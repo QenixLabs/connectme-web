@@ -27,7 +27,6 @@ export default function RecruiterSignupPage() {
     companyWebsite: "",
     companySize: "",
     industry: "",
-    contactName: "",
     email: "",
     phone: "",
     password: "",
@@ -53,10 +52,6 @@ export default function RecruiterSignupPage() {
   };
 
   const validateStep2 = () => {
-    if (!formData.contactName.trim()) {
-      setError("Your name is required");
-      return false;
-    }
     if (!formData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
       setError("Enter a valid work email");
       return false;
@@ -92,12 +87,12 @@ export default function RecruiterSignupPage() {
     setError(null);
     if (step === 1 && !validateStep1()) return;
     if (step === 2 && !validateStep2()) return;
-    setStep((s) => Math.min(s + 1, totalSteps));
+    setStep((s) => Math.min(s + 1, totalSteps) as Step);
   };
 
   const handleBack = () => {
     setError(null);
-    setStep((s) => Math.max(s - 1, 1));
+    setStep((s) => Math.max(s - 1, 1) as Step);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -108,15 +103,14 @@ export default function RecruiterSignupPage() {
     setError(null);
 
     try {
-      const payload = {
-        role: "recruiter" as const,
+      await authApi.signup({
+        role: "recruiter",
         email: formData.email,
         phone: `+91${formData.phone}`,
         password: formData.password,
         auth_provider: "credentials",
-      };
-
-      await authApi.signup(payload);
+        company_name: formData.companyName,
+      });
       router.push(`/auth/verify-email?email=${encodeURIComponent(formData.email)}`);
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || "Registration failed");
@@ -150,7 +144,6 @@ export default function RecruiterSignupPage() {
       }} />
 
       <div className="relative w-full max-w-md">
-        {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-block text-2xl font-bold text-slate-900">
             Connect<span className="text-amber-500">Me</span>
@@ -161,7 +154,6 @@ export default function RecruiterSignupPage() {
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-          {/* Progress Bar */}
           <div className="h-1 w-full bg-slate-100">
             <div
               className="h-full bg-gradient-to-r from-amber-400 to-amber-500 transition-all duration-500"
@@ -170,12 +162,11 @@ export default function RecruiterSignupPage() {
           </div>
 
           <div className="px-8 py-8">
-            {/* Step Header */}
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h1 className="text-xl font-bold text-slate-900">
                   {step === 1 && "Company Details"}
-                  {step === 2 && "Your Contact Info"}
+                  {step === 2 && "Contact Info"}
                   {step === 3 && "Secure Your Account"}
                 </h1>
                 <p className="text-sm text-slate-400 font-light mt-0.5">
@@ -194,7 +185,6 @@ export default function RecruiterSignupPage() {
               </div>
             </div>
 
-            {/* Error */}
             {error && (
               <div className="mb-4 flex items-start gap-2.5 bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
                 <svg className="w-4 h-4 mt-0.5 flex-shrink-0" viewBox="0 0 16 16" fill="none">
@@ -284,19 +274,6 @@ export default function RecruiterSignupPage() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-xs font-medium text-slate-600 mb-1.5 tracking-wide uppercase">
-                    Your Name
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.contactName}
-                    onChange={(e) => setFormData((f) => ({ ...f, contactName: e.target.value }))}
-                    placeholder="Your full name"
-                    className="w-full h-11 px-4 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:bg-white transition-all"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1.5 tracking-wide uppercase">
                     Work Email
                   </label>
                   <input
@@ -314,7 +291,7 @@ export default function RecruiterSignupPage() {
                   </label>
                   <div className="flex">
                     <div className="flex items-center px-3 h-11 border border-r-0 border-slate-200 rounded-l-lg bg-slate-100 text-slate-500 text-sm select-none">
-                      🇮🇳 +91
+                      +91
                     </div>
                     <input
                       type="tel"

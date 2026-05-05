@@ -14,6 +14,7 @@ export default function ForgotPasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,6 +57,24 @@ export default function ForgotPasswordPage() {
       setIsLoading(false);
     }
   };
+
+  const passwordStrength = (pw: string) => {
+    let score = 0;
+    if (pw.length >= 8) score++;
+    if (/[A-Z]/.test(pw)) score++;
+    if (/\d/.test(pw)) score++;
+    if (/[^A-Za-z0-9]/.test(pw)) score++;
+    const levels = [
+      { label: "", color: "bg-slate-200" },
+      { label: "Weak", color: "bg-red-400" },
+      { label: "Fair", color: "bg-amber-400" },
+      { label: "Good", color: "bg-emerald-400" },
+      { label: "Strong", color: "bg-emerald-500" },
+    ];
+    return { score, ...levels[score] };
+  };
+
+  const strength = passwordStrength(newPassword);
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4 py-12">
@@ -140,14 +159,66 @@ export default function ForgotPasswordPage() {
                   <label className="block text-xs font-medium text-slate-600 mb-1.5 tracking-wide uppercase">
                     New Password
                   </label>
-                  <input
-                    type="password"
-                    value={newPassword}
-                    onChange={(e) => { setNewPassword(e.target.value); setError(""); }}
-                    placeholder="At least 6 characters"
-                    className="w-full h-11 px-4 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:bg-white transition-all"
-                    required
-                  />
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={newPassword}
+                      onChange={(e) => { setNewPassword(e.target.value); setError(""); }}
+                      placeholder="At least 6 characters"
+                      className="w-full h-11 px-4 pr-11 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:bg-white transition-all"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                      tabIndex={-1}
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
+                        <path d="M2 8s2.5-4 6-4 6 4 6 4-2.5 4-6 4-6-4-6-4z" stroke="currentColor" strokeWidth="1.3" />
+                        <circle cx="8" cy="8" r="1.5" stroke="currentColor" strokeWidth="1.3" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  {newPassword.length > 0 && (
+                    <div className="mt-2">
+                      <div className="flex gap-1 mb-1">
+                        {Array.from({ length: 4 }).map((_, i) => (
+                          <div
+                            key={i}
+                            className={`h-1 flex-1 rounded-full transition-all ${
+                              i < strength.score ? strength.color : "bg-slate-200"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      {strength.label && (
+                        <p className="text-xs text-slate-400">
+                          Strength: <span className="font-medium text-slate-600">{strength.label}</span>
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  <ul className="mt-2 space-y-0.5">
+                    {[
+                      { ok: newPassword.length >= 8, text: "At least 8 characters" },
+                      { ok: /[A-Z]/.test(newPassword), text: "One uppercase letter" },
+                      { ok: /\d/.test(newPassword), text: "One number" },
+                    ].map((r) => (
+                      <li key={r.text} className={`flex items-center gap-1.5 text-xs transition-colors ${r.ok ? "text-emerald-600" : "text-slate-400"}`}>
+                        <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none">
+                          {r.ok ? (
+                            <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          ) : (
+                            <circle cx="6" cy="6" r="4" stroke="currentColor" strokeWidth="1.2" />
+                          )}
+                        </svg>
+                        {r.text}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
 
                 <div>

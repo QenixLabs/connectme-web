@@ -8,8 +8,9 @@ import { authApi } from "@/lib/api";
 type Step = 1 | 2 | 3;
 
 const PROFESSIONS = [
-  "Actor", "Model", "Influencer", "Content Creator",
+  "Actor", "Model", "Content Creator",
   "Dancer", "Musician", "Voice Artist", "Photographer",
+  "Other",
 ];
 
 const INDUSTRIES = [
@@ -26,6 +27,7 @@ export default function TalentSignupPage() {
 
   const [formData, setFormData] = useState({
     profession: "",
+    customProfession: "",
     fullName: "",
     email: "",
     phone: "",
@@ -39,6 +41,10 @@ export default function TalentSignupPage() {
   const validateStep1 = () => {
     if (!formData.profession) {
       setError("Please select your profession");
+      return false;
+    }
+    if (formData.profession === "Other" && !formData.customProfession.trim()) {
+      setError("Please enter your profession");
       return false;
     }
     return true;
@@ -84,12 +90,12 @@ export default function TalentSignupPage() {
     setError(null);
     if (step === 1 && !validateStep1()) return;
     if (step === 2 && !validateStep2()) return;
-    setStep((s) => Math.min(s + 1, totalSteps));
+    setStep((s) => Math.min(s + 1, totalSteps) as Step);
   };
 
   const handleBack = () => {
     setError(null);
-    setStep((s) => Math.max(s - 1, 1));
+    setStep((s) => Math.max(s - 1, 1) as Step);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -228,10 +234,25 @@ export default function TalentSignupPage() {
                   ))}
                 </div>
 
+                {formData.profession === "Other" && (
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-1.5 tracking-wide uppercase">
+                      Your Profession
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.customProfession}
+                      onChange={(e) => setFormData((f) => ({ ...f, customProfession: e.target.value }))}
+                      placeholder="Enter your profession"
+                      className="w-full h-11 px-4 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:bg-white transition-all"
+                    />
+                  </div>
+                )}
+
                 <button
                   type="button"
                   onClick={handleNext}
-                  disabled={!formData.profession}
+                  disabled={!formData.profession || (formData.profession === "Other" && !formData.customProfession.trim())}
                   className="w-full h-11 rounded-lg bg-slate-900 text-white text-sm font-medium hover:bg-slate-700 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
                 >
                   Continue

@@ -1,34 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useAuthStore } from "@/stores/auth-store";
 
 export default function RecruiterProfilePage() {
-  const router = useRouter();
-  const { user, isAuthenticated, isLoading, fetchUser } = useAuthStore();
+  const { user } = useAuthStore();
   const [isEditing, setIsEditing] = useState(false);
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      fetchUser();
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.push("/auth/login");
-    }
-  }, [isLoading, isAuthenticated, router]);
-
-  if (isLoading || !user) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-slate-500">Loading...</div>
-      </div>
-    );
-  }
 
   const profileData = {
     companyName: "Company",
@@ -46,26 +23,7 @@ export default function RecruiterProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200 px-4 py-4">
-        <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold text-slate-900">
-            Connect<span className="text-amber-500">Me</span>
-          </Link>
-          <div className="flex items-center gap-3">
-            <Link href="/recruiter/dashboard" className="text-sm text-slate-600 hover:text-slate-900">
-              Dashboard
-            </Link>
-            <button className="text-sm text-slate-600 hover:text-slate-900">Messages</button>
-            <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-sm font-medium text-slate-600">
-              PM
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-3xl mx-auto px-4 py-8">
+    <div>
         {/* Company Card */}
         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
           <div className="px-6 py-6">
@@ -212,7 +170,6 @@ export default function RecruiterProfilePage() {
             Find Talent
           </button>
         </div>
-      </main>
     </div>
   );
 }

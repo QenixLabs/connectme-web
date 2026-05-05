@@ -34,6 +34,7 @@ export const authApi = {
     phone: string;
     role: 'talent' | 'recruiter';
     auth_provider?: string;
+    company_name?: string;
   }) => {
     const response = await apiClient.post('/auth/signup', data);
     return response.data;

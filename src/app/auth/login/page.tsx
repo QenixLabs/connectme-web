@@ -17,7 +17,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      router.push(user.role === "talent" ? "/talent/profile" : "/recruiter/profile");
+      router.push(user.role === "talent" ? "/talent/dashboard" : "/recruiter/dashboard");
     }
   }, [isAuthenticated, user, router]);
 

@@ -1,37 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useAuthStore } from "@/stores/auth-store";
 
 type Availability = "available" | "busy" | "not_available";
 
 export default function TalentProfilePage() {
-  const router = useRouter();
-  const { user, isAuthenticated, isLoading, fetchUser, logout } = useAuthStore();
+  const { user } = useAuthStore();
   const [availability, setAvailability] = useState<Availability>("available");
   const [isEditing, setIsEditing] = useState(false);
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      fetchUser();
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.push("/auth/login");
-    }
-  }, [isLoading, isAuthenticated, router]);
-
-  if (isLoading || !user) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-slate-500">Loading...</div>
-      </div>
-    );
-  }
 
   const profileData = {
     fullName: user.email.split("@")[0],
@@ -47,11 +24,11 @@ export default function TalentProfilePage() {
     avatar: null as string | null,
   };
 
-  const skills = [
-    { name: "Acting", proficiency: "intermediate" as const },
-    { name: "Dancing", proficiency: "beginner" as const },
-    { name: "Stage Combat", proficiency: "intermediate" as const },
-    { name: "Voice Modulation", proficiency: "beginner" as const },
+  const skills: { name: string; proficiency: "beginner" | "intermediate" | "expert" }[] = [
+    { name: "Acting", proficiency: "intermediate" },
+    { name: "Dancing", proficiency: "beginner" },
+    { name: "Stage Combat", proficiency: "intermediate" },
+    { name: "Voice Modulation", proficiency: "beginner" },
   ];
 
   const languages = [
@@ -61,26 +38,7 @@ export default function TalentProfilePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200 px-4 py-4">
-        <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold text-slate-900">
-            Connect<span className="text-amber-500">Me</span>
-          </Link>
-          <div className="flex items-center gap-3">
-            <Link href="/talent/dashboard" className="text-sm text-slate-600 hover:text-slate-900">
-              Dashboard
-            </Link>
-            <button className="text-sm text-slate-600 hover:text-slate-900">Messages</button>
-            <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-sm font-medium text-slate-600">
-              AS
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-3xl mx-auto px-4 py-8">
+    <div>
         {/* Profile Card */}
         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
           {/* Cover / Banner area */}
@@ -238,7 +196,6 @@ export default function TalentProfilePage() {
             Analytics
           </button>
         </div>
-      </main>
     </div>
   );
 }
