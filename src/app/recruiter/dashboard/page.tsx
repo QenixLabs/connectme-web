@@ -57,12 +57,12 @@ export default function RecruiterDashboardPage() {
     <div className="space-y-6">
         {/* Welcome */}
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">
+          <h1 className="text-2xl font-bold text-text-primary">
             {greeting}, {firstName}
           </h1>
-          <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 border border-amber-200 rounded-full">
+          <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 bg-brand-light border border-brand-muted rounded-full">
             <svg
-              className="w-3.5 h-3.5 text-amber-600"
+              className="w-3.5 h-3.5 text-brand"
               viewBox="0 0 12 12"
               fill="none"
             >
@@ -74,7 +74,7 @@ export default function RecruiterDashboardPage() {
                 strokeLinejoin="round"
               />
             </svg>
-            <span className="text-xs font-medium text-amber-700">
+            <span className="text-xs font-medium text-brand-hover">
               Verified Recruiter
             </span>
           </div>
@@ -97,7 +97,7 @@ export default function RecruiterDashboardPage() {
         <div className="grid grid-cols-2 gap-3">
           <Link
             href="#"
-            className="flex items-center justify-center gap-2 h-11 rounded-xl bg-slate-900 text-white text-sm font-medium hover:bg-slate-800 active:scale-[0.98] transition-all"
+            className="flex items-center justify-center gap-2 h-11 rounded-xl bg-surface-dark text-white text-sm font-medium hover:bg-surface-darker active:scale-[0.98] transition-all"
           >
             <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
               <path
@@ -111,7 +111,7 @@ export default function RecruiterDashboardPage() {
           </Link>
           <Link
             href="#"
-            className="flex items-center justify-center gap-2 h-11 rounded-xl border border-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-50 active:scale-[0.98] transition-all"
+            className="flex items-center justify-center gap-2 h-11 rounded-xl border border-border text-text-secondary text-sm font-medium hover:bg-page active:scale-[0.98] transition-all"
           >
             <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
               <circle
@@ -136,10 +136,10 @@ export default function RecruiterDashboardPage() {
         <div>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-lg font-bold text-slate-900">
+              <h2 className="text-lg font-bold text-text-primary">
                 Recommended Talent for You
               </h2>
-              <p className="text-sm text-slate-400 mt-0.5">
+              <p className="text-sm text-text-muted mt-0.5">
                 Only verified talent shown
               </p>
             </div>
@@ -149,9 +149,9 @@ export default function RecruiterDashboardPage() {
             {MOCK_TALENT.map((talent) => (
               <div
                 key={talent.id}
-                className="bg-white border border-slate-200 rounded-2xl overflow-hidden hover:shadow-sm transition-shadow"
+                className="bg-card border border-border rounded-2xl overflow-hidden hover:shadow-sm transition-shadow"
               >
-                <div className="relative h-36 bg-slate-100">
+                <div className="relative h-36 bg-surface-light">
                   <div className="absolute inset-0 flex items-center justify-center text-3xl">
                     {talent.avatar ? (
                       <img
@@ -160,21 +160,21 @@ export default function RecruiterDashboardPage() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <span className="text-slate-300">👤</span>
+                      <span className="text-text-muted">👤</span>
                     )}
                   </div>
-                  <div className="absolute top-2 right-2 px-1.5 py-0.5 bg-amber-500 text-white text-xs font-bold rounded-md">
+                  <div className="absolute top-2 right-2 px-1.5 py-0.5 bg-brand text-white text-xs font-bold rounded-md">
                     {talent.matchPercent}%
                   </div>
                 </div>
                 <div className="p-3">
                   <div className="flex items-center gap-1.5">
-                    <h3 className="text-sm font-bold text-slate-900 truncate">
+                    <h3 className="text-sm font-bold text-text-primary truncate">
                       {talent.name}
                     </h3>
                     {talent.verified && (
                       <svg
-                        className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0"
+                        className="w-3.5 h-3.5 text-success flex-shrink-0"
                         viewBox="0 0 12 12"
                         fill="none"
                       >
@@ -188,12 +188,12 @@ export default function RecruiterDashboardPage() {
                       </svg>
                     )}
                   </div>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-xs text-text-muted mt-0.5">
                     {talent.profession} · {talent.location}
                   </p>
-                  <div className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 bg-slate-50 border border-slate-200 rounded-full">
+                  <div className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 bg-surface-lightest border border-border rounded-full">
                     <svg
-                      className="w-3 h-3 text-amber-500"
+                      className="w-3 h-3 text-brand"
                       viewBox="0 0 12 12"
                       fill="none"
                     >
@@ -205,7 +205,7 @@ export default function RecruiterDashboardPage() {
                         strokeLinejoin="round"
                       />
                     </svg>
-                    <span className="text-xs font-medium text-slate-600">
+                    <span className="text-xs font-medium text-text-secondary">
                       {talent.matchPercent}% Match
                     </span>
                   </div>
@@ -216,8 +216,8 @@ export default function RecruiterDashboardPage() {
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5">
-          <h2 className="text-lg font-bold text-slate-900 mb-4">
+        <div className="bg-card border border-border rounded-2xl p-5">
+          <h2 className="text-lg font-bold text-text-primary mb-4">
             Recent Activity
           </h2>
           <div className="space-y-3">
@@ -237,11 +237,11 @@ export default function RecruiterDashboardPage() {
             ].map((item, i) => (
               <div
                 key={i}
-                className="flex items-start gap-3 pb-3 border-b border-slate-100 last:border-0 last:pb-0"
+                className="flex items-start gap-3 pb-3 border-b border-border-subtle last:border-0 last:pb-0"
               >
-                <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-brand-light flex items-center justify-center flex-shrink-0">
                   <svg
-                    className="w-4 h-4 text-amber-500"
+                    className="w-4 h-4 text-brand"
                     viewBox="0 0 16 16"
                     fill="none"
                   >
@@ -261,8 +261,8 @@ export default function RecruiterDashboardPage() {
                   </svg>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-slate-700">{item.text}</p>
-                  <p className="text-xs text-slate-400 mt-0.5">{item.time}</p>
+                  <p className="text-sm text-text-secondary">{item.text}</p>
+                  <p className="text-xs text-text-muted mt-0.5">{item.time}</p>
                 </div>
               </div>
             ))}
@@ -274,9 +274,9 @@ export default function RecruiterDashboardPage() {
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="bg-white border border-slate-200 rounded-2xl p-4">
-      <p className="text-xs text-slate-500 leading-tight">{label}</p>
-      <p className="text-2xl font-bold text-slate-900 mt-1">{value}</p>
+    <div className="bg-card border border-border rounded-2xl p-4">
+      <p className="text-xs text-text-muted leading-tight">{label}</p>
+      <p className="text-2xl font-bold text-text-primary mt-1">{value}</p>
     </div>
   );
 }

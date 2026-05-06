@@ -2,16 +2,16 @@ import Link from "next/link";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-page">
       {/* Header */}
-      <header className="flex items-center justify-between px-6 py-4 bg-white border-b border-slate-200">
-        <Link href="/" className="text-2xl font-bold text-slate-900">
-          Connect<span className="text-amber-500">Me</span>
+      <header className="flex items-center justify-between px-6 py-4 bg-card border-b border-border">
+        <Link href="/" className="text-2xl font-bold text-text-primary">
+          Connect<span className="text-brand">Me</span>
         </Link>
         <div className="flex items-center gap-4">
           <Link
             href="/auth/login"
-            className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+            className="text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
           >
             Sign in
           </Link>
@@ -20,11 +20,11 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <main className="max-w-4xl mx-auto px-6 py-20 text-center">
-        <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6">
+        <h1 className="text-4xl md:text-5xl font-bold text-text-primary mb-6">
           Verified Talent.
-          <span className="text-amber-500"> Trusted Hiring.</span>
+          <span className="text-brand"> Trusted Hiring.</span>
         </h1>
-        <p className="text-lg text-slate-600 mb-10 max-w-2xl mx-auto">
+        <p className="text-lg text-text-secondary mb-10 max-w-2xl mx-auto">
           ConnectMe replaces broken trust in casting with verified, professional records.
           Hire with confidence. Get hired with credibility.
         </p>
@@ -33,7 +33,7 @@ export default function LandingPage() {
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
             href="/auth/talent/signup"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-slate-900 text-white font-medium rounded-lg hover:bg-slate-800 transition-all hover:scale-[1.02]"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-surface-dark text-white font-medium rounded-lg hover:bg-surface-darker transition-all hover:scale-[1.02]"
           >
             Join as Talent
             <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
@@ -42,7 +42,7 @@ export default function LandingPage() {
           </Link>
           <Link
             href="/auth/recruiter/signup"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white border-2 border-slate-200 text-slate-900 font-medium rounded-lg hover:border-slate-300 transition-all hover:scale-[1.02]"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-card border-2 border-border text-text-primary font-medium rounded-lg hover:border-border-subtle transition-all hover:scale-[1.02]"
           >
             Join as Recruiter
           </Link>
@@ -51,23 +51,23 @@ export default function LandingPage() {
         {/* Stats / Trust indicators */}
         <div className="mt-16 grid grid-cols-3 gap-8 max-w-lg mx-auto">
           <div>
-            <div className="text-2xl font-bold text-slate-900">Verified</div>
-            <div className="text-sm text-slate-500">Talent Pool</div>
+            <div className="text-2xl font-bold text-text-primary">Verified</div>
+            <div className="text-sm text-text-muted">Talent Pool</div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-slate-900">Safe</div>
-            <div className="text-sm text-slate-500">Hiring Only</div>
+            <div className="text-2xl font-bold text-text-primary">Safe</div>
+            <div className="text-sm text-text-muted">Hiring Only</div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-slate-900">Trusted</div>
-            <div className="text-sm text-slate-500">By Brands</div>
+            <div className="text-2xl font-bold text-text-primary">Trusted</div>
+            <div className="text-sm text-text-muted">By Brands</div>
           </div>
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-200 py-8 text-center">
-        <p className="text-sm text-slate-500">
+      <footer className="border-t border-border py-8 text-center">
+        <p className="text-sm text-text-muted">
           © 2026 ConnectMe. All rights reserved.
         </p>
       </footer>

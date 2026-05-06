@@ -38,23 +38,23 @@ export default function RecruiterLayout({
 
   if (!authChecked || isLoading || !user) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-slate-500">Loading...</div>
+      <div className="min-h-screen bg-page flex items-center justify-center">
+        <div className="text-text-muted">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen bg-page flex flex-col">
       {/* Top Logo Bar — minimal */}
-      <header className="bg-white border-b border-slate-200 px-4 py-3 sticky top-0 z-40">
+      <header className="bg-card border-b border-border px-4 py-3 sticky top-0 z-40">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <Link href="/recruiter/dashboard" className="text-lg font-bold text-slate-900">
-            Connect<span className="text-amber-500">Me</span>
+          <Link href="/recruiter/dashboard" className="text-lg font-bold text-text-primary">
+            Connect<span className="text-brand">Me</span>
           </Link>
           <button
             onClick={() => logout()}
-            className="text-xs text-slate-500 hover:text-slate-700 font-medium"
+            className="text-xs text-text-muted hover:text-text-secondary font-medium"
           >
             Logout
           </button>
@@ -67,7 +67,7 @@ export default function RecruiterLayout({
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-50 safe-area-pb">
+      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50 safe-area-pb">
         <div className="max-w-3xl mx-auto flex items-center justify-around h-16">
           {NAV_ITEMS.map((item) => {
             const isActive = pathname === item.href;
@@ -77,10 +77,10 @@ export default function RecruiterLayout({
                 key={item.href}
                 href={item.href}
                 className={`flex flex-col items-center justify-center gap-0.5 w-full h-full transition-colors ${
-                  isActive ? "text-amber-500" : "text-slate-400 hover:text-slate-600"
+                  isActive ? "text-brand" : "text-text-muted hover:text-text-secondary"
                 }`}
               >
-                <Icon className={`w-5 h-5 ${isActive ? "text-amber-500" : ""}`} />
+                <Icon className={`w-5 h-5 ${isActive ? "text-brand" : ""}`} />
                 <span className="text-[10px] font-medium">{item.label}</span>
               </Link>
             );

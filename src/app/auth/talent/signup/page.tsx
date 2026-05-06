@@ -130,11 +130,11 @@ export default function TalentSignupPage() {
     if (/\d/.test(pw)) score++;
     if (/[^A-Za-z0-9]/.test(pw)) score++;
     const levels = [
-      { label: "", color: "bg-slate-200" },
-      { label: "Weak", color: "bg-red-400" },
-      { label: "Fair", color: "bg-amber-400" },
-      { label: "Good", color: "bg-emerald-400" },
-      { label: "Strong", color: "bg-emerald-500" },
+      { label: "", color: "bg-surface-secondary" },
+      { label: "Weak", color: "bg-strength-weak" },
+      { label: "Fair", color: "bg-strength-fair" },
+      { label: "Good", color: "bg-strength-good" },
+      { label: "Strong", color: "bg-strength-strong" },
     ];
     return { score, ...levels[score] };
   };
@@ -142,27 +142,27 @@ export default function TalentSignupPage() {
   const strength = passwordStrength(formData.password);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-page flex items-center justify-center px-4 py-12">
       <div className="fixed inset-0 pointer-events-none" style={{
-        background: "radial-gradient(ellipse 70% 50% at 50% -5%, rgba(245,158,11,0.07) 0%, transparent 60%)",
+        background: "radial-gradient(ellipse 70% 50% at 50% -5%, var(--glow) 0%, transparent 60%)",
       }} />
 
       <div className="relative w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <Link href="/" className="inline-block text-2xl font-bold text-slate-900">
-            Connect<span className="text-amber-500">Me</span>
+          <Link href="/" className="inline-block text-2xl font-bold text-text-primary">
+            Connect<span className="text-brand">Me</span>
           </Link>
-          <p className="mt-2 text-sm text-slate-500 font-light">
+          <p className="mt-2 text-sm text-text-tertiary font-light">
             Create your talent account
           </p>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+        <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
           {/* Progress Bar */}
-          <div className="h-1 w-full bg-slate-100">
+          <div className="h-1 w-full bg-muted-bg">
             <div
-              className="h-full bg-gradient-to-r from-amber-400 to-amber-500 transition-all duration-500"
+              className="h-full bg-gradient-to-r from-brand to-brand-light transition-all duration-500"
               style={{ width: `${(step / totalSteps) * 100}%` }}
             />
           </div>
@@ -171,12 +171,12 @@ export default function TalentSignupPage() {
             {/* Step Header */}
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h1 className="text-xl font-bold text-slate-900">
+                <h1 className="text-xl font-bold text-text-primary">
                   {step === 1 && "Your Profession"}
                   {step === 2 && "Your Details"}
                   {step === 3 && "Secure Your Account"}
                 </h1>
-                <p className="text-sm text-slate-400 font-light mt-0.5">
+                <p className="text-sm text-text-muted font-light mt-0.5">
                   Step {step} of {totalSteps}
                 </p>
               </div>
@@ -185,7 +185,7 @@ export default function TalentSignupPage() {
                   <div
                     key={i}
                     className={`h-1.5 rounded-full transition-all duration-300 ${
-                      i < step ? "bg-amber-500 w-6" : "bg-slate-200 w-3"
+                      i < step ? "bg-brand w-6" : "bg-surface-secondary w-3"
                     }`}
                   />
                 ))}
@@ -194,7 +194,7 @@ export default function TalentSignupPage() {
 
             {/* Error */}
             {error && (
-              <div className="mb-4 flex items-start gap-2.5 bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
+              <div className="mb-4 flex items-start gap-2.5 bg-error-surface border border-error-border text-error-text rounded-lg px-4 py-3 text-sm">
                 <svg className="w-4 h-4 mt-0.5 flex-shrink-0" viewBox="0 0 16 16" fill="none">
                   <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
                   <path d="M8 5v3.5M8 11v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
@@ -206,7 +206,7 @@ export default function TalentSignupPage() {
             {/* STEP 1: Profession */}
             {step === 1 && (
               <div className="space-y-5">
-                <p className="text-sm text-slate-500 mb-4">
+                <p className="text-sm text-text-tertiary mb-4">
                   Select your primary profession to personalize your experience.
                 </p>
 
@@ -216,15 +216,15 @@ export default function TalentSignupPage() {
                       key={p}
                       type="button"
                       onClick={() => { setFormData((f) => ({ ...f, profession: p })); setError(null); }}
-                      className={`relative rounded-xl border-2 p-4 text-center transition-all ${
-                        formData.profession === p
-                          ? "border-amber-400 bg-amber-50"
-                          : "border-slate-200 bg-white hover:border-slate-300"
-                      }`}
+className={`relative rounded-xl border-2 p-4 text-center transition-all ${
+                          formData.profession === p
+                            ? "border-brand bg-brand-light"
+                            : "border-border bg-card hover:border-border"
+                        }`}
                     >
-                      <div className="font-medium text-sm text-slate-800">{p}</div>
+                      <div className="font-medium text-sm text-text-primary">{p}</div>
                       {formData.profession === p && (
-                        <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-amber-500 flex items-center justify-center">
+                        <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-brand flex items-center justify-center">
                           <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none">
                             <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
@@ -236,7 +236,7 @@ export default function TalentSignupPage() {
 
                 {formData.profession === "Other" && (
                   <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1.5 tracking-wide uppercase">
+                    <label className="block text-xs font-medium text-text-secondary mb-1.5 tracking-wide uppercase">
                       Your Profession
                     </label>
                     <input
@@ -244,7 +244,7 @@ export default function TalentSignupPage() {
                       value={formData.customProfession}
                       onChange={(e) => setFormData((f) => ({ ...f, customProfession: e.target.value }))}
                       placeholder="Enter your profession"
-                      className="w-full h-11 px-4 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:bg-white transition-all"
+                      className="w-full h-11 px-4 rounded-lg border border-border bg-page text-text-primary text-sm placeholder:text-text-placeholder focus:outline-none focus:ring-2 focus:ring-brand-focus focus:bg-card transition-all"
                     />
                   </div>
                 )}
@@ -253,7 +253,7 @@ export default function TalentSignupPage() {
                   type="button"
                   onClick={handleNext}
                   disabled={!formData.profession || (formData.profession === "Other" && !formData.customProfession.trim())}
-                  className="w-full h-11 rounded-lg bg-slate-900 text-white text-sm font-medium hover:bg-slate-700 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+                  className="w-full h-11 rounded-lg bg-surface-dark text-white text-sm font-medium hover:bg-surface-darker active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
                 >
                   Continue
                   <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
@@ -267,7 +267,7 @@ export default function TalentSignupPage() {
             {step === 2 && (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1.5 tracking-wide uppercase">
+                  <label className="block text-xs font-medium text-text-secondary mb-1.5 tracking-wide uppercase">
                     Full Name
                   </label>
                   <input
@@ -275,12 +275,12 @@ export default function TalentSignupPage() {
                     value={formData.fullName}
                     onChange={(e) => setFormData((f) => ({ ...f, fullName: e.target.value }))}
                     placeholder="As on your ID"
-                    className="w-full h-11 px-4 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:bg-white transition-all"
+                    className="w-full h-11 px-4 rounded-lg border border-border bg-page text-text-primary text-sm placeholder:text-text-placeholder focus:outline-none focus:ring-2 focus:ring-brand-focus focus:bg-card transition-all"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1.5 tracking-wide uppercase">
+                  <label className="block text-xs font-medium text-text-secondary mb-1.5 tracking-wide uppercase">
                     Email Address
                   </label>
                   <input
@@ -288,16 +288,16 @@ export default function TalentSignupPage() {
                     value={formData.email}
                     onChange={(e) => setFormData((f) => ({ ...f, email: e.target.value }))}
                     placeholder="you@example.com"
-                    className="w-full h-11 px-4 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:bg-white transition-all"
+                    className="w-full h-11 px-4 rounded-lg border border-border bg-page text-text-primary text-sm placeholder:text-text-placeholder focus:outline-none focus:ring-2 focus:ring-brand-focus focus:bg-card transition-all"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1.5 tracking-wide uppercase">
+                  <label className="block text-xs font-medium text-text-secondary mb-1.5 tracking-wide uppercase">
                     Mobile Number
                   </label>
                   <div className="flex">
-                    <div className="flex items-center px-3 h-11 border border-r-0 border-slate-200 rounded-l-lg bg-slate-100 text-slate-500 text-sm select-none">
+                    <div className="flex items-center px-3 h-11 border border-r-0 border-border rounded-l-lg bg-muted-bg text-text-tertiary text-sm select-none">
                       🇮🇳 +91
                     </div>
                     <input
@@ -305,24 +305,24 @@ export default function TalentSignupPage() {
                       value={formData.phone}
                       onChange={(e) => setFormData((f) => ({ ...f, phone: e.target.value.replace(/\D/g, "").slice(0, 10) }))}
                       placeholder="9876543210"
-                      className="flex-1 h-11 px-4 rounded-r-lg border border-slate-200 bg-slate-50 text-slate-900 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:bg-white transition-all"
+                      className="flex-1 h-11 px-4 rounded-r-lg border border-border bg-page text-text-primary text-sm placeholder:text-text-placeholder focus:outline-none focus:ring-2 focus:ring-brand-focus focus:bg-card transition-all"
                     />
                   </div>
-                  <p className="text-xs text-slate-400 mt-1">OTP will be sent to verify this number</p>
+                  <p className="text-xs text-text-muted mt-1">OTP will be sent to verify this number</p>
                 </div>
 
                 <div className="flex gap-3 pt-2">
                   <button
                     type="button"
                     onClick={handleBack}
-                    className="h-11 px-5 rounded-lg border border-slate-200 text-slate-600 text-sm hover:bg-slate-50 active:scale-[0.98] transition-all"
+                    className="h-11 px-5 rounded-lg border border-border text-text-secondary text-sm hover:bg-page active:scale-[0.98] transition-all"
                   >
                     Back
                   </button>
                   <button
                     type="button"
                     onClick={handleNext}
-                    className="flex-1 h-11 rounded-lg bg-slate-900 text-white text-sm font-medium hover:bg-slate-700 active:scale-[0.98] transition-all flex items-center justify-center gap-1.5"
+                    className="flex-1 h-11 rounded-lg bg-surface-dark text-white text-sm font-medium hover:bg-surface-darker active:scale-[0.98] transition-all flex items-center justify-center gap-1.5"
                   >
                     Continue
                     <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
@@ -337,7 +337,7 @@ export default function TalentSignupPage() {
             {step === 3 && (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1.5 tracking-wide uppercase">
+                  <label className="block text-xs font-medium text-text-secondary mb-1.5 tracking-wide uppercase">
                     Password
                   </label>
                   <div className="relative">
@@ -346,12 +346,12 @@ export default function TalentSignupPage() {
                       value={formData.password}
                       onChange={(e) => setFormData((f) => ({ ...f, password: e.target.value }))}
                       placeholder="Min. 8 characters"
-                      className="w-full h-11 px-4 pr-11 rounded-lg border border-slate-200 bg-slate-50 text-slate-900 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:bg-white transition-all"
+                      className="w-full h-11 px-4 pr-11 rounded-lg border border-border bg-page text-text-primary text-sm placeholder:text-text-placeholder focus:outline-none focus:ring-2 focus:ring-brand-focus focus:bg-card transition-all"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword((v) => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary transition-colors"
                       tabIndex={-1}
                     >
                       <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
@@ -368,14 +368,14 @@ export default function TalentSignupPage() {
                           <div
                             key={i}
                             className={`h-1 flex-1 rounded-full transition-all ${
-                              i < strength.score ? strength.color : "bg-slate-200"
+                              i < strength.score ? strength.color : "bg-surface-secondary"
                             }`}
                           />
                         ))}
                       </div>
                       {strength.label && (
-                        <p className="text-xs text-slate-400">
-                          Strength: <span className="font-medium text-slate-600">{strength.label}</span>
+                        <p className="text-xs text-text-muted">
+                          Strength: <span className="font-medium text-text-secondary">{strength.label}</span>
                         </p>
                       )}
                     </div>
@@ -387,7 +387,7 @@ export default function TalentSignupPage() {
                       { ok: /[A-Z]/.test(formData.password), text: "One uppercase letter" },
                       { ok: /\d/.test(formData.password), text: "One number" },
                     ].map((r) => (
-                      <li key={r.text} className={`flex items-center gap-1.5 text-xs transition-colors ${r.ok ? "text-emerald-600" : "text-slate-400"}`}>
+                      <li key={r.text} className={`flex items-center gap-1.5 text-xs transition-colors ${r.ok ? "text-success-text" : "text-text-muted"}`}>
                         <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none">
                           {r.ok ? (
                             <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -402,7 +402,7 @@ export default function TalentSignupPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1.5 tracking-wide uppercase">
+                  <label className="block text-xs font-medium text-text-secondary mb-1.5 tracking-wide uppercase">
                     Confirm Password
                   </label>
                   <input
@@ -410,14 +410,14 @@ export default function TalentSignupPage() {
                     value={formData.confirmPassword}
                     onChange={(e) => setFormData((f) => ({ ...f, confirmPassword: e.target.value }))}
                     placeholder="Re-enter your password"
-                    className={`w-full h-11 px-4 rounded-lg border bg-slate-50 text-slate-900 text-sm placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:bg-white transition-all ${
+                    className={`w-full h-11 px-4 rounded-lg border bg-page text-text-primary text-sm placeholder:text-text-placeholder focus:outline-none focus:ring-2 focus:ring-brand-focus focus:bg-card transition-all ${
                       formData.confirmPassword && formData.confirmPassword !== formData.password
-                        ? "border-red-300"
-                        : "border-slate-200"
+                        ? "border-error-border-strong"
+                        : "border-border"
                     }`}
                   />
                   {formData.confirmPassword && formData.confirmPassword !== formData.password && (
-                    <p className="text-xs text-red-500 mt-1">Passwords do not match</p>
+                    <p className="text-xs text-error mt-1">Passwords do not match</p>
                   )}
                 </div>
 
@@ -425,14 +425,14 @@ export default function TalentSignupPage() {
                   <button
                     type="button"
                     onClick={handleBack}
-                    className="h-11 px-5 rounded-lg border border-slate-200 text-slate-600 text-sm hover:bg-slate-50 active:scale-[0.98] transition-all"
+                    className="h-11 px-5 rounded-lg border border-border text-text-secondary text-sm hover:bg-page active:scale-[0.98] transition-all"
                   >
                     Back
                   </button>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="flex-1 h-11 rounded-lg bg-amber-500 text-white text-sm font-medium hover:bg-amber-600 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="flex-1 h-11 rounded-lg bg-brand text-white text-sm font-medium hover:bg-brand-hover active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {loading ? (
                       <>
@@ -454,15 +454,15 @@ export default function TalentSignupPage() {
               <>
                 <div className="relative my-5">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-slate-100" />
+                    <div className="w-full border-t border-border-subtle" />
                   </div>
                   <div className="relative flex justify-center">
-                    <span className="bg-white px-3 text-xs text-slate-400">Already have an account?</span>
+                    <span className="bg-card px-3 text-xs text-text-muted">Already have an account?</span>
                   </div>
                 </div>
                 <Link
                   href="/auth/login"
-                  className="block w-full h-11 rounded-lg border border-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-50 active:scale-[0.98] transition-all flex items-center justify-center"
+                  className="block w-full h-11 rounded-lg border border-border text-text-primary text-sm font-medium hover:bg-page active:scale-[0.98] transition-all flex items-center justify-center"
                 >
                   Sign in instead
                 </Link>
@@ -471,11 +471,11 @@ export default function TalentSignupPage() {
           </div>
         </div>
 
-        <p className="text-center text-xs text-slate-400 mt-6">
+        <p className="text-center text-xs text-text-muted mt-6">
           By creating an account you agree to our{" "}
-          <Link href="/terms" className="text-slate-500 hover:text-slate-700 underline underline-offset-2">Terms</Link>{" "}
+          <Link href="/terms" className="text-text-tertiary hover:text-text-primary underline underline-offset-2">Terms</Link>{" "}
           and{" "}
-          <Link href="/privacy" className="text-slate-500 hover:text-slate-700 underline underline-offset-2">Privacy Policy</Link>
+          <Link href="/privacy" className="text-text-tertiary hover:text-text-primary underline underline-offset-2">Privacy Policy</Link>
         </p>
       </div>
     </div>

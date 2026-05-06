@@ -75,20 +75,20 @@ export default function TalentDashboardPage() {
     <div className="space-y-6">
         {/* Welcome */}
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">
+          <h1 className="text-2xl font-bold text-text-primary">
             {greeting}, {firstName}
           </h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="text-sm text-text-tertiary mt-1">
             Here&apos;s what&apos;s happening with your career today
           </p>
         </div>
 
         {/* Verification Banner */}
         {!isVerified && (
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
-            <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+          <div className="bg-brand-light border border-brand-muted rounded-xl p-4 flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-brand-soft flex items-center justify-center flex-shrink-0 mt-0.5">
               <svg
-                className="w-4 h-4 text-amber-600"
+                className="w-4 h-4 text-brand-hover"
                 viewBox="0 0 16 16"
                 fill="none"
               >
@@ -101,24 +101,24 @@ export default function TalentDashboardPage() {
               </svg>
             </div>
             <div className="flex-1">
-              <p className="text-sm font-medium text-slate-800">
+              <p className="text-sm font-medium text-text-secondary">
                 Complete your identity verification
               </p>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-text-tertiary mt-0.5">
                 Verified talent get 5x more profile views and direct messages
                 from recruiters
               </p>
             </div>
-            <button className="px-3 py-1.5 bg-amber-500 text-white text-xs font-medium rounded-lg hover:bg-amber-600 transition-colors flex-shrink-0">
+            <button className="px-3 py-1.5 bg-brand text-white text-xs font-medium rounded-lg hover:bg-brand-hover transition-colors flex-shrink-0">
               Verify
             </button>
           </div>
         )}
 
         {isVerified && (
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 border border-emerald-200 rounded-full">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-success-light border border-success-muted rounded-full">
             <svg
-              className="w-3.5 h-3.5 text-emerald-600"
+              className="w-3.5 h-3.5 text-success-hover"
               viewBox="0 0 12 12"
               fill="none"
             >
@@ -130,7 +130,7 @@ export default function TalentDashboardPage() {
                 strokeLinejoin="round"
               />
             </svg>
-            <span className="text-xs font-medium text-emerald-700">
+            <span className="text-xs font-medium text-success-text">
               Identity Verified
             </span>
           </div>
@@ -148,7 +148,7 @@ export default function TalentDashboardPage() {
         <div className="grid grid-cols-2 gap-3">
           <Link
             href="/talent/profile"
-            className="flex items-center justify-center gap-2 h-11 rounded-xl bg-slate-900 text-white text-sm font-medium hover:bg-slate-800 active:scale-[0.98] transition-all"
+            className="flex items-center justify-center gap-2 h-11 rounded-xl bg-surface-dark text-white text-sm font-medium hover:bg-surface-darker active:scale-[0.98] transition-all"
           >
             <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
               <path
@@ -163,7 +163,7 @@ export default function TalentDashboardPage() {
           </Link>
           <Link
             href="#"
-            className="flex items-center justify-center gap-2 h-11 rounded-xl border border-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-50 active:scale-[0.98] transition-all"
+            className="flex items-center justify-center gap-2 h-11 rounded-xl border border-border text-text-secondary text-sm font-medium hover:bg-page active:scale-[0.98] transition-all"
           >
             <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
               <path
@@ -181,16 +181,16 @@ export default function TalentDashboardPage() {
         <div>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-lg font-bold text-slate-900">
+              <h2 className="text-lg font-bold text-text-primary">
                 Opportunities for You
               </h2>
-              <p className="text-sm text-slate-400 mt-0.5">
+              <p className="text-sm text-text-muted mt-0.5">
                 Matched based on your profile
               </p>
             </div>
             <Link
               href="#"
-              className="text-sm text-amber-600 hover:text-amber-700 font-medium"
+              className="text-sm text-brand-hover hover:text-brand-active font-medium"
             >
               View all
             </Link>
@@ -200,33 +200,33 @@ export default function TalentDashboardPage() {
             {MOCK_OPPORTUNITIES.map((opp) => (
               <div
                 key={opp.id}
-                className="bg-white border border-slate-200 rounded-xl p-4 hover:shadow-sm transition-shadow"
+                className="bg-card border border-border rounded-xl p-4 hover:shadow-sm transition-shadow"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <h3 className="text-sm font-bold text-slate-900 truncate">
+                      <h3 className="text-sm font-bold text-text-primary truncate">
                         {opp.title}
                       </h3>
-                      <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-700 text-xs font-medium rounded-full flex-shrink-0">
+                      <span className="px-1.5 py-0.5 bg-success-light text-success-text text-xs font-medium rounded-full flex-shrink-0">
                         {opp.matchPercent}% match
                       </span>
                     </div>
-                    <p className="text-xs text-slate-500 mt-1">
+                    <p className="text-xs text-text-tertiary mt-1">
                       {opp.company} · {opp.location}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center justify-between mt-3">
                   <div className="flex gap-2">
-                    <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                    <span className="text-xs text-text-tertiary bg-muted-bg px-2 py-0.5 rounded">
                       {opp.roleType}
                     </span>
-                    <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                    <span className="text-xs text-text-tertiary bg-muted-bg px-2 py-0.5 rounded">
                       {opp.budget}
                     </span>
                   </div>
-                  <span className="text-xs text-slate-400">{opp.postedAt}</span>
+                  <span className="text-xs text-text-muted">{opp.postedAt}</span>
                 </div>
               </div>
             ))}
@@ -235,27 +235,27 @@ export default function TalentDashboardPage() {
 
         {/* Next Best Actions */}
         <div>
-          <h2 className="text-lg font-bold text-slate-900 mb-4">
+          <h2 className="text-lg font-bold text-text-primary mb-4">
             Recommended Next Steps
           </h2>
           <div className="space-y-3">
             {MOCK_COACHING.map((item, i) => (
               <div
                 key={i}
-                className="bg-white border border-slate-200 rounded-xl p-4 flex items-start gap-3"
+                className="bg-card border border-border rounded-xl p-4 flex items-start gap-3"
               >
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
                     item.urgency === "high"
-                      ? "bg-amber-50"
-                      : "bg-slate-50"
+                      ? "bg-brand-light"
+                      : "bg-page"
                   }`}
                 >
                   <svg
                     className={`w-4 h-4 ${
                       item.urgency === "high"
-                        ? "text-amber-500"
-                        : "text-slate-500"
+                        ? "text-brand"
+                        : "text-text-tertiary"
                     }`}
                     viewBox="0 0 16 16"
                     fill="none"
@@ -276,14 +276,14 @@ export default function TalentDashboardPage() {
                   </svg>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-slate-800">
+                  <p className="text-sm font-bold text-text-secondary">
                     {item.title}
                   </p>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-xs text-text-tertiary mt-0.5">
                     {item.description}
                   </p>
                 </div>
-                <button className="px-3 py-1.5 bg-slate-900 text-white text-xs font-medium rounded-lg hover:bg-slate-800 transition-colors flex-shrink-0">
+                <button className="px-3 py-1.5 bg-surface-dark text-white text-xs font-medium rounded-lg hover:bg-surface-darker transition-colors flex-shrink-0">
                   {item.action}
                 </button>
               </div>
@@ -292,10 +292,10 @@ export default function TalentDashboardPage() {
         </div>
 
         {/* Safety Note */}
-        <div className="bg-slate-900 rounded-xl p-4 flex items-start gap-3">
-          <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center flex-shrink-0">
+        <div className="bg-surface-dark rounded-xl p-4 flex items-start gap-3">
+          <div className="w-8 h-8 rounded-full bg-surface-darker flex items-center justify-center flex-shrink-0">
             <svg
-              className="w-4 h-4 text-amber-400"
+              className="w-4 h-4 text-brand-focus"
               viewBox="0 0 16 16"
               fill="none"
             >
@@ -318,7 +318,7 @@ export default function TalentDashboardPage() {
             <p className="text-sm font-medium text-white">
               Only verified recruiters can contact you
             </p>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-xs text-text-muted mt-0.5">
               We verify every recruiter before they can message or shortlist
               talent. If you receive suspicious messages, report them
               immediately.
@@ -331,9 +331,9 @@ export default function TalentDashboardPage() {
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="bg-white border border-slate-200 rounded-2xl p-4 text-center">
-      <p className="text-xl font-bold text-slate-900">{value}</p>
-      <p className="text-xs text-slate-500 mt-1">{label}</p>
+    <div className="bg-card border border-border rounded-2xl p-4 text-center">
+      <p className="text-xl font-bold text-text-primary">{value}</p>
+      <p className="text-xs text-text-tertiary mt-1">{label}</p>
     </div>
   );
 }
