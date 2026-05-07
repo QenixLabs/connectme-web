@@ -72,6 +72,12 @@
   --color-strength-fair: #fbbf24;
   --color-strength-good: #34d399;
   --color-strength-strong: #10b981;
+
+  /* Surface text (replaces text-white) */
+  --color-on-brand: #ffffff;
+  --color-on-surface-dark: #ffffff;
+  --color-on-surface-darker: #ffffff;
+  --color-on-success: #ffffff;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -89,4 +95,9 @@ body {
 
 .safe-area-pb {
   padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@utility text-2xs {
+  font-size: 0.625rem;
+  line-height: 0.875rem;
 }

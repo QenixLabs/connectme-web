@@ -1,4 +1,9 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
+import type {
+  CreateTalentProfileInput,
+  TalentProfile,
+  UpdateTalentProfileInput,
+} from '@/lib/validations/talent-profile.schema';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
 
@@ -68,6 +73,34 @@ export const authApi = {
   resetPassword: async (email: string, otp: string, newPassword: string) => {
     const response = await apiClient.post('/auth/reset-password', { email, otp, new_password: newPassword });
     return response.data;
+  },
+};
+
+export const talentApi = {
+  getMyProfile: async (): Promise<TalentProfile | null> => {
+    try {
+      const response = await apiClient.get('/talent/me');
+      return response.data as TalentProfile;
+    } catch (err) {
+      const axiosErr = err as AxiosError;
+      if (axiosErr.response?.status === 404) return null;
+      throw err;
+    }
+  },
+
+  getCompleteness: async (): Promise<{ isComplete: boolean; missingFields: string[] }> => {
+    const response = await apiClient.get('/talent/completeness');
+    return response.data;
+  },
+
+  createProfile: async (payload: CreateTalentProfileInput): Promise<TalentProfile> => {
+    const response = await apiClient.post('/talent', payload);
+    return response.data as TalentProfile;
+  },
+
+  updateProfile: async (payload: UpdateTalentProfileInput): Promise<TalentProfile> => {
+    const response = await apiClient.patch('/talent', payload);
+    return response.data as TalentProfile;
   },
 };
 

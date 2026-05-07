@@ -1,7 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { Star, AlertCircle, ShieldCheck, Pencil, Globe } from "lucide-react";
 import { useAuthStore } from "@/stores/auth-store";
+import { getGreeting } from "@/lib/greeting";
+import { SectionHeader } from "@/components/ui/section-header";
+import { StatCard } from "@/components/ui/stat-card";
+import { VerifiedBadge } from "@/components/ui/verified-badge";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 const MOCK_OPPORTUNITIES = [
   {
@@ -68,279 +75,187 @@ export default function TalentDashboardPage() {
   const { user } = useAuthStore();
   const firstName = user!.email.split("@")[0];
   const greeting = getGreeting();
-  const verificationTier = user.verification_tier || 1;
+  const verificationTier = user!.verification_tier || 1;
   const isVerified = verificationTier >= 2;
 
   return (
     <div className="space-y-6">
-        {/* Welcome */}
-        <div>
-          <h1 className="text-2xl font-bold text-text-primary">
-            {greeting}, {firstName}
-          </h1>
-          <p className="text-sm text-text-tertiary mt-1">
-            Here&apos;s what&apos;s happening with your career today
-          </p>
-        </div>
+      {/* Welcome */}
+      <div>
+        <h1 className="text-2xl font-bold text-text-primary">
+          {greeting}, {firstName}
+        </h1>
+        <p className="text-sm text-text-tertiary mt-1">
+          Here&apos;s what&apos;s happening with your career today
+        </p>
+      </div>
 
-        {/* Verification Banner */}
-        {!isVerified && (
-          <div className="bg-brand-light border border-brand-muted rounded-xl p-4 flex items-start gap-3">
-            <div className="w-8 h-8 rounded-full bg-brand-soft flex items-center justify-center flex-shrink-0 mt-0.5">
-              <svg
-                className="w-4 h-4 text-brand-hover"
-                viewBox="0 0 16 16"
-                fill="none"
-              >
-                <path
-                  d="M8 1l2.5 4.5L15 6l-3.5 3.5L12.5 14 8 11.5 3.5 14l1-4.5L1 6l4.5-.5L8 1z"
-                  stroke="currentColor"
-                  strokeWidth="1.2"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-            <div className="flex-1">
-              <p className="text-sm font-medium text-text-secondary">
-                Complete your identity verification
-              </p>
-              <p className="text-xs text-text-tertiary mt-0.5">
-                Verified talent get 5x more profile views and direct messages
-                from recruiters
-              </p>
-            </div>
-            <button className="px-3 py-1.5 bg-brand text-white text-xs font-medium rounded-lg hover:bg-brand-hover transition-colors flex-shrink-0">
-              Verify
-            </button>
+      {/* Verification Banner */}
+      {!isVerified && (
+        <div className="bg-brand-light border border-brand-muted rounded-xl p-4 flex items-start gap-3">
+          <div className="w-8 h-8 rounded-full bg-brand-soft flex items-center justify-center flex-shrink-0 mt-0.5">
+            <Star className="w-4 h-4 text-brand-hover" strokeWidth={1.2} />
           </div>
-        )}
-
-        {isVerified && (
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-success-light border border-success-muted rounded-full">
-            <svg
-              className="w-3.5 h-3.5 text-success-hover"
-              viewBox="0 0 12 12"
-              fill="none"
-            >
-              <path
-                d="M2 6l3 3 5-5"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            <span className="text-xs font-medium text-success-text">
-              Identity Verified
-            </span>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-text-secondary">
+              Complete your identity verification
+            </p>
+            <p className="text-xs text-text-tertiary mt-0.5">
+              Verified talent get 5x more profile views and direct messages
+              from recruiters
+            </p>
           </div>
-        )}
-
-        {/* Career Snapshot */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <StatCard label="7d Views" value={MOCK_STATS.profileViews7d} />
-          <StatCard label="30d Views" value={MOCK_STATS.profileViews30d} />
-          <StatCard label="Shortlists" value={MOCK_STATS.shortlists} />
-          <StatCard label="Messages" value={MOCK_STATS.messages} />
-        </div>
-
-        {/* Quick Actions */}
-        <div className="grid grid-cols-2 gap-3">
-          <Link
-            href="/talent/profile"
-            className="flex items-center justify-center gap-2 h-11 rounded-xl bg-surface-dark text-white text-sm font-medium hover:bg-surface-darker active:scale-[0.98] transition-all"
+          <Button
+            variant="primary"
+            className="px-3 py-1.5 h-auto text-xs rounded-lg flex-shrink-0"
           >
-            <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
-              <path
-                d="M12 4L6 10 4 8"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            Edit Profile
-          </Link>
-          <Link
-            href="#"
-            className="flex items-center justify-center gap-2 h-11 rounded-xl border border-border text-text-secondary text-sm font-medium hover:bg-page active:scale-[0.98] transition-all"
-          >
-            <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
-              <path
-                d="M8 2C4.5 2 2 4.5 2 8s2.5 6 6 6M8 2c3 0 5.5 2.5 5.5 6M8 2v12"
-                stroke="currentColor"
-                strokeWidth="1.2"
-                strokeLinecap="round"
-              />
-            </svg>
-            View Public Profile
-          </Link>
+            Verify
+          </Button>
         </div>
+      )}
 
-        {/* Opportunities */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-lg font-bold text-text-primary">
-                Opportunities for You
-              </h2>
-              <p className="text-sm text-text-muted mt-0.5">
-                Matched based on your profile
-              </p>
-            </div>
+      {isVerified && (
+        <VerifiedBadge label="Identity Verified" />
+      )}
+
+      {/* Career Snapshot */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <StatCard label="7d Views" value={MOCK_STATS.profileViews7d} />
+        <StatCard label="30d Views" value={MOCK_STATS.profileViews30d} />
+        <StatCard label="Shortlists" value={MOCK_STATS.shortlists} />
+        <StatCard label="Messages" value={MOCK_STATS.messages} />
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-2 gap-3">
+        <Link
+          href="/talent/profile"
+          className="flex items-center justify-center gap-2 h-11 rounded-xl bg-surface-dark text-on-surface-dark text-sm font-medium hover:bg-surface-darker active:scale-[0.98] transition-all"
+        >
+          <Pencil className="w-4 h-4" strokeWidth={1.5} />
+          Edit Profile
+        </Link>
+        <Link
+          href="#"
+          className="flex items-center justify-center gap-2 h-11 rounded-xl border border-border text-text-secondary text-sm font-medium hover:bg-page active:scale-[0.98] transition-all"
+        >
+          <Globe className="w-4 h-4" strokeWidth={1.2} />
+          View Public Profile
+        </Link>
+      </div>
+
+      {/* Opportunities */}
+      <div>
+        <SectionHeader
+          title="Opportunities for You"
+          subtitle="Matched based on your profile"
+          action={
             <Link
               href="#"
               className="text-sm text-brand-hover hover:text-brand-active font-medium"
             >
               View all
             </Link>
-          </div>
+          }
+        />
 
-          <div className="space-y-3">
-            {MOCK_OPPORTUNITIES.map((opp) => (
-              <div
-                key={opp.id}
-                className="bg-card border border-border rounded-xl p-4 hover:shadow-sm transition-shadow"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-sm font-bold text-text-primary truncate">
-                        {opp.title}
-                      </h3>
-                      <span className="px-1.5 py-0.5 bg-success-light text-success-text text-xs font-medium rounded-full flex-shrink-0">
-                        {opp.matchPercent}% match
-                      </span>
-                    </div>
-                    <p className="text-xs text-text-tertiary mt-1">
-                      {opp.company} · {opp.location}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between mt-3">
-                  <div className="flex gap-2">
-                    <span className="text-xs text-text-tertiary bg-muted-bg px-2 py-0.5 rounded">
-                      {opp.roleType}
-                    </span>
-                    <span className="text-xs text-text-tertiary bg-muted-bg px-2 py-0.5 rounded">
-                      {opp.budget}
-                    </span>
-                  </div>
-                  <span className="text-xs text-text-muted">{opp.postedAt}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Next Best Actions */}
-        <div>
-          <h2 className="text-lg font-bold text-text-primary mb-4">
-            Recommended Next Steps
-          </h2>
-          <div className="space-y-3">
-            {MOCK_COACHING.map((item, i) => (
-              <div
-                key={i}
-                className="bg-card border border-border rounded-xl p-4 flex items-start gap-3"
-              >
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                    item.urgency === "high"
-                      ? "bg-brand-light"
-                      : "bg-page"
-                  }`}
-                >
-                  <svg
-                    className={`w-4 h-4 ${
-                      item.urgency === "high"
-                        ? "text-brand"
-                        : "text-text-tertiary"
-                    }`}
-                    viewBox="0 0 16 16"
-                    fill="none"
-                  >
-                    <path
-                      d="M8 2v6M8 12v.5"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                    />
-                    <circle
-                      cx="8"
-                      cy="8"
-                      r="6"
-                      stroke="currentColor"
-                      strokeWidth="1.2"
-                    />
-                  </svg>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-text-secondary">
-                    {item.title}
-                  </p>
-                  <p className="text-xs text-text-tertiary mt-0.5">
-                    {item.description}
-                  </p>
-                </div>
-                <button className="px-3 py-1.5 bg-surface-dark text-white text-xs font-medium rounded-lg hover:bg-surface-darker transition-colors flex-shrink-0">
-                  {item.action}
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Safety Note */}
-        <div className="bg-surface-dark rounded-xl p-4 flex items-start gap-3">
-          <div className="w-8 h-8 rounded-full bg-surface-darker flex items-center justify-center flex-shrink-0">
-            <svg
-              className="w-4 h-4 text-brand-focus"
-              viewBox="0 0 16 16"
-              fill="none"
+        <div className="space-y-3">
+          {MOCK_OPPORTUNITIES.map((opp) => (
+            <Card
+              key={opp.id}
+              className="p-4 hover:shadow-sm transition-shadow rounded-xl"
             >
-              <path
-                d="M8 2l6 3v4c0 3.5-2.5 6-6 7-3.5-1-6-3.5-6-7V5l6-3z"
-                stroke="currentColor"
-                strokeWidth="1.2"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M6 8l2 2 3-3"
-                stroke="currentColor"
-                strokeWidth="1.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
-          <div>
-            <p className="text-sm font-medium text-white">
-              Only verified recruiters can contact you
-            </p>
-            <p className="text-xs text-text-muted mt-0.5">
-              We verify every recruiter before they can message or shortlist
-              talent. If you receive suspicious messages, report them
-              immediately.
-            </p>
-          </div>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-text-primary truncate">
+                      {opp.title}
+                    </h3>
+                    <span className="px-1.5 py-0.5 bg-success-light text-success-text text-xs font-medium rounded-full flex-shrink-0">
+                      {opp.matchPercent}% match
+                    </span>
+                  </div>
+                  <p className="text-xs text-text-tertiary mt-1">
+                    {opp.company} · {opp.location}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between mt-3">
+                <div className="flex gap-2">
+                  <span className="text-xs text-text-tertiary bg-muted-bg px-2 py-0.5 rounded">
+                    {opp.roleType}
+                  </span>
+                  <span className="text-xs text-text-tertiary bg-muted-bg px-2 py-0.5 rounded">
+                    {opp.budget}
+                  </span>
+                </div>
+                <span className="text-xs text-text-muted">{opp.postedAt}</span>
+              </div>
+            </Card>
+          ))}
         </div>
+      </div>
+
+      {/* Next Best Actions */}
+      <div>
+        <SectionHeader title="Recommended Next Steps" />
+        <div className="space-y-3">
+          {MOCK_COACHING.map((item, i) => (
+            <Card
+              key={i}
+              className="p-4 flex items-start gap-3 rounded-xl"
+            >
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                  item.urgency === "high"
+                    ? "bg-brand-light"
+                    : "bg-page"
+                }`}
+              >
+                <AlertCircle
+                  className={`w-4 h-4 ${
+                    item.urgency === "high"
+                      ? "text-brand"
+                      : "text-text-tertiary"
+                  }`}
+                  strokeWidth={1.5}
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-text-secondary">
+                  {item.title}
+                </p>
+                <p className="text-xs text-text-tertiary mt-0.5">
+                  {item.description}
+                </p>
+              </div>
+              <Button
+                variant="dark"
+                className="px-3 py-1.5 h-auto text-xs rounded-lg flex-shrink-0"
+              >
+                {item.action}
+              </Button>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      {/* Safety Note */}
+      <div className="bg-surface-dark rounded-xl p-4 flex items-start gap-3">
+        <div className="w-8 h-8 rounded-full bg-surface-darker flex items-center justify-center flex-shrink-0">
+          <ShieldCheck className="w-4 h-4 text-brand-focus" strokeWidth={1.2} />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-on-surface-dark">
+            Only verified recruiters can contact you
+          </p>
+          <p className="text-xs text-text-muted mt-0.5">
+            We verify every recruiter before they can message or shortlist
+            talent. If you receive suspicious messages, report them
+            immediately.
+          </p>
+        </div>
+      </div>
     </div>
   );
-}
-
-function StatCard({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="bg-card border border-border rounded-2xl p-4 text-center">
-      <p className="text-xl font-bold text-text-primary">{value}</p>
-      <p className="text-xs text-text-tertiary mt-1">{label}</p>
-    </div>
-  );
-}
-
-function getGreeting() {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 17) return "Good afternoon";
-  return "Good evening";
 }
