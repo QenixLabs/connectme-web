@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
+import { StatCard } from "@/components/ui/stat-card";
 
 export default function LandingPage() {
   return (
@@ -33,12 +35,10 @@ export default function LandingPage() {
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
             href="/auth/talent/signup"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-surface-dark text-white font-medium rounded-lg hover:bg-surface-darker transition-all hover:scale-[1.02]"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-surface-dark text-on-surface-dark font-medium rounded-lg hover:bg-surface-darker transition-all hover:scale-[1.02]"
           >
             Join as Talent
-            <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
-              <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            <ChevronRight className="w-4 h-4" strokeWidth={1.5} />
           </Link>
           <Link
             href="/auth/recruiter/signup"
@@ -50,18 +50,9 @@ export default function LandingPage() {
 
         {/* Stats / Trust indicators */}
         <div className="mt-16 grid grid-cols-3 gap-8 max-w-lg mx-auto">
-          <div>
-            <div className="text-2xl font-bold text-text-primary">Verified</div>
-            <div className="text-sm text-text-muted">Talent Pool</div>
-          </div>
-          <div>
-            <div className="text-2xl font-bold text-text-primary">Safe</div>
-            <div className="text-sm text-text-muted">Hiring Only</div>
-          </div>
-          <div>
-            <div className="text-2xl font-bold text-text-primary">Trusted</div>
-            <div className="text-sm text-text-muted">By Brands</div>
-          </div>
+          <StatCard label="Talent Pool" value="Verified" align="center" />
+          <StatCard label="Hiring Only" value="Safe" align="center" />
+          <StatCard label="By Brands" value="Trusted" align="center" />
         </div>
       </main>
 

@@ -4,11 +4,17 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/stores/auth-store";
+import { AuthLayout } from "@/components/layout/auth-layout";
+import { Card } from "@/components/ui/card";
+import { ErrorBanner } from "@/components/ui/error-banner";
+import { TextInput } from "@/components/ui/text-input";
+import { PasswordInput } from "@/components/ui/password-input";
+import { Button } from "@/components/ui/button";
+import { DividerLabel } from "@/components/ui/divider-label";
 
 export default function LoginPage() {
   const router = useRouter();
   const { login, user, isAuthenticated, isLoading: storeLoading, error, clearError } = useAuthStore();
-  const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState({
     email: "",
@@ -23,10 +29,7 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.email || !formData.password) {
-      return;
-    }
-
+    if (!formData.email || !formData.password) return;
     try {
       await login(formData.email, formData.password);
     } catch (err) {
@@ -35,134 +38,85 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-page flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-block text-2xl font-bold text-text-primary">
-            Connect<span className="text-brand">Me</span>
-          </Link>
-          <p className="mt-2 text-sm text-text-tertiary">Welcome back! Sign in to continue</p>
-        </div>
+    <AuthLayout subtitle="Welcome back! Sign in to continue">
+      <Card>
+        <div className="px-8 py-8">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {error && <ErrorBanner>{error}</ErrorBanner>}
 
-        <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
-          <div className="px-8 py-8">
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {error && (
-                <div className="flex items-start gap-2.5 bg-error-light border border-error-muted text-error-hover rounded-lg px-4 py-3 text-sm">
-                  <svg className="w-4 h-4 mt-0.5 flex-shrink-0" viewBox="0 0 16 16" fill="none">
-                    <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
-                    <path d="M8 5v3.5M8 11v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  </svg>
-                  {error}
-                </div>
-              )}
+            <TextInput
+              label="Email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => {
+                setFormData((p) => ({ ...p, email: e.target.value }));
+                clearError();
+              }}
+              placeholder="you@example.com"
+              required
+            />
 
-              <div>
-                <label className="block text-xs font-medium text-text-secondary mb-1.5 tracking-wide uppercase">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => { setFormData((p) => ({ ...p, email: e.target.value })); clearError(); }}
-                  placeholder="you@example.com"
-                  className="w-full h-11 px-4 rounded-lg border border-border bg-page text-text-primary text-sm placeholder:text-text-placeholder focus:outline-none focus:ring-2 focus:ring-brand-focus focus:bg-card transition-all"
-                  required
-                />
-              </div>
+            <PasswordInput
+              label="Password"
+              value={formData.password}
+              onChange={(e) => {
+                setFormData((p) => ({ ...p, password: e.target.value }));
+                clearError();
+              }}
+              placeholder="Enter your password"
+              required
+            />
 
-              <div>
-                <label className="block text-xs font-medium text-text-secondary mb-1.5 tracking-wide uppercase">
-                  Password
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    value={formData.password}
-                    onChange={(e) => { setFormData((p) => ({ ...p, password: e.target.value })); clearError(); }}
-                    placeholder="Enter your password"
-                    className="w-full h-11 px-4 pr-11 rounded-lg border border-border bg-page text-text-primary text-sm placeholder:text-text-placeholder focus:outline-none focus:ring-2 focus:ring-brand-focus focus:bg-card transition-all"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword((v) => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary transition-colors"
-                    tabIndex={-1}
-                  >
-                    {showPassword ? (
-                      <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
-                        <path d="M2 8s2.5-4 6-4 6 4 6 4-2.5 4-6 4-6-4-6-4z" stroke="currentColor" strokeWidth="1.3" />
-                        <circle cx="8" cy="8" r="1.5" stroke="currentColor" strokeWidth="1.3" />
-                      </svg>
-                    ) : (
-                      <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
-                        <path d="M2 8s2.5-4 6-4 6 4 6 4-2.5 4-6 4-6-4-6-4z" stroke="currentColor" strokeWidth="1.3" />
-                        <path d="M2.5 13.5L13.5 2.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-                      </svg>
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              <div className="text-right">
-                <Link href="/auth/forgot-password" className="text-sm text-brand-hover hover:text-brand-active font-medium">
-                  Forgot password?
-                </Link>
-              </div>
-
-              <button
-                type="submit"
-                disabled={storeLoading}
-                className="w-full h-11 rounded-lg bg-brand text-white text-sm font-medium hover:bg-brand-hover active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {storeLoading ? (
-                  <>
-                    <svg className="w-4 h-4 animate-spin" viewBox="0 0 16 16" fill="none">
-                      <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="2" strokeOpacity="0.3" />
-                      <path d="M14 8a6 6 0 0 0-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                    </svg>
-                    Signing in...
-                  </>
-                ) : (
-                  "Sign in"
-                )}
-              </button>
-            </form>
-
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border-subtle" />
-              </div>
-              <div className="relative flex justify-center">
-                <span className="bg-card px-3 text-xs text-text-muted">New to ConnectMe?</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
+            <div className="text-right">
               <Link
-                href="/auth/talent/signup"
-                className="h-11 rounded-lg border border-border text-text-secondary text-sm font-medium hover:bg-card-hover active:scale-[0.98] transition-all flex items-center justify-center"
+                href="/auth/forgot-password"
+                className="text-sm text-brand-hover hover:text-brand-active font-medium"
               >
-                Join as Talent
-              </Link>
-              <Link
-                href="/auth/recruiter/signup"
-                className="h-11 rounded-lg border border-border text-text-secondary text-sm font-medium hover:bg-card-hover active:scale-[0.98] transition-all flex items-center justify-center"
-              >
-                Join as Recruiter
+                Forgot password?
               </Link>
             </div>
+
+            <Button
+              type="submit"
+              variant="primary"
+              className="w-full"
+              disabled={storeLoading}
+              isLoading={storeLoading}
+              loadingLabel="Signing in..."
+            >
+              Sign in
+            </Button>
+          </form>
+
+          <DividerLabel label="New to ConnectMe?" />
+
+          <div className="grid grid-cols-2 gap-3">
+            <Link
+              href="/auth/talent/signup"
+              className="h-11 rounded-lg border border-border text-text-secondary text-sm font-medium hover:bg-card-hover active:scale-[0.98] transition-all flex items-center justify-center"
+            >
+              Join as Talent
+            </Link>
+            <Link
+              href="/auth/recruiter/signup"
+              className="h-11 rounded-lg border border-border text-text-secondary text-sm font-medium hover:bg-card-hover active:scale-[0.98] transition-all flex items-center justify-center"
+            >
+              Join as Recruiter
+            </Link>
           </div>
         </div>
+      </Card>
 
-        <p className="text-center text-xs text-text-muted mt-6">
-          By signing in you agree to our{" "}
-          <Link href="/terms" className="text-text-tertiary hover:text-text-secondary underline underline-offset-2">Terms</Link>{" "}
-          and{" "}
-          <Link href="/privacy" className="text-text-tertiary hover:text-text-secondary underline underline-offset-2">Privacy Policy</Link>
-        </p>
-      </div>
-    </div>
+      <p className="text-center text-xs text-text-muted mt-6">
+        By signing in you agree to our{" "}
+        <Link href="/terms" className="text-text-tertiary hover:text-text-secondary underline underline-offset-2">
+          Terms
+        </Link>{" "}
+        and{" "}
+        <Link href="/privacy" className="text-text-tertiary hover:text-text-secondary underline underline-offset-2">
+          Privacy Policy
+        </Link>
+      </p>
+    </AuthLayout>
   );
 }

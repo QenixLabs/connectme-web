@@ -3,7 +3,20 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ChevronRight, Check } from "lucide-react";
 import { authApi } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/formatters";
+import { EMAIL_REGEX, PHONE_REGEX } from "@/lib/validation";
+import { AuthLayout } from "@/components/layout/auth-layout";
+import { Card } from "@/components/ui/card";
+import { ErrorBanner } from "@/components/ui/error-banner";
+import { TextInput } from "@/components/ui/text-input";
+import { PasswordInput } from "@/components/ui/password-input";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { Button } from "@/components/ui/button";
+import { PasswordStrength } from "@/components/ui/password-strength";
+import { PasswordRules } from "@/components/ui/password-rules";
+import { DividerLabel } from "@/components/ui/divider-label";
 
 type Step = 1 | 2 | 3;
 
@@ -20,7 +33,6 @@ export default function RecruiterSignupPage() {
   const [step, setStep] = useState<Step>(1);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState({
     companyName: "",
@@ -52,11 +64,11 @@ export default function RecruiterSignupPage() {
   };
 
   const validateStep2 = () => {
-    if (!formData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+    if (!formData.email.match(EMAIL_REGEX)) {
       setError("Enter a valid work email");
       return false;
     }
-    if (!formData.phone.match(/^[6-9]\d{9}$/)) {
+    if (!formData.phone.match(PHONE_REGEX)) {
       setError("Enter a valid 10-digit mobile number");
       return false;
     }
@@ -110,367 +122,250 @@ export default function RecruiterSignupPage() {
         password: formData.password,
         auth_provider: "credentials",
         company_name: formData.companyName,
+        company_website: formData.companyWebsite,
+        company_size: formData.companySize,
+        industry: formData.industry,
       });
       router.push(`/auth/verify-email?email=${encodeURIComponent(formData.email)}`);
     } catch (err: any) {
-      setError(err.response?.data?.message || err.message || "Registration failed");
+      setError(getApiErrorMessage(err, "Registration failed"));
     } finally {
       setLoading(false);
     }
   };
 
-  const passwordStrength = (pw: string) => {
-    let score = 0;
-    if (pw.length >= 8) score++;
-    if (/[A-Z]/.test(pw)) score++;
-    if (/\d/.test(pw)) score++;
-    if (/[^A-Za-z0-9]/.test(pw)) score++;
-    const levels = [
-      { label: "", color: "bg-surface-secondary" },
-      { label: "Weak", color: "bg-strength-weak" },
-      { label: "Fair", color: "bg-strength-fair" },
-      { label: "Good", color: "bg-strength-good" },
-      { label: "Strong", color: "bg-strength-strong" },
-    ];
-    return { score, ...levels[score] };
-  };
+  const stepTitle =
+    step === 1 ? "Company Details" :
+    step === 2 ? "Contact Info" :
+    "Secure Your Account";
 
-  const strength = passwordStrength(formData.password);
+  const passwordRules = [
+    { ok: formData.password.length >= 8, text: "At least 8 characters" },
+    { ok: /[A-Z]/.test(formData.password), text: "One uppercase letter" },
+    { ok: /\d/.test(formData.password), text: "One number" },
+  ];
+
+  const selectClassName =
+    "w-full h-11 px-4 rounded-lg border border-border bg-page text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-brand-focus focus:bg-card transition-all appearance-none";
 
   return (
-    <div className="min-h-screen bg-page flex items-center justify-center px-4 py-12">
-      <div className="fixed inset-0 pointer-events-none" style={{
-        background: "radial-gradient(ellipse 70% 50% at 50% -5%, var(--glow) 0%, transparent 60%)",
-      }} />
-
-      <div className="relative w-full max-w-md">
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-block text-2xl font-bold text-text-primary">
-            Connect<span className="text-brand">Me</span>
-          </Link>
-          <p className="mt-2 text-sm text-text-tertiary font-light">
-            Create your recruiter account
-          </p>
-        </div>
-
-        <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
-          <div className="h-1 w-full bg-muted-bg">
-            <div
-              className="h-full bg-gradient-to-r from-brand to-brand-light transition-all duration-500"
-              style={{ width: `${(step / totalSteps) * 100}%` }}
-            />
+    <AuthLayout subtitle="Create your recruiter account" showGlow>
+      <Card progress={(step / totalSteps) * 100}>
+        <div className="px-8 py-8">
+          {/* Step Header */}
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-xl font-bold text-text-primary">{stepTitle}</h1>
+              <p className="text-sm text-text-muted font-light mt-0.5">
+                Step {step} of {totalSteps}
+              </p>
+            </div>
+            <div className="flex gap-1.5">
+              {Array.from({ length: totalSteps }).map((_, i) => (
+                <div
+                  key={i}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    i < step ? "bg-brand w-6" : "bg-surface-secondary w-3"
+                  }`}
+                />
+              ))}
+            </div>
           </div>
 
-          <div className="px-8 py-8">
-            <div className="flex items-center justify-between mb-6">
+          {error && (
+            <ErrorBanner variant="surface" className="mb-4">
+              {error}
+            </ErrorBanner>
+          )}
+
+          {/* STEP 1 */}
+          {step === 1 && (
+            <div className="space-y-4">
+              <TextInput
+                label="Company Name"
+                value={formData.companyName}
+                onChange={(e) =>
+                  setFormData((f) => ({ ...f, companyName: e.target.value }))
+                }
+                placeholder="Your company or agency name"
+              />
+
+              <TextInput
+                label="Website (Optional)"
+                type="url"
+                value={formData.companyWebsite}
+                onChange={(e) =>
+                  setFormData((f) => ({ ...f, companyWebsite: e.target.value }))
+                }
+                placeholder="https://yourcompany.com"
+              />
+
               <div>
-                <h1 className="text-xl font-bold text-text-primary">
-                  {step === 1 && "Company Details"}
-                  {step === 2 && "Contact Info"}
-                  {step === 3 && "Secure Your Account"}
-                </h1>
-                <p className="text-sm text-text-muted font-light mt-0.5">
-                  Step {step} of {totalSteps}
-                </p>
+                <label className="block text-xs font-medium text-text-secondary mb-1.5 tracking-wide uppercase">
+                  Company Size
+                </label>
+                <select
+                  value={formData.companySize}
+                  onChange={(e) =>
+                    setFormData((f) => ({ ...f, companySize: e.target.value }))
+                  }
+                  className={selectClassName}
+                >
+                  <option value="">Select company size...</option>
+                  {COMPANY_SIZES.map((s) => (
+                    <option key={s} value={s}>{s} employees</option>
+                  ))}
+                </select>
               </div>
-              <div className="flex gap-1.5">
-                {Array.from({ length: totalSteps }).map((_, i) => (
-                  <div
-                    key={i}
-                    className={`h-1.5 rounded-full transition-all duration-300 ${
-                      i < step ? "bg-brand w-6" : "bg-surface-secondary w-3"
-                    }`}
-                  />
-                ))}
+
+              <div>
+                <label className="block text-xs font-medium text-text-secondary mb-1.5 tracking-wide uppercase">
+                  Industry
+                </label>
+                <select
+                  value={formData.industry}
+                  onChange={(e) =>
+                    setFormData((f) => ({ ...f, industry: e.target.value }))
+                  }
+                  className={selectClassName}
+                >
+                  <option value="">Select industry...</option>
+                  {INDUSTRIES.map((i) => (
+                    <option key={i} value={i}>{i}</option>
+                  ))}
+                </select>
               </div>
+
+              <Button
+                type="button"
+                variant="dark"
+                className="w-full mt-2"
+                onClick={handleNext}
+              >
+                Continue
+                <ChevronRight className="w-4 h-4" strokeWidth={1.5} />
+              </Button>
             </div>
+          )}
 
-            {error && (
-              <div className="mb-4 flex items-start gap-2.5 bg-error-surface border border-error-border text-error-text rounded-lg px-4 py-3 text-sm">
-                <svg className="w-4 h-4 mt-0.5 flex-shrink-0" viewBox="0 0 16 16" fill="none">
-                  <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
-                  <path d="M8 5v3.5M8 11v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-                {error}
-              </div>
-            )}
+          {/* STEP 2 */}
+          {step === 2 && (
+            <div className="space-y-4">
+              <TextInput
+                label="Work Email"
+                type="email"
+                value={formData.email}
+                onChange={(e) =>
+                  setFormData((f) => ({ ...f, email: e.target.value }))
+                }
+                placeholder="you@company.com"
+              />
 
-            {/* STEP 1: Company Details */}
-            {step === 1 && (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-medium text-text-secondary mb-1.5 tracking-wide uppercase">
-                    Company Name
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.companyName}
-                    onChange={(e) => setFormData((f) => ({ ...f, companyName: e.target.value }))}
-                    placeholder="Your company or agency name"
-                    className="w-full h-11 px-4 rounded-lg border border-border bg-page text-text-primary text-sm placeholder:text-text-placeholder focus:outline-none focus:ring-2 focus:ring-brand-focus focus:bg-card transition-all"
-                  />
-                </div>
+              <PhoneInput
+                label="Mobile Number"
+                value={formData.phone}
+                onChange={(val) => setFormData((f) => ({ ...f, phone: val }))}
+                placeholder="9876543210"
+              />
+              <p className="text-xs text-text-muted -mt-2">
+                OTP will be sent to verify this number
+              </p>
 
-                <div>
-                  <label className="block text-xs font-medium text-text-secondary mb-1.5 tracking-wide uppercase">
-                    Website (Optional)
-                  </label>
-                  <input
-                    type="url"
-                    value={formData.companyWebsite}
-                    onChange={(e) => setFormData((f) => ({ ...f, companyWebsite: e.target.value }))}
-                    placeholder="https://yourcompany.com"
-                    className="w-full h-11 px-4 rounded-lg border border-border bg-page text-text-primary text-sm placeholder:text-text-placeholder focus:outline-none focus:ring-2 focus:ring-brand-focus focus:bg-card transition-all"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-text-secondary mb-1.5 tracking-wide uppercase">
-                    Company Size
-                  </label>
-                  <select
-                    value={formData.companySize}
-                    onChange={(e) => setFormData((f) => ({ ...f, companySize: e.target.value }))}
-                    className="w-full h-11 px-4 rounded-lg border border-border bg-page text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-brand-focus focus:bg-card transition-all appearance-none"
-                  >
-                    <option value="">Select company size...</option>
-                    {COMPANY_SIZES.map((s) => (
-                      <option key={s} value={s}>{s} employees</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-text-secondary mb-1.5 tracking-wide uppercase">
-                    Industry
-                  </label>
-                  <select
-                    value={formData.industry}
-                    onChange={(e) => setFormData((f) => ({ ...f, industry: e.target.value }))}
-                    className="w-full h-11 px-4 rounded-lg border border-border bg-page text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-brand-focus focus:bg-card transition-all appearance-none"
-                  >
-                    <option value="">Select industry...</option>
-                    {INDUSTRIES.map((i) => (
-                      <option key={i} value={i}>{i}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <button
+              <div className="flex gap-3 pt-2">
+                <Button type="button" variant="secondary" onClick={handleBack}>
+                  Back
+                </Button>
+                <Button
                   type="button"
+                  variant="dark"
+                  className="flex-1"
                   onClick={handleNext}
-                  className="w-full h-11 rounded-lg bg-surface-dark text-white text-sm font-medium hover:bg-surface-darker active:scale-[0.98] transition-all flex items-center justify-center gap-1.5 mt-2"
                 >
                   Continue
-                  <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
-                    <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
+                  <ChevronRight className="w-4 h-4" strokeWidth={1.5} />
+                </Button>
               </div>
-            )}
+            </div>
+          )}
 
-            {/* STEP 2: Contact Info */}
-            {step === 2 && (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-medium text-text-secondary mb-1.5 tracking-wide uppercase">
-                    Work Email
-                  </label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData((f) => ({ ...f, email: e.target.value }))}
-                    placeholder="you@company.com"
-                    className="w-full h-11 px-4 rounded-lg border border-border bg-page text-text-primary text-sm placeholder:text-text-placeholder focus:outline-none focus:ring-2 focus:ring-brand-focus focus:bg-card transition-all"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-text-secondary mb-1.5 tracking-wide uppercase">
-                    Mobile Number
-                  </label>
-                  <div className="flex">
-                    <div className="flex items-center px-3 h-11 border border-r-0 border-border rounded-l-lg bg-muted-bg text-text-tertiary text-sm select-none">
-                      +91
-                    </div>
-                    <input
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) => setFormData((f) => ({ ...f, phone: e.target.value.replace(/\D/g, "").slice(0, 10) }))}
-                      placeholder="9876543210"
-                      className="flex-1 h-11 px-4 rounded-r-lg border border-border bg-page text-text-primary text-sm placeholder:text-text-placeholder focus:outline-none focus:ring-2 focus:ring-brand-focus focus:bg-card transition-all"
-                    />
-                  </div>
-                  <p className="text-xs text-text-muted mt-1">OTP will be sent to verify this number</p>
-                </div>
-
-                <div className="flex gap-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={handleBack}
-                    className="h-11 px-5 rounded-lg border border-border text-text-secondary text-sm hover:bg-page active:scale-[0.98] transition-all"
-                  >
-                    Back
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleNext}
-                    className="flex-1 h-11 rounded-lg bg-surface-dark text-white text-sm font-medium hover:bg-surface-darker active:scale-[0.98] transition-all flex items-center justify-center gap-1.5"
-                  >
-                    Continue
-                    <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
-                      <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </button>
-                </div>
+          {/* STEP 3 */}
+          {step === 3 && (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <PasswordInput
+                  label="Password"
+                  value={formData.password}
+                  onChange={(e) =>
+                    setFormData((f) => ({ ...f, password: e.target.value }))
+                  }
+                  placeholder="Min. 8 characters"
+                />
+                <PasswordStrength password={formData.password} />
+                <PasswordRules rules={passwordRules} />
               </div>
-            )}
 
-            {/* STEP 3: Password */}
-            {step === 3 && (
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-medium text-text-secondary mb-1.5 tracking-wide uppercase">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      value={formData.password}
-                      onChange={(e) => setFormData((f) => ({ ...f, password: e.target.value }))}
-                      placeholder="Min. 8 characters"
-                      className="w-full h-11 px-4 pr-11 rounded-lg border border-border bg-page text-text-primary text-sm placeholder:text-text-placeholder focus:outline-none focus:ring-2 focus:ring-brand-focus focus:bg-card transition-all"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword((v) => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary transition-colors"
-                      tabIndex={-1}
-                    >
-                      <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
-                        <path d="M2 8s2.5-4 6-4 6 4 6 4-2.5 4-6 4-6-4-6-4z" stroke="currentColor" strokeWidth="1.3" />
-                        <circle cx="8" cy="8" r="1.5" stroke="currentColor" strokeWidth="1.3" />
-                      </svg>
-                    </button>
-                  </div>
+              <TextInput
+                label="Confirm Password"
+                type="password"
+                value={formData.confirmPassword}
+                onChange={(e) =>
+                  setFormData((f) => ({ ...f, confirmPassword: e.target.value }))
+                }
+                placeholder="Re-enter your password"
+                error={
+                  !!(
+                    formData.confirmPassword &&
+                    formData.confirmPassword !== formData.password
+                  )
+                }
+              />
+              {formData.confirmPassword &&
+                formData.confirmPassword !== formData.password && (
+                  <p className="text-xs text-error mt-1">Passwords do not match</p>
+                )}
 
-                  {formData.password.length > 0 && (
-                    <div className="mt-2">
-                      <div className="flex gap-1 mb-1">
-                        {Array.from({ length: 4 }).map((_, i) => (
-                          <div
-                            key={i}
-                            className={`h-1 flex-1 rounded-full transition-all ${
-                              i < strength.score ? strength.color : "bg-surface-secondary"
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      {strength.label && (
-                        <p className="text-xs text-text-muted">
-                          Strength: <span className="font-medium text-text-secondary">{strength.label}</span>
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  <ul className="mt-2 space-y-0.5">
-                    {[
-                      { ok: formData.password.length >= 8, text: "At least 8 characters" },
-                      { ok: /[A-Z]/.test(formData.password), text: "One uppercase letter" },
-                      { ok: /\d/.test(formData.password), text: "One number" },
-                    ].map((r) => (
-                      <li key={r.text} className={`flex items-center gap-1.5 text-xs transition-colors ${r.ok ? "text-success-text" : "text-text-muted"}`}>
-                        <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none">
-                          {r.ok ? (
-                            <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                          ) : (
-                            <circle cx="6" cy="6" r="4" stroke="currentColor" strokeWidth="1.2" />
-                          )}
-                        </svg>
-                        {r.text}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-text-secondary mb-1.5 tracking-wide uppercase">
-                    Confirm Password
-                  </label>
-                  <input
-                    type="password"
-                    value={formData.confirmPassword}
-                    onChange={(e) => setFormData((f) => ({ ...f, confirmPassword: e.target.value }))}
-                    placeholder="Re-enter your password"
-                    className={`w-full h-11 px-4 rounded-lg border bg-page text-text-primary text-sm placeholder:text-text-placeholder focus:outline-none focus:ring-2 focus:ring-brand-focus focus:bg-card transition-all ${
-                      formData.confirmPassword && formData.confirmPassword !== formData.password
-                        ? "border-error-border-strong"
-                        : "border-border"
-                    }`}
-                  />
-                  {formData.confirmPassword && formData.confirmPassword !== formData.password && (
-                    <p className="text-xs text-error mt-1">Passwords do not match</p>
-                  )}
-                </div>
-
-                <div className="flex gap-3 pt-2">
-                  <button
-                    type="button"
-                    onClick={handleBack}
-                    className="h-11 px-5 rounded-lg border border-border text-text-secondary text-sm hover:bg-page active:scale-[0.98] transition-all"
-                  >
-                    Back
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="flex-1 h-11 rounded-lg bg-brand text-white text-sm font-medium hover:bg-brand-hover active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  >
-                    {loading ? (
-                      <>
-                        <svg className="w-4 h-4 animate-spin" viewBox="0 0 16 16" fill="none">
-                          <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="2" strokeOpacity="0.3" />
-                          <path d="M14 8a6 6 0 0 0-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                        </svg>
-                        Creating account...
-                      </>
-                    ) : (
-                      "Create account"
-                    )}
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {step === 1 && (
-              <>
-                <div className="relative my-5">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-border-subtle" />
-                  </div>
-                  <div className="relative flex justify-center">
-                    <span className="bg-card px-3 text-xs text-text-muted">Already have an account?</span>
-                  </div>
-                </div>
-                <Link
-                  href="/auth/login"
-                  className="block w-full h-11 rounded-lg border border-border text-text-primary text-sm font-medium hover:bg-page active:scale-[0.98] transition-all flex items-center justify-center"
+              <div className="flex gap-3 pt-2">
+                <Button type="button" variant="secondary" onClick={handleBack}>
+                  Back
+                </Button>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className="flex-1"
+                  disabled={loading}
+                  isLoading={loading}
+                  loadingLabel="Creating account..."
                 >
-                  Sign in instead
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
+                  Create account
+                </Button>
+              </div>
+            </form>
+          )}
 
-        <p className="text-center text-xs text-text-muted mt-6">
-          By creating an account you agree to our{" "}
-          <Link href="/terms" className="text-text-tertiary hover:text-text-primary underline underline-offset-2">Terms</Link>{" "}
-          and{" "}
-          <Link href="/privacy" className="text-text-tertiary hover:text-text-primary underline underline-offset-2">Privacy Policy</Link>
-        </p>
-      </div>
-    </div>
+          {step === 1 && (
+            <>
+              <DividerLabel label="Already have an account?" />
+              <Link
+                href="/auth/login"
+                className="block w-full h-11 rounded-lg border border-border text-text-primary text-sm font-medium hover:bg-page active:scale-[0.98] transition-all flex items-center justify-center"
+              >
+                Sign in instead
+              </Link>
+            </>
+          )}
+        </div>
+      </Card>
+
+      <p className="text-center text-xs text-text-muted mt-6">
+        By creating an account you agree to our{" "}
+        <Link href="/terms" className="text-text-tertiary hover:text-text-primary underline underline-offset-2">
+          Terms
+        </Link>{" "}
+        and{" "}
+        <Link href="/privacy" className="text-text-tertiary hover:text-text-primary underline underline-offset-2">
+          Privacy Policy
+        </Link>
+      </p>
+    </AuthLayout>
   );
 }
