@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Home, Briefcase, MessageSquare, User } from "lucide-react";
 import { useAuthStore } from "@/stores/auth-store";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export interface NavItem {
   href: string;
@@ -62,8 +63,20 @@ export function DashboardLayout({
 
   if (!authChecked || isLoading || !user) {
     return (
-      <div className="min-h-screen bg-page flex items-center justify-center">
-        <div className="text-text-muted">Loading...</div>
+      <div className="min-h-screen bg-page flex flex-col">
+        <header className="bg-card border-b border-border px-4 py-3 sticky top-0 z-40">
+          <div className="max-w-3xl mx-auto flex items-center justify-between">
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-8 w-8 rounded-full" />
+          </div>
+        </header>
+        <main className="flex-1 p-4 max-w-3xl mx-auto w-full">
+          <div className="space-y-4 pt-4">
+            <Skeleton className="h-32 w-full rounded-2xl" />
+            <Skeleton className="h-24 w-full rounded-2xl" />
+            <Skeleton className="h-24 w-full rounded-2xl" />
+          </div>
+        </main>
       </div>
     );
   }

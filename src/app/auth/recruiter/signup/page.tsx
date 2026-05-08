@@ -122,6 +122,9 @@ export default function RecruiterSignupPage() {
         password: formData.password,
         auth_provider: "credentials",
         company_name: formData.companyName,
+        company_website: formData.companyWebsite,
+        company_size: formData.companySize,
+        industry: formData.industry,
       });
       router.push(`/auth/verify-email?email=${encodeURIComponent(formData.email)}`);
     } catch (err: any) {

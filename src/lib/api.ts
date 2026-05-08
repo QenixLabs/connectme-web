@@ -40,6 +40,11 @@ export const authApi = {
     role: 'talent' | 'recruiter';
     auth_provider?: string;
     company_name?: string;
+    username?: string;
+    profession?: string;
+    company_website?: string;
+    company_size?: string;
+    industry?: string;
   }) => {
     const response = await apiClient.post('/auth/signup', data);
     return response.data;
@@ -77,6 +82,11 @@ export const authApi = {
 };
 
 export const talentApi = {
+  checkUsernameAvailability: async (username: string): Promise<boolean> => {
+    const response = await apiClient.get('/talent/check-username', { params: { username } });
+    return response.data.available;
+  },
+
   getMyProfile: async (): Promise<TalentProfile | null> => {
     try {
       const response = await apiClient.get('/talent/me');

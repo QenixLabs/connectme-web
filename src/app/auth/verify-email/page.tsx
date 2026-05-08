@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authApi } from "@/lib/api";
+import { useAuthStore } from "@/stores/auth-store";
 import { getApiErrorMessage } from "@/lib/formatters";
 import { AuthLayout } from "@/components/layout/auth-layout";
 import { Card } from "@/components/ui/card";
@@ -38,10 +39,12 @@ function VerifyEmailContent() {
 
     try {
       await authApi.verifyOtp(email, otp);
+      await useAuthStore.getState().fetchUser();
+      const user = useAuthStore.getState().user;
       setSuccess(true);
-      setTimeout(() => {
-        router.push("/auth/login");
-      }, 2000);
+      router.push(
+        user?.role === "talent" ? "/talent/dashboard" : "/recruiter/dashboard"
+      );
     } catch (err: any) {
       setError(getApiErrorMessage(err, "Invalid OTP"));
     } finally {
@@ -86,7 +89,7 @@ function VerifyEmailContent() {
         <SuccessState
           title="Email Verified!"
           message="Your email has been verified successfully."
-          submessage="Redirecting to login..."
+          submessage="Redirecting to your dashboard..."
         />
       </AuthLayout>
     );

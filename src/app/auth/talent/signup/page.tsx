@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronRight } from "lucide-react";
-import { authApi } from "@/lib/api";
+import { ChevronRight, Check, X } from "lucide-react";
+import { authApi, talentApi } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
 import { EMAIL_REGEX, PHONE_REGEX } from "@/lib/validation";
 import { AuthLayout } from "@/components/layout/auth-layout";
@@ -35,12 +35,66 @@ export default function TalentSignupPage() {
   const [formData, setFormData] = useState({
     profession: "",
     customProfession: "",
-    fullName: "",
+    username: "",
     email: "",
     phone: "",
     password: "",
     confirmPassword: "",
   });
+
+  const [usernameStatus, setUsernameStatus] = useState<"idle" | "checking" | "available" | "taken">("idle");
+  const usernameCheckTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  const checkUsername = async (username: string) => {
+    if (!username || username.length < 6 || username.length > 20) {
+      setUsernameStatus("idle");
+      return;
+    }
+    if (!/^[a-zA-Z0-9]+$/.test(username)) {
+      setUsernameStatus("idle");
+      return;
+    }
+
+    setUsernameStatus("checking");
+    try {
+      const available = await talentApi.checkUsernameAvailability(username);
+      setUsernameStatus(available ? "available" : "taken");
+    } catch {
+      setUsernameStatus("idle");
+    }
+  };
+
+  const handleUsernameChange = (value: string) => {
+    setFormData((f) => ({ ...f, username: value }));
+    setUsernameStatus("idle");
+
+    if (usernameCheckTimeout.current) {
+      clearTimeout(usernameCheckTimeout.current);
+    }
+
+    if (value.length >= 6) {
+      usernameCheckTimeout.current = setTimeout(() => {
+        checkUsername(value);
+      }, 2000);
+    }
+  };
+
+  const handleUsernameBlur = () => {
+    if (usernameCheckTimeout.current) {
+      clearTimeout(usernameCheckTimeout.current);
+    }
+    if (formData.username.length >= 6) {
+      checkUsername(formData.username);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (usernameCheckTimeout.current) {
+        clearTimeout(usernameCheckTimeout.current);
+      }
+    };
+  }, []);
 
   const totalSteps = 3;
 
@@ -57,8 +111,20 @@ export default function TalentSignupPage() {
   };
 
   const validateStep2 = () => {
-    if (!formData.fullName.trim()) {
-      setError("Full name is required");
+    if (!formData.username.trim()) {
+      setError("Username is required");
+      return false;
+    }
+    if (formData.username.length < 6 || formData.username.length > 20) {
+      setError("Username must be 6-20 characters");
+      return false;
+    }
+    if (!/^[a-zA-Z0-9]+$/.test(formData.username)) {
+      setError("Username can only contain letters and numbers");
+      return false;
+    }
+    if (usernameStatus === "taken") {
+      setError("This username is already taken");
       return false;
     }
     if (!formData.email.match(EMAIL_REGEX)) {
@@ -112,12 +178,18 @@ export default function TalentSignupPage() {
     setError(null);
 
     try {
+      const finalProfession = formData.profession === "Other" 
+        ? formData.customProfession 
+        : formData.profession;
+      
       await authApi.signup({
         role: "talent",
         email: formData.email,
         phone: `+91${formData.phone}`,
         password: formData.password,
         auth_provider: "credentials",
+        username: formData.username,
+        profession: finalProfession,
       });
       router.push(`/auth/verify-email?email=${encodeURIComponent(formData.email)}`);
     } catch (err: any) {
@@ -230,14 +302,33 @@ export default function TalentSignupPage() {
           {/* STEP 2 */}
           {step === 2 && (
             <div className="space-y-4">
-              <TextInput
-                label="Full Name"
-                value={formData.fullName}
-                onChange={(e) =>
-                  setFormData((f) => ({ ...f, fullName: e.target.value }))
-                }
-                placeholder="As on your ID"
-              />
+              <div>
+                <TextInput
+                  label="Username"
+                  value={formData.username}
+                  onChange={(e) => handleUsernameChange(e.target.value)}
+                  onBlur={handleUsernameBlur}
+                  placeholder=" alphanumeric (6-20)"
+                />
+                <div className="flex items-center gap-2 mt-1.5 h-5">
+                  {usernameStatus === "checking" && (
+                    <span className="text-xs text-text-muted">Checking...</span>
+                  )}
+                  {usernameStatus === "available" && (
+                    <span className="text-xs text-green-600 flex items-center gap-1">
+                      <Check className="w-3 h-3" /> Available
+                    </span>
+                  )}
+                  {usernameStatus === "taken" && (
+                    <span className="text-xs text-red-500 flex items-center gap-1">
+                      <X className="w-3 h-3" /> Already taken
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-text-muted mt-1">
+                  6-20 characters, letters and numbers only
+                </p>
+              </div>
 
               <TextInput
                 label="Email Address"
