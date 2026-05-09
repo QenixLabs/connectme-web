@@ -1,126 +1,132 @@
 "use client";
 
-import { useState } from "react";
-import { Check, Upload, Search } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Upload, Search, LogOut } from "lucide-react";
 import { useAuthStore } from "@/stores/auth-store";
+import { recruiterApi } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/formatters";
+import type { RecruiterProfile } from "@/lib/validations/recruiter-profile.schema";
 import { Card } from "@/components/ui/card";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
+import { RecruiterCard } from "@/components/recruiter-card";
+import { EditForm } from "./_edit-form";
 
 export default function RecruiterProfilePage() {
-  const { user } = useAuthStore();
+  const router = useRouter();
+  const { user, logout } = useAuthStore();
+  const [profile, setProfile] = useState<RecruiterProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
-  const profileData = {
-    companyName: "Company",
-    companyWebsite: "",
-    companySize: "Not set",
+  useEffect(() => {
+    recruiterApi
+      .getMyProfile()
+      .then((data) => {
+        setProfile(data as RecruiterProfile);
+      })
+      .catch((err) => setError(getApiErrorMessage(err, "Failed to load profile")))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-8 w-32" />
+          <Skeleton className="h-8 w-20" />
+        </div>
+        <Card className="p-6 space-y-4">
+          <div className="flex items-start gap-4">
+            <Skeleton className="w-16 h-16 rounded-xl" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-4 w-32" />
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  if (error && !profile) {
+    return (
+      <Alert variant="destructive">
+        <AlertDescription>{error}</AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (isEditing) {
+    return (
+      <EditForm
+        profile={profile}
+        onSaved={(saved) => {
+          setProfile((prev) => (prev ? { ...prev, ...saved } : saved));
+          setIsEditing(false);
+          setSaveSuccess(true);
+          setError(null);
+        }}
+        onCancel={() => {
+          setIsEditing(false);
+          setError(null);
+        }}
+      />
+    );
+  }
+
+  const profileData = profile || {
+    company_name: "Company",
+    company_website: "",
+    company_size: "Not set",
     industry: "Not set",
-    contactName: user?.email.split("@")[0] ?? "User",
     position: "Not set",
-    location: "Not set",
-    verificationStatus: user?.is_email_verified ? "verified" as const : "pending" as const,
-    campaignsPosted: 0,
-    talentShortlisted: 0,
-    activeCampaigns: 0,
-    logo: null as string | null,
+    linkedin_company_url: "",
+    verification_status: user?.is_email_verified ? "verified" : "pending",
+    company_email_domain: user?.email?.split("@")[1] || "",
   };
 
   return (
     <div>
-      {/* Company Card */}
-      <Card className="overflow-hidden">
-        <div className="px-6 py-6">
-          {/* Company Logo & Name */}
-          <div className="flex items-start gap-4 mb-6">
-            <div className="w-16 h-16 rounded-xl bg-surface-secondary flex items-center justify-center text-xl font-bold text-text-muted border border-border">
-              {profileData.logo ? (
-                <img src={profileData.logo} alt="" className="w-full h-full rounded-xl object-cover" />
-              ) : (
-                profileData.companyName.split(" ").map((w) => w[0]).slice(0, 2).join("")
-              )}
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold text-text-primary">{profileData.companyName}</h1>
-                {profileData.verificationStatus === "verified" && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-success-light text-success-text text-xs font-medium rounded-full">
-                    <Check className="w-3 h-3" strokeWidth={1.5} />
-                    Verified
-                  </span>
-                )}
-              </div>
-              <p className="text-sm text-text-tertiary mt-1">{profileData.industry}</p>
-            </div>
-            <Button
-              variant="outline"
-              className="h-auto px-0 py-0 border-0 text-sm text-brand-hover hover:text-brand-active font-medium"
-              onClick={() => setIsEditing(!isEditing)}
-            >
-              Edit Profile
-            </Button>
-          </div>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-xl font-bold text-text-primary">Profile</h1>
+        <button
+          onClick={() => {
+            logout();
+            router.push("/auth/login");
+          }}
+          className="flex items-center gap-1.5 text-xs text-text-muted hover:text-destructive font-medium transition-colors"
+        >
+          <LogOut className="w-4 h-4" strokeWidth={1.5} />
+          Logout
+        </button>
+      </div>
 
-          {/* Company Details */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div>
-              <p className="text-xs text-text-muted uppercase tracking-wide mb-1">Website</p>
-              <a
-                href={`https://${profileData.companyWebsite}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-brand-hover hover:text-brand-active"
-              >
-                {profileData.companyWebsite || "Not set"}
-              </a>
-            </div>
-            <div>
-              <p className="text-xs text-text-muted uppercase tracking-wide mb-1">Company Size</p>
-              <p className="text-sm text-text-secondary">{profileData.companySize} employees</p>
-            </div>
-            <div>
-              <p className="text-xs text-text-muted uppercase tracking-wide mb-1">Location</p>
-              <p className="text-sm text-text-secondary">{profileData.location}</p>
-            </div>
-            <div>
-              <p className="text-xs text-text-muted uppercase tracking-wide mb-1">Your Position</p>
-              <p className="text-sm text-text-secondary">{profileData.position}</p>
-            </div>
-          </div>
+      {saveSuccess && (
+        <Alert className="mb-4">
+          <AlertDescription>Profile saved.</AlertDescription>
+        </Alert>
+      )}
 
-          {/* Contact Person */}
-          <div className="border-t border-border-subtle pt-4 mb-6">
-            <p className="text-xs text-text-muted uppercase tracking-wide mb-2">Contact Person</p>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-surface-light flex items-center justify-center text-sm font-medium text-text-secondary">
-                {profileData.contactName.split(" ").map((n) => n[0]).join("")}
-              </div>
-              <div>
-                <p className="text-sm font-medium text-text-primary">{profileData.contactName}</p>
-                <p className="text-xs text-text-muted">{profileData.position}</p>
-              </div>
-            </div>
-          </div>
+      {error && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-4 py-4 border-t border-border-subtle">
-            <div className="text-center">
-              <div className="text-lg font-bold text-text-primary">{profileData.campaignsPosted}</div>
-              <div className="text-xs text-text-muted">Campaigns</div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-bold text-text-primary">{profileData.talentShortlisted}</div>
-              <div className="text-xs text-text-muted">Shortlisted</div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-bold text-text-primary">{profileData.activeCampaigns}</div>
-              <div className="text-xs text-text-muted">Active</div>
-            </div>
-          </div>
-        </div>
-      </Card>
+      <RecruiterCard
+        profile={profileData}
+        onEdit={() => {
+          setIsEditing(true);
+          setSaveSuccess(false);
+        }}
+      />
 
-      {/* Team Members (Placeholder) */}
       <Card className="mt-6 p-6">
         <SectionHeader
           title="Team Members"
@@ -135,10 +141,10 @@ export default function RecruiterProfilePage() {
         />
         <div className="flex items-center gap-3 p-4 bg-page rounded-xl">
           <div className="w-10 h-10 rounded-full bg-surface-light flex items-center justify-center text-sm font-medium text-text-secondary">
-            {profileData.contactName.split(" ").map((n) => n[0]).join("")}
+            {user?.email?.split("@")[0]?.split(" ").map((n) => n[0]).join("") || "U"}
           </div>
           <div className="flex-1">
-            <p className="text-sm font-medium text-text-primary">{profileData.contactName}</p>
+            <p className="text-sm font-medium text-text-primary">{user?.email?.split("@")[0] || "User"}</p>
             <p className="text-xs text-text-muted">Admin</p>
           </div>
           <span className="text-xs text-success-text font-medium">You</span>
@@ -148,7 +154,6 @@ export default function RecruiterProfilePage() {
         </p>
       </Card>
 
-      {/* Subscription Card */}
       <div className="bg-gradient-to-r from-brand-light to-brand-soft rounded-2xl border border-brand-muted mt-6 p-6">
         <div className="flex items-center justify-between">
           <div>
@@ -156,19 +161,19 @@ export default function RecruiterProfilePage() {
             <p className="text-lg font-bold text-text-primary mt-1">Free Plan</p>
             <p className="text-sm text-text-muted mt-1">5 messages/month · 1 campaign/month</p>
           </div>
-          <Button variant="primary" className="px-4 py-2 rounded-lg">
-            Upgrade
-          </Button>
+          <Button variant="primary" className="px-4 py-2 rounded-lg">Upgrade</Button>
         </div>
       </div>
 
-      {/* Quick Actions */}
       <div className="grid grid-cols-2 gap-4 mt-6">
         <button className="flex items-center justify-center gap-2 h-12 rounded-xl border border-border text-text-secondary font-medium hover:bg-page transition-all">
           <Upload className="w-4 h-4" strokeWidth={1.2} />
           Post Campaign
         </button>
-        <button className="flex items-center justify-center gap-2 h-12 rounded-xl border border-border text-text-secondary font-medium hover:bg-page transition-all">
+        <button
+          onClick={() => router.push("/recruiter/find-talent")}
+          className="flex items-center justify-center gap-2 h-12 rounded-xl border border-border text-text-secondary font-medium hover:bg-page transition-all"
+        >
           <Search className="w-4 h-4" strokeWidth={1.2} />
           Find Talent
         </button>

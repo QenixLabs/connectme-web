@@ -44,6 +44,19 @@ export const DEFAULT_VALUES: CreateTalentProfileInput = {
     linkedin: { url: "", visibility: "public" },
   },
   privacy_mode: undefined,
+  section_visibility: {
+    bio: true,
+    skills: true,
+    experience: true,
+    portfolio: true,
+    availability: true,
+    location: true,
+    physical_attributes: true,
+    languages: true,
+    accents: true,
+    documents: true,
+    social_links: true,
+  },
 };
 
 export function hydrateFromServer(profile: TalentProfile): CreateTalentProfileInput {
@@ -115,6 +128,19 @@ export function hydrateFromServer(profile: TalentProfile): CreateTalentProfileIn
       },
     },
     privacy_mode: profile.privacy_mode,
+    section_visibility: {
+      bio: profile.section_visibility?.bio ?? true,
+      skills: profile.section_visibility?.skills ?? true,
+      experience: profile.section_visibility?.experience ?? true,
+      portfolio: profile.section_visibility?.portfolio ?? true,
+      availability: profile.section_visibility?.availability ?? true,
+      location: profile.section_visibility?.location ?? true,
+      physical_attributes: profile.section_visibility?.physical_attributes ?? true,
+      languages: profile.section_visibility?.languages ?? true,
+      accents: profile.section_visibility?.accents ?? true,
+      documents: profile.section_visibility?.documents ?? true,
+      social_links: profile.section_visibility?.social_links ?? true,
+    },
   };
 }
 

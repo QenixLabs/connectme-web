@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const PROFICIENCY = ['beginner', 'intermediate', 'expert'] as const;
 export const AVAILABILITY = ['available', 'busy', 'not_available'] as const;
-export const PRIVACY_MODE = ['public', 'recruiters_only', 'private'] as const;
+export const PRIVACY_MODE = ['public', 'private'] as const;
 export const VISIBILITY = ['public', 'recruiters_only', 'private'] as const;
 
 const usernameSchema = z
@@ -61,6 +61,20 @@ const socialLinksSchema = z.object({
   linkedin: socialLinkSchema.optional(),
 });
 
+export const sectionVisibilitySchema = z.object({
+  bio: z.boolean().optional(),
+  skills: z.boolean().optional(),
+  experience: z.boolean().optional(),
+  portfolio: z.boolean().optional(),
+  availability: z.boolean().optional(),
+  location: z.boolean().optional(),
+  physical_attributes: z.boolean().optional(),
+  languages: z.boolean().optional(),
+  accents: z.boolean().optional(),
+  documents: z.boolean().optional(),
+  social_links: z.boolean().optional(),
+});
+
 export const updateTalentProfileSchema = z.object({
   username: z.string().optional(),
   full_legal_name: z.string().max(120).optional(),
@@ -80,6 +94,7 @@ export const updateTalentProfileSchema = z.object({
   documents: documentsSchema.optional(),
   social_links: socialLinksSchema.optional(),
   privacy_mode: z.enum(PRIVACY_MODE).optional(),
+  section_visibility: sectionVisibilitySchema.optional(),
 });
 
 export const createTalentProfileSchema = updateTalentProfileSchema.extend({
@@ -96,6 +111,7 @@ export type TalentProfile = UpdateTalentProfileInput & {
   username?: string;
   media_limits?: unknown;
   analytics?: unknown;
+  section_visibility?: z.infer<typeof sectionVisibilitySchema>;
   created_at?: string;
   updated_at?: string;
   __v?: number;
