@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, Briefcase, MessageSquare, User, Bell } from "lucide-react";
+import { Home, Briefcase, MessageSquare, User, Bell, Images } from "lucide-react";
 import { notificationsApi } from "@/lib/api";
 import { useAuthStore } from "@/stores/auth-store";
 import { cn } from "@/lib/utils";
@@ -20,6 +20,7 @@ const NAV_ITEMS_BY_ROLE: Record<"talent" | "recruiter", NavItem[]> = {
     { href: "/talent/dashboard", label: "Home", icon: Home },
     { href: "/talent/opportunities", label: "Jobs", icon: Briefcase },
     { href: "/talent/messages", label: "Messages", icon: MessageSquare },
+    { href: "/talent/portfolio", label: "Portfolio", icon: Images },
     { href: "/talent/profile", label: "Profile", icon: User },
   ],
   recruiter: [

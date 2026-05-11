@@ -3,6 +3,7 @@ import type {
   CreateTalentProfileInput,
   TalentProfile,
   UpdateTalentProfileInput,
+  PortfolioItem,
 } from '@/lib/validations/talent-profile.schema';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
@@ -155,6 +156,68 @@ export const talentApi = {
     privacy_mode?: string;
   }>> => {
     const response = await apiClient.get('/talent/all');
+    return response.data;
+  },
+
+  uploadProfilePhoto: async (file: File): Promise<{ relativePath: string; signedUrl: string }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await apiClient.post('/talent/upload/profile-photo', formData, {
+      headers: { 'Content-Type': undefined },
+    });
+    return response.data;
+  },
+
+  getPortfolio: async (): Promise<{ items: PortfolioItem[] }> => {
+    const response = await apiClient.get('/talent/portfolio');
+    return response.data;
+  },
+
+  uploadPortfolioImage: async (
+    file: File,
+    dto: { caption?: string; category?: 'work' | 'personal' | 'intro'; is_pinned?: boolean },
+  ): Promise<{ item: PortfolioItem }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (dto.caption) formData.append('caption', dto.caption);
+    if (dto.category) formData.append('category', dto.category);
+    if (dto.is_pinned !== undefined) formData.append('is_pinned', String(dto.is_pinned));
+    const response = await apiClient.post('/talent/portfolio/upload/image', formData, {
+      headers: { 'Content-Type': undefined },
+    });
+    return response.data;
+  },
+
+  uploadPortfolioVideo: async (
+    file: File,
+    dto: { caption?: string; category?: 'work' | 'personal' | 'intro'; is_pinned?: boolean },
+  ): Promise<{ item: PortfolioItem }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    if (dto.caption) formData.append('caption', dto.caption);
+    if (dto.category) formData.append('category', dto.category);
+    if (dto.is_pinned !== undefined) formData.append('is_pinned', String(dto.is_pinned));
+    const response = await apiClient.post('/talent/portfolio/upload/video', formData, {
+      headers: { 'Content-Type': undefined },
+    });
+    return response.data;
+  },
+
+  updatePortfolioItem: async (
+    itemId: string,
+    dto: { caption?: string; category?: 'work' | 'personal' | 'intro'; is_pinned?: boolean },
+  ): Promise<{ item: PortfolioItem }> => {
+    const response = await apiClient.patch(`/talent/portfolio/items/${itemId}`, dto);
+    return response.data;
+  },
+
+  deletePortfolioItem: async (itemId: string): Promise<{ success: boolean }> => {
+    const response = await apiClient.delete(`/talent/portfolio/items/${itemId}`);
+    return response.data;
+  },
+
+  reorderPortfolioItems: async (itemIds: string[]): Promise<{ items: PortfolioItem[] }> => {
+    const response = await apiClient.patch('/talent/portfolio/reorder', { item_ids: itemIds });
     return response.data;
   },
 };
