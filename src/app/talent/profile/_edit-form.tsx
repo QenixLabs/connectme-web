@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { useForm, useFieldArray, Controller, useWatch } from "react-hook-form";
+import { useForm, useFieldArray, Controller, useWatch, Control } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Trash2, ChevronDown, Pencil, X, Loader2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { AxiosError } from "axios";
 
 import { Card } from "@/components/ui/card";
@@ -115,37 +116,68 @@ function FormSection({
   title,
   children,
   defaultOpen = true,
+  rightAction,
 }: {
   id: string;
   title: string;
   children: React.ReactNode;
   defaultOpen?: boolean;
+  rightAction?: React.ReactNode;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
     <div id={id} className="scroll-mt-28">
       <Card className="p-5 sm:p-6">
         <Collapsible open={open} onOpenChange={setOpen}>
-          <CollapsibleTrigger asChild>
-            <button
-              type="button"
-              className="w-full flex items-center justify-between"
-            >
-              <h2 className="text-base font-semibold text-text-primary">{title}</h2>
-              <ChevronDown
-                className={cn(
-                  "w-4 h-4 text-text-tertiary transition-transform duration-200",
-                  open && "rotate-180"
-                )}
-              />
-            </button>
-          </CollapsibleTrigger>
+          <div className="flex items-center justify-between gap-3">
+            <CollapsibleTrigger asChild>
+              <button
+                type="button"
+                className="flex-1 flex items-center justify-between"
+              >
+                <h2 className="text-base font-semibold text-text-primary">{title}</h2>
+                <ChevronDown
+                  className={cn(
+                    "w-4 h-4 text-text-tertiary transition-transform duration-200",
+                    open && "rotate-180"
+                  )}
+                />
+              </button>
+            </CollapsibleTrigger>
+            {rightAction && (
+              <div className="shrink-0 flex items-center">{rightAction}</div>
+            )}
+          </div>
           <CollapsibleContent>
             <div className="pt-4">{children}</div>
           </CollapsibleContent>
         </Collapsible>
       </Card>
     </div>
+  );
+}
+
+function SectionToggle({
+  control,
+  sectionKey,
+}: {
+  control: Control<CreateTalentProfileInput>;
+  sectionKey: keyof CreateTalentProfileInput["section_visibility"];
+}) {
+  return (
+    <Controller
+      control={control}
+      name={`section_visibility.${sectionKey}`}
+      render={({ field }) => (
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-text-muted hidden sm:inline">Show</span>
+          <Switch
+            checked={field.value ?? true}
+            onCheckedChange={field.onChange}
+          />
+        </div>
+      )}
+    />
   );
 }
 
@@ -512,7 +544,11 @@ export function EditForm({
             </FormSection>
 
             {/* LOCATION */}
-            <FormSection id="location" title="Location">
+            <FormSection
+              id="location"
+              title="Location"
+              rightAction={<SectionToggle control={control} sectionKey="location" />}
+            >
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <FormField
                   control={control}
@@ -557,7 +593,11 @@ export function EditForm({
             </FormSection>
 
             {/* CAREER */}
-            <FormSection id="career" title="Career">
+            <FormSection
+              id="career"
+              title="Career"
+              rightAction={<SectionToggle control={control} sectionKey="experience" />}
+            >
               <div className="space-y-4">
                 <FormField
                   control={control}
@@ -615,7 +655,11 @@ export function EditForm({
             </FormSection>
 
             {/* SKILLS */}
-            <FormSection id="skills" title="Skills">
+            <FormSection
+              id="skills"
+              title="Skills"
+              rightAction={<SectionToggle control={control} sectionKey="skills" />}
+            >
               <div className="flex items-center justify-between mb-4">
                 <p className="text-sm text-text-muted">
                   {skillsArray.fields.length === 0
@@ -673,7 +717,11 @@ export function EditForm({
             </FormSection>
 
             {/* LANGUAGES */}
-            <FormSection id="languages" title="Languages">
+            <FormSection
+              id="languages"
+              title="Languages"
+              rightAction={<SectionToggle control={control} sectionKey="languages" />}
+            >
               <div className="flex items-center justify-between mb-4">
                 <p className="text-sm text-text-muted">
                   {languagesArray.fields.length === 0
@@ -731,7 +779,11 @@ export function EditForm({
             </FormSection>
 
             {/* ACCENTS */}
-            <FormSection id="accents" title="Accents">
+            <FormSection
+              id="accents"
+              title="Accents"
+              rightAction={<SectionToggle control={control} sectionKey="accents" />}
+            >
               <FormField
                 control={control}
                 name="accents"
@@ -749,7 +801,11 @@ export function EditForm({
             </FormSection>
 
             {/* PHYSICAL */}
-            <FormSection id="physical" title="Physical attributes">
+            <FormSection
+              id="physical"
+              title="Physical attributes"
+              rightAction={<SectionToggle control={control} sectionKey="physical_attributes" />}
+            >
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField
                   control={control}
@@ -906,7 +962,11 @@ export function EditForm({
             </FormSection>
 
             {/* DOCUMENTS */}
-            <FormSection id="documents" title="Documents">
+            <FormSection
+              id="documents"
+              title="Documents"
+              rightAction={<SectionToggle control={control} sectionKey="documents" />}
+            >
               <div className="space-y-4">
                 <FormField
                   control={control}
@@ -951,7 +1011,11 @@ export function EditForm({
             </FormSection>
 
             {/* SOCIAL */}
-            <FormSection id="social" title="Social links">
+            <FormSection
+              id="social"
+              title="Social links"
+              rightAction={<SectionToggle control={control} sectionKey="social_links" />}
+            >
               <div className="space-y-4">
                 {(["instagram", "youtube", "linkedin"] as const).map((platform) => (
                   <div

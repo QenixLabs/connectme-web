@@ -21,6 +21,10 @@ interface TalentCardProps {
   onMessage?: () => void;
   onViewProfile?: () => void;
   onEdit?: () => void;
+  onRequestAccess?: () => void;
+  requestSent?: boolean;
+  isOwner?: boolean;
+  privacyMode?: string;
 }
 
 /* ------------------------------------------------------------------ */
@@ -73,7 +77,7 @@ function availabilityMeta(v?: string | null) {
 
 function Tag({ children }: { children: React.ReactNode }) {
   return (
-    <span className="px-2.5 py-1 text-xs rounded-full bg-muted-bg text-text-secondary border border-border font-medium">
+    <span className="px-2.5 py-1 text-xs rounded-full bg-muted-bg text-text-secondary border border-border font-medium break-words max-w-full">
       {children}
     </span>
   );
@@ -89,6 +93,10 @@ export function TalentCard({
   onMessage,
   onViewProfile,
   onEdit,
+  onRequestAccess,
+  requestSent,
+  isOwner,
+  privacyMode,
 }: TalentCardProps) {
   const data = sample ? (SAMPLE_PROFILE as TalentProfile) : profile;
 
@@ -125,7 +133,7 @@ export function TalentCard({
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <h3 className="text-lg font-bold text-text-primary truncate">
+              <h3 className="text-lg font-bold text-text-primary break-words min-w-0">
                 {displayName}
               </h3>
               <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-success shrink-0">
@@ -134,22 +142,22 @@ export function TalentCard({
             </div>
 
             {data.username && (
-              <p className="text-sm text-text-tertiary">@{data.username}</p>
+              <p className="text-sm text-text-tertiary break-all">@{data.username}</p>
             )}
 
             {data.headline && (
-              <p className="text-sm text-text-secondary mt-1 line-clamp-2">
+              <p className="text-sm text-text-secondary mt-1 line-clamp-2 break-words">
                 {data.headline}
               </p>
             )}
 
             {loc && (
-              <div className="flex items-center gap-1 mt-1.5">
+              <div className="flex items-start gap-1 mt-1.5">
                 <MapPin
-                  className="w-3.5 h-3.5 text-text-muted"
+                  className="w-3.5 h-3.5 text-text-muted shrink-0 mt-0.5"
                   strokeWidth={1.5}
                 />
-                <span className="text-xs text-text-muted">{loc}</span>
+                <span className="text-xs text-text-muted break-words min-w-0">{loc}</span>
               </div>
             )}
           </div>
@@ -171,33 +179,61 @@ export function TalentCard({
         </div>
 
         {/* Actions */}
-        <div className="mt-5 flex items-center gap-2">
-          <Button
-            variant="secondary"
-            className="flex-1 h-10 rounded-xl"
-            onClick={onSave}
-          >
-            <Bookmark className="w-4 h-4" strokeWidth={1.5} />
-            Save
-          </Button>
-          <Button
-            variant="primary"
-            className="flex-1 h-10 rounded-xl"
-            onClick={onMessage}
-          >
-            <MessageCircle className="w-4 h-4" strokeWidth={1.5} />
-            Message
-          </Button>
-        </div>
+        {(onSave || onMessage) && (
+          <div className="mt-5 flex items-center gap-2">
+            {onSave && (
+              <Button
+                variant="secondary"
+                className="flex-1 h-10 rounded-xl"
+                onClick={onSave}
+              >
+                <Bookmark className="w-4 h-4" strokeWidth={1.5} />
+                Save
+              </Button>
+            )}
+            {onMessage && (
+              <Button
+                variant="primary"
+                className="flex-1 h-10 rounded-xl"
+                onClick={onMessage}
+              >
+                <MessageCircle className="w-4 h-4" strokeWidth={1.5} />
+                Message
+              </Button>
+            )}
+          </div>
+        )}
 
         {/* View full profile */}
-        <button
-          onClick={onViewProfile}
-          className="mt-3 w-full flex items-center justify-center gap-1 text-xs font-medium text-text-muted hover:text-text-secondary transition-colors"
-        >
-          View full profile
-          <ChevronDown className="w-3.5 h-3.5" strokeWidth={1.5} />
-        </button>
+        {onViewProfile && (!privacyMode || privacyMode !== 'private' || isOwner) && (
+          <button
+            onClick={onViewProfile}
+            className="mt-3 w-full flex items-center justify-center gap-1 text-xs font-medium text-text-muted hover:text-text-secondary transition-colors"
+          >
+            View full profile
+            <ChevronDown className="w-3.5 h-3.5" strokeWidth={1.5} />
+          </button>
+        )}
+
+        {/* Request access for private profiles */}
+        {privacyMode === 'private' && onRequestAccess && (
+          <div className="mt-4 pt-3 border-t border-border-subtle text-center space-y-2"
+          >
+            <p className="text-xs text-text-muted">This profile is private.</p>
+            {requestSent ? (
+              <p className="text-xs text-success-text font-medium">Request sent. Waiting for approval.</p>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full bg-amber-500 hover:bg-amber-600 text-white border-amber-500 hover:border-amber-600"
+                onClick={onRequestAccess}
+              >
+                Request Access
+              </Button>
+            )}
+          </div>
+        )}
       </div>
     </Card>
   );

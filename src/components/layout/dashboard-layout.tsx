@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Home, Briefcase, MessageSquare, User } from "lucide-react";
+import { Home, Briefcase, MessageSquare, User, Bell } from "lucide-react";
+import { notificationsApi } from "@/lib/api";
 import { useAuthStore } from "@/stores/auth-store";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -43,9 +44,10 @@ export function DashboardLayout({
   const navItems = NAV_ITEMS_BY_ROLE[role];
   const router = useRouter();
   const pathname = usePathname();
-  const { user, isAuthenticated, isLoading, fetchUser, logout } =
+  const { user, isAuthenticated, isLoading, fetchUser } =
     useAuthStore();
   const [authChecked, setAuthChecked] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -54,6 +56,12 @@ export function DashboardLayout({
       setAuthChecked(true);
     }
   }, []);
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      notificationsApi.getUnreadCount().then((count) => setUnreadCount(count));
+    }
+  }, [isAuthenticated, user, pathname]);
 
   useEffect(() => {
     if (authChecked && !isLoading && !isAuthenticated) {
@@ -91,12 +99,17 @@ export function DashboardLayout({
           >
             Connect<span className="text-brand">Me</span>
           </Link>
-          <button
-            onClick={() => logout()}
-            className="text-xs text-text-muted hover:text-text-secondary font-medium"
+          <Link
+            href={`/${role}/notifications`}
+            className="relative p-2 text-text-muted hover:text-text-secondary transition-colors"
           >
-            Logout
-          </button>
+            <Bell className="w-5 h-5" strokeWidth={1.5} />
+            {unreadCount > 0 && (
+              <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-destructive text-white text-[10px] font-bold rounded-full px-1">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </Link>
         </div>
       </header>
 

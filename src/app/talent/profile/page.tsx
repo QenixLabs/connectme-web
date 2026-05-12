@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
+import { useRouter } from "next/navigation";
+import { LogOut } from "lucide-react";
+import { useAuthStore } from "@/stores/auth-store";
 import { talentApi } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
 import type { TalentProfile } from "@/lib/validations/talent-profile.schema";
@@ -23,6 +25,8 @@ import { EditForm } from "./_edit-form";
 type Mode = "create" | "edit";
 
 export default function TalentProfilePage() {
+  const router = useRouter();
+  const { logout } = useAuthStore();
   const [mode, setMode] = useState<Mode>("create");
   const [isEditing, setIsEditing] = useState(true);
   const [profile, setProfile] = useState<TalentProfile | null>(null);
@@ -74,42 +78,60 @@ export default function TalentProfilePage() {
 
   if (mode === "edit" && !isEditing && profile) {
     return (
-      <div className="space-y-4 pb-2">
+      <div className="max-w-6xl mx-auto pb-6 px-4">
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-xl font-bold text-text-primary">Profile</h1>
+          <button
+            onClick={() => {
+              logout();
+              router.push("/auth/login");
+            }}
+            className="flex items-center gap-1.5 text-xs text-text-muted hover:text-destructive font-medium transition-colors"
+          >
+            <LogOut className="w-4 h-4" strokeWidth={1.5} />
+            Logout
+          </button>
+        </div>
         {saveSuccess && (
-          <Alert>
+          <Alert className="mb-4">
             <AlertDescription>Profile saved.</AlertDescription>
           </Alert>
         )}
-        <div>
-          <p className="text-xs sm:text-sm text-text-muted mb-3 px-1">
-            How recruiters see you
-          </p>
-          <TalentCard
-            profile={profile}
-            onViewProfile={() => setShowDetail((v) => !v)}
-            onEdit={() => {
+        <div className="max-w-xl mx-auto space-y-4">
+          <div>
+            <p className="text-xs sm:text-sm text-text-muted mb-3 px-1">
+              How recruiters see you
+            </p>
+            <TalentCard
+              profile={profile}
+              onViewProfile={() => setShowDetail(true)}
+              onEdit={() => {
+                setIsEditing(true);
+                setSaveSuccess(false);
+              }}
+            />
+          </div>
+          <CompletenessBanner
+            version={completenessVersion}
+            onCompleteProfile={() => {
               setIsEditing(true);
               setSaveSuccess(false);
             }}
           />
+          <TrustScore />
+          <TipsCard />
         </div>
-        <CompletenessBanner
-          version={completenessVersion}
-          onCompleteProfile={() => {
-            setIsEditing(true);
-            setSaveSuccess(false);
-          }}
-        />
-        <TrustScore />
-        <TipsCard />
 
         <Sheet open={showDetail} onOpenChange={setShowDetail}>
-          <SheetContent side="right" className="w-[90%] sm:max-w-2xl overflow-y-auto">
+          <SheetContent
+            side="right"
+            className="w-[90%] sm:max-w-2xl overflow-y-auto"
+          >
             <SheetHeader>
               <SheetTitle>Full profile</SheetTitle>
             </SheetHeader>
-            <div className="py-4">
-              <ProfileDetail profile={profile} />
+            <div className="p-4 sm:p-6">
+              <ProfileDetail profile={profile} isOwner />
             </div>
           </SheetContent>
         </Sheet>

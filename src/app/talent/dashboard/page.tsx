@@ -2,8 +2,11 @@
 
 import Link from "next/link";
 import { Star, AlertCircle, ShieldCheck, Pencil, Globe } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useAuthStore } from "@/stores/auth-store";
 import { getGreeting } from "@/lib/greeting";
+import { talentApi } from "@/lib/api";
+import type { TalentProfile } from "@/lib/validations/talent-profile.schema";
 import { SectionHeader } from "@/components/ui/section-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
@@ -77,6 +80,11 @@ export default function TalentDashboardPage() {
   const greeting = getGreeting();
   const verificationTier = user!.verification_tier || 1;
   const isVerified = verificationTier >= 2;
+  const [profile, setProfile] = useState<TalentProfile | null>(null);
+
+  useEffect(() => {
+    talentApi.getMyProfile().then((p) => setProfile(p)).catch(() => {});
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -136,7 +144,7 @@ export default function TalentDashboardPage() {
           Edit Profile
         </Link>
         <Link
-          href="#"
+          href={profile?.username ? `/talent/@${profile.username}` : "#"}
           className="flex items-center justify-center gap-2 h-11 rounded-xl border border-border text-text-secondary text-sm font-medium hover:bg-page active:scale-[0.98] transition-all"
         >
           <Globe className="w-4 h-4" strokeWidth={1.2} />

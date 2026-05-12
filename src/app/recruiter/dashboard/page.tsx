@@ -88,7 +88,7 @@ export default function RecruiterDashboardPage() {
           Post Campaign
         </Link>
         <Link
-          href="#"
+          href="/recruiter/find-talent"
           className="flex items-center justify-center gap-2 h-11 rounded-xl border border-border text-text-secondary text-sm font-medium hover:bg-page active:scale-[0.98] transition-all"
         >
           <Search className="w-4 h-4" strokeWidth={1.2} />

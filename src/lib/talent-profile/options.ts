@@ -72,7 +72,6 @@ export const AVAILABILITY_OPTIONS: Option[] = [
 
 export const PRIVACY_MODE_OPTIONS: Option[] = [
   opt('public', 'Public'),
-  opt('recruiters_only', 'Recruiters only'),
   opt('private', 'Private'),
 ];
 
