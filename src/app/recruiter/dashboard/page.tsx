@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Check, Plus, Search, Crosshair } from "lucide-react";
-import { useAuthStore } from "@/stores/auth-store";
+import { useAuthStore } from "@/providers/auth-store-provider";
 import { getGreeting } from "@/lib/greeting";
 import { SectionHeader } from "@/components/ui/section-header";
 import { StatCard } from "@/components/ui/stat-card";

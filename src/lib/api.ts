@@ -14,10 +14,19 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  paramsSerializer: {
+    indexes: null,
+  },
 });
 
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const data = response.data;
+    if (data && typeof data === 'object' && data.success === true) {
+      response.data = data.data;
+    }
+    return response;
+  },
   (error) => {
     if (error.response?.status === 401) {
       const requestUrl = error.config?.url || '';
@@ -124,6 +133,14 @@ export const talentApi = {
     return response.data;
   },
 
+  getPublicPortfolio: async (username: string): Promise<{
+    profile: Partial<TalentProfile>;
+    items: PortfolioItem[];
+  } | { private: true; requestSent?: boolean; preview: Partial<TalentProfile> }> => {
+    const response = await apiClient.get(`/talent/portfolio/${username}`);
+    return response.data;
+  },
+
   requestAccess: async (username: string): Promise<{ success: boolean }> => {
     const response = await apiClient.post('/profile-access-request/request', { username });
     return response.data;
@@ -144,7 +161,7 @@ export const talentApi = {
     return response.data;
   },
 
-  getAllTalent: async (): Promise<Array<{
+  getAllTalent: async (filter?: 'pending' | 'allowed' | 'not_requested' | 'public'): Promise<Array<{
     username?: string;
     full_legal_name?: string;
     headline?: string;
@@ -154,8 +171,9 @@ export const talentApi = {
     industries?: string[];
     availability?: string;
     privacy_mode?: string;
+    access_status?: 'allowed' | 'pending' | 'none';
   }>> => {
-    const response = await apiClient.get('/talent/all');
+    const response = await apiClient.get('/talent/all', { params: filter ? { filter } : undefined });
     return response.data;
   },
 
@@ -278,6 +296,20 @@ export const messagesApi = {
     return response.data;
   },
 
+  sendMessage: async (receiverId: string, content: string): Promise<{
+    _id: string;
+    sender_id: string;
+    receiver_id: string;
+    content: string;
+    message_type: string;
+    status: string;
+    is_read: boolean;
+    created_at: string;
+  }> => {
+    const response = await apiClient.post('/messages', { receiver_id: receiverId, content });
+    return response.data;
+  },
+
   markAsRead: async (messageId: string): Promise<void> => {
     await apiClient.patch(`/messages/${messageId}/read`);
   },
@@ -297,7 +329,7 @@ export const notificationsApi = {
     created_at: string;
   }>> => {
     const response = await apiClient.get('/notifications', { params: { history: history ? 'true' : undefined } });
-    return response.data.data;
+    return response.data;
   },
 
   getHistory: async (): Promise<Array<{
@@ -313,12 +345,12 @@ export const notificationsApi = {
     created_at: string;
   }>> => {
     const response = await apiClient.get('/notifications', { params: { history: 'true' } });
-    return response.data.data;
+    return response.data;
   },
 
   getUnreadCount: async (): Promise<number> => {
     const response = await apiClient.get('/notifications/unread-count');
-    return response.data.data.count;
+    return response.data.count;
   },
 
   markAsRead: async (id: string): Promise<void> => {
@@ -331,7 +363,7 @@ export const notificationsApi = {
 
   dismissAuto: async (): Promise<{ modified: number }> => {
     const response = await apiClient.post('/notifications/dismiss-auto');
-    return response.data.data;
+    return response.data;
   },
 };
 

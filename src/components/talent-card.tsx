@@ -7,6 +7,7 @@ import {
   MessageCircle,
   MapPin,
   Pencil,
+  Images,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar } from "@/components/ui/avatar";
@@ -25,6 +26,8 @@ interface TalentCardProps {
   requestSent?: boolean;
   isOwner?: boolean;
   privacyMode?: string;
+  hasAccess?: boolean;
+  onViewPortfolio?: () => void;
 }
 
 /* ------------------------------------------------------------------ */
@@ -97,6 +100,8 @@ export function TalentCard({
   requestSent,
   isOwner,
   privacyMode,
+  hasAccess,
+  onViewPortfolio,
 }: TalentCardProps) {
   const data = sample ? (SAMPLE_PROFILE as TalentProfile) : profile;
 
@@ -179,7 +184,7 @@ export function TalentCard({
         </div>
 
         {/* Actions */}
-        {(onSave || onMessage) && (
+        {(onSave || onMessage || onViewPortfolio) && (
           <div className="mt-5 flex items-center gap-2">
             {onSave && (
               <Button
@@ -201,11 +206,21 @@ export function TalentCard({
                 Message
               </Button>
             )}
+            {onViewPortfolio && (
+              <Button
+                variant="outline"
+                className="flex-1 h-10 rounded-xl"
+                onClick={onViewPortfolio}
+              >
+                <Images className="w-4 h-4" strokeWidth={1.5} />
+                Portfolio
+              </Button>
+            )}
           </div>
         )}
 
         {/* View full profile */}
-        {onViewProfile && (!privacyMode || privacyMode !== 'private' || isOwner) && (
+        {onViewProfile && (!privacyMode || privacyMode !== 'private' || isOwner || hasAccess) && (
           <button
             onClick={onViewProfile}
             className="mt-3 w-full flex items-center justify-center gap-1 text-xs font-medium text-text-muted hover:text-text-secondary transition-colors"
@@ -216,7 +231,7 @@ export function TalentCard({
         )}
 
         {/* Request access for private profiles */}
-        {privacyMode === 'private' && onRequestAccess && (
+        {privacyMode === 'private' && !hasAccess && onRequestAccess && (
           <div className="mt-4 pt-3 border-t border-border-subtle text-center space-y-2"
           >
             <p className="text-xs text-text-muted">This profile is private.</p>

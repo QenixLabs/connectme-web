@@ -1,7 +1,8 @@
-import { create } from 'zustand';
+import { createStore } from 'zustand/vanilla';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { authApi } from '@/lib/api';
 
-interface User {
+export interface User {
   _id: string;
   email: string;
   phone: string;
@@ -15,50 +16,90 @@ interface User {
   updated_at: string;
 }
 
-interface AuthState {
+export interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+  hasHydrated: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   fetchUser: () => Promise<void>;
   clearError: () => void;
+  setHasHydrated: (v: boolean) => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  isAuthenticated: false,
-  isLoading: false,
-  error: null,
+function setCookie(name: string, value: string, days: number) {
+  if (typeof document === 'undefined') return;
+  const expires = new Date(Date.now() + days * 86400000).toUTCString();
+  document.cookie = `${name}=${value};expires=${expires};path=/;SameSite=Lax`;
+}
 
-  login: async (email: string, password: string) => {
-    set({ isLoading: true, error: null });
-    try {
-      await authApi.login(email, password);
-      const { user } = await authApi.getCurrentUser();
-      set({ user, isAuthenticated: true, isLoading: false });
-    } catch (error: any) {
-      const message = error.response?.data?.message || 'Login failed';
-      set({ error: message, isLoading: false });
-      throw new Error(message);
-    }
-  },
+function deleteCookie(name: string) {
+  if (typeof document === 'undefined') return;
+  document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+}
 
-  logout: async () => {
-    try { await authApi.logout(); } catch {}
-    set({ user: null, isAuthenticated: false, isLoading: false });
-  },
+export const authStore = createStore<AuthState>()(
+  persist(
+    (set) => ({
+      user: null,
+      isAuthenticated: false,
+      isLoading: false,
+      error: null,
+      hasHydrated: false,
 
-  fetchUser: async () => {
-    set({ isLoading: true });
-    try {
-      const { user } = await authApi.getCurrentUser();
-      set({ user, isAuthenticated: true, isLoading: false });
-    } catch (error) {
-      set({ user: null, isAuthenticated: false, isLoading: false });
-    }
-  },
+      login: async (email: string, password: string) => {
+        set({ isLoading: true, error: null });
+        try {
+          await authApi.login(email, password);
+          const { user } = await authApi.getCurrentUser();
+          setCookie('auth_session', '1', 7);
+          setCookie('user_role', user.role, 7);
+          set({ user, isAuthenticated: true, isLoading: false });
+        } catch (error: any) {
+          const message = error.response?.data?.message || 'Login failed';
+          set({ error: message, isLoading: false });
+          throw new Error(message);
+        }
+      },
 
-  clearError: () => set({ error: null }),
-}));
+      logout: async () => {
+        try {
+          await authApi.logout();
+        } catch {}
+        deleteCookie('auth_session');
+        deleteCookie('user_role');
+        set({ user: null, isAuthenticated: false, isLoading: false });
+      },
+
+      fetchUser: async () => {
+        set({ isLoading: true });
+        try {
+          const { user } = await authApi.getCurrentUser();
+          setCookie('auth_session', '1', 7);
+          setCookie('user_role', user.role, 7);
+          set({ user, isAuthenticated: true, isLoading: false });
+        } catch (error) {
+          deleteCookie('auth_session');
+          deleteCookie('user_role');
+          set({ user: null, isAuthenticated: false, isLoading: false });
+        }
+      },
+
+      clearError: () => set({ error: null }),
+      setHasHydrated: (v: boolean) => set({ hasHydrated: v }),
+    }),
+    {
+      name: 'auth-storage',
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        user: state.user,
+        isAuthenticated: state.isAuthenticated,
+      }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated?.(true);
+      },
+    },
+  ),
+);

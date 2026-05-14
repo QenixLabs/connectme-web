@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { authApi } from "@/lib/api";
-import { useAuthStore } from "@/stores/auth-store";
+import { authStore } from "@/stores/auth-store";
 import { getApiErrorMessage } from "@/lib/formatters";
 import { AuthLayout } from "@/components/layout/auth-layout";
 import { Card } from "@/components/ui/card";
@@ -39,8 +39,8 @@ function VerifyEmailContent() {
 
     try {
       await authApi.verifyOtp(email, otp);
-      await useAuthStore.getState().fetchUser();
-      const user = useAuthStore.getState().user;
+      await authStore.getState().fetchUser();
+      const user = authStore.getState().user;
       setSuccess(true);
       router.push(
         user?.role === "talent" ? "/talent/dashboard" : "/recruiter/dashboard"
@@ -113,7 +113,7 @@ function VerifyEmailContent() {
             <p className="text-sm font-medium text-text-primary">{email}</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form method="post" onSubmit={handleSubmit} className="space-y-6">
             <OtpInput
               label="OTP Code"
               value={otp}

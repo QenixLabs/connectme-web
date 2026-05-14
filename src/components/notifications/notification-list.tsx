@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Bell, Check, X, Shield, User, Clock } from "lucide-react";
 import { notificationsApi, talentApi } from "@/lib/api";
+import { useSocket } from "@/hooks/use-socket";
 import { getApiErrorMessage } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -62,6 +63,7 @@ export function NotificationList() {
   const [error, setError] = useState<string | null>(null);
   const [respondingId, setRespondingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("active");
+  const { socket } = useSocket();
 
   const fetchAll = useCallback(async () => {
     try {
@@ -82,6 +84,23 @@ export function NotificationList() {
   useEffect(() => {
     fetchAll();
   }, [fetchAll]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNotification = (notification: NotificationItem) => {
+      setActiveNotifications((prev) => {
+        if (prev.some((n) => n._id === notification._id)) return prev;
+        return [notification, ...prev];
+      });
+    };
+
+    socket.on("notification:new", handleNotification);
+
+    return () => {
+      socket.off("notification:new", handleNotification);
+    };
+  }, [socket]);
 
   const handleAllow = async (notificationId: string, requesterId: string) => {
     if (respondingId) return;

@@ -52,12 +52,12 @@ export default function PublicTalentProfilePage() {
 
   if (loading) {
     return (
-      <div className="max-w-6xl mx-auto py-6 px-4 pb-20">
-        <div className="flex items-center gap-3 mb-6">
+      <div className="max-w-6xl mx-2.5 sm:mx-auto py-4 sm:py-6 px-4 pb-20">
+        <div className="flex items-center gap-3 mb-4 sm:mb-6">
           <Skeleton className="h-9 w-9 rounded-lg" />
           <Skeleton className="h-5 w-32" />
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           <div className="lg:col-span-1 space-y-4">
             <Skeleton className="h-80 w-full rounded-xl" />
           </div>
@@ -73,10 +73,10 @@ export default function PublicTalentProfilePage() {
 
   if (error) {
     return (
-      <div className="max-w-6xl mx-auto py-6 px-4 pb-20">
+      <div className="max-w-6xl mx-2.5 sm:mx-auto py-4 sm:py-6 px-4 pb-20">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-sm text-text-muted hover:text-text-primary transition-colors mb-6"
+          className="flex items-center gap-2 text-sm text-text-muted hover:text-text-primary transition-colors mb-4 sm:mb-6"
         >
           <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
           Back
@@ -90,16 +90,16 @@ export default function PublicTalentProfilePage() {
 
   if (isPrivate) {
     return (
-      <div className="max-w-6xl mx-auto py-6 px-4 pb-20">
+      <div className="max-w-6xl mx-2.5 sm:mx-auto py-4 sm:py-6 px-4 pb-20">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-sm text-text-muted hover:text-text-primary transition-colors mb-6"
+          className="flex items-center gap-2 text-sm text-text-muted hover:text-text-primary transition-colors mb-4 sm:mb-6"
         >
           <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
           Back
         </button>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           <div className="lg:col-span-1">
             <div className="lg:sticky lg:top-6 space-y-4">
               {previewProfile && <TalentCard profile={previewProfile} />}
@@ -151,16 +151,16 @@ export default function PublicTalentProfilePage() {
   if (!profile) return null;
 
   return (
-    <div className="max-w-6xl mx-auto py-6 px-4 pb-20">
+    <div className="max-w-6xl mx-2.5 sm:mx-auto py-4 sm:py-6 px-4 pb-20">
       <button
         onClick={() => router.back()}
-        className="flex items-center gap-2 text-sm text-text-muted hover:text-text-primary transition-colors mb-6"
+        className="flex items-center gap-2 text-sm text-text-muted hover:text-text-primary transition-colors mb-4 sm:mb-6"
       >
         <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
         Back
       </button>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         <div className="lg:col-span-1">
           <div className="lg:sticky lg:top-6 space-y-4">
             <TalentCard profile={profile} />

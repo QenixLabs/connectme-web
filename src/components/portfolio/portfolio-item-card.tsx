@@ -7,12 +7,22 @@ import type { PortfolioItem } from "@/lib/validations/talent-profile.schema";
 
 interface PortfolioItemCardProps {
   item: PortfolioItem;
-  onUpdate: (id: string, dto: { caption?: string; category?: "work" | "personal" | "intro"; is_pinned?: boolean }) => void;
+  onUpdate: (
+    id: string,
+    dto: {
+      caption?: string;
+      category?: "work" | "personal" | "intro";
+      is_pinned?: boolean;
+    }
+  ) => void;
   onDelete: (id: string) => void;
-  dragHandleProps?: React.HTMLAttributes<HTMLDivElement>;
 }
 
-export function PortfolioItemCard({ item, onUpdate, onDelete, dragHandleProps }: PortfolioItemCardProps) {
+export function PortfolioItemCard({
+  item,
+  onUpdate,
+  onDelete,
+}: PortfolioItemCardProps) {
   const [caption, setCaption] = useState(item.caption || "");
   const [isEditing, setIsEditing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -48,7 +58,6 @@ export function PortfolioItemCard({ item, onUpdate, onDelete, dragHandleProps }:
       {/* Preview */}
       <div className="relative w-full pt-[100%] bg-muted">
         {item.type === "image" ? (
-          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={item.url}
             alt={item.caption || "Portfolio image"}
@@ -78,8 +87,15 @@ export function PortfolioItemCard({ item, onUpdate, onDelete, dragHandleProps }:
           </div>
         )}
 
+        {/* Drag handle — always visible, top-left */}
+        <div className="absolute top-2 left-2 z-10" data-drag-handle>
+          <div className="p-1.5 rounded-lg bg-black/50 text-white/80 cursor-grab active:cursor-grabbing backdrop-blur-sm touch-none">
+            <GripVertical className="w-3.5 h-3.5" strokeWidth={1.5} />
+          </div>
+        </div>
+
         {/* Type badge */}
-        <div className="absolute top-2 left-2">
+        <div className="absolute top-2 left-10 z-10">
           <span
             className={cn(
               "px-2 py-0.5 text-2xs font-medium rounded-full uppercase",
@@ -93,7 +109,7 @@ export function PortfolioItemCard({ item, onUpdate, onDelete, dragHandleProps }:
         </div>
 
         {/* Category badge */}
-        <div className="absolute top-2 right-2">
+        <div className="absolute top-2 right-2 z-10">
           <span className="px-2 py-0.5 text-2xs font-medium rounded-full bg-black/60 text-white uppercase">
             {item.category}
           </span>
@@ -126,7 +142,7 @@ export function PortfolioItemCard({ item, onUpdate, onDelete, dragHandleProps }:
       </div>
 
       {/* Caption */}
-      <div className="p-2.5">
+      <div className="p-2.5 space-y-2">
         {isEditing ? (
           <input
             ref={inputRef}
@@ -149,17 +165,27 @@ export function PortfolioItemCard({ item, onUpdate, onDelete, dragHandleProps }:
             {item.caption || "Add caption..."}
           </p>
         )}
-      </div>
 
-      {/* Drag handle */}
-      {dragHandleProps && (
-        <div
-          {...dragHandleProps}
-          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
-        >
-          <GripVertical className="w-4 h-4 text-text-muted" strokeWidth={1.5} />
+        {/* Category selector */}
+        <div className="flex items-center gap-1">
+          {(["work", "personal", "intro"] as const).map((cat) => (
+            <button
+              key={cat}
+              onClick={() => onUpdate(item.id, { category: cat })}
+              className={cn(
+                "px-2 py-0.5 text-2xs font-medium rounded-full uppercase transition-colors",
+                item.category === cat
+                  ? cat === "intro"
+                    ? "bg-brand text-white"
+                    : "bg-muted-bg text-text-primary border border-border"
+                  : "text-text-muted hover:text-text-secondary hover:bg-muted-bg/50"
+              )}
+            >
+              {cat}
+            </button>
+          ))}
         </div>
-      )}
+      </div>
     </div>
   );
 }

@@ -14,22 +14,26 @@ import { Button } from "@/components/ui/button";
 
 export default function FindTalentPage() {
   const router = useRouter();
-  const [profiles, setProfiles] = useState<Array<Partial<TalentProfile> & { privacy_mode?: string }>>([]);
+  const [profiles, setProfiles] = useState<Array<Partial<TalentProfile> & { privacy_mode?: string; access_status?: 'allowed' | 'pending' | 'none' }>>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [requestSentMap, setRequestSentMap] = useState<Record<string, boolean>>({});
   const [search, setSearch] = useState("");
   const [availabilityFilter, setAvailabilityFilter] = useState<string | "all">("all");
+  const [accessFilter, setAccessFilter] = useState<'all' | 'pending' | 'allowed' | 'not_requested' | 'public'>("all");
 
   useEffect(() => {
+    if (accessFilter !== "all") {
+      setAvailabilityFilter("all");
+    }
     talentApi
-      .getAllTalent()
+      .getAllTalent(accessFilter === 'all' ? undefined : accessFilter)
       .then((data) => {
-        setProfiles(data as Array<Partial<TalentProfile> & { privacy_mode?: string }>);
+        setProfiles(data as Array<Partial<TalentProfile> & { privacy_mode?: string; access_status?: 'allowed' | 'pending' | 'none' }>);
       })
       .catch((err) => setError(getApiErrorMessage(err, "Failed to load talent")))
       .finally(() => setLoading(false));
-  }, []);
+  }, [accessFilter]);
 
   const handleRequestAccess = async (username: string) => {
     try {
@@ -62,6 +66,18 @@ export default function FindTalentPage() {
     for (const p of profiles) {
       const av = p.availability ?? "unknown";
       counts[av] = (counts[av] ?? 0) + 1;
+    }
+    return counts;
+  }, [profiles]);
+
+  const accessCounts = useMemo(() => {
+    const counts = { all: 0, pending: 0, allowed: 0, not_requested: 0, public: 0 };
+    for (const p of profiles) {
+      const status = p.access_status ?? 'none';
+      if (p.privacy_mode === 'public') counts.public++;
+      if (status === 'pending') counts.pending++;
+      if (status === 'allowed') counts.allowed++;
+      if (status === 'none') counts.not_requested++;
     }
     return counts;
   }, [profiles]);
@@ -137,20 +153,47 @@ export default function FindTalentPage() {
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Sidebar filters */}
         <aside className="lg:w-56 shrink-0 space-y-6">
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <SlidersHorizontal className="w-4 h-4 text-text-muted" strokeWidth={1.5} />
-              <p className="text-sm font-semibold text-text-primary">Filters</p>
+          {accessFilter === "all" && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <SlidersHorizontal className="w-4 h-4 text-text-muted" strokeWidth={1.5} />
+                <p className="text-sm font-semibold text-text-primary">Filters</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <FilterPill label="All" value="all" count={availabilityCounts.all ?? 0} />
+                <FilterPill label="Available" value="available" count={availabilityCounts.available ?? 0} />
+                <FilterPill label="Busy" value="busy" count={availabilityCounts.busy ?? 0} />
+                <FilterPill label="Not avail." value="not_available" count={availabilityCounts.not_available ?? 0} />
+              </div>
             </div>
+          )}
+
+          <div>
+            <p className="text-sm font-semibold text-text-primary mb-3">Access</p>
             <div className="flex flex-wrap gap-2">
-              <FilterPill label="All" value="all" count={availabilityCounts.all ?? 0} />
-              <FilterPill label="Available" value="available" count={availabilityCounts.available ?? 0} />
-              <FilterPill label="Busy" value="busy" count={availabilityCounts.busy ?? 0} />
-              <FilterPill label="Not avail." value="not_available" count={availabilityCounts.not_available ?? 0} />
+              {[
+                { label: "All", value: "all" as const },
+                { label: "Public", value: "public" as const },
+                { label: "Pending", value: "pending" as const },
+                { label: "Granted", value: "allowed" as const },
+                { label: "Not requested", value: "not_requested" as const },
+              ].map((pill) => (
+                <button
+                  key={pill.value}
+                  onClick={() => setAccessFilter(pill.value)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                    accessFilter === pill.value
+                      ? "bg-brand text-white border-brand"
+                      : "bg-card text-text-secondary border-border hover:bg-muted-bg"
+                  }`}
+                >
+                  {pill.label}
+                </button>
+              ))}
             </div>
           </div>
 
-          {search && (
+          {(search || availabilityFilter !== "all" || accessFilter !== "all") && (
             <Button
               variant="outline"
               size="sm"
@@ -158,6 +201,7 @@ export default function FindTalentPage() {
               onClick={() => {
                 setSearch("");
                 setAvailabilityFilter("all");
+                setAccessFilter("all");
               }}
             >
               Clear filters
@@ -177,6 +221,7 @@ export default function FindTalentPage() {
                 onClick={() => {
                   setSearch("");
                   setAvailabilityFilter("all");
+                  setAccessFilter("all");
                 }}
               >
                 Clear filters
@@ -186,16 +231,24 @@ export default function FindTalentPage() {
             <div className="max-w-xl mx-auto space-y-4">
               {filtered.map((profile) => {
                 const username = profile.username ?? "";
-                const isPrivate = profile.privacy_mode === "private";
+                const hasAccess = profile.access_status === 'allowed';
+                const isPrivate = profile.privacy_mode === 'private' && !hasAccess;
+                const requestPending = profile.access_status === 'pending' || requestSentMap[username];
 
                 return (
                   <TalentCard
                     key={username}
                     profile={profile as TalentProfile}
                     privacyMode={profile.privacy_mode}
+                    hasAccess={hasAccess}
                     onViewProfile={
                       !isPrivate
                         ? () => router.push(`/talent/${username}`)
+                        : undefined
+                    }
+                    onViewPortfolio={
+                      !isPrivate
+                        ? () => router.push(`/talent/${username}/portfolio`)
                         : undefined
                     }
                     onRequestAccess={
@@ -203,7 +256,7 @@ export default function FindTalentPage() {
                         ? () => handleRequestAccess(username)
                         : undefined
                     }
-                    requestSent={requestSentMap[username]}
+                    requestSent={requestPending}
                   />
                 );
               })}
