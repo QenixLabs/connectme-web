@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { MessageSquare, Check, X, Shield, User, Clock } from "lucide-react";
 import { messagesApi } from "@/lib/api";
+import { useSocket } from "@/hooks/use-socket";
 import { getApiErrorMessage } from "@/lib/formatters";
 import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
@@ -58,6 +59,7 @@ export default function RecruiterMessagesPage() {
   const [messages, setMessages] = useState<MessageItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { socket } = useSocket();
 
   useEffect(() => {
     messagesApi
@@ -66,6 +68,20 @@ export default function RecruiterMessagesPage() {
       .catch((err) => setError(getApiErrorMessage(err)))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleMessage = (message: MessageItem) => {
+      setMessages((prev) => [message, ...prev]);
+    };
+
+    socket.on("message:new", handleMessage);
+
+    return () => {
+      socket.off("message:new", handleMessage);
+    };
+  }, [socket]);
 
   if (loading) {
     return (

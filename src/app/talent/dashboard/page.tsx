@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Star, AlertCircle, ShieldCheck, Pencil, Globe } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useAuthStore } from "@/stores/auth-store";
+import { useAuthStore } from "@/providers/auth-store-provider";
 import { getGreeting } from "@/lib/greeting";
 import { talentApi } from "@/lib/api";
 import type { TalentProfile } from "@/lib/validations/talent-profile.schema";

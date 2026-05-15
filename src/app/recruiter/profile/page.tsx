@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Upload, Search, LogOut } from "lucide-react";
-import { useAuthStore } from "@/stores/auth-store";
+import { useAuthStore } from "@/providers/auth-store-provider";
 import { recruiterApi } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
 import type { RecruiterProfile } from "@/lib/validations/recruiter-profile.schema";

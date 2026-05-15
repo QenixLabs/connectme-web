@@ -1,24 +1,43 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/stores/auth-store";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Eye, EyeOff } from "lucide-react";
+import { useAuthStore } from "@/providers/auth-store-provider";
 import { AuthLayout } from "@/components/layout/auth-layout";
-import { Card } from "@/components/ui/card";
-import { ErrorBanner } from "@/components/ui/error-banner";
-import { TextInput } from "@/components/ui/text-input";
-import { PasswordInput } from "@/components/ui/password-input";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { DividerLabel } from "@/components/ui/divider-label";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
+
+const loginSchema = z.object({
+  email: z.string().min(1, "Email is required").email("Enter a valid email address"),
+  password: z.string().min(1, "Password is required"),
+});
+
+type LoginValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
   const { login, user, isAuthenticated, isLoading: storeLoading, error, clearError } = useAuthStore();
+  const [showPassword, setShowPassword] = useState(false);
 
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
+  const form = useForm<LoginValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: "", password: "" },
   });
 
   useEffect(() => {
@@ -27,11 +46,9 @@ export default function LoginPage() {
     }
   }, [isAuthenticated, user, router]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.email || !formData.password) return;
+  const onSubmit = async (values: LoginValues) => {
     try {
-      await login(formData.email, formData.password);
+      await login(values.email, values.password);
     } catch (err) {
       console.error(err);
     }
@@ -40,53 +57,95 @@ export default function LoginPage() {
   return (
     <AuthLayout subtitle="Welcome back! Sign in to continue">
       <Card>
-        <div className="px-8 py-8">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {error && <ErrorBanner>{error}</ErrorBanner>}
+        <CardContent className="px-8 py-8">
+          <Form {...form}>
+            <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+              {error && (
+                <Alert variant="destructive">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
 
-            <TextInput
-              label="Email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => {
-                setFormData((p) => ({ ...p, email: e.target.value }));
-                clearError();
-              }}
-              placeholder="you@example.com"
-              required
-            />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="email"
+                        placeholder="you@example.com"
+                        {...field}
+                        onChange={(e) => {
+                          field.onChange(e);
+                          clearError();
+                        }}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <PasswordInput
-              label="Password"
-              value={formData.password}
-              onChange={(e) => {
-                setFormData((p) => ({ ...p, password: e.target.value }));
-                clearError();
-              }}
-              placeholder="Enter your password"
-              required
-            />
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Enter your password"
+                          className="pr-10"
+                          {...field}
+                          onChange={(e) => {
+                            field.onChange(e);
+                            clearError();
+                          }}
+                        />
+                        <button
+                          type="button"
+                          tabIndex={-1}
+                          onClick={() => setShowPassword((v) => !v)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary transition-colors"
+                        >
+                          {showPassword ? (
+                            <Eye className="w-4 h-4" strokeWidth={1.3} />
+                          ) : (
+                            <EyeOff className="w-4 h-4" strokeWidth={1.3} />
+                          )}
+                        </button>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <div className="text-right">
-              <Link
-                href="/auth/forgot-password"
-                className="text-sm text-brand-hover hover:text-brand-active font-medium"
+              <div className="text-right">
+                <Link
+                  href="/auth/forgot-password"
+                  className="text-sm text-brand-hover hover:text-brand-active font-medium"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+
+              <Button
+                type="submit"
+                variant="primary"
+                className="w-full"
+                disabled={storeLoading}
+                isLoading={storeLoading}
+                loadingLabel="Signing in..."
               >
-                Forgot password?
-              </Link>
-            </div>
-
-            <Button
-              type="submit"
-              variant="primary"
-              className="w-full"
-              disabled={storeLoading}
-              isLoading={storeLoading}
-              loadingLabel="Signing in..."
-            >
-              Sign in
-            </Button>
-          </form>
+                Sign in
+              </Button>
+            </form>
+          </Form>
 
           <DividerLabel label="New to ConnectMe?" />
 
@@ -104,7 +163,7 @@ export default function LoginPage() {
               Join as Recruiter
             </Link>
           </div>
-        </div>
+        </CardContent>
       </Card>
 
       <p className="text-center text-xs text-text-muted mt-6">

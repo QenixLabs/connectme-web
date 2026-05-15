@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { MessageSquare, Check, X, Shield, User, Clock } from "lucide-react";
 import { messagesApi, talentApi } from "@/lib/api";
+import { useSocket } from "@/hooks/use-socket";
 import { getApiErrorMessage } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -61,6 +62,7 @@ export default function TalentMessagesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [respondingId, setRespondingId] = useState<string | null>(null);
+  const { socket } = useSocket();
 
   useEffect(() => {
     messagesApi
@@ -69,6 +71,20 @@ export default function TalentMessagesPage() {
       .catch((err) => setError(getApiErrorMessage(err)))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleMessage = (message: MessageItem) => {
+      setMessages((prev) => [message, ...prev]);
+    };
+
+    socket.on("message:new", handleMessage);
+
+    return () => {
+      socket.off("message:new", handleMessage);
+    };
+  }, [socket]);
 
   const handleAllow = async (msgId: string, requesterId: string) => {
     if (respondingId) return;

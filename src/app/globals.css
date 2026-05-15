@@ -131,6 +131,15 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+html {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar {
+  display: none;
+}
+
 .safe-area-pb {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }

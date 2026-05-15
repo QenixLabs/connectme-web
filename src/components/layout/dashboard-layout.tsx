@@ -5,9 +5,11 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Home, Briefcase, MessageSquare, User, Bell } from "lucide-react";
 import { notificationsApi } from "@/lib/api";
-import { useAuthStore } from "@/stores/auth-store";
+import { useAuthStore } from "@/providers/auth-store-provider";
+import { useSocket } from "@/hooks/use-socket";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 export interface NavItem {
   href: string;
@@ -48,6 +50,7 @@ export function DashboardLayout({
     useAuthStore();
   const [authChecked, setAuthChecked] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const { socket } = useSocket();
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -64,12 +67,43 @@ export function DashboardLayout({
   }, [isAuthenticated, user, pathname]);
 
   useEffect(() => {
+    if (!socket) return;
+
+    const handleNotification = (notification: { title?: string; body?: string }) => {
+      setUnreadCount((prev) => prev + 1);
+      toast.info(notification.title || "New notification", {
+        description: notification.body,
+      });
+    };
+
+    socket.on("notification:new", handleNotification);
+
+    return () => {
+      socket.off("notification:new", handleNotification);
+    };
+  }, [socket]);
+
+  useEffect(() => {
     if (authChecked && !isLoading && !isAuthenticated) {
       router.push("/auth/login");
     }
   }, [authChecked, isLoading, isAuthenticated, router]);
 
-  if (!authChecked || isLoading || !user) {
+  useEffect(() => {
+    if (authChecked && !isLoading && user && user.role !== role) {
+      const fallback =
+        user.role === "talent"
+          ? "/talent/dashboard"
+          : user.role === "recruiter"
+            ? "/recruiter/dashboard"
+            : "/auth/login";
+      router.push(fallback);
+    }
+  }, [authChecked, isLoading, user, role, router]);
+
+  const roleMismatch = user ? user.role !== role : false;
+
+  if (!authChecked || isLoading || !user || roleMismatch) {
     return (
       <div className="min-h-screen bg-page flex flex-col">
         <header className="bg-card border-b border-border px-4 py-3 sticky top-0 z-40">

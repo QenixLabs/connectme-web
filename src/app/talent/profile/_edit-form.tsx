@@ -3,7 +3,8 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useForm, useFieldArray, Controller, useWatch, Control } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2, ChevronDown, Pencil, X, Loader2 } from "lucide-react";
+import { Plus, Trash2, ChevronDown, Pencil, X, Loader2, Upload } from "lucide-react";
+import { Avatar } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { AxiosError } from "axios";
 
@@ -282,6 +283,9 @@ export function EditForm({
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [swipeStart, setSwipeStart] = useState<{ x: number; y: number } | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<CreateTalentProfileInput>({
     resolver: zodResolver(createTalentProfileSchema),
@@ -312,6 +316,60 @@ export function EditForm({
       reset(hydrateFromServer(profile));
     }
   }, [profile, reset]);
+
+  useEffect(() => {
+    if (!profile) {
+      setPhotoPreview(null);
+      return;
+    }
+    const photo = profile.profile_photo;
+    if (!photo) {
+      setPhotoPreview(null);
+      return;
+    }
+    setPhotoPreview(photo);
+    if (photo.includes('/files/access?') && photo.includes('signature=')) {
+      try {
+        const parsed = new URL(photo);
+        const relativePath = parsed.searchParams.get('path');
+        if (relativePath) {
+          form.setValue('profile_photo', relativePath, { shouldDirty: false });
+        }
+      } catch {
+        /* ignore parse errors */
+      }
+    }
+  }, [profile, form]);
+
+  const handlePhotoChange = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      setPhotoError(null);
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+        setPhotoError('Only JPEG, PNG, and WEBP images are allowed');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setPhotoError('File size must be less than 5MB');
+        return;
+      }
+      try {
+        const { relativePath, signedUrl } = await talentApi.uploadProfilePhoto(file);
+        form.setValue('profile_photo', relativePath, { shouldDirty: true });
+        setPhotoPreview(signedUrl);
+      } catch (err) {
+        setPhotoError(getApiErrorMessage(err, 'Failed to upload photo'));
+      }
+    },
+    [form],
+  );
+
+  const handlePhotoClear = useCallback(() => {
+    form.setValue('profile_photo', '', { shouldDirty: true });
+    setPhotoPreview(null);
+    setPhotoError(null);
+  }, [form]);
 
   const scrollTo = useCallback((id: string) => {
     const el = document.getElementById(id);
@@ -501,19 +559,54 @@ export function EditForm({
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={control}
-                  name="profile_photo"
-                  render={({ field }) => (
-                    <FormItem className="sm:col-span-2">
-                      <FormLabel>Profile photo URL</FormLabel>
-                      <FormControl>
-                        <Input {...field} value={field.value ?? ""} placeholder="https://…" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="sm:col-span-2">
+                  <FormLabel>Profile photo</FormLabel>
+                  <div className="flex items-center gap-4 mt-1.5">
+                    <Avatar
+                      name={form.getValues("full_legal_name") || form.getValues("username") || "Talent"}
+                      src={photoPreview || ""}
+                      size="lg"
+                      className="border border-border shrink-0"
+                    />
+                    <div className="flex flex-col gap-2">
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="hidden"
+                        ref={photoInputRef}
+                        onChange={handlePhotoChange}
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => photoInputRef.current?.click()}
+                        >
+                          <Upload className="w-3.5 h-3.5 mr-1.5" />
+                          {photoPreview ? "Change photo" : "Upload photo"}
+                        </Button>
+                        {photoPreview && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={handlePhotoClear}
+                          >
+                            <X className="w-3.5 h-3.5 mr-1.5" />
+                            Remove
+                          </Button>
+                        )}
+                      </div>
+                      <p className="text-xs text-text-muted">
+                        JPEG, PNG, or WEBP. Max 5MB.
+                      </p>
+                      {photoError && (
+                        <p className="text-xs text-destructive">{photoError}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
                 <FormField
                   control={control}
                   name="headline"

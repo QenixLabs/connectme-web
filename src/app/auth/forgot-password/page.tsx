@@ -90,7 +90,7 @@ export default function ForgotPasswordPage() {
           )}
 
           {step === "email" && (
-            <form onSubmit={handleRequestOtp} className="space-y-5">
+            <form method="post" onSubmit={handleRequestOtp} className="space-y-5">
               <TextInput
                 label="Email"
                 type="email"
@@ -117,7 +117,7 @@ export default function ForgotPasswordPage() {
           )}
 
           {step === "otp" && (
-            <form onSubmit={handleResetPassword} className="space-y-5">
+            <form method="post" onSubmit={handleResetPassword} className="space-y-5">
               <OtpInput
                 label="OTP Code"
                 value={otp}
