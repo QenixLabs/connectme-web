@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useForm, useFieldArray, Controller, useWatch, Control } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2, ChevronDown, Pencil, X, Loader2, Upload } from "lucide-react";
+import { Plus, Trash2, ChevronDown, Pencil, X, Loader2, Upload, FileText } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { AxiosError } from "axios";
@@ -127,19 +127,19 @@ function FormSection({
 }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div id={id} className="scroll-mt-28">
-      <Card className="p-5 sm:p-6">
+    <div id={id} className="scroll-mt-[100px] lg:scroll-mt-28">
+      <Card className="p-4 sm:p-6">
         <Collapsible open={open} onOpenChange={setOpen}>
           <div className="flex items-center justify-between gap-3">
             <CollapsibleTrigger asChild>
               <button
                 type="button"
-                className="flex-1 flex items-center justify-between"
+                className="flex-1 flex items-center justify-between min-h-11 py-2"
               >
-                <h2 className="text-base font-semibold text-text-primary">{title}</h2>
+                <h2 className="text-base font-bold sm:text-lg sm:font-semibold text-text-primary">{title}</h2>
                 <ChevronDown
                   className={cn(
-                    "w-4 h-4 text-text-tertiary transition-transform duration-200",
+                    "w-5 h-5 text-text-tertiary transition-transform duration-200",
                     open && "rotate-180"
                   )}
                 />
@@ -150,7 +150,7 @@ function FormSection({
             )}
           </div>
           <CollapsibleContent>
-            <div className="pt-4">{children}</div>
+            <div className="pt-3 sm:pt-4">{children}</div>
           </CollapsibleContent>
         </Collapsible>
       </Card>
@@ -170,7 +170,7 @@ function SectionToggle({
       control={control}
       name={`section_visibility.${sectionKey}`}
       render={({ field }) => (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 p-1.5 -m-1.5">
           <span className="text-xs text-text-muted hidden sm:inline">Show</span>
           <Switch
             checked={field.value ?? true}
@@ -231,6 +231,7 @@ function MobileNav({
   activeId: string;
   onSelect: (id: string) => void;
 }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
   const items = [
     { id: "identity", label: "Identity" },
     { id: "location", label: "Location" },
@@ -243,9 +244,20 @@ function MobileNav({
     { id: "social", label: "Social" },
     { id: "privacy", label: "Privacy" },
   ];
+
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+    const activeBtn = container.querySelector(`[data-nav-id="${activeId}"]`) as HTMLElement | null;
+    if (activeBtn) {
+      activeBtn.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    }
+  }, [activeId]);
+
   return (
     <div className="lg:hidden sticky top-[53px] z-30 bg-page/95 backdrop-blur border-b border-border -mx-4 px-4 py-2">
       <div
+        ref={scrollRef}
         className="flex gap-1.5 overflow-x-auto pb-0.5"
         style={{ scrollbarWidth: "none" }}
       >
@@ -253,9 +265,10 @@ function MobileNav({
           <button
             key={item.id}
             type="button"
+            data-nav-id={item.id}
             onClick={() => onSelect(item.id)}
             className={cn(
-              "shrink-0 px-2.5 py-1 rounded-full text-xs font-medium transition-colors border",
+              "shrink-0 px-3 py-2 min-h-11 rounded-full text-xs font-medium transition-colors border inline-flex items-center justify-center",
               activeId === item.id
                 ? "bg-brand text-white border-brand"
                 : "bg-card text-text-secondary border-border"
@@ -286,6 +299,11 @@ export function EditForm({
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const [resumePreview, setResumePreview] = useState<string | null>(null);
+  const [resumeName, setResumeName] = useState<string | null>(null);
+  const [resumeError, setResumeError] = useState<string | null>(null);
+  const [resumeUploading, setResumeUploading] = useState(false);
+  const resumeInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<CreateTalentProfileInput>({
     resolver: zodResolver(createTalentProfileSchema),
@@ -341,6 +359,37 @@ export function EditForm({
     }
   }, [profile, form]);
 
+  useEffect(() => {
+    if (!profile) {
+      setResumePreview(null);
+      setResumeName(null);
+      return;
+    }
+    const resume = profile.documents?.resume_url;
+    if (!resume) {
+      setResumePreview(null);
+      setResumeName(null);
+      return;
+    }
+    setResumePreview(resume);
+    if (resume.includes('/files/access?') && resume.includes('signature=')) {
+      try {
+        const parsed = new URL(resume);
+        const relativePath = parsed.searchParams.get('path');
+        if (relativePath) {
+          form.setValue('documents.resume_url', relativePath, { shouldDirty: false });
+          const base = relativePath.split('/').pop() || 'Resume';
+          setResumeName(base.replace(/^\d+-/, ''));
+        }
+      } catch {
+        /* ignore parse errors */
+      }
+    } else {
+      const base = resume.split('/').pop() || 'Resume';
+      setResumeName(base.replace(/^\d+-/, ''));
+    }
+  }, [profile, form]);
+
   const handlePhotoChange = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
@@ -369,6 +418,47 @@ export function EditForm({
     form.setValue('profile_photo', '', { shouldDirty: true });
     setPhotoPreview(null);
     setPhotoError(null);
+  }, [form]);
+
+  const handleResumeChange = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      setResumeError(null);
+      if (
+        ![
+          'application/pdf',
+          'application/msword',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        ].includes(file.type)
+      ) {
+        setResumeError('Only PDF, DOC, and DOCX files are allowed');
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        setResumeError('File size must be less than 10MB');
+        return;
+      }
+      setResumeUploading(true);
+      try {
+        const { relativePath, signedUrl } = await talentApi.uploadDocument(file);
+        form.setValue('documents.resume_url', relativePath, { shouldDirty: true });
+        setResumePreview(signedUrl);
+        setResumeName(file.name);
+      } catch (err) {
+        setResumeError(getApiErrorMessage(err, 'Failed to upload document'));
+      } finally {
+        setResumeUploading(false);
+      }
+    },
+    [form],
+  );
+
+  const handleResumeClear = useCallback(() => {
+    form.setValue('documents.resume_url', '', { shouldDirty: true });
+    setResumePreview(null);
+    setResumeName(null);
+    setResumeError(null);
   }, [form]);
 
   const scrollTo = useCallback((id: string) => {
@@ -493,7 +583,7 @@ export function EditForm({
         )}
 
         <Form {...form}>
-          <form onSubmit={onSubmit} className="space-y-5 pb-10">
+          <form onSubmit={onSubmit} className="space-y-4 sm:space-y-5 pb-32 sm:pb-10">
             {/* IDENTITY */}
             <FormSection id="identity" title="Identity">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -561,7 +651,7 @@ export function EditForm({
                 />
                 <div className="sm:col-span-2">
                   <FormLabel>Profile photo</FormLabel>
-                  <div className="flex items-center gap-4 mt-1.5">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mt-1.5">
                     <Avatar
                       name={form.getValues("full_legal_name") || form.getValues("username") || "Talent"}
                       src={photoPreview || ""}
@@ -627,7 +717,7 @@ export function EditForm({
                     <FormItem className="sm:col-span-2">
                       <FormLabel>About</FormLabel>
                       <FormControl>
-                        <Textarea {...field} value={field.value ?? ""} maxLength={500} rows={5} placeholder="A short bio (max 500 characters)" />
+                        <Textarea {...field} value={field.value ?? ""} maxLength={500} rows={3} placeholder="A short bio (max 500 characters)" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -691,7 +781,7 @@ export function EditForm({
               title="Career"
               rightAction={<SectionToggle control={control} sectionKey="experience" />}
             >
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <FormField
                   control={control}
                   name="professions"
@@ -773,7 +863,7 @@ export function EditForm({
                   {skillsArray.fields.map((field, idx) => (
                     <div
                       key={field.id}
-                      className="grid grid-cols-[1fr_140px_auto] sm:grid-cols-[1fr_180px_auto] gap-3 items-start"
+                      className="grid grid-cols-1 sm:grid-cols-[1fr_180px_auto] gap-3 items-start"
                     >
                       <Input
                         placeholder="Skill name"
@@ -798,6 +888,7 @@ export function EditForm({
                         type="button"
                         variant="outline"
                         size="icon"
+                        className="size-11"
                         onClick={() => skillsArray.remove(idx)}
                         aria-label="Remove skill"
                       >
@@ -835,7 +926,7 @@ export function EditForm({
                   {languagesArray.fields.map((field, idx) => (
                     <div
                       key={field.id}
-                      className="grid grid-cols-[1fr_140px_auto] sm:grid-cols-[1fr_180px_auto] gap-3 items-start"
+                      className="grid grid-cols-1 sm:grid-cols-[1fr_180px_auto] gap-3 items-start"
                     >
                       <Input
                         placeholder="Language name"
@@ -860,6 +951,7 @@ export function EditForm({
                         type="button"
                         variant="outline"
                         size="icon"
+                        className="size-11"
                         onClick={() => languagesArray.remove(idx)}
                         aria-label="Remove language"
                       >
@@ -1045,7 +1137,7 @@ export function EditForm({
                     <FormItem className="sm:col-span-2">
                       <FormLabel>Distinctive features</FormLabel>
                       <FormControl>
-                        <Textarea {...field} value={field.value ?? ""} rows={3} maxLength={300} />
+                        <Textarea {...field} value={field.value ?? ""} rows={2} maxLength={300} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -1060,42 +1152,75 @@ export function EditForm({
               title="Documents"
               rightAction={<SectionToggle control={control} sectionKey="documents" />}
             >
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <FormField
                   control={control}
                   name="documents.resume_url"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Resume URL</FormLabel>
+                      <FormLabel>Resume</FormLabel>
                       <FormControl>
-                        <Input {...field} value={field.value ?? ""} placeholder="https://…" />
+                        <div>
+                          <input
+                            type="file"
+                            accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                            className="hidden"
+                            ref={resumeInputRef}
+                            onChange={handleResumeChange}
+                          />
+                          {resumePreview ? (
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-2 bg-muted-bg rounded-lg px-3 py-2 text-sm text-text-primary flex-1 min-w-0">
+                                <FileText className="w-4 h-4 shrink-0 text-text-muted" />
+                                <span className="truncate">{resumeName || 'Resume'}</span>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => resumeInputRef.current?.click()}
+                                disabled={resumeUploading}
+                              >
+                                <Upload className="w-3.5 h-3.5 mr-1" />
+                                Change
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={handleResumeClear}
+                                disabled={resumeUploading}
+                              >
+                                <X className="w-3.5 h-3.5 mr-1" />
+                                Remove
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-2 bg-muted-bg rounded-lg px-3 py-2 text-sm text-text-muted flex-1 min-w-0">
+                                <FileText className="w-4 h-4 shrink-0" />
+                                <span>No file uploaded</span>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => resumeInputRef.current?.click()}
+                                disabled={resumeUploading}
+                              >
+                                {resumeUploading && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />}
+                                <Upload className="w-3.5 h-3.5 mr-1" />
+                                Upload
+                              </Button>
+                            </div>
+                          )}
+                          <input type="hidden" {...field} value={field.value ?? ''} />
+                        </div>
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={control}
-                  name="documents.portfolio_pdf_url"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Portfolio PDF URL</FormLabel>
-                      <FormControl>
-                        <Input {...field} value={field.value ?? ""} placeholder="https://…" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={control}
-                  name="documents.measurements_sheet_url"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Measurements sheet URL</FormLabel>
-                      <FormControl>
-                        <Input {...field} value={field.value ?? ""} placeholder="https://…" />
-                      </FormControl>
+                      <p className="text-xs text-text-muted mt-1">PDF, DOC, or DOCX. Max 10MB.</p>
+                      {resumeError && (
+                        <p className="text-xs text-destructive mt-1">{resumeError}</p>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}
@@ -1109,7 +1234,7 @@ export function EditForm({
               title="Social links"
               rightAction={<SectionToggle control={control} sectionKey="social_links" />}
             >
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {(["instagram", "youtube", "linkedin"] as const).map((platform) => (
                   <div
                     key={platform}
@@ -1178,7 +1303,7 @@ export function EditForm({
             </FormSection>
 
             {/* FLOATING SUBMIT BAR */}
-            <div className="fixed bottom-16 left-0 right-0 bg-card border-t border-border px-4 py-3 z-30">
+            <div className="fixed bottom-16 left-0 right-0 bg-card border-t border-border px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] z-30">
               <div className="max-w-3xl mx-auto flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-xs text-text-muted truncate">

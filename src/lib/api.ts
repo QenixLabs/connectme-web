@@ -94,6 +94,16 @@ export const authApi = {
     const response = await apiClient.post('/auth/reset-password', { email, otp, new_password: newPassword });
     return response.data;
   },
+
+  sendPhoneOtp: async () => {
+    const response = await apiClient.post('/auth/send-phone-otp');
+    return response.data;
+  },
+
+  verifyPhoneOtp: async (phone: string, otp: string) => {
+    const response = await apiClient.post('/auth/verify-phone-otp', { phone, otp });
+    return response.data;
+  },
 };
 
 export const talentApi = {
@@ -181,6 +191,15 @@ export const talentApi = {
     const formData = new FormData();
     formData.append('file', file);
     const response = await apiClient.post('/talent/upload/profile-photo', formData, {
+      headers: { 'Content-Type': undefined },
+    });
+    return response.data;
+  },
+
+  uploadDocument: async (file: File): Promise<{ relativePath: string; signedUrl: string }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await apiClient.post('/talent/upload/document', formData, {
       headers: { 'Content-Type': undefined },
     });
     return response.data;

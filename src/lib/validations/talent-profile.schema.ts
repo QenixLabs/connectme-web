@@ -122,6 +122,8 @@ export type TalentProfile = UpdateTalentProfileInput & {
   _id?: string;
   user_id?: string;
   username?: string;
+  email?: string;
+  phone?: string;
   media_limits?: {
     images_used: number;
     videos_used: number;

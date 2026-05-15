@@ -6,12 +6,9 @@ import {
   LogOut,
   Images,
   Pencil,
-  Share2,
-  MapPin,
   Eye,
   Bookmark,
   Globe,
-  Check,
   Play,
 } from "lucide-react";
 import { useAuthStore } from "@/providers/auth-store-provider";
@@ -22,14 +19,14 @@ import type { PortfolioItem } from "@/lib/validations/talent-profile.schema";
 import { ProfileSkeleton } from "@/components/skeletons/profile-skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ProfileDetail } from "./_profile-detail";
 import { CompletenessBanner } from "./_completeness-banner";
 import { TrustScore } from "./_trust-score";
 import { TipsCard } from "./_tips-card";
+import { ProfileCard, ShareButton } from "./_profile-card";
 import { EditForm } from "./_edit-form";
+import { VerificationAlerts } from "@/components/verification-alerts";
 
 type Mode = "create" | "edit";
 
@@ -70,175 +67,14 @@ function availabilityMeta(v?: string) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Hero                                                               */
-/* ------------------------------------------------------------------ */
-
-function ProfileHero({
-  profile,
-  onEdit,
-  onViewPortfolio,
-}: {
-  profile: TalentProfile;
-  onEdit: () => void;
-  onViewPortfolio: () => void;
-}) {
-  const router = useRouter();
-  const [copied, setCopied] = useState(false);
-  const displayName = profile.full_legal_name || profile.username || "Talent";
-  const loc = [profile.location?.city, profile.location?.state]
-    .filter((s): s is string => !!s && s.trim() !== "")
-    .join(", ");
-  const avail = availabilityMeta(profile.availability);
-
-  const handleShare = async () => {
-    const url = `${window.location.origin}/talent/${profile.username}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // ignore
-    }
-  };
-
-  return (
-    <div className="relative">
-      {/* Cover */}
-      <div className="h-36 sm:h-48 rounded-t-xl bg-gradient-to-br from-brand/20 to-brand/5 relative overflow-hidden">
-        {profile.profile_photo && (
-          <img
-            src={profile.profile_photo}
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover opacity-30"
-          />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/50 to-transparent" />
-      </div>
-
-      {/* Info */}
-      <div className="px-5 sm:px-6 -mt-14 relative">
-        <div className="flex items-end gap-4">
-          <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-card bg-surface-secondary flex items-center justify-center overflow-hidden shrink-0">
-            {profile.profile_photo ? (
-              <img
-                src={profile.profile_photo}
-                alt=""
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <span className="text-2xl font-bold text-text-muted">
-                {displayName
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")
-                  .slice(0, 2)}
-              </span>
-            )}
-          </div>
-
-          <div className="pb-1 flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <h2 className="text-xl sm:text-2xl font-bold text-text-primary truncate">
-                {displayName}
-              </h2>
-              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-success shrink-0">
-                <Check className="w-3 h-3 text-white" strokeWidth={2.5} />
-              </span>
-            </div>
-            {profile.username && (
-              <p className="text-sm text-text-tertiary">@{profile.username}</p>
-            )}
-          </div>
-        </div>
-
-        <div className="mt-4 space-y-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <span
-              className={`px-2.5 py-0.5 text-xs font-medium rounded-full border ${avail.classes}`}
-            >
-              {avail.label}
-            </span>
-            {profile.professions?.map((p) => (
-              <Badge key={p} variant="secondary">{p}</Badge>
-            ))}
-          </div>
-
-          {loc && (
-            <div className="flex items-center gap-1.5 text-xs text-text-muted">
-              <MapPin className="w-3.5 h-3.5" strokeWidth={1.5} />
-              {loc}
-            </div>
-          )}
-
-          {profile.headline && (
-            <p className="text-sm text-text-secondary leading-relaxed">{profile.headline}</p>
-          )}
-
-          {/* Actions */}
-          <div className="flex items-center gap-2 pt-1">
-            <Button variant="primary" size="sm" onClick={onEdit}>
-              <Pencil className="w-3.5 h-3.5 mr-1" strokeWidth={1.5} />
-              Edit Profile
-            </Button>
-            <Button variant="outline" size="sm" onClick={onViewPortfolio}>
-              <Images className="w-3.5 h-3.5 mr-1" strokeWidth={1.5} />
-              Portfolio
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleShare}>
-              <Share2 className="w-3.5 h-3.5 mr-1" strokeWidth={1.5} />
-              {copied ? "Copied!" : "Share"}
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Stats Bar                                                          */
-/* ------------------------------------------------------------------ */
-
-function StatsBar({ profile }: { profile: TalentProfile }) {
-  const analytics = profile.analytics as
-    | { profile_views_30d?: number; shortlist_count?: number }
-    | undefined;
-  const socialCount = [
-    profile.social_links?.instagram?.url,
-    profile.social_links?.youtube?.url,
-    profile.social_links?.linkedin?.url,
-  ].filter(Boolean).length;
-
-  const stats = [
-    { icon: Eye, value: formatCount(analytics?.profile_views_30d), label: "Monthly Views" },
-    { icon: Bookmark, value: formatCount(analytics?.shortlist_count), label: "Shortlists" },
-    { icon: Globe, value: String(socialCount), label: "Social Links" },
-  ];
-
-  return (
-    <div className="grid grid-cols-3 gap-3 px-5 sm:px-6 mt-5">
-      {stats.map((s) => (
-        <Card key={s.label} className="border-border-subtle bg-muted-bg/50">
-          <CardContent className="p-3 text-center">
-            <s.icon className="w-4 h-4 mx-auto text-brand mb-1.5" strokeWidth={1.5} />
-            <p className="text-lg font-bold text-text-primary">{s.value}</p>
-            <p className="text-2xs text-text-muted">{s.label}</p>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
 /*  Portfolio Grid (for tab)                                           */
 /* ------------------------------------------------------------------ */
 
 function PortfolioTabGrid({ items }: { items: PortfolioItem[] }) {
   if (items.length === 0) {
     return (
-      <div className="text-center py-12 text-text-muted text-sm">
-        No portfolio items yet.
+      <div className="text-center py-12 text-text-muted text-sm italic">
+        Not added yet
       </div>
     );
   }
@@ -373,116 +209,157 @@ export default function TalentProfilePage() {
 
   if (mode === "edit" && !isEditing && profile) {
     return (
-      <div className="max-w-6xl mx-auto pb-6 px-4">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-bold text-text-primary">Profile</h1>
+      <div className="max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto pb-[calc(5rem+env(safe-area-inset-bottom))] sm:pb-6">
+        {/* Topbar */}
+        <div className="flex items-center justify-between px-3 sm:px-4 py-3 border-b border-border/50">
+          <span className="text-[17px] font-medium text-text-primary">Connect<span className="text-brand">Me</span></span>
           <button
             onClick={() => {
               logout();
               router.push("/auth/login");
             }}
-            className="flex items-center gap-1.5 text-xs text-text-muted hover:text-destructive font-medium transition-colors"
+            className="flex items-center gap-1.5 text-[12px] text-brand-hover bg-brand-light border border-brand-muted px-2.5 py-1 rounded-md font-medium transition-colors hover:bg-brand-soft"
           >
-            <LogOut className="w-4 h-4" strokeWidth={1.5} />
+            <LogOut className="w-3 h-3" strokeWidth={1.5} />
             Logout
           </button>
         </div>
 
+        <VerificationAlerts />
+
         {saveSuccess && (
-          <Alert className="mb-4">
+          <Alert className="mx-3 sm:mx-4 mt-3">
             <AlertDescription>Profile saved.</AlertDescription>
           </Alert>
         )}
 
-        <Card className="overflow-hidden border-border-subtle mb-6">
-          <ProfileHero
-            profile={profile}
-            onEdit={() => {
-              setIsEditing(true);
-              setSaveSuccess(false);
-            }}
-            onViewPortfolio={() =>
-              router.push(`/talent/${profile.username}/portfolio`)
-            }
-          />
-          <StatsBar profile={profile} />
-        </Card>
+        <ProfileCard
+          profile={profile}
+          actions={
+            <>
+              <button
+                onClick={() => {
+                  setIsEditing(true);
+                  setSaveSuccess(false);
+                }}
+                className="flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium bg-brand-light text-brand-hover border border-brand-muted hover:bg-brand-soft transition-colors"
+              >
+                <Pencil className="w-3.5 h-3.5" strokeWidth={1.5} />
+                Edit
+              </button>
+              <button
+                onClick={() =>
+                  router.push(`/talent/${profile.username}/portfolio`)
+                }
+                className="flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium bg-muted-bg text-text-primary border border-border hover:bg-muted-bg/80 transition-colors"
+              >
+                <Images className="w-3.5 h-3.5" strokeWidth={1.5} />
+                Portfolio
+              </button>
+              <ShareButton username={profile.username ?? ""} />
+            </>
+          }
+        />
 
-        <Tabs defaultValue="overview" onValueChange={handleTabChange}>
-          <TabsList className="mb-4">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="portfolio">Portfolio</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          </TabsList>
+        <div className="lg:grid lg:grid-cols-[320px_1fr] lg:gap-6">
+          {/* Desktop sidebar */}
+          <div className="hidden lg:block px-3 sm:px-4 pt-4 space-y-3 lg:sticky lg:top-6 self-start">
+            <CompletenessBanner
+              version={completenessVersion}
+              onCompleteProfile={() => {
+                setIsEditing(true);
+                setSaveSuccess(false);
+              }}
+            />
+            <TrustScore />
+            <TipsCard />
+          </div>
 
-          <TabsContent value="overview">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 space-y-4">
-                <ProfileDetail profile={profile} isOwner />
-              </div>
-              <div className="space-y-4">
-                <CompletenessBanner
-                  version={completenessVersion}
-                  onCompleteProfile={() => {
+          {/* Main content */}
+          <div className="lg:mt-0">
+            <Tabs defaultValue="overview" onValueChange={handleTabChange} className="mt-4">
+              <TabsList variant="line" className="mx-3 sm:mx-4 mb-0 w-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <TabsTrigger value="overview" className="text-[13px] data-[state=active]:after:bg-brand data-[state=active]:text-brand-hover">Overview</TabsTrigger>
+                <TabsTrigger value="portfolio" className="text-[13px] data-[state=active]:after:bg-brand data-[state=active]:text-brand-hover">Portfolio</TabsTrigger>
+                <TabsTrigger value="analytics" className="text-[13px] data-[state=active]:after:bg-brand data-[state=active]:text-brand-hover">Analytics</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="overview" className="px-3 sm:px-4 pt-3 space-y-2.5">
+                <ProfileDetail
+                  profile={profile}
+                  isOwner
+                  onEditSection={() => {
                     setIsEditing(true);
                     setSaveSuccess(false);
                   }}
                 />
-                <TrustScore />
-                <TipsCard />
-              </div>
-            </div>
-          </TabsContent>
+                <div className="lg:hidden space-y-2.5">
+                  <CompletenessBanner
+                    version={completenessVersion}
+                    onCompleteProfile={() => {
+                      setIsEditing(true);
+                      setSaveSuccess(false);
+                    }}
+                  />
+                  <TrustScore />
+                  <TipsCard />
+                </div>
+              </TabsContent>
 
-          <TabsContent value="portfolio">
-            <Card>
-              <CardContent className="p-5 sm:p-6">
-                <h2 className="text-base font-semibold text-text-primary mb-4">
-                  Portfolio
-                </h2>
-                {portfolioLoading ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {Array.from({ length: 3 }).map((_, i) => (
-                      <div
-                        key={i}
-                        className="aspect-square bg-muted rounded-xl animate-pulse"
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <PortfolioTabGrid items={portfolioItems} />
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="analytics">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 space-y-4">
-                <CompletenessBanner
-                  version={completenessVersion}
-                  onCompleteProfile={() => {
-                    setIsEditing(true);
-                    setSaveSuccess(false);
-                  }}
-                />
-                <TrustScore />
-                <TipsCard />
-              </div>
-              <div className="space-y-4">
-                <Card>
-                  <CardContent className="p-5 sm:p-6">
-                    <h2 className="text-base font-semibold text-text-primary mb-4">
-                      Profile Stats
-                    </h2>
-                    <StatsBar profile={profile} />
+              <TabsContent value="portfolio" className="px-3 sm:px-4 pt-3">
+                <Card className="border-border-subtle">
+                  <CardContent className="p-4">
+                    <h2 className="text-xs uppercase tracking-[0.12em] font-bold text-brand-hover mb-4">Portfolio</h2>
+                    {portfolioLoading ? (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {Array.from({ length: 3 }).map((_, i) => (
+                          <div
+                            key={i}
+                            className="aspect-square bg-muted rounded-xl animate-pulse"
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <PortfolioTabGrid items={portfolioItems} />
+                    )}
                   </CardContent>
                 </Card>
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
+              </TabsContent>
+
+              <TabsContent value="analytics" className="px-3 sm:px-4 pt-3">
+                <Card className="border-border-subtle">
+                  <CardContent className="p-4">
+                    <h2 className="text-xs uppercase tracking-[0.12em] font-bold text-brand-hover mb-4">Profile Stats</h2>
+                    <div className="grid grid-cols-3 gap-2">
+                      {(() => {
+                        const analytics = profile.analytics as
+                          | { profile_views_30d?: number; shortlist_count?: number }
+                          | undefined;
+                        const socialCount = [
+                          profile.social_links?.instagram?.url,
+                          profile.social_links?.youtube?.url,
+                          profile.social_links?.linkedin?.url,
+                        ].filter(Boolean).length;
+                        const stats = [
+                          { icon: Eye, value: formatCount(analytics?.profile_views_30d), label: "Monthly Views" },
+                          { icon: Bookmark, value: formatCount(analytics?.shortlist_count), label: "Shortlists" },
+                          { icon: Globe, value: String(socialCount), label: "Social Links" },
+                        ];
+                        return stats.map((s) => (
+                          <div key={s.label} className="bg-muted-bg rounded-lg py-2.5 text-center border-l-2 border-brand-muted">
+                            <s.icon className="w-4 h-4 mx-auto text-brand mb-1" strokeWidth={1.5} />
+                            <p className="text-xl font-medium text-text-primary leading-none">{s.value}</p>
+                            <p className="text-[10px] text-text-muted mt-0.5">{s.label}</p>
+                          </div>
+                        ));
+                      })()}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
       </div>
     );
   }

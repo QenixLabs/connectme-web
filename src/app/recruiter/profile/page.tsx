@@ -14,6 +14,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RecruiterCard } from "@/components/recruiter-card";
 import { EditForm } from "./_edit-form";
+import { VerificationAlerts } from "@/components/verification-alerts";
 
 export default function RecruiterProfilePage() {
   const router = useRouter();
@@ -106,6 +107,8 @@ export default function RecruiterProfilePage() {
           Logout
         </button>
       </div>
+
+      <VerificationAlerts />
 
       {saveSuccess && (
         <Alert className="mb-4">
