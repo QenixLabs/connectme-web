@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, Check, X, Shield, User, Clock } from "lucide-react";
+import { Bell, Check, X, Shield, User, Clock, FileCheck } from "lucide-react";
 import { notificationsApi, talentApi } from "@/lib/api";
 import { useSocket } from "@/hooks/use-socket";
 import { getApiErrorMessage } from "@/lib/formatters";
@@ -31,7 +31,7 @@ type NotificationItem = {
   status: string;
   action_status: string | null;
   is_history: boolean;
-  dismiss_strategy: string;
+  dismiss_strategy?: string;
   created_at: string;
 };
 
@@ -142,6 +142,7 @@ export function NotificationList() {
   const renderNotification = (notification: NotificationItem) => {
     const isRequest = notification.type === "access_request";
     const isResponse = notification.type === "access_response";
+    const isVerificationStatus = notification.type === "verification_status";
     const actorName = getActorName(notification.actor_id);
 
     return (
@@ -178,6 +179,12 @@ export function NotificationList() {
                   <Badge variant="outline" className="text-2xs shrink-0">
                     <User className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
                     Response
+                  </Badge>
+                )}
+                {isVerificationStatus && (
+                  <Badge variant="outline" className="text-2xs shrink-0">
+                    <FileCheck className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
+                    Verification
                   </Badge>
                 )}
               </div>

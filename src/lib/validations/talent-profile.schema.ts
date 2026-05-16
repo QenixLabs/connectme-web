@@ -124,13 +124,18 @@ export type TalentProfile = UpdateTalentProfileInput & {
   username?: string;
   email?: string;
   phone?: string;
+  is_verified?: boolean;
   media_limits?: {
     images_used: number;
     videos_used: number;
     plan_max_images: number;
     plan_max_videos: number;
   };
-  analytics?: unknown;
+  analytics?: {
+    profile_views_7d?: number;
+    profile_views_30d?: number;
+    shortlist_count?: number;
+  };
   section_visibility?: z.infer<typeof sectionVisibilitySchema>;
   created_at?: string;
   updated_at?: string;

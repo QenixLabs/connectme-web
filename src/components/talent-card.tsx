@@ -141,9 +141,11 @@ export function TalentCard({
               <h3 className="text-lg font-bold text-text-primary break-words min-w-0">
                 {displayName}
               </h3>
-              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-success shrink-0">
-                <Check className="w-3 h-3 text-white" strokeWidth={2.5} />
-              </span>
+              {data.is_verified && (
+                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-success shrink-0">
+                  <Check className="w-3 h-3 text-white" strokeWidth={2.5} />
+                </span>
+              )}
             </div>
 
             {data.username && (

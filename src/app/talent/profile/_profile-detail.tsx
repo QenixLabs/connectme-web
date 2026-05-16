@@ -62,9 +62,9 @@ function Pills({ items }: { items?: string[] }) {
   );
 }
 
-function Section({ title, action, children }: { title: string; action?: React.ReactNode; children: React.ReactNode }) {
+function Section({ title, action, children, className }: { title: string; action?: React.ReactNode; children: React.ReactNode; className?: string }) {
   return (
-    <Card className="border-t-[2px] border-t-brand-muted overflow-hidden">
+    <Card className={`border-t-[2px] border-t-brand-muted overflow-hidden${className ? ` ${className}` : ""}`}>
       <div className="flex items-center justify-between px-3.5 sm:px-4 pt-3 pb-2">
         <h2 className="text-[11px] uppercase tracking-[0.08em] font-medium text-brand-hover">{title}</h2>
         {action && <div>{action}</div>}
@@ -119,8 +119,8 @@ export function ProfileDetail({ profile, isOwner, onEditSection, className }: Pr
   return (
     <div className={className ?? "space-y-2.5"}>
       <VisibleSection sectionKey="bio" isOwner={isOwner} profile={profile}>
-        <Section title="Identity" action={editAction}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 gap-x-4">
+        <Section title="Identity" action={editAction} className="col-span-2 lg:col-span-1">
+          <div className="grid grid-cols-2 gap-2.5 gap-x-4">
             <Field label="Full legal name" value={showStr(profile.full_legal_name)} />
             <Field label="Date of birth" value={formatDob(profile.date_of_birth)} />
             <Field label="Gender" value={titleCase(profile.gender)} />
@@ -138,7 +138,7 @@ export function ProfileDetail({ profile, isOwner, onEditSection, className }: Pr
       </VisibleSection>
 
       <VisibleSection sectionKey="location" isOwner={isOwner} profile={profile}>
-        <Section title="Location" action={editAction}>
+        <Section title="Location" action={editAction} className="col-span-2 lg:col-span-1">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 gap-x-4">
             <Field label="Country" value={showStr(profile.location?.country)} />
             <Field label="State" value={showStr(profile.location?.state)} />
@@ -149,7 +149,7 @@ export function ProfileDetail({ profile, isOwner, onEditSection, className }: Pr
       </VisibleSection>
 
       <VisibleSection sectionKey="experience" isOwner={isOwner} profile={profile}>
-        <Section title="Career" action={editAction}>
+        <Section title="Career" action={editAction} className="col-span-2 lg:col-span-1">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 gap-x-4">
             <Field label="Professions" value={<Pills items={profile.professions} />} />
             <Field label="Availability" value={titleCase(profile.availability)} />
@@ -235,7 +235,7 @@ export function ProfileDetail({ profile, isOwner, onEditSection, className }: Pr
             {(["instagram", "youtube", "linkedin"] as const).map((platform) => {
               const link = socials?.[platform];
               return (
-                <div key={platform} className="flex items-center justify-between gap-3">
+                <div key={platform} className="flex items-center justify-between gap-3 py-2">
                   <span className="text-text-tertiary capitalize text-[13px]">{platform}</span>
                   <div className="flex items-center gap-2 min-w-0 flex-1 justify-end">
                     {link?.url ? (

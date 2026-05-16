@@ -163,7 +163,7 @@ function SectionToggle({
   sectionKey,
 }: {
   control: Control<CreateTalentProfileInput>;
-  sectionKey: keyof CreateTalentProfileInput["section_visibility"];
+  sectionKey: keyof NonNullable<CreateTalentProfileInput["section_visibility"]>;
 }) {
   return (
     <Controller

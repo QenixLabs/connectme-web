@@ -10,6 +10,7 @@ import {
   Bookmark,
   Globe,
   Play,
+  Shield,
 } from "lucide-react";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { talentApi } from "@/lib/api";
@@ -139,7 +140,7 @@ function PortfolioTabGrid({ items }: { items: PortfolioItem[] }) {
 
 export default function TalentProfilePage() {
   const router = useRouter();
-  const { logout } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const [mode, setMode] = useState<Mode>("create");
   const [isEditing, setIsEditing] = useState(true);
   const [profile, setProfile] = useState<TalentProfile | null>(null);
@@ -147,6 +148,7 @@ export default function TalentProfilePage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [completenessVersion, setCompletenessVersion] = useState(0);
+  const [completenessPct, setCompletenessPct] = useState<number | undefined>(undefined);
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([]);
   const [portfolioLoading, setPortfolioLoading] = useState(false);
 
@@ -173,6 +175,19 @@ export default function TalentProfilePage() {
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
+
+    talentApi
+      .getCompleteness()
+      .then((res) => {
+        if (cancelled) return;
+        const total = 35;
+        const filled = Math.max(0, total - res.missingFields.length);
+        setCompletenessPct(Math.round((filled / total) * 100));
+      })
+      .catch(() => {
+        // ignore
+      });
+
     return () => {
       cancelled = true;
     };
@@ -194,6 +209,25 @@ export default function TalentProfilePage() {
   const handleTabChange = (tab: string) => {
     if (tab === "portfolio") fetchPortfolio();
   };
+
+  useEffect(() => {
+    if (completenessVersion === 0) return;
+    let cancelled = false;
+    talentApi
+      .getCompleteness()
+      .then((res) => {
+        if (cancelled) return;
+        const total = 35;
+        const filled = Math.max(0, total - res.missingFields.length);
+        setCompletenessPct(Math.round((filled / total) * 100));
+      })
+      .catch(() => {
+        // ignore
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [completenessVersion]);
 
   if (loading) {
     return <ProfileSkeleton />;
@@ -235,6 +269,7 @@ export default function TalentProfilePage() {
 
         <ProfileCard
           profile={profile}
+          completeness={completenessPct}
           actions={
             <>
               <button
@@ -242,7 +277,7 @@ export default function TalentProfilePage() {
                   setIsEditing(true);
                   setSaveSuccess(false);
                 }}
-                className="flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium bg-brand-light text-brand-hover border border-brand-muted hover:bg-brand-soft transition-colors"
+                className="flex items-center justify-center gap-1.5 py-3 rounded-lg text-xs font-medium bg-brand-light text-brand-hover border border-brand-muted hover:bg-brand-soft transition-colors"
               >
                 <Pencil className="w-3.5 h-3.5" strokeWidth={1.5} />
                 Edit
@@ -251,7 +286,7 @@ export default function TalentProfilePage() {
                 onClick={() =>
                   router.push(`/talent/${profile.username}/portfolio`)
                 }
-                className="flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium bg-muted-bg text-text-primary border border-border hover:bg-muted-bg/80 transition-colors"
+                className="flex items-center justify-center gap-1.5 py-3 rounded-lg text-xs font-medium bg-muted-bg text-text-primary border border-border hover:bg-muted-bg/80 transition-colors"
               >
                 <Images className="w-3.5 h-3.5" strokeWidth={1.5} />
                 Portfolio
@@ -260,6 +295,26 @@ export default function TalentProfilePage() {
             </>
           }
         />
+
+        {(user?.verification_tier ?? 0) < 2 && (
+          <div className="mx-3 sm:mx-4 mt-3">
+            <Card className="border-t-[2px] border-t-brand-muted overflow-hidden">
+              <div className="px-3.5 sm:px-4 pt-3 pb-2">
+                <h2 className="text-[11px] uppercase tracking-[0.08em] font-medium text-brand-hover">Identity Verification</h2>
+              </div>
+              <CardContent className="px-3.5 sm:px-4 pb-3.5 pt-0 space-y-2">
+                <p className="text-[12px] text-text-primary">Verify your identity to build trust with recruiters.</p>
+                <button
+                  onClick={() => router.push("/talent/verify-documents")}
+                  className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium bg-brand-light text-brand-hover border border-brand-muted hover:bg-brand-soft transition-colors"
+                >
+                  <Shield className="w-3.5 h-3.5" strokeWidth={1.5} />
+                  Verify Identity
+                </button>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         <div className="lg:grid lg:grid-cols-[320px_1fr] lg:gap-6">
           {/* Desktop sidebar */}
@@ -346,10 +401,10 @@ export default function TalentProfilePage() {
                           { icon: Globe, value: String(socialCount), label: "Social Links" },
                         ];
                         return stats.map((s) => (
-                          <div key={s.label} className="bg-muted-bg rounded-lg py-2.5 text-center border-l-2 border-brand-muted">
+                          <div key={s.label} className="bg-muted-bg rounded-lg py-3 text-center border-l-2 border-brand-muted">
                             <s.icon className="w-4 h-4 mx-auto text-brand mb-1" strokeWidth={1.5} />
                             <p className="text-xl font-medium text-text-primary leading-none">{s.value}</p>
-                            <p className="text-[10px] text-text-muted mt-0.5">{s.label}</p>
+                            <p className="text-[11px] text-text-muted mt-0.5">{s.label}</p>
                           </div>
                         ));
                       })()}

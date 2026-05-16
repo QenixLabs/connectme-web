@@ -16,10 +16,13 @@ import { PasswordRules } from "@/components/ui/password-rules";
 import { SuccessState } from "@/components/ui/success-state";
 
 type Step = "email" | "otp" | "success";
+type ResetMethod = "email" | "phone";
 
 export default function ForgotPasswordPage() {
   const [step, setStep] = useState<Step>("email");
+  const [resetMethod, setResetMethod] = useState<ResetMethod>("email");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -32,7 +35,10 @@ export default function ForgotPasswordPage() {
     setError("");
 
     try {
-      await authApi.forgotPassword(email);
+      await authApi.forgotPassword(
+        resetMethod === "email" ? email : undefined,
+        resetMethod === "phone" ? phone : undefined,
+      );
       setStep("otp");
     } catch (err: any) {
       setError(getApiErrorMessage(err, "Failed to send OTP. Please try again."));
@@ -59,7 +65,12 @@ export default function ForgotPasswordPage() {
     }
 
     try {
-      await authApi.resetPassword(email, otp, newPassword);
+      await authApi.resetPassword(
+        resetMethod === "email" ? email : undefined,
+        resetMethod === "phone" ? phone : undefined,
+        otp,
+        newPassword,
+      );
       setStep("success");
     } catch (err: any) {
       setError(getApiErrorMessage(err, "Failed to reset password. Please try again."));
@@ -70,9 +81,9 @@ export default function ForgotPasswordPage() {
 
   const subtitle =
     step === "email"
-      ? "Enter your email to reset password"
+      ? `Enter your ${resetMethod} to reset password`
       : step === "otp"
-      ? "Enter the OTP sent to your email"
+      ? `Enter the OTP sent to your ${resetMethod}`
       : "Your password has been reset";
 
   const rules = [
@@ -90,18 +101,63 @@ export default function ForgotPasswordPage() {
           )}
 
           {step === "email" && (
-            <form method="post" onSubmit={handleRequestOtp} className="space-y-5">
-              <TextInput
-                label="Email"
-                type="email"
-                value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  setError("");
-                }}
-                placeholder="you@example.com"
-                required
-              />
+            <form onSubmit={handleRequestOtp} className="space-y-5">
+              <div className="flex rounded-lg border border-border overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setResetMethod("email");
+                    setError("");
+                  }}
+                  className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                    resetMethod === "email"
+                      ? "bg-brand text-white"
+                      : "bg-card text-text-secondary hover:bg-muted-bg"
+                  }`}
+                >
+                  Email
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setResetMethod("phone");
+                    setError("");
+                  }}
+                  className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                    resetMethod === "phone"
+                      ? "bg-brand text-white"
+                      : "bg-card text-text-secondary hover:bg-muted-bg"
+                  }`}
+                >
+                  Phone
+                </button>
+              </div>
+
+              {resetMethod === "email" ? (
+                <TextInput
+                  label="Email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setError("");
+                  }}
+                  placeholder="you@example.com"
+                  required
+                />
+              ) : (
+                <TextInput
+                  label="Phone"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => {
+                    setPhone(e.target.value);
+                    setError("");
+                  }}
+                  placeholder="+91 98765 43210"
+                  required
+                />
+              )}
 
               <Button
                 type="submit"
@@ -117,7 +173,7 @@ export default function ForgotPasswordPage() {
           )}
 
           {step === "otp" && (
-            <form method="post" onSubmit={handleResetPassword} className="space-y-5">
+            <form onSubmit={handleResetPassword} className="space-y-5">
               <OtpInput
                 label="OTP Code"
                 value={otp}

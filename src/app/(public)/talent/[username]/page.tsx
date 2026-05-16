@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Lock, ShieldCheck, Images } from "lucide-react";
 import { talentApi } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
+import { computeCompletenessPct } from "@/lib/talent-profile/display-helpers";
 import type { TalentProfile } from "@/lib/validations/talent-profile.schema";
 import { ProfileDetail } from "@/app/talent/profile/_profile-detail";
 import { ProfileCard, ShareButton } from "@/app/talent/profile/_profile-card";
@@ -53,7 +54,7 @@ export default function PublicTalentProfilePage() {
   if (loading) {
     return (
       <div className="max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto pb-[calc(5rem+env(safe-area-inset-bottom))] sm:pb-6">
-        <div className="h-[72px] sm:h-24 bg-gradient-to-br from-[#FDF3E0] via-[#FEF9F0] to-[#FCEFD6] border-b border-brand-muted/50" />
+        <div className="h-28 sm:h-24 bg-gradient-to-br from-[#FDF3E0] via-[#FEF9F0] to-[#FCEFD6] border-b border-brand-muted/50" />
         <div className="mx-3 sm:mx-4 -mt-7 relative">
           <div className="bg-card border border-border-subtle rounded-xl p-4 space-y-4">
             <div className="flex items-start gap-3.5">
@@ -114,12 +115,13 @@ export default function PublicTalentProfilePage() {
       {activeProfile && (
         <ProfileCard
           profile={activeProfile}
+          completeness={computeCompletenessPct(activeProfile)}
           actions={
             <>
               {username && (
                 <button
                   onClick={() => router.push(`/talent/${username}/portfolio`)}
-                  className="flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium bg-muted-bg text-text-primary border border-border hover:bg-muted-bg/80 transition-colors"
+                  className="flex items-center justify-center gap-1.5 py-3 rounded-lg text-xs font-medium bg-muted-bg text-text-primary border border-border hover:bg-muted-bg/80 transition-colors"
                 >
                   <Images className="w-3.5 h-3.5" strokeWidth={1.5} />
                   Portfolio
@@ -164,9 +166,22 @@ export default function PublicTalentProfilePage() {
         <div className="px-3 sm:px-4 pt-4 space-y-2.5">
           <ProfileDetail
             profile={profile}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5"
+            className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2.5"
           />
-          <TrustScore />
+          <div className="mb-4">
+            <TrustScore />
+          </div>
+        </div>
+      )}
+
+      {!isPrivate && profile && (
+        <div className="fixed bottom-0 left-0 right-0 px-3 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] bg-card border-t border-border sm:hidden z-10">
+          <button
+            onClick={() => router.push("/recruiter/messages")}
+            className="w-full py-3 rounded-xl bg-brand text-white font-medium text-sm hover:bg-brand-hover transition-colors"
+          >
+            Connect with {(profile.full_legal_name || profile.username || "talent").split(" ")[0]}
+          </button>
         </div>
       )}
     </div>
