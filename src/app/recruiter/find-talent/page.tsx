@@ -414,7 +414,7 @@ function TalentRow({
               {displayName}
             </span>
             {profile.is_verified && (
-              <span className="inline-flex items-center justify-center w-[18px] h-[18px] rounded-full bg-success shrink-0">
+              <span className="inline-flex items-center justify-center w-[18px] h-[18px] rounded-full bg-amber-500 shrink-0">
                 <Check className="w-2.5 h-2.5 text-white" strokeWidth={2.5} />
               </span>
             )}
