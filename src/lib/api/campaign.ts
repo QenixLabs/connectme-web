@@ -90,7 +90,7 @@ export const campaignApi = {
     Array<{
       _id: string;
       campaign_id: string;
-      talent_id: { _id: string; email: string } | string;
+      talent_id: { _id: string; email: string; full_legal_name?: string; username?: string } | string;
       message?: string;
       status: string;
       created_at: string;
@@ -109,6 +109,95 @@ export const campaignApi = {
       `/campaigns/${campaignId}/applications/${applicationId}`,
       { status },
     );
+    return response.data;
+  },
+
+  invite: async (
+    campaignId: string,
+    payload: { talent_id: string; message?: string },
+  ): Promise<{ _id: string; status: string }> => {
+    const response = await apiClient.post(`/campaigns/${campaignId}/invite`, payload);
+    return response.data;
+  },
+
+  getInvites: async (campaignId: string): Promise<
+    Array<{
+      _id: string;
+      campaign_id: string;
+      talent_id: { _id: string; email: string; full_legal_name?: string; username?: string; professions?: string[] } | string;
+      status: string;
+      created_at: string;
+    }>
+  > => {
+    const response = await apiClient.get(`/campaigns/${campaignId}/invites`);
+    return response.data;
+  },
+
+  getAnalytics: async (campaignId: string): Promise<{
+    applications_over_time: Array<{ date: string; count: number }>;
+    status_breakdown: { pending: number; accepted: number; rejected: number };
+    total_applications: number;
+    total_invites: number;
+    accepted_invites: number;
+    declined_invites: number;
+    response_rate: number;
+  }> => {
+    const response = await apiClient.get(`/campaigns/${campaignId}/analytics`);
+    return response.data;
+  },
+
+  getDemographics: async (campaignId: string): Promise<{
+    gender: Record<string, number>;
+    professions: Array<{ name: string; count: number }>;
+    locations: Array<{ city: string; count: number }>;
+  }> => {
+    const response = await apiClient.get(`/campaigns/${campaignId}/analytics/demographics`);
+    return response.data;
+  },
+
+  exportCsv: async (campaignId: string, campaignName: string): Promise<void> => {
+    const response = await apiClient.get(`/campaigns/${campaignId}/export`, {
+      responseType: 'blob',
+    });
+    const blob = new Blob([response.data], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const safeName = campaignName.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+    a.download = `${safeName}-applicants-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  },
+
+  acceptInvite: async (inviteId: string): Promise<{ _id: string; status: string }> => {
+    const response = await apiClient.patch(`/campaigns/invites/${inviteId}/accept`);
+    return response.data;
+  },
+
+  declineInvite: async (inviteId: string): Promise<{ _id: string; status: string }> => {
+    const response = await apiClient.patch(`/campaigns/invites/${inviteId}/decline`);
+    return response.data;
+  },
+
+  getDashboardStats: async (): Promise<{
+    active_campaigns: number;
+    total_applications_this_week: number;
+    response_rate: number;
+    pending_reviews: number;
+  }> => {
+    const response = await apiClient.get('/campaigns/dashboard/stats');
+    return response.data;
+  },
+
+  getTalentView: async (campaignId: string): Promise<
+    Campaign & {
+      my_invite: { _id: string; status: string; message?: string; created_at: string } | null;
+      my_application: { _id: string; status: string; message?: string; created_at: string } | null;
+    }
+  > => {
+    const response = await apiClient.get(`/campaigns/${campaignId}/talent-view`);
     return response.data;
   },
 };

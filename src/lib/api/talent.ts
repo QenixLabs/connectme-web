@@ -81,6 +81,8 @@ export const talentApi = {
     limit?: number;
   }): Promise<{
     data: Array<{
+      _id?: string;
+      user_id?: string;
       username?: string;
       full_legal_name?: string;
       headline?: string;

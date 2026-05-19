@@ -1,63 +1,27 @@
 "use client";
 
 import Link from "next/link";
-import { Check, Plus, Search, Crosshair } from "lucide-react";
+import { Plus, Search, FolderOpen, AlertCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { getGreeting } from "@/lib/greeting";
+import { useRecruiterDashboardStats, useCampaigns } from "@/lib/api";
 import { SectionHeader } from "@/components/ui/section-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
 import { Card } from "@/components/ui/card";
-
-const MOCK_TALENT = [
-  {
-    id: "1",
-    name: "Ananya Kapoor",
-    profession: "Actress",
-    location: "Mumbai",
-    matchPercent: 89,
-    verified: true,
-    avatar: null,
-  },
-  {
-    id: "2",
-    name: "Ishaan Verma",
-    profession: "Actor",
-    location: "Delhi",
-    matchPercent: 92,
-    verified: true,
-    avatar: null,
-  },
-  {
-    id: "3",
-    name: "Priya Malhotra",
-    profession: "Model",
-    location: "Bangalore",
-    matchPercent: 84,
-    verified: true,
-    avatar: null,
-  },
-  {
-    id: "4",
-    name: "Rohit Sinha",
-    profession: "Film Director",
-    location: "Mumbai",
-    matchPercent: 76,
-    verified: true,
-    avatar: null,
-  },
-];
-
-const MOCK_STATS = {
-  activeProjects: 18,
-  shortlistedTalent: 24,
-  messages: 5,
-};
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 
 export default function RecruiterDashboardPage() {
+  const router = useRouter();
   const { user } = useAuthStore();
   const firstName = user!.email.split("@")[0];
   const greeting = getGreeting();
+
+  const { data: stats, isLoading: statsLoading } = useRecruiterDashboardStats();
+  const { data: campaignsData, isLoading: campaignsLoading } = useCampaigns({ status: "active", limit: 5 });
+  const activeCampaigns = campaignsData?.pages.flatMap((p) => p.data) ?? [];
 
   return (
     <div className="space-y-6">
@@ -72,16 +36,44 @@ export default function RecruiterDashboardPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
-        <StatCard label="Active Projects" value={MOCK_STATS.activeProjects} align="left" />
-        <StatCard label="Shortlisted Talent" value={MOCK_STATS.shortlistedTalent} align="left" />
-        <StatCard label="Messages" value={MOCK_STATS.messages} align="left" />
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {statsLoading ? (
+          <>
+            <Skeleton className="h-24 rounded-xl" />
+            <Skeleton className="h-24 rounded-xl" />
+            <Skeleton className="h-24 rounded-xl" />
+            <Skeleton className="h-24 rounded-xl" />
+          </>
+        ) : (
+          <>
+            <StatCard
+              label="Active Campaigns"
+              value={stats?.active_campaigns ?? 0}
+              align="left"
+            />
+            <StatCard
+              label="Apps This Week"
+              value={stats?.total_applications_this_week ?? 0}
+              align="left"
+            />
+            <StatCard
+              label="Response Rate"
+              value={`${Math.round((stats?.response_rate ?? 0) * 100)}%`}
+              align="left"
+            />
+            <StatCard
+              label="Pending Reviews"
+              value={stats?.pending_reviews ?? 0}
+              align="left"
+            />
+          </>
+        )}
       </div>
 
       {/* Quick Actions */}
       <div className="grid grid-cols-2 gap-3">
         <Link
-          href="#"
+          href="/recruiter/campaigns/new"
           className="flex items-center justify-center gap-2 h-11 rounded-xl bg-surface-dark text-on-surface-dark text-sm font-medium hover:bg-surface-darker active:scale-[0.98] transition-all"
         >
           <Plus className="w-4 h-4" strokeWidth={1.5} />
@@ -96,92 +88,66 @@ export default function RecruiterDashboardPage() {
         </Link>
       </div>
 
-      {/* Recommended Talent */}
+      {/* Active Campaigns */}
       <div>
         <SectionHeader
-          title="Recommended Talent for You"
-          subtitle="Only verified talent shown"
+          title="Active Campaigns"
+          action={
+            <Link
+              href="/recruiter/campaigns"
+              className="text-xs font-medium text-brand hover:text-brand-hover"
+            >
+              View all
+            </Link>
+          }
         />
 
-        <div className="grid grid-cols-2 gap-3">
-          {MOCK_TALENT.map((talent) => (
-            <Card
-              key={talent.id}
-              className="rounded-2xl overflow-hidden hover:shadow-sm transition-shadow"
+        {campaignsLoading ? (
+          <div className="space-y-3">
+            <Skeleton className="h-20 rounded-2xl" />
+            <Skeleton className="h-20 rounded-2xl" />
+          </div>
+        ) : activeCampaigns.length === 0 ? (
+          <Card className="p-6 text-center">
+            <AlertCircle className="w-8 h-8 text-text-muted mx-auto mb-2" strokeWidth={1.5} />
+            <p className="text-sm text-text-secondary">No active campaigns</p>
+            <Link
+              href="/recruiter/campaigns/new"
+              className="mt-2 inline-block text-xs font-medium text-brand hover:text-brand-hover"
             >
-              <div className="relative h-36 bg-surface-light">
-                <div className="absolute inset-0 flex items-center justify-center text-3xl">
-                  {talent.avatar ? (
-                    <img
-                      src={talent.avatar}
-                      alt={talent.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-text-muted">👤</span>
-                  )}
+              Create your first campaign
+            </Link>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {activeCampaigns.map((campaign) => (
+              <Card
+                key={campaign._id}
+                className="p-4 cursor-pointer hover:shadow-sm transition-shadow"
+                onClick={() => router.push(`/recruiter/campaigns/${campaign._id}`)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-bold text-text-primary truncate">
+                      {campaign.name}
+                    </h3>
+                    <p className="text-xs text-text-muted mt-0.5">
+                      {campaign.applications_count} applicant
+                      {campaign.applications_count !== 1 ? "s" : ""}
+                      {campaign.deadline
+                        ? ` · Due ${new Date(campaign.deadline).toLocaleDateString()}`
+                        : ""}
+                    </p>
+                  </div>
+                  <Badge variant="secondary" className="text-2xs shrink-0">
+                    {campaign.visibility === "invite_only" ? "Invite Only" : "Public"}
+                  </Badge>
                 </div>
-                <div className="absolute top-2 right-2 px-1.5 py-0.5 bg-brand text-on-brand text-xs font-bold rounded-md">
-                  {talent.matchPercent}%
-                </div>
-              </div>
-              <div className="p-3">
-                <div className="flex items-center gap-1.5">
-                  <h3 className="text-sm font-bold text-text-primary truncate">
-                    {talent.name}
-                  </h3>
-                  {talent.verified && (
-                    <Check className="w-3.5 h-3.5 text-success flex-shrink-0" strokeWidth={1.5} />
-                  )}
-                </div>
-                <p className="text-xs text-text-muted mt-0.5">
-                  {talent.profession} · {talent.location}
-                </p>
-                <div className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 bg-surface-lightest border border-border rounded-full">
-                  <Check className="w-3 h-3 text-brand" strokeWidth={1.5} />
-                  <span className="text-xs font-medium text-text-secondary">
-                    {talent.matchPercent}% Match
-                  </span>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
-
-      {/* Recent Activity */}
-      <Card className="p-5">
-        <SectionHeader title="Recent Activity" />
-        <div className="space-y-3">
-          {[
-            {
-              text: "Ananya Kapoor accepted your connection request",
-              time: "2h ago",
-            },
-            {
-              text: "New application received for 'Lead Actor - Web Series'",
-              time: "5h ago",
-            },
-            {
-              text: "Shortlist 'Mumbai Models' updated with 3 new talents",
-              time: "1d ago",
-            },
-          ].map((item, i) => (
-            <div
-              key={i}
-              className="flex items-start gap-3 pb-3 border-b border-border-subtle last:border-0 last:pb-0"
-            >
-              <div className="w-8 h-8 rounded-full bg-brand-light flex items-center justify-center flex-shrink-0">
-                <Crosshair className="w-4 h-4 text-brand" strokeWidth={1.5} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-text-secondary">{item.text}</p>
-                <p className="text-xs text-text-muted mt-0.5">{item.time}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
     </div>
   );
 }

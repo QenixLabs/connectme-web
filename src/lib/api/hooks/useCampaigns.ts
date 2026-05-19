@@ -9,6 +9,7 @@ export function useCampaigns(filters: {
   role_type?: string;
   gender?: string;
   location_city?: string;
+  limit?: number;
 }) {
   return useInfiniteQuery({
     queryKey: queryKeys.campaigns.all(filters),

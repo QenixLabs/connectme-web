@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, Check, X, Shield, User, Clock, FileCheck } from "lucide-react";
-import { notificationsApi, talentApi } from "@/lib/api";
+import { Bell, Check, X, Shield, User, Clock, FileCheck, Mail } from "lucide-react";
+import { notificationsApi, talentApi, useRespondToInvite } from "@/lib/api";
 import { useSocket } from "@/hooks/use-socket";
 import { getApiErrorMessage } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
@@ -128,6 +128,34 @@ export function NotificationList() {
     }
   };
 
+  const respondToInvite = useRespondToInvite();
+
+  const handleAcceptInvite = async (notificationId: string, inviteId: string) => {
+    if (respondingId) return;
+    setRespondingId(inviteId);
+    try {
+      await respondToInvite.mutateAsync({ inviteId, action: 'accept' });
+      await fetchAll();
+    } catch (err) {
+      setError(getApiErrorMessage(err, "Failed to accept invite"));
+    } finally {
+      setRespondingId(null);
+    }
+  };
+
+  const handleDeclineInvite = async (notificationId: string, inviteId: string) => {
+    if (respondingId) return;
+    setRespondingId(inviteId);
+    try {
+      await respondToInvite.mutateAsync({ inviteId, action: 'decline' });
+      await fetchAll();
+    } catch (err) {
+      setError(getApiErrorMessage(err, "Failed to decline invite"));
+    } finally {
+      setRespondingId(null);
+    }
+  };
+
   const handleMarkRead = async (id: string) => {
     try {
       await notificationsApi.markAsRead(id);
@@ -143,7 +171,27 @@ export function NotificationList() {
     const isRequest = notification.type === "access_request";
     const isResponse = notification.type === "access_response";
     const isVerificationStatus = notification.type === "verification_status";
+    const isCampaignInvite = notification.type === "campaign_invite";
+    const isApplicationReceived = notification.type === "application_received";
+    const isApplicationStatusChanged = notification.type === "application_status_changed";
+    const inviteId = notification.data?.invite_id;
     const actorName = getActorName(notification.actor_id);
+
+    const handleCardClick = () => {
+      if (notification.status === "unread") {
+        handleMarkRead(notification._id);
+      }
+      if (
+        isCampaignInvite ||
+        isApplicationReceived ||
+        isApplicationStatusChanged
+      ) {
+        const campaignId = notification.data?.campaign_id;
+        if (campaignId) {
+          router.push(`/talent/opportunities/${campaignId}`);
+        }
+      }
+    };
 
     return (
       <Card
@@ -151,11 +199,7 @@ export function NotificationList() {
         className={`p-4 transition-colors cursor-pointer ${
           notification.status === "unread" ? "border-brand-muted bg-brand-light/20" : ""
         }`}
-        onClick={() => {
-          if (notification.status === "unread") {
-            handleMarkRead(notification._id);
-          }
-        }}
+        onClick={handleCardClick}
       >
         <div className="flex items-start gap-3">
           <Avatar
@@ -185,6 +229,24 @@ export function NotificationList() {
                   <Badge variant="outline" className="text-2xs shrink-0">
                     <FileCheck className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
                     Verification
+                  </Badge>
+                )}
+                {isCampaignInvite && (
+                  <Badge variant="secondary" className="text-2xs shrink-0">
+                    <Mail className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
+                    Campaign Invite
+                  </Badge>
+                )}
+                {isApplicationReceived && (
+                  <Badge variant="outline" className="text-2xs shrink-0">
+                    <User className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
+                    Application
+                  </Badge>
+                )}
+                {isApplicationStatusChanged && (
+                  <Badge variant="outline" className="text-2xs shrink-0">
+                    <FileCheck className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
+                    Status Update
                   </Badge>
                 )}
               </div>
@@ -263,6 +325,55 @@ export function NotificationList() {
                     <>
                       <Check className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
                       Approved
+                    </>
+                  ) : (
+                    <>
+                      <X className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
+                      Declined
+                    </>
+                  )}
+                </Badge>
+              </div>
+            )}
+
+            {isCampaignInvite && notification.action_status === "pending" && inviteId && (
+              <div className="mt-3 flex gap-2">
+                <Button
+                  size="sm"
+                  disabled={respondingId === inviteId}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAcceptInvite(notification._id, inviteId);
+                  }}
+                >
+                  <Check className="w-4 h-4 mr-1" />
+                  Accept Invite
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={respondingId === inviteId}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeclineInvite(notification._id, inviteId);
+                  }}
+                >
+                  <X className="w-4 h-4 mr-1" />
+                  Decline
+                </Button>
+              </div>
+            )}
+
+            {isCampaignInvite && notification.action_status !== "pending" && (
+              <div className="mt-3">
+                <Badge
+                  variant={notification.action_status === "allowed" ? "default" : "destructive"}
+                  className="text-2xs capitalize"
+                >
+                  {notification.action_status === "allowed" ? (
+                    <>
+                      <Check className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
+                      Accepted
                     </>
                   ) : (
                     <>
