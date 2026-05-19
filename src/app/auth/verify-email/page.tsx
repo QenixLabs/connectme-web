@@ -113,7 +113,7 @@ function VerifyEmailContent() {
             <p className="text-sm font-medium text-text-primary">{email}</p>
           </div>
 
-          <form method="post" onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <OtpInput
               label="OTP Code"
               value={otp}

@@ -144,7 +144,7 @@ export default function TalentDashboardPage() {
           Edit Profile
         </Link>
         <Link
-          href={profile?.username ? `/talent/@${profile.username}` : "#"}
+          href={profile?.username ? `/talent/${profile.username}` : "#"}
           className="flex items-center justify-center gap-2 h-11 rounded-xl border border-border text-text-secondary text-sm font-medium hover:bg-page active:scale-[0.98] transition-all"
         >
           <Globe className="w-4 h-4" strokeWidth={1.2} />

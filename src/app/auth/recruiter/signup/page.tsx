@@ -180,7 +180,7 @@ export default function RecruiterSignupPage() {
           )}
 
           <Form {...form}>
-            <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
               {/* STEP 1 */}
               {step === 1 && (
                 <div className="space-y-4">

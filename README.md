@@ -7,8 +7,8 @@ Next.js 16 app for the ConnectME talent platform.
 - Next.js 16 (App Router) + React 19 + TypeScript
 - Tailwind CSS v4 (CSS-first via `@tailwindcss/postcss`)
 - shadcn/ui (New York, neutral, lucide icons)
-- Zustand v5 (client state)
-- Axios (API calls, `withCredentials: true`)
+- Zustand v5 (client state, vanilla store + provider)
+- Axios (`withCredentials: true`)
 - React Hook Form + Zod (forms)
 - TanStack React Query v5 (installed; not yet wired)
 - Motion (Framer) v12, Sonner (toasts), Recharts, date-fns
@@ -24,13 +24,13 @@ Runs on `http://localhost:3000` by default. Backend also defaults to `:3000`, so
 
 ## Environment
 
-Create `.env.local` and set:
+Create `.env.local`:
 
 ```
 NEXT_PUBLIC_API_URL=http://localhost:3000/api/v1
 ```
 
-Points to the NestJS backend (global prefix `api/v1`). Code fallback is `http://localhost:3001/api/v1` if unset — override locally so it actually hits the backend.
+Points to the NestJS backend (global prefix `api/v1`). Code fallback is `http://localhost:3001/api/v1` if unset.
 
 ## Scripts
 
@@ -45,75 +45,73 @@ npm run lint        # eslint
 
 ```
 src/
-├── app/
+├── app/                          # App Router pages
 │   ├── layout.tsx, page.tsx, globals.css
-│   ├── auth/
-│   │   ├── login/                        # email + password
-│   │   ├── forgot-password/
-│   │   ├── verify-email/                 # OTP entry
-│   │   ├── talent/signup/
-│   │   └── recruiter/signup/
-│   ├── talent/
-│   │   ├── layout.tsx
-│   │   ├── dashboard/
-│   │   ├── opportunities/
-│   │   ├── messages/
-│   │   ├── profile/                      # owner view + edit
-│   │   └── [username]/                   # public profile
-│   └── recruiter/
-│       ├── layout.tsx
-│       ├── dashboard/
-│       ├── campaigns/
-│       ├── messages/
-│       └── profile/
+│   ├── auth/                     # login, signup, forgot-password, verify-email
+│   ├── talent/                   # dashboard, profile, portfolio, messages,
+│   │                             # notifications, opportunities, verify-documents
+│   ├── recruiter/                # dashboard, profile, campaigns, find-talent,
+│   │                             # messages, notifications, verify-documents
+│   ├── admin/                    # dashboard, verifications
+│   └── (public)/talent/[username]/  # public profile + portfolio
 ├── components/
-│   ├── ui/                               # shadcn primitives (~30 files)
-│   ├── layout/                           # auth-layout, dashboard-layout
-│   ├── skeletons/                        # profile-skeleton
-│   └── talent-card.tsx
+│   ├── ui/                       # shadcn primitives (~35 files)
+│   ├── layout/                   # auth-layout, dashboard-layout
+│   ├── portfolio/                # grid, uploader, item card, media kit
+│   ├── verification/             # document submission, status card
+│   └── talent-card.tsx, recruiter-card.tsx, verification-alerts.tsx
 ├── stores/
-│   └── auth-store.ts                     # user, isAuthenticated, login/logout/fetchUser
+│   └── auth-store.ts             # user, isAuthenticated, login/logout/fetchUser
+├── providers/
+│   ├── auth-store-provider.tsx
+│   └── socket-provider.tsx
 ├── lib/
-│   ├── api.ts                            # apiClient + authApi/talentApi/messagesApi
-│   ├── utils.ts                          # cn()
+│   ├── api.ts                    # apiClient + domain API wrappers
+│   ├── utils.ts                  # cn()
 │   ├── formatters.ts, greeting.ts, validation.ts
-│   ├── validations/
-│   │   └── talent-profile.schema.ts
-│   └── talent-profile/                   # display + form helpers, options
-└── hooks/
-    └── use-password-strength.ts
+│   ├── validations/              # Zod schemas
+│   ├── talent-profile/           # display + form helpers, options
+│   └── recruiter-profile/        # form helpers, options
+├── hooks/
+│   ├── use-password-strength.ts
+│   └── use-socket.ts
+└── middleware.ts                 # Auth + role guard
 ```
 
 Path alias: `@/*` → `./src/*`.
 
-## API Layer (`src/lib/api.ts`)
+## Auth & Middleware
 
-Single Axios instance (`apiClient`), `withCredentials: true`, `Content-Type: application/json`. 401 responses redirect to `/auth/login` via response interceptor.
+`middleware.ts` guards `/talent/*`, `/recruiter/*`, `/admin/*`:
+- Checks `auth_session` cookie (mirrored from Zustand store on login)
+- Redirects unauthenticated to `/auth/login`
+- Enforces role match (talent → `/talent/*`, recruiter → `/recruiter/*`, admin → `/admin/*`)
+- Public talent profiles (`/talent/:username`) bypass auth
 
-Endpoint groups:
+Zustand auth store (`src/stores/auth-store.ts`) persists to localStorage and mirrors `auth_session` + `user_role` cookies so middleware can read them.
 
-- **`authApi`** — `login`, `signup`, `verifyOtp`, `resendOtp`, `getCurrentUser`, `logout`, `forgotPassword`, `resetPassword`
-- **`talentApi`** — `checkUsernameAvailability`, `getMyProfile`, `getCompleteness`, `createProfile`, `updateProfile`, `getPublicProfile`, `requestAccess`, `respondToAccessRequest`, `getAccessRequests`
-- **`messagesApi`** — `getConversations`, `markAsRead`
+## API Layer
 
-## State
+Single Axios instance (`apiClient`) in `src/lib/api.ts`, `withCredentials: true`, unwraps `{ success, data }` envelopes, 401 redirects to login.
 
-`src/stores/auth-store.ts` holds `user`, `isAuthenticated`, `isLoading`, `error`. Actions: `login`, `logout`, `fetchUser`, `clearError`. Login redirects role-based (`/talent/profile` or `/recruiter/profile`).
-
-No middleware exists. Auth gating is client-side: 401 from the backend triggers a redirect via the Axios interceptor.
+Domain wrappers: `authApi`, `talentApi`, `recruiterApi`, `messagesApi`, `notificationsApi`, `verificationApi`, `adminApi`.
 
 ## Styling
 
-- Tailwind v4 configured CSS-first in `src/app/globals.css` (no `tailwind.config.{js,ts}`).
-- PostCSS plugin: `@tailwindcss/postcss`.
-- shadcn config (`components.json`): `style: new-york`, `baseColor: neutral`, `cssVariables: true`, `rsc: true`, `iconLibrary: lucide`.
-- Use `cn()` from `src/lib/utils.ts` for conditional classes.
+- Tailwind v4 CSS-first in `src/app/globals.css` (no `tailwind.config.{js,ts}`)
+- PostCSS plugin: `@tailwindcss/postcss`
+- shadcn config (`components.json`): `style: new-york`, `baseColor: neutral`, `cssVariables: true`, `rsc: true`, `iconLibrary: lucide`
+- Use `cn()` from `src/lib/utils.ts` for conditional classes
 
 ## UI Component Rule
 
-Always use shadcn/ui primitives instead of hand-rolling buttons, inputs, dialogs, sheets, cards, tables, tabs, forms, alerts, badges, dropdowns, sidebars, etc. Install on demand via the shadcn CLI. Place primitives under `src/components/ui/` (kebab-case), domain components under `src/components/{domain}/` (PascalCase).
+Always use shadcn/ui primitives. Install on demand via shadcn CLI. Place primitives under `src/components/ui/` (kebab-case), domain components under `src/components/{domain}/` (PascalCase).
 
-Forms: shadcn `Form` + `FormField` + `FormItem` + `FormControl` + `FormMessage` with React Hook Form + `zodResolver`. Schemas live under `src/lib/validations/`.
+Forms: shadcn `Form` + `FormField` + `FormItem` + `FormControl` + `FormMessage` with React Hook Form + `zodResolver`. Schemas under `src/lib/validations/`.
+
+## Pages
+
+See [docs/routes.md](docs/routes.md) for full route documentation.
 
 ## Backend
 

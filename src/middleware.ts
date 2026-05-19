@@ -9,8 +9,20 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  const isAdmin = pathname.startsWith('/admin/');
   const isProtected =
     pathname.startsWith('/talent/') || pathname.startsWith('/recruiter/');
+
+  if (isAdmin) {
+    const authSession = request.cookies.get('auth_session')?.value;
+    const userRole = request.cookies.get('user_role')?.value;
+
+    if (!authSession || userRole !== 'admin') {
+      const loginUrl = new URL('/auth/login', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+  }
 
   if (isProtected) {
     const authSession = request.cookies.get('auth_session')?.value;
@@ -29,7 +41,9 @@ export function middleware(request: NextRequest) {
           ? '/talent/dashboard'
           : userRole === 'recruiter'
             ? '/recruiter/dashboard'
-            : '/auth/login';
+            : userRole === 'admin'
+              ? '/admin/dashboard'
+              : '/auth/login';
       return NextResponse.redirect(new URL(fallbackUrl, request.url));
     }
   }
@@ -38,5 +52,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/talent/:path*', '/recruiter/:path*'],
+  matcher: ['/talent/:path*', '/recruiter/:path*', '/admin/:path*'],
 };

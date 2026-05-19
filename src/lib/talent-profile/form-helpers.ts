@@ -37,7 +37,7 @@ export const DEFAULT_VALUES: CreateTalentProfileInput = {
   languages: [],
   accents: [],
   skills: [],
-  documents: { resume_url: "", portfolio_pdf_url: "", measurements_sheet_url: "" },
+  documents: { resume_url: "" },
   social_links: {
     instagram: { url: "", visibility: "public" },
     youtube: { url: "", visibility: "public" },
@@ -104,8 +104,6 @@ export function hydrateFromServer(profile: TalentProfile): CreateTalentProfileIn
     })),
     documents: {
       resume_url: profile.documents?.resume_url ?? "",
-      portfolio_pdf_url: profile.documents?.portfolio_pdf_url ?? "",
-      measurements_sheet_url: profile.documents?.measurements_sheet_url ?? "",
     },
     social_links: {
       instagram: {

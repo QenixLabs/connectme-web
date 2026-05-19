@@ -2,18 +2,19 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Upload, Search, LogOut } from "lucide-react";
+import { Upload, Search, LogOut, Shield } from "lucide-react";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { recruiterApi } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
 import type { RecruiterProfile } from "@/lib/validations/recruiter-profile.schema";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RecruiterCard } from "@/components/recruiter-card";
 import { EditForm } from "./_edit-form";
+import { VerificationAlerts } from "@/components/verification-alerts";
 
 export default function RecruiterProfilePage() {
   const router = useRouter();
@@ -107,6 +108,8 @@ export default function RecruiterProfilePage() {
         </button>
       </div>
 
+      <VerificationAlerts />
+
       {saveSuccess && (
         <Alert className="mb-4">
           <AlertDescription>Profile saved.</AlertDescription>
@@ -126,6 +129,26 @@ export default function RecruiterProfilePage() {
           setSaveSuccess(false);
         }}
       />
+
+      {profile?.verification_status !== 'approved' && (
+        <div className="mt-4">
+          <Card className="border-t-[2px] border-t-brand-muted overflow-hidden">
+            <div className="px-3.5 sm:px-4 pt-3 pb-2">
+              <h2 className="text-[11px] uppercase tracking-[0.08em] font-medium text-brand-hover">Company Verification</h2>
+            </div>
+            <CardContent className="px-3.5 sm:px-4 pb-3.5 pt-0 space-y-2">
+              <p className="text-[12px] text-text-primary">Verify your company to build trust with talents.</p>
+              <button
+                onClick={() => router.push("/recruiter/verify-documents")}
+                className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium bg-brand-light text-brand-hover border border-brand-muted hover:bg-brand-soft transition-colors"
+              >
+                <Shield className="w-3.5 h-3.5" strokeWidth={1.5} />
+                Verify Company
+              </button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <Card className="mt-6 p-6">
         <SectionHeader

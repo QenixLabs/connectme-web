@@ -59,7 +59,7 @@ export default function LoginPage() {
       <Card>
         <CardContent className="px-8 py-8">
           <Form {...form}>
-            <form method="post" onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
               {error && (
                 <Alert variant="destructive">
                   <AlertDescription>{error}</AlertDescription>

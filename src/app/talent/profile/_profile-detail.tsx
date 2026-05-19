@@ -5,10 +5,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { DASH, showStr, showNum, formatDob, titleCase, formatLocation } from "@/lib/talent-profile/display-helpers";
+import { Pencil } from "lucide-react";
 
 interface ProfileDetailProps {
   profile: TalentProfile;
   isOwner?: boolean;
+  onEditSection?: () => void;
+  className?: string;
 }
 
 function VisibleSection({
@@ -30,17 +33,24 @@ function VisibleSection({
   return <>{children}</>;
 }
 
-function Field({ label, value }: { label: string; value: React.ReactNode }) {
+function EmptyValue() {
+  return <span className="text-sm text-text-muted italic">Not added yet</span>;
+}
+
+function Field({ label, value, fullWidth }: { label: string; value: React.ReactNode; fullWidth?: boolean }) {
+  const isEmpty = value === DASH || value === null || value === undefined || value === "";
   return (
-    <div>
-      <p className="text-xs uppercase tracking-wide text-text-muted">{label}</p>
-      <div className="text-sm text-text-primary mt-0.5 break-words">{value}</div>
+    <div className={fullWidth ? "col-span-full" : ""}>
+      <p className="text-[10px] uppercase tracking-[0.06em] text-text-secondary font-medium mb-0.5">{label}</p>
+      <div className="text-[13px] text-text-primary break-words">
+        {isEmpty ? <EmptyValue /> : value}
+      </div>
     </div>
   );
 }
 
 function Pills({ items }: { items?: string[] }) {
-  if (!items || items.length === 0) return <span className="text-sm text-text-muted">{DASH}</span>;
+  if (!items || items.length === 0) return <EmptyValue />;
   return (
     <div className="flex flex-wrap gap-1.5">
       {items.map((it) => (
@@ -52,11 +62,14 @@ function Pills({ items }: { items?: string[] }) {
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, action, children, className }: { title: string; action?: React.ReactNode; children: React.ReactNode; className?: string }) {
   return (
-    <Card>
-      <CardContent className="p-5 sm:p-6">
-        <h2 className="text-base font-semibold text-text-primary mb-4">{title}</h2>
+    <Card className={`border-t-[2px] border-t-brand-muted overflow-hidden${className ? ` ${className}` : ""}`}>
+      <div className="flex items-center justify-between px-3.5 sm:px-4 pt-3 pb-2">
+        <h2 className="text-[11px] uppercase tracking-[0.08em] font-medium text-brand-hover">{title}</h2>
+        {action && <div>{action}</div>}
+      </div>
+      <CardContent className="px-3.5 sm:px-4 pb-3.5 pt-0">
         {children}
       </CardContent>
     </Card>
@@ -82,7 +95,7 @@ function DocLink({ label, url }: { label: string; url?: string }) {
   );
 }
 
-export function ProfileDetail({ profile, isOwner }: ProfileDetailProps) {
+export function ProfileDetail({ profile, isOwner, onEditSection, className }: ProfileDetailProps) {
   const loc = formatLocation([
     profile.location?.city,
     profile.location?.state,
@@ -93,51 +106,60 @@ export function ProfileDetail({ profile, isOwner }: ProfileDetailProps) {
   const docs = profile.documents;
   const socials = profile.social_links;
 
+  const editAction = onEditSection ? (
+    <button
+      onClick={onEditSection}
+      className="inline-flex items-center gap-1 text-[11px] text-brand hover:text-brand-hover transition-colors"
+    >
+      <Pencil className="w-3 h-3" strokeWidth={1.5} />
+      Edit
+    </button>
+  ) : undefined;
+
   return (
-    <div className="space-y-4">
+    <div className={className ?? "space-y-2.5"}>
       <VisibleSection sectionKey="bio" isOwner={isOwner} profile={profile}>
-        <Section title="Identity">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Section title="Identity" action={editAction} className="col-span-2 lg:col-span-1">
+          <div className="grid grid-cols-2 gap-2.5 gap-x-4">
             <Field label="Full legal name" value={showStr(profile.full_legal_name)} />
             <Field label="Date of birth" value={formatDob(profile.date_of_birth)} />
             <Field label="Gender" value={titleCase(profile.gender)} />
-            <Field
-              label="Username"
-              value={profile.username ? `@${profile.username}` : DASH}
-            />
+            <Field label="Username" value={profile.username ? `@${profile.username}` : DASH} />
+            <Field label="Email" value={showStr(profile.email)} />
+            <Field label="Phone" value={showStr(profile.phone)} />
           </div>
           {profile.headline && (
-            <p className="text-sm text-text-secondary mt-4">{profile.headline}</p>
+            <p className="text-[13px] text-text-secondary mt-3">{profile.headline}</p>
           )}
           {profile.about && (
-            <p className="text-sm text-text-secondary mt-2 whitespace-pre-wrap break-words">{profile.about}</p>
+            <p className="text-[13px] text-text-secondary mt-2 whitespace-pre-wrap break-words">{profile.about}</p>
           )}
         </Section>
       </VisibleSection>
 
       <VisibleSection sectionKey="location" isOwner={isOwner} profile={profile}>
-        <Section title="Location">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Section title="Location" action={editAction} className="col-span-2 lg:col-span-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 gap-x-4">
             <Field label="Country" value={showStr(profile.location?.country)} />
             <Field label="State" value={showStr(profile.location?.state)} />
-            <Field label="City" value={showStr(profile.location?.city)} />
+            <Field label="City" value={showStr(profile.location?.city)} fullWidth />
           </div>
-          {loc && <p className="text-sm text-text-muted mt-3">{loc}</p>}
+          {loc && <p className="text-[13px] text-text-muted mt-2">{loc}</p>}
         </Section>
       </VisibleSection>
 
       <VisibleSection sectionKey="experience" isOwner={isOwner} profile={profile}>
-        <Section title="Career">
-          <div className="space-y-4">
+        <Section title="Career" action={editAction} className="col-span-2 lg:col-span-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 gap-x-4">
             <Field label="Professions" value={<Pills items={profile.professions} />} />
-            <Field label="Industries" value={<Pills items={profile.industries} />} />
             <Field label="Availability" value={titleCase(profile.availability)} />
+            <Field label="Industries" value={<Pills items={profile.industries} />} fullWidth />
           </div>
         </Section>
       </VisibleSection>
 
       <VisibleSection sectionKey="skills" isOwner={isOwner} profile={profile}>
-        <Section title="Skills">
+        <Section title="Skills" action={editAction}>
           {profile.skills && profile.skills.length > 0 ? (
             <ul className="space-y-2">
               {profile.skills.map((s, i, arr) => (
@@ -151,13 +173,13 @@ export function ProfileDetail({ profile, isOwner }: ProfileDetailProps) {
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-text-muted">No skills added.</p>
+            <EmptyValue />
           )}
         </Section>
       </VisibleSection>
 
       <VisibleSection sectionKey="languages" isOwner={isOwner} profile={profile}>
-        <Section title="Languages">
+        <Section title="Languages" action={editAction}>
           {profile.languages && profile.languages.length > 0 ? (
             <ul className="space-y-2">
               {profile.languages.map((l, i, arr) => (
@@ -171,20 +193,20 @@ export function ProfileDetail({ profile, isOwner }: ProfileDetailProps) {
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-text-muted">No languages added.</p>
+            <EmptyValue />
           )}
         </Section>
       </VisibleSection>
 
       <VisibleSection sectionKey="accents" isOwner={isOwner} profile={profile}>
-        <Section title="Accents">
+        <Section title="Accents" action={editAction}>
           <Pills items={profile.accents} />
         </Section>
       </VisibleSection>
 
       <VisibleSection sectionKey="physical_attributes" isOwner={isOwner} profile={profile}>
-        <Section title="Physical attributes">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Section title="Physical attributes" action={editAction}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 gap-x-4">
             <Field label="Height" value={showNum(phys?.height_cm, " cm")} />
             <Field label="Weight" value={showNum(phys?.weight_kg, " kg")} />
             <Field label="Body type" value={titleCase(phys?.body_type)} />
@@ -198,8 +220,8 @@ export function ProfileDetail({ profile, isOwner }: ProfileDetailProps) {
       </VisibleSection>
 
       <VisibleSection sectionKey="documents" isOwner={isOwner} profile={profile}>
-        <Section title="Documents">
-          <div className="space-y-3">
+        <Section title="Documents" action={editAction}>
+          <div className="space-y-2.5">
             <DocLink label="Resume" url={docs?.resume_url} />
             <DocLink label="Portfolio PDF" url={docs?.portfolio_pdf_url} />
             <DocLink label="Measurements sheet" url={docs?.measurements_sheet_url} />
@@ -208,25 +230,25 @@ export function ProfileDetail({ profile, isOwner }: ProfileDetailProps) {
       </VisibleSection>
 
       <VisibleSection sectionKey="social_links" isOwner={isOwner} profile={profile}>
-        <Section title="Social links">
-          <div className="space-y-3">
+        <Section title="Social links" action={editAction}>
+          <div className="space-y-2.5">
             {(["instagram", "youtube", "linkedin"] as const).map((platform) => {
               const link = socials?.[platform];
               return (
-                <div key={platform} className="flex items-center justify-between gap-3">
-                  <span className="text-text-tertiary capitalize">{platform}</span>
+                <div key={platform} className="flex items-center justify-between gap-3 py-2">
+                  <span className="text-text-tertiary capitalize text-[13px]">{platform}</span>
                   <div className="flex items-center gap-2 min-w-0 flex-1 justify-end">
                     {link?.url ? (
                       <a
                         href={link.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-brand-hover hover:underline truncate text-sm"
+                        className="text-brand-hover hover:underline truncate text-[13px]"
                       >
                         {link.url}
                       </a>
                     ) : (
-                      <span className="text-text-muted text-sm">{DASH}</span>
+                      <EmptyValue />
                     )}
                     {link?.url && link?.visibility && (
                       <Badge variant="secondary">
@@ -242,7 +264,7 @@ export function ProfileDetail({ profile, isOwner }: ProfileDetailProps) {
       </VisibleSection>
 
       {isOwner && (
-        <Section title="Privacy">
+        <Section title="Privacy" action={editAction}>
           <Field label="Profile visibility" value={titleCase(profile.privacy_mode)} />
         </Section>
       )}

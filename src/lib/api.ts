@@ -85,13 +85,23 @@ export const authApi = {
     return response.data;
   },
 
-  forgotPassword: async (email: string) => {
-    const response = await apiClient.post('/auth/forgot-password', { email });
+  forgotPassword: async (email?: string, phone?: string) => {
+    const response = await apiClient.post('/auth/forgot-password', { email, phone });
     return response.data;
   },
 
-  resetPassword: async (email: string, otp: string, newPassword: string) => {
-    const response = await apiClient.post('/auth/reset-password', { email, otp, new_password: newPassword });
+  resetPassword: async (email: string | undefined, phone: string | undefined, otp: string, newPassword: string) => {
+    const response = await apiClient.post('/auth/reset-password', { email, phone, otp, new_password: newPassword });
+    return response.data;
+  },
+
+  sendPhoneOtp: async () => {
+    const response = await apiClient.post('/auth/send-phone-otp');
+    return response.data;
+  },
+
+  verifyPhoneOtp: async (phone: string, otp: string) => {
+    const response = await apiClient.post('/auth/verify-phone-otp', { phone, otp });
     return response.data;
   },
 };
@@ -186,6 +196,15 @@ export const talentApi = {
     return response.data;
   },
 
+  uploadDocument: async (file: File): Promise<{ relativePath: string; signedUrl: string }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await apiClient.post('/talent/upload/document', formData, {
+      headers: { 'Content-Type': undefined },
+    });
+    return response.data;
+  },
+
   getPortfolio: async (): Promise<{ items: PortfolioItem[] }> => {
     const response = await apiClient.get('/talent/portfolio');
     return response.data;
@@ -236,6 +255,65 @@ export const talentApi = {
 
   reorderPortfolioItems: async (itemIds: string[]): Promise<{ items: PortfolioItem[] }> => {
     const response = await apiClient.patch('/talent/portfolio/reorder', { item_ids: itemIds });
+    return response.data;
+  },
+};
+
+export interface VerificationRecord {
+  _id: string;
+  user_id: string;
+  type: string;
+  status: string;
+  submitted_docs: { type: string; url: string }[];
+  review_notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VerificationDocResponse {
+  type: string;
+  download_url: string;
+  expires: number;
+}
+
+export interface VerificationStatusResponse {
+  verification: VerificationRecord | null;
+  docs: VerificationDocResponse[];
+}
+
+export const verificationApi = {
+  createVerification: async (type: 'talent_id' | 'recruiter_company'): Promise<VerificationRecord> => {
+    const response = await apiClient.post('/verifications', { type });
+    return response.data;
+  },
+
+  addVerificationDoc: async (
+    verificationId: string,
+    file: File,
+    docType: string,
+  ): Promise<VerificationRecord> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('doc_type', docType);
+    const response = await apiClient.post(`/verifications/${verificationId}/docs`, formData, {
+      headers: { 'Content-Type': undefined },
+    });
+    return response.data;
+  },
+
+  getVerificationStatus: async (userId: string): Promise<VerificationStatusResponse | null> => {
+    try {
+      const response = await apiClient.get(`/verifications/user/${userId}`);
+      return response.data as VerificationStatusResponse;
+    } catch (err) {
+      const axiosErr = err as AxiosError;
+      if (axiosErr.response?.status === 404) return null;
+      throw err;
+    }
+  },
+
+  removeVerificationDoc: async (verificationId: string, docIndex: number): Promise<VerificationRecord> => {
+    const response = await apiClient.delete(`/verifications/${verificationId}/docs/${docIndex}`);
     return response.data;
   },
 };
@@ -363,6 +441,56 @@ export const notificationsApi = {
 
   dismissAuto: async (): Promise<{ modified: number }> => {
     const response = await apiClient.post('/notifications/dismiss-auto');
+    return response.data;
+  },
+};
+
+export interface DashboardStats {
+  total_artists: number;
+  total_brands: number;
+  total_admins: number;
+  pending_verifications: number;
+  active_campaigns: number;
+}
+
+export interface PendingVerificationItem {
+  _id: string;
+  user_id: string;
+  user_email: string;
+  user_name: string;
+  user_role: string;
+  username?: string;
+  profile_photo?: string;
+  type: string;
+  status: string;
+  submitted_docs: { type: string; url: string }[];
+  docs: { type: string; download_url: string; expires: number }[];
+  created_at: string;
+}
+
+export const adminApi = {
+  getDashboardStats: async (): Promise<DashboardStats> => {
+    const response = await apiClient.get('/admin/dashboard-stats');
+    return response.data;
+  },
+
+  getPendingVerifications: async (): Promise<PendingVerificationItem[]> => {
+    const response = await apiClient.get('/admin/verifications/pending');
+    return response.data;
+  },
+
+  approveVerification: async (id: string, reviewNotes?: string): Promise<unknown> => {
+    const response = await apiClient.post(`/admin/verifications/${id}/approve`, { review_notes: reviewNotes });
+    return response.data;
+  },
+
+  rejectVerification: async (id: string, reviewNotes: string): Promise<unknown> => {
+    const response = await apiClient.post(`/admin/verifications/${id}/reject`, { review_notes: reviewNotes });
+    return response.data;
+  },
+
+  getUsers: async (page = 1, limit = 20, role?: string): Promise<{ users: unknown[]; total: number; page: number; limit: number; total_pages: number }> => {
+    const response = await apiClient.get('/admin/users', { params: { page, limit, role } });
     return response.data;
   },
 };
