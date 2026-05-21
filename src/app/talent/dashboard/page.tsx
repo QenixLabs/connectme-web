@@ -1,50 +1,118 @@
 "use client";
 
 import Link from "next/link";
-import { Star, AlertCircle, ShieldCheck, Pencil, Globe } from "lucide-react";
+import { Star, AlertCircle, ShieldCheck, Pencil, Globe, FolderKanban, Bookmark } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { getGreeting } from "@/lib/greeting";
-import { talentApi } from "@/lib/api";
+import { talentApi, Campaign } from "@/lib/api";
+import { useRecommendedCampaigns } from "@/lib/api/hooks/useCampaigns";
 import type { TalentProfile } from "@/lib/validations/talent-profile.schema";
 import { SectionHeader } from "@/components/ui/section-header";
 import { StatCard } from "@/components/ui/stat-card";
 import { VerifiedBadge } from "@/components/ui/verified-badge";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 
-const MOCK_OPPORTUNITIES = [
-  {
-    id: "1",
-    title: "Lead Actor - Web Series",
-    company: "Netstream Originals",
-    location: "Mumbai",
-    roleType: "Actor",
-    budget: "₹2-5L",
-    postedAt: "2 days ago",
-    matchPercent: 94,
-  },
-  {
-    id: "2",
-    title: "Brand Ambassador - Fashion",
-    company: "Pledia",
-    location: "Delhi",
-    roleType: "Model",
-    budget: "₹1-3L",
-    postedAt: "3 days ago",
-    matchPercent: 87,
-  },
-  {
-    id: "3",
-    title: "Voice Over Artist - Ad Film",
-    company: "AudioCraft Studios",
-    location: "Remote",
-    roleType: "Voice Artist",
-    budget: "₹50K-1L",
-    postedAt: "5 days ago",
-    matchPercent: 82,
-  },
-];
+function DashboardRecommendations() {
+  const { data, isLoading } = useRecommendedCampaigns(5);
+  const campaigns: Campaign[] = data || [];
+
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        <SectionHeader title="Opportunities for You" subtitle="Matched based on your profile" />
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-24 rounded-xl" />
+        ))}
+      </div>
+    );
+  }
+
+  if (campaigns.length === 0) {
+    return (
+      <div>
+        <SectionHeader title="Opportunities for You" subtitle="Matched based on your profile" />
+        <p className="text-sm text-text-muted">No recommendations yet. Complete your profile to get matched.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <SectionHeader
+        title="Opportunities for You"
+        subtitle="Matched based on your profile"
+        action={
+          <Link
+            href="/talent/opportunities"
+            className="text-sm text-brand-hover hover:text-brand-active font-medium"
+          >
+            View all
+          </Link>
+        }
+      />
+      <div className="space-y-3">
+        {campaigns.map((campaign) => (
+          <RecommendationCard key={campaign._id} campaign={campaign} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function RecommendationCard({ campaign }: { campaign: Campaign }) {
+  const loc = [campaign.location?.city, campaign.location?.state]
+    .filter((s): s is string => !!s && s.trim() !== "")
+    .join(", ");
+
+  return (
+    <Card
+      key={campaign._id}
+      className="overflow-hidden hover:shadow-sm transition-shadow rounded-xl"
+    >
+      {campaign.cover_image_url && (
+        <div className="w-full h-32 overflow-hidden">
+          <img src={campaign.cover_image_url} alt={campaign.name} className="w-full h-full object-cover" />
+        </div>
+      )}
+      <div className="p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-bold text-text-primary truncate">
+                {campaign.name}
+              </h3>
+            </div>
+            <p className="text-xs text-text-tertiary mt-1">
+              {campaign.industry || "Campaign"}
+              {loc ? ` · ${loc}` : ""}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center justify-between mt-3">
+          <div className="flex gap-2">
+            {campaign.role_type && (
+              <span className="text-xs text-text-tertiary bg-muted-bg px-2 py-0.5 rounded">
+                {campaign.role_type}
+              </span>
+            )}
+            {campaign.budget_range && (
+              <span className="text-xs text-text-tertiary bg-muted-bg px-2 py-0.5 rounded">
+                {campaign.budget_range.currency || "USD"}{" "}
+                {campaign.budget_range.min?.toLocaleString()}
+                {campaign.budget_range.max
+                  ? ` - ${campaign.budget_range.max.toLocaleString()}`
+                  : "+"}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+}
 
 const MOCK_COACHING = [
   {
@@ -150,59 +218,24 @@ export default function TalentDashboardPage() {
           <Globe className="w-4 h-4" strokeWidth={1.2} />
           View Public Profile
         </Link>
+        <Link
+          href="/talent/applications"
+          className="flex items-center justify-center gap-2 h-11 rounded-xl border border-border text-text-secondary text-sm font-medium hover:bg-page active:scale-[0.98] transition-all"
+        >
+          <FolderKanban className="w-4 h-4" strokeWidth={1.5} />
+          My Applications
+        </Link>
+        <Link
+          href="/talent/opportunities?tab=saved"
+          className="flex items-center justify-center gap-2 h-11 rounded-xl border border-border text-text-secondary text-sm font-medium hover:bg-page active:scale-[0.98] transition-all"
+        >
+          <Bookmark className="w-4 h-4" strokeWidth={1.5} />
+          Saved
+        </Link>
       </div>
 
       {/* Opportunities */}
-      <div>
-        <SectionHeader
-          title="Opportunities for You"
-          subtitle="Matched based on your profile"
-          action={
-            <Link
-              href="#"
-              className="text-sm text-brand-hover hover:text-brand-active font-medium"
-            >
-              View all
-            </Link>
-          }
-        />
-
-        <div className="space-y-3">
-          {MOCK_OPPORTUNITIES.map((opp) => (
-            <Card
-              key={opp.id}
-              className="p-4 hover:shadow-sm transition-shadow rounded-xl"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-bold text-text-primary truncate">
-                      {opp.title}
-                    </h3>
-                    <span className="px-1.5 py-0.5 bg-success-light text-success-text text-xs font-medium rounded-full flex-shrink-0">
-                      {opp.matchPercent}% match
-                    </span>
-                  </div>
-                  <p className="text-xs text-text-tertiary mt-1">
-                    {opp.company} · {opp.location}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center justify-between mt-3">
-                <div className="flex gap-2">
-                  <span className="text-xs text-text-tertiary bg-muted-bg px-2 py-0.5 rounded">
-                    {opp.roleType}
-                  </span>
-                  <span className="text-xs text-text-tertiary bg-muted-bg px-2 py-0.5 rounded">
-                    {opp.budget}
-                  </span>
-                </div>
-                <span className="text-xs text-text-muted">{opp.postedAt}</span>
-              </div>
-            </Card>
-          ))}
-        </div>
-      </div>
+      <DashboardRecommendations />
 
       {/* Next Best Actions */}
       <div>

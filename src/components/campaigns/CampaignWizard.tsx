@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form } from '@/components/ui/form';
-import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
@@ -19,12 +18,14 @@ import { PublishStep } from './PublishStep';
 import { useCreateCampaign } from '@/lib/api/hooks/useCreateCampaign';
 import { useUpdateCampaign } from '@/lib/api/hooks/useUpdateCampaign';
 import { useCampaign } from '@/lib/api/hooks/useCampaign';
+import { useUploadCampaignMedia } from '@/lib/api/hooks/useCampaigns';
 import { getApiErrorMessage } from '@/lib/formatters';
+import { Check } from 'lucide-react';
 
 const STEPS = [
-  { label: 'Basic Info', number: 1 },
+  { label: 'Basic info', number: 1 },
   { label: 'Requirements', number: 2 },
-  { label: 'Publish', number: 3 },
+  { label: 'Review & publish', number: 3 },
 ];
 
 function getStepFields(step: number): string[] {
@@ -52,9 +53,10 @@ function getStepFields(step: number): string[] {
         'budget_range.max',
         'budget_range.currency',
         'requirements.attributes',
+        'questions',
       ];
     case 3:
-      return ['publishOption'];
+      return ['publishOption', 'scheduled_publish_at', 'auto_close_on_deadline'];
     default:
       return [];
   }
@@ -97,7 +99,19 @@ function mapCampaignToDefaults(campaign: any): CampaignWizardInput {
       max: campaign.budget_range?.max ?? undefined,
       currency: campaign.budget_range?.currency ?? 'INR',
     },
+    is_budget_disclosed: campaign.is_budget_disclosed ?? false,
+    is_unpaid: campaign.is_unpaid ?? false,
+    questions: (campaign.questions || []).map((q: any) => ({
+      _id: q._id?.toString?.() ?? q._id,
+      question_text: q.question_text ?? '',
+      question_type: q.question_type ?? 'text',
+      options: q.options || [],
+      is_required: q.is_required ?? false,
+      order: q.order ?? 0,
+    })),
     publishOption,
+    scheduled_publish_at: campaign.scheduled_publish_at?.slice(0, 16) ?? '',
+    auto_close_on_deadline: campaign.auto_close_on_deadline ?? true,
   };
 }
 
@@ -111,15 +125,17 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
   const [step, setStep] = useState(1);
   const [serverError, setServerError] = useState<string | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [pendingMediaFile, setPendingMediaFile] = useState<File | null>(null);
 
   const createCampaign = useCreateCampaign();
+  const uploadMedia = useUploadCampaignMedia();
   const updateCampaign = useUpdateCampaign();
   const { data: existingCampaign, isLoading: isLoadingCampaign } = useCampaign(
     campaignId ?? '',
   );
 
   const form = useForm<CampaignWizardInput>({
-    resolver: zodResolver(campaignWizardSchema),
+    resolver: zodResolver(campaignWizardSchema) as any,
     mode: 'onChange',
     defaultValues: {
       name: '',
@@ -137,7 +153,12 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
         attributes: '',
       },
       budget_range: { min: undefined, max: undefined, currency: 'INR' },
+      is_budget_disclosed: false,
+      is_unpaid: false,
+      questions: [],
       publishOption: 'draft',
+      scheduled_publish_at: '',
+      auto_close_on_deadline: true,
     },
   });
 
@@ -161,6 +182,12 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
   const onBack = () => {
     setServerError(null);
     setStep((s) => Math.max(s - 1, 1));
+  };
+
+  const goToStep = (n: number) => {
+    if (n >= step) return;
+    setServerError(null);
+    setStep(n);
   };
 
   const buildPayload = (values: CampaignWizardInput) => ({
@@ -210,8 +237,25 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
             currency: values.budget_range.currency || 'INR',
           }
         : undefined,
-    status: values.publishOption === 'draft' ? 'draft' : 'active',
+    questions: values.questions?.length
+      ? values.questions.map((q, i) => {
+          const base: any = {
+            question_text: q.question_text,
+            question_type: q.question_type,
+            is_required: q.is_required,
+            order: i,
+          };
+          if (q._id) base._id = q._id;
+          if (q.question_type === 'select' || q.question_type === 'multiselect') {
+            base.options = q.options;
+          }
+          return base;
+        })
+      : undefined,
+    status: values.publishOption === 'draft' || values.scheduled_publish_at ? 'draft' : 'active',
     visibility: values.publishOption === 'invite_only' ? 'invite_only' : 'public',
+    scheduled_publish_at: values.scheduled_publish_at || undefined,
+    auto_close_on_deadline: values.auto_close_on_deadline,
   });
 
   const onSubmit = async (values: CampaignWizardInput) => {
@@ -219,11 +263,20 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
     const payload = buildPayload(values);
 
     try {
+      let resultCampaignId = campaignId;
       if (isEdit && campaignId) {
-        await updateCampaign.mutateAsync({ id: campaignId, payload });
+        await updateCampaign.mutateAsync({ id: campaignId, payload: payload as any });
       } else {
-        await createCampaign.mutateAsync(payload);
+        const created = await createCampaign.mutateAsync(payload);
+        resultCampaignId = created._id;
       }
+
+      if (pendingMediaFile && resultCampaignId) {
+        const formData = new FormData();
+        formData.append('file', pendingMediaFile);
+        await uploadMedia.mutateAsync({ campaignId: resultCampaignId, formData });
+      }
+
       router.push('/recruiter/campaigns');
     } catch (err: any) {
       setServerError(
@@ -235,10 +288,17 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
     }
   };
 
+  const saveDraft = () => {
+    form.setValue('publishOption', 'draft', { shouldValidate: true });
+    form.handleSubmit(onSubmit)();
+  };
+
   if (isEdit && isLoadingCampaign) {
     return (
-      <div className="max-w-2xl mx-auto space-y-8">
-        <Skeleton className="h-8 w-64 mx-auto" />
+      <div className="max-w-[640px] mx-auto p-6 bg-card border border-border rounded-xl space-y-6">
+        <Skeleton className="h-6 w-48" />
+        <Skeleton className="h-4 w-64" />
+        <Skeleton className="h-8 w-full" />
         <Skeleton className="h-72 rounded-xl" />
         <div className="flex justify-between">
           <Skeleton className="h-10 w-20" />
@@ -248,104 +308,137 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
     );
   }
 
-  const isPending = createCampaign.isPending || updateCampaign.isPending;
-  const buttonLabel =
-    step < 3
-      ? 'Next'
-      : form.watch('publishOption') === 'draft'
-        ? isEdit
-          ? 'Save as Draft'
-          : 'Save as Draft'
-        : isEdit
-          ? 'Update Campaign'
-          : 'Publish Campaign';
+  const isPending = createCampaign.isPending || updateCampaign.isPending || uploadMedia.isPending;
 
   return (
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="max-w-2xl mx-auto space-y-8"
+        className="max-w-[640px] mx-auto p-6 bg-card border border-border rounded-xl"
       >
-        {/* Step Indicator */}
-        <div className="flex items-center justify-center gap-2 sm:gap-4">
-          {STEPS.map((s, idx) => (
-            <div key={s.number} className="flex items-center gap-2 sm:gap-4">
-              <div
-                className={cn(
-                  'flex items-center gap-2',
-                  step >= s.number ? 'text-brand' : 'text-text-muted'
-                )}
-              >
-                <span
-                  className={cn(
-                    'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium border-2 shrink-0',
-                    step === s.number
-                      ? 'border-brand bg-brand text-white'
-                      : step > s.number
-                        ? 'border-brand bg-brand-soft text-brand-active'
-                        : 'border-border bg-card text-text-muted'
-                  )}
+        {/* Header */}
+        <div className="mb-6">
+          <div className="text-lg font-medium text-text-primary">
+            {isEdit ? 'Edit campaign' : 'New campaign'}
+          </div>
+          <div className="text-sm text-text-secondary mt-0.5">
+            {isEdit ? 'Update your casting call details' : 'Create a casting call or project'}
+          </div>
+        </div>
+
+        {/* Stepper */}
+        <div className="flex items-center mb-8">
+          {STEPS.map((s, idx) => {
+            const isActive = step === s.number;
+            const isDone = step > s.number;
+            return (
+              <div key={s.number} className="flex items-center flex-1">
+                <button
+                  type="button"
+                  onClick={() => goToStep(s.number)}
+                  className="flex items-center gap-[7px] cursor-pointer"
                 >
-                  {s.number}
-                </span>
-                <span className="hidden sm:inline text-sm font-medium">
-                  {s.label}
-                </span>
+                  <span
+                    className={cn(
+                      'w-[26px] h-[26px] rounded-full flex items-center justify-center text-xs font-medium border-[1.5px] shrink-0 transition-all',
+                      isActive
+                        ? 'bg-[#B85C00] border-[#B85C00] text-white'
+                        : isDone
+                          ? 'bg-success-light border-success text-success-text'
+                          : 'border-border text-text-muted'
+                    )}
+                  >
+                    {isDone ? (
+                      <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
+                    ) : (
+                      s.number
+                    )}
+                  </span>
+                  <span
+                    className={cn(
+                      'text-sm',
+                      isActive
+                        ? 'text-text-primary font-medium'
+                        : isDone
+                          ? 'text-success-text'
+                          : 'text-text-muted'
+                    )}
+                  >
+                    {s.label}
+                  </span>
+                </button>
+                {idx < STEPS.length - 1 && (
+                  <div className="flex-1 h-px bg-border mx-2.5" />
+                )}
               </div>
-              {idx < STEPS.length - 1 && (
-                <div
-                  className={cn(
-                    'w-6 sm:w-12 h-0.5',
-                    step > s.number ? 'bg-brand' : 'bg-border'
-                  )}
-                />
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Step Content */}
-        <div className="min-h-[300px]">
-          {step === 1 && <BasicInfoStep />}
-          {step === 2 && <RequirementsStep />}
-          {step === 3 && <PublishStep />}
+        <div className={cn(step === 1 ? 'block' : 'hidden')}>
+          <BasicInfoStep
+            mediaFile={pendingMediaFile}
+            onMediaChange={setPendingMediaFile}
+            existingMedia={existingCampaign?.media?.[0]}
+          />
+        </div>
+        <div className={cn(step === 2 ? 'block' : 'hidden')}>
+          <RequirementsStep />
+        </div>
+        <div className={cn(step === 3 ? 'block' : 'hidden')}>
+          <PublishStep />
         </div>
 
         {/* Server Error */}
         {serverError && (
-          <Alert variant="destructive">
+          <Alert variant="destructive" className="mt-6">
             <AlertDescription>{serverError}</AlertDescription>
           </Alert>
         )}
 
-        {/* Navigation */}
-        <div className="flex justify-between pt-4 border-t border-border">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onBack}
-            disabled={step === 1}
-          >
-            Back
-          </Button>
-          {step < 3 ? (
-            <Button type="button" variant="primary" onClick={onNext}>
-              Next
-            </Button>
-          ) : (
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={isNavigating}
-              isLoading={isPending}
-              loadingLabel={
-                form.watch('publishOption') === 'draft'
-                  ? 'Saving...'
-                  : 'Updating...'
-              }
+        {/* Actions */}
+        <div className="flex justify-between items-center mt-6 pt-4 border-t border-border">
+          <div className="flex gap-2">
+            {step > 1 && (
+              <button
+                type="button"
+                onClick={onBack}
+                className="px-[18px] py-2 rounded-md text-sm font-medium border border-transparent text-text-secondary hover:bg-muted transition-colors"
+              >
+                Back
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={saveDraft}
+              disabled={isPending}
+              className="px-[18px] py-2 rounded-md text-sm font-medium border border-transparent text-text-secondary hover:bg-muted transition-colors disabled:opacity-50"
             >
-              {buttonLabel}
-            </Button>
+              Save as draft
+            </button>
+          </div>
+          {step < 3 ? (
+            <button
+              type="button"
+              onClick={onNext}
+              disabled={isNavigating}
+              className="px-[18px] py-2 rounded-md text-sm font-medium border border-[#B85C00] bg-[#B85C00] text-white hover:bg-[#9A4D00] transition-colors disabled:opacity-50"
+            >
+              Next →
+            </button>
+          ) : (
+            <button
+              type="submit"
+              disabled={isNavigating || isPending}
+              className="px-[18px] py-2 rounded-md text-sm font-medium border border-[#B85C00] bg-[#B85C00] text-white hover:bg-[#9A4D00] transition-colors disabled:opacity-50"
+            >
+              {isPending
+                ? (form.watch('publishOption') === 'draft' ? 'Saving...' : 'Publishing...')
+                : (form.watch('publishOption') === 'draft'
+                    ? (isEdit ? 'Save as draft' : 'Save as draft')
+                    : (isEdit ? 'Update campaign' : 'Publish campaign'))}
+            </button>
           )}
         </div>
       </form>

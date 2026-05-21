@@ -11,11 +11,12 @@ import {
   SlidersHorizontal,
   X,
   ArrowRight,
+  Bookmark,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Campaign } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
-import { useCampaigns } from "@/lib/api/hooks/useCampaigns";
+import { useCampaigns, useBookmarkCampaign, useUnbookmarkCampaign, useBookmarkedCampaigns } from "@/lib/api/hooks/useCampaigns";
 import { SectionHeader } from "@/components/ui/section-header";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,6 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const INDUSTRY_OPTIONS = [
   { value: "all", label: "Industries" },
@@ -77,11 +79,17 @@ export default function TalentOpportunitiesPage() {
   const searchParams = useSearchParams();
 
   const [search, setSearch] = useState("");
+  const tabParam = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState<"available" | "applied" | "saved">(
+    tabParam === "applied" || tabParam === "saved" ? tabParam : "available"
+  );
 
   const industry = searchParams.get("industry") || "all";
   const role_type = searchParams.get("role_type") || "all";
   const gender = searchParams.get("gender") || "all";
   const locationCity = searchParams.get("location_city") || "";
+  const skills = searchParams.get("skills") || "";
+  const languages = searchParams.get("languages") || "";
 
   const updateParam = useCallback(
     (key: string, value: string) => {
@@ -106,6 +114,8 @@ export default function TalentOpportunitiesPage() {
     role_type !== "all" ||
     gender !== "all" ||
     !!locationCity ||
+    !!skills ||
+    !!languages ||
     !!search;
 
   const filters = useMemo(
@@ -114,31 +124,34 @@ export default function TalentOpportunitiesPage() {
       role_type: role_type === "all" ? undefined : role_type,
       gender: gender === "all" ? undefined : gender,
       location_city: locationCity || undefined,
+      skills: skills || undefined,
+      languages: languages || undefined,
+      applied: activeTab === "applied" ? "true" : activeTab === "available" ? "false" : undefined,
     }),
-    [industry, role_type, gender, locationCity],
+    [industry, role_type, gender, locationCity, skills, languages, activeTab],
   );
 
   const { ref: sentinelRef, inView } = useInView({ threshold: 0 });
 
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-    error,
-  } = useCampaigns(filters);
+  const campaignsQuery = useCampaigns(filters);
+  const bookmarksQuery = useBookmarkedCampaigns();
+
+  const isSavedTab = activeTab === "saved";
+  const isLoading = isSavedTab ? bookmarksQuery.isLoading : campaignsQuery.isLoading;
+  const error = isSavedTab ? bookmarksQuery.error : campaignsQuery.error;
 
   useEffect(() => {
-    if (inView && hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
+    if (!isSavedTab && inView && campaignsQuery.hasNextPage && !campaignsQuery.isFetchingNextPage) {
+      campaignsQuery.fetchNextPage();
     }
-  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
+  }, [inView, campaignsQuery.hasNextPage, campaignsQuery.isFetchingNextPage, campaignsQuery.fetchNextPage, isSavedTab]);
 
-  const allCampaigns = useMemo(
-    () => (data ? data.pages.flatMap((p) => p.data) : []),
-    [data],
-  );
+  const allCampaigns: Campaign[] = useMemo(() => {
+    if (isSavedTab) {
+      return bookmarksQuery.data || [];
+    }
+    return campaignsQuery.data ? campaignsQuery.data.pages.flatMap((p) => p.data) : [];
+  }, [campaignsQuery.data, bookmarksQuery.data, isSavedTab]);
 
   const filtered = useMemo(() => {
     if (!search.trim()) return allCampaigns;
@@ -184,9 +197,35 @@ export default function TalentOpportunitiesPage() {
 
   return (
     <div className="max-w-[1280px] mx-auto w-full px-3 sm:px-4 py-4 sm:py-6 pb-24 lg:pb-8 flex flex-col gap-4 sm:gap-5">
-      <SectionHeader
-        title="Opportunities"
-      />
+      <SectionHeader title="Opportunities" />
+
+      <Tabs
+        value={activeTab}
+        onValueChange={(v) => {
+          const next = v as "available" | "applied" | "saved";
+          setActiveTab(next);
+          const params = new URLSearchParams(searchParams.toString());
+          if (next === "available") {
+            params.delete("tab");
+          } else {
+            params.set("tab", next);
+          }
+          router.push(`${pathname}?${params.toString()}`);
+        }}
+        className="w-full"
+      >
+        <TabsList className="w-full sm:w-auto">
+          <TabsTrigger value="available" className="flex-1 sm:flex-none">
+            Available
+          </TabsTrigger>
+          <TabsTrigger value="applied" className="flex-1 sm:flex-none">
+            Applied
+          </TabsTrigger>
+          <TabsTrigger value="saved" className="flex-1 sm:flex-none">
+            Saved
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {/* Search */}
       <div className="flex items-center gap-2 w-full">
@@ -285,6 +324,40 @@ export default function TalentOpportunitiesPage() {
           )}
         </div>
 
+        <div className="relative w-[130px] sm:w-[150px] shrink-0">
+          <Input
+            value={skills}
+            onChange={(e) => updateParam("skills", e.target.value)}
+            placeholder="Skills (comma)..."
+            className="h-9 rounded-lg text-xs bg-card border-border"
+          />
+          {skills && (
+            <button
+              onClick={() => updateParam("skills", "")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          )}
+        </div>
+
+        <div className="relative w-[130px] sm:w-[150px] shrink-0">
+          <Input
+            value={languages}
+            onChange={(e) => updateParam("languages", e.target.value)}
+            placeholder="Languages (comma)..."
+            className="h-9 rounded-lg text-xs bg-card border-border"
+          />
+          {languages && (
+            <button
+              onClick={() => updateParam("languages", "")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          )}
+        </div>
+
         {hasActiveFilters && (
           <button
             onClick={clearFilters}
@@ -308,7 +381,11 @@ export default function TalentOpportunitiesPage() {
             <p className="text-xs text-text-muted">
               {hasActiveFilters
                 ? "Try adjusting your filters."
-                : "Complete your profile to get matched with casting calls."}
+                : activeTab === "applied"
+                  ? "You haven't applied to any campaigns yet."
+                  : activeTab === "saved"
+                    ? "No saved campaigns yet."
+                    : "Complete your profile to get matched with casting calls."}
             </p>
             {hasActiveFilters && (
               <button
@@ -333,9 +410,9 @@ export default function TalentOpportunitiesPage() {
               ))}
             </div>
 
-            {hasNextPage && (
+            {!isSavedTab && campaignsQuery.hasNextPage && (
               <div ref={sentinelRef} className="py-4">
-                {isFetchingNextPage ? (
+                {campaignsQuery.isFetchingNextPage ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                     {Array.from({ length: 3 }).map((_, i) => (
                       <Skeleton key={i} className="h-64 rounded-2xl" />
@@ -362,13 +439,44 @@ function OpportunityCard({
   const loc = [campaign.location?.city, campaign.location?.state]
     .filter((s): s is string => !!s && s.trim() !== "")
     .join(", ");
+  const bookmark = useBookmarkCampaign();
+  const unbookmark = useUnbookmarkCampaign();
+  const isBookmarked = campaign.is_bookmarked;
+  const isPending = bookmark.isPending || unbookmark.isPending;
 
   return (
     <article
-      className="bg-card border border-border rounded-2xl p-[18px] shadow-[0_1px_3px_rgba(0,0,0,0.07),0_4px_12px_rgba(0,0,0,0.04)] hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(79,110,247,0.12),0_1px_3px_rgba(0,0,0,0.06)] transition-all duration-200 flex flex-col gap-3 cursor-pointer"
+      className="relative bg-card border border-border rounded-2xl overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.07),0_4px_12px_rgba(0,0,0,0.04)] hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(79,110,247,0.12),0_1px_3px_rgba(0,0,0,0.06)] transition-all duration-200 flex flex-col gap-3 cursor-pointer"
       onClick={onView}
     >
-      <div>
+      {campaign.cover_image_url && (
+        <div className="w-full h-40 overflow-hidden">
+          <img src={campaign.cover_image_url} alt={campaign.name} className="w-full h-full object-cover" />
+        </div>
+      )}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          if (isPending) return;
+          if (isBookmarked) {
+            unbookmark.mutate(campaign._id);
+          } else {
+            bookmark.mutate(campaign._id);
+          }
+        }}
+        disabled={isPending}
+        className="absolute top-3 right-3 p-1.5 rounded-full hover:bg-muted-bg transition-colors z-10"
+        aria-label={isBookmarked ? "Remove bookmark" : "Bookmark"}
+      >
+        <Bookmark
+          className={cn(
+            "w-4 h-4",
+            isBookmarked ? "fill-brand text-brand" : "text-text-muted"
+          )}
+          strokeWidth={1.5}
+        />
+      </button>
+      <div className="px-[18px] pt-[18px] pr-10">
         <h3 className="text-base font-bold text-text-primary leading-tight line-clamp-2">
           {campaign.name}
         </h3>
@@ -378,12 +486,12 @@ function OpportunityCard({
       </div>
 
       {campaign.description && (
-        <p className="text-[13px] text-text-secondary line-clamp-3 leading-[1.45]">
+        <p className="px-[18px] text-[13px] text-text-secondary line-clamp-3 leading-[1.45]">
           {campaign.description}
         </p>
       )}
 
-      <div className="flex flex-wrap gap-3 text-xs text-text-muted">
+      <div className="px-[18px] flex flex-wrap gap-3 text-xs text-text-muted">
         {loc && (
           <div className="flex items-center gap-1">
             <MapPin className="w-3 h-3" strokeWidth={1.5} />
@@ -403,8 +511,8 @@ function OpportunityCard({
         )}
       </div>
 
-      {(campaign.role_type || campaign.requirements?.gender) && (
-        <div className="flex flex-wrap gap-1.5">
+      {(campaign.role_type || campaign.requirements?.gender || campaign.my_application) && (
+        <div className="px-[18px] flex flex-wrap gap-1.5">
           {campaign.role_type && (
             <span className="px-2.5 py-0.5 rounded-full bg-muted-bg text-text-secondary border border-border text-xs font-medium">
               {campaign.role_type}
@@ -415,11 +523,23 @@ function OpportunityCard({
               {campaign.requirements.gender}
             </span>
           )}
+          {campaign.my_application && (
+            <span className={cn(
+              "px-2.5 py-0.5 rounded-full text-xs font-medium border",
+              campaign.my_application.status === "accepted"
+                ? "bg-green-100 text-green-700 border-green-200"
+                : campaign.my_application.status === "rejected"
+                  ? "bg-red-100 text-red-700 border-red-200"
+                  : "bg-amber-100 text-amber-700 border-amber-200",
+            )}>
+              {campaign.my_application.status === "pending" ? "Pending" : campaign.my_application.status === "accepted" ? "Accepted" : "Rejected"}
+            </span>
+          )}
         </div>
       )}
 
       {campaign.budget_range && (
-        <div className="pt-2 border-t border-border-subtle">
+        <div className="px-[18px] pt-2 border-t border-border-subtle">
           <p className="text-xs text-text-muted">
             Budget:{" "}
             <span className="font-medium text-text-secondary">
@@ -433,7 +553,7 @@ function OpportunityCard({
         </div>
       )}
 
-      <div className="mt-auto pt-2 flex gap-2">
+      <div className="mt-auto px-[18px] pt-2 pb-[18px] flex gap-2">
         <Button
           variant="outline"
           className="flex-1 h-10 text-[13px]"

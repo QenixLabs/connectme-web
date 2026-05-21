@@ -60,6 +60,9 @@ interface TalentGridCardProps {
   onViewPortfolio: () => void;
   onContact: () => void;
   onInvite?: () => void;
+  selectable?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: () => void;
 }
 
 export function TalentGridCard({
@@ -68,6 +71,9 @@ export function TalentGridCard({
   onViewPortfolio,
   onContact,
   onInvite,
+  selectable,
+  isSelected,
+  onToggleSelect,
 }: TalentGridCardProps) {
   const requestAccess = useRequestProfileAccess();
   const loc = [profile.location?.city, profile.location?.state, profile.location?.country]
@@ -80,9 +86,31 @@ export function TalentGridCard({
   const isPending = profile.access_status === "pending";
 
   return (
-    <article className="bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-[0_1px_3px_rgba(0,0,0,0.07),0_4px_12px_rgba(0,0,0,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(79,110,247,0.12),0_1px_3px_rgba(0,0,0,0.06)] flex flex-col h-full">
+    <article
+      className={cn(
+        "bg-card border border-border rounded-2xl p-4 sm:p-5 shadow-[0_1px_3px_rgba(0,0,0,0.07),0_4px_12px_rgba(0,0,0,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(79,110,247,0.12),0_1px_3px_rgba(0,0,0,0.06)] flex flex-col h-full",
+        selectable && "cursor-pointer",
+        isSelected && "border-brand ring-1 ring-brand"
+      )}
+      onClick={(e) => {
+        if (!selectable) return;
+        const target = e.target as HTMLElement;
+        if (target.closest("button, a, input, [role='button']")) return;
+        onToggleSelect?.();
+      }}
+    >
       {/* Header: avatar + name */}
       <div className="flex flex-col items-center text-center">
+        {selectable && (
+          <div className="w-full flex justify-start mb-1">
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={(e) => { e.stopPropagation(); onToggleSelect?.(); }}
+              className="w-4 h-4 rounded border-border text-brand focus:ring-brand"
+            />
+          </div>
+        )}
         <Avatar
           name={displayName}
           src={profile.profile_photo}

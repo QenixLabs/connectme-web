@@ -10,6 +10,9 @@ import {
   X,
   LayoutList,
   LayoutGrid,
+  Mail,
+  CheckSquare,
+  Square,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getApiErrorMessage } from "@/lib/formatters";
@@ -18,6 +21,7 @@ import { useDistinctProfessions } from "@/lib/api/hooks/useDistinctProfessions";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -54,6 +58,8 @@ export default function FindTalentPage() {
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [selectedTalent, setSelectedTalent] = useState<{ id: string; name: string } | null>(null);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Load view mode from localStorage on mount
   useEffect(() => {
@@ -91,6 +97,25 @@ export default function FindTalentPage() {
   const clearFilters = useCallback(() => {
     router.push(pathname);
   }, [pathname, router]);
+
+  const toggleSelectMode = useCallback(() => {
+    setSelectMode((v) => !v);
+    setSelectedIds(new Set());
+  }, []);
+
+  const toggleTalentSelection = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const handleBulkInvite = useCallback(() => {
+    if (selectedIds.size === 0) return;
+    setInviteModalOpen(true);
+  }, [selectedIds]);
 
   const hasActiveFilters =
     profession !== "all" || availability !== "all" || gender !== "all" || !!locationCity;
@@ -201,6 +226,19 @@ export default function FindTalentPage() {
               className="h-10 rounded-[10px] bg-card border-[1.5px] border-border pl-9 text-sm"
             />
           </div>
+          {/* Select mode toggle */}
+          <button
+            onClick={toggleSelectMode}
+            className={cn(
+              "h-8 px-2.5 rounded-md text-xs font-medium border shrink-0 transition-colors flex items-center gap-1.5",
+              selectMode
+                ? "bg-brand text-white border-brand"
+                : "bg-card text-text-secondary border-border hover:border-brand hover:text-brand",
+            )}
+          >
+            {selectMode ? <CheckSquare className="w-3.5 h-3.5" strokeWidth={1.5} /> : <Square className="w-3.5 h-3.5" strokeWidth={1.5} />}
+            {selectMode ? 'Done' : 'Select'}
+          </button>
           {/* View toggle */}
           <div className="inline-flex items-center bg-muted-bg border border-border rounded-lg p-[3px] shrink-0">
             <button
@@ -329,6 +367,33 @@ export default function FindTalentPage() {
         )}
       </div>
 
+      {/* Bulk action bar */}
+      {selectMode && selectedIds.size > 0 && (
+        <div className="flex items-center justify-between gap-3 bg-card border border-border rounded-xl p-3">
+          <span className="text-sm text-text-secondary">
+            {selectedIds.size} selected
+          </span>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 text-xs"
+              onClick={() => setSelectedIds(new Set())}
+            >
+              Clear
+            </Button>
+            <Button
+              size="sm"
+              className="h-8 text-xs"
+              onClick={handleBulkInvite}
+            >
+              <Mail className="w-3.5 h-3.5 mr-1" strokeWidth={1.5} />
+              Invite to Campaign
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Results */}
       <div className="flex-1 min-w-0">
         {filtered.length === 0 ? (
@@ -363,12 +428,15 @@ export default function FindTalentPage() {
                       onContact={() =>
                         router.push(`/recruiter/messages?talent=${username}`)
                       }
-                      onInvite={() => {
+                      onInvite={!selectMode ? () => {
                         if (profile.user_id) {
                           setSelectedTalent({ id: profile.user_id, name: displayName });
                           setInviteModalOpen(true);
                         }
-                      }}
+                      } : undefined}
+                      selectable={selectMode}
+                      isSelected={profile.user_id ? selectedIds.has(profile.user_id) : false}
+                      onToggleSelect={() => profile.user_id && toggleTalentSelection(profile.user_id)}
                     />
                   );
                 })}
@@ -389,12 +457,15 @@ export default function FindTalentPage() {
                       onContact={() =>
                         router.push(`/recruiter/messages?talent=${username}`)
                       }
-                      onInvite={() => {
+                      onInvite={!selectMode ? () => {
                         if (profile.user_id) {
                           setSelectedTalent({ id: profile.user_id, name: displayName });
                           setInviteModalOpen(true);
                         }
-                      }}
+                      } : undefined}
+                      selectable={selectMode}
+                      isSelected={profile.user_id ? selectedIds.has(profile.user_id) : false}
+                      onToggleSelect={() => profile.user_id && toggleTalentSelection(profile.user_id)}
                     />
                   );
                 })}
@@ -418,15 +489,17 @@ export default function FindTalentPage() {
         )}
       </div>
 
-      {selectedTalent && (
+      {(selectedTalent || selectMode) && (
         <InviteToCampaignModal
           open={inviteModalOpen}
           onClose={() => {
             setInviteModalOpen(false);
             setSelectedTalent(null);
+            setSelectedIds(new Set());
           }}
-          talentId={selectedTalent.id}
-          talentName={selectedTalent.name}
+          talentId={selectedTalent?.id}
+          talentIds={selectMode ? Array.from(selectedIds) : undefined}
+          talentName={selectedTalent?.name}
         />
       )}
     </div>

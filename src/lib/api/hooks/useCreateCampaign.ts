@@ -1,18 +1,24 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { campaignApi } from '@/lib/api';
-import { toast } from 'sonner';
+import { usePopup } from '@/hooks/use-popup';
 
 export function useCreateCampaign() {
   const queryClient = useQueryClient();
+  const { show } = usePopup();
 
   return useMutation({
     mutationFn: campaignApi.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['campaigns', 'list'] });
-      toast.success('Campaign created successfully');
+      show({ title: 'Campaign created', variant: 'success', position: 'bottom-center' });
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message || 'Failed to create campaign');
+      show({
+        title: 'Failed to create campaign',
+        description: error?.response?.data?.message,
+        variant: 'error',
+        position: 'bottom-center',
+      });
     },
   });
 }

@@ -17,18 +17,25 @@ import {
   Globe,
   CheckCircle2,
   Ban,
+  Trash2,
+  Bookmark,
+  Link2,
 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { campaignApi, useCampaignTalentView, useRespondToInvite } from "@/lib/api";
+import { useBookmarkCampaign, useUnbookmarkCampaign } from "@/lib/api/hooks/useCampaigns";
+import { useWithdrawApplication } from "@/lib/api/hooks/useCampaignTalentView";
 import { getApiErrorMessage } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { usePopup } from "@/hooks/use-popup";
 
 function formatDeadline(deadline?: string) {
   if (!deadline) return null;
@@ -52,9 +59,11 @@ export default function TalentCampaignDetailPage() {
   const router = useRouter();
   const campaignId = params.id as string;
   const queryClient = useQueryClient();
+  const { show } = usePopup();
 
   const [applyMessage, setApplyMessage] = useState("");
   const [showApplyForm, setShowApplyForm] = useState(false);
+  const [answers, setAnswers] = useState<Record<string, string>>({});
 
   const {
     data: campaign,
@@ -63,24 +72,40 @@ export default function TalentCampaignDetailPage() {
   } = useCampaignTalentView(campaignId);
 
   const respondToInvite = useRespondToInvite();
+  const withdrawMutation = useWithdrawApplication();
+  const bookmarkMutation = useBookmarkCampaign();
+  const unbookmarkMutation = useUnbookmarkCampaign();
+  const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false);
+  const isBookmarkPending = bookmarkMutation.isPending || unbookmarkMutation.isPending;
 
   const applyMutation = useMutation({
     mutationFn: () =>
-      campaignApi.apply(campaignId, { message: applyMessage || undefined }),
+      campaignApi.apply(campaignId, {
+        message: applyMessage || undefined,
+        answers: campaign?.questions?.length
+          ? campaign.questions
+              .filter((q) => answers[q._id] || q.is_required)
+              .map((q) => ({ question_id: q._id, answer: answers[q._id] || '' }))
+          : undefined,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["campaigns", "talent-view", campaignId],
       });
-      toast.success("Application sent!");
+      show({ title: "Application sent!", variant: "success", position: "top-center" });
       setShowApplyForm(false);
       setApplyMessage("");
+      setAnswers({});
     },
     onError: (err) => {
-      toast.error("Failed to apply", {
+      show({
+        title: "Failed to apply",
         description: getApiErrorMessage(
           err,
           "Something went wrong. Please try again.",
         ),
+        variant: "error",
+        position: "bottom-center",
       });
     },
   });
@@ -95,9 +120,9 @@ export default function TalentCampaignDetailPage() {
       queryClient.invalidateQueries({
         queryKey: ["campaigns", "talent-view", campaignId],
       });
-      toast.success("Invite accepted");
+      show({ title: "Invite accepted", variant: "success", position: "bottom-center" });
     } catch {
-      toast.error("Failed to accept invite");
+      show({ title: "Failed to accept invite", variant: "error", position: "bottom-center" });
     }
   };
 
@@ -111,9 +136,9 @@ export default function TalentCampaignDetailPage() {
       queryClient.invalidateQueries({
         queryKey: ["campaigns", "talent-view", campaignId],
       });
-      toast.success("Invite declined");
+      show({ title: "Invite declined", variant: "success", position: "bottom-center" });
     } catch {
-      toast.error("Failed to decline invite");
+      show({ title: "Failed to decline invite", variant: "error", position: "bottom-center" });
     }
   };
 
@@ -242,44 +267,58 @@ export default function TalentCampaignDetailPage() {
                 : "border-error-muted bg-error-light/30",
           )}
         >
-          <div className="flex items-center gap-3">
-            <div
-              className={cn(
-                "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
-                applicationStatus === "pending"
-                  ? "bg-warning-light"
-                  : applicationStatus === "accepted"
-                    ? "bg-success-light"
-                    : "bg-error-light",
-              )}
-            >
-              {applicationStatus === "pending" ? (
-                <Clock className="w-4 h-4 text-warning-text" strokeWidth={1.5} />
-              ) : applicationStatus === "accepted" ? (
-                <CheckCircle2
-                  className="w-4 h-4 text-success-text"
-                  strokeWidth={1.5}
-                />
-              ) : (
-                <X className="w-4 h-4 text-error-text" strokeWidth={1.5} />
-              )}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div
+                className={cn(
+                  "w-8 h-8 rounded-full flex items-center justify-center shrink-0",
+                  applicationStatus === "pending"
+                    ? "bg-warning-light"
+                    : applicationStatus === "accepted"
+                      ? "bg-success-light"
+                      : "bg-error-light",
+                )}
+              >
+                {applicationStatus === "pending" ? (
+                  <Clock className="w-4 h-4 text-warning-text" strokeWidth={1.5} />
+                ) : applicationStatus === "accepted" ? (
+                  <CheckCircle2
+                    className="w-4 h-4 text-success-text"
+                    strokeWidth={1.5}
+                  />
+                ) : (
+                  <X className="w-4 h-4 text-error-text" strokeWidth={1.5} />
+                )}
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-text-primary">
+                  {applicationStatus === "pending"
+                    ? "Application pending review"
+                    : applicationStatus === "accepted"
+                      ? "Application accepted"
+                      : "Application rejected"}
+                </p>
+                <p className="text-xs text-text-secondary mt-0.5">
+                  {applicationStatus === "pending"
+                    ? "The recruiter is reviewing your application."
+                    : applicationStatus === "accepted"
+                      ? "Congratulations! The recruiter accepted your application."
+                      : "Your application was not selected for this campaign."}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-semibold text-text-primary">
-                {applicationStatus === "pending"
-                  ? "Application pending review"
-                  : applicationStatus === "accepted"
-                    ? "Application accepted"
-                    : "Application rejected"}
-              </p>
-              <p className="text-xs text-text-secondary mt-0.5">
-                {applicationStatus === "pending"
-                  ? "The recruiter is reviewing your application."
-                  : applicationStatus === "accepted"
-                    ? "Congratulations! The recruiter accepted your application."
-                    : "Your application was not selected for this campaign."}
-              </p>
-            </div>
+            {(applicationStatus === "pending" || applicationStatus === "accepted") && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="shrink-0 text-error-text hover:bg-error-light"
+                onClick={() => setShowWithdrawConfirm(true)}
+                disabled={withdrawMutation.isPending}
+              >
+                <Trash2 className="w-3.5 h-3.5 mr-1" strokeWidth={1.5} />
+                Withdraw
+              </Button>
+            )}
           </div>
         </Card>
       )}
@@ -311,10 +350,63 @@ export default function TalentCampaignDetailPage() {
             </Badge>
           )}
         </div>
-        <h1 className="text-xl sm:text-2xl font-bold text-text-primary mt-2">
-          {campaign.name}
-        </h1>
+        <div className="flex items-start justify-between gap-3 mt-2">
+          <h1 className="text-xl sm:text-2xl font-bold text-text-primary">
+            {campaign.name}
+          </h1>
+          <button
+            onClick={() => {
+              if (isBookmarkPending) return;
+              if (campaign.is_bookmarked) {
+                unbookmarkMutation.mutate(campaignId);
+              } else {
+                bookmarkMutation.mutate(campaignId);
+              }
+            }}
+            disabled={isBookmarkPending}
+            className="p-2 rounded-full hover:bg-muted-bg transition-colors shrink-0"
+            aria-label={campaign.is_bookmarked ? "Remove bookmark" : "Bookmark"}
+          >
+            <Bookmark
+              className={cn(
+                "w-5 h-5",
+                campaign.is_bookmarked ? "fill-brand text-brand" : "text-text-muted"
+              )}
+              strokeWidth={1.5}
+            />
+          </button>
+          <button
+            onClick={() => {
+              const url = `${window.location.origin}/talent/opportunities/${campaignId}`;
+              navigator.clipboard.writeText(url);
+            }}
+            className="p-2 rounded-full hover:bg-muted-bg transition-colors shrink-0"
+            aria-label="Copy link"
+          >
+            <Link2 className="w-5 h-5 text-text-muted" strokeWidth={1.5} />
+          </button>
+        </div>
       </div>
+
+      {/* Media */}
+      {campaign.cover_image_url && (
+        <Card className="p-0 overflow-hidden">
+          <img src={campaign.cover_image_url} alt={campaign.name} className="w-full h-48 sm:h-64 object-cover" />
+        </Card>
+      )}
+      {campaign.media && campaign.media.length > 0 && (
+        <div className="flex flex-col gap-5">
+          {campaign.media.map((item, idx) => (
+            <Card key={idx} className="p-0 overflow-hidden">
+              {item.type === 'video' ? (
+                <video src={item.url} className="w-full h-48 sm:h-64 object-cover" controls />
+              ) : (
+                <img src={item.url} alt={item.caption || ''} className="w-full h-48 sm:h-64 object-cover" />
+              )}
+            </Card>
+          ))}
+        </div>
+      )}
 
       {/* Campaign Details */}
       <Card className="p-5 space-y-4">
@@ -452,19 +544,106 @@ export default function TalentCampaignDetailPage() {
                   {applyMessage.length}/1000
                 </p>
               </div>
-              <div className="flex gap-2 justify-end">
+
+              {campaign?.questions && campaign.questions.length > 0 && (
+                <div className="space-y-3"
+                >
+                  <p className="text-sm font-medium text-text-secondary"
+                  >Application questions
+                  </p>
+                  {campaign.questions.map((q) => (
+                    <div key={q._id} className="space-y-1.5"
+                    >
+                      <label className="text-sm text-text-primary"
+                      >
+                        {q.question_text}
+                        {q.is_required && <span className="text-error-text"> *</span>}
+                      </label>
+                      {q.question_type === 'text' && (
+                        <Textarea
+                          value={answers[q._id] || ''}
+                          onChange={(e) => setAnswers((prev) => ({ ...prev, [q._id]: e.target.value }))}
+                          placeholder="Your answer..."
+                          rows={2}
+                          className="resize-none text-sm"
+                        />
+                      )}
+                      {q.question_type === 'number' && (
+                        <Input
+                          type="number"
+                          value={answers[q._id] || ''}
+                          onChange={(e) => setAnswers((prev) => ({ ...prev, [q._id]: e.target.value }))}
+                          className="text-sm h-9"
+                        />
+                      )}
+                      {(q.question_type === 'select' || q.question_type === 'multiselect') && (
+                        <div className="flex flex-wrap gap-2"
+                        >
+                          {q.options?.map((opt) => (
+                            <Button
+                              key={opt}
+                              type="button"
+                              variant={answers[q._id]?.includes(opt) ? 'primary' : 'outline'}
+                              size="sm"
+                              onClick={() => {
+                                if (q.question_type === 'multiselect') {
+                                  const current = answers[q._id] || '';
+                                  const selected = current ? current.split(', ') : [];
+                                  const next = selected.includes(opt)
+                                    ? selected.filter((s) => s !== opt).join(', ')
+                                    : [...selected, opt].join(', ');
+                                  setAnswers((prev) => ({ ...prev, [q._id]: next }));
+                                } else {
+                                  setAnswers((prev) => ({ ...prev, [q._id]: opt }));
+                                }
+                              }}
+                            >
+                              {opt}
+                            </Button>
+                          ))}
+                        </div>
+                      )}
+                      {q.question_type === 'boolean' && (
+                        <div className="flex gap-2"
+                        >
+                          <Button
+                            type="button"
+                            variant={answers[q._id] === 'Yes' ? 'primary' : 'outline'}
+                            size="sm"
+                            onClick={() => setAnswers((prev) => ({ ...prev, [q._id]: 'Yes' }))}
+                          >
+                            Yes
+                          </Button>
+                          <Button
+                            type="button"
+                            variant={answers[q._id] === 'No' ? 'primary' : 'outline'}
+                            size="sm"
+                            onClick={() => setAnswers((prev) => ({ ...prev, [q._id]: 'No' }))}
+                          >
+                            No
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex gap-2 justify-end"
+              >
                 <Button
                   variant="outline"
                   onClick={() => {
                     setShowApplyForm(false);
                     setApplyMessage("");
+                    setAnswers({});
                   }}
                 >
                   Cancel
                 </Button>
                 <Button
                   onClick={() => applyMutation.mutate()}
-                  disabled={applyMutation.isPending}
+                  disabled={applyMutation.isPending || (campaign?.questions?.some((q) => q.is_required && !answers[q._id]) ?? false)}
                 >
                   <Send className="w-4 h-4 mr-1.5" strokeWidth={1.5} />
                   {applyMutation.isPending
@@ -476,6 +655,32 @@ export default function TalentCampaignDetailPage() {
           )}
         </Card>
       )}
+
+      {/* Withdraw Confirmation Dialog */}
+      <Dialog open={showWithdrawConfirm} onOpenChange={setShowWithdrawConfirm}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Withdraw Application</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to withdraw your application for &quot;{campaign?.name}&quot;? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowWithdrawConfirm(false)}>Cancel</Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                withdrawMutation.mutate(campaignId, {
+                  onSuccess: () => setShowWithdrawConfirm(false),
+                });
+              }}
+              disabled={withdrawMutation.isPending}
+            >
+              Withdraw
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

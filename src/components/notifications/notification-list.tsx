@@ -1,9 +1,29 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, Check, X, Shield, User, Clock, FileCheck, Mail } from "lucide-react";
-import { notificationsApi, talentApi, useRespondToInvite } from "@/lib/api";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  Bell,
+  Check,
+  X,
+  Shield,
+  User,
+  Clock,
+  FileCheck,
+  Mail,
+  Loader2,
+  CheckCheck,
+} from "lucide-react";
+import {
+  notificationsApi,
+  talentApi,
+  useRespondToInvite,
+  useNotifications,
+  useMarkAsRead,
+  useMarkAllAsRead,
+  useDismissAuto,
+} from "@/lib/api";
 import { useSocket } from "@/hooks/use-socket";
 import { getApiErrorMessage } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
@@ -13,6 +33,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { NotificationItem } from "@/lib/api/notifications";
 
 type Actor = {
   _id: string;
@@ -21,23 +42,15 @@ type Actor = {
   username?: string;
 };
 
-type NotificationItem = {
-  _id: string;
-  actor_id: Actor | string;
-  type: string;
-  title: string;
-  body: string;
-  data: Record<string, any>;
-  status: string;
-  action_status: string | null;
-  is_history: boolean;
-  dismiss_strategy?: string;
-  created_at: string;
-};
-
-function getActorName(actor: Actor | string): string {
+function getActorName(actor: Actor | string | null): string {
+  if (!actor) return "System";
   if (typeof actor === "string") return "Unknown";
-  return actor.full_legal_name || actor.username || actor.email?.split("@")[0] || "Unknown";
+  return (
+    actor.full_legal_name ||
+    actor.username ||
+    actor.email?.split("@")[0] ||
+    "Unknown"
+  );
 }
 
 function formatTimeAgo(dateStr: string): string {
@@ -57,42 +70,55 @@ function formatTimeAgo(dateStr: string): string {
 
 export function NotificationList() {
   const router = useRouter();
-  const [activeNotifications, setActiveNotifications] = useState<NotificationItem[]>([]);
-  const [historyNotifications, setHistoryNotifications] = useState<NotificationItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [respondingId, setRespondingId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("active");
+  const [respondingId, setRespondingId] = useState<string | null>(null);
   const { socket } = useSocket();
 
-  const fetchAll = useCallback(async () => {
-    try {
-      await notificationsApi.dismissAuto();
-      const [active, history] = await Promise.all([
-        notificationsApi.getNotifications(false),
-        notificationsApi.getNotifications(true),
-      ]);
-      setActiveNotifications(active);
-      setHistoryNotifications(history);
-    } catch (err) {
-      setError(getApiErrorMessage(err, "Failed to load notifications"));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const isHistory = activeTab === "history";
+
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    isError,
+    error,
+  } = useNotifications(isHistory);
+
+  const markAsRead = useMarkAsRead();
+  const markAllAsRead = useMarkAllAsRead();
+  const dismissAuto = useDismissAuto();
+
+  const allNotifications = data?.pages.flatMap((page) => page.data) ?? [];
 
   useEffect(() => {
-    fetchAll();
-  }, [fetchAll]);
+    dismissAuto.mutate();
+  }, []);
 
   useEffect(() => {
     if (!socket) return;
 
     const handleNotification = (notification: NotificationItem) => {
-      setActiveNotifications((prev) => {
-        if (prev.some((n) => n._id === notification._id)) return prev;
-        return [notification, ...prev];
-      });
+      queryClient.setQueryData(
+        ["notifications", "list", false],
+        (old: any) => {
+          if (!old) return old;
+          const firstPage = old.pages[0];
+          if (firstPage?.data?.some((n: NotificationItem) => n._id === notification._id)) {
+            return old;
+          }
+          const newPages = [...old.pages];
+          newPages[0] = {
+            ...firstPage,
+            data: [notification, ...firstPage.data],
+            total: (firstPage.total || 0) + 1,
+          };
+          return { ...old, pages: newPages };
+        }
+      );
+      queryClient.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
     };
 
     socket.on("notification:new", handleNotification);
@@ -100,16 +126,16 @@ export function NotificationList() {
     return () => {
       socket.off("notification:new", handleNotification);
     };
-  }, [socket]);
+  }, [socket, queryClient]);
 
   const handleAllow = async (notificationId: string, requesterId: string) => {
     if (respondingId) return;
     setRespondingId(requesterId);
     try {
       await talentApi.respondToAccessRequest(requesterId, "allowed");
-      await fetchAll();
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
     } catch (err) {
-      setError(getApiErrorMessage(err, "Failed to respond"));
+      // handled by component if needed
     } finally {
       setRespondingId(null);
     }
@@ -120,9 +146,9 @@ export function NotificationList() {
     setRespondingId(requesterId);
     try {
       await talentApi.respondToAccessRequest(requesterId, "denied");
-      await fetchAll();
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
     } catch (err) {
-      setError(getApiErrorMessage(err, "Failed to respond"));
+      // handled by component if needed
     } finally {
       setRespondingId(null);
     }
@@ -134,10 +160,10 @@ export function NotificationList() {
     if (respondingId) return;
     setRespondingId(inviteId);
     try {
-      await respondToInvite.mutateAsync({ inviteId, action: 'accept' });
-      await fetchAll();
+      await respondToInvite.mutateAsync({ inviteId, action: "accept" });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
     } catch (err) {
-      setError(getApiErrorMessage(err, "Failed to accept invite"));
+      // handled by component if needed
     } finally {
       setRespondingId(null);
     }
@@ -147,25 +173,25 @@ export function NotificationList() {
     if (respondingId) return;
     setRespondingId(inviteId);
     try {
-      await respondToInvite.mutateAsync({ inviteId, action: 'decline' });
-      await fetchAll();
+      await respondToInvite.mutateAsync({ inviteId, action: "decline" });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
     } catch (err) {
-      setError(getApiErrorMessage(err, "Failed to decline invite"));
+      // handled by component if needed
     } finally {
       setRespondingId(null);
     }
   };
 
-  const handleMarkRead = async (id: string) => {
-    try {
-      await notificationsApi.markAsRead(id);
-      setActiveNotifications((prev) =>
-        prev.map((n) => (n._id === id ? { ...n, status: "read" } : n))
-      );
-    } catch {
-      // ignore
-    }
-  };
+  const handleMarkRead = useCallback(
+    (id: string) => {
+      markAsRead.mutate(id);
+    },
+    [markAsRead]
+  );
+
+  const handleMarkAllRead = useCallback(() => {
+    markAllAsRead.mutate();
+  }, [markAllAsRead]);
 
   const renderNotification = (notification: NotificationItem) => {
     const isRequest = notification.type === "access_request";
@@ -173,7 +199,8 @@ export function NotificationList() {
     const isVerificationStatus = notification.type === "verification_status";
     const isCampaignInvite = notification.type === "campaign_invite";
     const isApplicationReceived = notification.type === "application_received";
-    const isApplicationStatusChanged = notification.type === "application_status_changed";
+    const isApplicationStatusChanged =
+      notification.type === "application_status_changed";
     const inviteId = notification.data?.invite_id;
     const actorName = getActorName(notification.actor_id);
 
@@ -197,7 +224,9 @@ export function NotificationList() {
       <Card
         key={notification._id}
         className={`p-4 transition-colors cursor-pointer ${
-          notification.status === "unread" ? "border-brand-muted bg-brand-light/20" : ""
+          notification.status === "unread"
+            ? "border-brand-muted bg-brand-light/20"
+            : ""
         }`}
         onClick={handleCardClick}
       >
@@ -390,7 +419,7 @@ export function NotificationList() {
     );
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="space-y-3">
         {Array.from({ length: 4 }).map((_, i) => (
@@ -400,51 +429,106 @@ export function NotificationList() {
     );
   }
 
-  if (error) {
+  if (isError) {
     return (
       <Alert variant="destructive">
-        <AlertDescription>{error}</AlertDescription>
+        <AlertDescription>
+          {getApiErrorMessage(error, "Failed to load notifications")}
+        </AlertDescription>
       </Alert>
     );
   }
 
+  const unreadCount = allNotifications.filter((n) => n.status === "unread").length;
+
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className="grid w-full grid-cols-2 mb-4">
-        <TabsTrigger value="active">
-          Active
-          {activeNotifications.length > 0 && (
-            <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] bg-brand text-white text-[10px] font-bold rounded-full px-1">
-              {activeNotifications.length > 99 ? "99+" : activeNotifications.length}
-            </span>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-0">
+            <TabsTrigger value="active">
+              Active
+              {unreadCount > 0 && (
+                <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] bg-brand text-white text-[10px] font-bold rounded-full px-1">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+
+      {activeTab === "active" && unreadCount > 0 && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-xs"
+          onClick={handleMarkAllRead}
+          disabled={markAllAsRead.isPending}
+        >
+          <CheckCheck className="w-3.5 h-3.5 mr-1" />
+          Mark all as read
+        </Button>
+      )}
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsContent value="active" className="space-y-3 mt-0">
+          {allNotifications.length === 0 ? (
+            <EmptyState
+              icon={<Bell className="w-8 h-8 text-text-muted" strokeWidth={1.5} />}
+              title="No active notifications"
+              description="You're all caught up. New notifications will appear here."
+            />
+          ) : (
+            <>
+              {allNotifications.map(renderNotification)}
+              {hasNextPage && (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                >
+                  {isFetchingNextPage ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    "Load more"
+                  )}
+                </Button>
+              )}
+            </>
           )}
-        </TabsTrigger>
-        <TabsTrigger value="history">History</TabsTrigger>
-      </TabsList>
+        </TabsContent>
 
-      <TabsContent value="active" className="space-y-3">
-        {activeNotifications.length === 0 ? (
-          <EmptyState
-            icon={<Bell className="w-8 h-8 text-text-muted" strokeWidth={1.5} />}
-            title="No active notifications"
-            description="You're all caught up. New notifications will appear here."
-          />
-        ) : (
-          activeNotifications.map(renderNotification)
-        )}
-      </TabsContent>
-
-      <TabsContent value="history" className="space-y-3">
-        {historyNotifications.length === 0 ? (
-          <EmptyState
-            icon={<Bell className="w-8 h-8 text-text-muted" strokeWidth={1.5} />}
-            title="No history"
-            description="Resolved notifications will appear here."
-          />
-        ) : (
-          historyNotifications.map(renderNotification)
-        )}
-      </TabsContent>
-    </Tabs>
+        <TabsContent value="history" className="space-y-3 mt-0">
+          {allNotifications.length === 0 ? (
+            <EmptyState
+              icon={<Bell className="w-8 h-8 text-text-muted" strokeWidth={1.5} />}
+              title="No history"
+              description="Resolved notifications will appear here."
+            />
+          ) : (
+            <>
+              {allNotifications.map(renderNotification)}
+              {hasNextPage && (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                >
+                  {isFetchingNextPage ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    "Load more"
+                  )}
+                </Button>
+              )}
+            </>
+          )}
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }

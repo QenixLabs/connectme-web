@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronDown, Pencil, X } from "lucide-react";
+import { usePopup } from "@/hooks/use-popup";
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -201,6 +202,7 @@ function MobileNav({
 /* ------------------------------------------------------------------ */
 
 export function EditForm({ profile, onSaved, onCancel }: EditFormProps) {
+  const { show } = usePopup();
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const form = useForm<UpdateRecruiterProfileInput>({
@@ -235,6 +237,13 @@ export function EditForm({ profile, onSaved, onCancel }: EditFormProps) {
       const payload = buildPayload(values);
       const saved = await recruiterApi.updateProfile(payload);
       onSaved(saved as RecruiterProfile);
+      show({
+        title: "Profile saved",
+        description: "Your changes have been saved.",
+        variant: "success",
+        position: "bottom-center",
+        duration: 4000,
+      });
     } catch (err) {
       setSaveError(getApiErrorMessage(err, "Failed to save profile"));
     }

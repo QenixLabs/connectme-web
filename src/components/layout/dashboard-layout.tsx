@@ -1,15 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { Home, Briefcase, MessageSquare, User, Bell } from "lucide-react";
-import { notificationsApi } from "@/lib/api";
+import { useUnreadCount } from "@/lib/api";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { useSocket } from "@/hooks/use-socket";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
+import { usePopup } from "@/hooks/use-popup";
 
 export interface NavItem {
   href: string;
@@ -46,11 +47,13 @@ export function DashboardLayout({
   const navItems = NAV_ITEMS_BY_ROLE[role];
   const router = useRouter();
   const pathname = usePathname();
+  const queryClient = useQueryClient();
   const { user, isAuthenticated, isLoading, fetchUser } =
     useAuthStore();
   const [authChecked, setAuthChecked] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const { data: unreadCount = 0, refetch: refetchUnread } = useUnreadCount();
   const { socket } = useSocket();
+  const { show } = usePopup();
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -62,17 +65,20 @@ export function DashboardLayout({
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      notificationsApi.getUnreadCount().then((count) => setUnreadCount(count));
+      refetchUnread();
     }
-  }, [isAuthenticated, user, pathname]);
+  }, [isAuthenticated, user, pathname, refetchUnread]);
 
   useEffect(() => {
     if (!socket) return;
 
     const handleNotification = (notification: { title?: string; body?: string }) => {
-      setUnreadCount((prev) => prev + 1);
-      toast.info(notification.title || "New notification", {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      show({
+        title: notification.title || "New notification",
         description: notification.body,
+        variant: "info",
+        position: "top-right",
       });
     };
 
@@ -81,7 +87,7 @@ export function DashboardLayout({
     return () => {
       socket.off("notification:new", handleNotification);
     };
-  }, [socket]);
+  }, [socket, queryClient]);
 
   useEffect(() => {
     if (authChecked && !isLoading && !isAuthenticated) {

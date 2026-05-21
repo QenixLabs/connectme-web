@@ -1,10 +1,11 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { campaignApi } from '@/lib/api';
 import { queryKeys } from '@/lib/api/query-keys';
-import { toast } from 'sonner';
+import { usePopup } from '@/hooks/use-popup';
 
 export function useUpdateCampaign() {
   const queryClient = useQueryClient();
+  const { show } = usePopup();
 
   return useMutation({
     mutationFn: ({
@@ -19,10 +20,15 @@ export function useUpdateCampaign() {
       queryClient.invalidateQueries({
         queryKey: queryKeys.campaigns.detail(variables.id),
       });
-      toast.success('Campaign updated successfully');
+      show({ title: 'Campaign updated', variant: 'success', position: 'bottom-center' });
     },
     onError: (error: any) => {
-      toast.error(error?.response?.data?.message || 'Failed to update campaign');
+      show({
+        title: 'Failed to update campaign',
+        description: error?.response?.data?.message,
+        variant: 'error',
+        position: 'bottom-center',
+      });
     },
   });
 }

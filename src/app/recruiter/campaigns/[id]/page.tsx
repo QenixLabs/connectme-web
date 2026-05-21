@@ -15,6 +15,20 @@ import {
   Send,
   CheckCheck,
   Ban,
+  Play,
+  RotateCcw,
+  Copy,
+  Link2,
+  Star,
+  Bookmark,
+  BookmarkCheck,
+  Trash2,
+  MessageSquare,
+  Shield,
+  UserPlus,
+  UserCog,
+  UserX,
+  Pin,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -33,6 +47,10 @@ import {
 import {
   useCampaignApplications,
   useUpdateApplicationStatus,
+  useAddToShortlist,
+  useRemoveFromShortlist,
+  useUpsertApplicantNote,
+  useDeleteApplicantNote,
 } from '@/lib/api/hooks/useCampaignApplications';
 import { useCampaign } from '@/lib/api/hooks/useCampaign';
 import {
@@ -42,6 +60,17 @@ import {
 } from '@/lib/api';
 import { campaignApi } from '@/lib/api/campaign';
 import { getApiErrorMessage } from '@/lib/formatters';
+import { usePublishCampaign, useCloseCampaign, useReopenCampaign, useCloneCampaign, useUploadCampaignMedia, useDeleteCampaignMedia } from '@/lib/api/hooks/useCampaigns';
+import { useUpdateCampaign } from '@/lib/api/hooks/useUpdateCampaign';
+import { useBulkUpdateApplicationStatus } from '@/lib/api/hooks/useCampaignApplications';
+import {
+  useCampaignTeam,
+  useInviteTeamMember,
+  useUpdateTeamMemberRole,
+  useRemoveTeamMember,
+} from '@/lib/api/hooks/useCampaignTeam';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import {
   LineChart,
@@ -109,6 +138,14 @@ export default function CampaignDetailPage() {
   const campaignId = params.id as string;
   const [activeTab, setActiveTab] = useState('applicants');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [selectedApps, setSelectedApps] = useState<Set<string>>(new Set());
+  const [analyticsFrom, setAnalyticsFrom] = useState('');
+  const [analyticsTo, setAnalyticsTo] = useState('');
+
+  const [teamInviteEmail, setTeamInviteEmail] = useState('');
+  const [teamInviteRole, setTeamInviteRole] = useState('viewer');
+  const [showShortlistedOnly, setShowShortlistedOnly] = useState(false);
+  const updateCampaign = useUpdateCampaign();
 
   const {
     data: campaign,
@@ -128,11 +165,15 @@ export default function CampaignDetailPage() {
     error: invitesError,
   } = useCampaignInvites(campaignId);
 
+  const analyticsRange = analyticsFrom || analyticsTo
+    ? { from: analyticsFrom || undefined, to: analyticsTo || undefined }
+    : undefined;
+
   const {
     data: analytics,
     isLoading: isLoadingAnalytics,
     error: analyticsError,
-  } = useCampaignAnalytics(campaignId);
+  } = useCampaignAnalytics(campaignId, analyticsRange);
 
   const {
     data: demographics,
@@ -141,6 +182,27 @@ export default function CampaignDetailPage() {
   } = useCampaignDemographics(campaignId);
 
   const updateStatus = useUpdateApplicationStatus();
+  const bulkUpdateStatus = useBulkUpdateApplicationStatus();
+  const publishCampaign = usePublishCampaign();
+  const closeCampaign = useCloseCampaign();
+  const reopenCampaign = useReopenCampaign();
+  const cloneCampaign = useCloneCampaign();
+  const uploadMedia = useUploadCampaignMedia();
+  const deleteMedia = useDeleteCampaignMedia();
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const addToShortlist = useAddToShortlist();
+  const removeFromShortlist = useRemoveFromShortlist();
+  const upsertNote = useUpsertApplicantNote();
+  const deleteNote = useDeleteApplicantNote();
+
+  const { data: teamData, isLoading: isLoadingTeam, error: teamError } = useCampaignTeam(campaignId);
+  const inviteTeamMember = useInviteTeamMember();
+  const updateTeamRole = useUpdateTeamMemberRole();
+  const removeTeamMember = useRemoveTeamMember();
+
+  const [noteAppId, setNoteAppId] = useState<string | null>(null);
+  const [noteText, setNoteText] = useState('');
+  const [noteRating, setNoteRating] = useState(0);
 
   const handleStatusChange = async (appId: string, status: string) => {
     setUpdatingId(appId);
@@ -149,6 +211,26 @@ export default function CampaignDetailPage() {
     } finally {
       setUpdatingId(null);
     }
+  };
+
+  const toggleAppSelection = (appId: string) => {
+    const next = new Set(selectedApps);
+    if (next.has(appId)) {
+      next.delete(appId);
+    } else {
+      next.add(appId);
+    }
+    setSelectedApps(next);
+  };
+
+  const handleBulkUpdate = async (status: string) => {
+    if (selectedApps.size === 0) return;
+    await bulkUpdateStatus.mutateAsync({
+      campaignId,
+      applicationIds: Array.from(selectedApps),
+      status,
+    });
+    setSelectedApps(new Set());
   };
 
   const handleExport = async () => {
@@ -226,7 +308,48 @@ export default function CampaignDetailPage() {
             </p>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {campaign?.status === 'draft' && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => publishCampaign.mutate(campaignId)}
+              disabled={publishCampaign.isPending}
+            >
+              <Play className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.5} />
+              Publish
+            </Button>
+          )}
+          {campaign?.status === 'active' && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => closeCampaign.mutate(campaignId)}
+              disabled={closeCampaign.isPending}
+            >
+              Close
+            </Button>
+          )}
+          {campaign?.status === 'closed' && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => reopenCampaign.mutate(campaignId)}
+              disabled={reopenCampaign.isPending}
+            >
+              <RotateCcw className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.5} />
+              Reopen
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => cloneCampaign.mutate(campaignId)}
+            disabled={cloneCampaign.isPending}
+          >
+            <Copy className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.5} />
+            Clone
+          </Button>
           <Button
             variant="outline"
             size="sm"
@@ -234,6 +357,17 @@ export default function CampaignDetailPage() {
           >
             <Pencil className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.5} />
             Edit
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const url = `${window.location.origin}/talent/opportunities/${campaignId}`;
+              navigator.clipboard.writeText(url);
+            }}
+          >
+            <Link2 className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.5} />
+            Copy Link
           </Button>
           <Button variant="outline" size="sm" onClick={handleExport}>
             <Download className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.5} />
@@ -253,9 +387,11 @@ export default function CampaignDetailPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="applicants">Applicants ({totalApplicants})</TabsTrigger>
           <TabsTrigger value="invites">Invites ({invites?.length ?? 0})</TabsTrigger>
+          <TabsTrigger value="media">Media ({campaign?.media?.length ?? 0})</TabsTrigger>
+          <TabsTrigger value="team">Team</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
 
@@ -272,68 +408,300 @@ export default function CampaignDetailPage() {
             </Alert>
           ) : applications && applications.length > 0 ? (
             <div className="space-y-3">
-              {applications.map((app) => {
+              <div className="flex items-center gap-2"
+              >
+                <button
+                  onClick={() => setShowShortlistedOnly(false)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
+                    !showShortlistedOnly
+                      ? "bg-brand text-white border-brand"
+                      : "bg-card text-text-secondary border-border hover:border-brand hover:text-brand"
+                  )}
+                >
+                  All
+                </button>
+                <button
+                  onClick={() => setShowShortlistedOnly(true)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
+                    showShortlistedOnly
+                      ? "bg-brand text-white border-brand"
+                      : "bg-card text-text-secondary border-border hover:border-brand hover:text-brand"
+                  )}
+                >
+                  Shortlisted
+                </button>
+              </div>
+              {selectedApps.size > 0 && (
+                <div className="flex items-center justify-between gap-3 bg-card border border-border rounded-xl p-3">
+                  <span className="text-sm text-text-secondary">
+                    {selectedApps.size} selected
+                  </span>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleBulkUpdate('accepted')}
+                      disabled={bulkUpdateStatus.isPending}
+                    >
+                      <CheckCircle2 className="w-3.5 h-3.5 mr-1" strokeWidth={1.5} />
+                      Accept
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-error-text hover:bg-error-light"
+                      onClick={() => handleBulkUpdate('rejected')}
+                      disabled={bulkUpdateStatus.isPending}
+                    >
+                      <XCircle className="w-3.5 h-3.5 mr-1" strokeWidth={1.5} />
+                      Reject
+                    </Button>
+                  </div>
+                </div>
+              )}
+              {applications.filter((app) => !showShortlistedOnly || app.is_shortlisted).map((app) => {
                 const meta = APP_STATUS_META[app.status] ?? APP_STATUS_META.pending;
                 const Icon = meta.icon;
                 const talent =
                   typeof app.talent_id === 'object' && app.talent_id !== null
                     ? app.talent_id
                     : null;
+                const isSelected = selectedApps.has(app._id);
+                const isEditingNote = noteAppId === app._id;
+                const note = app.note;
 
                 return (
                   <article
                     key={app._id}
-                    className="bg-card border border-border rounded-2xl p-[18px] shadow-[0_1px_3px_rgba(0,0,0,0.07),0_4px_12px_rgba(0,0,0,0.04)] flex flex-col sm:flex-row sm:items-center gap-4"
+                    className={cn(
+                      "bg-card border rounded-2xl p-[18px] shadow-[0_1px_3px_rgba(0,0,0,0.07),0_4px_12px_rgba(0,0,0,0.04)] flex flex-col gap-4",
+                      isSelected ? "border-brand" : "border-border",
+                    )}
                   >
-                    <div className="flex-1 min-w-0 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-muted-bg flex items-center justify-center">
-                          <User className="w-4 h-4 text-text-muted" strokeWidth={1.5} />
+                    <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+                      <div className="flex-1 min-w-0 space-y-2">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleAppSelection(app._id)}
+                            className="w-4 h-4 rounded border-border text-brand focus:ring-brand"
+                          />
+                          <div className="w-8 h-8 rounded-full bg-muted-bg flex items-center justify-center">
+                            <User className="w-4 h-4 text-text-muted" strokeWidth={1.5} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="text-sm font-medium text-text-primary">
+                                {talent?.full_legal_name || talent?.email || 'Unknown'}
+                              </p>
+                              {app.is_shortlisted && (
+                                <Badge variant="outline" className="text-2xs text-brand border-brand-muted bg-brand-light">
+                                  <BookmarkCheck className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
+                                  Shortlisted
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-xs text-text-muted">
+                              {new Date(app.created_at).toLocaleDateString('en-US', {
+                                month: 'short',
+                                day: 'numeric',
+                                year: 'numeric',
+                              })}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-medium text-text-primary">
-                            {talent?.full_legal_name || talent?.email || 'Unknown'}
-                          </p>
-                          <p className="text-xs text-text-muted">
-                            {new Date(app.created_at).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
-                            })}
-                          </p>
-                        </div>
+                        {app.message && (
+                          <div className="flex items-start gap-1.5">
+                            <Mail className="w-3.5 h-3.5 text-text-muted mt-0.5 shrink-0" strokeWidth={1.5} />
+                            <p className="text-sm text-text-secondary line-clamp-2">{app.message}</p>
+                          </div>
+                        )}
+                        {app.answers && app.answers.length > 0 && (
+                          <div className="space-y-1 mt-1">
+                            {app.answers.map((ans: any) => (
+                              <div key={ans.question_id} className="text-xs text-text-secondary">
+                                <span className="font-medium text-text-primary">{ans.question_text}:</span>{' '}
+                                {ans.answer}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {note && !isEditingNote && (
+                          <div className="space-y-1.5 pt-1">
+                            {(() => {
+                              const r = note.rating;
+                              if (r == null || r <= 0) return null;
+                              return (
+                                <div className="flex items-center gap-0.5">
+                                  {Array.from({ length: 5 }).map((_, i) => (
+                                    <Star
+                                      key={i}
+                                      className={cn(
+                                        "w-3.5 h-3.5",
+                                        i < r ? "fill-amber-400 text-amber-400" : "text-text-muted"
+                                      )}
+                                      strokeWidth={1.5}
+                                    />
+                                  ))}
+                                </div>
+                              );
+                            })()}
+                            {note.note_text && (
+                              <div className="flex items-start gap-1.5">
+                                <MessageSquare className="w-3.5 h-3.5 text-text-muted mt-0.5 shrink-0" strokeWidth={1.5} />
+                                <p className="text-xs text-text-secondary">{note.note_text}</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
-                      {app.message && (
-                        <div className="flex items-start gap-1.5">
-                          <Mail className="w-3.5 h-3.5 text-text-muted mt-0.5 shrink-0" strokeWidth={1.5} />
-                          <p className="text-sm text-text-secondary line-clamp-2">{app.message}</p>
-                        </div>
-                      )}
+
+                      <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                        <Badge className={cn('shrink-0', meta.classes)}>
+                          <Icon className="w-3 h-3 mr-1" strokeWidth={1.5} />
+                          {meta.label}
+                        </Badge>
+                        <Select
+                          value={app.status}
+                          onValueChange={(val) => handleStatusChange(app._id, val)}
+                          disabled={updateStatus.isPending && updatingId === app._id}
+                        >
+                          <SelectTrigger className="w-[130px] h-9 text-sm">
+                            <SelectValue placeholder="Update status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="accepted">Accepted</SelectItem>
+                            <SelectItem value="rejected">Rejected</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
 
-                    <div className="flex items-center gap-3 shrink-0">
-                      <Badge className={cn('shrink-0', meta.classes)}>
-                        <Icon className="w-3 h-3 mr-1" strokeWidth={1.5} />
-                        {meta.label}
-                      </Badge>
-                      <Select
-                        value={app.status}
-                        onValueChange={(val) => handleStatusChange(app._id, val)}
-                        disabled={updateStatus.isPending && updatingId === app._id}
+                    {/* Actions row */}
+                    <div className="flex items-center gap-2 pt-2 border-t border-border-subtle">
+                      <Button
+                        size="sm"
+                        variant={app.is_shortlisted ? "default" : "outline"}
+                        className="h-8 text-xs"
+                        onClick={() => {
+                          if (app.is_shortlisted) {
+                            removeFromShortlist.mutate({ campaignId, applicationId: app._id });
+                          } else {
+                            addToShortlist.mutate({ campaignId, applicationId: app._id });
+                          }
+                        }}
+                        disabled={addToShortlist.isPending || removeFromShortlist.isPending}
                       >
-                        <SelectTrigger className="w-[140px] h-9 text-sm">
-                          <SelectValue placeholder="Update status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="accepted">Accepted</SelectItem>
-                          <SelectItem value="rejected">Rejected</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        {app.is_shortlisted ? (
+                          <BookmarkCheck className="w-3.5 h-3.5 mr-1" strokeWidth={1.5} />
+                        ) : (
+                          <Bookmark className="w-3.5 h-3.5 mr-1" strokeWidth={1.5} />
+                        )}
+                        {app.is_shortlisted ? 'Shortlisted' : 'Shortlist'}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 text-xs"
+                        onClick={() => {
+                          if (isEditingNote) {
+                            setNoteAppId(null);
+                            setNoteText('');
+                            setNoteRating(0);
+                          } else {
+                            setNoteAppId(app._id);
+                            setNoteText(note?.note_text || '');
+                            setNoteRating(note?.rating || 0);
+                          }
+                        }}
+                      >
+                        <MessageSquare className="w-3.5 h-3.5 mr-1" strokeWidth={1.5} />
+                        {isEditingNote ? 'Cancel' : note ? 'Edit Note' : 'Add Note'}
+                      </Button>
                     </div>
+
+                    {isEditingNote && (
+                      <div className="space-y-3 bg-muted-bg rounded-xl p-3">
+                        <div className="flex items-center gap-1">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <button
+                              key={i}
+                              onClick={() => setNoteRating(i + 1)}
+                              className="p-0.5"
+                            >
+                              <Star
+                                className={cn(
+                                  "w-5 h-5",
+                                  i < noteRating ? "fill-amber-400 text-amber-400" : "text-text-muted"
+                                )}
+                                strokeWidth={1.5}
+                              />
+                            </button>
+                          ))}
+                        </div>
+                        <Textarea
+                          value={noteText}
+                          onChange={(e) => setNoteText(e.target.value)}
+                          placeholder="Write a note about this applicant..."
+                          rows={3}
+                          className="resize-none text-sm bg-card"
+                        />
+                        <div className="flex items-center justify-end gap-2">
+                          {note && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 text-xs text-error-text"
+                              onClick={() => {
+                                deleteNote.mutate({ campaignId, applicationId: app._id }, {
+                                  onSuccess: () => setNoteAppId(null),
+                                });
+                              }}
+                              disabled={deleteNote.isPending}
+                            >
+                              <Trash2 className="w-3.5 h-3.5 mr-1" strokeWidth={1.5} />
+                              Delete
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            className="h-8 text-xs"
+                            onClick={() => {
+                              upsertNote.mutate({
+                                campaignId,
+                                applicationId: app._id,
+                                payload: { note_text: noteText, rating: noteRating || undefined },
+                              }, {
+                                onSuccess: () => {
+                                  setNoteAppId(null);
+                                  setNoteText('');
+                                  setNoteRating(0);
+                                },
+                              });
+                            }}
+                            disabled={upsertNote.isPending}
+                          >
+                            Save Note
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </article>
                 );
               })}
+              {applications.filter((app) => !showShortlistedOnly || app.is_shortlisted).length === 0 && (
+                <div className="text-center py-12 bg-card border border-border rounded-2xl"
+                >
+                  <p className="text-sm text-text-muted"
+                  >
+                    {showShortlistedOnly ? 'No shortlisted applications yet.' : 'No applications yet.'}
+                  </p>
+                </div>
+              )}
             </div>
           ) : (
             <div className="text-center py-20 bg-card border border-border rounded-2xl">
@@ -404,6 +772,202 @@ export default function CampaignDetailPage() {
           )}
         </TabsContent>
 
+        <TabsContent value="media" className="space-y-4">
+          <div className="flex items-center gap-3">
+            <input
+              type="file"
+              accept="image/*,video/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file || !campaignId) return;
+                const formData = new FormData();
+                formData.append('file', file);
+                uploadMedia.mutate({ campaignId, formData });
+                e.target.value = '';
+              }}
+              className="hidden"
+              id="media-upload"
+            />
+            <label htmlFor="media-upload">
+              <Button variant="outline" size="sm" className="cursor-pointer" asChild>
+                <span>Upload Media</span>
+              </Button>
+            </label>
+          </div>
+
+          {campaign?.media && campaign.media.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              {campaign.media.map((item, idx) => {
+                const isPinned = campaign.cover_image_url === item.url;
+                return (
+                  <div
+                    key={idx}
+                    className={cn(
+                      "relative rounded-xl overflow-hidden aspect-square group",
+                      isPinned ? "border-2 border-brand ring-1 ring-brand" : "border border-border"
+                    )}
+                  >
+                    {item.type === 'video' ? (
+                      <video src={item.url} className="w-full h-full object-cover" controls />
+                    ) : (
+                      <img src={item.url} alt={item.caption || ''} className="w-full h-full object-cover" />
+                    )}
+                    <div className="absolute top-2 right-2 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {!isPinned && (
+                        <button
+                          onClick={() =>
+                            updateCampaign.mutate({
+                              id: campaignId,
+                              payload: { cover_image_url: item.url },
+                            })
+                          }
+                          disabled={updateCampaign.isPending}
+                          className="p-1.5 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+                          title="Pin as cover"
+                        >
+                          <Pin className="w-3.5 h-3.5" strokeWidth={1.5} />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => deleteMedia.mutate({ campaignId, url: item.url })}
+                        className="p-1.5 rounded-full bg-black/50 text-white hover:bg-black/70"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
+                      </button>
+                    </div>
+                    {isPinned && (
+                      <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-brand text-white text-[10px] font-semibold">
+                        Pinned
+                      </span>
+                    )}
+                    {item.caption && (
+                      <p className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[11px] px-2 py-1 truncate">
+                        {item.caption}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-16 bg-card border border-border rounded-2xl">
+              <p className="text-sm text-text-muted">No media yet</p>
+              <p className="text-xs text-text-muted mt-1">Upload images or videos to showcase this campaign.</p>
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="team" className="space-y-4">
+          <div className="bg-card border border-border rounded-2xl p-4 space-y-4">
+            <div className="flex items-center gap-3">
+              <Input
+                placeholder="Email address..."
+                value={teamInviteEmail}
+                onChange={(e) => setTeamInviteEmail(e.target.value)}
+                className="h-10 text-sm flex-1"
+              />
+              <Select value={teamInviteRole} onValueChange={setTeamInviteRole}>
+                <SelectTrigger className="w-[130px] h-10 text-sm">
+                  <SelectValue placeholder="Role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="viewer">Viewer</SelectItem>
+                  <SelectItem value="editor">Editor</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                size="sm"
+                className="h-10 text-xs"
+                onClick={() => {
+                  if (!teamInviteEmail.trim()) return;
+                  inviteTeamMember.mutate(
+                    { campaignId, email: teamInviteEmail.trim(), role: teamInviteRole },
+                    {
+                      onSuccess: () => {
+                        setTeamInviteEmail('');
+                        setTeamInviteRole('viewer');
+                      },
+                    }
+                  );
+                }}
+                disabled={inviteTeamMember.isPending || !teamInviteEmail.trim()}
+              >
+                <UserPlus className="w-3.5 h-3.5 mr-1" strokeWidth={1.5} />
+                Invite
+              </Button>
+            </div>
+
+            {isLoadingTeam ? (
+              <div className="space-y-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton key={i} className="h-16 rounded-xl" />
+                ))}
+              </div>
+            ) : teamError ? (
+              <Alert variant="destructive">
+                <AlertDescription>{getApiErrorMessage(teamError, 'Failed to load team')}</AlertDescription>
+              </Alert>
+            ) : teamData?.members && teamData.members.length > 0 ? (
+              <div className="space-y-2">
+                {teamData.members.map((member: any) => {
+                  const user = member.user_id;
+                  const displayName = user?.full_legal_name || user?.email || 'Unknown';
+                  return (
+                    <div
+                      key={member._id}
+                      className="flex items-center justify-between gap-3 bg-page border border-border rounded-xl p-3"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-muted-bg flex items-center justify-center">
+                          <User className="w-4 h-4 text-text-muted" strokeWidth={1.5} />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-text-primary">{displayName}</p>
+                          <p className="text-xs text-text-muted">{user?.email}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-2xs capitalize">
+                          {member.role}
+                        </Badge>
+                        <Select
+                          value={member.role}
+                          onValueChange={(val) =>
+                            updateTeamRole.mutate({ campaignId, memberId: member._id, role: val })
+                          }
+                        >
+                          <SelectTrigger className="w-[100px] h-8 text-xs">
+                            <SelectValue placeholder="Role" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="viewer">Viewer</SelectItem>
+                            <SelectItem value="editor">Editor</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 w-8 p-0 text-error-text"
+                          onClick={() => removeTeamMember.mutate({ campaignId, memberId: member._id })}
+                          disabled={removeTeamMember.isPending}
+                        >
+                          <UserX className="w-4 h-4" strokeWidth={1.5} />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Shield className="w-8 h-8 text-text-muted mx-auto mb-2" strokeWidth={1.5} />
+                <p className="text-sm text-text-muted">No team members yet</p>
+                <p className="text-xs text-text-muted mt-1">Invite colleagues to collaborate on this campaign.</p>
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
         <TabsContent value="analytics" className="space-y-6">
           {isLoadingAnalytics || isLoadingDemographics ? (
             <div className="space-y-6">
@@ -416,8 +980,35 @@ export default function CampaignDetailPage() {
             </Alert>
           ) : (
             <>
+              <div className="flex items-center gap-3 bg-card border border-border rounded-xl p-3">
+                <span className="text-sm text-text-secondary">Date range:</span>
+                <input
+                  type="date"
+                  value={analyticsFrom}
+                  onChange={(e) => setAnalyticsFrom(e.target.value)}
+                  className="h-9 rounded-lg text-xs px-3 bg-page border border-border"
+                />
+                <span className="text-xs text-text-muted">to</span>
+                <input
+                  type="date"
+                  value={analyticsTo}
+                  onChange={(e) => setAnalyticsTo(e.target.value)}
+                  className="h-9 rounded-lg text-xs px-3 bg-page border border-border"
+                />
+                {(analyticsFrom || analyticsTo) && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 text-xs"
+                    onClick={() => { setAnalyticsFrom(''); setAnalyticsTo(''); }}
+                  >
+                    Reset
+                  </Button>
+                )}
+              </div>
+
               <div className="bg-card border border-border rounded-2xl p-4 sm:p-6">
-                <h3 className="text-sm font-semibold text-text-primary mb-4">Applications Over Time (30 days)</h3>
+                <h3 className="text-sm font-semibold text-text-primary mb-4">Applications Over Time</h3>
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={analytics?.applications_over_time ?? []}>

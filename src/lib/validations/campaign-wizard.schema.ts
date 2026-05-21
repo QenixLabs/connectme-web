@@ -46,7 +46,24 @@ export const campaignWizardSchema = z
         currency: z.string().optional(),
       })
       .optional(),
+    is_budget_disclosed: z.boolean().optional(),
+    is_unpaid: z.boolean().optional(),
+    questions: z
+      .array(
+        z.object({
+          _id: z.string().optional(),
+          question_text: z.string().min(1, 'Question text is required').max(500, 'Too long'),
+          question_type: z.enum(['text', 'number', 'select', 'multiselect', 'boolean']).default('text'),
+          options: z.array(z.string().max(100)).max(20).optional(),
+          is_required: z.boolean().default(false),
+          order: z.number().default(0),
+        }),
+      )
+      .max(20, 'Max 20 questions')
+      .optional(),
     publishOption: z.enum(['draft', 'public', 'invite_only']),
+    scheduled_publish_at: z.string().optional(),
+    auto_close_on_deadline: z.boolean().default(true),
   })
   .superRefine((data, ctx) => {
     if (data.dates?.start && data.dates?.end) {
@@ -80,6 +97,32 @@ export const campaignWizardSchema = z
           message: 'Max budget must be greater than or equal to min budget',
           path: ['budget_range', 'max'],
         });
+      }
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (data.dates?.start) {
+      const start = new Date(data.dates.start + 'T00:00:00');
+      if (start < today)
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Start date cannot be in the past.', path: ['dates', 'start'] });
+    }
+
+    if (data.dates?.end && !data.dates?.start) {
+      const end = new Date(data.dates.end + 'T00:00:00');
+      if (end < today)
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'End date cannot be in the past.', path: ['dates', 'end'] });
+    }
+
+    if (data.deadline) {
+      const deadline = new Date(data.deadline + 'T00:00:00');
+      if (deadline < today)
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Application deadline cannot be in the past.', path: ['deadline'] });
+      if (data.dates?.start) {
+        const start = new Date(data.dates.start + 'T00:00:00');
+        if (deadline > start)
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Application deadline must be on or before the start date.', path: ['deadline'] });
       }
     }
   });

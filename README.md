@@ -10,7 +10,7 @@ Next.js 16 app for the ConnectME talent platform.
 - Zustand v5 (client state, vanilla store + provider)
 - Axios (`withCredentials: true`)
 - React Hook Form + Zod (forms)
-- TanStack React Query v5 (installed; not yet wired)
+- TanStack React Query v5 (data fetching + mutations + cache invalidation)
 - Motion (Framer) v12, Sonner (toasts), Recharts, date-fns
 
 ## Getting Started
@@ -49,9 +49,12 @@ src/
 │   ├── layout.tsx, page.tsx, globals.css
 │   ├── auth/                     # login, signup, forgot-password, verify-email
 │   ├── talent/                   # dashboard, profile, portfolio, messages,
-│   │                             # notifications, opportunities, verify-documents
-│   ├── recruiter/                # dashboard, profile, campaigns, find-talent,
-│   │                             # messages, notifications, verify-documents
+│   │                             # notifications, opportunities (list + detail
+│   │                             # with invite banners + apply form), verify-documents
+│   ├── recruiter/                # dashboard (live stats), campaigns (list + detail
+│   │                             # with applicants/invites/analytics), find-talent
+│   │                             # (list + card views + invite modal), messages,
+│   │                             # notifications, verify-documents
 │   ├── admin/                    # dashboard, verifications
 │   └── (public)/talent/[username]/  # public profile + portfolio
 ├── components/
@@ -59,7 +62,9 @@ src/
 │   ├── layout/                   # auth-layout, dashboard-layout
 │   ├── portfolio/                # grid, uploader, item card, media kit
 │   ├── verification/             # document submission, status card
-│   └── talent-card.tsx, recruiter-card.tsx, verification-alerts.tsx
+│   ├── talent-card.tsx, recruiter-card.tsx, verification-alerts.tsx
+│   ├── invite-to-campaign-modal.tsx
+│   └── notifications/notification-list.tsx (real-time, campaign invite actions)
 ├── stores/
 │   └── auth-store.ts             # user, isAuthenticated, login/logout/fetchUser
 ├── providers/
@@ -94,7 +99,16 @@ Zustand auth store (`src/stores/auth-store.ts`) persists to localStorage and mir
 
 Single Axios instance (`apiClient`) in `src/lib/api.ts`, `withCredentials: true`, unwraps `{ success, data }` envelopes, 401 redirects to login.
 
-Domain wrappers: `authApi`, `talentApi`, `recruiterApi`, `messagesApi`, `notificationsApi`, `verificationApi`, `adminApi`.
+Domain wrappers: `authApi`, `talentApi`, `recruiterApi`, `campaignApi`, `messagesApi`, `notificationsApi`, `verificationApi`, `adminApi`.
+
+TanStack Query hooks (one file per domain under `src/lib/api/hooks/`):
+- `useCampaigns()`, `useCampaign(id)`, `useCampaignApplications(id)`, `useUpdateApplicationStatus()`
+- `useCampaignInvites(id)`, `useCampaignAnalytics(id)`, `useCampaignDemographics(id)`
+- `useInviteTalent()`, `useRespondToInvite()`
+- `useRecruiterDashboardStats()`, `useCampaignTalentView(id)`
+- `useTalentSearch(filters)`, `useDistinctProfessions(search)`
+
+Query-key factory: `src/lib/api/query-keys.ts`.
 
 ## Styling
 

@@ -60,6 +60,9 @@ interface TalentListItemProps {
   onViewPortfolio: () => void;
   onContact: () => void;
   onInvite?: () => void;
+  selectable?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: () => void;
 }
 
 export function TalentListItem({
@@ -68,6 +71,9 @@ export function TalentListItem({
   onViewPortfolio,
   onContact,
   onInvite,
+  selectable,
+  isSelected,
+  onToggleSelect,
 }: TalentListItemProps) {
   const requestAccess = useRequestProfileAccess();
   const loc = [profile.location?.city, profile.location?.state, profile.location?.country]
@@ -80,8 +86,28 @@ export function TalentListItem({
   const isPending = profile.access_status === "pending";
 
   return (
-    <article className="bg-card border border-border rounded-2xl p-3 sm:p-[18px] shadow-[0_1px_3px_rgba(0,0,0,0.07),0_4px_12px_rgba(0,0,0,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(79,110,247,0.12),0_1px_3px_rgba(0,0,0,0.06)]">
+    <article
+      className={cn(
+        "bg-card border border-border rounded-2xl p-3 sm:p-[18px] shadow-[0_1px_3px_rgba(0,0,0,0.07),0_4px_12px_rgba(0,0,0,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(79,110,247,0.12),0_1px_3px_rgba(0,0,0,0.06)]",
+        selectable && "cursor-pointer",
+        isSelected && "border-brand ring-1 ring-brand"
+      )}
+      onClick={(e) => {
+        if (!selectable) return;
+        const target = e.target as HTMLElement;
+        if (target.closest("button, a, input, [role='button']")) return;
+        onToggleSelect?.();
+      }}
+    >
       <div className="flex gap-3 sm:gap-3.5 items-start">
+        {selectable && (
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={(e) => { e.stopPropagation(); onToggleSelect?.(); }}
+            className="mt-1 w-4 h-4 rounded border-border text-brand focus:ring-brand shrink-0"
+          />
+        )}
         <Avatar
           name={displayName}
           src={profile.profile_photo}

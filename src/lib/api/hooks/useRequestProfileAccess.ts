@@ -1,21 +1,25 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { talentApi } from '@/lib/api';
 import { queryKeys } from '@/lib/api/query-keys';
-import { toast } from 'sonner';
+import { usePopup } from '@/hooks/use-popup';
 
 export function useRequestProfileAccess() {
   const queryClient = useQueryClient();
+  const { show } = usePopup();
 
   return useMutation({
     mutationFn: (username: string) => talentApi.requestAccess(username),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['talent', 'list'] });
-      toast.success('Access request sent');
+      show({ title: 'Access request sent', variant: 'success', position: 'bottom-center' });
     },
     onError: (error: any) => {
-      toast.error(
-        error?.response?.data?.message || 'Failed to send access request',
-      );
+      show({
+        title: 'Failed to send access request',
+        description: error?.response?.data?.message,
+        variant: 'error',
+        position: 'bottom-center',
+      });
     },
   });
 }

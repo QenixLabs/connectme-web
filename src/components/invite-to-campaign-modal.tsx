@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Send, FolderOpen } from "lucide-react";
 import { useCampaigns } from "@/lib/api/hooks/useCampaigns";
-import { useInviteTalent } from "@/lib/api";
+import { useInviteTalent, useBulkInviteTalent } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,44 +19,70 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "sonner";
+import { usePopup } from "@/hooks/use-popup";
 import Link from "next/link";
 
 interface InviteToCampaignModalProps {
   open: boolean;
   onClose: () => void;
-  talentId: string;
-  talentName: string;
+  talentId?: string;
+  talentIds?: string[];
+  talentName?: string;
 }
 
 export function InviteToCampaignModal({
   open,
   onClose,
   talentId,
+  talentIds,
   talentName,
 }: InviteToCampaignModalProps) {
   const [selectedCampaign, setSelectedCampaign] = useState("");
   const [message, setMessage] = useState("");
   const { data: campaignsData } = useCampaigns({ status: "active" });
   const invite = useInviteTalent();
+  const bulkInvite = useBulkInviteTalent();
+  const { show } = usePopup();
 
   const campaigns = campaignsData?.pages.flatMap((p) => p.data) ?? [];
+  const isBulk = (talentIds?.length ?? 0) > 0;
+  const ids = isBulk ? talentIds! : talentId ? [talentId] : [];
 
   const handleSend = async () => {
-    if (!selectedCampaign) return;
+    if (!selectedCampaign || ids.length === 0) return;
     try {
-      await invite.mutateAsync({
-        campaignId: selectedCampaign,
-        talentId,
-        message: message.trim() || undefined,
-      });
-      const campaign = campaigns.find((c) => c._id === selectedCampaign);
-      toast.success(`Invite sent to ${talentName} for ${campaign?.name || "campaign"}`);
+      if (isBulk) {
+        const result = await bulkInvite.mutateAsync({
+          campaignId: selectedCampaign,
+          talentIds: ids,
+          message: message.trim() || undefined,
+        });
+        const campaign = campaigns.find((c) => c._id === selectedCampaign);
+        show({
+          title: `Invites sent`,
+          description: `${result.successful.length} of ${ids.length} to ${campaign?.name || "campaign"}`,
+          variant: "success",
+          position: "bottom-center",
+        });
+      } else {
+        await invite.mutateAsync({
+          campaignId: selectedCampaign,
+          talentId: ids[0],
+          message: message.trim() || undefined,
+        });
+        const campaign = campaigns.find((c) => c._id === selectedCampaign);
+        show({
+          title: `Invite sent to ${talentName || "talent"}`,
+          description: campaign?.name || "campaign",
+          variant: "success",
+          position: "bottom-center",
+        });
+      }
       onClose();
       setSelectedCampaign("");
       setMessage("");
     } catch {
-      toast.error("Failed to send invite");
+      show({ title: "Failed to send invite", variant: "error", position: "bottom-center" });
     }
   };
 
@@ -64,7 +90,9 @@ export function InviteToCampaignModal({
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-lg">Invite to Campaign</DialogTitle>
+          <DialogTitle className="text-lg">
+            {isBulk ? `Invite ${ids.length} talents to Campaign` : 'Invite to Campaign'}
+          </DialogTitle>
         </DialogHeader>
 
         {campaigns.length === 0 ? (
@@ -122,10 +150,10 @@ export function InviteToCampaignModal({
               </Button>
               <Button
                 onClick={handleSend}
-                disabled={!selectedCampaign || invite.isPending}
+                disabled={!selectedCampaign || invite.isPending || bulkInvite.isPending}
               >
                 <Send className="w-4 h-4 mr-1.5" strokeWidth={1.5} />
-                Send Invite
+                {isBulk ? 'Send Invites' : 'Send Invite'}
               </Button>
             </div>
           </div>

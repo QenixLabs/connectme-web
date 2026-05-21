@@ -2,10 +2,10 @@ import { useQuery } from '@tanstack/react-query';
 import { campaignApi } from '@/lib/api';
 import { queryKeys } from '@/lib/api/query-keys';
 
-export function useCampaignAnalytics(campaignId: string) {
+export function useCampaignAnalytics(campaignId: string, range?: { from?: string; to?: string }) {
   return useQuery({
-    queryKey: queryKeys.campaigns.analytics(campaignId),
-    queryFn: () => campaignApi.getAnalytics(campaignId),
+    queryKey: queryKeys.campaigns.analytics(campaignId, range),
+    queryFn: () => campaignApi.getAnalytics(campaignId, range),
     enabled: !!campaignId,
   });
 }

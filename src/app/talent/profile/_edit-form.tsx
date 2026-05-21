@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useForm, useFieldArray, Controller, useWatch, Control } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Trash2, ChevronDown, Pencil, X, Loader2, Upload, FileText } from "lucide-react";
+import { usePopup } from "@/hooks/use-popup";
 import { Avatar } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { AxiosError } from "axios";
@@ -293,8 +294,8 @@ export function EditForm({
   onCancel,
   onConflictLoaded,
 }: EditFormProps) {
+  const { show } = usePopup();
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [saveSuccess, setSaveSuccess] = useState(false);
   const [swipeStart, setSwipeStart] = useState<{ x: number; y: number } | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoError, setPhotoError] = useState<string | null>(null);
@@ -487,7 +488,6 @@ export function EditForm({
 
   const onSubmit = handleSubmit(async (values) => {
     setSaveError(null);
-    setSaveSuccess(false);
     try {
       let saved: TalentProfile;
       if (mode === "create") {
@@ -498,7 +498,13 @@ export function EditForm({
         saved = await talentApi.updateProfile(payload);
       }
       onSaved(saved);
-      setSaveSuccess(true);
+      show({
+        title: "Profile saved",
+        description: mode === "create" ? "Your profile has been created." : "Your changes have been saved.",
+        variant: "success",
+        position: "bottom-center",
+        duration: 4000,
+      });
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       const axiosErr = err as AxiosError<{ message?: string }>;
@@ -574,14 +580,6 @@ export function EditForm({
             </Alert>
           </div>
         )}
-        {saveSuccess && (
-          <div className="mb-4">
-            <Alert>
-              <AlertDescription>Profile saved.</AlertDescription>
-            </Alert>
-          </div>
-        )}
-
         <Form {...form}>
           <form onSubmit={onSubmit} className="space-y-4 sm:space-y-5 pb-32 sm:pb-10">
             {/* IDENTITY */}

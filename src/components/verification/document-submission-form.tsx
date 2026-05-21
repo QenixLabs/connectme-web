@@ -4,6 +4,7 @@ import { useCallback, useRef, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Trash2, Upload, FileCheck, Loader2 } from "lucide-react";
+import { usePopup } from "@/hooks/use-popup";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -64,6 +65,7 @@ export function DocumentSubmissionForm({
   onSubmitted,
   onCancel,
 }: DocumentSubmissionFormProps) {
+  const { show } = usePopup();
   const [verificationId, setVerificationId] = useState<string | undefined>(
     initialVerificationId
   );
@@ -159,6 +161,13 @@ export function DocumentSubmissionForm({
         );
       }
 
+      show({
+        title: "Documents submitted",
+        description: "Your documents have been submitted for verification.",
+        variant: "success",
+        position: "bottom-center",
+        duration: 4000,
+      });
       onSubmitted();
     } catch (err) {
       setSubmissionError(

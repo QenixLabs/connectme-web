@@ -9,9 +9,15 @@ export { verificationApi, type VerificationRecord, type VerificationDocResponse,
 export { adminApi, type DashboardStats, type PendingVerificationItem } from './admin';
 export { useCampaignAnalytics, useCampaignDemographics } from './hooks/useCampaignAnalytics';
 export { useCampaignInvites } from './hooks/useCampaignInvites';
-export { useInviteTalent, useRespondToInvite } from './hooks/useInviteTalent';
+export { useInviteTalent, useBulkInviteTalent, useRespondToInvite } from './hooks/useInviteTalent';
 export { useRecruiterDashboardStats } from './hooks/useRecruiterDashboardStats';
 export { useCampaignTalentView } from './hooks/useCampaignTalentView';
 export { useCampaigns } from './hooks/useCampaigns';
 export { useCampaign } from './hooks/useCampaign';
 export { useCampaignApplications, useUpdateApplicationStatus } from './hooks/useCampaignApplications';
+export { useNotifications } from './hooks/useNotifications';
+export { useUnreadCount } from './hooks/useUnreadCount';
+export { useMarkAsRead } from './hooks/useMarkAsRead';
+export { useMarkAllAsRead } from './hooks/useMarkAllAsRead';
+export { useDismissAuto } from './hooks/useDismissAuto';
+export { useNotificationSettings, useUpdateNotificationSettings } from './hooks/useNotificationSettings';
