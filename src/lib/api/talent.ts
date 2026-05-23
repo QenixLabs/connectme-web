@@ -108,6 +108,24 @@ export const talentApi = {
     return response.data;
   },
 
+  getRecommendations: async (limit?: number): Promise<
+    Array<{
+      _id: string;
+      user_id: string;
+      username: string;
+      full_legal_name?: string;
+      profile_photo?: string;
+      professions?: string[];
+      location?: { city?: string; state?: string; country?: string };
+      match_score: number;
+    }>
+  > => {
+    const response = await apiClient.get('/talent/recommendations', {
+      params: limit ? { limit } : undefined,
+    });
+    return response.data;
+  },
+
   uploadProfilePhoto: async (file: File): Promise<{ relativePath: string; signedUrl: string }> => {
     const formData = new FormData();
     formData.append('file', file);

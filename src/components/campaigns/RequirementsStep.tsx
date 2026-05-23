@@ -19,9 +19,10 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { CampaignWizardInput } from '@/lib/validations/campaign-wizard.schema';
-import { Plus, Trash2, GripVertical } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Plus, Trash2 } from 'lucide-react';
 
-const CURRENCIES = ['INR', 'USD', 'EUR'];
+const GENDERS = ['Any', 'Male', 'Female', 'Non-binary'];
 
 function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return (
@@ -50,6 +51,7 @@ export function RequirementsStep() {
   const skills = watch('requirements.skills') ?? [];
   const languages = watch('requirements.languages') ?? [];
   const isUnpaid = watch('is_unpaid') ?? false;
+  const gender = watch('requirements.gender') ?? '';
 
   return (
     <div className="flex flex-col gap-2.5">
@@ -94,30 +96,40 @@ export function RequirementsStep() {
 
       <SectionLabel>Talent profile</SectionLabel>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-        <FormField
-          name="requirements.gender"
-          render={({ field }) => (
-            <FormItem className="flex flex-col gap-1">
-              <FieldLabel>Gender preference</FieldLabel>
-              <Select value={field.value} onValueChange={field.onChange}>
-                <FormControl>
-                  <SelectTrigger className="text-sm h-9 px-2.5">
-                    <SelectValue placeholder="Any" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="Any">Any</SelectItem>
-                  <SelectItem value="Male">Male</SelectItem>
-                  <SelectItem value="Female">Female</SelectItem>
-                  <SelectItem value="Non-binary">Non-binary</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      <FormField
+        control={control}
+        name="requirements.gender"
+        render={() => (
+          <FormItem className="flex flex-col gap-1">
+            <FieldLabel>Gender preference</FieldLabel>
+            <FormControl>
+              <div className="flex flex-wrap gap-2">
+                {GENDERS.map((g) => {
+                  const selected = gender === g || (!gender && g === 'Any');
+                  return (
+                    <button
+                      key={g}
+                      type="button"
+                      onClick={() => setValue('requirements.gender', g === 'Any' ? '' : g, { shouldValidate: true })}
+                      className={cn(
+                        'px-3 py-1.5 rounded-full text-xs font-medium border transition-colors',
+                        selected
+                          ? 'bg-[#FFF7F0] border-[#B85C00] text-[#B85C00]'
+                          : 'bg-card border-border text-text-secondary hover:border-[#B85C00]/50'
+                      )}
+                    >
+                      {g}
+                    </button>
+                  );
+                })}
+              </div>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
 
+      <div className="grid grid-cols-2 gap-2 mt-1">
         <FormField
           name="requirements.age_range.min"
           render={({ field }) => (
@@ -132,7 +144,7 @@ export function RequirementsStep() {
                   {...field}
                   onChange={(e) => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))}
                   value={field.value ?? ''}
-                  className="text-sm px-2.5 py-2 h-9"
+                  className="text-sm px-2.5 py-2 h-9 text-center"
                 />
               </FormControl>
               <FormMessage />
@@ -154,7 +166,7 @@ export function RequirementsStep() {
                   {...field}
                   onChange={(e) => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))}
                   value={field.value ?? ''}
-                  className="text-sm px-2.5 py-2 h-9"
+                  className="text-sm px-2.5 py-2 h-9 text-center"
                 />
               </FormControl>
               <FormMessage />
@@ -165,7 +177,7 @@ export function RequirementsStep() {
 
       <SectionLabel>Budget</SectionLabel>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 items-end">
+      <div className="grid grid-cols-2 gap-2">
         <FormField
           name="budget_range.min"
           render={({ field }) => (
@@ -207,43 +219,23 @@ export function RequirementsStep() {
             </FormItem>
           )}
         />
-
-        <FormField
-          name="budget_range.currency"
-          render={({ field }) => (
-            <FormItem className="flex flex-col gap-1">
-              <FieldLabel>Currency</FieldLabel>
-              <Select value={field.value} onValueChange={field.onChange} disabled={isUnpaid}>
-                <FormControl>
-                  <SelectTrigger className="text-sm h-9 px-2.5">
-                    <SelectValue />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {CURRENCIES.map((c) => (
-                    <SelectItem key={c} value={c}>{c}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
       </div>
 
       <FormField
         name="is_budget_disclosed"
         render={({ field }) => (
-          <FormItem className="flex items-center gap-1.5 mt-1">
+          <FormItem className="mt-1">
             <FormControl>
-              <input
-                type="checkbox"
-                checked={field.value}
-                onChange={(e) => field.onChange(e.target.checked)}
-                className="w-3.5 h-3.5 accent-[#B85C00]"
-              />
+              <label className="flex items-start gap-2.5 p-2.5 bg-muted-bg rounded-lg cursor-pointer border border-transparent hover:border-border transition-colors">
+                <input
+                  type="checkbox"
+                  checked={field.value}
+                  onChange={(e) => field.onChange(e.target.checked)}
+                  className="w-4 h-4 accent-[#B85C00] shrink-0 mt-0.5"
+                />
+                <span className="text-xs text-text-secondary leading-relaxed">Budget not disclosed to applicants</span>
+              </label>
             </FormControl>
-            <label className="text-xs text-text-secondary">Budget not disclosed to applicants</label>
           </FormItem>
         )}
       />
@@ -251,22 +243,24 @@ export function RequirementsStep() {
       <FormField
         name="is_unpaid"
         render={({ field }) => (
-          <FormItem className="flex items-center gap-1.5">
+          <FormItem>
             <FormControl>
-              <input
-                type="checkbox"
-                checked={field.value}
-                onChange={(e) => {
-                  field.onChange(e.target.checked);
-                  if (e.target.checked) {
-                    setValue('budget_range.min', undefined, { shouldValidate: false });
-                    setValue('budget_range.max', undefined, { shouldValidate: false });
-                  }
-                }}
-                className="w-3.5 h-3.5 accent-[#B85C00]"
-              />
+              <label className="flex items-start gap-2.5 p-2.5 bg-muted-bg rounded-lg cursor-pointer border border-transparent hover:border-border transition-colors">
+                <input
+                  type="checkbox"
+                  checked={field.value}
+                  onChange={(e) => {
+                    field.onChange(e.target.checked);
+                    if (e.target.checked) {
+                      setValue('budget_range.min', undefined, { shouldValidate: false });
+                      setValue('budget_range.max', undefined, { shouldValidate: false });
+                    }
+                  }}
+                  className="w-4 h-4 accent-[#B85C00] shrink-0 mt-0.5"
+                />
+                <span className="text-xs text-text-secondary leading-relaxed">Unpaid / voluntary role</span>
+              </label>
             </FormControl>
-            <label className="text-xs text-text-secondary">Unpaid / voluntary role</label>
           </FormItem>
         )}
       />
@@ -409,7 +403,7 @@ export function RequirementsStep() {
           type="button"
           variant="outline"
           size="sm"
-          className="w-full h-10 text-sm"
+          className="w-full h-10 text-sm border-dashed"
           onClick={() => append({ question_text: '', question_type: 'text', options: [], is_required: false, order: fields.length })}
         >
           <Plus className="w-4 h-4 mr-1.5" strokeWidth={1.5} />

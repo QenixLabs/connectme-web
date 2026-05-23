@@ -108,7 +108,7 @@ export function PublishStep() {
         name="publishOption"
         render={() => (
           <FormItem>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div className="flex flex-col gap-2">
               {OPTIONS.map((opt) => {
                 const Icon = opt.icon;
                 const selected = publishOption === opt.value;
@@ -120,30 +120,32 @@ export function PublishStep() {
                       setValue('publishOption', opt.value, { shouldValidate: true })
                     }
                     className={cn(
-                      'flex flex-col gap-1 p-3 rounded-lg border-[1.5px] text-left transition-all cursor-pointer',
+                      'flex items-center gap-3 p-3 rounded-lg border text-left transition-all cursor-pointer',
                       selected
                         ? 'border-[#B85C00] bg-[#FFF7F0]'
                         : 'border-border bg-card hover:border-[#B85C00]/50'
                     )}
                   >
-                    <Icon
-                      className={cn(
-                        'w-[18px] h-[18px] mb-0.5',
-                        selected ? 'text-[#B85C00]' : 'text-text-muted'
-                      )}
-                      strokeWidth={1.5}
-                    />
-                    <span
-                      className={cn(
-                        'text-sm font-medium',
-                        selected ? 'text-text-primary' : 'text-text-primary'
-                      )}
-                    >
-                      {opt.label}
-                    </span>
-                    <span className="text-[11px] text-text-muted leading-snug">
-                      {opt.description}
-                    </span>
+                    <div className={cn(
+                      'w-8 h-8 rounded-lg flex items-center justify-center shrink-0',
+                      selected ? 'bg-[#B85C00]/10' : 'bg-muted-bg'
+                    )}>
+                      <Icon
+                        className={cn(
+                          'w-4 h-4',
+                          selected ? 'text-[#B85C00]' : 'text-text-muted'
+                        )}
+                        strokeWidth={1.5}
+                      />
+                    </div>
+                    <div>
+                      <span className="text-sm font-medium text-text-primary block">
+                        {opt.label}
+                      </span>
+                      <span className="text-[11px] text-text-muted leading-snug">
+                        {opt.description}
+                      </span>
+                    </div>
                   </button>
                 );
               })}

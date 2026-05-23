@@ -118,7 +118,7 @@ export function DashboardLayout({
             <Skeleton className="h-8 w-8 rounded-full" />
           </div>
         </header>
-        <main className="flex-1 p-4 max-w-3xl mx-auto w-full">
+        <main className="flex-1 max-w-3xl mx-auto w-full pb-24">
           <div className="space-y-4 pt-4">
             <Skeleton className="h-32 w-full rounded-2xl" />
             <Skeleton className="h-24 w-full rounded-2xl" />
@@ -153,7 +153,7 @@ export function DashboardLayout({
         </div>
       </header>
 
-      <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-6 pb-24">
+      <main className="flex-1 max-w-3xl w-full mx-auto pb-24">
         {children}
       </main>
 

@@ -6,13 +6,12 @@ import { useInView } from "react-intersection-observer";
 import {
   Search,
   MapPin,
-  SlidersHorizontal,
   X,
-  LayoutList,
-  LayoutGrid,
   Mail,
   CheckSquare,
   Square,
+  LayoutGrid,
+  List,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getApiErrorMessage } from "@/lib/formatters";
@@ -29,21 +28,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { TalentListItem } from "@/components/talent-list-item";
 import { TalentGridCard } from "@/components/talent-grid-card";
+import { TalentListRow } from "@/components/talent-list-row";
 import { InviteToCampaignModal } from "@/components/invite-to-campaign-modal";
 
-type ViewMode = "list" | "card";
-
 const AVAILABILITY_OPTIONS = [
-  { value: "all", label: "Availability" },
+  { value: "all", label: "All" },
   { value: "available", label: "Available" },
   { value: "busy", label: "Busy" },
   { value: "not_available", label: "Not Available" },
 ];
 
 const GENDER_OPTIONS = [
-  { value: "all", label: "Gender" },
+  { value: "all", label: "All" },
   { value: "male", label: "Male" },
   { value: "female", label: "Female" },
   { value: "other", label: "Other" },
@@ -55,26 +52,11 @@ export default function FindTalentPage() {
   const searchParams = useSearchParams();
 
   const [search, setSearch] = useState("");
-  const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [selectedTalent, setSelectedTalent] = useState<{ id: string; name: string } | null>(null);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-
-  // Load view mode from localStorage on mount
-  useEffect(() => {
-    const saved = typeof window !== "undefined" ? (localStorage.getItem("find-talent-view") as ViewMode | null) : null;
-    if (saved === "list" || saved === "card") {
-      setViewMode(saved);
-    }
-  }, []);
-
-  // Persist view mode
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("find-talent-view", viewMode);
-    }
-  }, [viewMode]);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const profession = searchParams.get("profession") || "all";
   const availability = searchParams.get("availability") || "all";
@@ -174,15 +156,14 @@ export default function FindTalentPage() {
       <div className="max-w-[1280px] mx-auto w-full px-3 sm:px-4 py-4 sm:py-6 pb-24 lg:pb-8">
         <Skeleton className="h-8 w-40 mb-2" />
         <Skeleton className="h-4 w-32 mb-6" />
-        <div className="flex flex-wrap gap-2 sm:gap-3 mb-6">
-          <Skeleton className="h-10 w-36 rounded-lg" />
-          <Skeleton className="h-10 w-36 rounded-lg" />
-          <Skeleton className="h-10 w-44 rounded-lg" />
-          <Skeleton className="h-10 w-40 rounded-lg" />
+        <div className="flex flex-wrap gap-2 mb-6">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-8 w-24 rounded-full" />
+          ))}
         </div>
-        <div className="space-y-3">
+        <div className="grid grid-cols-2 gap-3">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-56 w-full rounded-2xl" />
+            <Skeleton key={i} className="h-72 w-full rounded-2xl" />
           ))}
         </div>
       </div>
@@ -209,7 +190,6 @@ export default function FindTalentPage() {
           <h1 className="text-xl sm:text-[22px] leading-tight font-bold text-text-primary">
             Find Talent
           </h1>
-          
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
           <div className="relative flex-1 sm:flex-none sm:w-[280px] lg:w-[320px]">
@@ -226,7 +206,6 @@ export default function FindTalentPage() {
               className="h-10 rounded-[10px] bg-card border-[1.5px] border-border pl-9 text-sm"
             />
           </div>
-          {/* Select mode toggle */}
           <button
             onClick={toggleSelectMode}
             className={cn(
@@ -237,61 +216,52 @@ export default function FindTalentPage() {
             )}
           >
             {selectMode ? <CheckSquare className="w-3.5 h-3.5" strokeWidth={1.5} /> : <Square className="w-3.5 h-3.5" strokeWidth={1.5} />}
-            {selectMode ? 'Done' : 'Select'}
+            {selectMode ? "Done" : "Select"}
           </button>
-          {/* View toggle */}
-          <div className="inline-flex items-center bg-muted-bg border border-border rounded-lg p-[3px] shrink-0">
+          <div className="flex items-center border border-border rounded-md overflow-hidden shrink-0">
             <button
-              onClick={() => setViewMode("list")}
-              aria-label="List view"
-              aria-pressed={viewMode === "list"}
+              onClick={() => setViewMode("grid")}
               className={cn(
-                "h-8 w-8 rounded-md flex items-center justify-center transition-all",
-                viewMode === "list"
-                  ? "bg-card text-text-primary shadow-sm border border-border"
-                  : "text-text-muted hover:text-text-secondary",
+                "h-8 w-8 flex items-center justify-center transition-colors",
+                viewMode === "grid"
+                  ? "bg-text-primary text-white"
+                  : "bg-card text-text-secondary hover:bg-muted-bg",
               )}
+              aria-label="Grid view"
             >
-              <LayoutList className="w-4 h-4" strokeWidth={1.5} />
+              <LayoutGrid className="w-3.5 h-3.5" strokeWidth={1.5} />
             </button>
             <button
-              onClick={() => setViewMode("card")}
-              aria-label="Card view"
-              aria-pressed={viewMode === "card"}
+              onClick={() => setViewMode("list")}
               className={cn(
-                "h-8 w-8 rounded-md flex items-center justify-center transition-all",
-                viewMode === "card"
-                  ? "bg-card text-text-primary shadow-sm border border-border"
-                  : "text-text-muted hover:text-text-secondary",
+                "h-8 w-8 flex items-center justify-center transition-colors",
+                viewMode === "list"
+                  ? "bg-text-primary text-white"
+                  : "bg-card text-text-secondary hover:bg-muted-bg",
               )}
+              aria-label="List view"
             >
-              <LayoutGrid className="w-4 h-4" strokeWidth={1.5} />
+              <List className="w-3.5 h-3.5" strokeWidth={1.5} />
             </button>
           </div>
         </div>
       </div>
 
-      {/* Filter bar */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-3 px-3 sm:mx-0 sm:px-0 sm:pb-0 sm:flex-wrap sm:overflow-visible"
+      {/* Filters */}
+      <div
+        className="flex items-center gap-2 overflow-x-auto pb-1"
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
-        <div className="flex items-center gap-1.5 text-xs font-semibold text-text-muted mr-1 shrink-0">
-          <SlidersHorizontal className="w-3.5 h-3.5" strokeWidth={1.5} />
-          
-        </div>
-
         <Select
           value={availability}
           onValueChange={(v) => updateParam("availability", v)}
         >
-          <SelectTrigger className="h-9 w-[140px] sm:w-[150px] rounded-lg text-xs bg-card border-border shrink-0">
+          <SelectTrigger className="h-8 text-xs w-auto min-w-[120px]">
             <SelectValue placeholder="Availability" />
           </SelectTrigger>
           <SelectContent>
             {AVAILABILITY_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
+              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -300,14 +270,12 @@ export default function FindTalentPage() {
           value={gender}
           onValueChange={(v) => updateParam("gender", v)}
         >
-          <SelectTrigger className="h-9 w-[120px] sm:w-[130px] rounded-lg text-xs bg-card border-border shrink-0">
+          <SelectTrigger className="h-8 text-xs w-auto min-w-[100px]">
             <SelectValue placeholder="Gender" />
           </SelectTrigger>
           <SelectContent>
             {GENDER_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
+              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -316,35 +284,28 @@ export default function FindTalentPage() {
           value={profession}
           onValueChange={(v) => updateParam("profession", v)}
         >
-          <SelectTrigger className="h-9 w-[160px] sm:w-[180px] rounded-lg text-xs bg-card border-border shrink-0">
+          <SelectTrigger className="h-8 text-xs w-auto min-w-[140px]">
             <SelectValue placeholder="Profession" />
           </SelectTrigger>
-          <SelectContent className="max-h-60">
-            <SelectItem value="all">Professions</SelectItem>
+          <SelectContent>
+            <SelectItem value="all">All professions</SelectItem>
             {professionsLoading ? (
-              <SelectItem value="_loading" disabled>
-                Loading...
-              </SelectItem>
+              <SelectItem value="loading" disabled>Loading...</SelectItem>
             ) : (
               professionOptions?.map((p) => (
-                <SelectItem key={p} value={p}>
-                  {p}
-                </SelectItem>
+                <SelectItem key={p} value={p}>{p}</SelectItem>
               ))
             )}
           </SelectContent>
         </Select>
 
-        <div className="relative w-[150px] sm:w-[180px] shrink-0">
-          <MapPin
-            className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted pointer-events-none z-10"
-            strokeWidth={1.5}
-          />
+        <div className="relative">
+          <MapPin className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted pointer-events-none" strokeWidth={1.5} />
           <Input
             value={locationCity}
             onChange={(e) => updateParam("location_city", e.target.value)}
             placeholder="City..."
-            className="h-9 rounded-lg text-xs pl-8 bg-card border-border"
+            className="h-8 pl-8 pr-7 text-xs w-32"
           />
           {locationCity && (
             <button
@@ -357,13 +318,15 @@ export default function FindTalentPage() {
         </div>
 
         {hasActiveFilters && (
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={clearFilters}
-            className="h-9 px-2.5 rounded-lg text-xs font-medium text-brand hover:text-brand-hover hover:bg-brand-light transition-colors flex items-center gap-1 shrink-0"
+            className="h-8 text-xs text-brand hover:text-brand-hover hover:bg-brand-light"
           >
-            <X className="w-3 h-3" />
+            <X className="w-3 h-3 mr-1" />
             Clear
-          </button>
+          </Button>
         )}
       </div>
 
@@ -412,8 +375,8 @@ export default function FindTalentPage() {
           </div>
         ) : (
           <>
-            {viewMode === "card" ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            {viewMode === "grid" ? (
+              <div className="grid grid-cols-2 gap-3">
                 {filtered.map((profile) => {
                   const username = profile.username ?? "";
                   const displayName = profile.full_legal_name || profile.username || "Talent";
@@ -422,12 +385,6 @@ export default function FindTalentPage() {
                       key={username}
                       profile={profile}
                       onViewProfile={() => router.push(`/talent/${username}`)}
-                      onViewPortfolio={() =>
-                        router.push(`/talent/${username}/portfolio`)
-                      }
-                      onContact={() =>
-                        router.push(`/recruiter/messages?talent=${username}`)
-                      }
                       onInvite={!selectMode ? () => {
                         if (profile.user_id) {
                           setSelectedTalent({ id: profile.user_id, name: displayName });
@@ -442,21 +399,15 @@ export default function FindTalentPage() {
                 })}
               </div>
             ) : (
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2">
                 {filtered.map((profile) => {
                   const username = profile.username ?? "";
                   const displayName = profile.full_legal_name || profile.username || "Talent";
                   return (
-                    <TalentListItem
+                    <TalentListRow
                       key={username}
                       profile={profile}
                       onViewProfile={() => router.push(`/talent/${username}`)}
-                      onViewPortfolio={() =>
-                        router.push(`/talent/${username}/portfolio`)
-                      }
-                      onContact={() =>
-                        router.push(`/recruiter/messages?talent=${username}`)
-                      }
                       onInvite={!selectMode ? () => {
                         if (profile.user_id) {
                           setSelectedTalent({ id: profile.user_id, name: displayName });
@@ -474,14 +425,19 @@ export default function FindTalentPage() {
             {hasNextPage && (
               <div ref={sentinelRef} className="py-4 flex justify-center">
                 {isFetchingNextPage ? (
-                  <div className={cn(
-                    "flex gap-2 w-full",
-                    viewMode === "card" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4" : "flex flex-col gap-3"
-                  )}>
-                    {Array.from({ length: viewMode === "card" ? 3 : 2 }).map((_, i) => (
-                      <Skeleton key={i} className="h-56 w-full rounded-2xl" />
-                    ))}
-                  </div>
+                  viewMode === "grid" ? (
+                    <div className="grid grid-cols-2 gap-3 w-full">
+                      {Array.from({ length: 2 }).map((_, i) => (
+                        <Skeleton key={i} className="h-72 w-full rounded-2xl" />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2 w-full">
+                      {Array.from({ length: 3 }).map((_, i) => (
+                        <Skeleton key={i} className="h-16 w-full rounded-xl" />
+                      ))}
+                    </div>
+                  )
                 ) : null}
               </div>
             )}
@@ -496,6 +452,7 @@ export default function FindTalentPage() {
             setInviteModalOpen(false);
             setSelectedTalent(null);
             setSelectedIds(new Set());
+            setSelectMode(false);
           }}
           talentId={selectedTalent?.id}
           talentIds={selectMode ? Array.from(selectedIds) : undefined}

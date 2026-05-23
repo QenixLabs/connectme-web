@@ -314,7 +314,7 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="max-w-[640px] mx-auto p-6 bg-card border border-border rounded-xl"
+        className="max-w-[640px] mx-auto px-4 py-5 sm:p-6 bg-card border border-border rounded-xl"
       >
         {/* Header */}
         <div className="mb-6">
@@ -327,7 +327,7 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
         </div>
 
         {/* Stepper */}
-        <div className="flex items-center mb-8">
+        <div className="flex items-start mb-6">
           {STEPS.map((s, idx) => {
             const isActive = step === s.number;
             const isDone = step > s.number;
@@ -336,11 +336,11 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
                 <button
                   type="button"
                   onClick={() => goToStep(s.number)}
-                  className="flex items-center gap-[7px] cursor-pointer"
+                  className="flex flex-col items-center gap-1 cursor-pointer min-w-0 flex-1"
                 >
                   <span
                     className={cn(
-                      'w-[26px] h-[26px] rounded-full flex items-center justify-center text-xs font-medium border-[1.5px] shrink-0 transition-all',
+                      'w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium border-[1.5px] shrink-0 transition-all',
                       isActive
                         ? 'bg-[#B85C00] border-[#B85C00] text-white'
                         : isDone
@@ -356,7 +356,7 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
                   </span>
                   <span
                     className={cn(
-                      'text-sm',
+                      'text-[10px] leading-tight text-center mt-0.5',
                       isActive
                         ? 'text-text-primary font-medium'
                         : isDone
@@ -364,15 +364,43 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
                           : 'text-text-muted'
                     )}
                   >
-                    {s.label}
+                    {s.label === 'Basic info' && (
+                      <>
+                        Basic
+                        <br />
+                        info
+                      </>
+                    )}
+                    {s.label === 'Requirements' && (
+                      <>
+                        Require
+                        <br />
+                        ments
+                      </>
+                    )}
+                    {s.label === 'Review & publish' && (
+                      <>
+                        Review &amp;
+                        <br />
+                        publish
+                      </>
+                    )}
                   </span>
                 </button>
                 {idx < STEPS.length - 1 && (
-                  <div className="flex-1 h-px bg-border mx-2.5" />
+                  <div className="flex-1 h-px bg-border mx-1 mt-3.5" />
                 )}
-              </div>
+          </div>
             );
           })}
+        </div>
+
+        {/* Progress bar */}
+        <div className="h-0.5 bg-border rounded-full overflow-hidden mb-6">
+          <div
+            className="h-full bg-[#B85C00] rounded-full transition-all duration-300"
+            style={{ width: `${(step / 3) * 100}%` }}
+          />
         </div>
 
         {/* Step Content */}
@@ -398,32 +426,30 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
         )}
 
         {/* Actions */}
-        <div className="flex justify-between items-center mt-6 pt-4 border-t border-border">
-          <div className="flex gap-2">
-            {step > 1 && (
-              <button
-                type="button"
-                onClick={onBack}
-                className="px-[18px] py-2 rounded-md text-sm font-medium border border-transparent text-text-secondary hover:bg-muted transition-colors"
-              >
-                Back
-              </button>
-            )}
+        <div className="flex items-center gap-2 mt-6 pt-4 border-t border-border">
+          {step > 1 && (
             <button
               type="button"
-              onClick={saveDraft}
-              disabled={isPending}
-              className="px-[18px] py-2 rounded-md text-sm font-medium border border-transparent text-text-secondary hover:bg-muted transition-colors disabled:opacity-50"
+              onClick={onBack}
+              className="px-3 py-2.5 rounded-lg text-sm font-medium border border-border text-text-secondary hover:bg-muted-bg transition-colors shrink-0"
             >
-              Save as draft
+              ← Back
             </button>
-          </div>
+          )}
+          <button
+            type="button"
+            onClick={saveDraft}
+            disabled={isPending}
+            className="px-3 py-2.5 rounded-lg text-sm font-medium border border-border text-text-secondary bg-transparent hover:bg-muted-bg transition-colors disabled:opacity-50 flex-1"
+          >
+            Save draft
+          </button>
           {step < 3 ? (
             <button
               type="button"
               onClick={onNext}
               disabled={isNavigating}
-              className="px-[18px] py-2 rounded-md text-sm font-medium border border-[#B85C00] bg-[#B85C00] text-white hover:bg-[#9A4D00] transition-colors disabled:opacity-50"
+              className="px-3 py-2.5 rounded-lg text-sm font-medium bg-[#B85C00] text-white hover:bg-[#9A4D00] transition-colors disabled:opacity-50 flex-[2] flex items-center justify-center gap-1.5"
             >
               Next →
             </button>
@@ -431,13 +457,18 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
             <button
               type="submit"
               disabled={isNavigating || isPending}
-              className="px-[18px] py-2 rounded-md text-sm font-medium border border-[#B85C00] bg-[#B85C00] text-white hover:bg-[#9A4D00] transition-colors disabled:opacity-50"
+              className={cn(
+                'px-3 py-2.5 rounded-lg text-sm font-medium text-white transition-colors disabled:opacity-50 flex-[2] flex items-center justify-center gap-1.5',
+                form.watch('publishOption') === 'draft'
+                  ? 'bg-[#B85C00] hover:bg-[#9A4D00]'
+                  : 'bg-[#1a8a4a] hover:bg-[#157a3f]'
+              )}
             >
               {isPending
                 ? (form.watch('publishOption') === 'draft' ? 'Saving...' : 'Publishing...')
                 : (form.watch('publishOption') === 'draft'
-                    ? (isEdit ? 'Save as draft' : 'Save as draft')
-                    : (isEdit ? 'Update campaign' : 'Publish campaign'))}
+                    ? (isEdit ? 'Save draft' : 'Save draft')
+                    : (isEdit ? 'Update campaign' : 'Publish'))}
             </button>
           )}
         </div>
