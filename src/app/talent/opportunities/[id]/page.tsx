@@ -175,7 +175,7 @@ export default function TalentCampaignDetailPage() {
   const hasApplied = !!campaign.my_application;
 
   return (
-    <div className="max-w-[800px] mx-auto w-full px-4 py-6 pb-24 lg:pb-8 flex flex-col gap-5">
+    <div className="max-w-[800px] mx-auto w-full px-4 py-6 lg:pb-8 flex flex-col gap-5">
       {/* Back */}
       <Button
         variant="ghost"

@@ -4,7 +4,13 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { Home, Briefcase, MessageSquare, User, Bell } from "lucide-react";
+import { Home, Briefcase, MessageSquare, User, Bell, Search, LogOut, UserCheck } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useUnreadCount } from "@/lib/api";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { useSocket } from "@/hooks/use-socket";
@@ -22,14 +28,15 @@ const NAV_ITEMS_BY_ROLE: Record<"talent" | "recruiter", NavItem[]> = {
   talent: [
     { href: "/talent/dashboard", label: "Home", icon: Home },
     { href: "/talent/opportunities", label: "Jobs", icon: Briefcase },
+    { href: "/talent/requests", label: "Requests", icon: UserCheck },
     { href: "/talent/messages", label: "Messages", icon: MessageSquare },
     { href: "/talent/profile", label: "Profile", icon: User },
   ],
   recruiter: [
     { href: "/recruiter/dashboard", label: "Home", icon: Home },
+    { href: "/recruiter/find-talent", label: "Search", icon: Search },
     { href: "/recruiter/campaigns", label: "Campaigns", icon: Briefcase },
     { href: "/recruiter/messages", label: "Messages", icon: MessageSquare },
-    { href: "/recruiter/profile", label: "Profile", icon: User },
   ],
 };
 
@@ -48,7 +55,7 @@ export function DashboardLayout({
   const router = useRouter();
   const pathname = usePathname();
   const queryClient = useQueryClient();
-  const { user, isAuthenticated, isLoading, fetchUser } =
+  const { user, isAuthenticated, isLoading, fetchUser, logout } =
     useAuthStore();
   const [authChecked, setAuthChecked] = useState(false);
   const { data: unreadCount = 0, refetch: refetchUnread } = useUnreadCount();
@@ -107,6 +114,9 @@ export function DashboardLayout({
     }
   }, [authChecked, isLoading, user, role, router]);
 
+  const hideNav = pathname.includes("/edit");
+  const isMessagesPage = pathname.endsWith("/messages");
+
   const roleMismatch = user ? user.role !== role : false;
 
   if (!authChecked || isLoading || !user || roleMismatch) {
@@ -115,7 +125,10 @@ export function DashboardLayout({
         <header className="bg-card border-b border-border px-4 py-3 sticky top-0 z-40">
           <div className="max-w-3xl mx-auto flex items-center justify-between">
             <Skeleton className="h-6 w-32" />
-            <Skeleton className="h-8 w-8 rounded-full" />
+            <div className="flex items-center gap-1">
+              <Skeleton className="h-8 w-8 rounded-full" />
+              <Skeleton className="h-8 w-8 rounded-full" />
+            </div>
           </div>
         </header>
         <main className="flex-1 max-w-3xl mx-auto w-full pb-24">
@@ -131,7 +144,7 @@ export function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-page flex flex-col">
-      <header className="bg-card border-b border-border px-4 py-3 sticky top-0 z-40">
+      <header className={cn("bg-card border-b border-border px-4 py-3 sticky top-0 z-40", isMessagesPage && "hidden md:block")}>
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <Link
             href={homeHref}
@@ -139,50 +152,85 @@ export function DashboardLayout({
           >
             Connect<span className="text-brand">Me</span>
           </Link>
-          <Link
-            href={`/${role}/notifications`}
-            className="relative p-2 text-text-muted hover:text-text-secondary transition-colors"
-          >
-            <Bell className="w-5 h-5" strokeWidth={1.5} />
-            {unreadCount > 0 && (
-              <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-destructive text-white text-[10px] font-bold rounded-full px-1">
-                {unreadCount > 9 ? "9+" : unreadCount}
-              </span>
-            )}
-          </Link>
+          <div className="flex items-center gap-1">
+            <Link
+              href={`/${role}/notifications`}
+              className="relative p-2 text-text-muted hover:text-text-secondary transition-colors"
+            >
+              <Bell className="w-5 h-5" strokeWidth={1.5} />
+              {unreadCount > 0 && (
+                <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-destructive text-white text-[10px] font-bold rounded-full px-1">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className={cn(
+                    "p-2 transition-colors",
+                    pathname === `/${role}/profile`
+                      ? "text-brand"
+                      : "text-text-muted hover:text-text-secondary"
+                  )}
+                >
+                  <User className="w-5 h-5" strokeWidth={1.5} />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuItem asChild>
+                  <Link href={`/${role}/profile`} className="cursor-pointer">
+                    Profile
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={async () => {
+                    await logout();
+                    router.push("/auth/login");
+                  }}
+                  className="cursor-pointer text-destructive focus:text-destructive"
+                >
+                  <LogOut className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </header>
 
-      <main className="flex-1 max-w-3xl w-full mx-auto pb-24">
+      <main className={cn("flex-1 max-w-3xl w-full mx-auto", isMessagesPage ? "pb-0 md:pb-20" : "pb-20")}>
         {children}
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50 safe-area-pb">
-        <div className="max-w-3xl mx-auto flex items-center justify-around h-16">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href;
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex flex-col items-center justify-center gap-0.5 w-full h-full transition-colors",
-                  isActive
-                    ? "text-brand"
-                    : "text-text-muted hover:text-text-secondary"
-                )}
-              >
-                <Icon
-                  className={cn("w-5 h-5", isActive ? "text-brand" : "")}
-                  strokeWidth={1.5}
-                />
-                <span className="text-2xs font-medium">{item.label}</span>
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
+      {!hideNav && (
+        <nav className={cn("fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50 safe-area-pb", isMessagesPage && "hidden md:flex")}>
+          <div className="max-w-3xl mx-auto flex items-center justify-around h-16">
+            {navItems.map((item) => {
+              const isActive = pathname === item.href;
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex flex-col items-center justify-center gap-1 w-full h-full transition-colors",
+                    isActive
+                      ? "text-brand"
+                      : "text-text-muted hover:text-text-secondary"
+                  )}
+                >
+                  <Icon
+                    className={cn("w-5 h-5", isActive ? "text-brand" : "")}
+                    strokeWidth={isActive ? 2 : 1.5}
+                  />
+                  <span className={cn("text-[11px] leading-none", isActive && "font-semibold")}>{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </nav>
+      )}
     </div>
   );
 }

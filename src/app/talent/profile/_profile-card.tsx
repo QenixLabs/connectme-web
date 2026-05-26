@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Eye, Bookmark, Globe, Star, Share2 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Share2, Star, CheckCircle2, Pencil, LayoutGrid } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { TalentProfile } from "@/lib/validations/talent-profile.schema";
 
-export function ShareButton({ username }: { username: string }) {
+export function ShareButton({ username, className }: { username: string; className?: string }) {
   const [copied, setCopied] = useState(false);
   const handleShare = async () => {
     const url = `${window.location.origin}/talent/${username}`;
@@ -20,35 +20,15 @@ export function ShareButton({ username }: { username: string }) {
   return (
     <button
       onClick={handleShare}
-      className="flex items-center justify-center gap-1.5 py-3 rounded-lg text-xs font-medium bg-muted-bg text-text-primary border border-border hover:bg-muted-bg/80 transition-colors"
+      className={cn(
+        "inline-flex items-center gap-1.5 text-[12px] font-medium transition-colors",
+        className
+      )}
     >
-      <Share2 className="w-3.5 h-3.5" strokeWidth={1.5} />
-      {copied ? "Copied!" : "Share"}
+      <Share2 className="w-4 h-4" strokeWidth={1.5} />
+      {copied ? "Copied" : "Share"}
     </button>
   );
-}
-
-function VerificationBadge() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="#f59e0b"
-      width="16"
-      height="16"
-      className="inline-block shrink-0"
-    >
-      <path d="M12 2l1.9 2.1 2.8-.5.7 2.8 2.6 1.1-.6 2.8 1.8 2.2-1.8 2.2.6 2.8-2.6 1.1-.7 2.8-2.8-.5L12 22l-1.9-2.1-2.8.5-.7-2.8-2.6-1.1.6-2.8-1.8-2.2 1.8-2.2-.6-2.8 2.6-1.1.7-2.8 2.8.5z" />
-      <path d="M9.5 15.5l-3.5-3.5 1.4-1.4 2.1 2.1 5.6-5.6 1.4 1.4z" fill="#ffffff" />
-    </svg>
-  );
-}
-
-function formatCount(n?: number): string {
-  if (!n) return "0";
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-  return String(n);
 }
 
 function availabilityMeta(v?: string) {
@@ -56,22 +36,22 @@ function availabilityMeta(v?: string) {
     case "available":
       return {
         label: "Available",
-        classes: "bg-success-light text-success-text border-success-muted",
+        style: { background: "#f0faf4", color: "#2a7a4b", border: "0.5px solid #a3d9b8" },
       };
     case "busy":
       return {
         label: "Busy",
-        classes: "bg-brand-light text-brand-hover border-brand-muted",
+        style: { background: "#fdf3dc", color: "#8a5e0a", border: "0.5px solid #e8c87a" },
       };
     case "not_available":
       return {
         label: "Not available",
-        classes: "bg-error-light text-error-text border-error-muted",
+        style: { background: "#fef2f2", color: "#b91c1c", border: "0.5px solid #fecaca" },
       };
     default:
       return {
         label: "Unknown",
-        classes: "bg-muted-bg text-text-secondary border-border",
+        style: { background: "#f5f3ef", color: "#5c5145", border: "0.5px solid #ddd5c5" },
       };
   }
 }
@@ -79,119 +59,161 @@ function availabilityMeta(v?: string) {
 function completenessMeta(pct?: number) {
   if (pct === undefined) return null;
   if (pct >= 80)
-    return { label: "Excellent", classes: "bg-brand-light text-brand-hover border-brand-muted" };
+    return {
+      label: "Excellent",
+      style: { background: "#f0faf4", color: "#2a7a4b", border: "0.5px solid #a3d9b8" },
+      showStar: true,
+    };
   if (pct >= 60)
-    return { label: "Advanced", classes: "bg-success-light text-success-text border-success-muted" };
+    return {
+      label: "Advanced",
+      style: { background: "#f0faf4", color: "#2a7a4b", border: "0.5px solid #a3d9b8" },
+      showStar: false,
+    };
   if (pct >= 40)
-    return { label: "Intermediate", classes: "bg-brand-soft text-brand-hover border-brand-muted" };
+    return {
+      label: "Intermediate",
+      style: { background: "#fdf3dc", color: "#8a5e0a", border: "0.5px solid #e8c87a" },
+      showStar: false,
+    };
   if (pct >= 20)
-    return { label: "Beginner", classes: "bg-muted-bg text-text-secondary border-border" };
-  return { label: "Starter", classes: "bg-muted-bg text-text-muted border-border" };
+    return {
+      label: "Beginner",
+      style: { background: "#f5f3ef", color: "#5c5145", border: "0.5px solid #ddd5c5" },
+      showStar: false,
+    };
+  return {
+    label: "Starter",
+    style: { background: "#f5f3ef", color: "#5c5145", border: "0.5px solid #ddd5c5" },
+    showStar: false,
+  };
 }
 
 export interface ProfileCardProps {
   profile: TalentProfile;
-  actions?: React.ReactNode;
-  stats?: { icon: React.ElementType; value: string; label: string }[];
   completeness?: number;
+  verificationTier?: number;
+  onEdit?: () => void;
+  onPortfolio?: () => void;
 }
 
-export function ProfileCard({ profile, actions, stats, completeness }: ProfileCardProps) {
+export function ProfileCard({
+  profile,
+  completeness,
+  verificationTier,
+  onEdit,
+  onPortfolio,
+}: ProfileCardProps) {
   const displayName = profile.full_legal_name || profile.username || "Talent";
   const avail = availabilityMeta(profile.availability);
   const comp = completenessMeta(completeness);
-
-  const defaultStats = (() => {
-    const analytics = profile.analytics as
-      | { profile_views_30d?: number; shortlist_count?: number }
-      | undefined;
-    const socialCount = [
-      profile.social_links?.instagram?.url,
-      profile.social_links?.youtube?.url,
-      profile.social_links?.linkedin?.url,
-    ].filter(Boolean).length;
-    return [
-      { icon: Eye, value: formatCount(analytics?.profile_views_30d), label: "Monthly Views" },
-      { icon: Bookmark, value: formatCount(analytics?.shortlist_count), label: "Shortlists" },
-      { icon: Globe, value: String(socialCount), label: "Social Links" },
-    ];
-  })();
-
-  const statItems = stats ?? defaultStats;
+  const initials = displayName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2);
 
   return (
-    <>
-      {/* Cover */}
-      <div className="h-28 sm:h-24 relative overflow-hidden bg-gradient-to-br from-[#FDF3E0] via-[#FEF9F0] to-[#FCEFD6] border-b border-brand-muted/50">
-        <div className="absolute inset-0 [background:repeating-linear-gradient(45deg,transparent,transparent_18px,rgba(232,160,32,0.04)_18px,rgba(232,160,32,0.04)_19px)]" />
-      </div>
-
-      {/* Card */}
-      <Card className="mx-3 sm:mx-4 -mt-7 relative border-border-subtle">
-        <CardContent className="p-4">
-          {/* Header */}
-          <div className="flex items-center gap-3.5 mb-3.5">
-            <div className="relative shrink-0 -mt-8">
-              <div className="w-16 h-16 rounded-full border-[3px] border-brand bg-gradient-to-br from-purple-300 to-blue-400 flex items-center justify-center overflow-hidden">
-                {profile.profile_photo ? (
-                  <img src={profile.profile_photo} alt="" className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-[22px] font-medium text-white">
-                    {displayName.split(" ").map((n) => n[0]).join("").slice(0, 2)}
-                  </span>
-                )}
-              </div>
-              <div className="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 rounded-full bg-success border-2 border-card" />
-            </div>
-
-            <div className="flex-1 pt-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                <h2 className="text-[17px] font-medium text-text-primary break-words">{displayName}</h2>
-                {comp && (
-                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[11px] font-medium ${comp.classes}`}>
-                    <Star className="w-2.5 h-2.5" strokeWidth={1.5} />
-                    {comp.label}
-                  </span>
-                )}
-              </div>
-              {profile.username && (
-                <p className="text-[13px] text-text-secondary mb-2 flex items-center gap-1">
-                  @{profile.username}
-                  {profile.is_verified && <VerificationBadge />}
-                </p>
-              )}
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className={`text-[11px] px-2 py-[3px] rounded-full border ${avail.classes}`}>
-                  {avail.label}
-                </span>
-                {profile.professions?.slice(0, 2).map((p) => (
-                  <span key={p} className="text-[11px] px-2 py-[3px] rounded-full border bg-muted-bg text-text-secondary border-border">
-                    {p}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Actions */}
-          {actions && (
-            <div className="grid grid-flow-col gap-2 mb-4" style={{ gridAutoColumns: "minmax(0, 1fr)" }}>
-              {actions}
+    <div
+      className="bg-white overflow-hidden"
+      style={{ borderRadius: "16px", border: "0.5px solid #e0d9ce" }}
+    >
+      <div className="flex items-center gap-3 p-4">
+        {/* Avatar */}
+        <div className="relative shrink-0">
+          {profile.profile_photo ? (
+            <img
+              src={profile.profile_photo}
+              alt=""
+              className="w-[52px] h-[52px] rounded-full object-cover"
+            />
+          ) : (
+            <div
+              className="w-[52px] h-[52px] rounded-full flex items-center justify-center text-white text-[18px] font-bold"
+              style={{
+                background: "linear-gradient(135deg, #c8a96e, #8b6914)",
+                fontFamily: "var(--font-playfair), Georgia, serif",
+              }}
+            >
+              {initials}
             </div>
           )}
+          {(verificationTier ?? 0) >= 2 && (
+            <div
+              className="absolute -bottom-0.5 -right-0.5 w-[18px] h-[18px] rounded-full flex items-center justify-center border-2 border-white"
+              style={{ background: "#c8a040" }}
+            >
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
+          )}
+        </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-2">
-            {statItems.map((s) => (
-              <div key={s.label} className="bg-muted-bg rounded-lg py-3 text-center border-l-2 border-brand-muted">
-                <s.icon className="w-4 h-4 mx-auto text-brand mb-1" strokeWidth={1.5} />
-                <p className="text-xl font-medium text-text-primary leading-none">{s.value}</p>
-                <p className="text-[11px] text-text-muted mt-0.5">{s.label}</p>
-              </div>
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1">
+            <h1
+              className="text-[16px] font-semibold text-[#1e1a14] truncate leading-tight"
+              style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
+            >
+              {displayName}
+            </h1>
+            {(verificationTier ?? 0) >= 2 && (
+              <CheckCircle2 className="w-4 h-4 shrink-0" style={{ color: "#c8a040" }} strokeWidth={1.5} />
+            )}
+          </div>
+          {profile.username && (
+            <p className="text-[12px] text-[#8a7d6b]">@{profile.username}</p>
+          )}
+          <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
+            <span
+              className="text-[11px] px-2 py-0.5 rounded-full font-medium"
+              style={avail.style}
+            >
+              {avail.label}
+            </span>
+            {comp && (
+              <span
+                className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full font-medium"
+                style={comp.style}
+              >
+                {comp.showStar && <Star className="w-3 h-3" strokeWidth={1.5} />}
+                {comp.label}
+              </span>
+            )}
+            {profile.professions?.slice(0, 1).map((p) => (
+              <span
+                key={p}
+                className="text-[11px] px-2 py-0.5 rounded-full font-medium"
+                style={{ background: "#f5f3ef", color: "#5c5145", border: "0.5px solid #ddd5c5" }}
+              >
+                {p}
+              </span>
             ))}
           </div>
-        </CardContent>
-      </Card>
-    </>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex gap-2 px-4 pb-4">
+        <button
+          onClick={onPortfolio}
+          className="flex-1 h-[34px] rounded-[10px] flex items-center justify-center gap-1.5 text-[12px] font-medium text-[#5c5145] transition-colors"
+          style={{ background: "#f7f4ef", border: "0.5px solid #e0d9ce" }}
+        >
+          <LayoutGrid className="w-4 h-4" strokeWidth={1.5} />
+          Portfolio
+        </button>
+        <button
+          onClick={onEdit}
+          className="flex-1 h-[34px] rounded-[10px] flex items-center justify-center gap-1.5 text-[12px] font-medium transition-colors"
+          style={{ background: "#1e1a14", color: "#f0e8d4", border: "0.5px solid #1e1a14" }}
+        >
+          <Pencil className="w-4 h-4" strokeWidth={1.5} />
+          {completeness !== undefined && completeness < 100 ? "Complete" : "Edit"}
+        </button>
+      </div>
+    </div>
   );
 }

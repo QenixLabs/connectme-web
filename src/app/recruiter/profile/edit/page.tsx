@@ -43,7 +43,7 @@ export default function EditRecruiterProfilePage() {
   }
 
   return (
-    <div className="px-4 pt-4 pb-6">
+    <div className="pb-1">
       <EditForm
         profile={profile}
         onSaved={() => {

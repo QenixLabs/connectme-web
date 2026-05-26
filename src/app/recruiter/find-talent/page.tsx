@@ -31,6 +31,9 @@ import {
 import { TalentGridCard } from "@/components/talent-grid-card";
 import { TalentListRow } from "@/components/talent-list-row";
 import { InviteToCampaignModal } from "@/components/invite-to-campaign-modal";
+import { useCreateCollaborationRequest } from "@/lib/api/hooks/useCreateCollaborationRequest";
+import { messagesApi } from "@/lib/api/messages";
+import { usePopup } from "@/hooks/use-popup";
 
 const AVAILABILITY_OPTIONS = [
   { value: "all", label: "All" },
@@ -57,6 +60,69 @@ export default function FindTalentPage() {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+
+  const createRequest = useCreateCollaborationRequest();
+  const popup = usePopup();
+
+  const handleConnect = useCallback(
+    (profile: {
+      user_id?: string;
+      username?: string;
+      full_legal_name?: string;
+      privacy_mode?: string;
+    }) => {
+      const talentId = profile.user_id;
+      if (!talentId) return;
+
+      if (profile.privacy_mode === "private") {
+        const name = profile.full_legal_name || profile.username || "Talent";
+        createRequest.mutate(talentId, {
+          onSuccess: () => {
+            popup.show({
+              title: "Request sent",
+              description: `Collaboration request sent to ${name}. You can message once they accept.`,
+              variant: "success",
+            });
+          },
+          onError: (err: any) => {
+            const msg = err?.response?.data?.message || "";
+            if (msg.toLowerCase().includes("already exists")) {
+              popup.show({
+                title: "Request pending",
+                description: "You already have a pending request with this talent.",
+                variant: "info",
+              });
+            } else {
+              popup.show({
+                title: "Failed to send request",
+                description: getApiErrorMessage(err, "Something went wrong"),
+                variant: "error",
+              });
+            }
+          },
+        });
+        return;
+      }
+
+      messagesApi
+        .startDirectConversation(talentId)
+        .then(({ conversation }) => {
+          const draft =
+            "Hi, I came across your profile and would love to connect regarding a potential opportunity. Looking forward to hearing from you!";
+          router.push(
+            `/recruiter/messages?conversationId=${conversation._id}&draft=${encodeURIComponent(draft)}`,
+          );
+        })
+        .catch((err) => {
+          popup.show({
+            title: "Could not start conversation",
+            description: getApiErrorMessage(err, "Something went wrong"),
+            variant: "error",
+          });
+        });
+    },
+    [createRequest, popup, router],
+  );
 
   const profession = searchParams.get("profession") || "all";
   const availability = searchParams.get("availability") || "all";
@@ -391,6 +457,7 @@ export default function FindTalentPage() {
                           setInviteModalOpen(true);
                         }
                       } : undefined}
+                      onConnect={!selectMode && profile.user_id ? () => handleConnect(profile) : undefined}
                       selectable={selectMode}
                       isSelected={profile.user_id ? selectedIds.has(profile.user_id) : false}
                       onToggleSelect={() => profile.user_id && toggleTalentSelection(profile.user_id)}
@@ -414,6 +481,7 @@ export default function FindTalentPage() {
                           setInviteModalOpen(true);
                         }
                       } : undefined}
+                      onConnect={!selectMode && profile.user_id ? () => handleConnect(profile) : undefined}
                       selectable={selectMode}
                       isSelected={profile.user_id ? selectedIds.has(profile.user_id) : false}
                       onToggleSelect={() => profile.user_id && toggleTalentSelection(profile.user_id)}

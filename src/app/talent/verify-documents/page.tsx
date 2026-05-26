@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Shield } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Card, CardContent } from "@/components/ui/card";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { verificationApi } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
@@ -16,15 +16,12 @@ export default function VerifyDocumentsPage() {
   const router = useRouter();
   const { user } = useAuthStore();
   const [hasRecord, setHasRecord] = useState<boolean | null>(null);
-  const [verificationId, setVerificationId] = useState<string | undefined>(
-    undefined
-  );
+  const [verificationId, setVerificationId] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user?._id) return;
-
     let cancelled = false;
 
     verificationApi
@@ -57,36 +54,46 @@ export default function VerifyDocumentsPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
+        <div className="animate-pulse text-text-muted">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background py-8 px-4">
-      <div className="max-w-xl mx-auto space-y-6">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.push("/talent/profile")}
-          >
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Back to Profile
-          </Button>
-        </div>
+    <div className="min-h-screen bg-background py-6 px-4">
+      <div className="max-w-xl mx-auto space-y-5">
+        {/* Back Button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push("/talent/profile")}
+          className="text-text-secondary"
+        >
+          <ArrowLeft className="w-4 h-4 mr-1" />
+          Back to Profile
+        </Button>
 
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <Shield className="w-6 h-6 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold">Identity Verification</h1>
-            <p className="text-sm text-muted-foreground">
-              Verify your identity to build trust with recruiters.
-            </p>
-          </div>
-        </div>
+        {/* Hero Card */}
+        <Card
+          className="overflow-hidden border-0 shadow-md"
+          style={{
+            background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 50%, #fffbeb 100%)",
+          }}
+        >
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-brand-light flex items-center justify-center shrink-0">
+                <Shield className="w-7 h-7 text-brand" strokeWidth={1.5} />
+              </div>
+              <div>
+                <h1 className="text-[19px] font-semibold text-text-primary">Identity Verification</h1>
+                <p className="text-[13px] text-text-secondary mt-0.5">
+                  Verify your identity to build trust with recruiters and unlock premium features.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {error && (
           <Alert variant="destructive">
@@ -102,12 +109,12 @@ export default function VerifyDocumentsPage() {
           <DocumentSubmissionForm
             verificationId={verificationId}
             verificationType="talent_id"
-            docTypeOptions={['aadhaar', 'pan', 'driving_license', 'other']}
+            docTypeOptions={["aadhaar", "pan", "driving_license", "other"]}
             docTypeLabels={{
-              aadhaar: 'Aadhaar Card',
-              pan: 'PAN Card',
-              driving_license: 'Driving License',
-              other: 'Other',
+              aadhaar: "Aadhaar Card",
+              pan: "PAN Card",
+              driving_license: "Driving License",
+              other: "Other",
             }}
             title="Identity Verification"
             description="Submit up to 2 documents to verify your identity. Accepted formats: PDF, JPEG, PNG, WEBP (max 5MB each)."

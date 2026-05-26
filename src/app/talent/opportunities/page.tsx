@@ -449,9 +449,31 @@ function OpportunityCard({
       className="relative bg-card border border-border rounded-2xl overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.07),0_4px_12px_rgba(0,0,0,0.04)] hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(79,110,247,0.12),0_1px_3px_rgba(0,0,0,0.06)] transition-all duration-200 flex flex-col gap-3 cursor-pointer"
       onClick={onView}
     >
-      {campaign.cover_image_url && (
-        <div className="w-full h-40 overflow-hidden">
-          <img src={campaign.cover_image_url} alt={campaign.name} className="w-full h-full object-cover" />
+      {/* Campaign Media / Cover */}
+      {
+        (() => {
+          const imageUrl = campaign.cover_image_url || campaign.banner?.url || campaign.media?.find(m => m.type === 'image')?.url;
+          if (!imageUrl) return null;
+          return (
+            <div className="w-full h-40 overflow-hidden">
+              <img src={imageUrl} alt={campaign.name} className="w-full h-full object-cover" />
+            </div>
+          );
+        })()
+      }
+
+      {/* Media thumbnails row */}
+      {campaign.media && campaign.media.length > 1 && (
+        <div className="px-[18px] -mt-1">
+          <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+            {campaign.media.slice(0, 5).map((m, i) => (
+              m.type === 'image' ? (
+                <div key={i} className="w-12 h-12 rounded-lg overflow-hidden shrink-0 border border-border">
+                  <img src={m.url} alt="" className="w-full h-full object-cover" />
+                </div>
+              ) : null
+            ))}
+          </div>
         </div>
       )}
       <button

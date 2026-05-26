@@ -6,13 +6,11 @@ import {
   Images,
   MessageSquare,
   ChevronDown,
-  Lock,
-  Clock,
   Mail,
+  Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar } from "@/components/ui/avatar";
-import { useRequestProfileAccess } from "@/lib/api/hooks/useRequestProfileAccess";
 
 type ProfileWithAccess = Partial<{
   username?: string;
@@ -24,7 +22,6 @@ type ProfileWithAccess = Partial<{
   industries?: string[];
   availability?: string;
   privacy_mode?: string;
-  access_status?: "allowed" | "pending" | "none";
   is_verified?: boolean;
   gender?: string;
 }>;
@@ -75,15 +72,11 @@ export function TalentListItem({
   isSelected,
   onToggleSelect,
 }: TalentListItemProps) {
-  const requestAccess = useRequestProfileAccess();
   const loc = [profile.location?.city, profile.location?.state, profile.location?.country]
     .filter((s): s is string => !!s && s.trim() !== "")
     .join(", ");
   const avail = availabilityMeta(profile.availability);
   const displayName = profile.full_legal_name || profile.username || "Talent";
-  const isPrivateLocked =
-    profile.privacy_mode === "private" && profile.access_status !== "allowed";
-  const isPending = profile.access_status === "pending";
 
   return (
     <article
@@ -168,71 +161,38 @@ export function TalentListItem({
         ))}
       </div>
 
-      {isPrivateLocked ? (
-        <div className="mt-3 sm:mt-3.5 flex items-center gap-2">
-          {isPending ? (
-            <button
-              disabled
-              className="flex-1 min-h-10 sm:min-h-11 rounded-[10px] border-[1.5px] border-border bg-muted-bg text-text-muted text-[13px] font-medium flex items-center justify-center gap-1.5 cursor-not-allowed"
-            >
-              <Clock className="w-[15px] h-[15px]" strokeWidth={1.5} />
-              Request Pending
-            </button>
-          ) : (
-            <button
-              onClick={() =>
-                profile.username && requestAccess.mutate(profile.username)
-              }
-              disabled={requestAccess.isPending || !profile.username}
-              className="flex-1 min-h-10 sm:min-h-11 rounded-[10px] border-[1.5px] border-amber-500 bg-amber-50 text-amber-700 text-[13px] font-medium flex items-center justify-center gap-1.5 transition-colors hover:bg-amber-100 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Lock className="w-[15px] h-[15px]" strokeWidth={1.5} />
-              Request Access
-            </button>
-          )}
+      <div className="mt-3 sm:mt-3.5 flex items-center gap-2">
+        <button
+          onClick={onViewPortfolio}
+          className="flex-1 min-h-10 sm:min-h-11 rounded-[10px] border-[1.5px] border-border bg-card text-text-secondary text-[13px] font-medium flex items-center justify-center gap-1.5 transition-colors hover:border-brand hover:text-brand hover:bg-brand-light"
+        >
+          <Images className="w-[15px] h-[15px]" strokeWidth={1.5} />
+          Portfolio
+        </button>
+        <button
+          onClick={onContact}
+          className="min-h-10 sm:min-h-11 px-4 rounded-[10px] bg-brand text-white text-[13px] font-semibold flex items-center gap-1.5 transition-colors hover:bg-brand-hover whitespace-nowrap"
+        >
+          <MessageSquare className="w-3.5 h-3.5" strokeWidth={1.5} />
+          Contact
+        </button>
+        {onInvite && (
           <button
-            onClick={onViewProfile}
-            className="min-h-10 sm:min-h-11 px-4 rounded-[10px] border-[1.5px] border-border bg-card text-text-secondary text-[13px] font-medium flex items-center gap-1.5 transition-colors hover:border-brand hover:text-brand hover:bg-brand-light whitespace-nowrap"
+            onClick={onInvite}
+            className="min-h-10 sm:min-h-11 px-4 rounded-[10px] border-[1.5px] border-brand bg-brand-light text-brand text-[13px] font-medium flex items-center gap-1.5 transition-colors hover:bg-brand hover:text-white whitespace-nowrap"
           >
-            View Profile
+            <Mail className="w-3.5 h-3.5" strokeWidth={1.5} />
+            Invite
           </button>
-        </div>
-      ) : (
-        <>
-          <div className="mt-3 sm:mt-3.5 flex items-center gap-2">
-            <button
-              onClick={onViewPortfolio}
-              className="flex-1 min-h-10 sm:min-h-11 rounded-[10px] border-[1.5px] border-border bg-card text-text-secondary text-[13px] font-medium flex items-center justify-center gap-1.5 transition-colors hover:border-brand hover:text-brand hover:bg-brand-light"
-            >
-              <Images className="w-[15px] h-[15px]" strokeWidth={1.5} />
-              Portfolio
-            </button>
-            <button
-              onClick={onContact}
-              className="min-h-10 sm:min-h-11 px-4 rounded-[10px] bg-brand text-white text-[13px] font-semibold flex items-center gap-1.5 transition-colors hover:bg-brand-hover whitespace-nowrap"
-            >
-              <MessageSquare className="w-3.5 h-3.5" strokeWidth={1.5} />
-              Contact
-            </button>
-            {onInvite && (
-              <button
-                onClick={onInvite}
-                className="min-h-10 sm:min-h-11 px-4 rounded-[10px] border-[1.5px] border-brand bg-brand-light text-brand text-[13px] font-medium flex items-center gap-1.5 transition-colors hover:bg-brand hover:text-white whitespace-nowrap"
-              >
-                <Mail className="w-3.5 h-3.5" strokeWidth={1.5} />
-                Invite
-              </button>
-            )}
-          </div>
-          <button
-            onClick={onViewProfile}
-            className="mt-2 sm:mt-2.5 w-full min-h-9 flex items-center justify-center gap-1 text-xs font-medium text-text-muted rounded-lg py-1 transition-colors hover:text-text-secondary hover:bg-muted-bg"
-          >
-            View full profile
-            <ChevronDown className="w-3.5 h-3.5" strokeWidth={1.5} />
-          </button>
-        </>
-      )}
+        )}
+      </div>
+      <button
+        onClick={onViewProfile}
+        className="mt-2 sm:mt-2.5 w-full min-h-9 flex items-center justify-center gap-1 text-xs font-medium text-text-muted rounded-lg py-1 transition-colors hover:text-text-secondary hover:bg-muted-bg"
+      >
+        View full profile
+        <ChevronDown className="w-3.5 h-3.5" strokeWidth={1.5} />
+      </button>
     </article>
   );
 }

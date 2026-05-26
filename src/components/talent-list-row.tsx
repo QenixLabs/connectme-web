@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, MapPin, Briefcase } from "lucide-react";
+import { Check, MapPin, Briefcase, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type ProfileWithAccess = Partial<{
@@ -26,6 +26,7 @@ interface TalentListRowProps {
   profile: ProfileWithAccess;
   onViewProfile: () => void;
   onInvite?: () => void;
+  onConnect?: () => void;
   selectable?: boolean;
   isSelected?: boolean;
   onToggleSelect?: () => void;
@@ -48,6 +49,7 @@ export function TalentListRow({
   profile,
   onViewProfile,
   onInvite,
+  onConnect,
   selectable,
   isSelected,
   onToggleSelect,
@@ -166,6 +168,18 @@ export function TalentListRow({
             className="h-8 px-3 rounded-lg border border-[#B85C00] bg-[#FFF7F0] text-[#B85C00] text-xs font-medium transition-colors hover:bg-[#FAEEDA]"
           >
             Invite
+          </button>
+        )}
+        {onConnect && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onConnect();
+            }}
+            className="h-8 px-3 rounded-lg border border-border bg-card text-text-secondary text-xs font-medium transition-colors hover:bg-muted-bg flex items-center gap-1"
+          >
+            <UserPlus className="w-3.5 h-3.5" strokeWidth={1.5} />
+            Connect
           </button>
         )}
       </div>

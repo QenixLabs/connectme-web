@@ -153,7 +153,7 @@ export default function RecruiterProfilePage() {
 
   if (loading) {
     return (
-      <div className="px-4 pt-4 pb-6 space-y-3">
+      <div className="px-4 pt-4  space-y-3">
         <div className="flex items-center justify-between">
           <Skeleton className="h-7 w-24" />
           <Skeleton className="h-8 w-8 rounded-lg" />
@@ -201,7 +201,7 @@ export default function RecruiterProfilePage() {
     .join("");
 
   return (
-    <div className="px-4 pt-4 pb-6 space-y-3">
+    <div className="px-4 pt-4  space-y-3">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1

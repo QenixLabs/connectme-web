@@ -274,6 +274,11 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
       if (pendingMediaFile && resultCampaignId) {
         const formData = new FormData();
         formData.append('file', pendingMediaFile);
+        formData.append('is_banner', 'true');
+        formData.append(
+          'type',
+          pendingMediaFile.type.startsWith('video/') ? 'video' : 'image',
+        );
         await uploadMedia.mutateAsync({ campaignId: resultCampaignId, formData });
       }
 
@@ -408,7 +413,7 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
           <BasicInfoStep
             mediaFile={pendingMediaFile}
             onMediaChange={setPendingMediaFile}
-            existingMedia={existingCampaign?.media?.[0]}
+            existingBanner={existingCampaign?.banner}
           />
         </div>
         <div className={cn(step === 2 ? 'block' : 'hidden')}>

@@ -31,4 +31,7 @@ export const queryKeys = {
     all: (history: boolean) => ['notifications', 'list', history] as const,
     unreadCount: () => ['notifications', 'unread-count'] as const,
   },
+  collaborationRequests: {
+    all: () => ['collaboration-requests'] as const,
+  },
 };

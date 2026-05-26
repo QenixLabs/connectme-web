@@ -3,37 +3,64 @@
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useInView } from "react-intersection-observer";
-import { FilePlus, Search, MapPin, Users, Calendar, Edit, Trash2, Play, RotateCcw, Copy, Save } from "lucide-react";
+import {
+  Plus,
+  Search,
+  MapPin,
+  Users,
+  Clock,
+  Play,
+  Pencil,
+  Copy,
+  FileText,
+  Trash2,
+  RotateCcw,
+  Image,
+  Video,
+  ImagePlus,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Campaign } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
-import { useCampaigns, useDeleteCampaign, usePublishCampaign, useCloseCampaign, useReopenCampaign, useCloneCampaign } from "@/lib/api/hooks/useCampaigns";
+import {
+  useCampaigns,
+  useDeleteCampaign,
+  usePublishCampaign,
+  useCloseCampaign,
+  useReopenCampaign,
+  useCloneCampaign,
+} from "@/lib/api/hooks/useCampaigns";
 import { useSaveCampaignTemplate } from "@/lib/api/hooks/useCampaignTemplates";
-import { SectionHeader } from "@/components/ui/section-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 type StatusFilter = "all" | "draft" | "active" | "closed";
 
 const STATUS_META: Record<
   string,
-  { label: string; classes: string }
+  { label: string; badgeClass: string }
 > = {
   draft: {
     label: "Draft",
-    classes: "bg-muted-bg text-text-secondary border-border",
+    badgeClass: "bg-[#FEF3E2] text-[#B45309]",
   },
   active: {
     label: "Active",
-    classes: "bg-success-light text-success-text border-success-muted",
+    badgeClass: "bg-[#D1FAE5] text-[#065F46]",
   },
   closed: {
     label: "Closed",
-    classes: "bg-error-light text-error-text border-error-muted",
+    badgeClass: "bg-[#F3F4F6] text-[#6B7280]",
   },
 };
 
@@ -73,9 +100,8 @@ export default function RecruiterCampaignsPage() {
 
   const allCampaigns = useMemo(
     () => (data ? data.pages.flatMap((p) => p.data) : []),
-    [data],
+    [data]
   );
-
 
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = { all: allCampaigns.length };
@@ -85,7 +111,11 @@ export default function RecruiterCampaignsPage() {
     return counts;
   }, [allCampaigns]);
 
-  const STATUS_PILLS: Array<{ label: string; value: StatusFilter; count: number }> = [
+  const STATUS_PILLS: Array<{
+    label: string;
+    value: StatusFilter;
+    count: number;
+  }> = [
     { label: "All", value: "all", count: statusCounts.all ?? 0 },
     { label: "Draft", value: "draft", count: statusCounts.draft ?? 0 },
     { label: "Active", value: "active", count: statusCounts.active ?? 0 },
@@ -94,11 +124,17 @@ export default function RecruiterCampaignsPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-[1280px] mx-auto w-full px-4 py-6 pb-24 lg:pb-8 space-y-6">
+      <div className="max-w-[1280px] mx-auto w-full px-4 py-6 pb-24 lg:pb-8 space-y-5">
         <Skeleton className="h-8 w-40" />
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-56 rounded-2xl" />
+        <div className="flex gap-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-9 w-20 rounded-full" />
+          ))}
+        </div>
+        <Skeleton className="h-10 w-full rounded-xl" />
+        <div className="flex flex-col gap-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-80 rounded-2xl" />
           ))}
         </div>
       </div>
@@ -118,67 +154,76 @@ export default function RecruiterCampaignsPage() {
   }
 
   return (
-    <div className="max-w-[1280px] mx-auto w-full px-4 py-6 pb-24 lg:pb-8 flex flex-col gap-5">
-      <SectionHeader
-        title="Campaigns"
-        subtitle="Manage your casting calls and projects"
-        action={
-          <Button
-            variant="primary"
-            className="px-4 py-2 h-auto text-sm rounded-lg"
-            onClick={() => router.push('/recruiter/campaigns/new')}
-          >
-            + New
-          </Button>
-        }
-      />
-
-      <div className="flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex gap-2 overflow-x-auto [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {STATUS_PILLS.map((p) => (
-            <button
-              key={p.value}
-              onClick={() => setStatusFilter(p.value)}
-              className={cn(
-                "shrink-0 px-3.5 py-1.5 rounded-full border-[1.5px] text-[13px] font-medium whitespace-nowrap min-h-9 transition-colors",
-                statusFilter === p.value
-                  ? "bg-brand text-white border-brand"
-                  : "bg-card text-text-secondary border-border hover:border-brand hover:text-brand",
-              )}
-            >
-              {p.label}
-              {p.count > 0 && (
-                <span
-                  className={cn(
-                    "ml-1 text-xs",
-                    statusFilter === p.value ? "opacity-80" : "opacity-70",
-                  )}
-                >
-                  {p.count}
-                </span>
-              )}
-            </button>
-          ))}
+    <div className="max-w-[1280px] mx-auto w-full px-4 py-6 lg:pb-8 flex flex-col gap-4">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-[22px] font-bold text-text-primary leading-tight tracking-tight">
+            Campaigns
+          </h1>
+          <p className="text-[13px] text-text-secondary mt-0.5">
+            Manage your casting calls
+          </p>
         </div>
-
-        <div className="relative w-full sm:w-[240px]">
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none z-10"
-            strokeWidth={1.5}
-          />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            type="search"
-            placeholder="Search campaigns..."
-            className="h-10 rounded-[10px] bg-card border-[1.5px] border-border pl-9 text-sm"
-          />
-        </div>
+        <Button
+          className="bg-brand hover:bg-brand/90 text-white px-4 py-2 h-auto text-[13px] rounded-xl flex items-center gap-1.5"
+          onClick={() => router.push("/recruiter/campaigns/new")}
+        >
+          <Plus className="w-4 h-4" strokeWidth={2} />
+          New
+        </Button>
       </div>
 
+      {/* Filter chips */}
+      <div
+        className="flex gap-2 overflow-x-auto pb-0.5"
+        style={{ scrollbarWidth: "none" }}
+      >
+        {STATUS_PILLS.map((p) => (
+          <button
+            key={p.value}
+            onClick={() => setStatusFilter(p.value)}
+            className={cn(
+              "shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium border transition-colors",
+              statusFilter === p.value
+                ? "bg-brand text-white border-brand"
+                : "bg-card text-text-secondary border-border hover:border-brand/50"
+            )}
+          >
+            {p.label}
+            {p.count > 0 && (
+              <span
+                className={cn(
+                  "ml-1",
+                  statusFilter === p.value ? "opacity-80" : "opacity-60"
+                )}
+              >
+                {p.count}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* Search */}
+      <div className="relative">
+        <Search
+          className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary pointer-events-none"
+          strokeWidth={1.5}
+        />
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          type="search"
+          placeholder="Search campaigns…"
+          className="h-10 rounded-xl bg-card border-border pl-10 text-sm"
+        />
+      </div>
+
+      {/* Campaigns list */}
       {allCampaigns.length === 0 ? (
         <div className="text-center py-20 bg-card border border-border rounded-2xl">
-          <FilePlus
+          <ImagePlus
             className="w-10 h-10 text-text-muted mx-auto mb-3"
             strokeWidth={1.5}
           />
@@ -203,7 +248,7 @@ export default function RecruiterCampaignsPage() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="flex flex-col gap-3.5">
             {allCampaigns.map((campaign) => (
               <CampaignCard key={campaign._id} campaign={campaign} />
             ))}
@@ -212,9 +257,9 @@ export default function RecruiterCampaignsPage() {
           {hasNextPage && (
             <div ref={sentinelRef} className="py-4">
               {isFetchingNextPage ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <Skeleton key={i} className="h-56 rounded-2xl" />
+                <div className="flex flex-col gap-3.5">
+                  {Array.from({ length: 2 }).map((_, i) => (
+                    <Skeleton key={i} className="h-80 rounded-2xl" />
                   ))}
                 </div>
               ) : null}
@@ -226,12 +271,129 @@ export default function RecruiterCampaignsPage() {
   );
 }
 
+function CampaignBanner({
+  campaign,
+}: {
+  campaign: Campaign;
+}) {
+  const statusMeta = STATUS_META[campaign.status] ?? STATUS_META.draft;
+
+  if (campaign.banner?.type === "video") {
+    return (
+      <div className="relative w-full h-[140px] overflow-hidden bg-muted-bg">
+        <img
+          src={campaign.banner.thumbnail || campaign.banner.url}
+          alt={campaign.name}
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-11 h-11 rounded-full bg-black/50 flex items-center justify-center">
+            <Play
+              className="w-5 h-5 text-white ml-0.5"
+              strokeWidth={1.5}
+              fill="white"
+            />
+          </div>
+        </div>
+        <span
+          className={cn(
+            "absolute top-2.5 left-2.5 px-2.5 py-1 rounded-md text-[11px] font-medium",
+            statusMeta.badgeClass
+          )}
+        >
+          {statusMeta.label}
+        </span>
+        <div className="absolute top-2.5 right-2.5 flex gap-1.5">
+          <span className="bg-black/55 text-white rounded-md px-2 py-1 text-[11px] backdrop-blur-sm flex items-center gap-1">
+            <Video className="w-3 h-3" strokeWidth={1.5} />
+            Video
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  if (campaign.banner?.type === "image") {
+    return (
+      <div className="relative w-full h-[140px] overflow-hidden bg-muted-bg">
+        <img
+          src={campaign.banner.url}
+          alt={campaign.name}
+          className="w-full h-full object-cover"
+        />
+        <span
+          className={cn(
+            "absolute top-2.5 left-2.5 px-2.5 py-1 rounded-md text-[11px] font-medium",
+            statusMeta.badgeClass
+          )}
+        >
+          {statusMeta.label}
+        </span>
+        <div className="absolute top-2.5 right-2.5 flex gap-1.5">
+          <span className="bg-black/55 text-white rounded-md px-2 py-1 text-[11px] backdrop-blur-sm flex items-center gap-1">
+            <Image className="w-3 h-3" strokeWidth={1.5} />
+            Photo
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  if (campaign.cover_image_url) {
+    return (
+      <div className="relative w-full h-[140px] overflow-hidden bg-muted-bg">
+        <img
+          src={campaign.cover_image_url}
+          alt={campaign.name}
+          className="w-full h-full object-cover"
+        />
+        <span
+          className={cn(
+            "absolute top-2.5 left-2.5 px-2.5 py-1 rounded-md text-[11px] font-medium",
+            statusMeta.badgeClass
+          )}
+        >
+          {statusMeta.label}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative w-full h-[140px] bg-muted-bg flex flex-col items-center justify-center gap-2 border-b border-border-subtle">
+      <ImagePlus
+        className="w-7 h-7 text-text-tertiary"
+        strokeWidth={1.5}
+      />
+      <span className="text-xs text-text-tertiary">Add campaign banner</span>
+      <div className="flex items-center gap-2 mt-0.5">
+        <span className="text-[11px] text-text-tertiary flex items-center gap-1">
+          <Image className="w-3.5 h-3.5" strokeWidth={1.5} />
+          Photo
+        </span>
+        <span className="text-[11px] text-text-tertiary">·</span>
+        <span className="text-[11px] text-text-tertiary flex items-center gap-1">
+          <Video className="w-3.5 h-3.5" strokeWidth={1.5} />
+          Video
+        </span>
+      </div>
+      <span
+        className={cn(
+          "absolute top-2.5 left-2.5 px-2.5 py-1 rounded-md text-[11px] font-medium",
+          statusMeta.badgeClass
+        )}
+      >
+        {statusMeta.label}
+      </span>
+    </div>
+  );
+}
+
 function CampaignCard({ campaign }: { campaign: Campaign }) {
   const router = useRouter();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
-  const [templateName, setTemplateName] = useState('');
-  const statusMeta = STATUS_META[campaign.status] ?? STATUS_META.draft;
+  const [templateName, setTemplateName] = useState("");
   const deadline = formatDeadline(campaign.deadline);
   const loc = [campaign.location?.city, campaign.location?.state]
     .filter((s): s is string => !!s && s.trim() !== "")
@@ -254,137 +416,123 @@ function CampaignCard({ campaign }: { campaign: Campaign }) {
 
   return (
     <>
-      <article className="bg-card border border-border rounded-2xl overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.07),0_4px_12px_rgba(0,0,0,0.04)] hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(79,110,247,0.12),0_1px_3px_rgba(0,0,0,0.06)] transition-all duration-200 flex flex-col gap-3">
-        {campaign.cover_image_url && (
-          <div className="w-full h-40 overflow-hidden">
-            <img src={campaign.cover_image_url} alt={campaign.name} className="w-full h-full object-cover" />
+      <article className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200">
+        <CampaignBanner campaign={campaign} />
+
+        <div className="px-4 py-3.5">
+          <div className="text-[11px] text-text-tertiary mb-1">
+            {campaign.industry || "Campaign"}
           </div>
-        )}
-        <div className="px-[18px] pt-[18px] flex items-start justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            <h3 className="text-base font-bold text-text-primary leading-tight line-clamp-1">
+          <div className="flex items-start justify-between gap-2 mb-1">
+            <h3 className="text-[15px] font-semibold text-text-primary leading-tight tracking-tight flex-1">
               {campaign.name}
             </h3>
-            {campaign.industry && (
-              <p className="text-xs text-text-muted mt-0.5">{campaign.industry}</p>
+          </div>
+
+          {campaign.description && (
+            <p className="text-[13px] text-text-secondary leading-relaxed mb-2.5 line-clamp-2">
+              {campaign.description}
+            </p>
+          )}
+
+          <div className="flex flex-wrap items-center gap-3 mb-2.5">
+            {loc && (
+              <span className="flex items-center gap-1 text-xs text-text-secondary">
+                <MapPin className="w-3.5 h-3.5" strokeWidth={1.5} />
+                {loc}
+              </span>
             )}
-          </div>
-          <Badge className={cn("shrink-0", statusMeta.classes)}>
-            {statusMeta.label}
-          </Badge>
-        </div>
-
-        {campaign.description && (
-          <p className="px-[18px] text-[13px] text-text-secondary line-clamp-2 leading-[1.45]">
-            {campaign.description}
-          </p>
-        )}
-
-        <div className="px-[18px] flex flex-wrap gap-3 text-xs text-text-muted">
-          {loc && (
-            <div className="flex items-center gap-1">
-              <MapPin className="w-3 h-3" strokeWidth={1.5} />
-              <span>{loc}</span>
-            </div>
-          )}
-          <div className="flex items-center gap-1">
-            <Users className="w-3 h-3" strokeWidth={1.5} />
-            <span>{campaign.applications_count} application{campaign.applications_count !== 1 ? "s" : ""}</span>
-          </div>
-          {deadline && (
-            <div className="flex items-center gap-1">
-              <Calendar className="w-3 h-3" strokeWidth={1.5} />
-              <span>Due {deadline}</span>
-            </div>
-          )}
-        </div>
-
-        {campaign.role_type && (
-          <div className="px-[18px] flex flex-wrap gap-1.5">
-            <span className="px-2.5 py-0.5 rounded-full bg-muted-bg text-text-secondary border border-border text-xs font-medium">
-              {campaign.role_type}
+            <span className="flex items-center gap-1 text-xs text-text-secondary">
+              <Users className="w-3.5 h-3.5" strokeWidth={1.5} />
+              {campaign.applications_count} application
+              {campaign.applications_count !== 1 ? "s" : ""}
             </span>
           </div>
-        )}
 
-        <div className="mt-auto px-[18px] pt-2 pb-[18px] border-t border-border-subtle flex flex-wrap gap-2">
-          {campaign.status === 'draft' && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-9 text-[13px] flex-1 min-w-[80px]"
+          {campaign.role_type && (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-muted-bg text-text-secondary border border-border text-[11px] font-medium mb-2.5">
+              {campaign.role_type}
+            </span>
+          )}
+
+          {deadline && (
+            <div className="text-[11px] text-brand font-medium mb-1 flex items-center gap-1">
+              <Clock className="w-3 h-3" strokeWidth={1.5} />
+              Due {deadline}
+            </div>
+          )}
+        </div>
+
+        <div className="h-px bg-border-subtle mx-4" />
+
+        <div className="flex items-center gap-1.5 px-3 py-2.5">
+          {campaign.status === "draft" && (
+            <ActionBtn
+              icon={
+                <Play className="w-3.5 h-3.5" strokeWidth={1.5} fill="currentColor" />
+              }
+              label="Publish"
+              accent
               onClick={() => publishCampaign.mutate(campaign._id)}
               disabled={isMutating}
-            >
-              <Play className="w-3.5 h-3.5 mr-1" strokeWidth={1.5} />
-              Publish
-            </Button>
+            />
           )}
-          {campaign.status === 'active' && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-9 text-[13px] flex-1 min-w-[80px]"
+          {campaign.status === "active" && (
+            <ActionBtn
+              icon={<Play className="w-3.5 h-3.5" strokeWidth={1.5} />}
+              label="Close"
+              accent
               onClick={() => closeCampaign.mutate(campaign._id)}
               disabled={isMutating}
-            >
-              Close
-            </Button>
+            />
           )}
-          {campaign.status === 'closed' && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-9 text-[13px] flex-1 min-w-[80px]"
+          {campaign.status === "closed" && (
+            <ActionBtn
+              icon={<RotateCcw className="w-3.5 h-3.5" strokeWidth={1.5} />}
+              label="Reopen"
+              accent
               onClick={() => reopenCampaign.mutate(campaign._id)}
               disabled={isMutating}
-            >
-              <RotateCcw className="w-3.5 h-3.5 mr-1" strokeWidth={1.5} />
-              Reopen
-            </Button>
+            />
           )}
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-9 text-[13px] flex-1 min-w-[80px]"
-            onClick={() => router.push(`/recruiter/campaigns/${campaign._id}/edit`)}
-          >
-            <Edit className="w-3.5 h-3.5 mr-1" strokeWidth={1.5} />
-            Edit
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-9 text-[13px] flex-1 min-w-[80px]"
+          <ActionBtn
+            icon={<Users className="w-3.5 h-3.5" strokeWidth={1.5} />}
+            label="Applications"
+            onClick={() =>
+              router.push(`/recruiter/campaigns/${campaign._id}/applications`)
+            }
+            disabled={isMutating}
+          />
+          <ActionBtn
+            icon={<Pencil className="w-3.5 h-3.5" strokeWidth={1.5} />}
+            label="Edit"
+            onClick={() =>
+              router.push(`/recruiter/campaigns/${campaign._id}/edit`)
+            }
+            disabled={isMutating}
+          />
+          <ActionBtn
+            icon={<Copy className="w-3.5 h-3.5" strokeWidth={1.5} />}
+            label="Clone"
             onClick={() => cloneCampaign.mutate(campaign._id)}
             disabled={isMutating}
-          >
-            <Copy className="w-3.5 h-3.5 mr-1" strokeWidth={1.5} />
-            Clone
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-9 text-[13px] flex-1 min-w-[80px]"
+          />
+          <ActionBtn
+            icon={<FileText className="w-3.5 h-3.5" strokeWidth={1.5} />}
+            label="Template"
             onClick={() => {
               setTemplateName(campaign.name);
               setSaveTemplateOpen(true);
             }}
             disabled={isMutating}
-          >
-            <Save className="w-3.5 h-3.5 mr-1" strokeWidth={1.5} />
-            Template
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-9 text-[13px] flex-1 min-w-[80px] text-error-text hover:bg-error-light"
+          />
+          <ActionBtn
+            icon={<Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />}
+            label="Delete"
+            danger
             onClick={() => setDeleteOpen(true)}
             disabled={isMutating}
-          >
-            <Trash2 className="w-3.5 h-3.5 mr-1" strokeWidth={1.5} />
-            Delete
-          </Button>
+          />
         </div>
       </article>
 
@@ -393,11 +541,14 @@ function CampaignCard({ campaign }: { campaign: Campaign }) {
           <DialogHeader>
             <DialogTitle>Delete Campaign</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete &quot;{campaign.name}&quot;? This action cannot be undone.
+              Are you sure you want to delete &quot;{campaign.name}&quot;? This
+              action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDeleteOpen(false)}>
+              Cancel
+            </Button>
             <Button
               variant="destructive"
               onClick={() => {
@@ -430,12 +581,17 @@ function CampaignCard({ campaign }: { campaign: Campaign }) {
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setSaveTemplateOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setSaveTemplateOpen(false)}>
+              Cancel
+            </Button>
             <Button
               onClick={() => {
-                saveTemplate.mutate({ name: templateName, campaignId: campaign._id }, {
-                  onSuccess: () => setSaveTemplateOpen(false),
-                });
+                saveTemplate.mutate(
+                  { name: templateName, campaignId: campaign._id },
+                  {
+                    onSuccess: () => setSaveTemplateOpen(false),
+                  }
+                );
               }}
               disabled={saveTemplate.isPending || !templateName.trim()}
             >
@@ -445,5 +601,40 @@ function CampaignCard({ campaign }: { campaign: Campaign }) {
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+function ActionBtn({
+  icon,
+  label,
+  onClick,
+  disabled,
+  accent,
+  danger,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  accent?: boolean;
+  danger?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        "flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg border text-[11px] font-medium transition-colors disabled:opacity-50",
+        accent
+          ? "text-brand border-brand/30 hover:bg-brand/5"
+          : danger
+            ? "text-destructive border-destructive/20 hover:bg-destructive/5"
+            : "text-text-secondary border-border hover:bg-muted-bg"
+      )}
+    >
+      {icon}
+      {label}
+    </button>
   );
 }

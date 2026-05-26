@@ -30,7 +30,7 @@ export default function RecruiterDashboardPage() {
   const showVerified = profile?.verification_status !== "pending";
 
   return (
-    <div className="px-4 pt-2.5 pb-6 space-y-6">
+    <div className="px-4 pt-2.5 space-y-6">
       {/* Welcome */}
       <div>
         <h1 className="text-2xl font-bold text-text-primary">
@@ -94,7 +94,6 @@ export default function RecruiterDashboardPage() {
                 profile={{
                   ...talent,
                   is_verified: true,
-                  access_status: "allowed",
                 }}
                 onViewProfile={() => router.push(`/talent/${talent.username}`)}
               />

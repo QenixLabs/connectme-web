@@ -4,8 +4,6 @@ import { useEffect, useState, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
-  Lock,
-  ShieldCheck,
   Mail,
   BookmarkPlus,
   Download,
@@ -13,7 +11,7 @@ import {
   Play,
   ChevronRight,
 } from "lucide-react";
-import { talentApi } from "@/lib/api";
+import { talentApi, messagesApi } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
 import type { TalentProfile } from "@/lib/validations/talent-profile.schema";
 import type { PortfolioItem } from "@/lib/validations/talent-profile.schema";
@@ -306,13 +304,32 @@ export default function PublicTalentProfilePage() {
   const isRecruiter = user?.role === "recruiter";
 
   const [profile, setProfile] = useState<TalentProfile | null>(null);
-  const [previewProfile, setPreviewProfile] = useState<TalentProfile | null>(null);
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([]);
-  const [isPrivate, setIsPrivate] = useState(false);
-  const [requestSent, setRequestSent] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [shortlistModalOpen, setShortlistModalOpen] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
+
+  const handleConnect = async () => {
+    const talentId = profile?.user_id;
+    if (!talentId || !isRecruiter) return;
+
+    if (profile?.privacy_mode === "private") {
+      router.push(`/recruiter/connection-request/${username}`);
+      return;
+    }
+
+    setIsConnecting(true);
+    try {
+      const { conversation } = await messagesApi.startDirectConversation(talentId);
+      const draft = "Hi, I came across your profile and would love to connect regarding a potential opportunity. Looking forward to hearing from you!";
+      router.push(`/recruiter/messages?conversationId=${conversation._id}&draft=${encodeURIComponent(draft)}`);
+    } catch (err) {
+      setError(getApiErrorMessage(err, "Could not start conversation"));
+    } finally {
+      setIsConnecting(false);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -322,9 +339,7 @@ export default function PublicTalentProfilePage() {
         const profileRes = await talentApi.getPublicProfile(username);
         if ((profileRes as any).private) {
           if (!cancelled) {
-            setIsPrivate(true);
-            setRequestSent((profileRes as any).requestSent ?? false);
-            setPreviewProfile((profileRes as any).preview ?? null);
+            setProfile((profileRes as any).preview ?? null);
             setLoading(false);
           }
           return;
@@ -351,16 +366,7 @@ export default function PublicTalentProfilePage() {
     return () => { cancelled = true; };
   }, [username]);
 
-  const handleRequestAccess = async () => {
-    try {
-      await talentApi.requestAccess(username);
-      setRequestSent(true);
-    } catch (err) {
-      setError(getApiErrorMessage(err, "Failed to send request"));
-    }
-  };
-
-  const activeProfile = profile ?? previewProfile;
+  const activeProfile = profile;
 
   if (loading) {
     return (
@@ -469,11 +475,12 @@ export default function PublicTalentProfilePage() {
             {/* Action buttons */}
             <div className="grid grid-cols-3 gap-2.5">
               <button
-                onClick={() => router.push("/recruiter/messages")}
-                className="flex items-center justify-center gap-1.5 py-3 rounded-xl text-xs font-medium bg-muted-bg text-text-primary border border-border hover:bg-muted-bg/80 transition-colors"
+                onClick={handleConnect}
+                disabled={isConnecting || !isRecruiter}
+                className="flex items-center justify-center gap-1.5 py-3 rounded-xl text-xs font-medium bg-muted-bg text-text-primary border border-border hover:bg-muted-bg/80 transition-colors disabled:opacity-50"
               >
                 <Mail className="w-3.5 h-3.5" strokeWidth={1.5} />
-                Message
+                {isConnecting ? "Connecting..." : "Connect"}
               </button>
               <button
                 onClick={() => {
@@ -498,51 +505,23 @@ export default function PublicTalentProfilePage() {
             </div>
 
             {/* Why this talent fits */}
-            {!isPrivate && profile && (
+            {profile && (
               <WhyThisTalentFits profile={profile} />
             )}
 
             {/* Social stats */}
-            {!isPrivate && profile && (
+            {profile && (
               <SocialStats profile={profile} />
             )}
 
             {/* Portfolio */}
-            {!isPrivate && profile && (
+            {profile && (
               <PortfolioSection items={portfolioItems} username={username} />
             )}
           </div>
         </>
       )}
 
-      {isPrivate && (
-        <div className="px-4 mt-4">
-          <div className="bg-card border border-border rounded-xl p-6 text-center space-y-4">
-            <div className="mx-auto w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
-              <Lock className="w-5 h-5 text-amber-600" strokeWidth={1.5} />
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-text-primary">This profile is private</p>
-              <p className="text-xs text-text-muted">
-                Only approved recruiters can view the full profile.
-              </p>
-            </div>
-            {requestSent ? (
-              <div className="flex items-center justify-center gap-2 text-xs text-success-text font-medium py-2">
-                <ShieldCheck className="w-4 h-4" strokeWidth={1.5} />
-                Request sent. Waiting for approval.
-              </div>
-            ) : (
-              <button
-                onClick={handleRequestAccess}
-                className="w-full py-2.5 rounded-xl text-xs font-medium bg-amber-500 hover:bg-amber-600 text-white transition-colors"
-              >
-                Request Access
-              </button>
-            )}
-          </div>
-        </div>
-      )}
 
       <ShortlistOrInviteModal
         open={shortlistModalOpen}

@@ -35,6 +35,7 @@ export interface Campaign {
   questions?: CampaignQuestion[];
   cover_image_url?: string;
   media?: Array<{ url: string; type: string; caption?: string; order: number }>;
+  banner?: { type: 'image' | 'video'; url: string; thumbnail?: string };
   created_at: string;
   my_application?: { _id: string; status: string; created_at?: string; answers?: Array<{ question_id: string; question_text: string; answer: string }> } | null;
   is_bookmarked?: boolean;
@@ -322,7 +323,7 @@ export const campaignApi = {
   uploadMedia: async (
     campaignId: string,
     formData: FormData,
-  ): Promise<{ url: string; media: any[]; cover_image_url?: string }> => {
+  ): Promise<{ url: string; media: any[]; cover_image_url?: string; banner?: { type: 'image' | 'video'; url: string; thumbnail?: string } }> => {
     const response = await apiClient.post(`/campaigns/${campaignId}/media`, formData, {
       headers: { 'Content-Type': undefined },
     });

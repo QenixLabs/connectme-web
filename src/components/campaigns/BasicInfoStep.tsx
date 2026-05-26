@@ -114,10 +114,10 @@ function DateBlock({
 interface BasicInfoStepProps {
   mediaFile?: File | null;
   onMediaChange?: (file: File | null) => void;
-  existingMedia?: { url: string; type: string; caption?: string } | null;
+  existingBanner?: { url: string; type: 'image' | 'video'; thumbnail?: string } | null;
 }
 
-export function BasicInfoStep({ mediaFile, onMediaChange, existingMedia }: BasicInfoStepProps) {
+export function BasicInfoStep({ mediaFile, onMediaChange, existingBanner }: BasicInfoStepProps) {
   const { trigger, watch, setValue } = useFormContext();
   const selectedState = watch('location.state');
   const selectedCity = watch('location.city');
@@ -353,12 +353,12 @@ export function BasicInfoStep({ mediaFile, onMediaChange, existingMedia }: Basic
       <SectionLabel>Media</SectionLabel>
 
       <div className="space-y-2">
-        {existingMedia && !mediaFile && (
+        {existingBanner && !mediaFile && (
           <div className="relative rounded-xl overflow-hidden aspect-video border border-border w-full max-w-[280px]">
-            {existingMedia.type === 'video' ? (
-              <video src={existingMedia.url} className="w-full h-full object-cover" controls />
+            {existingBanner.type === 'video' ? (
+              <video src={existingBanner.url} className="w-full h-full object-cover" controls poster={existingBanner.thumbnail} />
             ) : (
-              <img src={existingMedia.url} alt="" className="w-full h-full object-cover" />
+              <img src={existingBanner.url} alt="" className="w-full h-full object-cover" />
             )}
           </div>
         )}

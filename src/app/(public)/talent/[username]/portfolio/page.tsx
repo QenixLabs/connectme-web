@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Lock, ShieldCheck } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { talentApi } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
 import type { TalentProfile } from "@/lib/validations/talent-profile.schema";
@@ -303,9 +303,6 @@ export default function PublicPortfolioPage() {
   const [ownerChecked, setOwnerChecked] = useState(false);
 
   const [data, setData] = useState<PortfolioData | null>(null);
-  const [previewProfile, setPreviewProfile] = useState<TalentProfile | null>(null);
-  const [isPrivate, setIsPrivate] = useState(false);
-  const [requestSent, setRequestSent] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -330,9 +327,7 @@ export default function PublicPortfolioPage() {
       .getPublicPortfolio(username)
       .then((res) => {
         if ((res as any).private) {
-          setIsPrivate(true);
-          setRequestSent((res as any).requestSent ?? false);
-          setPreviewProfile((res as any).preview ?? null);
+          setError("This portfolio is private");
         } else {
           setData(res as PortfolioData);
         }
@@ -340,15 +335,6 @@ export default function PublicPortfolioPage() {
       .catch((err) => setError(getApiErrorMessage(err)))
       .finally(() => setLoading(false));
   }, [ownerChecked, isOwner, username]);
-
-  const handleRequestAccess = async () => {
-    try {
-      await talentApi.requestAccess(username);
-      setRequestSent(true);
-    } catch (err) {
-      setError(getApiErrorMessage(err, "Failed to send request"));
-    }
-  };
 
   if (!ownerChecked) {
     return (
@@ -399,52 +385,6 @@ export default function PublicPortfolioPage() {
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
-      </div>
-    );
-  }
-
-  if (isPrivate) {
-    return (
-      <div className="max-w-2xl mx-auto py-6 px-4 pb-20">
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-2 text-sm text-text-muted hover:text-text-primary transition-colors mb-6"
-        >
-          <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
-          Back
-        </button>
-
-        {previewProfile && (
-          <div className="mb-4">
-            <MediaKitView profile={previewProfile} items={[]} showBack={false} />
-          </div>
-        )}
-
-        <div className="bg-card border border-border rounded-xl p-5 text-center space-y-4">
-          <div className="mx-auto w-12 h-12 rounded-full bg-warning/10 flex items-center justify-center">
-            <Lock className="w-5 h-5 text-warning" strokeWidth={1.5} />
-          </div>
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-text-primary">Portfolio is private</p>
-            <p className="text-xs text-text-muted">
-              Only approved recruiters can view the full portfolio.
-            </p>
-          </div>
-
-          {requestSent ? (
-            <div className="flex items-center justify-center gap-2 text-xs text-success-text font-medium py-2">
-              <ShieldCheck className="w-4 h-4" strokeWidth={1.5} />
-              Request sent. Waiting for approval.
-            </div>
-          ) : (
-            <Button
-              onClick={handleRequestAccess}
-              className="w-full bg-warning hover:bg-warning/90 text-white"
-            >
-              Request Access
-            </Button>
-          )}
-        </div>
       </div>
     );
   }
