@@ -32,7 +32,7 @@ type LoginValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, user, isAuthenticated, isLoading: storeLoading, error, clearError } = useAuthStore();
+  const { login, user, isAuthenticated, isLoading: storeLoading, error } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<LoginValues>({
@@ -77,10 +77,6 @@ export default function LoginPage() {
                         type="email"
                         placeholder="you@example.com"
                         {...field}
-                        onChange={(e) => {
-                          field.onChange(e);
-                          clearError();
-                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -101,10 +97,6 @@ export default function LoginPage() {
                           placeholder="Enter your password"
                           className="pr-10"
                           {...field}
-                          onChange={(e) => {
-                            field.onChange(e);
-                            clearError();
-                          }}
                         />
                         <button
                           type="button"

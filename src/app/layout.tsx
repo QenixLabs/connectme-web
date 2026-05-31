@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Toaster } from "sonner";
+import { PopupProvider } from "@/providers/popup-provider";
 import { SocketProvider } from "@/providers/socket-provider";
 import { AuthStoreProvider } from "@/providers/auth-store-provider";
+import { QueryProvider } from "@/providers/query-provider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -17,7 +18,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "ConnectMe - Verified Talent Platform",
-  description: "ConnectMe is a verification-first talent operating system for casting and influencer ecosystems",
+  description:
+    "ConnectMe is a verification-first talent operating system for casting and influencer ecosystems",
 };
 
 export default function RootLayout({
@@ -33,8 +35,10 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <AuthStoreProvider>
           <SocketProvider>
-            {children}
-            <Toaster position="top-center" richColors />
+            <QueryProvider>
+              {children}
+              <PopupProvider />
+            </QueryProvider>
           </SocketProvider>
         </AuthStoreProvider>
       </body>

@@ -5,7 +5,7 @@ import { Upload, Image as ImageIcon, Film, X, Loader2, AlertCircle } from "lucid
 import { cn } from "@/lib/utils";
 import { talentApi } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
-import { toast } from "sonner";
+import { usePopup } from "@/hooks/use-popup";
 
 interface PortfolioUploaderProps {
   imagesUsed: number;
@@ -69,6 +69,7 @@ export function PortfolioUploader({
   const [uploading, setUploading] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { show } = usePopup();
 
   const canUploadImage = imagesUsed < maxImages;
   const canUploadVideo = videosUsed < maxVideos;
@@ -111,7 +112,7 @@ export function PortfolioUploader({
         const error = validateFile(file);
         if (error) {
           setFileError(error);
-          toast.error(error);
+          show({ title: error, variant: "error", position: "bottom-center" });
           continue;
         }
 
@@ -131,12 +132,12 @@ export function PortfolioUploader({
             await talentApi.uploadPortfolioVideo(uploadFile, { category: "work" });
           }
 
-          toast.success(`${isImage ? "Image" : "Video"} uploaded`);
+          show({ title: `${isImage ? "Image" : "Video"} uploaded`, variant: "success", position: "bottom-center" });
           onUpload();
         } catch (err) {
           const msg = getApiErrorMessage(err, "Upload failed");
           setFileError(msg);
-          toast.error(msg);
+          show({ title: msg, variant: "error", position: "bottom-center" });
         } finally {
           setUploading(false);
         }
