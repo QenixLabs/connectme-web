@@ -8,6 +8,7 @@ import {
   Mail,
   ChevronRight,
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -45,11 +46,18 @@ export function SafetyMenu({
   const [blockOpen, setBlockOpen] = useState(false);
   const [reportReason, setReportReason] = useState("");
   const [reportDetails, setReportDetails] = useState("");
+  const [consentChecked, setConsentChecked] = useState(false);
+  const [showConsentHint, setShowConsentHint] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { show } = usePopup();
 
   const handleReport = async () => {
     if (!reportReason) return;
+    if (!consentChecked) {
+      setShowConsentHint(true);
+      setTimeout(() => setShowConsentHint(false), 2000);
+      return;
+    }
     setIsSubmitting(true);
     try {
       await messagesApi.reportUser({
@@ -62,6 +70,7 @@ export function SafetyMenu({
       setReportOpen(false);
       setReportReason("");
       setReportDetails("");
+      setConsentChecked(false);
     } catch {
       show({ title: "Failed to submit report", variant: "error", position: "top-right" });
     } finally {
@@ -162,12 +171,27 @@ export function SafetyMenu({
       </Dialog>
 
       {/* Report Dialog */}
-      <Dialog open={reportOpen} onOpenChange={setReportOpen}>
+      <Dialog open={reportOpen} onOpenChange={(open) => {
+        setReportOpen(open);
+        if (!open) {
+          setReportReason("");
+          setReportDetails("");
+          setConsentChecked(false);
+        }
+      }}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-base font-semibold">Report {otherUserName}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
+            {conversationId && (
+              <div className="flex items-start gap-2.5 p-3 rounded-lg bg-amber-50 border border-amber-200">
+                <Shield className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" strokeWidth={1.5} />
+                <p className="text-xs text-amber-800 leading-relaxed">
+                  The last 20 messages from this conversation will be shared with our moderation team for review.
+                </p>
+              </div>
+            )}
             <div className="space-y-2">
               {REPORT_REASONS.map((reason) => (
                 <button
@@ -189,6 +213,20 @@ export function SafetyMenu({
               onChange={(e) => setReportDetails(e.target.value)}
               className="text-sm min-h-[80px]"
             />
+            <div className={`flex items-start gap-2.5 rounded-md transition-all ${showConsentHint ? 'bg-red-50 ring-2 ring-red-400 ring-offset-1 p-1.5 -m-1' : ''}`}>
+              <Checkbox
+                id="report-consent"
+                checked={consentChecked}
+                onCheckedChange={(checked) => {
+                  setConsentChecked(checked === true);
+                  if (checked) setShowConsentHint(false);
+                }}
+                className="mt-0.5"
+              />
+              <label htmlFor="report-consent" className={`text-xs leading-relaxed cursor-pointer ${showConsentHint ? 'text-red-700 font-medium' : 'text-muted-foreground'}`}>
+                I understand and consent to sharing these messages
+              </label>
+            </div>
             <div className="flex gap-2">
               <Button
                 variant="outline"

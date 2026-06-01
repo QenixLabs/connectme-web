@@ -25,6 +25,7 @@ interface ChatInterfaceProps {
   initialConversationId?: string | null;
   initialDraft?: string | null;
   dashboardUrl?: string;
+  findPeopleUrl?: string;
 }
 
 function formatTime(dateStr: string): string {
@@ -103,7 +104,7 @@ function generateClientId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-export default function ChatInterface({ currentUserId, initialConversationId, initialDraft, dashboardUrl }: ChatInterfaceProps) {
+export default function ChatInterface({ currentUserId, initialConversationId, initialDraft, dashboardUrl, findPeopleUrl }: ChatInterfaceProps) {
   const router = useRouter();
   const pathname = usePathname();
   const queryClient = useQueryClient();
@@ -410,28 +411,10 @@ export default function ChatInterface({ currentUserId, initialConversationId, in
     );
   }
 
-  if (conversations.length === 0 && !initialConversationId) {
-    return (
-      <div className="flex flex-1 items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center mx-auto">
-            <MessageSquare className="w-8 h-8 text-amber-400" />
-          </div>
-          <h2 className="text-lg font-semibold">
-            {conversationsError ? 'Could not load conversations' : 'No conversations yet'}
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            {conversationsError || 'Start messaging after connecting with others.'}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-1 min-h-0 gap-0 md:gap-4 bg-page">
       {/* Conversation List */}
-      <div className={`flex-col min-h-0 bg-card border-r border-border md:border md:rounded-xl overflow-hidden shadow-sm ${showMobileChat ? 'hidden md:flex md:w-80' : 'w-full flex md:w-80'}`}>
+      <div className={`flex-col min-h-0 bg-card border-r border-border md:border md:rounded-xl overflow-hidden shadow-sm ${showMobileChat || conversations.length === 0 ? 'hidden md:flex md:w-80' : 'w-full flex md:w-80'}`}>
         {/* Inbox Header */}
         <div className="flex items-center gap-3 px-4 py-3 border-b border-border bg-gradient-to-r from-card to-slate-50/50">
           {dashboardUrl && (
@@ -527,7 +510,7 @@ export default function ChatInterface({ currentUserId, initialConversationId, in
       </div>
 
       {/* Chat Area */}
-      <div className={`flex-1 flex flex-col bg-card md:border md:rounded-xl min-h-0 shadow-sm ${showMobileChat ? 'flex w-full md:flex' : 'hidden md:flex'}`}>
+      <div className={`flex-1 flex flex-col bg-card md:border md:rounded-xl min-h-0 shadow-sm ${showMobileChat || conversations.length === 0 ? 'flex w-full md:flex' : 'hidden md:flex'}`}>
         {selectedConversation ? (
           <>
             {/* Chat Header */}
@@ -750,11 +733,32 @@ export default function ChatInterface({ currentUserId, initialConversationId, in
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground gap-3" style={{ backgroundColor: '#f8fafc', backgroundImage: `radial-gradient(circle, #e2e8f0 0.5px, transparent 0.5px)`, backgroundSize: '16px 16px' }}>
-            <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center">
-              <MessageCircle className="w-7 h-7 text-amber-300" />
-            </div>
-            <p className="text-sm font-medium">Select a conversation</p>
-            <p className="text-xs text-muted-foreground">Choose someone from the list to start messaging</p>
+            {conversations.length === 0 ? (
+              <>
+                <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center">
+                  <MessageSquare className="w-7 h-7 text-amber-300" />
+                </div>
+                <p className="text-sm font-medium">{conversationsError ? 'Could not load conversations' : 'No conversations yet'}</p>
+                <p className="text-xs text-muted-foreground">{conversationsError || 'Start messaging after connecting with others.'}</p>
+                {!conversationsError && findPeopleUrl && (
+                  <Button
+                    size="sm"
+                    className="mt-1 bg-[#1e1a14] hover:bg-[#2a2520] text-xs"
+                    onClick={() => router.push(findPeopleUrl)}
+                  >
+                    Find Talent
+                  </Button>
+                )}
+              </>
+            ) : (
+              <>
+                <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center">
+                  <MessageCircle className="w-7 h-7 text-amber-300" />
+                </div>
+                <p className="text-sm font-medium">Select a conversation</p>
+                <p className="text-xs text-muted-foreground">Choose someone from the list to start messaging</p>
+              </>
+            )}
           </div>
         )}
       </div>

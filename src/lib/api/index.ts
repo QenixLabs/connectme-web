@@ -6,7 +6,7 @@ export { recruiterApi } from './recruiter';
 export { messagesApi, collaborationRequestsApi } from './messages';
 export { notificationsApi } from './notifications';
 export { verificationApi, type VerificationRecord, type VerificationDocResponse, type VerificationStatusResponse } from './verification';
-export { adminApi, type DashboardStats, type PendingVerificationItem, type ReportItem, type PaginatedReports } from './admin';
+export { adminApi, type DashboardStats, type PendingVerificationItem, type ReportItem, type PaginatedReports, type ReportDetail, type MessageSnapshot } from './admin';
 export { useCampaignAnalytics, useCampaignDemographics } from './hooks/useCampaignAnalytics';
 export { useCampaignInvites } from './hooks/useCampaignInvites';
 export { useRecruiterProfile } from './hooks/useRecruiterProfile';

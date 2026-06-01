@@ -56,6 +56,20 @@ export interface PaginatedReports {
   total_pages: number;
 }
 
+export interface MessageSnapshot {
+  id: string;
+  sender_id: string;
+  sender_name: string;
+  sender_role: string;
+  content: string;
+  message_type: string;
+  created_at: string;
+}
+
+export interface ReportDetail extends ReportItem {
+  messages: MessageSnapshot[];
+}
+
 export const adminApi = {
   getDashboardStats: async (): Promise<DashboardStats> => {
     const response = await apiClient.get('/admin/dashboard-stats');
@@ -89,6 +103,11 @@ export const adminApi = {
 
   updateReportStatus: async (id: string, status: string): Promise<ReportItem> => {
     const response = await apiClient.patch(`/admin/reports/${id}/status`, { status });
+    return response.data;
+  },
+
+  getReportById: async (id: string): Promise<ReportDetail> => {
+    const response = await apiClient.get(`/admin/reports/${id}`);
     return response.data;
   },
 };

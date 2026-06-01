@@ -29,6 +29,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { adminApi, type ReportItem, type PaginatedReports } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
+import { ReportDetailPanel } from "@/components/admin/report-detail-panel";
 
 const STATUS_OPTIONS = ["all", "pending", "reviewed", "resolved", "dismissed"];
 
@@ -62,6 +63,7 @@ export default function AdminReportsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
 
   const limit = 20;
 
@@ -166,7 +168,11 @@ export default function AdminReportsPage() {
               </TableRow>
             ) : (
               data.reports.map((report) => (
-                <TableRow key={report._id}>
+                <TableRow
+                  key={report._id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => setSelectedReportId(report._id)}
+                >
                   <TableCell className="text-xs font-medium">
                     {getDisplayName(report.reported_id)}
                     <div className="text-[10px] text-muted-foreground">
@@ -246,6 +252,22 @@ export default function AdminReportsPage() {
           </div>
         </div>
       )}
+
+      <ReportDetailPanel
+        reportId={selectedReportId}
+        onClose={() => setSelectedReportId(null)}
+        onStatusChange={(id, newStatus) => {
+          setData((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              reports: prev.reports.map((r) =>
+                r._id === id ? { ...r, status: newStatus } : r
+              ),
+            };
+          });
+        }}
+      />
     </div>
   );
 }

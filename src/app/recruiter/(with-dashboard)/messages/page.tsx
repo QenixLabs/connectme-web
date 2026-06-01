@@ -26,6 +26,7 @@ export default function RecruiterMessagesPage() {
       initialConversationId={conversationId}
       initialDraft={draft}
       dashboardUrl="/recruiter/dashboard"
+      findPeopleUrl="/recruiter/find-talent"
     />
   );
 }
