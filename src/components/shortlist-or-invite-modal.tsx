@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { usePopup } from "@/hooks/use-popup";
+import { useTierGuard } from "@/hooks/use-tier-guard";
 import Link from "next/link";
 
 interface CampaignWithApps {
@@ -41,6 +42,7 @@ export function ShortlistOrInviteModal({
   const { show } = usePopup();
   const showRef = useRef(show);
   showRef.current = show;
+  const { guard } = useTierGuard(3);
 
   const loadCampaigns = useCallback(async () => {
     if (!open) return;
@@ -103,58 +105,62 @@ export function ShortlistOrInviteModal({
     campaignId: string,
     applicationId: string,
   ) => {
-    setProcessingId(campaignId + "-shortlist");
-    try {
-      await campaignApi.addToShortlist(campaignId, applicationId);
-      showRef.current({
-        title: "Added to shortlist",
-        variant: "success",
-        position: "bottom-center",
-      });
-      setCampaigns((prev) =>
-        prev.map((c) =>
-          c.campaign._id === campaignId && c.application
-            ? {
-                ...c,
-                application: { ...c.application, is_shortlisted: true },
-              }
-            : c,
-        ),
-      );
-    } catch (err: any) {
-      showRef.current({
-        title:
-          err?.response?.data?.message || "Failed to shortlist",
-        variant: "error",
-        position: "bottom-center",
-      });
-    } finally {
-      setProcessingId(null);
-    }
+    guard(async () => {
+      setProcessingId(campaignId + "-shortlist");
+      try {
+        await campaignApi.addToShortlist(campaignId, applicationId);
+        showRef.current({
+          title: "Added to shortlist",
+          variant: "success",
+          position: "bottom-center",
+        });
+        setCampaigns((prev) =>
+          prev.map((c) =>
+            c.campaign._id === campaignId && c.application
+              ? {
+                  ...c,
+                  application: { ...c.application, is_shortlisted: true },
+                }
+              : c,
+          ),
+        );
+      } catch (err: any) {
+        showRef.current({
+          title:
+            err?.response?.data?.message || "Failed to shortlist",
+          variant: "error",
+          position: "bottom-center",
+        });
+      } finally {
+        setProcessingId(null);
+      }
+    });
   };
 
   const handleInvite = async (campaignId: string) => {
-    setProcessingId(campaignId + "-invite");
-    try {
-      await campaignApi.invite(campaignId, {
-        talent_id: talentUserId,
-        message: message.trim() || undefined,
-      });
-      showRef.current({
-        title: "Invite sent",
-        variant: "success",
-        position: "bottom-center",
-      });
-    } catch (err: any) {
-      showRef.current({
-        title:
-          err?.response?.data?.message || "Failed to send invite",
-        variant: "error",
-        position: "bottom-center",
-      });
-    } finally {
-      setProcessingId(null);
-    }
+    guard(async () => {
+      setProcessingId(campaignId + "-invite");
+      try {
+        await campaignApi.invite(campaignId, {
+          talent_id: talentUserId,
+          message: message.trim() || undefined,
+        });
+        showRef.current({
+          title: "Invite sent",
+          variant: "success",
+          position: "bottom-center",
+        });
+      } catch (err: any) {
+        showRef.current({
+          title:
+            err?.response?.data?.message || "Failed to send invite",
+          variant: "error",
+          position: "bottom-center",
+        });
+      } finally {
+        setProcessingId(null);
+      }
+    });
   };
 
   const activeCampaigns = campaigns.filter(

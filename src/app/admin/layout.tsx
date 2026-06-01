@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { Shield, Users, Building2, FolderKanban, LogOut } from "lucide-react";
+import { Shield, Users, Building2, FolderKanban, Flag, LogOut } from "lucide-react";
 import { useAuthStore } from "@/providers/auth-store-provider";
 
 export default function AdminLayout({
@@ -33,6 +33,7 @@ export default function AdminLayout({
     { label: "Artists", href: "/admin/dashboard", icon: Users },
     { label: "Brands", href: "/admin/dashboard", icon: Building2 },
     { label: "Projects", href: "/admin/dashboard", icon: FolderKanban },
+    { label: "Reports", href: "/admin/reports", icon: Flag },
   ];
 
   return (
@@ -43,7 +44,11 @@ export default function AdminLayout({
           <div className="flex items-center gap-2">
             <Shield className="w-5 h-5 text-brand" strokeWidth={1.5} />
             <span className="font-medium text-sm">
-              {pathname === "/admin/verifications" ? "Verification" : "Admin Dashboard"}
+              {pathname === "/admin/verifications"
+              ? "Verification"
+              : pathname === "/admin/reports"
+                ? "Reports"
+                : "Admin Dashboard"}
             </span>
           </div>
 

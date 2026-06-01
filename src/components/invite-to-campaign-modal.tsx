@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { usePopup } from "@/hooks/use-popup";
+import { useTierGuard } from "@/hooks/use-tier-guard";
 import Link from "next/link";
 
 interface InviteToCampaignModalProps {
@@ -43,6 +44,7 @@ export function InviteToCampaignModal({
   const invite = useInviteTalent();
   const bulkInvite = useBulkInviteTalent();
   const { show } = usePopup();
+  const { guard } = useTierGuard(3);
 
   const campaigns = campaignsData?.pages.flatMap((p) => p.data) ?? [];
   const isBulk = (talentIds?.length ?? 0) > 0;
@@ -50,40 +52,42 @@ export function InviteToCampaignModal({
 
   const handleSend = async () => {
     if (!selectedCampaign || ids.length === 0) return;
-    try {
-      if (isBulk) {
-        const result = await bulkInvite.mutateAsync({
-          campaignId: selectedCampaign,
-          talentIds: ids,
-          message: message.trim() || undefined,
-        });
-        const campaign = campaigns.find((c) => c._id === selectedCampaign);
-        show({
-          title: `Invites sent`,
-          description: `${result.successful.length} of ${ids.length} to ${campaign?.name || "campaign"}`,
-          variant: "success",
-          position: "bottom-center",
-        });
-      } else {
-        await invite.mutateAsync({
-          campaignId: selectedCampaign,
-          talentId: ids[0],
-          message: message.trim() || undefined,
-        });
-        const campaign = campaigns.find((c) => c._id === selectedCampaign);
-        show({
-          title: `Invite sent to ${talentName || "talent"}`,
-          description: campaign?.name || "campaign",
-          variant: "success",
-          position: "bottom-center",
-        });
+    guard(async () => {
+      try {
+        if (isBulk) {
+          const result = await bulkInvite.mutateAsync({
+            campaignId: selectedCampaign,
+            talentIds: ids,
+            message: message.trim() || undefined,
+          });
+          const campaign = campaigns.find((c) => c._id === selectedCampaign);
+          show({
+            title: `Invites sent`,
+            description: `${result.successful.length} of ${ids.length} to ${campaign?.name || "campaign"}`,
+            variant: "success",
+            position: "bottom-center",
+          });
+        } else {
+          await invite.mutateAsync({
+            campaignId: selectedCampaign,
+            talentId: ids[0],
+            message: message.trim() || undefined,
+          });
+          const campaign = campaigns.find((c) => c._id === selectedCampaign);
+          show({
+            title: `Invite sent to ${talentName || "talent"}`,
+            description: campaign?.name || "campaign",
+            variant: "success",
+            position: "bottom-center",
+          });
+        }
+        onClose();
+        setSelectedCampaign("");
+        setMessage("");
+      } catch {
+        show({ title: "Failed to send invite", variant: "error", position: "bottom-center" });
       }
-      onClose();
-      setSelectedCampaign("");
-      setMessage("");
-    } catch {
-      show({ title: "Failed to send invite", variant: "error", position: "bottom-center" });
-    }
+    });
   };
 
   return (

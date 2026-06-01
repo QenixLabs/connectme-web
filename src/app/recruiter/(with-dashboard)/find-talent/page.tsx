@@ -12,6 +12,7 @@ import {
   Square,
   LayoutGrid,
   List,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getApiErrorMessage } from "@/lib/formatters";
@@ -34,6 +35,7 @@ import { InviteToCampaignModal } from "@/components/invite-to-campaign-modal";
 import { useCreateCollaborationRequest } from "@/lib/api/hooks/useCreateCollaborationRequest";
 import { messagesApi } from "@/lib/api/messages";
 import { usePopup } from "@/hooks/use-popup";
+import { useTierGuard } from "@/hooks/use-tier-guard";
 
 const AVAILABILITY_OPTIONS = [
   { value: "all", label: "All" },
@@ -55,6 +57,7 @@ export default function FindTalentPage() {
   const searchParams = useSearchParams();
 
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [selectedTalent, setSelectedTalent] = useState<{ id: string; name: string } | null>(null);
   const [selectMode, setSelectMode] = useState(false);
@@ -63,6 +66,7 @@ export default function FindTalentPage() {
 
   const createRequest = useCreateCollaborationRequest();
   const popup = usePopup();
+  const { guard } = useTierGuard(3);
 
   const handleConnect = useCallback(
     (profile: {
@@ -74,54 +78,71 @@ export default function FindTalentPage() {
       const talentId = profile.user_id;
       if (!talentId) return;
 
-      if (profile.privacy_mode === "private") {
-        const name = profile.full_legal_name || profile.username || "Talent";
-        createRequest.mutate(talentId, {
-          onSuccess: () => {
-            popup.show({
-              title: "Request sent",
-              description: `Collaboration request sent to ${name}. You can message once they accept.`,
-              variant: "success",
-            });
-          },
-          onError: (err: any) => {
-            const msg = err?.response?.data?.message || "";
-            if (msg.toLowerCase().includes("already exists")) {
+      guard(() => {
+        if (profile.privacy_mode === "private") {
+          const name = profile.full_legal_name || profile.username || "Talent";
+          createRequest.mutate({ receiverId: talentId }, {
+            onSuccess: () => {
               popup.show({
-                title: "Request pending",
-                description: "You already have a pending request with this talent.",
-                variant: "info",
+                title: "Request sent",
+                description: `Collaboration request sent to ${name}. You can message once they accept.`,
+                variant: "success",
               });
-            } else {
-              popup.show({
-                title: "Failed to send request",
-                description: getApiErrorMessage(err, "Something went wrong"),
-                variant: "error",
-              });
-            }
-          },
-        });
-        return;
-      }
-
-      messagesApi
-        .startDirectConversation(talentId)
-        .then(({ conversation }) => {
-          const draft =
-            "Hi, I came across your profile and would love to connect regarding a potential opportunity. Looking forward to hearing from you!";
-          router.push(
-            `/recruiter/messages?conversationId=${conversation._id}&draft=${encodeURIComponent(draft)}`,
-          );
-        })
-        .catch((err) => {
-          popup.show({
-            title: "Could not start conversation",
-            description: getApiErrorMessage(err, "Something went wrong"),
-            variant: "error",
+            },
+            onError: (err: any) => {
+              const msg = err?.response?.data?.message || "";
+              if (msg.toLowerCase().includes("already accepted")) {
+                messagesApi
+                  .startDirectConversation(talentId)
+                  .then(({ conversation }) => {
+                    router.push(
+                      `/recruiter/messages?conversationId=${conversation._id}`,
+                    );
+                  })
+                  .catch((err2) => {
+                    popup.show({
+                      title: "Could not open messages",
+                      description: getApiErrorMessage(err2, "Something went wrong"),
+                      variant: "error",
+                    });
+                  });
+              } else if (msg.toLowerCase().includes("already pending")) {
+                popup.show({
+                  title: "Request pending",
+                  description: "You already have a pending request with this talent.",
+                  variant: "info",
+                });
+              } else {
+                popup.show({
+                  title: "Failed to send request",
+                  description: getApiErrorMessage(err, "Something went wrong"),
+                  variant: "error",
+                });
+              }
+            },
           });
-        });
+          return;
+        }
+
+        messagesApi
+          .startDirectConversation(talentId)
+          .then(({ conversation }) => {
+            const draft =
+              "Hi, I came across your profile and would love to connect regarding a potential opportunity. Looking forward to hearing from you!";
+            router.push(
+              `/recruiter/messages?conversationId=${conversation._id}&draft=${encodeURIComponent(draft)}`,
+            );
+          })
+          .catch((err) => {
+            popup.show({
+              title: "Could not start conversation",
+              description: getApiErrorMessage(err, "Something went wrong"),
+              variant: "error",
+            });
+          });
+      });
     },
-    [createRequest, popup, router],
+    [createRequest, popup, router, guard],
   );
 
   const profession = searchParams.get("profession") || "all";
@@ -162,8 +183,8 @@ export default function FindTalentPage() {
 
   const handleBulkInvite = useCallback(() => {
     if (selectedIds.size === 0) return;
-    setInviteModalOpen(true);
-  }, [selectedIds]);
+    guard(() => setInviteModalOpen(true));
+  }, [selectedIds, guard]);
 
   const hasActiveFilters =
     profession !== "all" || availability !== "all" || gender !== "all" || !!locationCity;
@@ -174,8 +195,9 @@ export default function FindTalentPage() {
       availability: availability === "all" ? undefined : availability,
       gender: gender === "all" ? undefined : gender,
       location_city: locationCity || undefined,
+      search: debouncedSearch || undefined,
     }),
-    [profession, availability, gender, locationCity],
+    [profession, availability, gender, locationCity, debouncedSearch],
   );
 
   const { ref: sentinelRef, inView } = useInView({ threshold: 0 });
@@ -186,6 +208,7 @@ export default function FindTalentPage() {
     hasNextPage,
     isFetchingNextPage,
     isLoading,
+    isFetching,
     error,
   } = useTalentSearch(filters);
 
@@ -198,24 +221,15 @@ export default function FindTalentPage() {
     }
   }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(timer);
+  }, [search]);
+
   const allProfiles = useMemo(
     () => (data ? data.pages.flatMap((p) => p.data) : []),
     [data],
   );
-
-  const filtered = useMemo(() => {
-    if (!search.trim()) return allProfiles;
-    const q = search.toLowerCase();
-    return allProfiles.filter(
-      (p) =>
-        (p.username?.toLowerCase().includes(q) ?? false) ||
-        (p.full_legal_name?.toLowerCase().includes(q) ?? false) ||
-        (p.headline?.toLowerCase().includes(q) ?? false) ||
-        (p.professions?.some((prof) =>
-          prof.toLowerCase().includes(q),
-        ) ?? false),
-    );
-  }, [allProfiles, search]);
 
   if (isLoading) {
     return (
@@ -269,8 +283,11 @@ export default function FindTalentPage() {
               type="search"
               placeholder="Search by name, profession..."
               aria-label="Search talent"
-              className="h-10 rounded-[10px] bg-card border-[1.5px] border-border pl-9 text-sm"
+              className="h-10 rounded-[10px] bg-card border-[1.5px] border-border pl-9 pr-9 text-sm"
             />
+            {isFetching && (
+              <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted animate-spin pointer-events-none" />
+            )}
           </div>
           <button
             onClick={toggleSelectMode}
@@ -425,7 +442,7 @@ export default function FindTalentPage() {
 
       {/* Results */}
       <div className="flex-1 min-w-0">
-        {filtered.length === 0 ? (
+        {allProfiles.length === 0 ? (
           <div className="text-center py-16 bg-card border border-border rounded-2xl">
             <p className="text-sm text-text-muted">
               No talent matches your filters.
@@ -443,7 +460,7 @@ export default function FindTalentPage() {
           <>
             {viewMode === "grid" ? (
               <div className="grid grid-cols-2 gap-3">
-                {filtered.map((profile) => {
+                {allProfiles.map((profile) => {
                   const username = profile.username ?? "";
                   const displayName = profile.full_legal_name || profile.username || "Talent";
                   return (
@@ -452,10 +469,12 @@ export default function FindTalentPage() {
                       profile={profile}
                       onViewProfile={() => router.push(`/talent/${username}`)}
                       onInvite={!selectMode ? () => {
-                        if (profile.user_id) {
-                          setSelectedTalent({ id: profile.user_id, name: displayName });
-                          setInviteModalOpen(true);
-                        }
+                        guard(() => {
+                          if (profile.user_id) {
+                            setSelectedTalent({ id: profile.user_id, name: displayName });
+                            setInviteModalOpen(true);
+                          }
+                        });
                       } : undefined}
                       onConnect={!selectMode && profile.user_id ? () => handleConnect(profile) : undefined}
                       selectable={selectMode}
@@ -467,7 +486,7 @@ export default function FindTalentPage() {
               </div>
             ) : (
               <div className="flex flex-col gap-2">
-                {filtered.map((profile) => {
+                {allProfiles.map((profile) => {
                   const username = profile.username ?? "";
                   const displayName = profile.full_legal_name || profile.username || "Talent";
                   return (
@@ -476,10 +495,12 @@ export default function FindTalentPage() {
                       profile={profile}
                       onViewProfile={() => router.push(`/talent/${username}`)}
                       onInvite={!selectMode ? () => {
-                        if (profile.user_id) {
-                          setSelectedTalent({ id: profile.user_id, name: displayName });
-                          setInviteModalOpen(true);
-                        }
+                        guard(() => {
+                          if (profile.user_id) {
+                            setSelectedTalent({ id: profile.user_id, name: displayName });
+                            setInviteModalOpen(true);
+                          }
+                        });
                       } : undefined}
                       onConnect={!selectMode && profile.user_id ? () => handleConnect(profile) : undefined}
                       selectable={selectMode}

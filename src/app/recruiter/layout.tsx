@@ -1,4 +1,4 @@
-import { DashboardLayout } from "@/components/layout/dashboard-layout";
+import { Suspense } from "react";
 
 export default function RecruiterLayout({
   children,
@@ -6,8 +6,8 @@ export default function RecruiterLayout({
   children: React.ReactNode;
 }) {
   return (
-    <DashboardLayout role="recruiter" homeHref="/recruiter/dashboard">
+    <Suspense fallback={<div className="min-h-screen bg-page" />}>
       {children}
-    </DashboardLayout>
+    </Suspense>
   );
 }

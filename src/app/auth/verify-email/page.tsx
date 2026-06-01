@@ -19,6 +19,8 @@ function VerifyEmailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get("email") || "";
+  const method = (searchParams.get("method") as "email" | "phone") || "email";
+  const isPhone = method === "phone";
 
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
@@ -87,8 +89,12 @@ function VerifyEmailContent() {
     return (
       <AuthLayout>
         <SuccessState
-          title="Email Verified!"
-          message="Your email has been verified successfully."
+          title={isPhone ? "Phone Verified!" : "Email Verified!"}
+          message={
+            isPhone
+              ? "Your phone has been verified successfully."
+              : "Your email has been verified successfully."
+          }
           submessage="Redirecting to your dashboard..."
         />
       </AuthLayout>
@@ -96,13 +102,15 @@ function VerifyEmailContent() {
   }
 
   return (
-    <AuthLayout subtitle="Verify your email address">
+    <AuthLayout subtitle={isPhone ? "Verify your phone number" : "Verify your email address"}>
       <Card>
         <div className="px-8 py-8">
           {error && <ErrorBanner className="mb-4">{error}</ErrorBanner>}
           {resendSuccess && (
             <SuccessBanner className="mb-4">
-              OTP resent successfully! Check your email.
+              {isPhone
+                ? "OTP resent successfully! Check your phone."
+                : "OTP resent successfully! Check your email."}
             </SuccessBanner>
           )}
 
@@ -110,7 +118,9 @@ function VerifyEmailContent() {
             <p className="text-sm text-text-secondary mb-2">
               Enter the 6-digit code sent to
             </p>
-            <p className="text-sm font-medium text-text-primary">{email}</p>
+            <p className="text-sm font-medium text-text-primary">
+              {isPhone ? "your phone number" : email}
+            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -124,7 +134,9 @@ function VerifyEmailContent() {
               placeholder="000000"
             />
             <p className="text-xs text-text-muted mt-2">
-              Enter the 6-digit code from your email
+              {isPhone
+                ? "Enter the 6-digit code sent to your phone"
+                : "Enter the 6-digit code from your email"}
             </p>
 
             <Button
@@ -135,7 +147,7 @@ function VerifyEmailContent() {
               isLoading={loading}
               loadingLabel="Verifying..."
             >
-              Verify Email
+              {isPhone ? "Verify Phone" : "Verify Email"}
             </Button>
           </form>
 

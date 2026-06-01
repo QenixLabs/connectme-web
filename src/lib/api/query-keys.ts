@@ -34,4 +34,7 @@ export const queryKeys = {
   collaborationRequests: {
     all: () => ['collaboration-requests'] as const,
   },
+  messages: {
+    unreadCount: () => ['messages', 'unread-count'] as const,
+  },
 };

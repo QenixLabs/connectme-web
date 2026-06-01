@@ -100,29 +100,15 @@ export const campaignWizardSchema = z
       }
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    if (data.dates?.start) {
-      const start = new Date(data.dates.start + 'T00:00:00');
-      if (start < today)
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Start date cannot be in the past.', path: ['dates', 'start'] });
-    }
-
-    if (data.dates?.end && !data.dates?.start) {
-      const end = new Date(data.dates.end + 'T00:00:00');
-      if (end < today)
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'End date cannot be in the past.', path: ['dates', 'end'] });
-    }
-
-    if (data.deadline) {
+    if (data.deadline && data.dates?.start) {
       const deadline = new Date(data.deadline + 'T00:00:00');
-      if (deadline < today)
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Application deadline cannot be in the past.', path: ['deadline'] });
-      if (data.dates?.start) {
-        const start = new Date(data.dates.start + 'T00:00:00');
-        if (deadline > start)
-          ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Application deadline must be on or before the start date.', path: ['deadline'] });
+      const start = new Date(data.dates.start + 'T00:00:00');
+      if (deadline > start) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Application deadline must be on or before the start date.',
+          path: ['deadline'],
+        });
       }
     }
   });

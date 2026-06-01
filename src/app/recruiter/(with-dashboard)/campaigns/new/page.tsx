@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { getApiErrorMessage } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
+import { useTierGuard } from "@/hooks/use-tier-guard";
 
 function TemplateCard({
   name,
@@ -48,11 +49,15 @@ export default function NewCampaignPage() {
 
   const templates = templatesData || [];
 
+  const { guard } = useTierGuard(3);
+
   const handleUseTemplate = (templateId: string) => {
-    useTemplate.mutate(templateId, {
-      onSuccess: (campaign) => {
-        router.push(`/recruiter/campaigns/${campaign._id}/edit`);
-      },
+    guard(() => {
+      useTemplate.mutate(templateId, {
+        onSuccess: (campaign) => {
+          router.push(`/recruiter/campaigns/${campaign._id}/edit`);
+        },
+      });
     });
   };
 
@@ -69,7 +74,7 @@ export default function NewCampaignPage() {
       <h1 className="text-xl font-bold text-text-primary">New Campaign</h1>
 
       <button
-        onClick={() => setMode("wizard")}
+        onClick={() => guard(() => setMode("wizard"))}
         className="bg-card border border-border rounded-2xl p-5 text-left transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(79,110,247,0.12),0_1px_3px_rgba(0,0,0,0.06)] flex items-center gap-3"
       >
         <div className="w-10 h-10 rounded-full bg-brand-light flex items-center justify-center">

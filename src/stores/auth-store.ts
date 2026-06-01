@@ -32,7 +32,8 @@ export interface AuthState {
 function setCookie(name: string, value: string, days: number) {
   if (typeof document === 'undefined') return;
   const expires = new Date(Date.now() + days * 86400000).toUTCString();
-  document.cookie = `${name}=${value};expires=${expires};path=/;SameSite=Lax`;
+  const secure = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'Secure;' : '';
+  document.cookie = `${name}=${value};expires=${expires};path=/;SameSite=Strict;${secure}`;
 }
 
 function deleteCookie(name: string) {

@@ -11,6 +11,7 @@ export const authApi = {
     password: string;
     phone: string;
     role: 'talent' | 'recruiter';
+    verification_method: 'email' | 'phone';
     auth_provider?: string;
     company_name?: string;
     username?: string;

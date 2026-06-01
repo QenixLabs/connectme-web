@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 import {
   LogOut,
   ShieldCheck,
@@ -14,6 +15,9 @@ import {
   MoreHorizontal,
   Pencil,
   Shield,
+  BadgeCheck,
+  Mail,
+  Phone,
 } from "lucide-react";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { recruiterApi, authApi, verificationApi } from "@/lib/api";
@@ -184,11 +188,9 @@ export default function RecruiterProfilePage() {
     profile?.verification_status === "enterprise" ||
     profile?.verification_status === "trusted_partner";
 
-  const documentsApproved = verification?.verification?.submitted_docs?.length ?? 0;
   const hasVerificationRecord = !!verification?.verification;
 
   const allContactVerified = user?.is_email_verified && user?.is_phone_verified;
-  const fullyVerified = isCompanyVerified && allContactVerified;
 
   const trustScore = user?.trust_score ?? 0;
   const companyName = profile?.company_name || "Company";
@@ -279,30 +281,113 @@ export default function RecruiterProfilePage() {
         </button>
       </div>
 
-      {/* Verification Status Card */}
+      {/* Verification Status Card — hidden at Tier 3 */}
+      {(user?.verification_tier ?? 0) < 3 && (
       <div className="rounded-2xl bg-white border border-slate-100 p-4">
-        <div className="divide-y divide-slate-100">
-          {/* Verified Status */}
-          <button
-            onClick={() =>
-              router.push(
-                hasVerificationRecord
-                  ? "/recruiter/profile/verification"
-                  : "/recruiter/verify-documents"
-              )
-            }
-            className="w-full flex items-center justify-between py-3 first:pt-0 text-left"
-          >
-            <span className="text-[13.5px] text-slate-900">Verified Status</span>
-            <div className="flex items-center gap-1">
-              <span className="text-[13px] font-medium text-emerald-700">
-                {isCompanyVerified ? "Verified" : hasVerificationRecord ? "Pending" : "Not started"}
-              </span>
-              <ChevronRight className="w-4 h-4 text-slate-400" />
+        {/* Tier Header */}
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-[13.5px] font-medium text-slate-900">Verification</span>
+          {(user?.verification_tier ?? 0) >= 3 ? (
+            <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 rounded-full px-2.5 py-1">
+              <BadgeCheck className="w-4 h-4 text-emerald-600" strokeWidth={2} />
+              <span className="text-[11.5px] font-semibold text-emerald-700">Tier 3</span>
             </div>
-          </button>
+          ) : (
+            <span className="text-[13px] font-medium text-slate-500">Tier {user?.verification_tier ?? 1}</span>
+          )}
+        </div>
 
-          {/* Documents Approved */}
+        {/* Tier Progress */}
+        <div className="flex items-center gap-2 mb-4">
+          {[1, 2, 3].map((t) => {
+            const active = (user?.verification_tier ?? 1) >= t;
+            return (
+              <div key={t} className="flex-1 flex items-center gap-2">
+                <div
+                  className={cn(
+                    "w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0",
+                    active
+                      ? "bg-brand text-white"
+                      : "bg-slate-100 text-slate-400"
+                  )}
+                >
+                  {active ? <Check className="w-3.5 h-3.5" strokeWidth={3} /> : t}
+                </div>
+                <span
+                  className={cn(
+                    "text-[10px] font-medium",
+                    active ? "text-brand" : "text-slate-400"
+                  )}
+                >
+                  {t === 1 ? "Account" : t === 2 ? "Contact" : "Documents"}
+                </span>
+                {t < 3 && (
+                  <div
+                    className={cn(
+                      "flex-1 h-0.5 rounded-full",
+                      (user?.verification_tier ?? 1) > t
+                        ? "bg-brand"
+                        : "bg-slate-100"
+                    )}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="divide-y divide-slate-100">
+          {/* Email */}
+          <div className="flex items-center justify-between py-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center">
+                <Mail className="w-4 h-4 text-slate-500" strokeWidth={1.5} />
+              </div>
+              <span className="text-[13.5px] text-slate-900">Email</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              {user?.is_email_verified ? (
+                <>
+                  <span className="text-[13px] text-slate-500 truncate max-w-[120px]">{user.email}</span>
+                  <Check className="w-4 h-4 text-emerald-600" strokeWidth={2} />
+                </>
+              ) : (
+                <button
+                  onClick={() => handleOpenVerify("email")}
+                  className="text-[13px] font-medium text-brand hover:text-brand-hover"
+                >
+                  Verify now
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Phone */}
+          <div className="flex items-center justify-between py-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center">
+                <Phone className="w-4 h-4 text-slate-500" strokeWidth={1.5} />
+              </div>
+              <span className="text-[13.5px] text-slate-900">Phone</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              {user?.is_phone_verified ? (
+                <>
+                  <span className="text-[13px] text-slate-500 truncate max-w-[120px]">{user.phone}</span>
+                  <Check className="w-4 h-4 text-emerald-600" strokeWidth={2} />
+                </>
+              ) : (
+                <button
+                  onClick={() => handleOpenVerify("phone")}
+                  className="text-[13px] font-medium text-brand hover:text-brand-hover"
+                >
+                  Verify now
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Company / Documents */}
           <button
             onClick={() =>
               router.push(
@@ -313,67 +398,23 @@ export default function RecruiterProfilePage() {
             }
             className="w-full flex items-center justify-between py-3 text-left"
           >
-            <span className="text-[13.5px] text-slate-900">Documents Approved</span>
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center">
+                <Shield className="w-4 h-4 text-slate-500" strokeWidth={1.5} />
+              </div>
+              <span className="text-[13.5px] text-slate-900">Company</span>
+            </div>
             <div className="flex items-center gap-1">
-              <span className="text-[13px] text-slate-500">{documentsApproved} Documents</span>
+              <span className="text-[13px] font-medium text-emerald-700">
+                {isCompanyVerified
+                  ? "Approved"
+                  : hasVerificationRecord
+                    ? "Pending"
+                    : "Not started"}
+              </span>
               <ChevronRight className="w-4 h-4 text-slate-400" />
             </div>
           </button>
-
-          {/* Email */}
-          {!allContactVerified && (
-            <div className="flex items-center justify-between py-3">
-              <span className="text-[13.5px] text-slate-900">Email</span>
-              <div className="flex items-center gap-1.5">
-                {user?.is_email_verified ? (
-                  <>
-                    <span className="text-[13px] text-slate-500 truncate max-w-[140px]">{user.email}</span>
-                    <Check className="w-4 h-4 text-emerald-600" strokeWidth={2} />
-                  </>
-                ) : (
-                  <button
-                    onClick={() => handleOpenVerify("email")}
-                    className="text-[13px] font-medium text-amber-600 hover:text-amber-700"
-                  >
-                    Verify now
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Phone */}
-          {!allContactVerified && (
-            <div className="flex items-center justify-between py-3">
-              <span className="text-[13.5px] text-slate-900">Phone</span>
-              <div className="flex items-center gap-1.5">
-                {user?.is_phone_verified ? (
-                  <>
-                    <span className="text-[13px] text-slate-500 truncate max-w-[140px]">{user.phone}</span>
-                    <Check className="w-4 h-4 text-emerald-600" strokeWidth={2} />
-                  </>
-                ) : (
-                  <button
-                    onClick={() => handleOpenVerify("phone")}
-                    className="text-[13px] font-medium text-amber-600 hover:text-amber-700"
-                  >
-                    Verify now
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* All verified state */}
-          {allContactVerified && (
-            <div className="flex items-center justify-between py-3">
-              <span className="text-[13.5px] text-slate-900">Contact</span>
-              <div className="flex items-center gap-1.5">
-                <span className="text-[13px] font-medium text-emerald-700">All verified</span>
-                <Check className="w-4 h-4 text-emerald-600" strokeWidth={2} />
-              </div>
-            </div>
-          )}
 
           {/* Trust Score */}
           <div className="py-3 last:pb-0">
@@ -395,21 +436,41 @@ export default function RecruiterProfilePage() {
           </div>
         </div>
 
-        {/* Verified Banner */}
-        {fullyVerified && (
-          <div className="mt-3 flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl p-3">
-            <div className="flex items-center gap-3">
-              <div className="w-[34px] h-[34px] rounded-full bg-amber-500 flex items-center justify-center shrink-0">
-                <ShieldCheck className="w-5 h-5 text-white" strokeWidth={2} />
-              </div>
-              <p className="text-[12.5px] text-amber-900 leading-snug">
-                <strong className="font-semibold text-amber-950">Your account</strong> and business details are fully verified.
+        {/* Tier 3 Fully Verified Banner */}
+        {(user?.verification_tier ?? 0) >= 3 && (
+          <div className="mt-3 flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-xl p-3">
+            <div className="w-9 h-9 rounded-full bg-emerald-500 flex items-center justify-center shrink-0">
+              <BadgeCheck className="w-5 h-5 text-white" strokeWidth={2.5} />
+            </div>
+            <div>
+              <p className="text-[13px] font-semibold text-emerald-900">Fully Verified</p>
+              <p className="text-[11.5px] text-emerald-700 leading-snug">
+                Your email, phone, and company documents are all verified.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Partial verified banner */}
+        {allContactVerified && !isCompanyVerified && (user?.verification_tier ?? 0) < 3 && (
+          <button
+            onClick={() => router.push("/recruiter/verify-documents")}
+            className="mt-3 w-full flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl p-3 text-left hover:bg-amber-100 transition-colors"
+          >
+            <div className="w-9 h-9 rounded-full bg-amber-500 flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-5 h-5 text-white" strokeWidth={2} />
+            </div>
+            <div className="flex-1">
+              <p className="text-[13px] font-semibold text-amber-900">Contact Verified</p>
+              <p className="text-[11.5px] text-amber-700 leading-snug">
+                Submit company documents to reach Tier 3.
               </p>
             </div>
             <ChevronRight className="w-4 h-4 text-amber-700 shrink-0" />
-          </div>
+          </button>
         )}
       </div>
+      )}
 
       {/* Verify Company CTA — only when no record */}
       {!hasVerificationRecord && !isCompanyVerified && (

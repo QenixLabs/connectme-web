@@ -1,35 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { Share2, Star, CheckCircle2, Pencil, LayoutGrid } from "lucide-react";
+import { Star, CheckCircle2, Pencil, LayoutGrid, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { TalentProfile } from "@/lib/validations/talent-profile.schema";
-
-export function ShareButton({ username, className }: { username: string; className?: string }) {
-  const [copied, setCopied] = useState(false);
-  const handleShare = async () => {
-    const url = `${window.location.origin}/talent/${username}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // ignore
-    }
-  };
-  return (
-    <button
-      onClick={handleShare}
-      className={cn(
-        "inline-flex items-center gap-1.5 text-[12px] font-medium transition-colors",
-        className
-      )}
-    >
-      <Share2 className="w-4 h-4" strokeWidth={1.5} />
-      {copied ? "Copied" : "Share"}
-    </button>
-  );
-}
+import { ShareProfileDialog } from "@/components/share-profile-dialog";
 
 function availabilityMeta(v?: string) {
   switch (v) {
@@ -196,10 +170,10 @@ export function ProfileCard({
       </div>
 
       {/* Actions */}
-      <div className="flex gap-2 px-4 pb-4">
+      <div className="grid grid-cols-3 gap-2 px-4 pb-4">
         <button
           onClick={onPortfolio}
-          className="flex-1 h-[34px] rounded-[10px] flex items-center justify-center gap-1.5 text-[12px] font-medium text-[#5c5145] transition-colors"
+          className="h-[34px] rounded-[10px] flex items-center justify-center gap-1.5 text-[12px] font-medium text-[#5c5145] transition-colors"
           style={{ background: "#f7f4ef", border: "0.5px solid #e0d9ce" }}
         >
           <LayoutGrid className="w-4 h-4" strokeWidth={1.5} />
@@ -207,12 +181,25 @@ export function ProfileCard({
         </button>
         <button
           onClick={onEdit}
-          className="flex-1 h-[34px] rounded-[10px] flex items-center justify-center gap-1.5 text-[12px] font-medium transition-colors"
+          className="h-[34px] rounded-[10px] flex items-center justify-center gap-1.5 text-[12px] font-medium transition-colors"
           style={{ background: "#1e1a14", color: "#f0e8d4", border: "0.5px solid #1e1a14" }}
         >
           <Pencil className="w-4 h-4" strokeWidth={1.5} />
           {completeness !== undefined && completeness < 100 ? "Complete" : "Edit"}
         </button>
+        <ShareProfileDialog
+          username={profile.username}
+          profilePhoto={profile.profile_photo}
+          name={profile.full_legal_name}
+        >
+          <button
+            className="h-[34px] rounded-[10px] flex items-center justify-center gap-1.5 text-[12px] font-medium text-[#5c5145] transition-colors w-full"
+            style={{ background: "#f7f4ef", border: "0.5px solid #e0d9ce" }}
+          >
+            <Share2 className="w-4 h-4" strokeWidth={1.5} />
+            Share
+          </button>
+        </ShareProfileDialog>
       </div>
     </div>
   );

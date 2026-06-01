@@ -72,6 +72,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { useTierGuard } from '@/hooks/use-tier-guard';
 import {
   LineChart,
   Line,
@@ -145,6 +146,7 @@ export default function CampaignDetailPage() {
   const [teamInviteEmail, setTeamInviteEmail] = useState('');
   const [teamInviteRole, setTeamInviteRole] = useState('viewer');
   const [showShortlistedOnly, setShowShortlistedOnly] = useState(false);
+  const { guard } = useTierGuard(3);
   const updateCampaign = useUpdateCampaign();
 
   const {
@@ -313,7 +315,7 @@ export default function CampaignDetailPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => publishCampaign.mutate(campaignId)}
+              onClick={() => guard(() => publishCampaign.mutate(campaignId))}
               disabled={publishCampaign.isPending}
             >
               <Play className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.5} />
@@ -324,7 +326,7 @@ export default function CampaignDetailPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => closeCampaign.mutate(campaignId)}
+              onClick={() => guard(() => closeCampaign.mutate(campaignId))}
               disabled={closeCampaign.isPending}
             >
               Close
@@ -334,7 +336,7 @@ export default function CampaignDetailPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => reopenCampaign.mutate(campaignId)}
+              onClick={() => guard(() => reopenCampaign.mutate(campaignId))}
               disabled={reopenCampaign.isPending}
             >
               <RotateCcw className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.5} />
@@ -344,7 +346,7 @@ export default function CampaignDetailPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => cloneCampaign.mutate(campaignId)}
+            onClick={() => guard(() => cloneCampaign.mutate(campaignId))}
             disabled={cloneCampaign.isPending}
           >
             <Copy className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.5} />
@@ -353,7 +355,7 @@ export default function CampaignDetailPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => router.push(`/recruiter/campaigns/${campaignId}/edit`)}
+            onClick={() => guard(() => router.push(`/recruiter/campaigns/${campaignId}/edit`))}
           >
             <Pencil className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.5} />
             Edit
@@ -880,7 +882,7 @@ export default function CampaignDetailPage() {
                 className="h-10 text-xs"
                 onClick={() => {
                   if (!teamInviteEmail.trim()) return;
-                  inviteTeamMember.mutate(
+                  guard(() => inviteTeamMember.mutate(
                     { campaignId, email: teamInviteEmail.trim(), role: teamInviteRole },
                     {
                       onSuccess: () => {
@@ -888,7 +890,7 @@ export default function CampaignDetailPage() {
                         setTeamInviteRole('viewer');
                       },
                     }
-                  );
+                  ));
                 }}
                 disabled={inviteTeamMember.isPending || !teamInviteEmail.trim()}
               >

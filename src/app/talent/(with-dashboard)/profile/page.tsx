@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Shield } from "lucide-react";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { talentApi } from "@/lib/api";
@@ -22,6 +22,8 @@ type Mode = "create" | "edit";
 
 export default function TalentProfilePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const forceEdit = searchParams.get("edit") === "1";
   const { user } = useAuthStore();
   const [mode, setMode] = useState<Mode>("create");
   const [isEditing, setIsEditing] = useState(true);
@@ -44,7 +46,7 @@ export default function TalentProfilePage() {
           setProfile(null);
         } else {
           setMode("edit");
-          setIsEditing(false);
+          setIsEditing(forceEdit);
           setProfile(loaded);
         }
       })

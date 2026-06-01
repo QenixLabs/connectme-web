@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { talentApi } from "@/lib/api";
+import { talentApi, collaborationRequestsApi } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
 import type { TalentProfile } from "@/lib/validations/talent-profile.schema";
 import type { PortfolioItem } from "@/lib/validations/talent-profile.schema";
@@ -14,6 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
+import { useAuthStore } from "@/providers/auth-store-provider";
+import { usePopup } from "@/hooks/use-popup";
 
 interface PortfolioData {
   profile: Partial<TalentProfile>;
@@ -305,6 +307,12 @@ export default function PublicPortfolioPage() {
   const [data, setData] = useState<PortfolioData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isPrivate, setIsPrivate] = useState(false);
+  const [hasConnection, setHasConnection] = useState(true);
+  const [previewProfile, setPreviewProfile] = useState<Partial<TalentProfile> | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const { user } = useAuthStore();
+  const { show } = usePopup();
 
   /* ---- Owner detection ---- */
   useEffect(() => {
@@ -327,6 +335,9 @@ export default function PublicPortfolioPage() {
       .getPublicPortfolio(username)
       .then((res) => {
         if ((res as any).private) {
+          setIsPrivate(true);
+          setHasConnection((res as any).hasConnection !== false);
+          setPreviewProfile((res as any).preview ?? null);
           setError("This portfolio is private");
         } else {
           setData(res as PortfolioData);
@@ -372,6 +383,28 @@ export default function PublicPortfolioPage() {
     );
   }
 
+  const [requestSent, setRequestSent] = useState(false);
+
+  const handleConnect = async () => {
+    const talentId = previewProfile?.user_id;
+    if (!talentId) return;
+    if (!user) {
+      router.push("/auth/login");
+      return;
+    }
+    setIsConnecting(true);
+    try {
+      await collaborationRequestsApi.createRequest(talentId, "I'd like to view your full portfolio and profile.");
+      setRequestSent(true);
+      show({ title: "Request sent! The talent will be notified.", variant: "success", position: "top-center" });
+    } catch (err: any) {
+      const msg = getApiErrorMessage(err, "Could not send request");
+      show({ title: msg, variant: "error", position: "bottom-center" });
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
   if (error) {
     return (
       <div className="max-w-2xl mx-auto py-6 px-4 pb-20">
@@ -385,6 +418,28 @@ export default function PublicPortfolioPage() {
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
+        {isPrivate && !hasConnection && previewProfile?.user_id && (
+          <div className="mt-6 text-center space-y-3">
+            {requestSent ? (
+              <p className="text-sm text-success-text">
+                Request sent. You will be able to view the portfolio once the talent accepts your request.
+              </p>
+            ) : (
+              <>
+                <p className="text-sm text-text-secondary">
+                  Send a connection request to view the full profile and portfolio.
+                </p>
+                <Button
+                  onClick={handleConnect}
+                  disabled={isConnecting}
+                  className="shrink-0"
+                >
+                  {isConnecting ? "Sending..." : "Send Connection Request"}
+                </Button>
+              </>
+            )}
+          </div>
+        )}
       </div>
     );
   }

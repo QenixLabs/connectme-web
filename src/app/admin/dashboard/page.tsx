@@ -88,7 +88,7 @@ export default function AdminDashboardPage() {
       icon: FileText,
       iconBg: "bg-rose-50",
       iconColor: "text-rose-500",
-      onClick: () => {},
+      onClick: () => router.push("/admin/reports"),
     },
     {
       label: "Suspend Account",

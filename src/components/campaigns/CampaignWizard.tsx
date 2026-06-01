@@ -62,6 +62,20 @@ function getStepFields(step: number): string[] {
   }
 }
 
+function toDateInputValue(val: any): string {
+  if (!val) return '';
+  if (typeof val === 'string') return val.slice(0, 10);
+  if (val instanceof Date) return val.toISOString().slice(0, 10);
+  return '';
+}
+
+function toDatetimeInputValue(val: any): string {
+  if (!val) return '';
+  if (typeof val === 'string') return val.slice(0, 16);
+  if (val instanceof Date) return val.toISOString().slice(0, 16);
+  return '';
+}
+
 function mapCampaignToDefaults(campaign: any): CampaignWizardInput {
   const publishOption: CampaignWizardInput['publishOption'] =
     campaign.status === 'draft'
@@ -80,10 +94,10 @@ function mapCampaignToDefaults(campaign: any): CampaignWizardInput {
       state: campaign.location?.state ?? '',
     },
     dates: {
-      start: campaign.dates?.start?.slice(0, 10) ?? '',
-      end: campaign.dates?.end?.slice(0, 10) ?? '',
+      start: toDateInputValue(campaign.dates?.start),
+      end: toDateInputValue(campaign.dates?.end),
     },
-    deadline: campaign.deadline?.slice(0, 10) ?? '',
+    deadline: toDateInputValue(campaign.deadline),
     requirements: {
       skills: campaign.requirements?.skills ?? [],
       languages: campaign.requirements?.languages ?? [],
@@ -110,7 +124,7 @@ function mapCampaignToDefaults(campaign: any): CampaignWizardInput {
       order: q.order ?? 0,
     })),
     publishOption,
-    scheduled_publish_at: campaign.scheduled_publish_at?.slice(0, 16) ?? '',
+    scheduled_publish_at: toDatetimeInputValue(campaign.scheduled_publish_at),
     auto_close_on_deadline: campaign.auto_close_on_deadline ?? true,
   };
 }
@@ -275,10 +289,7 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
         const formData = new FormData();
         formData.append('file', pendingMediaFile);
         formData.append('is_banner', 'true');
-        formData.append(
-          'type',
-          pendingMediaFile.type.startsWith('video/') ? 'video' : 'image',
-        );
+        formData.append('type', 'image');
         await uploadMedia.mutateAsync({ campaignId: resultCampaignId, formData });
       }
 

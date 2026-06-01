@@ -5,7 +5,7 @@ import { collaborationRequestsApi } from "@/lib/api/messages";
 
 export function useCreateCollaborationRequest() {
   return useMutation({
-    mutationFn: (receiverId: string) =>
-      collaborationRequestsApi.createRequest(receiverId),
+    mutationFn: ({ receiverId, message }: { receiverId: string; message?: string }) =>
+      collaborationRequestsApi.createRequest(receiverId, message),
   });
 }

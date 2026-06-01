@@ -36,6 +36,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { usePopup } from "@/hooks/use-popup";
+import { useAuthStore } from "@/providers/auth-store-provider";
 
 function formatDeadline(deadline?: string) {
   if (!deadline) return null;
@@ -63,7 +64,9 @@ export default function TalentCampaignDetailPage() {
 
   const [applyMessage, setApplyMessage] = useState("");
   const [showApplyForm, setShowApplyForm] = useState(false);
+  const [showTierDialog, setShowTierDialog] = useState(false);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const { user } = useAuthStore();
 
   const {
     data: campaign,
@@ -519,7 +522,13 @@ export default function TalentCampaignDetailPage() {
                 </div>
               </div>
               <Button
-                onClick={() => setShowApplyForm(true)}
+                onClick={() => {
+                  if ((user?.verification_tier ?? 1) < 3) {
+                    setShowTierDialog(true);
+                  } else {
+                    setShowApplyForm(true);
+                  }
+                }}
                 className="shrink-0"
               >
                 <Send className="w-4 h-4 mr-1.5" strokeWidth={1.5} />
@@ -655,6 +664,24 @@ export default function TalentCampaignDetailPage() {
           )}
         </Card>
       )}
+
+      {/* Tier Requirement Dialog */}
+      <Dialog open={showTierDialog} onOpenChange={setShowTierDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Verification Required</DialogTitle>
+            <DialogDescription>
+              Only Tier 3 verified talents can apply to campaigns. Complete your verification to unlock applications.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowTierDialog(false)}>Cancel</Button>
+            <Button onClick={() => router.push("/talent/verify-documents")}>
+              Verify Now
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Withdraw Confirmation Dialog */}
       <Dialog open={showWithdrawConfirm} onOpenChange={setShowWithdrawConfirm}>

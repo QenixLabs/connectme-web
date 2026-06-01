@@ -7,6 +7,7 @@ export interface ConversationParticipant {
   full_legal_name?: string;
   username?: string;
   company_name?: string;
+  profile_photo?: string;
 }
 
 export interface Conversation {
@@ -29,6 +30,7 @@ export interface Message {
     full_legal_name?: string;
     username?: string;
     company_name?: string;
+    profile_photo?: string;
   };
   content: string;
   message_type: string;
@@ -39,15 +41,29 @@ export interface Message {
 
 export interface CollaborationRequest {
   _id: string;
-  requester_id: string;
+  requester_id: {
+    _id: string;
+    email: string;
+    role?: string;
+    full_legal_name?: string;
+    username?: string;
+    company_name?: string;
+    profile_photo?: string;
+  };
   receiver_id: string;
   status: 'pending' | 'accepted' | 'rejected';
+  message?: string;
   created_at: string;
 }
 
 export const messagesApi = {
   getConversations: async (): Promise<Conversation[]> => {
     const response = await apiClient.get('/conversations');
+    return response.data;
+  },
+
+  getUnreadCount: async (): Promise<{ count: number }> => {
+    const response = await apiClient.get('/conversations/unread-count');
     return response.data;
   },
 
@@ -80,15 +96,52 @@ export const messagesApi = {
     await apiClient.patch(`/conversations/${conversationId}/read/${messageId}`);
   },
 
+  markAllAsRead: async (conversationId: string): Promise<{ message_ids: string[] }> => {
+    const response = await apiClient.post(`/conversations/${conversationId}/mark-all-read`);
+    return response.data;
+  },
+
+  getConversation: async (conversationId: string): Promise<Conversation> => {
+    const response = await apiClient.get(`/conversations/${conversationId}`);
+    return response.data;
+  },
+
   startDirectConversation: async (receiverId: string): Promise<{ conversation: Conversation }> => {
     const response = await apiClient.post(`/connections/direct/${receiverId}`);
     return response.data;
   },
+
+  blockUser: async (blockedId: string): Promise<void> => {
+    await apiClient.post('/blocks', { blocked_id: blockedId });
+  },
+
+  unblockUser: async (blockedId: string): Promise<void> => {
+    await apiClient.delete(`/blocks/${blockedId}`);
+  },
+
+  checkBlocked: async (userId: string): Promise<{ isBlocked: boolean; blockedByMe: boolean }> => {
+    const response = await apiClient.get(`/blocks/check/${userId}`);
+    return response.data;
+  },
+
+  getBlockedUsers: async (): Promise<{ _id: string; blocked_id: { _id: string; email: string; full_legal_name?: string; username?: string; company_name?: string; role?: string }; created_at: string }[]> => {
+    const response = await apiClient.get('/blocks');
+    return response.data;
+  },
+
+  reportUser: async (payload: {
+    reported_id: string;
+    reason: string;
+    details?: string;
+    conversation_id?: string;
+  }): Promise<void> => {
+    await apiClient.post('/reports', payload);
+  },
 };
 
 export const collaborationRequestsApi = {
-  createRequest: async (receiverId: string): Promise<CollaborationRequest> => {
-    const response = await apiClient.post('/collaboration-requests', { receiver_id: receiverId });
+  createRequest: async (receiverId: string, message?: string): Promise<CollaborationRequest> => {
+    const response = await apiClient.post('/collaboration-requests', { receiver_id: receiverId, message });
     return response.data;
   },
 

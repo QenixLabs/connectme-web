@@ -23,6 +23,39 @@ export interface PendingVerificationItem {
   created_at: string;
 }
 
+export interface ReportItem {
+  _id: string;
+  reporter_id: {
+    _id: string;
+    email: string;
+    full_legal_name?: string;
+    username?: string;
+    company_name?: string;
+    role?: string;
+  };
+  reported_id: {
+    _id: string;
+    email: string;
+    full_legal_name?: string;
+    username?: string;
+    company_name?: string;
+    role?: string;
+  };
+  reason: string;
+  details?: string;
+  status: string;
+  conversation_id?: string;
+  created_at: string;
+}
+
+export interface PaginatedReports {
+  reports: ReportItem[];
+  total: number;
+  page: number;
+  limit: number;
+  total_pages: number;
+}
+
 export const adminApi = {
   getDashboardStats: async (): Promise<DashboardStats> => {
     const response = await apiClient.get('/admin/dashboard-stats');
@@ -46,6 +79,16 @@ export const adminApi = {
 
   getUsers: async (page = 1, limit = 20, role?: string): Promise<{ users: unknown[]; total: number; page: number; limit: number; total_pages: number }> => {
     const response = await apiClient.get('/admin/users', { params: { page, limit, role } });
+    return response.data;
+  },
+
+  getReports: async (page = 1, limit = 20, status?: string): Promise<PaginatedReports> => {
+    const response = await apiClient.get('/admin/reports', { params: { page, limit, status } });
+    return response.data;
+  },
+
+  updateReportStatus: async (id: string, status: string): Promise<ReportItem> => {
+    const response = await apiClient.patch(`/admin/reports/${id}/status`, { status });
     return response.data;
   },
 };

@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { Star, AlertCircle, ShieldCheck, Pencil, Globe, FolderKanban, Bookmark } from "lucide-react";
+import { Star, ShieldCheck, Pencil, Globe, FolderKanban, Bookmark } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { getGreeting } from "@/lib/greeting";
 import { talentApi, Campaign } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/formatters";
 import { useRecommendedCampaigns } from "@/lib/api/hooks/useCampaigns";
 import type { TalentProfile } from "@/lib/validations/talent-profile.schema";
 import { SectionHeader } from "@/components/ui/section-header";
@@ -114,32 +115,11 @@ function RecommendationCard({ campaign }: { campaign: Campaign }) {
   );
 }
 
-const MOCK_COACHING = [
-  {
-    title: "Add 3 work images",
-    description: "Profiles with 5+ images get 3x more views from recruiters",
-    action: "Update Portfolio",
-    urgency: "high" as const,
-  },
-  {
-    title: "Record your intro video",
-    description: "Intro videos improve shortlist chances by 40%",
-    action: "Record Now",
-    urgency: "medium" as const,
-  },
-  {
-    title: "Verify your identity",
-    description: "Get the verified badge to unlock messaging from all recruiters",
-    action: "Start Verification",
-    urgency: "high" as const,
-  },
-];
-
-const MOCK_STATS = {
-  profileViews7d: 128,
-  profileViews30d: 456,
-  shortlists: 12,
-  messages: 3,
+const EMPTY_STATS = {
+  profileViews7d: 0,
+  profileViews30d: 0,
+  shortlists: 0,
+  messages: 0,
 };
 
 export default function TalentDashboardPage() {
@@ -149,9 +129,23 @@ export default function TalentDashboardPage() {
   const verificationTier = user!.verification_tier || 1;
   const isVerified = verificationTier >= 2;
   const [profile, setProfile] = useState<TalentProfile | null>(null);
+  const [stats, setStats] = useState(EMPTY_STATS);
+  const [profileError, setProfileError] = useState<string | null>(null);
 
   useEffect(() => {
-    talentApi.getMyProfile().then((p) => setProfile(p)).catch(() => {});
+    talentApi.getMyProfile()
+      .then((p) => {
+        setProfile(p);
+        setStats({
+          profileViews7d: p?.analytics?.profile_views_7d ?? 0,
+          profileViews30d: p?.analytics?.profile_views_30d ?? 0,
+          shortlists: p?.analytics?.shortlist_count ?? 0,
+          messages: 0,
+        });
+      })
+      .catch((err) => {
+        setProfileError(getApiErrorMessage(err, 'Failed to load profile'));
+      });
   }, []);
 
   return (
@@ -196,16 +190,16 @@ export default function TalentDashboardPage() {
 
       {/* Career Snapshot */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <StatCard label="7d Views" value={MOCK_STATS.profileViews7d} />
-        <StatCard label="30d Views" value={MOCK_STATS.profileViews30d} />
-        <StatCard label="Shortlists" value={MOCK_STATS.shortlists} />
-        <StatCard label="Messages" value={MOCK_STATS.messages} />
+        <StatCard label="7d Views" value={stats.profileViews7d} />
+        <StatCard label="30d Views" value={stats.profileViews30d} />
+        <StatCard label="Shortlists" value={stats.shortlists} />
+        <StatCard label="Messages" value={stats.messages} />
       </div>
 
       {/* Quick Actions */}
       <div className="grid grid-cols-2 gap-3">
         <Link
-          href="/talent/profile"
+          href="/talent/profile?edit=1"
           className="flex items-center justify-center gap-2 h-11 rounded-xl bg-surface-dark text-on-surface-dark text-sm font-medium hover:bg-surface-darker active:scale-[0.98] transition-all"
         >
           <Pencil className="w-4 h-4" strokeWidth={1.5} />
@@ -240,45 +234,11 @@ export default function TalentDashboardPage() {
       {/* Next Best Actions */}
       <div>
         <SectionHeader title="Recommended Next Steps" />
-        <div className="space-y-3">
-          {MOCK_COACHING.map((item, i) => (
-            <Card
-              key={i}
-              className="p-4 flex items-start gap-3 rounded-xl"
-            >
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                  item.urgency === "high"
-                    ? "bg-brand-light"
-                    : "bg-page"
-                }`}
-              >
-                <AlertCircle
-                  className={`w-4 h-4 ${
-                    item.urgency === "high"
-                      ? "text-brand"
-                      : "text-text-tertiary"
-                  }`}
-                  strokeWidth={1.5}
-                />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-text-secondary">
-                  {item.title}
-                </p>
-                <p className="text-xs text-text-tertiary mt-0.5">
-                  {item.description}
-                </p>
-              </div>
-              <Button
-                variant="dark"
-                className="px-3 py-1.5 h-auto text-xs rounded-lg flex-shrink-0"
-              >
-                {item.action}
-              </Button>
-            </Card>
-          ))}
-        </div>
+        <Card className="p-4 rounded-xl">
+          <p className="text-sm text-text-secondary">
+            Complete your profile to get discovered by recruiters.
+          </p>
+        </Card>
       </div>
 
       {/* Safety Note */}
