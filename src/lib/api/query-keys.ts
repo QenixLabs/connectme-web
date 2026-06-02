@@ -21,6 +21,11 @@ export const queryKeys = {
       ['talent', 'list', filters] as const,
     professions: (search: string) =>
       ['talent', 'professions', search] as const,
+    recommendations: (limit?: number) =>
+      ['talent', 'recommendations', limit] as const,
+  },
+  recruiter: {
+    me: () => ['recruiter', 'me'] as const,
   },
   notifications: {
     all: (history: boolean) => ['notifications', 'list', history] as const,

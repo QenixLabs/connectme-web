@@ -58,14 +58,14 @@ export default function NewCampaignPage() {
 
   if (mode === "wizard") {
     return (
-      <div className="max-w-[1280px] mx-auto w-full px-4 py-6 pb-24 lg:pb-8">
+      <div className="max-w-[1280px] mx-auto w-full px-4 py-6 pb-10">
         <CampaignWizard />
       </div>
     );
   }
 
   return (
-    <div className="max-w-[1280px] mx-auto w-full px-4 py-6 pb-24 lg:pb-8 flex flex-col gap-6">
+    <div className="max-w-[1280px] mx-auto w-full px-4 py-6 pb-10 flex flex-col gap-6">
       <h1 className="text-xl font-bold text-text-primary">New Campaign</h1>
 
       <button
