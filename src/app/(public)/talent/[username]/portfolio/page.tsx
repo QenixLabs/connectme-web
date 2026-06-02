@@ -2,12 +2,11 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Pin } from "lucide-react";
 import { talentApi, collaborationRequestsApi } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
 import type { TalentProfile } from "@/lib/validations/talent-profile.schema";
 import type { PortfolioItem } from "@/lib/validations/talent-profile.schema";
-import { MediaKitView } from "@/components/portfolio/media-kit-view";
 import { PortfolioUploader } from "@/components/portfolio/portfolio-uploader";
 import { PortfolioGrid } from "@/components/portfolio/portfolio-grid";
 import { Button } from "@/components/ui/button";
@@ -16,6 +15,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { usePopup } from "@/hooks/use-popup";
+import { MediaKitHeader } from "@/components/portfolio/media-kit-header";
+import { MediaKitIntro } from "@/components/portfolio/media-kit-intro";
+import { MediaTile } from "@/components/portfolio/media-tile";
 
 interface PortfolioData {
   profile: Partial<TalentProfile>;
@@ -250,8 +252,8 @@ function PortfolioManager({ username }: { username: string }) {
           <CardContent className="p-4 flex flex-col justify-between gap-2 h-full">
             <p className="text-sm text-text-muted">
               Unlock{" "}
-              <strong className="text-text-primary font-medium">20 images</strong>{" "}
-              &amp;{" "}
+              <strong className="text-text-primary font-medium">20 images</strong>
+              &{" "}
               <strong className="text-text-primary font-medium">5 videos</strong>
             </p>
             <button className="self-start text-xs border border-border rounded-lg px-3 py-1.5 bg-transparent hover:bg-muted-bg transition-colors">
@@ -311,8 +313,29 @@ export default function PublicPortfolioPage() {
   const [hasConnection, setHasConnection] = useState(true);
   const [previewProfile, setPreviewProfile] = useState<Partial<TalentProfile> | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [requestSent, setRequestSent] = useState(false);
   const { user } = useAuthStore();
   const { show } = usePopup();
+
+  const handleConnect = useCallback(async () => {
+    const talentId = previewProfile?.user_id;
+    if (!talentId) return;
+    if (!user) {
+      router.push("/auth/login");
+      return;
+    }
+    setIsConnecting(true);
+    try {
+      await collaborationRequestsApi.createRequest(talentId, "I'd like to view your full portfolio and profile.");
+      setRequestSent(true);
+      show({ title: "Request sent! The talent will be notified.", variant: "success", position: "top-center" });
+    } catch (err: any) {
+      const msg = getApiErrorMessage(err, "Could not send request");
+      show({ title: msg, variant: "error", position: "bottom-center" });
+    } finally {
+      setIsConnecting(false);
+    }
+  }, [previewProfile?.user_id, user, router, show]);
 
   /* ---- Owner detection ---- */
   useEffect(() => {
@@ -349,15 +372,16 @@ export default function PublicPortfolioPage() {
 
   if (!ownerChecked) {
     return (
-      <div className="max-w-2xl mx-auto py-6 px-4 pb-20">
-        <div className="flex items-center gap-3 mb-6">
-          <Skeleton className="h-9 w-9 rounded-lg" />
-          <Skeleton className="h-5 w-32" />
-        </div>
-        <div className="space-y-4">
-          <Skeleton className="h-48 w-full rounded-xl" />
-          <Skeleton className="h-20 w-full rounded-xl" />
-          <Skeleton className="h-48 w-full rounded-xl" />
+      <div className="min-h-screen bg-background font-sans pb-12">
+        <MediaKitHeader />
+        <div className="px-4 pt-5 space-y-4">
+          <Skeleton className="h-32 rounded-2xl" />
+          <Skeleton className="h-48 rounded-2xl" />
+          <div className="grid grid-cols-2 gap-2.5">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="aspect-square rounded-2xl" />
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -369,86 +393,94 @@ export default function PublicPortfolioPage() {
 
   if (loading) {
     return (
-      <div className="max-w-2xl mx-auto py-6 px-4 pb-20">
-        <div className="flex items-center gap-3 mb-6">
-          <Skeleton className="h-9 w-9 rounded-lg" />
-          <Skeleton className="h-5 w-32" />
-        </div>
-        <div className="space-y-4">
-          <Skeleton className="h-48 w-full rounded-xl" />
-          <Skeleton className="h-20 w-full rounded-xl" />
-          <Skeleton className="h-48 w-full rounded-xl" />
+      <div className="min-h-screen bg-background font-sans pb-12">
+        <MediaKitHeader />
+        <div className="px-4 pt-5 space-y-4">
+          <Skeleton className="h-32 rounded-2xl" />
+          <Skeleton className="h-48 rounded-2xl" />
+          <div className="grid grid-cols-2 gap-2.5">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="aspect-square rounded-2xl" />
+            ))}
+          </div>
         </div>
       </div>
     );
   }
 
-  const [requestSent, setRequestSent] = useState(false);
-
-  const handleConnect = async () => {
-    const talentId = previewProfile?.user_id;
-    if (!talentId) return;
-    if (!user) {
-      router.push("/auth/login");
-      return;
-    }
-    setIsConnecting(true);
-    try {
-      await collaborationRequestsApi.createRequest(talentId, "I'd like to view your full portfolio and profile.");
-      setRequestSent(true);
-      show({ title: "Request sent! The talent will be notified.", variant: "success", position: "top-center" });
-    } catch (err: any) {
-      const msg = getApiErrorMessage(err, "Could not send request");
-      show({ title: msg, variant: "error", position: "bottom-center" });
-    } finally {
-      setIsConnecting(false);
-    }
-  };
-
   if (error) {
     return (
-      <div className="max-w-2xl mx-auto py-6 px-4 pb-20">
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-2 text-sm text-text-muted hover:text-text-primary transition-colors mb-6"
-        >
-          <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
-          Back
-        </button>
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-        {isPrivate && !hasConnection && previewProfile?.user_id && (
-          <div className="mt-6 text-center space-y-3">
-            {requestSent ? (
-              <p className="text-sm text-success-text">
-                Request sent. You will be able to view the portfolio once the talent accepts your request.
-              </p>
-            ) : (
-              <>
-                <p className="text-sm text-text-secondary">
-                  Send a connection request to view the full profile and portfolio.
+      <div className="min-h-screen bg-background font-sans pb-12">
+        <MediaKitHeader />
+        <div className="px-4 pt-5">
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+          {isPrivate && !hasConnection && previewProfile?.user_id && (
+            <div className="mt-6 text-center space-y-3">
+              {requestSent ? (
+                <p className="text-sm text-success-text">
+                  Request sent. You will be able to view the portfolio once the talent accepts your request.
                 </p>
-                <Button
-                  onClick={handleConnect}
-                  disabled={isConnecting}
-                  className="shrink-0"
-                >
-                  {isConnecting ? "Sending..." : "Send Connection Request"}
-                </Button>
-              </>
-            )}
-          </div>
-        )}
+              ) : (
+                <>
+                  <p className="text-sm text-text-secondary">
+                    Send a connection request to view the full profile and portfolio.
+                  </p>
+                  <Button
+                    onClick={handleConnect}
+                    disabled={isConnecting}
+                    className="shrink-0"
+                  >
+                    {isConnecting ? "Sending..." : "Send Connection Request"}
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     );
   }
 
   if (!data) return null;
 
+  const pinnedItem = data.items.find((i) => i.is_pinned);
+  const rest = data.items.filter((i) => !i.is_pinned);
+  const imageCount = data.items.filter((i) => i.type === "image").length;
+  const videoCount = data.items.filter((i) => i.type === "video").length;
+
   return (
-    <div className="py-6 px-4 pb-20">
-      <MediaKitView profile={data.profile} items={data.items} />
+    <div className="min-h-screen bg-background font-sans pb-12">
+      <MediaKitHeader />
+      <MediaKitIntro
+        name={data.profile.full_legal_name || data.profile.username || "Talent"}
+        imageCount={imageCount}
+        videoCount={videoCount}
+      />
+
+      {pinnedItem && (
+        <section className="px-4 pt-5">
+          <div className="flex items-center justify-between mb-2 px-1">
+            <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-ink-muted flex items-center gap-1.5">
+              <Pin className="h-3 w-3 text-gold" /> Pinned
+            </p>
+            <span className="text-[10px] text-ink-muted">Featured at top</span>
+          </div>
+          <MediaTile item={pinnedItem} pinned large />
+        </section>
+      )}
+
+      <section className="px-4 pt-5">
+        <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-ink-muted mb-2 px-1">
+          Gallery
+        </p>
+        <div className="grid grid-cols-2 gap-2.5">
+          {rest.map((item) => (
+            <MediaTile key={item.id} item={item} />
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

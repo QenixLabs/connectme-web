@@ -31,6 +31,7 @@ export default function AdminLayout({
 
   const navItems = [
     { label: "Artists", href: "/admin/dashboard", icon: Users },
+    { label: "Users", href: "/admin/users", icon: Users },
     { label: "Brands", href: "/admin/dashboard", icon: Building2 },
     { label: "Projects", href: "/admin/dashboard", icon: FolderKanban },
     { label: "Reports", href: "/admin/reports", icon: Flag },

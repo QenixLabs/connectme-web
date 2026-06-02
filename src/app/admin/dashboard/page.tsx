@@ -11,6 +11,9 @@ import {
   FileText,
   UserX,
   Loader2,
+  AlertTriangle,
+  Clock,
+  BarChart3,
 } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,7 +45,7 @@ export default function AdminDashboardPage() {
     };
   }, []);
 
-  const statCards = stats
+  const primaryStats = stats
     ? [
         {
           label: "Total Artists",
@@ -75,6 +78,47 @@ export default function AdminDashboardPage() {
       ]
     : [];
 
+  const moderationStats = stats
+    ? [
+        {
+          label: "Pending Reports",
+          value: stats.pending_reports,
+          icon: AlertTriangle,
+          iconBg: "bg-amber-50",
+          iconColor: "text-amber-500",
+        },
+        {
+          label: "Resolved Today",
+          value: stats.resolved_today,
+          icon: CheckCircle,
+          iconBg: "bg-emerald-50",
+          iconColor: "text-emerald-500",
+        },
+        {
+          label: "Suspended Users",
+          value: stats.suspended_users,
+          icon: UserX,
+          iconBg: "bg-rose-50",
+          iconColor: "text-rose-500",
+        },
+        {
+          label: "High Priority",
+          value: stats.high_priority_reports,
+          icon: Flag,
+          iconBg: "bg-red-50",
+          iconColor: "text-red-500",
+        },
+        {
+          label: "Avg Resolution Time",
+          value: stats.avg_resolution_hours,
+          suffix: "h",
+          icon: Clock,
+          iconBg: "bg-slate-50",
+          iconColor: "text-slate-500",
+        },
+      ]
+    : [];
+
   const actionCards = [
     {
       label: "Verify User",
@@ -91,10 +135,10 @@ export default function AdminDashboardPage() {
       onClick: () => router.push("/admin/reports"),
     },
     {
-      label: "Suspend Account",
-      icon: UserX,
-      iconBg: "bg-slate-50",
-      iconColor: "text-slate-500",
+      label: "View Analytics",
+      icon: BarChart3,
+      iconBg: "bg-blue-50",
+      iconColor: "text-blue-500",
       onClick: () => {},
     },
   ];
@@ -115,9 +159,9 @@ export default function AdminDashboardPage() {
         </Alert>
       )}
 
-      {/* Stats row */}
+      {/* Primary stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {statCards.map((card) => (
+        {primaryStats.map((card) => (
           <Card key={card.label} className="border-border-subtle">
             <CardContent className="p-4">
               <div className="flex items-center gap-3 mb-3">
@@ -130,6 +174,29 @@ export default function AdminDashboardPage() {
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      {/* Moderation stats */}
+      <div>
+        <h2 className="text-sm font-semibold mb-3">Moderation Overview</h2>
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+          {moderationStats.map((card) => (
+            <Card key={card.label} className="border-border-subtle">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={`p-1.5 rounded-md ${card.iconBg}`}>
+                    <card.icon className={`w-4 h-4 ${card.iconColor}`} strokeWidth={1.5} />
+                  </div>
+                  <span className="text-xs text-muted-foreground">{card.label}</span>
+                </div>
+                <p className="text-2xl font-semibold">
+                  {card.value.toLocaleString()}
+                  {card.suffix && <span className="text-sm text-muted-foreground ml-0.5">{card.suffix}</span>}
+                </p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
 
       {/* Charts row */}

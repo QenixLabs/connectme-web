@@ -22,6 +22,13 @@ import {
   Share2,
   Shield,
   Eye,
+  EyeOff,
+  Save,
+  Sparkles,
+  Camera,
+  Check,
+  ChevronRight,
+  ArrowLeft,
 } from "lucide-react";
 import { usePopup } from "@/hooks/use-popup";
 import { Avatar } from "@/components/ui/avatar";
@@ -93,7 +100,6 @@ const SECTION_IDS = [
   "career",
   "skills",
   "languages",
-  "accents",
   "physical",
   "documents",
   "social",
@@ -196,49 +202,51 @@ function SectionToggle({
   );
 }
 
-function TopBar({ mode, onSave, isSubmitting, isDirty }: {
+function TopBar({ mode, onSave, isSubmitting, isDirty, username }: {
   mode: "create" | "edit";
   onSave: () => void;
   isSubmitting: boolean;
   isDirty: boolean;
+  username?: string;
 }) {
   const router = useRouter();
   return (
-    <div
-      className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 border-b"
-      style={{ background: gold.background, borderColor: gold.border }}
-    >
-      <span className="text-[17px] font-semibold" style={{ color: gold.foreground }}>
-        {mode === "create" ? "Create profile" : "Edit profile"}
-      </span>
-      <div className="flex items-center gap-2">
-        {mode === "edit" && (
-          <button
-            type="button"
-            onClick={() => router.push("/talent/profile/preview")}
-            className="flex items-center gap-1.5 text-[13px] font-medium px-3 py-1.5 rounded-full border transition-colors"
-            style={{
-              color: gold.primary,
-              background: gold.accent,
-              borderColor: gold.accentBorder,
-            }}
-          >
-            <Eye className="w-3.5 h-3.5" strokeWidth={2} />
-            Preview
-          </button>
-        )}
-        <Button
+    <header className="sticky top-0 z-40 backdrop-blur-xl bg-background/80 border-b border-border/60">
+      <div className="flex items-center justify-between px-5 py-3.5">
+        <button
           type="button"
-          onClick={onSave}
-          disabled={mode === "edit" && !isDirty}
-          className="h-8 px-4 text-[13px] text-white rounded-xl"
-          style={{ background: gold.primary }}
+          onClick={() => router.push("/talent/dashboard")}
+          className="flex items-center gap-2 text-ink"
         >
-          {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />}
-          {mode === "create" ? "Create" : "Save"}
-        </Button>
+          <ArrowLeft className="h-4 w-4 text-gold" />
+          <span className="font-serif text-[15px] font-semibold tracking-tight">
+            {mode === "create" ? "Create profile" : "Edit profile"}
+          </span>
+        </button>
+        <div className="flex items-center gap-2">
+          {mode === "edit" && username && (
+            <button
+              type="button"
+              onClick={() => router.push(`/talent/${username}`)}
+              className="flex items-center gap-1.5 text-[12px] font-medium px-3 py-1.5 rounded-full border border-gold/30 bg-gold-soft text-gold-ink transition-colors"
+            >
+              <Eye className="h-3.5 w-3.5" />
+              Preview
+            </button>
+          )}
+          <Button
+            type="button"
+            onClick={onSave}
+            disabled={mode === "edit" && !isDirty}
+            className="h-8 px-4 text-[13px] text-white rounded-xl"
+            style={{ background: gold.primary }}
+          >
+            {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />}
+            {mode === "create" ? "Create" : "Save"}
+          </Button>
+        </div>
       </div>
-    </div>
+    </header>
   );
 }
 
@@ -257,7 +265,6 @@ function SectionNav({
     { id: "career", label: "Career", icon: Briefcase },
     { id: "skills", label: "Skills", icon: Zap },
     { id: "languages", label: "Languages", icon: Languages },
-    { id: "accents", label: "Accents", icon: Mic },
     { id: "physical", label: "Body", icon: ScanLine },
     { id: "documents", label: "Docs", icon: FileText },
     { id: "social", label: "Social", icon: Share2 },
@@ -323,7 +330,6 @@ function MobileNav({
     { id: "career", label: "Career" },
     { id: "skills", label: "Skills" },
     { id: "languages", label: "Lang" },
-    { id: "accents", label: "Accents" },
     { id: "physical", label: "Body" },
     { id: "documents", label: "Docs" },
     { id: "social", label: "Social" },
@@ -513,6 +519,191 @@ function SocialIcon({ platform }: { platform: "instagram" | "youtube" | "linkedi
         <circle cx="4" cy="4" r="2" />
       </svg>
     </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  New design components (match samplefrontend)                       */
+/* ------------------------------------------------------------------ */
+
+function CompletionBanner({ control }: { control: Control<CreateTalentProfileInput> }) {
+  const sectionVisibility = useWatch({ control, name: "section_visibility" });
+  const controllable = [
+    "skills",
+    "languages",
+    "accents",
+    "physical_attributes",
+    "documents",
+    "social_links",
+    "location",
+    "availability",
+  ] as const;
+  const publicCount = controllable.filter((k) => sectionVisibility?.[k] ?? true).length;
+  const totalCount = controllable.length;
+  const pct = Math.round((publicCount / totalCount) * 100);
+
+  return (
+    <section className="px-4 pt-5">
+      <div className="relative overflow-hidden rounded-[24px] shadow-luxe border border-border/60 bg-card">
+        <div
+          className="absolute inset-0 opacity-90"
+          style={{
+            background:
+              "radial-gradient(120% 80% at 0% 0%, oklch(0.74 0.13 80 / 0.12) 0%, transparent 55%), radial-gradient(120% 80% at 100% 100%, oklch(0.74 0.13 80 / 0.10) 0%, transparent 50%)",
+          }}
+        />
+        <div className="relative px-5 py-4 flex items-center gap-4">
+          <div className="h-12 w-12 rounded-2xl bg-gold-soft border border-gold/30 grid place-items-center">
+            <Sparkles className="h-5 w-5 text-gold-ink" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] uppercase tracking-[0.14em] text-ink-muted">Public profile</p>
+            <p className="font-serif text-[16px] text-ink leading-tight mt-0.5">
+              {publicCount} of {totalCount} sections visible
+            </p>
+          </div>
+          <div className="text-right">
+            <div className="text-[11px] text-ink-muted">Completion</div>
+            <div className="font-serif text-[18px] text-gold leading-none mt-0.5">{pct}%</div>
+          </div>
+        </div>
+        <div className="relative h-1.5 bg-cream-deep/60">
+          <div
+            className="h-full bg-gradient-to-r from-gold to-gold/60 transition-all"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function VisibilityToggle({
+  isPublic,
+  onToggle,
+}: {
+  isPublic: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={isPublic}
+      onClick={onToggle}
+      className={`group flex items-center gap-2 rounded-full pl-2.5 pr-1 py-1 border transition-colors ${
+        isPublic
+          ? "bg-gold-soft border-gold/30 text-gold-ink"
+          : "bg-cream border-border text-ink-muted"
+      }`}
+    >
+      <span className="flex items-center gap-1 text-[10.5px] font-medium uppercase tracking-[0.1em]">
+        {isPublic ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+        {isPublic ? "Public" : "Hidden"}
+      </span>
+      <span
+        className={`relative h-5 w-9 rounded-full transition-colors ${
+          isPublic ? "bg-gold" : "bg-ink-muted/40"
+        }`}
+      >
+        <span
+          className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${
+            isPublic ? "left-[18px]" : "left-0.5"
+          }`}
+        />
+      </span>
+    </button>
+  );
+}
+
+function SectionCard({
+  icon: Icon,
+  label,
+  description,
+  isPublic,
+  onToggle,
+  alwaysPublic,
+  children,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  description: string;
+  isPublic?: boolean;
+  onToggle?: () => void;
+  alwaysPublic?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-2xl bg-card border border-border/60 shadow-luxe overflow-hidden">
+      <header className="px-5 pt-4 pb-3 flex items-start gap-3">
+        <div className="h-10 w-10 rounded-xl bg-gold-soft border border-gold/20 grid place-items-center shrink-0">
+          <Icon className="h-4 w-4 text-gold-ink" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h2 className="font-serif text-[16px] text-ink leading-tight">{label}</h2>
+          <p className="text-[11.5px] text-ink-muted mt-0.5">{description}</p>
+        </div>
+        {alwaysPublic ? (
+          <span className="flex items-center gap-1.5 text-[10.5px] font-medium uppercase tracking-[0.1em] text-gold-ink bg-gold-soft border border-gold/30 rounded-full pl-2.5 pr-3 py-1">
+            <Eye className="h-3 w-3" />
+            Always public
+          </span>
+        ) : (
+          <VisibilityToggle isPublic={isPublic!} onToggle={onToggle!} />
+        )}
+      </header>
+      <div className="h-px bg-border/60 mx-5" />
+      <div className="px-5 py-4">{children}</div>
+    </section>
+  );
+}
+
+function Field({
+  label,
+  children,
+  compact,
+}: {
+  label: string;
+  children: React.ReactNode;
+  compact?: boolean;
+}) {
+  return (
+    <label className={`block ${compact ? "" : "mb-3 last:mb-0"}`}>
+      <span className="block text-[10.5px] uppercase tracking-[0.12em] text-ink-muted mb-1.5">{label}</span>
+      {children}
+    </label>
+  );
+}
+
+function Row({
+  title,
+  meta,
+  trailing,
+}: {
+  title: string;
+  meta?: string;
+  trailing?: React.ReactNode;
+}) {
+  return (
+    <button type="button" className="w-full flex items-center justify-between rounded-xl bg-cream/60 border border-border/60 px-3.5 py-2.5 text-left active:scale-[0.99] transition">
+      <div className="min-w-0">
+        <div className="text-[13.5px] text-ink font-medium truncate">{title}</div>
+        {meta && <div className="text-[11px] text-gold mt-0.5">{meta}</div>}
+      </div>
+      {trailing ?? <ChevronRight className="h-4 w-4 text-ink-muted" />}
+    </button>
+  );
+}
+
+function AddRow({ label, onClick }: { label: string; onClick?: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full flex items-center justify-center gap-2 rounded-xl border border-dashed border-gold/40 bg-gold-soft/40 px-3.5 py-2.5 text-[12.5px] font-medium text-gold-ink hover:bg-gold-soft transition"
+    >
+      + {label}
+    </button>
   );
 }
 
@@ -789,7 +980,9 @@ export function EditForm({
     >
       {/* Top bar + mobile nav inside main content area */}
       <div className="flex-1 min-w-0">
-        <TopBar mode={mode} onSave={triggerSave} isSubmitting={isSubmitting} isDirty={isDirty} />
+        <TopBar mode={mode} onSave={triggerSave} isSubmitting={isSubmitting} isDirty={isDirty} username={watchedUsername || profile?.username} />
+
+        {mode === "edit" && <CompletionBanner control={control} />}
 
         <div className="flex">
           <SectionNav activeId={activeSection} onSelect={scrollTo} username={watchedUsername || profile?.username} />
@@ -827,22 +1020,19 @@ export function EditForm({
 
             <Form {...form}>
               <form id="profile-form" onSubmit={onSubmit} className="px-4 lg:px-8 space-y-6 max-w-5xl mx-auto">
-                {/* ---------- IDENTITY ---------- */}
+                {/* ---------- BASIC INFO ---------- */}
                 <div id="identity" className="scroll-mt-[120px] lg:scroll-mt-28">
-                  <SectionDivider label="Identity" />
-
-                  <div className="mt-4 space-y-4">
-                    <FormCard>
-                      <div className="flex items-center gap-4">
+                  <SectionCard icon={User} label="Basic info" description="Name, role, location and bio" alwaysPublic>
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="relative">
                         <div
-                          className="w-[72px] h-[72px] rounded-full flex items-center justify-center text-[26px] font-bold text-white shrink-0 border-[3px]"
+                          className="h-16 w-16 rounded-2xl flex items-center justify-center text-3xl font-bold text-white shrink-0"
                           style={{
                             background: photoPreview ? undefined : "linear-gradient(135deg,#c8a040,#8b6914)",
-                            borderColor: gold.accentBorder,
                           }}
                         >
                           {photoPreview ? (
-                            <img src={photoPreview} alt="" className="w-full h-full rounded-full object-cover" />
+                            <img src={photoPreview} alt="" className="w-full h-full rounded-2xl object-cover" />
                           ) : (
                             <span className="font-serif">
                               {(form.getValues("full_legal_name") || form.getValues("username") || "T")
@@ -854,113 +1044,297 @@ export function EditForm({
                             </span>
                           )}
                         </div>
-                        <div className="flex flex-col gap-1.5">
-                          <input
-                            type="file"
-                            accept="image/jpeg,image/png,image/webp"
-                            className="hidden"
-                            ref={photoInputRef}
-                            onChange={handlePhotoChange}
-                          />
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          className="hidden"
+                          ref={photoInputRef}
+                          onChange={handlePhotoChange}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => photoInputRef.current?.click()}
+                          className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full bg-gold grid place-items-center shadow-md ring-4 ring-card"
+                        >
+                          <Camera className="h-3.5 w-3.5 text-white" />
+                        </button>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[12px] text-ink-muted">Tap the camera to update your photo.</span>
+                        {photoPreview && (
                           <button
                             type="button"
-                            onClick={() => photoInputRef.current?.click()}
-                            className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-[7px] rounded-lg border transition-colors"
-                            style={{ background: gold.background, borderColor: gold.border, color: gold.foreground }}
+                            onClick={handlePhotoClear}
+                            className="text-xs text-left text-destructive"
                           >
-                            <Upload className="w-3.5 h-3.5" strokeWidth={2} />
-                            {photoPreview ? "Change photo" : "Upload photo"}
+                            Remove
                           </button>
-                          <span className="text-[11px]" style={{ color: gold.mutedFg }}>
-                            JPEG, PNG, or WEBP. Max 5MB.
-                          </span>
-                          {photoPreview && (
-                            <button
-                              type="button"
-                              onClick={handlePhotoClear}
-                              className="text-xs text-left text-destructive"
-                            >
-                              Remove
-                            </button>
-                          )}
-                          {photoError && <p className="text-xs text-destructive">{photoError}</p>}
-                        </div>
+                        )}
+                        {photoError && <p className="text-xs text-destructive">{photoError}</p>}
                       </div>
-                    </FormCard>
+                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-3">
                       <FormField
                         control={control}
                         name="username"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-[13px] font-medium">Username <span style={{ color: gold.primary }}>*</span></FormLabel>
+                            <FormLabel className="text-[13px] font-medium">Username <span className="text-gold">*</span></FormLabel>
                             <FormControl>
                               <Input
                                 {...field}
                                 disabled={mode === "edit"}
                                 placeholder="e.g. john_doe"
-                                className="h-10 text-sm rounded-[10px] border-[#e0d9ce] focus:border-[#c8a040] focus:ring-[3px] focus:ring-[rgba(200,160,64,0.12)]"
+                                className="h-10 text-sm rounded-xl border-border bg-cream/60 focus:border-gold/50 focus:bg-card transition"
                               />
                             </FormControl>
                             <FormMessage />
                             {mode === "edit" && (
-                              <p className="text-[11px] mt-1" style={{ color: gold.mutedFg }}>
+                              <p className="text-[11px] mt-1 text-ink-muted">
                                 Username cannot be changed.
                               </p>
                             )}
                           </FormItem>
                         )}
                       />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <FormField
+                          control={control}
+                          name="full_legal_name"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-[13px] font-medium">Full legal name</FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  value={field.value ?? ""}
+                                  className="h-10 text-sm rounded-xl border-border bg-cream/60 focus:border-gold/50 focus:bg-card transition"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={control}
+                          name="date_of_birth"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-[13px] font-medium">Date of birth</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="date"
+                                  {...field}
+                                  value={field.value ?? ""}
+                                  className="h-10 text-sm rounded-xl border-border bg-cream/60 focus:border-gold/50 focus:bg-card transition"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={control}
+                          name="gender"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-[13px] font-medium">Gender</FormLabel>
+                              <Select onValueChange={(v) => field.onChange(v || undefined)} value={field.value || ""}>
+                                <FormControl>
+                                  <SelectTrigger className="h-10 text-sm rounded-xl border-border bg-cream/60">
+                                    <SelectValue placeholder="Select…" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {dynamicOptions(field.value, GENDER_OPTIONS).map((opt) => (
+                                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={control}
+                          name="headline"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-[13px] font-medium">Headline</FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  value={field.value ?? ""}
+                                  maxLength={120}
+                                  placeholder="One line that describes you"
+                                  className="h-10 text-sm rounded-xl border-border bg-cream/60 focus:border-gold/50 focus:bg-card transition"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                       <FormField
                         control={control}
-                        name="full_legal_name"
+                        name="about"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-[13px] font-medium">Full legal name</FormLabel>
+                            <FormLabel className="text-[13px] font-medium">About</FormLabel>
+                            <FormControl>
+                              <Textarea
+                                {...field}
+                                value={field.value ?? ""}
+                                maxLength={500}
+                                rows={4}
+                                placeholder="A short bio (max 500 characters)"
+                                className="text-sm rounded-xl border-border bg-cream/60 focus:border-gold/50 focus:bg-card transition resize-none"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                            <div className="mt-1.5 flex justify-between text-[11px] text-ink-muted">
+                              <span>Keep it crisp — 1 to 3 sentences.</span>
+                              <span>{(field.value ?? "").length}/500</span>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </SectionCard>
+                </div>
+
+                {/* ---------- LOCATION ---------- */}
+                <div id="location" className="scroll-mt-[120px] lg:scroll-mt-28">
+                  <SectionCard
+                    icon={MapPin}
+                    label="Location"
+                    description="Where you are based"
+                    isPublic={form.watch("section_visibility.location") ?? true}
+                    onToggle={() => {
+                      const current = form.getValues("section_visibility.location") ?? true;
+                      form.setValue("section_visibility.location", !current, { shouldDirty: true });
+                    }}
+                  >
+                    <div className="space-y-3">
+                      <FormField
+                        control={control}
+                        name="location.country"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-[13px] font-medium">Country</FormLabel>
                             <FormControl>
                               <Input
                                 {...field}
                                 value={field.value ?? ""}
-                                className="h-10 text-sm rounded-[10px] border-[#e0d9ce] focus:border-[#c8a040] focus:ring-[3px] focus:ring-[rgba(200,160,64,0.12)]"
+                                className="h-10 text-sm rounded-xl border-border bg-cream/60 focus:border-gold/50 focus:bg-card transition"
                               />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
+                      <div className="grid grid-cols-2 gap-3">
+                        <FormField
+                          control={control}
+                          name="location.state"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-[13px] font-medium">State</FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  value={field.value ?? ""}
+                                  className="h-10 text-sm rounded-xl border-border bg-cream/60 focus:border-gold/50 focus:bg-card transition"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={control}
+                          name="location.city"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-[13px] font-medium">City</FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  value={field.value ?? ""}
+                                  className="h-10 text-sm rounded-xl border-border bg-cream/60 focus:border-gold/50 focus:bg-card transition"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
+                  </SectionCard>
+                </div>
+
+                {/* ---------- CAREER ---------- */}
+                <div id="career" className="scroll-mt-[120px] lg:scroll-mt-28">
+                  <SectionCard
+                    icon={Briefcase}
+                    label="Career"
+                    description="Professions, industries and availability"
+                    isPublic={form.watch("section_visibility.availability") ?? true}
+                    onToggle={() => {
+                      const current = form.getValues("section_visibility.availability") ?? true;
+                      form.setValue("section_visibility.availability", !current, { shouldDirty: true });
+                    }}
+                  >
+                    <div className="space-y-3">
                       <FormField
                         control={control}
-                        name="date_of_birth"
+                        name="professions"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-[13px] font-medium">Date of birth</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="date"
-                                {...field}
-                                value={field.value ?? ""}
-                                className="h-10 text-sm rounded-[10px] border-[#e0d9ce] focus:border-[#c8a040] focus:ring-[3px] focus:ring-[rgba(200,160,64,0.12)]"
-                              />
-                            </FormControl>
+                            <FormLabel className="text-[13px] font-medium">Professions</FormLabel>
+                            <TagInput
+                              value={field.value ?? []}
+                              onChange={field.onChange}
+                              suggestions={PROFESSION_SUGGESTIONS}
+                              placeholder="Add profession…"
+                              containerClassName="[&>div]:rounded-xl [&>div]:border-border [&>div]:focus-within:border-gold/50 [&>div]:bg-cream/60"
+                            />
                             <FormMessage />
                           </FormItem>
                         )}
                       />
                       <FormField
                         control={control}
-                        name="gender"
+                        name="industries"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel className="text-[13px] font-medium">Gender</FormLabel>
+                            <FormLabel className="text-[13px] font-medium">Industries</FormLabel>
+                            <TagInput
+                              value={field.value ?? []}
+                              onChange={field.onChange}
+                              suggestions={INDUSTRY_SUGGESTIONS}
+                              placeholder="Add industry…"
+                              containerClassName="[&>div]:rounded-xl [&>div]:border-border [&>div]:focus-within:border-gold/50 [&>div]:bg-cream/60"
+                            />
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={control}
+                        name="availability"
+                        render={({ field }) => (
+                          <FormItem className="max-w-xs">
+                            <FormLabel className="text-[13px] font-medium">Availability</FormLabel>
                             <Select onValueChange={(v) => field.onChange(v || undefined)} value={field.value || ""}>
                               <FormControl>
-                                <SelectTrigger className="h-10 text-sm rounded-[10px] border-[#e0d9ce]">
+                                <SelectTrigger className="h-10 text-sm rounded-xl border-border bg-cream/60">
                                   <SelectValue placeholder="Select…" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {dynamicOptions(field.value, GENDER_OPTIONS).map((opt) => (
+                                {AVAILABILITY_OPTIONS.map((opt) => (
                                   <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                                 ))}
                               </SelectContent>
@@ -969,264 +1343,110 @@ export function EditForm({
                           </FormItem>
                         )}
                       />
-                      <FormField
-                        control={control}
-                        name="headline"
-                        render={({ field }) => (
-                          <FormItem className="md:col-span-2">
-                            <FormLabel className="text-[13px] font-medium">Headline</FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                value={field.value ?? ""}
-                                maxLength={120}
-                                placeholder="One line that describes you"
-                                className="h-10 text-sm rounded-[10px] border-[#e0d9ce] focus:border-[#c8a040] focus:ring-[3px] focus:ring-[rgba(200,160,64,0.12)]"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={control}
-                        name="about"
-                        render={({ field }) => (
-                          <FormItem className="md:col-span-2">
-                            <FormLabel className="text-[13px] font-medium">About</FormLabel>
-                            <FormControl>
-                              <Textarea
-                                {...field}
-                                value={field.value ?? ""}
-                                maxLength={500}
-                                rows={3}
-                                placeholder="A short bio (max 500 characters)"
-                                className="text-sm rounded-[10px] border-[#e0d9ce] focus:border-[#c8a040] focus:ring-[3px] focus:ring-[rgba(200,160,64,0.12)] resize-y min-h-[90px]"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
                     </div>
-                  </div>
-                </div>
-
-                {/* ---------- LOCATION ---------- */}
-                <div id="location" className="scroll-mt-[120px] lg:scroll-mt-28">
-                  <SectionDivider label="Location" />
-                  <div className="mt-4 space-y-3">
-                    <FormField
-                      control={control}
-                      name="location.country"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-[13px] font-medium">Country</FormLabel>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              value={field.value ?? ""}
-                              className="h-10 text-sm rounded-[10px] border-[#e0d9ce] focus:border-[#c8a040] focus:ring-[3px] focus:ring-[rgba(200,160,64,0.12)]"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <div className="grid grid-cols-2 gap-3">
-                      <FormField
-                        control={control}
-                        name="location.state"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-[13px] font-medium">State</FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                value={field.value ?? ""}
-                                className="h-10 text-sm rounded-[10px] border-[#e0d9ce] focus:border-[#c8a040] focus:ring-[3px] focus:ring-[rgba(200,160,64,0.12)]"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={control}
-                        name="location.city"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-[13px] font-medium">City</FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                value={field.value ?? ""}
-                                className="h-10 text-sm rounded-[10px] border-[#e0d9ce] focus:border-[#c8a040] focus:ring-[3px] focus:ring-[rgba(200,160,64,0.12)]"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* ---------- CAREER ---------- */}
-                <div id="career" className="scroll-mt-[120px] lg:scroll-mt-28">
-                  <SectionDivider label="Career" />
-                  <div className="mt-4 grid grid-cols-1 gap-3">
-                    <FormField
-                      control={control}
-                      name="professions"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-[13px] font-medium">Professions</FormLabel>
-                          <TagInput
-                            value={field.value ?? []}
-                            onChange={field.onChange}
-                            suggestions={PROFESSION_SUGGESTIONS}
-                            placeholder="Add profession…"
-                            containerClassName="[&>div]:rounded-[10px] [&>div]:border-[#e0d9ce] [&>div]:focus-within:border-[#c8a040] [&>div]:focus-within:ring-[3px] [&>div]:focus-within:ring-[rgba(200,160,64,0.12)] [&>div]:bg-white"
-                          />
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={control}
-                      name="industries"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-[13px] font-medium">Industries</FormLabel>
-                          <TagInput
-                            value={field.value ?? []}
-                            onChange={field.onChange}
-                            suggestions={INDUSTRY_SUGGESTIONS}
-                            placeholder="Add industry…"
-                            containerClassName="[&>div]:rounded-[10px] [&>div]:border-[#e0d9ce] [&>div]:focus-within:border-[#c8a040] [&>div]:focus-within:ring-[3px] [&>div]:focus-within:ring-[rgba(200,160,64,0.12)] [&>div]:bg-white"
-                          />
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={control}
-                      name="availability"
-                      render={({ field }) => (
-                        <FormItem className="md:col-span-2 max-w-xs">
-                          <FormLabel className="text-[13px] font-medium">Availability</FormLabel>
-                          <Select onValueChange={(v) => field.onChange(v || undefined)} value={field.value || ""}>
-                            <FormControl>
-                              <SelectTrigger className="h-10 text-sm rounded-[10px] border-[#e0d9ce]">
-                                <SelectValue placeholder="Select…" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {AVAILABILITY_OPTIONS.map((opt) => (
-                                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  </SectionCard>
                 </div>
 
                 {/* ---------- SKILLS ---------- */}
                 <div id="skills" className="scroll-mt-[120px] lg:scroll-mt-28">
-                  <SectionDivider label="Skills" />
-                  <div className="mt-4 space-y-2">
-                    {skillsArray.fields.map((field, idx) => (
-                      <SkillRow
-                        key={field.id}
-                        idx={idx}
-                        register={register}
-                        control={control}
-                        errors={errors}
-                        onRemove={() => skillsArray.remove(idx)}
+                  <SectionCard
+                    icon={Zap}
+                    label="Skills"
+                    description="Acting craft & specialties"
+                    isPublic={form.watch("section_visibility.skills") ?? true}
+                    onToggle={() => {
+                      const current = form.getValues("section_visibility.skills") ?? true;
+                      form.setValue("section_visibility.skills", !current, { shouldDirty: true });
+                    }}
+                  >
+                    <div className="space-y-2">
+                      {skillsArray.fields.map((field, idx) => (
+                        <SkillRow
+                          key={field.id}
+                          idx={idx}
+                          register={register}
+                          control={control}
+                          errors={errors}
+                          onRemove={() => skillsArray.remove(idx)}
+                        />
+                      ))}
+                      <AddRow
+                        label="Add skill"
+                        onClick={() => skillsArray.append({ name: "", proficiency: "beginner" })}
                       />
-                    ))}
-                    <button
-                      type="button"
-                      onClick={() => skillsArray.append({ name: "", proficiency: "beginner" })}
-                      className="inline-flex items-center gap-1.5 text-[13px] font-medium px-3.5 py-[7px] rounded-lg border transition-colors"
-                      style={{
-                        color: gold.primary,
-                        borderColor: gold.primary,
-                        background: gold.accent,
-                      }}
-                    >
-                      <Plus className="w-3.5 h-3.5" strokeWidth={2.5} />
-                      Add skill
-                    </button>
-                    {errors.skills && !Array.isArray(errors.skills) && (
-                      <p className="text-xs text-destructive">{errors.skills.message}</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* ---------- LANGUAGES ---------- */}
-                <div id="languages" className="scroll-mt-[120px] lg:scroll-mt-28">
-                  <SectionDivider label="Languages" />
-                  <div className="mt-4 space-y-2">
-                    {languagesArray.fields.map((field, idx) => (
-                      <LanguageRow
-                        key={field.id}
-                        idx={idx}
-                        register={register}
-                        control={control}
-                        errors={errors}
-                        onRemove={() => languagesArray.remove(idx)}
-                      />
-                    ))}
-                    <button
-                      type="button"
-                      onClick={() => languagesArray.append({ name: "", fluency: "" })}
-                      className="inline-flex items-center gap-1.5 text-[13px] font-medium px-3.5 py-[7px] rounded-lg border transition-colors"
-                      style={{
-                        color: gold.primary,
-                        borderColor: gold.primary,
-                        background: gold.accent,
-                      }}
-                    >
-                      <Plus className="w-3.5 h-3.5" strokeWidth={2.5} />
-                      Add language
-                    </button>
-                    {errors.languages && !Array.isArray(errors.languages) && (
-                      <p className="text-xs text-destructive">{errors.languages.message}</p>
-                    )}
-                  </div>
-                </div>
-
-                {/* ---------- ACCENTS ---------- */}
-                <div id="accents" className="scroll-mt-[120px] lg:scroll-mt-28">
-                  <SectionDivider label="Accents" />
-                  <div className="mt-4">
-                    <FormField
-                      control={control}
-                      name="accents"
-                      render={({ field }) => (
-                        <FormItem>
-                          <TagInput
-                            value={field.value ?? []}
-                            onChange={field.onChange}
-                            placeholder="Add accent…"
-                            containerClassName="[&>div]:rounded-[10px] [&>div]:border-[#e0d9ce] [&>div]:focus-within:border-[#c8a040] [&>div]:focus-within:ring-[3px] [&>div]:focus-within:ring-[rgba(200,160,64,0.12)] [&>div]:bg-white"
-                          />
-                          <FormMessage />
-                        </FormItem>
+                      {errors.skills && !Array.isArray(errors.skills) && (
+                        <p className="text-xs text-destructive">{errors.skills.message}</p>
                       )}
-                    />
-                  </div>
+                    </div>
+                  </SectionCard>
+                </div>
+
+                {/* ---------- LANGUAGES & ACCENTS ---------- */}
+                <div id="languages" className="scroll-mt-[120px] lg:scroll-mt-28">
+                  <SectionCard
+                    icon={Languages}
+                    label="Languages"
+                    description="Languages and accents"
+                    isPublic={form.watch("section_visibility.languages") ?? true}
+                    onToggle={() => {
+                      const current = form.getValues("section_visibility.languages") ?? true;
+                      form.setValue("section_visibility.languages", !current, { shouldDirty: true });
+                    }}
+                  >
+                    <div className="space-y-2">
+                      {languagesArray.fields.map((field, idx) => (
+                        <LanguageRow
+                          key={field.id}
+                          idx={idx}
+                          register={register}
+                          control={control}
+                          errors={errors}
+                          onRemove={() => languagesArray.remove(idx)}
+                        />
+                      ))}
+                      <AddRow
+                        label="Add language"
+                        onClick={() => languagesArray.append({ name: "", fluency: "" })}
+                      />
+                      {errors.languages && !Array.isArray(errors.languages) && (
+                        <p className="text-xs text-destructive">{errors.languages.message}</p>
+                      )}
+                    </div>
+
+                    <div className="mt-4 pt-4 border-t border-border/60">
+                      <FormField
+                        control={control}
+                        name="accents"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-[13px] font-medium">Accents</FormLabel>
+                            <TagInput
+                              value={field.value ?? []}
+                              onChange={field.onChange}
+                              placeholder="Add accent…"
+                              containerClassName="[&>div]:rounded-xl [&>div]:border-border [&>div]:focus-within:border-gold/50 [&>div]:bg-cream/60"
+                            />
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </SectionCard>
                 </div>
 
                 {/* ---------- PHYSICAL ---------- */}
                 <div id="physical" className="scroll-mt-[120px] lg:scroll-mt-28">
-                  <SectionDivider label="Physical Attributes" />
-                  <div className="mt-4 grid grid-cols-3 gap-3">
+                  <SectionCard
+                    icon={ScanLine}
+                    label="Looks"
+                    description="Physical attributes"
+                    isPublic={form.watch("section_visibility.physical_attributes") ?? true}
+                    onToggle={() => {
+                      const current = form.getValues("section_visibility.physical_attributes") ?? true;
+                      form.setValue("section_visibility.physical_attributes", !current, { shouldDirty: true });
+                    }}
+                  >
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     <FormField
                       control={control}
                       name="physical_attributes.height_cm"
@@ -1239,7 +1459,7 @@ export function EditForm({
                               {...field}
                               value={field.value ?? ""}
                               onChange={(e) => field.onChange(e.target.value === "" ? undefined : Number(e.target.value))}
-                              className="h-10 text-sm rounded-[10px] border-[#e0d9ce] focus:border-[#c8a040] focus:ring-[3px] focus:ring-[rgba(200,160,64,0.12)]"
+                              className="h-10 text-sm rounded-xl border-border bg-cream/60 focus:border-gold/50 focus:bg-card transition"
                             />
                           </FormControl>
                           <FormMessage />
@@ -1258,7 +1478,7 @@ export function EditForm({
                               {...field}
                               value={field.value ?? ""}
                               onChange={(e) => field.onChange(e.target.value === "" ? undefined : Number(e.target.value))}
-                              className="h-10 text-sm rounded-[10px] border-[#e0d9ce] focus:border-[#c8a040] focus:ring-[3px] focus:ring-[rgba(200,160,64,0.12)]"
+                              className="h-10 text-sm rounded-xl border-border bg-cream/60 focus:border-gold/50 focus:bg-card transition"
                             />
                           </FormControl>
                           <FormMessage />
@@ -1273,7 +1493,7 @@ export function EditForm({
                           <FormLabel className="text-[13px] font-medium">Body type</FormLabel>
                           <Select onValueChange={(v) => field.onChange(v || undefined)} value={field.value || ""}>
                             <FormControl>
-                              <SelectTrigger className="h-10 text-sm rounded-[10px] border-[#e0d9ce]">
+                              <SelectTrigger className="h-10 text-sm rounded-xl border-border bg-cream/60">
                                 <SelectValue placeholder="Select…" />
                               </SelectTrigger>
                             </FormControl>
@@ -1295,7 +1515,7 @@ export function EditForm({
                           <FormLabel className="text-[13px] font-medium">Complexion</FormLabel>
                           <Select onValueChange={(v) => field.onChange(v || undefined)} value={field.value || ""}>
                             <FormControl>
-                              <SelectTrigger className="h-10 text-sm rounded-[10px] border-[#e0d9ce]">
+                              <SelectTrigger className="h-10 text-sm rounded-xl border-border bg-cream/60">
                                 <SelectValue placeholder="Select…" />
                               </SelectTrigger>
                             </FormControl>
@@ -1317,7 +1537,7 @@ export function EditForm({
                           <FormLabel className="text-[13px] font-medium">Hair color</FormLabel>
                           <Select onValueChange={(v) => field.onChange(v || undefined)} value={field.value || ""}>
                             <FormControl>
-                              <SelectTrigger className="h-10 text-sm rounded-[10px] border-[#e0d9ce]">
+                              <SelectTrigger className="h-10 text-sm rounded-xl border-border bg-cream/60">
                                 <SelectValue placeholder="Select…" />
                               </SelectTrigger>
                             </FormControl>
@@ -1339,7 +1559,7 @@ export function EditForm({
                           <FormLabel className="text-[13px] font-medium">Hair length</FormLabel>
                           <Select onValueChange={(v) => field.onChange(v || undefined)} value={field.value || ""}>
                             <FormControl>
-                              <SelectTrigger className="h-10 text-sm rounded-[10px] border-[#e0d9ce]">
+                              <SelectTrigger className="h-10 text-sm rounded-xl border-border bg-cream/60">
                                 <SelectValue placeholder="Select…" />
                               </SelectTrigger>
                             </FormControl>
@@ -1361,7 +1581,7 @@ export function EditForm({
                           <FormLabel className="text-[13px] font-medium">Eye color</FormLabel>
                           <Select onValueChange={(v) => field.onChange(v || undefined)} value={field.value || ""}>
                             <FormControl>
-                              <SelectTrigger className="h-10 text-sm rounded-[10px] border-[#e0d9ce] max-w-xs">
+                              <SelectTrigger className="h-10 text-sm rounded-xl border-border bg-cream/60 max-w-xs">
                                 <SelectValue placeholder="Select…" />
                               </SelectTrigger>
                             </FormControl>
@@ -1386,7 +1606,7 @@ export function EditForm({
                               {...field}
                               value={field.value ?? ""}
                               placeholder="e.g. birthmark, scar, tattoo"
-                              className="h-10 text-sm rounded-[10px] border-[#e0d9ce] focus:border-[#c8a040] focus:ring-[3px] focus:ring-[rgba(200,160,64,0.12)]"
+                              className="h-10 text-sm rounded-xl border-border bg-cream/60 focus:border-gold/50 focus:bg-card transition"
                             />
                           </FormControl>
                           <FormMessage />
@@ -1394,12 +1614,21 @@ export function EditForm({
                       )}
                     />
                   </div>
-                </div>
+                </SectionCard>
+              </div>
 
-                {/* ---------- DOCUMENTS ---------- */}
-                <div id="documents" className="scroll-mt-[120px] lg:scroll-mt-28">
-                  <SectionDivider label="Documents" />
-                  <div className="mt-4">
+              {/* ---------- DOCUMENTS ---------- */}
+              <div id="documents" className="scroll-mt-[120px] lg:scroll-mt-28">
+                <SectionCard
+                  icon={FileText}
+                  label="Documents"
+                  description="Résumé, portfolio & sheets"
+                  isPublic={form.watch("section_visibility.documents") ?? true}
+                  onToggle={() => {
+                    const current = form.getValues("section_visibility.documents") ?? true;
+                    form.setValue("section_visibility.documents", !current, { shouldDirty: true });
+                  }}
+                >
                     <FormField
                       control={control}
                       name="documents.resume_url"
@@ -1414,22 +1643,16 @@ export function EditForm({
                                 ref={resumeInputRef}
                                 onChange={handleResumeChange}
                               />
-                              <div
-                                className="flex items-center justify-between rounded-[14px] border border-dashed p-4"
-                                style={{ borderColor: gold.accentBorder, background: gold.card }}
-                              >
+                              <div className="flex items-center justify-between rounded-[14px] border border-dashed border-gold/40 p-4 bg-card">
                                 <div className="flex items-center gap-3 min-w-0">
-                                  <div
-                                    className="w-10 h-10 rounded-[10px] flex items-center justify-center border"
-                                    style={{ background: gold.accent, borderColor: gold.accentBorder }}
-                                  >
-                                    <FileText className="w-5 h-5 text-[#c8a040]" strokeWidth={2} />
+                                  <div className="w-10 h-10 rounded-xl flex items-center justify-center border border-gold/30 bg-gold-soft">
+                                    <FileText className="w-5 h-5 text-gold" strokeWidth={2} />
                                   </div>
                                   <div className="min-w-0">
-                                    <p className="text-[13px] font-medium truncate" style={{ color: gold.foreground }}>
+                                    <p className="text-[13px] font-medium truncate text-ink">
                                       {resumePreview ? (resumeName || "Resume") : "No resume uploaded"}
                                     </p>
-                                    <p className="text-[11px]" style={{ color: gold.mutedFg }}>
+                                    <p className="text-[11px] text-ink-muted">
                                       PDF, DOC, or DOCX. Max 10MB.
                                     </p>
                                   </div>
@@ -1439,8 +1662,7 @@ export function EditForm({
                                     type="button"
                                     onClick={() => resumeInputRef.current?.click()}
                                     disabled={resumeUploading}
-                                    className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-[7px] rounded-lg border transition-colors"
-                                    style={{ background: gold.background, borderColor: gold.border, color: gold.foreground }}
+                                    className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-[7px] rounded-lg border border-border bg-cream text-ink transition-colors"
                                   >
                                     {resumeUploading && <Loader2 className="w-3 h-3 animate-spin" />}
                                     <Upload className="w-3.5 h-3.5" strokeWidth={2} />
@@ -1466,19 +1688,26 @@ export function EditForm({
                         </FormItem>
                       )}
                     />
-                  </div>
-                </div>
+                </SectionCard>
+              </div>
 
-                {/* ---------- SOCIAL ---------- */}
-                <div id="social" className="scroll-mt-[120px] lg:scroll-mt-28">
-                  <SectionDivider label="Social Links" />
-                  <div className="mt-4">
-                    <FormCard className="overflow-hidden p-0">
+              {/* ---------- SOCIAL ---------- */}
+              <div id="social" className="scroll-mt-[120px] lg:scroll-mt-28">
+                <SectionCard
+                  icon={Share2}
+                  label="Social links"
+                  description="Instagram, YouTube, LinkedIn"
+                  isPublic={form.watch("section_visibility.social_links") ?? true}
+                  onToggle={() => {
+                    const current = form.getValues("section_visibility.social_links") ?? true;
+                    form.setValue("section_visibility.social_links", !current, { shouldDirty: true });
+                  }}
+                >
+                  <div className="overflow-hidden rounded-2xl border border-border/60">
                       {(["instagram", "youtube", "linkedin"] as const).map((platform) => (
                         <div
                           key={platform}
-                          className="flex items-center gap-2.5 px-4 py-3 border-b last:border-b-0"
-                          style={{ borderColor: gold.border }}
+                          className="flex items-center gap-2.5 px-4 py-3 border-b border-border/60 last:border-b-0"
                         >
                           <SocialIcon platform={platform} />
                           <FormField
@@ -1491,8 +1720,7 @@ export function EditForm({
                                     {...field}
                                     value={field.value ?? ""}
                                     placeholder={`${platform.charAt(0).toUpperCase() + platform.slice(1)} URL`}
-                                    className="w-full bg-transparent text-[13px] outline-none placeholder:text-[#8a7d6b]"
-                                    style={{ color: gold.foreground }}
+                                    className="w-full bg-transparent text-[13px] outline-none placeholder:text-ink-muted text-ink"
                                   />
                                 </FormControl>
                                 <FormMessage />
@@ -1520,37 +1748,38 @@ export function EditForm({
                           />
                         </div>
                       ))}
-                    </FormCard>
-                  </div>
+                    </div>
+                  </SectionCard>
                 </div>
 
                 {/* ---------- PRIVACY ---------- */}
                 <div id="privacy" className="scroll-mt-[120px] lg:scroll-mt-28">
-                  <SectionDivider label="Privacy" />
-                  <div className="mt-4 max-w-xs">
-                    <FormField
-                      control={control}
-                      name="privacy_mode"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-[13px] font-medium">Profile visibility</FormLabel>
-                          <Select onValueChange={(v) => field.onChange(v || undefined)} value={field.value || ""}>
-                            <FormControl>
-                              <SelectTrigger className="h-10 text-sm rounded-[10px] border-[#e0d9ce]">
-                                <SelectValue placeholder="Select…" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {PRIVACY_MODE_OPTIONS.map((opt) => (
-                                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  <SectionCard icon={Shield} label="Privacy" description="Control who sees your profile" alwaysPublic>
+                    <div className="max-w-xs">
+                      <FormField
+                        control={control}
+                        name="privacy_mode"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-[13px] font-medium">Profile visibility</FormLabel>
+                            <Select onValueChange={(v) => field.onChange(v || undefined)} value={field.value || ""}>
+                              <FormControl>
+                                <SelectTrigger className="h-10 text-sm rounded-xl border-border bg-cream/60">
+                                  <SelectValue placeholder="Select…" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {PRIVACY_MODE_OPTIONS.map((opt) => (
+                                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </SectionCard>
                 </div>
               </form>
             </Form>
@@ -1559,54 +1788,29 @@ export function EditForm({
       </div>
 
       {/* ---------- STICKY SAVE BAR ---------- */}
-      <div
-        className="fixed bottom-0 left-0 right-0 border-t z-30 px-4 py-3"
-        style={{ background: gold.background, borderColor: gold.border }}
-      >
-        <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-xs truncate" style={{ color: gold.mutedFg }}>
-              {watchedUsername ? `@${watchedUsername}` : "Username required"}
-            </p>
-            {mode === "edit" && isDirty && (
-              <p className="text-[10px] font-medium" style={{ color: gold.primary }}>
-                Unsaved changes
-              </p>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            {mode === "edit" && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-8 text-xs rounded-lg border-[#e0d9ce]"
-                style={{ background: gold.background }}
-                onClick={onCancel}
-                disabled={isSubmitting}
-              >
-                <X className="w-4 h-4 sm:mr-1" strokeWidth={1.5} />
-                <span className="hidden sm:inline">Cancel</span>
-              </Button>
-            )}
+      <div className="fixed bottom-0 inset-x-0 z-30 px-4 pb-4 pt-3 bg-gradient-to-t from-background via-background/95 to-background/0">
+        <div className="max-w-3xl mx-auto rounded-2xl bg-card border border-border/60 shadow-luxe-lg p-2.5 flex items-center gap-2">
+          {mode === "edit" && (
             <Button
-              type="submit"
-              form="profile-form"
-              size="sm"
-              className="h-8 text-xs text-white rounded-xl"
-              style={{ background: gold.primary }}
-              disabled={mode === "edit" && !isDirty}
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              disabled={isSubmitting}
+              className="h-11 px-4 rounded-xl bg-cream border-border text-ink-soft text-[13px] font-medium"
             >
-              {isSubmitting && <Loader2 className="w-4 h-4 animate-spin mr-1" />}
-              <Pencil className="w-4 h-4 sm:mr-1" strokeWidth={1.5} />
-              <span className="hidden sm:inline">
-                {mode === "create" ? "Create profile" : "Save changes"}
-              </span>
-              <span className="sm:hidden">
-                {mode === "create" ? "Create" : "Save"}
-              </span>
+              Cancel
             </Button>
-          </div>
+          )}
+          <Button
+            type="submit"
+            form="profile-form"
+            disabled={mode === "edit" && !isDirty}
+            className="flex-1 h-11 rounded-xl bg-gradient-to-b from-[oklch(0.78_0.13_80)] to-[oklch(0.68_0.13_78)] text-white font-medium text-[13px] flex items-center justify-center gap-2 shadow-[0_8px_24px_-10px_oklch(0.74_0.13_80/0.7)]"
+          >
+            {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+            <Save className="h-4 w-4" />
+            {mode === "create" ? "Create profile" : "Save changes"}
+          </Button>
         </div>
       </div>
     </div>

@@ -125,6 +125,8 @@ export type TalentProfile = UpdateTalentProfileInput & {
   email?: string;
   phone?: string;
   is_verified?: boolean;
+  trust_score?: number;
+  verification_tier?: number;
   media_limits?: {
     images_used: number;
     videos_used: number;
