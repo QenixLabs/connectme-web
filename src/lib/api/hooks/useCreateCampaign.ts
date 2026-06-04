@@ -12,10 +12,11 @@ export function useCreateCampaign() {
       queryClient.invalidateQueries({ queryKey: ['campaigns', 'list'] });
       show({ title: 'Campaign created', variant: 'success', position: 'bottom-center' });
     },
-    onError: (error: any) => {
+    onError: (error) => {
+      const err = error as { response?: { data?: { message?: string } } };
       show({
         title: 'Failed to create campaign',
-        description: error?.response?.data?.message,
+        description: err.response?.data?.message,
         variant: 'error',
         position: 'bottom-center',
       });

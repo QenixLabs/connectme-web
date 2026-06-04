@@ -32,10 +32,11 @@ export function useUpdateApplicationStatus() {
       });
       show({ title: 'Application status updated', variant: 'success', position: 'bottom-center' });
     },
-    onError: (error: any) => {
+    onError: (error) => {
+      const err = error as { response?: { data?: { message?: string } } };
       show({
         title: 'Failed to update application status',
-        description: error?.response?.data?.message,
+        description: err.response?.data?.message,
         variant: 'error',
         position: 'bottom-center',
       });
@@ -63,10 +64,11 @@ export function useBulkUpdateApplicationStatus() {
       });
       show({ title: 'Applications updated', variant: 'success', position: 'bottom-center' });
     },
-    onError: (error: any) => {
+    onError: (error) => {
+      const err = error as { response?: { data?: { message?: string } } };
       show({
         title: 'Failed to update applications',
-        description: error?.response?.data?.message,
+        description: err.response?.data?.message,
         variant: 'error',
         position: 'bottom-center',
       });
@@ -87,8 +89,9 @@ export function useAddToShortlist() {
       });
       show({ title: 'Added to shortlist', variant: 'success', position: 'bottom-center' });
     },
-    onError: (error: any) => {
-      show({ title: 'Failed to add to shortlist', description: error?.response?.data?.message, variant: 'error', position: 'bottom-center' });
+    onError: (error) => {
+      const err = error as { response?: { data?: { message?: string } } };
+      show({ title: 'Failed to add to shortlist', description: err.response?.data?.message, variant: 'error', position: 'bottom-center' });
     },
   });
 }
@@ -106,8 +109,9 @@ export function useRemoveFromShortlist() {
       });
       show({ title: 'Removed from shortlist', variant: 'success', position: 'bottom-center' });
     },
-    onError: (error: any) => {
-      show({ title: 'Failed to remove from shortlist', description: error?.response?.data?.message, variant: 'error', position: 'bottom-center' });
+    onError: (error) => {
+      const err = error as { response?: { data?: { message?: string } } };
+      show({ title: 'Failed to remove from shortlist', description: err.response?.data?.message, variant: 'error', position: 'bottom-center' });
     },
   });
 }
@@ -132,8 +136,9 @@ export function useUpsertApplicantNote() {
       });
       show({ title: 'Note saved', variant: 'success', position: 'bottom-center' });
     },
-    onError: (error: any) => {
-      show({ title: 'Failed to save note', description: error?.response?.data?.message, variant: 'error', position: 'bottom-center' });
+    onError: (error) => {
+      const err = error as { response?: { data?: { message?: string } } };
+      show({ title: 'Failed to save note', description: err.response?.data?.message, variant: 'error', position: 'bottom-center' });
     },
   });
 }
@@ -151,8 +156,9 @@ export function useDeleteApplicantNote() {
       });
       show({ title: 'Note deleted', variant: 'success', position: 'bottom-center' });
     },
-    onError: (error: any) => {
-      show({ title: 'Failed to delete note', description: error?.response?.data?.message, variant: 'error', position: 'bottom-center' });
+    onError: (error) => {
+      const err = error as { response?: { data?: { message?: string } } };
+      show({ title: 'Failed to delete note', description: err.response?.data?.message, variant: 'error', position: 'bottom-center' });
     },
   });
 }

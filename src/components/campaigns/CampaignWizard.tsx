@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
+import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form } from '@/components/ui/form';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -20,6 +20,7 @@ import { useUpdateCampaign } from '@/lib/api/hooks/useUpdateCampaign';
 import { useCampaign } from '@/lib/api/hooks/useCampaign';
 import { useUploadCampaignMedia } from '@/lib/api/hooks/useCampaigns';
 import { getApiErrorMessage } from '@/lib/formatters';
+import { campaignApi, type Campaign, type CampaignQuestion } from '@/lib/api';
 import { Check } from 'lucide-react';
 
 const STEPS = [
@@ -62,21 +63,21 @@ function getStepFields(step: number): string[] {
   }
 }
 
-function toDateInputValue(val: any): string {
+function toDateInputValue(val: unknown): string {
   if (!val) return '';
   if (typeof val === 'string') return val.slice(0, 10);
   if (val instanceof Date) return val.toISOString().slice(0, 10);
   return '';
 }
 
-function toDatetimeInputValue(val: any): string {
+function toDatetimeInputValue(val: unknown): string {
   if (!val) return '';
   if (typeof val === 'string') return val.slice(0, 16);
   if (val instanceof Date) return val.toISOString().slice(0, 16);
   return '';
 }
 
-function mapCampaignToDefaults(campaign: any): CampaignWizardInput {
+function mapCampaignToDefaults(campaign: Campaign): CampaignWizardInput {
   const publishOption: CampaignWizardInput['publishOption'] =
     campaign.status === 'draft'
       ? 'draft'
@@ -115,13 +116,13 @@ function mapCampaignToDefaults(campaign: any): CampaignWizardInput {
     },
     is_budget_disclosed: campaign.is_budget_disclosed ?? false,
     is_unpaid: campaign.is_unpaid ?? false,
-    questions: (campaign.questions || []).map((q: any) => ({
-      _id: q._id?.toString?.() ?? q._id,
-      question_text: q.question_text ?? '',
-      question_type: q.question_type ?? 'text',
+    questions: (campaign.questions || []).map((q) => ({
+      _id: q._id,
+      question_text: q.question_text,
+      question_type: q.question_type,
       options: q.options || [],
-      is_required: q.is_required ?? false,
-      order: q.order ?? 0,
+      is_required: q.is_required,
+      order: q.order,
     })),
     publishOption,
     scheduled_publish_at: toDatetimeInputValue(campaign.scheduled_publish_at),
@@ -149,7 +150,7 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
   );
 
   const form = useForm<CampaignWizardInput>({
-    resolver: zodResolver(campaignWizardSchema) as any,
+    resolver: zodResolver(campaignWizardSchema) as unknown as Resolver<CampaignWizardInput>,
     mode: 'onChange',
     defaultValues: {
       name: '',
@@ -185,7 +186,7 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
   const onNext = async () => {
     setServerError(null);
     const fields = getStepFields(step);
-    const valid = await form.trigger(fields as any);
+    const valid = await form.trigger(fields as unknown as Parameters<typeof form.trigger>[0]);
     if (valid) {
       setIsNavigating(true);
       setStep((s) => Math.min(s + 1, 3));
@@ -204,7 +205,9 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
     setStep(n);
   };
 
-  const buildPayload = (values: CampaignWizardInput) => ({
+  const buildPayload = (values: CampaignWizardInput): Partial<
+    Omit<Campaign, '_id' | 'recruiter_id' | 'applications_count' | 'created_at'>
+  > => ({
     name: values.name,
     description: values.description || undefined,
     role_type: values.role_type || undefined,
@@ -253,17 +256,15 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
         : undefined,
     questions: values.questions?.length
       ? values.questions.map((q, i) => {
-          const base: any = {
+          const base = {
             question_text: q.question_text,
             question_type: q.question_type,
             is_required: q.is_required,
             order: i,
+            ...(q._id ? { _id: q._id } : {}),
+            ...((q.question_type === 'select' || q.question_type === 'multiselect') ? { options: q.options } : {}),
           };
-          if (q._id) base._id = q._id;
-          if (q.question_type === 'select' || q.question_type === 'multiselect') {
-            base.options = q.options;
-          }
-          return base;
+          return base as unknown as CampaignQuestion;
         })
       : undefined,
     status: values.publishOption === 'draft' || values.scheduled_publish_at ? 'draft' : 'active',
@@ -279,9 +280,9 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
     try {
       let resultCampaignId = campaignId;
       if (isEdit && campaignId) {
-        await updateCampaign.mutateAsync({ id: campaignId, payload: payload as any });
+        await updateCampaign.mutateAsync({ id: campaignId, payload });
       } else {
-        const created = await createCampaign.mutateAsync(payload);
+        const created = await createCampaign.mutateAsync(payload as Parameters<typeof campaignApi.create>[0]);
         resultCampaignId = created._id;
       }
 
@@ -294,7 +295,7 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
       }
 
       router.push('/recruiter/campaigns');
-    } catch (err: any) {
+    } catch (err: unknown) {
       setServerError(
         getApiErrorMessage(
           err,

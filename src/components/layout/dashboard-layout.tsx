@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { Home, Briefcase, MessageSquare, User, Bell, Search, LogOut, UserCheck } from "lucide-react";
 import {
@@ -55,9 +55,8 @@ export function DashboardLayout({
   const navItems = NAV_ITEMS_BY_ROLE[role];
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const isMessagesPage = pathname.endsWith("/messages");
-  const hasActiveConversation = isMessagesPage && !!searchParams.get("conversationId");
+  const isMessagesPage = pathname.includes("/messages");
+  const isChatPage = /\/messages\/.+/.test(pathname);
   const queryClient = useQueryClient();
   const { user, isAuthenticated, isLoading, fetchUser, logout } =
     useAuthStore();
@@ -126,14 +125,26 @@ export function DashboardLayout({
       });
     };
 
+    const handleModerationWarning = (data: { type?: string; reason?: string }) => {
+      show({
+        title: "Content Warning",
+        description: data.reason || "Your message contained inappropriate content and was not delivered.",
+        variant: "warning",
+        position: "top-center",
+        duration: 6000,
+      });
+    };
+
     socket.on("notification:new", handleNotification);
     socket.on("collaboration-request:new", handleCollaborationRequest);
     socket.on("message:new", handleNewMessage);
+    socket.on("moderation:warning", handleModerationWarning);
 
     return () => {
       socket.off("notification:new", handleNotification);
       socket.off("collaboration-request:new", handleCollaborationRequest);
       socket.off("message:new", handleNewMessage);
+      socket.off("moderation:warning", handleModerationWarning);
     };
   }, [socket, queryClient, isMessagesPage, user, show]);
 
@@ -155,7 +166,7 @@ export function DashboardLayout({
     }
   }, [authChecked, isLoading, user, role, router]);
 
-  const hideNav = pathname.includes("/edit") || hasActiveConversation;
+  const hideNav = pathname.includes("/edit") || isChatPage;
 
   const roleMismatch = user ? user.role !== role : false;
 

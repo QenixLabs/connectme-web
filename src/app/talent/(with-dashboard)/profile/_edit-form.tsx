@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { useForm, useFieldArray, Controller, useWatch, Control } from "react-hook-form";
+import { useForm, useFieldArray, Controller, useWatch, Control, UseFormRegister, FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import {
@@ -389,9 +389,9 @@ function SkillRow({
   onRemove,
 }: {
   idx: number;
-  register: any;
+  register: UseFormRegister<CreateTalentProfileInput>;
   control: Control<CreateTalentProfileInput>;
-  errors: any;
+  errors: FieldErrors<CreateTalentProfileInput>;
   onRemove: () => void;
 }) {
   return (
@@ -443,9 +443,9 @@ function LanguageRow({
   onRemove,
 }: {
   idx: number;
-  register: any;
+  register: UseFormRegister<CreateTalentProfileInput>;
   control: Control<CreateTalentProfileInput>;
-  errors: any;
+  errors: FieldErrors<CreateTalentProfileInput>;
   onRemove: () => void;
 }) {
   return (

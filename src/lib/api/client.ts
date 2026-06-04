@@ -22,6 +22,26 @@ apiClient.interceptors.response.use(
     return response;
   },
   (error) => {
+    if (error.response?.status === 403) {
+      const data = error.response.data;
+      if (data?.data?.suspended && typeof window !== 'undefined') {
+        const params = new URLSearchParams({
+          until: data.data.suspended_until,
+          reason: data.data.reason,
+        });
+        window.location.href = `/suspended?${params.toString()}`;
+        return;
+      }
+      if (data?.data?.banned && typeof window !== 'undefined') {
+        const params = new URLSearchParams({
+          banned_at: data.data.banned_at,
+          reason: data.data.reason,
+        });
+        window.location.href = `/banned?${params.toString()}`;
+        return;
+      }
+    }
+
     if (error.response?.status === 401) {
       const requestUrl = error.config?.url || '';
       const publicEndpoints = [

@@ -64,8 +64,8 @@ export default function PublicTalentProfilePage() {
               variant: "success",
             });
           },
-          onError: (err: any) => {
-            const msg = err?.response?.data?.message || "";
+          onError: (err: unknown) => {
+            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || "";
             if (msg.toLowerCase().includes("already accepted")) {
               messagesApi
                 .startDirectConversation(talentId)

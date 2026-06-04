@@ -523,7 +523,7 @@ export default function CampaignDetailPage() {
                         )}
                         {app.answers && app.answers.length > 0 && (
                           <div className="space-y-1 mt-1">
-                            {app.answers.map((ans: any) => (
+                            {app.answers.map((ans: { question_id: string; question_text: string; answer: string }) => (
                               <div key={ans.question_id} className="text-xs text-text-secondary">
                                 <span className="font-medium text-text-primary">{ans.question_text}:</span>{' '}
                                 {ans.answer}
@@ -911,7 +911,7 @@ export default function CampaignDetailPage() {
               </Alert>
             ) : teamData?.members && teamData.members.length > 0 ? (
               <div className="space-y-2">
-                {teamData.members.map((member: any) => {
+                {teamData.members.map((member: { _id: string; user_id: { full_legal_name?: string; email?: string } | null; role: string }) => {
                   const user = member.user_id;
                   const displayName = user?.full_legal_name || user?.email || 'Unknown';
                   return (

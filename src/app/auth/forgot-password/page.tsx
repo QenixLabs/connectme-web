@@ -40,7 +40,7 @@ export default function ForgotPasswordPage() {
         resetMethod === "phone" ? phone : undefined,
       );
       setStep("otp");
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(getApiErrorMessage(err, "Failed to send OTP. Please try again."));
     } finally {
       setIsLoading(false);
@@ -72,7 +72,7 @@ export default function ForgotPasswordPage() {
         newPassword,
       );
       setStep("success");
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(getApiErrorMessage(err, "Failed to reset password. Please try again."));
     } finally {
       setIsLoading(false);

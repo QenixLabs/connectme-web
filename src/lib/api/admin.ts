@@ -140,9 +140,21 @@ export interface PaginatedUsers {
 
 export interface UserDetail {
   user: AdminUser;
-  profile: any;
+  profile: {
+    username?: string;
+    professions?: string[];
+    industries?: string[];
+    headline?: string;
+    location?: { city?: string; country?: string };
+    privacy_mode?: string;
+    company_name?: string;
+    company_website?: string;
+    industry?: string;
+    position?: string;
+    verification_status?: string;
+  } | null;
   report_count: number;
-  verification: any;
+  verification: Record<string, unknown> | null;
 }
 
 export interface AdminNote {
@@ -156,9 +168,37 @@ export interface AdminNote {
 export interface UserActivity {
   user: AdminUser;
   message_count: number;
-  recent_campaigns: any[];
-  recent_moderation_actions: any[];
-  recent_reports: any[];
+  recent_campaigns: Array<{ _id: string; name: string; status: string }>;
+  recent_moderation_actions: Array<{ _id: string; action_type: string; created_at: string; reason?: string; admin_id?: { email?: string } }>;
+  recent_reports: Array<{ _id: string; reason: string; status: string; reporter_id?: { email?: string }; created_at: string }>;
+}
+
+export interface PaginatedModerationActions {
+  actions: Array<{ _id: string; action_type: string; reason: string; duration?: number; admin_id?: { email?: string }; created_at: string }>;
+  total: number;
+  page: number;
+  limit: number;
+  total_pages: number;
+}
+
+export interface AppealItem {
+  _id: string;
+  user_id: { _id: string; email: string; role: string; status: string };
+  type: string;
+  reason: string;
+  status: string;
+  admin_response?: string;
+  reviewed_by?: { _id: string; email: string };
+  reviewed_at?: string;
+  created_at: string;
+}
+
+export interface PaginatedAppeals {
+  appeals: AppealItem[];
+  total: number;
+  page: number;
+  limit: number;
+  total_pages: number;
 }
 
 export const adminApi = {
@@ -272,6 +312,16 @@ export const adminApi = {
     return response.data;
   },
 
+  updateVerificationTier: async (id: string, reason: string, tier: number): Promise<unknown> => {
+    const response = await apiClient.post(`/admin/users/${id}/verification-tier`, { reason, tier: tier.toString() });
+    return response.data;
+  },
+
+  markUserSafe: async (id: string, reason?: string): Promise<unknown> => {
+    const response = await apiClient.post(`/admin/users/${id}/mark-safe`, { reason });
+    return response.data;
+  },
+
   getUserNotes: async (id: string): Promise<AdminNote[]> => {
     const response = await apiClient.get(`/admin/users/${id}/notes`);
     return response.data;
@@ -284,6 +334,26 @@ export const adminApi = {
 
   getUserActivity: async (id: string): Promise<UserActivity> => {
     const response = await apiClient.get(`/admin/users/${id}/activity`);
+    return response.data;
+  },
+
+  getUserModerationActions: async (id: string, params: { page?: number; limit?: number }): Promise<PaginatedModerationActions> => {
+    const response = await apiClient.get(`/admin/users/${id}/moderation-actions`, { params });
+    return response.data;
+  },
+
+  getAppeals: async (params: { status?: string; page?: number; limit?: number }): Promise<PaginatedAppeals> => {
+    const response = await apiClient.get('/appeals', { params });
+    return response.data;
+  },
+
+  updateAppealStatus: async (id: string, status: string, adminResponse?: string): Promise<AppealItem> => {
+    const response = await apiClient.patch(`/appeals/${id}/status`, { status, admin_response: adminResponse });
+    return response.data;
+  },
+
+  updateUserPassword: async (id: string, password: string): Promise<{ message: string }> => {
+    const response = await apiClient.post(`/admin/users/${id}/password`, { password });
     return response.data;
   },
 };

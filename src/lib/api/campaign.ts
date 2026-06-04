@@ -25,7 +25,10 @@ export interface Campaign {
     languages?: string[];
     gender?: string;
     age_range?: { min?: number; max?: number };
+    attributes?: string;
   };
+  is_budget_disclosed?: boolean;
+  is_unpaid?: boolean;
   visibility: string;
   deadline?: string;
   status: string;
@@ -323,7 +326,7 @@ export const campaignApi = {
   uploadMedia: async (
     campaignId: string,
     formData: FormData,
-  ): Promise<{ url: string; media: any[]; cover_image_url?: string; banner?: { type: 'image' | 'video'; url: string; thumbnail?: string } }> => {
+  ): Promise<{ url: string; media: Record<string, unknown>[]; cover_image_url?: string; banner?: { type: 'image' | 'video'; url: string; thumbnail?: string } }> => {
     const response = await apiClient.post(`/campaigns/${campaignId}/media`, formData, {
       headers: { 'Content-Type': undefined },
     });
@@ -362,7 +365,7 @@ export const campaignApi = {
     await apiClient.delete(`/campaigns/${campaignId}/team/${memberId}`);
   },
 
-  getTemplates: async (): Promise<Array<{ _id: string; name: string; template_data: any; created_at: string }>> => {
+  getTemplates: async (): Promise<Array<{ _id: string; name: string; template_data: Record<string, unknown>; created_at: string }>> => {
     const response = await apiClient.get('/campaigns/templates');
     return response.data;
   },

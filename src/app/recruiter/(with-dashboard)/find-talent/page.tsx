@@ -89,8 +89,9 @@ export default function FindTalentPage() {
                 variant: "success",
               });
             },
-            onError: (err: any) => {
-              const msg = err?.response?.data?.message || "";
+            onError: (err: unknown) => {
+              const e = err as { response?: { data?: { message?: string } } };
+              const msg = e?.response?.data?.message || "";
               if (msg.toLowerCase().includes("already accepted")) {
                 messagesApi
                   .startDirectConversation(talentId)

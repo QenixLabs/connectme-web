@@ -45,7 +45,7 @@ export function LinksPane({ profile, showSocial = true, showDocuments = true }: 
               return (
                 <a
                   key={s.key}
-                  href={link!.url}
+                  href={link!.url!.startsWith("http") ? link!.url : `https://${link!.url}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-left rounded-xl bg-cream/70 border border-border/60 p-3 active:scale-[0.99] transition"
@@ -74,7 +74,7 @@ export function LinksPane({ profile, showSocial = true, showDocuments = true }: 
               return (
                 <a
                   key={d.key}
-                  href={url}
+                  href={url.startsWith("http") ? url : `https://${url}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full flex items-center gap-3 rounded-xl bg-cream/70 border border-border/60 px-3.5 py-3 active:scale-[0.99] transition"

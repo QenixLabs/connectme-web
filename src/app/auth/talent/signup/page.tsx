@@ -202,7 +202,7 @@ export default function TalentSignupPage() {
         verification_method: verificationMethod,
       });
       router.push(`/auth/verify-email?email=${encodeURIComponent(values.email)}&method=${verificationMethod}`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setServerError(getApiErrorMessage(err, "Registration failed"));
     } finally {
       setLoading(false);

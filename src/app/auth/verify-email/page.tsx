@@ -47,7 +47,7 @@ function VerifyEmailContent() {
       router.push(
         user?.role === "talent" ? "/talent/dashboard" : "/recruiter/dashboard"
       );
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(getApiErrorMessage(err, "Invalid OTP"));
     } finally {
       setLoading(false);
@@ -62,7 +62,7 @@ function VerifyEmailContent() {
     try {
       await authApi.resendOtp(email);
       setResendSuccess(true);
-    } catch (err: any) {
+    } catch (err: unknown) {
       setError(getApiErrorMessage(err, "Failed to resend OTP"));
     } finally {
       setResendLoading(false);

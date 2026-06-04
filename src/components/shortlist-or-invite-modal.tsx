@@ -124,10 +124,11 @@ export function ShortlistOrInviteModal({
               : c,
           ),
         );
-      } catch (err: any) {
+      } catch (err: unknown) {
+        const error = err as { response?: { data?: { message?: string } } };
         showRef.current({
           title:
-            err?.response?.data?.message || "Failed to shortlist",
+            error?.response?.data?.message || "Failed to shortlist",
           variant: "error",
           position: "bottom-center",
         });
@@ -150,10 +151,11 @@ export function ShortlistOrInviteModal({
           variant: "success",
           position: "bottom-center",
         });
-      } catch (err: any) {
+      } catch (err: unknown) {
+        const error = err as { response?: { data?: { message?: string } } };
         showRef.current({
           title:
-            err?.response?.data?.message || "Failed to send invite",
+            error?.response?.data?.message || "Failed to send invite",
           variant: "error",
           position: "bottom-center",
         });

@@ -32,8 +32,9 @@ export function useDeleteCampaign() {
       queryClient.invalidateQueries({ queryKey: ['campaigns', 'list'] });
       show({ title: 'Campaign deleted', variant: 'success', position: 'bottom-center' });
     },
-    onError: (error: any) => {
-      show({ title: 'Failed to delete campaign', description: error?.response?.data?.message, variant: 'error', position: 'bottom-center' });
+    onError: (error) => {
+      const err = error as { response?: { data?: { message?: string } } };
+      show({ title: 'Failed to delete campaign', description: err.response?.data?.message, variant: 'error', position: 'bottom-center' });
     },
   });
 }
@@ -48,8 +49,9 @@ export function usePublishCampaign() {
       queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.detail(id) });
       show({ title: 'Campaign published', variant: 'success', position: 'bottom-center' });
     },
-    onError: (error: any) => {
-      show({ title: 'Failed to publish campaign', description: error?.response?.data?.message, variant: 'error', position: 'bottom-center' });
+    onError: (error) => {
+      const err = error as { response?: { data?: { message?: string } } };
+      show({ title: 'Failed to publish campaign', description: err.response?.data?.message, variant: 'error', position: 'bottom-center' });
     },
   });
 }
@@ -64,8 +66,9 @@ export function useCloseCampaign() {
       queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.detail(id) });
       show({ title: 'Campaign closed', variant: 'success', position: 'bottom-center' });
     },
-    onError: (error: any) => {
-      show({ title: 'Failed to close campaign', description: error?.response?.data?.message, variant: 'error', position: 'bottom-center' });
+    onError: (error) => {
+      const err = error as { response?: { data?: { message?: string } } };
+      show({ title: 'Failed to close campaign', description: err.response?.data?.message, variant: 'error', position: 'bottom-center' });
     },
   });
 }
@@ -80,8 +83,9 @@ export function useReopenCampaign() {
       queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.detail(id) });
       show({ title: 'Campaign reopened', variant: 'success', position: 'bottom-center' });
     },
-    onError: (error: any) => {
-      show({ title: 'Failed to reopen campaign', description: error?.response?.data?.message, variant: 'error', position: 'bottom-center' });
+    onError: (error) => {
+      const err = error as { response?: { data?: { message?: string } } };
+      show({ title: 'Failed to reopen campaign', description: err.response?.data?.message, variant: 'error', position: 'bottom-center' });
     },
   });
 }
@@ -95,8 +99,9 @@ export function useCloneCampaign() {
       queryClient.invalidateQueries({ queryKey: ['campaigns', 'list'] });
       show({ title: 'Campaign cloned', variant: 'success', position: 'bottom-center' });
     },
-    onError: (error: any) => {
-      show({ title: 'Failed to clone campaign', description: error?.response?.data?.message, variant: 'error', position: 'bottom-center' });
+    onError: (error) => {
+      const err = error as { response?: { data?: { message?: string } } };
+      show({ title: 'Failed to clone campaign', description: err.response?.data?.message, variant: 'error', position: 'bottom-center' });
     },
   });
 }
@@ -110,8 +115,9 @@ export function useBookmarkCampaign() {
       queryClient.invalidateQueries({ queryKey: ['campaigns'] });
       show({ title: 'Campaign saved', variant: 'success', position: 'bottom-center' });
     },
-    onError: (error: any) => {
-      show({ title: 'Failed to save', description: error?.response?.data?.message, variant: 'error', position: 'bottom-center' });
+    onError: (error) => {
+      const err = error as { response?: { data?: { message?: string } } };
+      show({ title: 'Failed to save', description: err.response?.data?.message, variant: 'error', position: 'bottom-center' });
     },
   });
 }
@@ -125,8 +131,9 @@ export function useUnbookmarkCampaign() {
       queryClient.invalidateQueries({ queryKey: ['campaigns'] });
       show({ title: 'Removed from saved', variant: 'success', position: 'bottom-center' });
     },
-    onError: (error: any) => {
-      show({ title: 'Failed to remove', description: error?.response?.data?.message, variant: 'error', position: 'bottom-center' });
+    onError: (error) => {
+      const err = error as { response?: { data?: { message?: string } } };
+      show({ title: 'Failed to remove', description: err.response?.data?.message, variant: 'error', position: 'bottom-center' });
     },
   });
 }
@@ -155,8 +162,9 @@ export function useUploadCampaignMedia() {
       queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.detail(variables.campaignId) });
       show({ title: 'Media uploaded', variant: 'success', position: 'bottom-center' });
     },
-    onError: (error: any) => {
-      show({ title: 'Upload failed', description: error?.response?.data?.message, variant: 'error', position: 'bottom-center' });
+    onError: (error) => {
+      const err = error as { response?: { data?: { message?: string } } };
+      show({ title: 'Upload failed', description: err.response?.data?.message, variant: 'error', position: 'bottom-center' });
     },
   });
 }
@@ -171,8 +179,9 @@ export function useDeleteCampaignMedia() {
       queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.detail(variables.campaignId) });
       show({ title: 'Media deleted', variant: 'success', position: 'bottom-center' });
     },
-    onError: (error: any) => {
-      show({ title: 'Delete failed', description: error?.response?.data?.message, variant: 'error', position: 'bottom-center' });
+    onError: (error) => {
+      const err = error as { response?: { data?: { message?: string } } };
+      show({ title: 'Delete failed', description: err.response?.data?.message, variant: 'error', position: 'bottom-center' });
     },
   });
 }

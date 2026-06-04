@@ -1,17 +1,15 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuthStore } from "@/providers/auth-store-provider";
-import ChatInterface from "@/components/messaging/chat-interface";
+import { ConversationList } from "@/components/messaging/conversation-list";
 
 export default function TalentMessagesPage() {
   const user = useAuthStore((state) => state.user);
   const hasHydrated = useAuthStore((state) => state.hasHydrated);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const conversationId = searchParams.get("conversationId");
 
   useEffect(() => {
     if (hasHydrated && !isAuthenticated) {
@@ -21,11 +19,17 @@ export default function TalentMessagesPage() {
 
   if (!hasHydrated || !user) {
     return (
-      <div className="flex h-[calc(100vh-120px)] items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+      <div className="flex h-full items-center justify-center">
+        <p className="text-msg-ink-muted">Loading...</p>
       </div>
     );
   }
 
-  return <ChatInterface currentUserId={user._id} initialConversationId={conversationId} dashboardUrl="/talent/dashboard" />;
+  return (
+    <ConversationList
+      currentUserId={user._id}
+      role="talent"
+      dashboardUrl="/talent/dashboard"
+    />
+  );
 }

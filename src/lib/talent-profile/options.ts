@@ -60,7 +60,6 @@ export const FLUENCIES: Option[] = [
 
 export const VISIBILITIES: Option[] = [
   opt('public', 'Public'),
-  opt('recruiters_only', 'Recruiters only'),
   opt('private', 'Private'),
 ];
 

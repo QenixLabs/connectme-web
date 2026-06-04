@@ -1,12 +1,13 @@
 export { apiClient } from './client';
 export { authApi } from './auth';
 export { talentApi } from './talent';
-export { campaignApi, type Campaign } from './campaign';
+export { campaignApi, type Campaign, type CampaignQuestion } from './campaign';
 export { recruiterApi } from './recruiter';
 export { messagesApi, collaborationRequestsApi } from './messages';
 export { notificationsApi } from './notifications';
 export { verificationApi, type VerificationRecord, type VerificationDocResponse, type VerificationStatusResponse } from './verification';
-export { adminApi, type DashboardStats, type PendingVerificationItem, type ReportItem, type PaginatedReports, type ReportDetail, type MessageContextItem, type UserHistory, type AdminUser, type PaginatedUsers, type UserDetail, type AdminNote, type UserActivity } from './admin';
+export { adminApi, type DashboardStats, type PendingVerificationItem, type ReportItem, type PaginatedReports, type ReportDetail, type MessageContextItem, type UserHistory, type AdminUser, type PaginatedUsers, type UserDetail, type AdminNote, type UserActivity, type PaginatedModerationActions, type AppealItem, type PaginatedAppeals } from './admin';
+export { appealsApi, type Appeal } from './appeals';
 export { useCampaignAnalytics, useCampaignDemographics } from './hooks/useCampaignAnalytics';
 export { useCampaignInvites } from './hooks/useCampaignInvites';
 export { useRecruiterProfile } from './hooks/useRecruiterProfile';

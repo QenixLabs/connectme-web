@@ -136,6 +136,18 @@
   --color-ink-muted: oklch(0.62 0.020 80);
   --shadow-luxe: 0 1px 0 0 oklch(0.92 0.02 80 / 0.6) inset, 0 12px 32px -18px oklch(0.30 0.05 60 / 0.25);
   --shadow-luxe-lg: 0 24px 60px -28px oklch(0.30 0.05 60 / 0.35);
+
+  /* Messaging redesign palette */
+  --color-msg-page: #faf9f7;
+  --color-msg-card: #ffffff;
+  --color-msg-cream: #f5f3ef;
+  --color-msg-gold: #c8a040;
+  --color-msg-gold-soft: #fdf3dc;
+  --color-msg-ink: #1e1a14;
+  --color-msg-ink-soft: #5c5145;
+  --color-msg-ink-muted: #8a7f72;
+  --color-msg-border: #e0d9ce;
+  --shadow-msg-luxe: 0 1px 0 0 #e0d9ce inset, 0 12px 32px -18px rgba(30, 26, 20, 0.18);
 }
 
 body {

@@ -329,7 +329,7 @@ export default function PublicPortfolioPage() {
       await collaborationRequestsApi.createRequest(talentId, "I'd like to view your full portfolio and profile.");
       setRequestSent(true);
       show({ title: "Request sent! The talent will be notified.", variant: "success", position: "top-center" });
-    } catch (err: any) {
+    } catch (err: unknown) {
       const msg = getApiErrorMessage(err, "Could not send request");
       show({ title: msg, variant: "error", position: "bottom-center" });
     } finally {

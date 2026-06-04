@@ -21,8 +21,9 @@ export function useSaveCampaignTemplate() {
       queryClient.invalidateQueries({ queryKey: ['campaigns', 'templates'] });
       show({ title: 'Template saved', variant: 'success', position: 'bottom-center' });
     },
-    onError: (error: any) => {
-      show({ title: 'Failed to save template', description: error?.response?.data?.message, variant: 'error', position: 'bottom-center' });
+    onError: (error) => {
+      const err = error as { response?: { data?: { message?: string } } };
+      show({ title: 'Failed to save template', description: err.response?.data?.message, variant: 'error', position: 'bottom-center' });
     },
   });
 }
@@ -37,8 +38,9 @@ export function useUseCampaignTemplate() {
       queryClient.invalidateQueries({ queryKey: ['campaigns', 'list'] });
       show({ title: 'Campaign created from template', variant: 'success', position: 'bottom-center' });
     },
-    onError: (error: any) => {
-      show({ title: 'Failed to use template', description: error?.response?.data?.message, variant: 'error', position: 'bottom-center' });
+    onError: (error) => {
+      const err = error as { response?: { data?: { message?: string } } };
+      show({ title: 'Failed to use template', description: err.response?.data?.message, variant: 'error', position: 'bottom-center' });
     },
   });
 }

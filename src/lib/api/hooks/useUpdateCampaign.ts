@@ -22,10 +22,11 @@ export function useUpdateCampaign() {
       });
       show({ title: 'Campaign updated', variant: 'success', position: 'bottom-center' });
     },
-    onError: (error: any) => {
+    onError: (error) => {
+      const err = error as { response?: { data?: { message?: string } } };
       show({
         title: 'Failed to update campaign',
-        description: error?.response?.data?.message,
+        description: err.response?.data?.message,
         variant: 'error',
         position: 'bottom-center',
       });

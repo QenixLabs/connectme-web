@@ -101,7 +101,7 @@ export function NotificationList() {
     const handleNotification = (notification: NotificationItem) => {
       queryClient.setQueryData(
         ["notifications", "list", false],
-        (old: any) => {
+        (old: { pages: Array<{ data: NotificationItem[]; total: number }> } | undefined) => {
           if (!old) return old;
           const firstPage = old.pages[0];
           if (firstPage?.data?.some((n: NotificationItem) => n._id === notification._id)) {

@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { Shield, Users, Building2, FolderKanban, Flag, LogOut } from "lucide-react";
+import { Shield, Users, Building2, FolderKanban, Flag, LogOut, MessageSquareWarning } from "lucide-react";
 import { useAuthStore } from "@/providers/auth-store-provider";
 
 export default function AdminLayout({
@@ -35,6 +35,7 @@ export default function AdminLayout({
     { label: "Brands", href: "/admin/dashboard", icon: Building2 },
     { label: "Projects", href: "/admin/dashboard", icon: FolderKanban },
     { label: "Reports", href: "/admin/reports", icon: Flag },
+    { label: "Appeals", href: "/admin/appeals", icon: MessageSquareWarning },
   ];
 
   return (

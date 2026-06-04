@@ -24,8 +24,9 @@ export function useBulkInviteTalent() {
       queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.invites(vars.campaignId) });
       show({ title: 'Invites sent', variant: 'success', position: 'bottom-center' });
     },
-    onError: (error: any) => {
-      show({ title: 'Failed to send invites', description: error?.response?.data?.message, variant: 'error', position: 'bottom-center' });
+    onError: (error) => {
+      const err = error as { response?: { data?: { message?: string } } };
+      show({ title: 'Failed to send invites', description: err.response?.data?.message, variant: 'error', position: 'bottom-center' });
     },
   });
 }

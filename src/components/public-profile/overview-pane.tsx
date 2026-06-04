@@ -19,7 +19,7 @@ export function OverviewPane({ profile, showAbout = true }: OverviewPaneProps) {
     profile.location?.city
       ? `${profile.location.city} · Open to travel`
       : "Mumbai · Open to travel",
-    `Verified · Tier ${(profile as any).verification_tier || 1}`,
+    `Verified · Tier ${profile.verification_tier || 1}`,
   ];
 
   const about = profile.about ||

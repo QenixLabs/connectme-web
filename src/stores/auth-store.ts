@@ -58,8 +58,9 @@ export const authStore = createStore<AuthState>()(
           setCookie('auth_session', '1', 7);
           setCookie('user_role', user.role, 7);
           set({ user, isAuthenticated: true, isLoading: false });
-        } catch (error: any) {
-          const message = error.response?.data?.message || 'Login failed';
+        } catch (error: unknown) {
+          const err = error as { response?: { data?: { message?: string } } };
+          const message = err.response?.data?.message || 'Login failed';
           set({ error: message, isLoading: false });
           throw new Error(message);
         }
