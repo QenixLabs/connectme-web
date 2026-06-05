@@ -184,6 +184,7 @@ export interface PaginatedModerationActions {
 export interface AppealItem {
   _id: string;
   user_id: { _id: string; email: string; role: string; status: string };
+  moderation_action_id?: string;
   type: string;
   reason: string;
   status: string;
@@ -191,6 +192,27 @@ export interface AppealItem {
   reviewed_by?: { _id: string; email: string };
   reviewed_at?: string;
   created_at: string;
+}
+
+export interface AuditLogItem {
+  _id: string;
+  actor_id?: string;
+  actor_type: string;
+  action: string;
+  target_type: string;
+  target_id: string;
+  metadata: Record<string, unknown>;
+  ip_address?: string;
+  user_agent?: string;
+  created_at: string;
+}
+
+export interface PaginatedAuditLogs {
+  logs: AuditLogItem[];
+  total: number;
+  page: number;
+  limit: number;
+  total_pages: number;
 }
 
 export interface PaginatedAppeals {
@@ -349,6 +371,21 @@ export const adminApi = {
 
   updateAppealStatus: async (id: string, status: string, adminResponse?: string): Promise<AppealItem> => {
     const response = await apiClient.patch(`/appeals/${id}/status`, { status, admin_response: adminResponse });
+    return response.data;
+  },
+
+  getAuditLogs: async (params: {
+    page?: number;
+    limit?: number;
+    action?: string;
+    actor_type?: string;
+    target_type?: string;
+    target_id?: string;
+    actor_id?: string;
+    date_from?: string;
+    date_to?: string;
+  }): Promise<PaginatedAuditLogs> => {
+    const response = await apiClient.get('/admin/audit-logs', { params });
     return response.data;
   },
 

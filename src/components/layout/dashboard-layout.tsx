@@ -20,6 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { usePopup } from "@/hooks/use-popup";
 import { useSwipeNavigation } from "@/hooks/use-swipe-navigation";
 import { queryKeys } from "@/lib/api/query-keys";
+import { redirectToSuspendedPage } from "@/lib/redirect";
 
 export interface NavItem {
   href: string;
@@ -85,8 +86,11 @@ export function DashboardLayout({
   useEffect(() => {
     if (!socket) return;
 
-    const handleNotification = (notification: { title?: string; body?: string }) => {
+    const handleNotification = (notification: { title?: string; body?: string; type?: string }) => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      if (notification.type === "moderation_violation") {
+        return;
+      }
       show({
         title: notification.title || "New notification",
         description: notification.body,
@@ -135,16 +139,34 @@ export function DashboardLayout({
       });
     };
 
+    const handleModerationSuspension = (data: {
+      type?: string;
+      reason?: string;
+      duration_hours?: number;
+      suspended_until?: string;
+    }) => {
+      show({
+        title: "Account Suspended",
+        description: data.reason || "Your account has been suspended due to repeated violations.",
+        variant: "error",
+        position: "top-center",
+        duration: 8000,
+      });
+      redirectToSuspendedPage(data.suspended_until || "", data.reason || "");
+    };
+
     socket.on("notification:new", handleNotification);
     socket.on("collaboration-request:new", handleCollaborationRequest);
     socket.on("message:new", handleNewMessage);
     socket.on("moderation:warning", handleModerationWarning);
+    socket.on("moderation:suspension", handleModerationSuspension);
 
     return () => {
       socket.off("notification:new", handleNotification);
       socket.off("collaboration-request:new", handleCollaborationRequest);
       socket.off("message:new", handleNewMessage);
       socket.off("moderation:warning", handleModerationWarning);
+      socket.off("moderation:suspension", handleModerationSuspension);
     };
   }, [socket, queryClient, isMessagesPage, user, show]);
 

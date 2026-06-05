@@ -1406,7 +1406,7 @@ export function EditForm({
                       ))}
                       <AddRow
                         label="Add language"
-                        onClick={() => languagesArray.append({ name: "", fluency: "" })}
+                        onClick={() => languagesArray.append({ name: "", fluency: "basic" })}
                       />
                       {errors.languages && !Array.isArray(errors.languages) && (
                         <p className="text-xs text-destructive">{errors.languages.message}</p>

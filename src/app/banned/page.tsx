@@ -16,6 +16,7 @@ function BannedContent() {
   const router = useRouter();
   const bannedAt = searchParams.get("banned_at");
   const reason = searchParams.get("reason");
+  const moderationActionId = searchParams.get("moderation_action_id");
 
   const [appealText, setAppealText] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -24,11 +25,14 @@ function BannedContent() {
   const [appeals, setAppeals] = useState<Appeal[]>([]);
   const [loadingAppeal, setLoadingAppeal] = useState(true);
 
-  const openAppeal = appeals.find((a) => a.status === "open");
-  const latestAppeal = appeals[0] || null;
+  const currentAppeals = moderationActionId
+    ? appeals.filter((a) => a.moderation_action_id === moderationActionId)
+    : appeals;
+  const openAppeal = currentAppeals.find((a) => a.status === "open");
+  const latestAppeal = currentAppeals[0] || null;
 
   useEffect(() => {
-    authApi.getCurrentUser()
+    authApi.checkAuth()
       .then(({ user }) => {
         if (user.status !== "banned") {
           router.replace(`/${user.role}/dashboard`);
@@ -52,11 +56,11 @@ function BannedContent() {
   };
 
   const handleSubmit = async () => {
-    if (!appealText.trim()) return;
+    if (!appealText.trim() || !moderationActionId) return;
     setSubmitting(true);
     setError(null);
     try {
-      await appealsApi.create(appealText.trim(), "ban");
+      await appealsApi.create(appealText.trim(), moderationActionId, "ban");
       setSubmitted(true);
       setAppealText("");
       await refreshAppeals();
@@ -171,7 +175,7 @@ function BannedContent() {
                         <Button
                           className="w-full text-xs h-9"
                           onClick={handleSubmit}
-                          disabled={submitting || !appealText.trim()}
+                          disabled={submitting || !appealText.trim() || !moderationActionId}
                         >
                           {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Send className="w-3.5 h-3.5 mr-1.5" /> Submit Appeal</>}
                         </Button>

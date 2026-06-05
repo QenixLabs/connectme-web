@@ -3,6 +3,7 @@ import { apiClient } from './client';
 export interface Appeal {
   _id: string;
   user_id: string;
+  moderation_action_id?: string;
   type: string;
   reason: string;
   status: string;
@@ -13,8 +14,8 @@ export interface Appeal {
 }
 
 export const appealsApi = {
-  create: async (reason: string, type?: string): Promise<Appeal> => {
-    const response = await apiClient.post('/appeals', { reason, type });
+  create: async (reason: string, moderationActionId: string, type?: string): Promise<Appeal> => {
+    const response = await apiClient.post('/appeals', { reason, moderation_action_id: moderationActionId, type });
     return response.data;
   },
 

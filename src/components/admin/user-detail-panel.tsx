@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Loader2,
   AlertCircle,
   CheckCircle,
   ChevronLeft,
   ChevronRight,
+  ExternalLink,
   ShieldAlert,
   ShieldBan,
   ShieldCheck,
@@ -48,6 +50,7 @@ interface UserDetailPanelProps {
 }
 
 export function UserDetailPanel({ userId, onClose, onStatusChange }: UserDetailPanelProps) {
+  const router = useRouter();
   const [detail, setDetail] = useState<UserDetail | null>(null);
   const [activity, setActivity] = useState<UserActivity | null>(null);
   const [notes, setNotes] = useState<AdminNote[]>([]);
@@ -387,6 +390,17 @@ export function UserDetailPanel({ userId, onClose, onStatusChange }: UserDetailP
                         </>
                       )}
                     </div>
+                    {detail.user.role === "talent" && detail.profile.username && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs h-8 mt-3"
+                        onClick={() => router.push(`/talent/${detail.profile!.username}`)}
+                      >
+                        <ExternalLink className="w-3.5 h-3.5 mr-1" />
+                        View Public Profile
+                      </Button>
+                    )}
                   </div>
                 )}
               </TabsContent>

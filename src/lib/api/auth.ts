@@ -39,6 +39,11 @@ export const authApi = {
     return response.data;
   },
 
+  checkAuth: async () => {
+    const response = await apiClient.get('/auth/check');
+    return response.data;
+  },
+
   logout: async () => {
     const response = await apiClient.post('/auth/logout');
     return response.data;

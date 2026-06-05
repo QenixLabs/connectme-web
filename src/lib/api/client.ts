@@ -1,4 +1,5 @@
 import axios, { AxiosError } from 'axios';
+import { redirectToSuspendedPage, redirectToBannedPage } from '@/lib/redirect';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
 
@@ -24,21 +25,21 @@ apiClient.interceptors.response.use(
   (error) => {
     if (error.response?.status === 403) {
       const data = error.response.data;
-      if (data?.data?.suspended && typeof window !== 'undefined') {
-        const params = new URLSearchParams({
-          until: data.data.suspended_until,
-          reason: data.data.reason,
-        });
-        window.location.href = `/suspended?${params.toString()}`;
-        return;
+      if (data?.data?.suspended) {
+        redirectToSuspendedPage(data.data.suspended_until, data.data.reason, data.data.moderation_action_id);
+        return Promise.reject(error);
       }
-      if (data?.data?.banned && typeof window !== 'undefined') {
-        const params = new URLSearchParams({
-          banned_at: data.data.banned_at,
-          reason: data.data.reason,
-        });
-        window.location.href = `/banned?${params.toString()}`;
-        return;
+      if (data?.data?.banned) {
+        redirectToBannedPage(data.data.banned_at, data.data.reason, data.data.moderation_action_id);
+        return Promise.reject(error);
+      }
+    }
+
+    if (error.response?.status === 429) {
+      const data = error.response.data;
+      const message = data?.message || 'Too many requests. Please slow down.';
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('api-error', { detail: { status: 429, message } }));
       }
     }
 
