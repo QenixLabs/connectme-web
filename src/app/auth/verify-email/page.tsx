@@ -40,7 +40,10 @@ function VerifyEmailContent() {
     setError(null);
 
     try {
-      await authApi.verifyOtp(email, otp);
+      const result = await authApi.verifyOtp(email, otp);
+      if (result.access_token) {
+        authStore.getState().setAccessToken(result.access_token);
+      }
       await authStore.getState().fetchUser();
       const user = authStore.getState().user;
       setSuccess(true);

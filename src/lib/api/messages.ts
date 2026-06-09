@@ -56,9 +56,17 @@ export interface CollaborationRequest {
   created_at: string;
 }
 
+export interface PaginatedConversations {
+  data: Conversation[];
+  nextCursor: string | null;
+}
+
 export const messagesApi = {
-  getConversations: async (): Promise<Conversation[]> => {
-    const response = await apiClient.get('/conversations');
+  getConversations: async (cursor?: string, limit = 20): Promise<PaginatedConversations> => {
+    const params = new URLSearchParams();
+    if (cursor) params.append('cursor', cursor);
+    params.append('limit', String(limit));
+    const response = await apiClient.get(`/conversations?${params}`);
     return response.data;
   },
 

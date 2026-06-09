@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -13,6 +13,7 @@ import {
   Building2,
   PieChart,
   Briefcase,
+  Camera,
 } from "lucide-react";
 import { usePopup } from "@/hooks/use-popup";
 
@@ -295,6 +296,9 @@ function MobileNav({
 export function EditForm({ profile, onSaved, onCancel }: EditFormProps) {
   const { show } = usePopup();
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<UpdateRecruiterProfileInput>({
     resolver: zodResolver(updateRecruiterProfileSchema),
@@ -317,6 +321,60 @@ export function EditForm({ profile, onSaved, onCancel }: EditFormProps) {
       reset(hydrateFromServer(profile));
     }
   }, [profile, reset]);
+
+  useEffect(() => {
+    if (!profile) {
+      setPhotoPreview(null);
+      return;
+    }
+    const photo = profile.profile_photo;
+    if (!photo) {
+      setPhotoPreview(null);
+      return;
+    }
+    setPhotoPreview(photo);
+    if (photo.includes('/files/access?') && photo.includes('signature=')) {
+      try {
+        const parsed = new URL(photo);
+        const relativePath = parsed.searchParams.get('path');
+        if (relativePath) {
+          form.setValue('profile_photo', relativePath, { shouldDirty: false });
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+  }, [profile, form]);
+
+  const handlePhotoChange = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      setPhotoError(null);
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+        setPhotoError('Only JPEG, PNG, and WEBP images are allowed');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setPhotoError('File size must be less than 5MB');
+        return;
+      }
+      try {
+        const { relativePath, signedUrl } = await recruiterApi.uploadProfilePhoto(file);
+        form.setValue('profile_photo', relativePath, { shouldDirty: true });
+        setPhotoPreview(signedUrl);
+      } catch (err) {
+        setPhotoError(getApiErrorMessage(err, 'Failed to upload photo'));
+      }
+    },
+    [form],
+  );
+
+  const handlePhotoClear = useCallback(() => {
+    form.setValue('profile_photo', '', { shouldDirty: true });
+    setPhotoPreview(null);
+    setPhotoError(null);
+  }, [form]);
 
   const scrollTo = useCallback((id: string) => {
     const el = document.getElementById(id);
@@ -352,7 +410,7 @@ export function EditForm({ profile, onSaved, onCancel }: EditFormProps) {
     role: roleDone,
   };
 
-  const totalFields = 6;
+  const totalFields = 7;
   let filledFields = 0;
   if (watched.company_name) filledFields++;
   if (watched.company_website) filledFields++;
@@ -360,6 +418,7 @@ export function EditForm({ profile, onSaved, onCancel }: EditFormProps) {
   if (watched.company_size) filledFields++;
   if (watched.industry) filledFields++;
   if (watched.position) filledFields++;
+  if (watched.profile_photo) filledFields++;
   const completeness = Math.round((filledFields / totalFields) * 100);
 
   return (
@@ -439,6 +498,53 @@ export function EditForm({ profile, onSaved, onCancel }: EditFormProps) {
 
           <Form {...form}>
             <form onSubmit={onSubmit} className="space-y-3">
+              {/* PROFILE PHOTO */}
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <div className="w-16 h-16 rounded-xl bg-surface-secondary flex items-center justify-center text-xl font-bold text-text-muted border border-border shrink-0 overflow-hidden">
+                    {photoPreview ? (
+                      <img src={photoPreview} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <span>
+                        {(form.getValues("company_name") || "C")
+                          .split(" ")
+                          .map((w) => w[0])
+                          .slice(0, 2)
+                          .join("")
+                          .toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    ref={photoInputRef}
+                    onChange={handlePhotoChange}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => photoInputRef.current?.click()}
+                    className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full bg-brand grid place-items-center shadow-md ring-4 ring-card"
+                  >
+                    <Camera className="h-3.5 w-3.5 text-white" />
+                  </button>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs text-text-secondary">Tap the camera to update your photo.</span>
+                  {photoPreview && (
+                    <button
+                      type="button"
+                      onClick={handlePhotoClear}
+                      className="text-xs text-left text-destructive"
+                    >
+                      Remove
+                    </button>
+                  )}
+                  {photoError && <p className="text-xs text-destructive">{photoError}</p>}
+                </div>
+              </div>
+
               {/* COMPANY INFO */}
               <FormSection
                 id="company"

@@ -66,8 +66,12 @@ export function RecruiterCard({ profile, sample, onEdit }: RecruiterCardProps) {
         )}
 
         <div className="flex items-start gap-4">
-          <div className="w-16 h-16 rounded-xl bg-surface-secondary flex items-center justify-center text-xl font-bold text-text-muted border border-border shrink-0">
-            {initials}
+          <div className="w-16 h-16 rounded-xl bg-surface-secondary flex items-center justify-center text-xl font-bold text-text-muted border border-border shrink-0 overflow-hidden">
+            {data.profile_photo ? (
+              <img src={data.profile_photo} alt={data.company_name || "Company"} className="w-full h-full object-cover" />
+            ) : (
+              initials
+            )}
           </div>
 
           <div className="flex-1 min-w-0">

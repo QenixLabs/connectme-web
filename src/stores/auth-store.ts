@@ -1,6 +1,7 @@
 import { createStore } from 'zustand/vanilla';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { authApi } from '@/lib/api';
+import { tokenStorage } from '@/lib/token-storage';
 
 export interface User {
   _id: string;
@@ -12,12 +13,15 @@ export interface User {
   verification_tier: number;
   trust_score: number;
   status: string;
+  active_plan?: string;
+  subscription_status?: string;
   created_at: string;
   updated_at: string;
 }
 
 export interface AuthState {
   user: User | null;
+  accessToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
@@ -25,6 +29,7 @@ export interface AuthState {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   fetchUser: () => Promise<void>;
+  setAccessToken: (token: string | null) => void;
   clearError: () => void;
   setHasHydrated: (v: boolean) => void;
 }
@@ -45,6 +50,7 @@ export const authStore = createStore<AuthState>()(
   persist(
     (set) => ({
       user: null,
+      accessToken: null,
       isAuthenticated: false,
       isLoading: false,
       error: null,
@@ -53,11 +59,12 @@ export const authStore = createStore<AuthState>()(
       login: async (email: string, password: string) => {
         set({ isLoading: true, error: null });
         try {
-          await authApi.login(email, password);
+          const { access_token } = await authApi.login(email, password);
           const { user } = await authApi.getCurrentUser();
           setCookie('auth_session', '1', 7);
           setCookie('user_role', user.role, 7);
-          set({ user, isAuthenticated: true, isLoading: false });
+          tokenStorage.setToken(access_token);
+          set({ user, accessToken: access_token, isAuthenticated: true, isLoading: false });
         } catch (error: unknown) {
           const err = error as { response?: { data?: { message?: string } } };
           const message = err.response?.data?.message || 'Login failed';
@@ -72,7 +79,8 @@ export const authStore = createStore<AuthState>()(
         } catch {}
         deleteCookie('auth_session');
         deleteCookie('user_role');
-        set({ user: null, isAuthenticated: false, isLoading: false });
+        tokenStorage.setToken(null);
+        set({ user: null, accessToken: null, isAuthenticated: false, isLoading: false });
       },
 
       fetchUser: async () => {
@@ -85,10 +93,15 @@ export const authStore = createStore<AuthState>()(
         } catch (error) {
           deleteCookie('auth_session');
           deleteCookie('user_role');
-          set({ user: null, isAuthenticated: false, isLoading: false });
+          tokenStorage.setToken(null);
+          set({ user: null, accessToken: null, isAuthenticated: false, isLoading: false });
         }
       },
 
+      setAccessToken: (token: string | null) => {
+        tokenStorage.setToken(token);
+        set({ accessToken: token });
+      },
       clearError: () => set({ error: null }),
       setHasHydrated: (v: boolean) => set({ hasHydrated: v }),
     }),
@@ -97,10 +110,14 @@ export const authStore = createStore<AuthState>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         user: state.user,
+        accessToken: state.accessToken,
         isAuthenticated: state.isAuthenticated,
       }),
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated?.(true);
+        if (state?.accessToken) {
+          tokenStorage.setToken(state.accessToken);
+        }
       },
     },
   ),

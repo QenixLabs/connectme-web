@@ -52,6 +52,7 @@ export function SafetyMenu({
   const { show } = usePopup();
 
   const handleReport = async () => {
+    if (!otherUserId) return;
     if (!reportReason) return;
     if (!consentChecked) {
       setShowConsentHint(true);
@@ -79,6 +80,7 @@ export function SafetyMenu({
   };
 
   const handleBlock = async () => {
+    if (!otherUserId) return;
     setIsSubmitting(true);
     try {
       await messagesApi.blockUser(otherUserId);
@@ -120,11 +122,12 @@ export function SafetyMenu({
             </div>
 
             <button
+              disabled={!otherUserId}
               onClick={() => {
                 setMenuOpen(false);
                 setReportOpen(true);
               }}
-              className="w-full flex items-center justify-between p-3 rounded-xl bg-card border border-border hover:bg-muted transition-colors"
+              className="w-full flex items-center justify-between p-3 rounded-xl bg-card border border-border hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center">
@@ -136,11 +139,12 @@ export function SafetyMenu({
             </button>
 
             <button
+              disabled={!otherUserId}
               onClick={() => {
                 setMenuOpen(false);
                 setBlockOpen(true);
               }}
-              className="w-full flex items-center justify-between p-3 rounded-xl bg-card border border-border hover:bg-muted transition-colors"
+              className="w-full flex items-center justify-between p-3 rounded-xl bg-card border border-border hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center">

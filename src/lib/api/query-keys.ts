@@ -37,4 +37,7 @@ export const queryKeys = {
   messages: {
     unreadCount: () => ['messages', 'unread-count'] as const,
   },
+  subscriptions: {
+    me: () => ['subscriptions', 'me'] as const,
+  },
 };

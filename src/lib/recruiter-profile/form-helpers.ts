@@ -10,6 +10,7 @@ export const DEFAULT_VALUES: UpdateRecruiterProfileInput = {
   company_size: '',
   industry: '',
   position: '',
+  profile_photo: '',
 };
 
 export function hydrateFromServer(profile: RecruiterProfile): UpdateRecruiterProfileInput {
@@ -20,6 +21,7 @@ export function hydrateFromServer(profile: RecruiterProfile): UpdateRecruiterPro
     company_size: profile.company_size ?? '',
     industry: profile.industry ?? '',
     position: profile.position ?? '',
+    profile_photo: profile.profile_photo ?? '',
   };
 }
 
@@ -30,6 +32,9 @@ export function buildPayload(values: UpdateRecruiterProfileInput): Record<string
     if (typeof val === 'string' && val !== '') {
       out[key] = val;
     }
+  }
+  if (values.profile_photo !== undefined) {
+    out.profile_photo = values.profile_photo;
   }
   return out;
 }

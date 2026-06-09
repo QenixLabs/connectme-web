@@ -179,7 +179,10 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
 
   useEffect(() => {
     if (existingCampaign) {
-      form.reset(mapCampaignToDefaults(existingCampaign));
+      const timer = setTimeout(() => {
+        form.reset(mapCampaignToDefaults(existingCampaign));
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [existingCampaign, form]);
 

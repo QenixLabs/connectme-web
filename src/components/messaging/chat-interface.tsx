@@ -109,9 +109,14 @@ export default function ChatInterface({ currentUserId, initialConversationId, in
   const pathname = usePathname();
   const queryClient = useQueryClient();
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [conversationCursor, setConversationCursor] = useState<string | null>(null);
+  const [hasMoreConversations, setHasMoreConversations] = useState(false);
+  const [loadingMoreConversations, setLoadingMoreConversations] = useState(false);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(initialConversationId || null);
   const [showMobileChat, setShowMobileChat] = useState(!!initialConversationId);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [hasMoreMessages, setHasMoreMessages] = useState(false);
+  const [loadingMoreMessages, setLoadingMoreMessages] = useState(false);
   const [inputValue, setInputValue] = useState(initialDraft || "");
   const [loadingConversations, setLoadingConversations] = useState(true);
   const [conversationsError, setConversationsError] = useState<string | null>(null);
@@ -122,6 +127,8 @@ export default function ChatInterface({ currentUserId, initialConversationId, in
   const [blockedUsers, setBlockedUsers] = useState<{ _id: string; blocked_id: { _id: string; email: string; full_legal_name?: string; username?: string; company_name?: string; role?: string }; created_at: string }[]>([]);
   const [loadingBlockedUsers, setLoadingBlockedUsers] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const conversationListRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { socket } = useSocket();
   const initialDraftRef = useRef(initialDraft);
@@ -148,11 +155,13 @@ export default function ChatInterface({ currentUserId, initialConversationId, in
       .getConversations()
       .then((data) => {
         if (cancelled) return;
-        setConversations(data);
-        if (data.length > 0) {
+        setConversations(data.data);
+        setConversationCursor(data.nextCursor);
+        setHasMoreConversations(!!data.nextCursor);
+        if (data.data.length > 0) {
           setSelectedConversationId((prev) => {
             if (prev) return prev;
-            return data[0]._id;
+            return data.data[0]._id;
           });
         }
       })
@@ -185,11 +194,13 @@ export default function ChatInterface({ currentUserId, initialConversationId, in
     if (!selectedConversationId) return;
     setLoadingMessages(true);
     setMessages([]);
+    setHasMoreMessages(false);
     messagesApi
       .getMessages(selectedConversationId)
       .then(async (data) => {
         const ordered = data.reverse();
         setMessages(ordered);
+        setHasMoreMessages(data.length === 20);
 
         // Mark all unread messages as read and clear local unread count
         const unreadFromOthers = ordered.filter(
@@ -289,17 +300,18 @@ export default function ChatInterface({ currentUserId, initialConversationId, in
     };
   }, [socket, currentUserId]);
 
-  // Scroll to bottom on new messages
+  // Scroll to bottom on new messages (skip if user is loading older messages)
   useEffect(() => {
+    if (loadingMoreMessages) return;
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, loadingMoreMessages]);
 
-  // Scroll to bottom when messages finish loading
+  // Scroll to bottom when messages finish initial loading
   useEffect(() => {
-    if (!loadingMessages && messages.length > 0) {
+    if (!loadingMessages && !loadingMoreMessages && messages.length > 0) {
       messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
     }
-  }, [loadingMessages, messages.length]);
+  }, [loadingMessages, loadingMoreMessages, messages.length]);
 
   // Auto-focus input when conversation is selected
   useEffect(() => {
@@ -348,6 +360,84 @@ export default function ChatInterface({ currentUserId, initialConversationId, in
       handleSend();
     }
   };
+
+  const loadMoreMessages = useCallback(async () => {
+    if (!selectedConversationId || loadingMoreMessages || messages.length === 0) return;
+    const container = messagesContainerRef.current;
+    const oldScrollHeight = container?.scrollHeight ?? 0;
+    const oldScrollTop = container?.scrollTop ?? 0;
+    setLoadingMoreMessages(true);
+    try {
+      const oldestMessageId = messages[0]._id;
+      const data = await messagesApi.getMessages(selectedConversationId, oldestMessageId);
+      if (data.length === 0) {
+        setHasMoreMessages(false);
+        return;
+      }
+      const ordered = data.reverse();
+      setMessages((prev) => [...ordered, ...prev]);
+      setHasMoreMessages(data.length === 20);
+      requestAnimationFrame(() => {
+        const newScrollHeight = container?.scrollHeight ?? 0;
+        if (container) {
+          container.scrollTop = newScrollHeight - oldScrollHeight + oldScrollTop;
+        }
+      });
+    } catch {
+      // silently fail
+    } finally {
+      setLoadingMoreMessages(false);
+    }
+  }, [selectedConversationId, loadingMoreMessages, messages]);
+
+  const loadMoreConversations = useCallback(async () => {
+    if (!conversationCursor || loadingMoreConversations) return;
+    setLoadingMoreConversations(true);
+    try {
+      const data = await messagesApi.getConversations(conversationCursor);
+      setConversations((prev) => [...prev, ...data.data]);
+      setConversationCursor(data.nextCursor);
+      setHasMoreConversations(!!data.nextCursor);
+    } catch {
+      // silently fail
+    } finally {
+      setLoadingMoreConversations(false);
+    }
+  }, [conversationCursor, loadingMoreConversations]);
+
+  // Infinite scroll: conversations sidebar
+  useEffect(() => {
+    const el = conversationListRef.current;
+    if (!el) return;
+
+    const handleScroll = () => {
+      if (!hasMoreConversations || loadingMoreConversations) return;
+      const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 50;
+      if (nearBottom) {
+        loadMoreConversations();
+      }
+    };
+
+    el.addEventListener('scroll', handleScroll);
+    return () => el.removeEventListener('scroll', handleScroll);
+  }, [hasMoreConversations, loadingMoreConversations, loadMoreConversations]);
+
+  // Infinite scroll: messages (load older when near top)
+  useEffect(() => {
+    const el = messagesContainerRef.current;
+    if (!el) return;
+
+    const handleScroll = () => {
+      if (!hasMoreMessages || loadingMoreMessages) return;
+      const nearTop = el.scrollTop < 50;
+      if (nearTop) {
+        loadMoreMessages();
+      }
+    };
+
+    el.addEventListener('scroll', handleScroll);
+    return () => el.removeEventListener('scroll', handleScroll);
+  }, [hasMoreMessages, loadingMoreMessages, loadMoreMessages]);
 
   const loadBlockedUsers = useCallback(async () => {
     setLoadingBlockedUsers(true);
@@ -438,7 +528,7 @@ export default function ChatInterface({ currentUserId, initialConversationId, in
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
+        <div ref={conversationListRef} className="flex-1 overflow-y-auto">
           {conversations.map((conversation) => {
             const other = getOtherParticipant(conversation, currentUserId);
             const otherIdLocal = other?._id || getOtherParticipantId(conversation, currentUserId);
@@ -506,6 +596,11 @@ export default function ChatInterface({ currentUserId, initialConversationId, in
               </button>
             );
           })}
+          {hasMoreConversations && (
+            <div className="w-full py-2.5 text-xs font-medium text-muted-foreground text-center">
+              {loadingMoreConversations ? "Loading..." : ""}
+            </div>
+          )}
         </div>
       </div>
 
@@ -564,6 +659,7 @@ export default function ChatInterface({ currentUserId, initialConversationId, in
 
             {/* Messages */}
             <div
+              ref={messagesContainerRef}
               className="flex-1 overflow-y-auto space-y-1"
               style={{
                 backgroundColor: '#f8fafc',
@@ -579,6 +675,11 @@ export default function ChatInterface({ currentUserId, initialConversationId, in
                 </div>
               ) : (
                 <>
+                  {hasMoreMessages && (
+                    <div className="w-full py-2 text-xs font-medium text-muted-foreground text-center">
+                      {loadingMoreMessages ? "Loading..." : ""}
+                    </div>
+                  )}
                   {messages.map((msg, index) => {
                     const isOwn = String(msg.sender_id._id) === currentUserId;
                     const showDate =

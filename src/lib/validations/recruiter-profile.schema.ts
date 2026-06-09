@@ -7,6 +7,7 @@ export const updateRecruiterProfileSchema = z.object({
   company_size: z.string().max(50).optional().or(z.literal('')),
   industry: z.string().max(80).optional().or(z.literal('')),
   position: z.string().max(100, 'Position must be 100 characters or fewer').optional().or(z.literal('')),
+  profile_photo: z.string().optional(),
 });
 
 export type UpdateRecruiterProfileInput = z.infer<typeof updateRecruiterProfileSchema>;
@@ -17,6 +18,7 @@ export type RecruiterProfile = UpdateRecruiterProfileInput & {
   company_email_domain?: string;
   verification_status?: string;
   subscription_tier?: string;
+  profile_photo?: string;
   created_at?: string;
   updated_at?: string;
 };

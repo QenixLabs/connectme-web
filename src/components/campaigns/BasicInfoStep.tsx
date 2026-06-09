@@ -196,7 +196,7 @@ export function BasicInfoStep({ mediaFile, onMediaChange, existingBanner }: Basi
           render={({ field }) => (
             <FormItem className="flex flex-col gap-1">
               <FieldLabel required>Role type</FieldLabel>
-              <Select value={field.value} onValueChange={field.onChange}>
+              <Select value={field.value ?? ''} onValueChange={field.onChange}>
                 <FormControl>
                   <SelectTrigger className="text-sm h-9 px-2.5">
                     <SelectValue placeholder="Select" />
@@ -218,7 +218,7 @@ export function BasicInfoStep({ mediaFile, onMediaChange, existingBanner }: Basi
           render={({ field }) => (
             <FormItem className="flex flex-col gap-1">
               <FieldLabel required>Industry</FieldLabel>
-              <Select value={field.value} onValueChange={field.onChange}>
+              <Select value={field.value ?? ''} onValueChange={field.onChange}>
                 <FormControl>
                   <SelectTrigger className="text-sm h-9 px-2.5">
                     <SelectValue placeholder="Select" />
@@ -245,7 +245,7 @@ export function BasicInfoStep({ mediaFile, onMediaChange, existingBanner }: Basi
             <FormItem className="flex flex-col gap-1">
               <FieldLabel required>State</FieldLabel>
               <Select
-                value={field.value}
+                value={field.value ?? ''}
                 onValueChange={(v) => {
                   field.onChange(v);
                   if (selectedCity && !getCitiesForState(v).includes(selectedCity)) {
@@ -275,7 +275,7 @@ export function BasicInfoStep({ mediaFile, onMediaChange, existingBanner }: Basi
             <FormItem className="flex flex-col gap-1">
               <FieldLabel required>City</FieldLabel>
               <Select
-                value={field.value}
+                value={field.value ?? ''}
                 onValueChange={field.onChange}
                 disabled={!selectedState}
               >

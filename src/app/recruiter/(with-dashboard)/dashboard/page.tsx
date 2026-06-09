@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Check } from "lucide-react";
+import { useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { getGreeting } from "@/lib/greeting";
 import {
@@ -15,11 +15,19 @@ import { VerifiedBadge } from "@/components/ui/verified-badge";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TalentGridCard } from "@/components/talent-grid-card";
+import { SubscriptionStatus } from "@/components/subscription/SubscriptionStatus";
 
 export default function RecruiterDashboardPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuthStore();
   const greeting = getGreeting();
+
+  useEffect(() => {
+    if (searchParams.get("upgraded") === "true") {
+      toast.success("You're now on a new plan!");
+    }
+  }, [searchParams]);
 
   const { data: profile } = useRecruiterProfile();
   const { data: stats, isLoading: statsLoading } = useRecruiterDashboardStats();
@@ -42,6 +50,8 @@ export default function RecruiterDashboardPage() {
           </div>
         )}
       </div>
+
+      <SubscriptionStatus />
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
@@ -95,7 +105,7 @@ export default function RecruiterDashboardPage() {
                   ...talent,
                   is_verified: true,
                 }}
-                onViewProfile={() => router.push(`/talent/${talent.username}`)}
+                onViewProfile={() => router.push("/talent/" + talent.username)}
               />
             ))}
           </div>

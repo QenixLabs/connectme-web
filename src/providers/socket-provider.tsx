@@ -25,9 +25,10 @@ export function SocketProvider({ children }: { children: ReactNode }) {
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const accessToken = useAuthStore((state) => state.accessToken);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !accessToken) {
       if (socketRef.current) {
         socketRef.current.disconnect();
         socketRef.current = null;
@@ -43,6 +44,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     const newSocket = io(wsUrl, {
       withCredentials: true,
       transports: ["websocket", "polling"],
+      auth: { token: accessToken },
     });
 
     newSocket.on("connect", () => setIsConnected(true));
@@ -55,7 +57,7 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       socketRef.current = null;
       setIsConnected(false);
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, accessToken]);
 
   return (
     <SocketContext.Provider value={{ socket: socketRef.current, isConnected }}>

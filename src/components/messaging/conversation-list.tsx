@@ -36,6 +36,9 @@ export function ConversationList({
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [blockedUsersOpen, setBlockedUsersOpen] = useState(false);
   const [blockedUsers, setBlockedUsers] = useState<
     {
@@ -59,7 +62,9 @@ export function ConversationList({
       .getConversations()
       .then((data) => {
         if (cancelled) return;
-        setConversations(data);
+        setConversations(data.data);
+        setCursor(data.nextCursor);
+        setHasMore(!!data.nextCursor);
       })
       .catch((err) => {
         if (!cancelled) setError(getApiErrorMessage(err, "Failed to load conversations"));
@@ -71,6 +76,21 @@ export function ConversationList({
       cancelled = true;
     };
   }, []);
+
+  const loadMore = useCallback(async () => {
+    if (!cursor || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const data = await messagesApi.getConversations(cursor);
+      setConversations((prev) => [...prev, ...data.data]);
+      setCursor(data.nextCursor);
+      setHasMore(!!data.nextCursor);
+    } catch {
+      // silently fail
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [cursor, loadingMore]);
 
   useEffect(() => {
     if (!socket) return;
@@ -200,16 +220,27 @@ export function ConversationList({
         {conversations.length === 0 ? (
           <EmptyListState error={error} findPeopleUrl={findPeopleUrl} />
         ) : (
-          conversations.map((conversation, index) => (
-            <ConversationCard
-              key={conversation._id}
-              conversation={conversation}
-              currentUserId={currentUserId}
-              isActive={false}
-              index={index}
-              role={role}
-            />
-          ))
+          <>
+            {conversations.map((conversation, index) => (
+              <ConversationCard
+                key={conversation._id}
+                conversation={conversation}
+                currentUserId={currentUserId}
+                isActive={false}
+                index={index}
+                role={role}
+              />
+            ))}
+            {hasMore && (
+              <button
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="w-full py-2.5 text-xs font-medium text-msg-ink-muted hover:text-msg-ink transition-colors disabled:opacity-50"
+              >
+                {loadingMore ? "Loading..." : "Load more"}
+              </button>
+            )}
+          </>
         )}
       </div>
 

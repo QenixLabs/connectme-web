@@ -68,4 +68,9 @@ export const authApi = {
     const response = await apiClient.post('/auth/verify-phone-otp', { phone, otp });
     return response.data;
   },
+
+  refreshToken: async () => {
+    const response = await apiClient.post('/auth/refresh');
+    return response.data as { access_token: string };
+  },
 };
