@@ -4,7 +4,6 @@ import { PopupProvider } from "@/providers/popup-provider";
 import { SocketProvider } from "@/providers/socket-provider";
 import { AuthStoreProvider } from "@/providers/auth-store-provider";
 import { QueryProvider } from "@/providers/query-provider";
-import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -45,7 +44,6 @@ export default function RootLayout({
             <QueryProvider>
               {children}
               <PopupProvider />
-              <Toaster position="top-right" />
             </QueryProvider>
           </SocketProvider>
         </AuthStoreProvider>

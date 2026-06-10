@@ -1,9 +1,12 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Check, Loader2 } from "lucide-react";
+import { Check } from "lucide-react";
+import { usePopup } from "@/hooks/use-popup";
 import { plansApi, type PlanConfig } from "@/lib/api";
 import { subscriptionsApi } from "@/lib/api";
+import { queryKeys } from "@/lib/api/query-keys";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,55 +20,77 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 
+const SKELETON_CARDS = [1, 2, 3];
+const SKELETON_FEATURES = [1, 2, 3, 4];
+
 export default function PricingPage() {
+  const router = useRouter();
+  const popup = usePopup();
   const { user, isAuthenticated } = useAuthStore();
   const isRecruiter = user?.role === "recruiter";
+  const isTalent = user?.role === "talent";
   const currentPlanKey = user?.active_plan;
 
   const {
     data: plans,
     isLoading: plansLoading,
     error: plansError,
+    refetch: refetchPlans,
   } = useQuery<PlanConfig[]>({
-    queryKey: ["plans", "public"],
+    queryKey: queryKeys.plans.public(),
     queryFn: plansApi.getPlans,
   });
 
-  const {
-    data: subscriptionData,
-    isLoading: subLoading,
-  } = useQuery({
-    queryKey: ["subscriptions", "me"],
-    queryFn: subscriptionsApi.getMySubscription,
-    enabled: isAuthenticated && isRecruiter,
+  const filteredPlans = plans?.filter((plan) => {
+    if (isTalent) return plan.key.startsWith("talent_");
+    if (isRecruiter) return plan.key.startsWith("recruiter_");
+    return true;
   });
 
   const handleUpgrade = async (planKey: string) => {
     try {
       const result = await subscriptionsApi.initiateUpgrade(planKey);
       if (result.shortUrl) {
-        window.location.href = result.shortUrl;
+        router.push(result.shortUrl);
       }
     } catch (err: unknown) {
       const message =
         (err as { response?: { data?: { message?: string } } })?.response?.data
           ?.message || "Failed to initiate upgrade";
-      alert(message);
+      popup.show({ title: message, variant: "error" });
     }
   };
 
   const getCta = (plan: PlanConfig) => {
     if (!isAuthenticated) {
+      const signupPath = plan.key.startsWith("talent_")
+        ? "/auth/talent/signup"
+        : "/auth/recruiter/signup";
       return (
-        <Button className="w-full" onClick={() => window.location.href = "/auth/recruiter/signup"}>
+        <Button
+          className="w-full"
+          onClick={() => router.push(signupPath)}
+          aria-label={`Get started with ${plan.display_name} plan`}
+        >
           Get Started
         </Button>
       );
     }
 
-    if (!isRecruiter) {
+    const isTalentPlan = plan.key.startsWith("talent_");
+    const isRecruiterPlan = plan.key.startsWith("recruiter_");
+
+    if (isTalent && !isTalentPlan) {
       return (
-        <Button className="w-full" disabled>
+        <Button className="w-full" disabled aria-label="Talents only">
+          Talents only
+        </Button>
+      );
+    }
+
+    if (isRecruiter && !isRecruiterPlan) {
+      return (
+        <Button className="w-full" disabled aria-label="Recruiters only">
           Recruiters only
         </Button>
       );
@@ -73,22 +98,18 @@ export default function PricingPage() {
 
     if (currentPlanKey === plan.key) {
       return (
-        <Button className="w-full" disabled variant="secondary">
-          Current Plan
-        </Button>
-      );
-    }
-
-    if (plan.key === "recruiter_free") {
-      return (
-        <Button className="w-full" disabled variant="secondary">
+        <Button className="w-full" disabled variant="secondary" aria-label="Current plan">
           Current Plan
         </Button>
       );
     }
 
     return (
-      <Button className="w-full" onClick={() => handleUpgrade(plan.key)}>
+      <Button
+        className="w-full"
+        onClick={() => handleUpgrade(plan.key)}
+        aria-label={`Upgrade to ${plan.display_name} plan`}
+      >
         Upgrade
       </Button>
     );
@@ -108,14 +129,14 @@ export default function PricingPage() {
 
         {plansLoading && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
+            {SKELETON_CARDS.map((i) => (
               <Card key={i} className="flex flex-col">
                 <CardHeader>
                   <Skeleton className="h-5 w-24" />
                   <Skeleton className="h-8 w-20 mt-2" />
                 </CardHeader>
                 <CardContent className="flex-1 space-y-3">
-                  {[1, 2, 3, 4].map((j) => (
+                  {SKELETON_FEATURES.map((j) => (
                     <Skeleton key={j} className="h-4 w-full" />
                   ))}
                 </CardContent>
@@ -128,15 +149,16 @@ export default function PricingPage() {
         )}
 
         {plansError && (
-          <div className="text-center text-destructive">
-            Failed to load plans. Please try again later.
+          <div className="text-center space-y-3">
+            <p className="text-destructive">Failed to load plans. Please try again later.</p>
+            <Button variant="outline" onClick={() => refetchPlans()}>Retry</Button>
           </div>
         )}
 
-        {plans && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {plans.map((plan) => {
-              const isPopular = plan.key === "recruiter_pro";
+        {filteredPlans && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6" role="list">
+            {filteredPlans.map((plan) => {
+              const isPopular = plan.key === "recruiter_pro" || plan.key === "talent_verified";
               const priceDisplay = plan.price === 0
                 ? "Free"
                 : `₹${(plan.price / 100).toLocaleString("en-IN")}/mo`;
@@ -145,6 +167,7 @@ export default function PricingPage() {
                 <Card
                   key={plan.key}
                   className={`flex flex-col relative ${isPopular ? "border-amber-400 ring-1 ring-amber-400" : ""}`}
+                  role="listitem"
                 >
                   {isPopular && (
                     <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-amber-500 text-white border-0">

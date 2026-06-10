@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { usePopup } from "@/hooks/use-popup";
+import { Loader2, AlertCircle, CheckCircle2, RefreshCcw } from "lucide-react";
 import { subscriptionsApi, type SubscriptionWithPlan } from "@/lib/api";
 import { queryKeys } from "@/lib/api/query-keys";
+import { authStore } from "@/stores/auth-store";
 import {
   Card,
   CardContent,
@@ -25,16 +27,43 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
+const PLAN_BADGE_STYLES: Record<string, string> = {
+  recruiter_pro: "bg-amber-100 text-amber-800 border-amber-200",
+  recruiter_business: "bg-yellow-100 text-yellow-800 border-yellow-200",
+  talent_verified: "bg-blue-100 text-blue-800 border-blue-200",
+};
+
+const STATUS_BADGE_STYLES: Record<string, string> = {
+  active: "bg-green-100 text-green-800 border-green-200",
+  trialing: "bg-green-100 text-green-800 border-green-200",
+  past_due: "bg-red-100 text-red-800 border-red-200",
+  cancelled: "bg-gray-100 text-gray-800 border-gray-200",
+  expired: "bg-gray-100 text-gray-800 border-gray-200",
+  paused: "bg-orange-100 text-orange-800 border-orange-200",
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  active: "Active",
+  trialing: "Trialing",
+  past_due: "Past Due",
+  cancelled: "Cancelled",
+  expired: "Expired",
+  paused: "Paused",
+};
+
+const CANCELLATION_REASONS = [
+  { value: "too_expensive", label: "Too expensive" },
+  { value: "missing_features", label: "Missing features" },
+  { value: "not_using", label: "Not using enough" },
+  { value: "other", label: "Other" },
+];
+
 function planBadgeColor(planKey: string | undefined) {
-  if (planKey === "recruiter_pro") return "bg-amber-100 text-amber-800 border-amber-200";
-  if (planKey === "recruiter_business") return "bg-yellow-100 text-yellow-800 border-yellow-200";
-  return "bg-gray-100 text-gray-800 border-gray-200";
+  return PLAN_BADGE_STYLES[planKey || ""] || "bg-gray-100 text-gray-800 border-gray-200";
 }
 
 function statusBadgeColor(status: string | undefined) {
-  if (status === "active" || status === "trialing") return "bg-green-100 text-green-800 border-green-200";
-  if (status === "past_due") return "bg-red-100 text-red-800 border-red-200";
-  return "bg-gray-100 text-gray-800 border-gray-200";
+  return STATUS_BADGE_STYLES[status || ""] || "bg-gray-100 text-gray-800 border-gray-200";
 }
 
 function formatDate(dateStr: string | undefined | null) {
@@ -44,30 +73,36 @@ function formatDate(dateStr: string | undefined | null) {
 }
 
 export function SubscriptionStatus() {
+  const router = useRouter();
   const queryClient = useQueryClient();
+  const popup = usePopup();
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
 
   const {
     data,
     isLoading,
     error,
+    refetch,
   } = useQuery<SubscriptionWithPlan>({
     queryKey: queryKeys.subscriptions.me(),
     queryFn: subscriptionsApi.getMySubscription,
   });
 
   const cancelMutation = useMutation({
-    mutationFn: subscriptionsApi.cancelSubscription,
+    mutationFn: (reason?: string) => subscriptionsApi.cancelSubscription(reason),
     onSuccess: () => {
-      toast.success("Plan will cancel at end of billing period");
+      popup.show({ title: "Plan will cancel at end of billing period", variant: "success" });
       queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.me() });
+      authStore.getState().fetchUser().catch(() => {});
       setConfirmOpen(false);
+      setCancelReason("");
     },
     onError: (err: unknown) => {
       const message =
         (err as { response?: { data?: { message?: string } } })?.response?.data
           ?.message || "Failed to cancel subscription";
-      toast.error(message);
+      popup.show({ title: message, variant: "error" });
     },
   });
 
@@ -92,6 +127,9 @@ export function SubscriptionStatus() {
         <CardContent className="pt-6 flex items-center gap-2 text-destructive">
           <AlertCircle className="w-4 h-4" />
           <span>Failed to load subscription status</span>
+          <Button variant="ghost" size="sm" onClick={() => refetch()} aria-label="Retry loading subscription">
+            <RefreshCcw className="w-4 h-4" />
+          </Button>
         </CardContent>
       </Card>
     );
@@ -99,8 +137,10 @@ export function SubscriptionStatus() {
 
   const subscription = data?.subscription;
   const plan = data?.plan;
-  const isFree = subscription?.plan_key === "recruiter_free";
+  const isFree = subscription?.plan_key === "recruiter_free" || !subscription?.plan_key;
   const isCancelled = subscription?.status === "cancelled" || subscription?.status === "expired";
+  const isPastDue = subscription?.status === "past_due";
+  const isExpired = subscription?.status === "expired";
   const showRenewal = !isFree && !isCancelled && subscription?.current_period_end;
 
   return (
@@ -119,11 +159,7 @@ export function SubscriptionStatus() {
         {subscription && (
           <div className="flex items-center gap-2">
             <Badge variant="outline" className={statusBadgeColor(subscription.status)}>
-              {subscription.status === "active" ? "Active" :
-                subscription.status === "trialing" ? "Trialing" :
-                subscription.status === "past_due" ? "Past Due" :
-                subscription.status === "cancelled" ? "Cancelled" :
-                subscription.status === "expired" ? "Expired" : subscription.status}
+              {STATUS_LABELS[subscription.status] || subscription.status}
             </Badge>
             {subscription.cancel_at_period_end && (
               <span className="text-xs text-muted-foreground">Cancels at period end</span>
@@ -138,15 +174,30 @@ export function SubscriptionStatus() {
         )}
 
         {isFree && (
-          <Button size="sm" onClick={() => window.location.href = "/pricing"}>
+          <Button size="sm" onClick={() => router.push("/pricing")} aria-label="Upgrade subscription">
             Upgrade
+          </Button>
+        )}
+
+        {isPastDue && (
+          <div className="space-y-2">
+            <p className="text-sm text-destructive">Your payment method failed. Please update it to keep your plan active.</p>
+            <Button size="sm" variant="outline" onClick={() => router.push("/pricing")} aria-label="Update payment method">
+              Update payment
+            </Button>
+          </div>
+        )}
+
+        {isExpired && (
+          <Button size="sm" variant="outline" onClick={() => router.push("/pricing")} aria-label="Resubscribe">
+            Resubscribe
           </Button>
         )}
 
         {!isFree && !isCancelled && !subscription?.cancel_at_period_end && (
           <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
             <DialogTrigger asChild>
-              <Button size="sm" variant="outline">
+              <Button size="sm" variant="outline" aria-label="Cancel subscription">
                 Cancel plan
               </Button>
             </DialogTrigger>
@@ -154,16 +205,34 @@ export function SubscriptionStatus() {
               <DialogHeader>
                 <DialogTitle>Cancel subscription?</DialogTitle>
                 <DialogDescription>
-                  Your plan will remain active until the end of the current billing period, then revert to Free.
+                  Your plan will remain active until the end of the current billing period.
                 </DialogDescription>
               </DialogHeader>
+              <div className="space-y-3 py-2">
+                <p className="text-sm font-medium">Why are you cancelling?</p>
+                <div className="space-y-2">
+                  {CANCELLATION_REASONS.map((r) => (
+                    <label key={r.value} className="flex items-center gap-2 text-sm cursor-pointer">
+                      <input
+                        type="radio"
+                        name="cancelReason"
+                        value={r.value}
+                        checked={cancelReason === r.value}
+                        onChange={(e) => setCancelReason(e.target.value)}
+                        className="accent-primary"
+                      />
+                      {r.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
               <DialogFooter className="gap-2">
-                <Button variant="ghost" onClick={() => setConfirmOpen(false)}>
+                <Button variant="ghost" onClick={() => { setConfirmOpen(false); setCancelReason(""); }}>
                   Keep plan
                 </Button>
                 <Button
                   variant="destructive"
-                  onClick={() => cancelMutation.mutate()}
+                  onClick={() => cancelMutation.mutate(cancelReason || undefined)}
                   disabled={cancelMutation.isPending}
                 >
                   {cancelMutation.isPending && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}

@@ -9,7 +9,10 @@ export { verificationApi, type VerificationRecord, type VerificationDocResponse,
 export { adminApi, type DashboardStats, type PendingVerificationItem, type ReportItem, type PaginatedReports, type ReportDetail, type MessageContextItem, type UserHistory, type AdminUser, type PaginatedUsers, type UserDetail, type AdminNote, type UserActivity, type PaginatedModerationActions, type AppealItem, type PaginatedAppeals, type AuditLogItem, type PaginatedAuditLogs } from './admin';
 export { plansApi, type PlanConfig } from './plans';
 export { appealsApi, type Appeal } from './appeals';
-export { subscriptionsApi, type Subscription, type SubscriptionWithPlan } from './subscriptions';
+export { subscriptionsApi, type Subscription, type SubscriptionWithPlan, type SubscriptionUsage } from './subscriptions';
+export { invoicesApi, type Invoice, type PaginatedInvoices } from './invoices';
+export { useInvoices } from './hooks/useInvoices';
+export { useSubscriptionUsage } from './hooks/useSubscriptionUsage';
 export { useCampaignAnalytics, useCampaignDemographics } from './hooks/useCampaignAnalytics';
 export { useCampaignInvites } from './hooks/useCampaignInvites';
 export { useRecruiterProfile } from './hooks/useRecruiterProfile';

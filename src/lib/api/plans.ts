@@ -1,7 +1,6 @@
 import { apiClient } from './client';
 
 export interface PlanConfig {
-  _id: string;
   key: string;
   display_name: string;
   description: string;
@@ -9,8 +8,6 @@ export interface PlanConfig {
   interval: string;
   features: string[];
   is_active: boolean;
-  created_at: string;
-  updated_at: string;
 }
 
 export interface UpdatePlanInput {

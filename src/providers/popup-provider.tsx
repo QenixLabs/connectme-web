@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import { Toaster, toast } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
+import { toast } from "sonner";
 
 export function PopupProvider() {
   useEffect(() => {

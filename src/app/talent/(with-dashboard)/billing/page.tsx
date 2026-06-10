@@ -6,7 +6,7 @@ import { UsageMeter } from "@/components/subscription/UsageMeter";
 import { SubscriptionStatus } from "@/components/subscription/SubscriptionStatus";
 import { Loader2 } from "lucide-react";
 
-export default function RecruiterBillingPage() {
+export default function TalentBillingPage() {
   const { data: invoices, isLoading: invoicesLoading } = useInvoices();
   const { data: usage, isLoading: usageLoading } = useSubscriptionUsage();
 
@@ -19,10 +19,10 @@ export default function RecruiterBillingPage() {
         <h2 className="text-sm font-semibold">Usage</h2>
         {usageLoading ? (
           <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-        ) : usage?.messages ? (
+        ) : usage?.media ? (
           <div className="space-y-3">
-            <UsageMeter label="Messages" used={usage.messages.used} limit={usage.messages.limit} />
-            <UsageMeter label="Campaigns" used={usage.campaigns.used} limit={usage.campaigns.limit} />
+            <UsageMeter label="Images" used={usage.media.images.used} limit={usage.media.images.limit} />
+            <UsageMeter label="Videos" used={usage.media.videos.used} limit={usage.media.videos.limit} />
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">No usage data available.</p>

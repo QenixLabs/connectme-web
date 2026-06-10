@@ -106,6 +106,12 @@ export function HeroCard({ profile, showLocation = true, showAvailability = true
                 {displayName}
               </h1>
             </div>
+            {profile.active_plan === 'talent_verified' && (
+              <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-gold/15 backdrop-blur-md border border-gold/30 px-2.5 py-1">
+                <BadgeCheck className="h-3.5 w-3.5 text-gold" strokeWidth={2.5} />
+                <span className="text-[11px] font-medium text-gold tracking-wide">Verified</span>
+              </div>
+            )}
             <p className="mt-1 text-[12.5px] text-ink-muted text-center flex items-center justify-center gap-1.5">
               <span className="text-ink-soft font-medium">{professionStr || "Talent"}</span>
               {professionStr && loc && showLocation && <span className="text-ink-muted/60">·</span>}

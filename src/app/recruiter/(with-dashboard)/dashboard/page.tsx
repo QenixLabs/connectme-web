@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { toast } from "sonner";
+import { usePopup } from "@/hooks/use-popup";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { getGreeting } from "@/lib/greeting";
 import {
@@ -20,12 +20,13 @@ import { SubscriptionStatus } from "@/components/subscription/SubscriptionStatus
 export default function RecruiterDashboardPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const popup = usePopup();
   const { user } = useAuthStore();
   const greeting = getGreeting();
 
   useEffect(() => {
     if (searchParams.get("upgraded") === "true") {
-      toast.success("You're now on a new plan!");
+      popup.show({ title: "You're now on a new plan!", variant: "success" });
     }
   }, [searchParams]);
 

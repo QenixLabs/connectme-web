@@ -28,6 +28,7 @@ import { useRecommendedCampaigns } from "@/lib/api/hooks/useCampaigns";
 import type { TalentProfile } from "@/lib/validations/talent-profile.schema";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SubscriptionStatus } from "@/components/subscription/SubscriptionStatus";
 
 /* ------------------------------------------------------------------ */
 /*  OPPORTUNITIES                                                     */
@@ -191,6 +192,9 @@ export default function TalentDashboardPage() {
     <div className="min-h-screen bg-background pb-2">
       <GreetingSection firstName={firstName} greetingText={greetingText} isVerified={isVerified} />
       <StatsGrid stats={stats} />
+      <div className="px-4 mt-4">
+        <SubscriptionStatus />
+      </div>
       <QuickActions profile={profile} />
       <DashboardRecommendations />
       <NextSteps profile={profile} isVerified={isVerified} />

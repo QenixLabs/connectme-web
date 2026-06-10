@@ -141,5 +141,6 @@ export type TalentProfile = UpdateTalentProfileInput & {
   section_visibility?: z.infer<typeof sectionVisibilitySchema>;
   created_at?: string;
   updated_at?: string;
+  active_plan?: string | null;
   __v?: number;
 };
