@@ -41,6 +41,7 @@ export const queryKeys = {
     me: () => ['subscriptions', 'me'] as const,
     invoices: (page: number, limit: number) => ['subscriptions', 'invoices', page, limit] as const,
     usage: () => ['subscriptions', 'usage'] as const,
+    adminAnalytics: () => ['subscriptions', 'admin', 'analytics'] as const,
   },
   plans: {
     public: () => ['plans', 'public'] as const,

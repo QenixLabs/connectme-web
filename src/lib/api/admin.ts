@@ -215,6 +215,19 @@ export interface PaginatedAuditLogs {
   total_pages: number;
 }
 
+export interface SubscriptionAnalytics {
+  active_subscriptions: number;
+  counts_by_status: Record<string, number>;
+  counts_by_plan: Array<{ plan_key: string; display_name: string; count: number }>;
+  mrr_paise: number;
+  mrr_inr: number;
+  total_revenue_paise: number;
+  total_revenue_inr: number;
+  recent_subscriptions: Array<{ date: string; count: number }>;
+  recent_cancellations: Array<{ date: string; count: number }>;
+  cancellation_reasons: Array<{ reason: string; count: number }>;
+}
+
 export interface PaginatedAppeals {
   appeals: AppealItem[];
   total: number;
@@ -391,6 +404,11 @@ export const adminApi = {
 
   updateUserPassword: async (id: string, password: string): Promise<{ message: string }> => {
     const response = await apiClient.post(`/admin/users/${id}/password`, { password });
+    return response.data;
+  },
+
+  getSubscriptionAnalytics: async (): Promise<SubscriptionAnalytics> => {
+    const response = await apiClient.get('/admin/subscriptions/analytics');
     return response.data;
   },
 };

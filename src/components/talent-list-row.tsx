@@ -98,7 +98,7 @@ export function TalentListRow({
             {displayName}
           </h3>
           {profile.is_verified && (
-            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-[#B85C00] shrink-0">
+            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-campaign shrink-0">
               <Check className="w-2.5 h-2.5 text-white" strokeWidth={2.5} />
             </span>
           )}
@@ -165,7 +165,7 @@ export function TalentListRow({
               e.stopPropagation();
               onInvite();
             }}
-            className="h-8 px-3 rounded-lg border border-[#B85C00] bg-[#FFF7F0] text-[#B85C00] text-xs font-medium transition-colors hover:bg-[#FAEEDA]"
+            className="h-8 px-3 rounded-lg border border-campaign bg-campaign-light text-campaign text-xs font-medium transition-colors hover:bg-campaign-soft"
           >
             Invite
           </button>

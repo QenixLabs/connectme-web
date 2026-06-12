@@ -60,10 +60,11 @@ export const authStore = createStore<AuthState>()(
         set({ isLoading: true, error: null });
         try {
           const { access_token } = await authApi.login(email, password);
+          tokenStorage.setToken(access_token);
+          set({ accessToken: access_token });
           const { user } = await authApi.getCurrentUser();
           setCookie('auth_session', '1', 7);
           setCookie('user_role', user.role, 7);
-          tokenStorage.setToken(access_token);
           set({ user, accessToken: access_token, isAuthenticated: true, isLoading: false });
         } catch (error: unknown) {
           const err = error as { response?: { data?: { message?: string } } };

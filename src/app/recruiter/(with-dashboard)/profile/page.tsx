@@ -251,7 +251,7 @@ export default function RecruiterProfilePage() {
       {/* Profile Header Card */}
       <div className="rounded-2xl bg-white border border-slate-100 p-4">
         <div className="flex items-start gap-3">
-          <div className="w-[60px] h-[60px] rounded-full bg-gradient-to-br from-[#c8b99a] to-[#a09070] flex items-center justify-center text-xl font-semibold text-white shrink-0 overflow-hidden">
+          <div className="w-[60px] h-[60px] rounded-full bg-gradient-to-br from-msg-gold to-msg-gold-dark flex items-center justify-center text-xl font-semibold text-white shrink-0 overflow-hidden">
             {initials}
           </div>
           <div className="flex-1 min-w-0">

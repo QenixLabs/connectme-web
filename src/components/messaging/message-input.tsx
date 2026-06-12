@@ -55,7 +55,7 @@ export function MessageInput({
         className={cn(
           "w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-all",
           value.trim()
-            ? "bg-msg-gold text-white hover:bg-[#b08d38] active:scale-95 shadow-sm"
+            ? "bg-msg-gold text-white hover:bg-msg-gold-dark active:scale-95 shadow-sm"
             : "bg-msg-cream text-msg-ink-muted",
         )}
       >

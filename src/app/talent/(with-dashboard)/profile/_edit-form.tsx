@@ -111,17 +111,17 @@ const SECTION_IDS = [
 /* ------------------------------------------------------------------ */
 
 const gold = {
-  primary: "#c8a040",
-  primaryHover: "#a8841e",
-  accent: "#fdf3dc",
-  accentBorder: "#e8c87a",
-  border: "#e0d9ce",
-  muted: "#ede9e0",
-  mutedFg: "#8a7d6b",
-  textSecondary: "#5c5145",
-  foreground: "#1e1a14",
-  background: "#f8f6f2",
-  card: "#ffffff",
+  primary: "var(--color-msg-gold)",
+  primaryHover: "var(--color-gold-hover)",
+  accent: "var(--color-msg-gold-soft)",
+  accentBorder: "var(--color-border-gold)",
+  border: "var(--color-msg-border)",
+  muted: "var(--color-bg-warm)",
+  mutedFg: "var(--color-msg-ink-muted)",
+  textSecondary: "var(--color-msg-ink-soft)",
+  foreground: "var(--color-msg-ink)",
+  background: "var(--color-cream-pale)",
+  card: "var(--color-white)",
 };
 
 /* ------------------------------------------------------------------ */
@@ -348,7 +348,7 @@ function MobileNav({
   return (
     <div
       className="lg:hidden sticky top-[53px] z-30 px-4 py-2 border-b"
-      style={{ background: "rgba(248,246,242,0.95)", backdropFilter: "blur(8px)", borderColor: gold.border }}
+      style={{ background: "var(--color-cream-pale)/95", backdropFilter: "blur(8px)", borderColor: gold.border }}
     >
       <div
         ref={scrollRef}
@@ -403,7 +403,7 @@ function SkillRow({
         placeholder="Skill name"
         {...register(`skills.${idx}.name`)}
         aria-invalid={!!errors.skills?.[idx]?.name}
-        className="flex-1 min-w-0 bg-transparent text-sm font-medium outline-none placeholder:text-[#8a7d6b]"
+        className="flex-1 min-w-0 bg-transparent text-sm font-medium outline-none placeholder:text-msg-ink-muted"
         style={{ color: gold.foreground }}
       />
       <Controller
@@ -411,7 +411,7 @@ function SkillRow({
         name={`skills.${idx}.proficiency`}
         render={({ field }) => (
           <Select onValueChange={field.onChange} value={field.value || ""}>
-            <SelectTrigger className="h-8 w-[120px] text-xs rounded-lg border-[#e0d9ce]">
+            <SelectTrigger className="h-8 w-[120px] text-xs rounded-lg border-msg-border">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -457,7 +457,7 @@ function LanguageRow({
         placeholder="Language name"
         {...register(`languages.${idx}.name`)}
         aria-invalid={!!errors.languages?.[idx]?.name}
-        className="flex-1 min-w-0 bg-transparent text-sm font-medium outline-none placeholder:text-[#8a7d6b]"
+        className="flex-1 min-w-0 bg-transparent text-sm font-medium outline-none placeholder:text-msg-ink-muted"
         style={{ color: gold.foreground }}
       />
       <Controller
@@ -465,7 +465,7 @@ function LanguageRow({
         name={`languages.${idx}.fluency`}
         render={({ field }) => (
           <Select onValueChange={field.onChange} value={field.value || ""}>
-            <SelectTrigger className="h-8 w-[120px] text-xs rounded-lg border-[#e0d9ce]">
+            <SelectTrigger className="h-8 w-[120px] text-xs rounded-lg border-msg-border">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -492,19 +492,19 @@ function LanguageRow({
 function SocialIcon({ platform }: { platform: "instagram" | "youtube" | "linkedin" }) {
   if (platform === "instagram") {
     return (
-      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#fce7f3" }}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="#db2777" strokeWidth="2" className="w-4 h-4">
+      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "var(--color-pink-light)" }}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-pink)" strokeWidth="2" className="w-4 h-4">
           <rect x="2" y="2" width="20" height="20" rx="5" />
           <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-          <circle cx="17.5" cy="6.5" r="1" fill="#db2777" stroke="none" />
+          <circle cx="17.5" cy="6.5" r="1" fill="var(--color-pink)" stroke="none" />
         </svg>
       </div>
     );
   }
   if (platform === "youtube") {
     return (
-      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#fee2e2" }}>
-        <svg viewBox="0 0 24 24" fill="#ef4444" className="w-4 h-4">
+      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "var(--color-red-light)" }}>
+        <svg viewBox="0 0 24 24" fill="var(--color-red)" className="w-4 h-4">
           <path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58A2.78 2.78 0 0 0 3.41 19.54C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z" />
           <polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="white" />
         </svg>
@@ -512,8 +512,8 @@ function SocialIcon({ platform }: { platform: "instagram" | "youtube" | "linkedi
     );
   }
   return (
-    <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#dbeafe" }}>
-      <svg viewBox="0 0 24 24" fill="#2563eb" className="w-4 h-4">
+    <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "var(--color-blue-light)" }}>
+      <svg viewBox="0 0 24 24" fill="var(--color-blue)" className="w-4 h-4">
         <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
         <rect x="2" y="9" width="4" height="12" />
         <circle cx="4" cy="4" r="2" />
@@ -1028,7 +1028,7 @@ export function EditForm({
                         <div
                           className="h-16 w-16 rounded-2xl flex items-center justify-center text-3xl font-bold text-white shrink-0"
                           style={{
-                            background: photoPreview ? undefined : "linear-gradient(135deg,#c8a040,#8b6914)",
+                            background: photoPreview ? undefined : "linear-gradient(135deg, var(--color-msg-gold), var(--color-gold-dark))",
                           }}
                         >
                           {photoPreview ? (
@@ -1733,7 +1733,7 @@ export function EditForm({
                             render={({ field }) => (
                               <FormItem className="shrink-0 mb-0">
                                 <Select onValueChange={(v) => field.onChange(v || undefined)} value={field.value || ""}>
-                                  <SelectTrigger className="h-7 w-[110px] text-[11px] rounded-md border-[#e0d9ce]">
+                                  <SelectTrigger className="h-7 w-[110px] text-[11px] rounded-md border-msg-border">
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
@@ -1805,7 +1805,7 @@ export function EditForm({
             type="submit"
             form="profile-form"
             disabled={mode === "edit" && !isDirty}
-            className="flex-1 h-11 rounded-xl bg-gradient-to-b from-[oklch(0.78_0.13_80)] to-[oklch(0.68_0.13_78)] text-white font-medium text-[13px] flex items-center justify-center gap-2 shadow-[0_8px_24px_-10px_oklch(0.74_0.13_80/0.7)]"
+            className="flex-1 h-11 rounded-xl bg-gradient-to-b from-gold to-gold/80 text-white font-medium text-[13px] flex items-center justify-center gap-2 shadow-[0_8px_24px_-10px_oklch(0.74_0.13_80/0.7)]"
           >
             {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
             <Save className="h-4 w-4" />

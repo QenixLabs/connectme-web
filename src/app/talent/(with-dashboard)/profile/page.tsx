@@ -110,7 +110,7 @@ export default function TalentProfilePage() {
     return (
       <div className="max-w-2xl mx-auto px-4 pt-5 space-y-3">
         {saveSuccess && (
-          <Alert className="border-[#e0d9ce]">
+          <Alert className="border-msg-border">
             <AlertDescription>Profile saved.</AlertDescription>
           </Alert>
         )}
@@ -158,21 +158,21 @@ export default function TalentProfilePage() {
           <div
             className="rounded-2xl p-5 border cursor-pointer"
             style={{
-              background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)",
-              borderColor: "#e8c87a",
+              background: "linear-gradient(135deg, var(--color-brand-light) 0%, var(--color-brand-soft) 100%)",
+              borderColor: "var(--color-border-gold)",
             }}
             onClick={() => router.push("/talent/verify-documents")}
           >
             <div className="flex items-center gap-3">
               <div
                 className="w-10 h-10 rounded-full flex items-center justify-center"
-                style={{ background: "#fdf3dc" }}
+                style={{ background: "var(--color-msg-gold-soft)" }}
               >
-                <Shield className="w-5 h-5" style={{ color: "#c8a040" }} strokeWidth={1.5} />
+                <Shield className="w-5 h-5 text-msg-gold" strokeWidth={1.5} />
               </div>
               <div>
-                <h3 className="text-[15px] font-semibold text-[#1e1a14]">Verify Your Identity</h3>
-                <p className="text-[13px] text-[#8a7d6b]">Build trust with recruiters</p>
+                <h3 className="text-[15px] font-semibold text-msg-ink">Verify Your Identity</h3>
+                <p className="text-[13px] text-msg-ink-muted">Build trust with recruiters</p>
               </div>
             </div>
           </div>

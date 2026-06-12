@@ -18,7 +18,7 @@ export function SkillChips({ skills, showProficiency = false }: SkillChipsProps)
       {skills.map((skill) => (
         <span
           key={skill.name}
-          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13px] font-medium bg-white text-text-secondary border border-border shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
+          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13px] font-medium bg-white text-text-secondary border border-border shadow-[0_1px_2px_black/4]"
         >
           {skill.name}
           {showProficiency && skill.proficiency && (

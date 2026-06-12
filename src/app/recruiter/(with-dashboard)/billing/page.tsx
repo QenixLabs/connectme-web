@@ -19,7 +19,7 @@ export default function RecruiterBillingPage() {
         <h2 className="text-sm font-semibold">Usage</h2>
         {usageLoading ? (
           <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-        ) : usage?.messages ? (
+        ) : usage?.messages && usage?.campaigns ? (
           <div className="space-y-3">
             <UsageMeter label="Messages" used={usage.messages.used} limit={usage.messages.limit} />
             <UsageMeter label="Campaigns" used={usage.campaigns.used} limit={usage.campaigns.limit} />

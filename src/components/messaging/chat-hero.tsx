@@ -28,7 +28,7 @@ export function ChatHero({
       className="relative w-full shrink-0"
       style={{
         background:
-          "linear-gradient(180deg, #f5f3ef 0%, #e8e2d8 50%, #faf9f7 100%)",
+          "linear-gradient(180deg, var(--color-msg-cream) 0%, var(--color-cream-deep) 50%, var(--color-msg-page) 100%)",
       }}
     >
       <div className="max-w-3xl mx-auto px-4 pt-4 pb-5 flex items-center gap-4 animate-in fade-in duration-300"
@@ -46,7 +46,7 @@ export function ChatHero({
             className="rounded-full p-[3px]"
             style={{
               background:
-                "linear-gradient(135deg, #c8a040 0%, #e8c86a 50%, #c8a040 100%)",
+                "linear-gradient(135deg, var(--color-msg-gold) 0%, var(--color-msg-gold-light) 50%, var(--color-msg-gold) 100%)",
             }}
           >
             <UserAvatar

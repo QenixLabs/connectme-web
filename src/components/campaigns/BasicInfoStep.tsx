@@ -47,7 +47,7 @@ function FieldLabel({ children, required }: { children: React.ReactNode; require
   return (
     <label className="text-sm text-text-secondary">
       {children}
-      {required && <span className="text-[#B85C00]"> *</span>}
+      {required && <span className="text-campaign"> *</span>}
     </label>
   );
 }
@@ -87,10 +87,10 @@ function DateBlock({
 
   return (
     <div
-      className="relative bg-muted-bg border border-border rounded-lg px-3 py-2 flex flex-col gap-0.5 cursor-pointer hover:border-[#B85C00]/50 transition-colors"
+      className="relative bg-muted-bg border border-border rounded-lg px-3 py-2 flex flex-col gap-0.5 cursor-pointer hover:border-campaign/50 transition-colors"
       onClick={() => inputRef.current?.showPicker?.() || inputRef.current?.click()}
     >
-      <div className={`text-[10px] text-text-muted uppercase tracking-wide ${required ? "after:content-['_*'] after:text-[#B85C00]" : ''}`}>
+      <div className={`text-[10px] text-text-muted uppercase tracking-wide ${required ? "after:content-['_*'] after:text-campaign" : ''}`}>
         {label}
       </div>
       <div className="text-sm text-text-primary flex items-center gap-1.5">

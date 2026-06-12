@@ -148,6 +148,106 @@
   --color-msg-ink-muted: #8a7f72;
   --color-msg-border: #e0d9ce;
   --shadow-msg-luxe: 0 1px 0 0 #e0d9ce inset, 0 12px 32px -18px rgba(30, 26, 20, 0.18);
+
+  /* Brand Gold extended */
+  --color-gold-hover: #a8841e;
+  --color-gold-dark: #8b6914;
+  --color-gold-light: #b08d38;
+  --color-gold-bright: #e8c86a;
+  --color-gold-warm: #c8a96e;
+  --color-gold-pale: #c8b99a;
+  --color-gold-muted: #a09070;
+
+  /* Cream extended */
+  --color-cream-light: #faf8f4;
+  --color-cream-soft: #f7f4ef;
+  --color-cream-hover: #f5f0e5;
+  --color-cream-muted: #f0ece3;
+  --color-cream-pale: #f8f6f2;
+  --color-cream-deep: #e8e2d8;
+
+  /* Campaign */
+  --color-campaign: #B85C00;
+  --color-campaign-hover: #9A4D00;
+  --color-campaign-light: #FFF7F0;
+  --color-campaign-soft: #FAEEDA;
+  --color-campaign-dark: #633806;
+
+  /* Ink extended */
+  --color-ink-hover: #2a2520;
+  --color-ink-warm: #3d3529;
+  --color-ink-faded: #6b5c3e;
+  --color-ink-pale: #9a8a6a;
+  --color-ink-light: #b8a88a;
+
+  /* Border extended */
+  --color-border-warm: #ddd5c5;
+  --color-border-light: #f0ebe2;
+  --color-border-gold: #e8c87a;
+
+  /* Background tones */
+  --color-bg-warm: #ede9e0;
+
+  /* Platform accents */
+  --color-pink: #db2777;
+  --color-pink-light: #fce7f3;
+  --color-rose: #c2185b;
+  --color-rose-light: #fce4ec;
+  --color-blue: #2563eb;
+  --color-blue-light: #dbeafe;
+  --color-red: #ef4444;
+  --color-red-light: #fee2e2;
+  --color-green: #1a7a3a;
+  --color-green-light: #dcf5e7;
+
+  /* Chart */
+  --color-chart-blue: #4f6ef7;
+  --color-chart-grid: #e5e7eb;
+
+  /* Success extended */
+  --color-success-pale: #b8f0c8;
+  --color-success-dark: #3a7a4a;
+  --color-success-strong: #1a8a4a;
+  --color-success-deep: #157a3f;
+
+  /* Deep darks */
+  --color-ink-deep: #1a160f;
+  --color-ink-deep-hover: #2d2515;
+
+  /* Misc */
+  --color-amber: #BA7517;
+  --color-warm-gray: #c8c4bc;
+  --color-stone: #9e9690;
+
+  /* Banner illustration (recruiter campaigns) */
+  --color-banner-base: #1e293b;
+  --color-banner-dark: #0f172a;
+  --color-banner-building: #334155;
+  --color-banner-beam: #fbbf24;
+  --color-banner-circle1: #f59e0b;
+  --color-banner-circle2: #fbbf24;
+  --color-banner-pillar: #fbbf24;
+
+  /* Opportunity card gradients */
+  --color-opportunity-green-start: #0a2a1f;
+  --color-opportunity-green-end: #0f4a35;
+  --color-opportunity-film-start: #1e1b4b;
+  --color-opportunity-film-end: #312e81;
+  --color-opportunity-fashion-start: #4a044e;
+  --color-opportunity-fashion-end: #86198f;
+  --color-opportunity-tv-start: #1e3a5f;
+  --color-opportunity-tv-end: #1e40af;
+  --color-opportunity-theater-start: #500724;
+  --color-opportunity-theater-end: #9f1239;
+  --color-opportunity-default-start: #1e1e2e;
+  --color-opportunity-default-end: #2d2b55;
+
+  /* Verify documents gradient */
+  --color-verify-start: #fffbeb;
+  --color-verify-mid: #fef3c7;
+
+  /* Messaging gold light (gradient variant) */
+  --color-msg-gold-light: #e8c86a;
 }
 
 body {

@@ -311,15 +311,15 @@ function BannerPlaceholder() {
     <div className="absolute inset-0 bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950">
       <div className="absolute inset-0 opacity-20">
         <svg width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 400 130">
-          <rect width="400" height="130" fill="#1e293b" />
-          <rect x="0" y="70" width="400" height="60" fill="#0f172a" />
-          <rect x="155" y="50" width="65" height="80" fill="#172033" />
-          <line x1="187" y1="52" x2="187" y2="130" stroke="#f59e0b" strokeWidth="2" strokeDasharray="14 8" />
-          <rect x="0" y="46" width="400" height="26" fill="#243447" opacity="0.8" />
-          <circle cx="55" cy="30" r="16" fill="#263d52" />
-          <circle cx="300" cy="22" r="22" fill="#1a3048" />
-          <rect x="16" y="49" width="7" height="22" fill="#2d4760" />
-          <rect x="345" y="43" width="7" height="28" fill="#2d4760" />
+          <rect width="400" height="130" fill="var(--color-banner-base)" />
+          <rect x="0" y="70" width="400" height="60" fill="var(--color-banner-dark)" />
+          <rect x="155" y="50" width="65" height="80" fill="var(--color-banner-building)" />
+          <line x1="187" y1="52" x2="187" y2="130" stroke="var(--color-brand)" strokeWidth="2" strokeDasharray="14 8" />
+          <rect x="0" y="46" width="400" height="26" fill="var(--color-banner-beam)" opacity="0.8" />
+          <circle cx="55" cy="30" r="16" fill="var(--color-banner-circle1)" />
+          <circle cx="300" cy="22" r="22" fill="var(--color-banner-circle2)" />
+          <rect x="16" y="49" width="7" height="22" fill="var(--color-banner-pillar)" />
+          <rect x="345" y="43" width="7" height="28" fill="var(--color-banner-pillar)" />
         </svg>
       </div>
     </div>

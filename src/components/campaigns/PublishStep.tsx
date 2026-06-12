@@ -122,18 +122,18 @@ export function PublishStep() {
                     className={cn(
                       'flex items-center gap-3 p-3 rounded-lg border text-left transition-all cursor-pointer',
                       selected
-                        ? 'border-[#B85C00] bg-[#FFF7F0]'
-                        : 'border-border bg-card hover:border-[#B85C00]/50'
+                        ? 'border-campaign bg-campaign-light'
+                        : 'border-border bg-card hover:border-campaign/50'
                     )}
                   >
                     <div className={cn(
                       'w-8 h-8 rounded-lg flex items-center justify-center shrink-0',
-                      selected ? 'bg-[#B85C00]/10' : 'bg-muted-bg'
+                      selected ? 'bg-campaign/10' : 'bg-muted-bg'
                     )}>
                       <Icon
                         className={cn(
                           'w-4 h-4',
-                          selected ? 'text-[#B85C00]' : 'text-text-muted'
+                          selected ? 'text-campaign' : 'text-text-muted'
                         )}
                         strokeWidth={1.5}
                       />

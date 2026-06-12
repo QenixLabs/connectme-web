@@ -662,8 +662,8 @@ export default function ChatInterface({ currentUserId, initialConversationId, in
               ref={messagesContainerRef}
               className="flex-1 overflow-y-auto space-y-1"
               style={{
-                backgroundColor: '#f8fafc',
-                backgroundImage: `radial-gradient(circle, #e2e8f0 0.5px, transparent 0.5px)`,
+                backgroundColor: 'var(--color-msg-page)',
+                backgroundImage: `radial-gradient(circle, var(--color-divider) 0.5px, transparent 0.5px)`,
                 backgroundSize: '16px 16px',
               }}
             >
@@ -833,7 +833,7 @@ export default function ChatInterface({ currentUserId, initialConversationId, in
             )}
           </>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground gap-3" style={{ backgroundColor: '#f8fafc', backgroundImage: `radial-gradient(circle, #e2e8f0 0.5px, transparent 0.5px)`, backgroundSize: '16px 16px' }}>
+          <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground gap-3" style={{ backgroundColor: 'var(--color-msg-page)', backgroundImage: `radial-gradient(circle, var(--color-divider) 0.5px, transparent 0.5px)`, backgroundSize: '16px 16px' }}>
             {conversations.length === 0 ? (
               <>
                 <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center">
@@ -844,7 +844,7 @@ export default function ChatInterface({ currentUserId, initialConversationId, in
                 {!conversationsError && findPeopleUrl && (
                   <Button
                     size="sm"
-                    className="mt-1 bg-[#1e1a14] hover:bg-[#2a2520] text-xs"
+                    className="mt-1 bg-msg-ink hover:bg-ink-hover text-xs"
                     onClick={() => router.push(findPeopleUrl)}
                   >
                     Find Talent

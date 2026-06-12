@@ -114,9 +114,9 @@ export function SafetyMenu({
           </DialogHeader>
 
           <div className="px-5 pb-5 space-y-2">
-            <div className="flex items-center gap-3 p-3 rounded-xl bg-[#f5f3ef] border border-[#e0d9ce]">
-              <Shield className="w-5 h-5 text-[#c8a040] shrink-0" strokeWidth={1.5} />
-              <span className="text-sm text-[#5c5145]">
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-msg-cream border border-msg-border">
+              <Shield className="w-5 h-5 text-msg-gold shrink-0" strokeWidth={1.5} />
+              <span className="text-sm text-msg-ink-soft">
                 Your safety and privacy are our priority.
               </span>
             </div>
@@ -203,7 +203,7 @@ export function SafetyMenu({
                   onClick={() => setReportReason(reason)}
                   className={`w-full text-left px-3 py-2.5 rounded-lg text-sm border transition-colors ${
                     reportReason === reason
-                      ? "border-[#c8a040] bg-[#fdf3dc] text-[#1e1a14]"
+                      ? "border-msg-gold bg-msg-gold-soft text-msg-ink"
                       : "border-border hover:bg-muted"
                   }`}
                 >
@@ -240,7 +240,7 @@ export function SafetyMenu({
                 Cancel
               </Button>
               <Button
-                className="flex-1 bg-[#1e1a14] hover:bg-[#2a2520]"
+                className="flex-1 bg-msg-ink hover:bg-ink-hover"
                 onClick={handleReport}
                 disabled={!reportReason || isSubmitting}
                 isLoading={isSubmitting}

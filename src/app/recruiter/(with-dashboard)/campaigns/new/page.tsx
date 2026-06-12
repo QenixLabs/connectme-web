@@ -25,7 +25,7 @@ function TemplateCard({
       onClick={onClick}
       disabled={isLoading}
       className={cn(
-        "bg-card border border-border rounded-2xl p-5 text-left transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(79,110,247,0.12),0_1px_3px_rgba(0,0,0,0.06)] flex flex-col gap-2",
+        "bg-card border border-border rounded-2xl p-5 text-left transition-all hover:-translate-y-0.5 hover:shadow-card-hover flex flex-col gap-2",
         isLoading && "opacity-60 cursor-not-allowed"
       )}
     >
@@ -75,7 +75,7 @@ export default function NewCampaignPage() {
 
       <button
         onClick={() => guard(() => setMode("wizard"))}
-        className="bg-card border border-border rounded-2xl p-5 text-left transition-all hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(79,110,247,0.12),0_1px_3px_rgba(0,0,0,0.06)] flex items-center gap-3"
+        className="bg-card border border-border rounded-2xl p-5 text-left transition-all hover:-translate-y-0.5 hover:shadow-card-hover flex items-center gap-3"
       >
         <div className="w-10 h-10 rounded-full bg-brand-light flex items-center justify-center">
           <FilePlus className="w-5 h-5 text-brand" strokeWidth={1.5} />

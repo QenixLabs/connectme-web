@@ -77,7 +77,7 @@ export default function VerifyDocumentsPage() {
         <Card
           className="overflow-hidden border-0 shadow-md"
           style={{
-            background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 50%, #fffbeb 100%)",
+            background: "linear-gradient(135deg, var(--color-verify-start) 0%, var(--color-verify-mid) 50%, var(--color-verify-start) 100%)",
           }}
         >
           <CardContent className="p-6">

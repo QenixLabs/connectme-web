@@ -130,8 +130,8 @@ const INVITE_STATUS_META: Record<
   },
 };
 
-const PIE_COLORS = ['#f59e0b', '#22c55e', '#ef4444'];
-const BAR_COLOR = '#4f6ef7';
+const PIE_COLORS = ['var(--color-brand)', 'var(--color-success)', 'var(--color-error)'];
+const BAR_COLOR = 'var(--color-chart-blue)';
 
 export default function CampaignDetailPage() {
   const params = useParams();
@@ -478,7 +478,7 @@ export default function CampaignDetailPage() {
                   <article
                     key={app._id}
                     className={cn(
-                      "bg-card border rounded-2xl p-[18px] shadow-[0_1px_3px_rgba(0,0,0,0.07),0_4px_12px_rgba(0,0,0,0.04)] flex flex-col gap-4",
+                      "bg-card border rounded-2xl p-[18px] shadow-card flex flex-col gap-4",
                       isSelected ? "border-brand" : "border-border",
                     )}
                   >
@@ -737,7 +737,7 @@ export default function CampaignDetailPage() {
                 return (
                   <article
                     key={invite._id}
-                    className="bg-card border border-border rounded-2xl p-[18px] shadow-[0_1px_3px_rgba(0,0,0,0.07),0_4px_12px_rgba(0,0,0,0.04)] flex flex-col sm:flex-row sm:items-center gap-4"
+                    className="bg-card border border-border rounded-2xl p-[18px] shadow-card flex flex-col sm:flex-row sm:items-center gap-4"
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
@@ -1014,7 +1014,7 @@ export default function CampaignDetailPage() {
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={analytics?.applications_over_time ?? []}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--color-chart-grid)" />
                       <XAxis dataKey="date" tick={{ fontSize: 12 }} />
                       <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
                       <Tooltip />
@@ -1076,7 +1076,7 @@ export default function CampaignDetailPage() {
                         }))}
                         margin={{ top: 5, right: 5, bottom: 5, left: -20 }}
                       >
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-chart-grid)" />
                         <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                         <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
                         <Tooltip />
@@ -1097,7 +1097,7 @@ export default function CampaignDetailPage() {
                         layout="vertical"
                         margin={{ top: 5, right: 5, bottom: 5, left: 20 }}
                       >
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-chart-grid)" />
                         <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12 }} />
                         <YAxis dataKey="name" type="category" tick={{ fontSize: 12 }} width={100} />
                         <Tooltip />

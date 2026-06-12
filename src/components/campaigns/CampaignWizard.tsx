@@ -362,7 +362,7 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
                     className={cn(
                       'w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium border-[1.5px] shrink-0 transition-all',
                       isActive
-                        ? 'bg-[#B85C00] border-[#B85C00] text-white'
+                        ? 'bg-campaign border-campaign text-white'
                         : isDone
                           ? 'bg-success-light border-success text-success-text'
                           : 'border-border text-text-muted'
@@ -418,7 +418,7 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
         {/* Progress bar */}
         <div className="h-0.5 bg-border rounded-full overflow-hidden mb-6">
           <div
-            className="h-full bg-[#B85C00] rounded-full transition-all duration-300"
+            className="h-full bg-campaign rounded-full transition-all duration-300"
             style={{ width: `${(step / 3) * 100}%` }}
           />
         </div>
@@ -469,7 +469,7 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
               type="button"
               onClick={onNext}
               disabled={isNavigating}
-              className="px-3 py-2.5 rounded-lg text-sm font-medium bg-[#B85C00] text-white hover:bg-[#9A4D00] transition-colors disabled:opacity-50 flex-[2] flex items-center justify-center gap-1.5"
+              className="px-3 py-2.5 rounded-lg text-sm font-medium bg-campaign text-white hover:bg-campaign-hover transition-colors disabled:opacity-50 flex-[2] flex items-center justify-center gap-1.5"
             >
               Next →
             </button>
@@ -480,8 +480,8 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
               className={cn(
                 'px-3 py-2.5 rounded-lg text-sm font-medium text-white transition-colors disabled:opacity-50 flex-[2] flex items-center justify-center gap-1.5',
                 form.watch('publishOption') === 'draft'
-                  ? 'bg-[#B85C00] hover:bg-[#9A4D00]'
-                  : 'bg-[#1a8a4a] hover:bg-[#157a3f]'
+                  ? 'bg-campaign hover:bg-campaign-hover'
+                  : 'bg-success-strong hover:bg-success-deep'
               )}
             >
               {isPending

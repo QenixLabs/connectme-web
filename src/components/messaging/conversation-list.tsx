@@ -164,7 +164,7 @@ export function ConversationList({
         <div className="shrink-0 px-4 py-3 border-b border-msg-border"
           style={{
             background:
-              "linear-gradient(90deg, rgba(200,160,64,0.12), rgba(200,160,64,0.02))",
+              "linear-gradient(90deg, color-mix(in oklab, var(--color-msg-gold) 12%, transparent), color-mix(in oklab, var(--color-msg-gold) 2%, transparent))",
           }}
         >
           <Skeleton className="h-7 w-32 rounded-lg" />
@@ -187,7 +187,7 @@ export function ConversationList({
         className="shrink-0 px-4 py-3 border-b border-msg-border flex items-center gap-3 sticky top-0 z-10"
         style={{
           background:
-            "linear-gradient(90deg, rgba(200,160,64,0.12), rgba(200,160,64,0.02))",
+            "linear-gradient(90deg, color-mix(in oklab, var(--color-msg-gold) 12%, transparent), color-mix(in oklab, var(--color-msg-gold) 2%, transparent))",
         }}
       >
         {dashboardUrl && (

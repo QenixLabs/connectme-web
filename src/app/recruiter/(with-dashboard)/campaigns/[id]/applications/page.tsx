@@ -140,7 +140,7 @@ export default function CampaignApplicationsPage() {
             return (
               <article
                 key={app._id}
-                className="bg-card border border-border rounded-2xl p-[18px] shadow-[0_1px_3px_rgba(0,0,0,0.07),0_4px_12px_rgba(0,0,0,0.04)] flex flex-col sm:flex-row sm:items-center gap-4"
+                className="bg-card border border-border rounded-2xl p-[18px] shadow-card flex flex-col sm:flex-row sm:items-center gap-4"
               >
                 <div className="flex-1 min-w-0 space-y-2">
                   <div className="flex items-center gap-2">

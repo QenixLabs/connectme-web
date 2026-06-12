@@ -31,17 +31,17 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const gold = {
-  primary: "#c8a040",
-  primaryHover: "#a8841e",
-  accent: "#fdf3dc",
-  accentBorder: "#e8c87a",
-  border: "#e0d9ce",
-  muted: "#ede9e0",
-  mutedFg: "#8a7d6b",
-  textSecondary: "#5c5145",
-  foreground: "#1e1a14",
-  background: "#f8f6f2",
-  card: "#ffffff",
+  primary: "var(--color-msg-gold)",
+  primaryHover: "var(--color-gold-hover)",
+  accent: "var(--color-msg-gold-soft)",
+  accentBorder: "var(--color-border-gold)",
+  border: "var(--color-msg-border)",
+  muted: "var(--color-bg-warm)",
+  mutedFg: "var(--color-msg-ink-muted)",
+  textSecondary: "var(--color-msg-ink-soft)",
+  foreground: "var(--color-msg-ink)",
+  background: "var(--color-cream-pale)",
+  card: "var(--color-white)",
 };
 
 function SectionCard({ title, icon: Icon, children }: {
@@ -67,7 +67,7 @@ function Tag({ children }: { children: React.ReactNode }) {
   return (
     <span
       className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full border"
-      style={{ background: gold.accent, color: "#7a5c0a", borderColor: gold.accentBorder }}
+      style={{ background: gold.accent, color: "var(--color-campaign-dark)", borderColor: gold.accentBorder }}
     >
       {children}
     </span>
@@ -188,7 +188,7 @@ export default function ProfilePreviewPage() {
           <div
             className="w-[88px] h-[88px] rounded-full flex items-center justify-center text-[28px] font-bold text-white shrink-0 border-[3px]"
             style={{
-              background: profile?.profile_photo ? undefined : "linear-gradient(135deg,#c8a040,#8b6914)",
+              background: profile?.profile_photo ? undefined : "linear-gradient(135deg, var(--color-msg-gold), var(--color-gold-dark))",
               borderColor: gold.accentBorder,
             }}
           >
@@ -221,9 +221,9 @@ export default function ProfilePreviewPage() {
                 <span
                   className="px-2.5 py-0.5 text-xs font-medium rounded-full border"
                   style={{
-                    background: profile.availability === "available" ? "#ecfdf5" : profile.availability === "busy" ? gold.accent : "#fef2f2",
-                    color: profile.availability === "available" ? "#047857" : profile.availability === "busy" ? "#7a5c0a" : "#b91c1c",
-                    borderColor: profile.availability === "available" ? "#a7f3d0" : profile.availability === "busy" ? gold.accentBorder : "#fecaca",
+                    background: profile.availability === "available" ? "var(--color-success-light)" : profile.availability === "busy" ? gold.accent : "var(--color-error-light)",
+                    color: profile.availability === "available" ? "var(--color-success-text)" : profile.availability === "busy" ? "var(--color-campaign-dark)" : "var(--color-error)",
+                    borderColor: profile.availability === "available" ? "var(--color-success-muted)" : profile.availability === "busy" ? gold.accentBorder : "var(--color-error-muted)",
                   }}
                 >
                   {profile.availability === "available" ? "Available" : profile.availability === "busy" ? "Busy" : "Not available"}
@@ -291,7 +291,7 @@ export default function ProfilePreviewPage() {
                     <span className="text-[13px] font-medium" style={{ color: gold.foreground }}>{s.name}</span>
                     <span
                       className="text-[11px] px-2 py-0.5 rounded-md border"
-                      style={{ background: gold.accent, borderColor: gold.accentBorder, color: "#7a5c0a" }}
+                      style={{ background: gold.accent, borderColor: gold.accentBorder, color: "var(--color-campaign-dark)" }}
                     >
                       {s.proficiency ? s.proficiency.charAt(0).toUpperCase() + s.proficiency.slice(1) : "—"}
                     </span>
@@ -314,7 +314,7 @@ export default function ProfilePreviewPage() {
                     <span className="text-[13px] font-medium" style={{ color: gold.foreground }}>{l.name}</span>
                     <span
                       className="text-[11px] px-2 py-0.5 rounded-md border"
-                      style={{ background: gold.accent, borderColor: gold.accentBorder, color: "#7a5c0a" }}
+                      style={{ background: gold.accent, borderColor: gold.accentBorder, color: "var(--color-campaign-dark)" }}
                     >
                       {l.fluency ? l.fluency.charAt(0).toUpperCase() + l.fluency.slice(1) : "—"}
                     </span>
@@ -383,11 +383,11 @@ export default function ProfilePreviewPage() {
                       className="flex items-center gap-2 text-[13px]"
                       style={{ color: gold.foreground }}
                     >
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#fce7f3" }}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="#db2777" strokeWidth="2" className="w-4 h-4">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "var(--color-pink-light)" }}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-pink)" strokeWidth="2" className="w-4 h-4">
                           <rect x="2" y="2" width="20" height="20" rx="5" />
                           <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-                          <circle cx="17.5" cy="6.5" r="1" fill="#db2777" stroke="none" />
+                          <circle cx="17.5" cy="6.5" r="1" fill="var(--color-pink)" stroke="none" />
                         </svg>
                       </div>
                       Instagram
@@ -401,8 +401,8 @@ export default function ProfilePreviewPage() {
                       className="flex items-center gap-2 text-[13px]"
                       style={{ color: gold.foreground }}
                     >
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#fee2e2" }}>
-                        <svg viewBox="0 0 24 24" fill="#ef4444" className="w-4 h-4">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "var(--color-red-light)" }}>
+                        <svg viewBox="0 0 24 24" fill="var(--color-red)" className="w-4 h-4">
                           <path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58A2.78 2.78 0 0 0 3.41 19.54C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z" />
                           <polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="white" />
                         </svg>
@@ -418,8 +418,8 @@ export default function ProfilePreviewPage() {
                       className="flex items-center gap-2 text-[13px]"
                       style={{ color: gold.foreground }}
                     >
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#dbeafe" }}>
-                        <svg viewBox="0 0 24 24" fill="#2563eb" className="w-4 h-4">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "var(--color-blue-light)" }}>
+                        <svg viewBox="0 0 24 24" fill="var(--color-blue)" className="w-4 h-4">
                           <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
                           <rect x="2" y="9" width="4" height="12" />
                           <circle cx="4" cy="4" r="2" />

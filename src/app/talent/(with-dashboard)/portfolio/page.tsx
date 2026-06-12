@@ -212,7 +212,7 @@ export default function TalentPortfolioPage() {
               className="h-full rounded-full transition-all duration-500"
               style={{
                 width: `${imagesPct}%`,
-                background: imagesPct >= 80 ? "#BA7517" : "var(--foreground)",
+                background: imagesPct >= 80 ? "var(--color-amber)" : "var(--foreground)",
               }}
             />
           </div>
@@ -245,7 +245,7 @@ export default function TalentPortfolioPage() {
               className="h-full rounded-full transition-all duration-500"
               style={{
                 width: `${videosPct}%`,
-                background: videosPct >= 80 ? "#BA7517" : "var(--foreground)",
+                background: videosPct >= 80 ? "var(--color-amber)" : "var(--foreground)",
               }}
             />
           </div>

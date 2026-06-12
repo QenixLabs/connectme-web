@@ -44,8 +44,8 @@ export function ShareProfileDialog({
       margin: 2,
       errorCorrectionLevel: "H",
       color: {
-        dark: "#1a160f",
-        light: "#ffffff",
+        dark: "var(--color-ink-deep)",
+        light: "var(--color-white)",
       },
     })
       .then(setQrDataUrl)
@@ -108,16 +108,16 @@ export function ShareProfileDialog({
       )}
 
       <DialogContent
-        className="sm:max-w-[400px] p-0 overflow-hidden border-0 bg-[#faf8f4]"
+        className="sm:max-w-[400px] p-0 overflow-hidden border-0 bg-cream-light"
         showCloseButton={false}
       >
         {/* Top Section */}
-        <div className="relative bg-[#1a160f] px-7 pt-7 pb-6 overflow-hidden">
+        <div className="relative bg-ink-deep px-7 pt-7 pb-6 overflow-hidden">
           <div
             className="absolute inset-0 pointer-events-none"
             style={{
               background:
-                "radial-gradient(ellipse at 70% -20%, #c8a040 0%, transparent 65%)",
+                "radial-gradient(ellipse at 70% -20%, var(--color-msg-gold) 0%, transparent 65%)",
               opacity: 0.18,
             }}
           />
@@ -125,8 +125,7 @@ export function ShareProfileDialog({
           {/* Custom close */}
           <button
             onClick={() => setOpen(false)}
-            className="absolute top-4 right-4 z-10 w-7 h-7 rounded-full flex items-center justify-center text-[rgba(255,255,255,0.7)] transition-colors hover:bg-[rgba(255,255,255,0.2)]"
-            style={{ background: "rgba(255,255,255,0.1)" }}
+            className="absolute top-4 right-4 z-10 w-7 h-7 rounded-full flex items-center justify-center text-white/70 transition-colors hover:bg-white/20 bg-white/10"
             aria-label="Close"
           >
             <X className="w-3.5 h-3.5" strokeWidth={2} />
@@ -134,9 +133,9 @@ export function ShareProfileDialog({
 
           <div className="relative z-[1] flex items-center gap-3.5">
             <div
-              className="w-12 h-12 rounded-full flex items-center justify-center text-lg text-white font-semibold shrink-0 border-2 border-[rgba(200,160,64,0.4)] overflow-hidden"
+              className="w-12 h-12 rounded-full flex items-center justify-center text-lg text-white font-semibold shrink-0 border-2 border-msg-gold/40 overflow-hidden"
               style={{
-                background: "linear-gradient(135deg, #c8a040, #8a6620)",
+                background: "linear-gradient(135deg, var(--color-msg-gold), var(--color-gold-dark))",
                 fontFamily: "var(--font-playfair), Georgia, serif",
               }}
             >
@@ -152,18 +151,18 @@ export function ShareProfileDialog({
             </div>
             <div>
               <div
-                className="text-[17px] font-semibold text-[#faf8f4] leading-tight"
+                className="text-[17px] font-semibold text-cream-light leading-tight"
                 style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
               >
                 {name || "User"}
               </div>
-              <div className="text-xs text-[rgba(250,248,244,0.5)] mt-0.5 font-light tracking-wide">
+              <div className="text-xs text-cream-light/50 mt-0.5 font-light tracking-wide">
                 {username ? `@${username}` : ""}
               </div>
             </div>
           </div>
 
-          <div className="relative z-[1] mt-5 text-[10px] font-medium tracking-[0.12em] uppercase text-[rgba(200,160,64,0.8)]">
+          <div className="relative z-[1] mt-5 text-[10px] font-medium tracking-[0.12em] uppercase text-msg-gold/80">
             Share profile
           </div>
         </div>
@@ -172,12 +171,12 @@ export function ShareProfileDialog({
         <div className="px-7 pt-6 pb-7">
           {/* QR Code */}
           <div className="flex justify-center mb-5">
-            <div className="relative inline-block bg-white rounded-[14px] p-3.5 border border-[rgba(200,160,64,0.2)]">
+            <div className="relative inline-block bg-white rounded-[14px] p-3.5 border border-msg-gold/20">
               {/* Corner accents */}
-              <div className="absolute top-2 left-2 w-[18px] h-[18px] border-t-[2.5px] border-l-[2.5px] border-[#c8a040] rounded-tl-[3px]" />
-              <div className="absolute top-2 right-2 w-[18px] h-[18px] border-t-[2.5px] border-r-[2.5px] border-[#c8a040] rounded-tr-[3px]" />
-              <div className="absolute bottom-2 left-2 w-[18px] h-[18px] border-b-[2.5px] border-l-[2.5px] border-[#c8a040] rounded-bl-[3px]" />
-              <div className="absolute bottom-2 right-2 w-[18px] h-[18px] border-b-[2.5px] border-r-[2.5px] border-[#c8a040] rounded-br-[3px]" />
+              <div className="absolute top-2 left-2 w-[18px] h-[18px] border-t-[2.5px] border-l-[2.5px] border-msg-gold rounded-tl-[3px]" />
+              <div className="absolute top-2 right-2 w-[18px] h-[18px] border-t-[2.5px] border-r-[2.5px] border-msg-gold rounded-tr-[3px]" />
+              <div className="absolute bottom-2 left-2 w-[18px] h-[18px] border-b-[2.5px] border-l-[2.5px] border-msg-gold rounded-bl-[3px]" />
+              <div className="absolute bottom-2 right-2 w-[18px] h-[18px] border-b-[2.5px] border-r-[2.5px] border-msg-gold rounded-br-[3px]" />
 
               {qrDataUrl ? (
                 <img
@@ -186,18 +185,18 @@ export function ShareProfileDialog({
                   className="w-[148px] h-[148px] block rounded"
                 />
               ) : (
-                <div className="w-[148px] h-[148px] bg-[#f0ece3] rounded flex items-center justify-center animate-pulse" />
+                <div className="w-[148px] h-[148px] bg-cream-muted rounded flex items-center justify-center animate-pulse" />
               )}
             </div>
           </div>
 
-          <p className="text-center text-[11px] text-[#9a8a6a] mb-5 font-light tracking-wide">
+          <p className="text-center text-[11px] text-ink-pale mb-5 font-light tracking-wide">
             Scan to view full profile
           </p>
 
           {/* URL Row */}
-          <div className="flex items-center gap-2 bg-[#f0ece3] rounded-[10px] px-3 py-2.5 mb-4 border border-[rgba(200,160,64,0.15)]">
-            <span className="flex-1 text-xs text-[#6b5c3e] truncate font-normal tracking-wide">
+          <div className="flex items-center gap-2 bg-cream-muted rounded-[10px] px-3 py-2.5 mb-4 border border-msg-gold/15">
+            <span className="flex-1 text-xs text-ink-faded truncate font-normal tracking-wide">
               {url}
             </span>
             <button
@@ -205,8 +204,8 @@ export function ShareProfileDialog({
               className={cn(
                 "shrink-0 flex items-center gap-1.5 rounded-[7px] px-3 py-1.5 text-[11px] font-medium tracking-wide transition-colors cursor-pointer",
                 copied
-                  ? "bg-[#3a7a4a] text-[#b8f0c8]"
-                  : "bg-[#1a160f] text-[#c8a040] hover:bg-[#2d2515]",
+                  ? "bg-success-dark text-success-pale"
+                  : "bg-ink-deep text-msg-gold hover:bg-ink-deep-hover",
               )}
             >
               {copied ? (
@@ -220,32 +219,32 @@ export function ShareProfileDialog({
 
           {/* Divider */}
           <div className="flex items-center gap-2.5 mb-4">
-            <div className="flex-1 h-px bg-[rgba(200,160,64,0.15)]" />
-            <span className="text-[10px] text-[#b8a88a] font-normal tracking-[0.08em] uppercase">
+            <div className="flex-1 h-px bg-msg-gold/15" />
+            <span className="text-[10px] text-ink-light font-normal tracking-[0.08em] uppercase">
               also share via
             </span>
-            <div className="flex-1 h-px bg-[rgba(200,160,64,0.15)]" />
+            <div className="flex-1 h-px bg-msg-gold/15" />
           </div>
 
           {/* Social Buttons */}
           <div className="grid grid-cols-3 gap-2">
             <button
               onClick={handleShareWA}
-              className="flex flex-col items-center gap-1.5 bg-white border border-[rgba(200,160,64,0.2)] rounded-[10px] py-2.5 px-2 cursor-pointer transition-all hover:bg-[#f5f0e5] hover:border-[rgba(200,160,64,0.5)] hover:-translate-y-0.5"
+              className="flex flex-col items-center gap-1.5 bg-white border border-msg-gold/20 rounded-[10px] py-2.5 px-2 cursor-pointer transition-all hover:bg-cream-hover hover:border-msg-gold/50 hover:-translate-y-0.5"
             >
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center text-sm bg-[#dcf5e7] text-[#1a7a3a]">
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center text-sm bg-green-light text-green">
                 <MessageCircle className="w-4 h-4" strokeWidth={2} />
               </div>
-              <span className="text-[10px] text-[#6b5c3e] font-medium tracking-wide">
+              <span className="text-[10px] text-ink-faded font-medium tracking-wide">
                 WhatsApp
               </span>
             </button>
 
             <button
               onClick={handleCopyForIG}
-              className="flex flex-col items-center gap-1.5 bg-white border border-[rgba(200,160,64,0.2)] rounded-[10px] py-2.5 px-2 cursor-pointer transition-all hover:bg-[#f5f0e5] hover:border-[rgba(200,160,64,0.5)] hover:-translate-y-0.5"
+              className="flex flex-col items-center gap-1.5 bg-white border border-msg-gold/20 rounded-[10px] py-2.5 px-2 cursor-pointer transition-all hover:bg-cream-hover hover:border-msg-gold/50 hover:-translate-y-0.5"
             >
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center text-sm bg-[#fce4ec] text-[#c2185b]">
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center text-sm bg-rose-light text-rose">
                 <svg
                   className="w-4 h-4"
                   viewBox="0 0 24 24"
@@ -260,19 +259,19 @@ export function ShareProfileDialog({
                   <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
                 </svg>
               </div>
-              <span className="text-[10px] text-[#6b5c3e] font-medium tracking-wide">
+              <span className="text-[10px] text-ink-faded font-medium tracking-wide">
                 Instagram
               </span>
             </button>
 
             <button
               onClick={handleCopy}
-              className="flex flex-col items-center gap-1.5 bg-white border border-[rgba(200,160,64,0.2)] rounded-[10px] py-2.5 px-2 cursor-pointer transition-all hover:bg-[#f5f0e5] hover:border-[rgba(200,160,64,0.5)] hover:-translate-y-0.5"
+              className="flex flex-col items-center gap-1.5 bg-white border border-msg-gold/20 rounded-[10px] py-2.5 px-2 cursor-pointer transition-all hover:bg-cream-hover hover:border-msg-gold/50 hover:-translate-y-0.5"
             >
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center text-sm bg-[#e3f0fb] text-[#1565c0]">
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center text-sm bg-blue-light text-blue">
                 <Copy className="w-4 h-4" strokeWidth={2} />
               </div>
-              <span className="text-[10px] text-[#6b5c3e] font-medium tracking-wide">
+              <span className="text-[10px] text-ink-faded font-medium tracking-wide">
                 Copy link
               </span>
             </button>
@@ -281,7 +280,7 @@ export function ShareProfileDialog({
 
         {/* Toast */}
         {toastMsg && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-[#1a160f] text-[#c8a040] text-xs px-4 py-1.5 rounded-full font-medium whitespace-nowrap pointer-events-none animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-ink-deep text-msg-gold text-xs px-4 py-1.5 rounded-full font-medium whitespace-nowrap pointer-events-none animate-in fade-in slide-in-from-bottom-2 duration-300">
             {toastMsg}
           </div>
         )}

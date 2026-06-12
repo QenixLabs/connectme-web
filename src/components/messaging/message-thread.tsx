@@ -35,9 +35,9 @@ export function MessageThread({
       <div
         className="flex-1 overflow-y-auto px-4 py-3 space-y-3"
         style={{
-          backgroundColor: "#faf9f7",
+          backgroundColor: "var(--color-msg-page)",
           backgroundImage:
-            "radial-gradient(circle, #e2e8f0 0.5px, transparent 0.5px)",
+            "radial-gradient(circle, var(--color-divider) 0.5px, transparent 0.5px)",
           backgroundSize: "16px 16px",
         }}
       >
@@ -53,9 +53,9 @@ export function MessageThread({
       <div
         className="flex-1 overflow-y-auto px-4"
         style={{
-          backgroundColor: "#faf9f7",
+          backgroundColor: "var(--color-msg-page)",
           backgroundImage:
-            "radial-gradient(circle, #e2e8f0 0.5px, transparent 0.5px)",
+            "radial-gradient(circle, var(--color-divider) 0.5px, transparent 0.5px)",
           backgroundSize: "16px 16px",
         }}
       >
@@ -68,9 +68,9 @@ export function MessageThread({
     <div
       className="flex-1 overflow-y-auto px-4 py-3"
       style={{
-        backgroundColor: "#faf9f7",
+        backgroundColor: "var(--color-msg-page)",
         backgroundImage:
-          "radial-gradient(circle, #e2e8f0 0.5px, transparent 0.5px)",
+          "radial-gradient(circle, var(--color-divider) 0.5px, transparent 0.5px)",
         backgroundSize: "16px 16px",
       }}
     >

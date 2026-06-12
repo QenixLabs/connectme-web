@@ -28,7 +28,7 @@ function FieldLabel({ children, required }: { children: React.ReactNode; require
   return (
     <label className="text-sm text-text-secondary">
       {children}
-      {required && <span className="text-[#B85C00]"> *</span>}
+      {required && <span className="text-campaign"> *</span>}
     </label>
   );
 }
@@ -114,8 +114,8 @@ export function RequirementsStep() {
                       className={cn(
                         'px-3 py-1.5 rounded-full text-xs font-medium border transition-colors',
                         selected
-                          ? 'bg-[#FFF7F0] border-[#B85C00] text-[#B85C00]'
-                          : 'bg-card border-border text-text-secondary hover:border-[#B85C00]/50'
+                          ? 'bg-campaign-light border-campaign text-campaign'
+                          : 'bg-card border-border text-text-secondary hover:border-campaign/50'
                       )}
                     >
                       {g}
@@ -231,7 +231,7 @@ export function RequirementsStep() {
                   type="checkbox"
                   checked={field.value}
                   onChange={(e) => field.onChange(e.target.checked)}
-                  className="w-4 h-4 accent-[#B85C00] shrink-0 mt-0.5"
+                  className="w-4 h-4 accent-campaign shrink-0 mt-0.5"
                 />
                 <span className="text-xs text-text-secondary leading-relaxed">Budget not disclosed to applicants</span>
               </label>
@@ -256,7 +256,7 @@ export function RequirementsStep() {
                       setValue('budget_range.max', undefined, { shouldValidate: false });
                     }
                   }}
-                  className="w-4 h-4 accent-[#B85C00] shrink-0 mt-0.5"
+                  className="w-4 h-4 accent-campaign shrink-0 mt-0.5"
                 />
                 <span className="text-xs text-text-secondary leading-relaxed">Unpaid / voluntary role</span>
               </label>

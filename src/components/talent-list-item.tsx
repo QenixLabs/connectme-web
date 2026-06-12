@@ -81,7 +81,7 @@ export function TalentListItem({
   return (
     <article
       className={cn(
-        "bg-card border border-border rounded-2xl p-3 sm:p-[18px] shadow-[0_1px_3px_rgba(0,0,0,0.07),0_4px_12px_rgba(0,0,0,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(79,110,247,0.12),0_1px_3px_rgba(0,0,0,0.06)]",
+        "bg-card border border-border rounded-2xl p-3 sm:p-[18px] shadow-[0_1px_3px_black/7,0_4px_12px_black/4] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_16px_var(--color-chart-blue)/12,0_1px_3px_black/6]",
         selectable && "cursor-pointer",
         isSelected && "border-brand ring-1 ring-brand"
       )}

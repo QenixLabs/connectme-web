@@ -36,6 +36,7 @@ const PLAN_BADGE_STYLES: Record<string, string> = {
 const STATUS_BADGE_STYLES: Record<string, string> = {
   active: "bg-green-100 text-green-800 border-green-200",
   trialing: "bg-green-100 text-green-800 border-green-200",
+  pending: "bg-amber-100 text-amber-800 border-amber-200",
   past_due: "bg-red-100 text-red-800 border-red-200",
   cancelled: "bg-gray-100 text-gray-800 border-gray-200",
   expired: "bg-gray-100 text-gray-800 border-gray-200",
@@ -45,6 +46,7 @@ const STATUS_BADGE_STYLES: Record<string, string> = {
 const STATUS_LABELS: Record<string, string> = {
   active: "Active",
   trialing: "Trialing",
+  pending: "Pending payment",
   past_due: "Past Due",
   cancelled: "Cancelled",
   expired: "Expired",
@@ -102,6 +104,21 @@ export function SubscriptionStatus() {
       const message =
         (err as { response?: { data?: { message?: string } } })?.response?.data
           ?.message || "Failed to cancel subscription";
+      popup.show({ title: message, variant: "error" });
+    },
+  });
+
+  const resumeMutation = useMutation({
+    mutationFn: () => subscriptionsApi.resumeSubscription(),
+    onSuccess: () => {
+      popup.show({ title: "Subscription resumed", variant: "success" });
+      queryClient.invalidateQueries({ queryKey: queryKeys.subscriptions.me() });
+      authStore.getState().fetchUser().catch(() => {});
+    },
+    onError: (err: unknown) => {
+      const message =
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message || "Failed to resume subscription";
       popup.show({ title: message, variant: "error" });
     },
   });
@@ -244,9 +261,21 @@ export function SubscriptionStatus() {
         )}
 
         {subscription?.cancel_at_period_end && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <CheckCircle2 className="w-4 h-4 text-green-600" />
-            Plan will cancel at end of billing period
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-green-600" />
+              Plan will cancel at end of billing period
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => resumeMutation.mutate()}
+              disabled={resumeMutation.isPending}
+              aria-label="Resume subscription"
+            >
+              {resumeMutation.isPending && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
+              Resume
+            </Button>
           </div>
         )}
       </CardContent>

@@ -29,16 +29,16 @@ export function ProfileDetail({ profile }: ProfileDetailProps) {
           className="bg-white text-center py-3 px-2"
           style={{
             borderRadius: "12px",
-            border: "0.5px solid #e0d9ce",
+            borderColor: "var(--color-msg-border)",
           }}
         >
           <p
-            className="text-[20px] font-bold text-[#1e1a14] leading-none"
+            className="text-[20px] font-bold text-msg-ink leading-none"
             style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
           >
             {s.value}
           </p>
-          <p className="text-[11px] text-[#8a7d6b] mt-1">{s.label}</p>
+          <p className="text-[11px] text-msg-ink-muted mt-1">{s.label}</p>
         </div>
       ))}
     </div>

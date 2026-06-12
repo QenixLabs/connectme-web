@@ -29,7 +29,7 @@ export function MessageBubble({
           className={cn(
             "px-3.5 py-2.5 text-[13px] leading-relaxed shadow-sm",
             isOwn
-              ? "bg-gradient-to-br from-msg-gold to-[#b08d38] text-white"
+              ? "bg-gradient-to-br from-msg-gold to-msg-gold-dark text-white"
               : "bg-msg-card text-msg-ink border border-msg-border",
           )}
           style={{

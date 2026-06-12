@@ -64,7 +64,7 @@ function ApplicationCard({ campaign }: { campaign: Campaign }) {
 
   return (
     <div
-      className="bg-card border border-border rounded-2xl p-[18px] shadow-[0_1px_3px_rgba(0,0,0,0.07),0_4px_12px_rgba(0,0,0,0.04)] hover:-translate-y-0.5 hover:shadow-[0_4px_16px_rgba(79,110,247,0.12),0_1px_3px_rgba(0,0,0,0.06)] transition-all duration-200 flex flex-col gap-3 cursor-pointer"
+      className="bg-card border border-border rounded-2xl p-[18px] shadow-card hover:-translate-y-0.5 hover:shadow-card-hover transition-all duration-200 flex flex-col gap-3 cursor-pointer"
       onClick={() => router.push(`/talent/opportunities/${campaign._id}`)}
     >
       <div className="flex items-start justify-between gap-3">

@@ -30,11 +30,6 @@ export interface SubscriptionUsage {
   };
 }
 
-function getWebhookBaseUrl(): string {
-  const base = apiClient.defaults.baseURL || 'http://localhost:3001/api/v1';
-  return base.replace(/\/api\/v1$/, '');
-}
-
 export const subscriptionsApi = {
   getMySubscription: async (): Promise<SubscriptionWithPlan> => {
     const response = await apiClient.get('/subscriptions/me');
@@ -46,8 +41,13 @@ export const subscriptionsApi = {
     return response.data;
   },
 
-  cancelSubscription: async (reason?: string): Promise<Subscription> => {
-    const response = await apiClient.post('/subscriptions/cancel', { reason });
+  cancelSubscription: async (reason?: string, immediate?: boolean): Promise<Subscription> => {
+    const response = await apiClient.post('/subscriptions/cancel', { reason, immediate });
+    return response.data;
+  },
+
+  resumeSubscription: async (): Promise<Subscription> => {
+    const response = await apiClient.post('/subscriptions/resume');
     return response.data;
   },
 
@@ -60,7 +60,7 @@ export const subscriptionsApi = {
     event: string;
     razorpaySubscriptionId: string;
   }): Promise<{ message: string; data: unknown }> => {
-    const response = await apiClient.post(`${getWebhookBaseUrl()}/webhooks/simulate`, payload);
+    const response = await apiClient.post('/webhooks/simulate', payload);
     return response.data;
   },
 };

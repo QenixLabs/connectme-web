@@ -155,7 +155,7 @@ export function TalentGridCard({
         )}
 
         {/* Completion badge */}
-        <span className="absolute top-2 right-2 bg-[#FAEEDA] text-[#633806] text-[11px] font-semibold px-2 py-0.5 rounded-lg">
+        <span className="absolute top-2 right-2 bg-campaign-soft text-campaign-dark text-[11px] font-semibold px-2 py-0.5 rounded-lg">
           {completion}%
         </span>
 
@@ -183,7 +183,7 @@ export function TalentGridCard({
             {displayName}
           </h3>
           {profile.is_verified && (
-            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-[#B85C00] shrink-0">
+            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-campaign shrink-0">
               <Check className="w-2.5 h-2.5 text-white" strokeWidth={2.5} />
             </span>
           )}
@@ -239,7 +239,7 @@ export function TalentGridCard({
                   e.stopPropagation();
                   onInvite();
                 }}
-                className="flex-1 py-1.5 rounded-full border border-[#B85C00] bg-[#FFF7F0] text-[#B85C00] text-[11px] font-medium transition-colors hover:bg-[#FAEEDA]"
+                className="flex-1 py-1.5 rounded-full border border-campaign bg-campaign-light text-campaign text-[11px] font-medium transition-colors hover:bg-campaign-soft"
               >
                 Invite
               </button>

@@ -94,16 +94,16 @@ function badgeColor(industry?: string, roleType?: string): string {
 function gradientForCampaign(c: Campaign): string {
   const key = (c.industry || c.role_type || "").toLowerCase();
   if (key.includes("digital") || key.includes("influencer"))
-    return "linear-gradient(135deg,#0a2a1f 0%,#0f4a35 100%)";
+    return "linear-gradient(135deg, var(--color-opportunity-green-start) 0%, var(--color-opportunity-green-end) 100%)";
   if (key.includes("film"))
-    return "linear-gradient(135deg,#1e1b4b 0%,#312e81 100%)";
+    return "linear-gradient(135deg, var(--color-opportunity-film-start) 0%, var(--color-opportunity-film-end) 100%)";
   if (key.includes("fashion"))
-    return "linear-gradient(135deg,#4a044e 0%,#86198f 100%)";
+    return "linear-gradient(135deg, var(--color-opportunity-fashion-start) 0%, var(--color-opportunity-fashion-end) 100%)";
   if (key.includes("tv"))
-    return "linear-gradient(135deg,#1e3a5f 0%,#1e40af 100%)";
+    return "linear-gradient(135deg, var(--color-opportunity-tv-start) 0%, var(--color-opportunity-tv-end) 100%)";
   if (key.includes("theater"))
-    return "linear-gradient(135deg,#500724 0%,#9f1239 100%)";
-  return "linear-gradient(135deg,#1e1e2e 0%,#2d2b55 100%)";
+    return "linear-gradient(135deg, var(--color-opportunity-theater-start) 0%, var(--color-opportunity-theater-end) 100%)";
+  return "linear-gradient(135deg, var(--color-opportunity-default-start) 0%, var(--color-opportunity-default-end) 100%)";
 }
 
 export default function TalentOpportunitiesPage() {
