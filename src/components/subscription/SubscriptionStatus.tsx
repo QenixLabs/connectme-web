@@ -212,12 +212,16 @@ export function SubscriptionStatus() {
         )}
 
         {!isFree && !isCancelled && !subscription?.cancel_at_period_end && (
-          <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" variant="outline" aria-label="Cancel subscription">
-                Cancel plan
-              </Button>
-            </DialogTrigger>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" onClick={() => router.push("/pricing")} aria-label="Change plan">
+              Change plan
+            </Button>
+            <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" variant="outline" aria-label="Cancel subscription">
+                  Cancel plan
+                </Button>
+              </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Cancel subscription?</DialogTitle>
@@ -258,6 +262,7 @@ export function SubscriptionStatus() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+          </div>
         )}
 
         {subscription?.cancel_at_period_end && (

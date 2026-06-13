@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Check, X, ShieldCheck, Loader2 } from "lucide-react";
+import { Check, ShieldCheck } from "lucide-react";
 import { usePopup } from "@/hooks/use-popup";
 import { plansApi, type PlanConfig } from "@/lib/api";
 import { subscriptionsApi } from "@/lib/api";
@@ -36,6 +36,17 @@ function formatPrice(paise: number, annual: boolean): string {
   if (monthly === 0) return "₹0";
   const value = annual ? Math.floor(monthly * 0.8) : monthly;
   return `₹${value.toLocaleString("en-IN")}`;
+}
+
+const ANNUAL_KEY_MAP: Record<string, string> = {
+  recruiter_pro: "recruiter_pro_yearly",
+  recruiter_business: "recruiter_business_yearly",
+  talent_verified: "talent_verified_yearly",
+};
+
+function getUpgradeKey(monthlyKey: string, annual: boolean): string {
+  if (!annual) return monthlyKey;
+  return ANNUAL_KEY_MAP[monthlyKey] ?? monthlyKey;
 }
 
 function periodText(paise: number, annual: boolean): string {
@@ -74,9 +85,14 @@ export default function PricingPage() {
 
   const handleUpgrade = async (planKey: string) => {
     try {
-      const result = await subscriptionsApi.initiateUpgrade(planKey);
+      const upgradeKey = getUpgradeKey(planKey, annual);
+      const result = await subscriptionsApi.initiateUpgrade(upgradeKey);
       if (result.shortUrl) {
-        router.push(result.shortUrl);
+        if (result.shortUrl.startsWith("http")) {
+          window.open(result.shortUrl, "_self");
+        } else {
+          router.push(result.shortUrl);
+        }
       }
     } catch (err: unknown) {
       const message =
@@ -92,12 +108,13 @@ export default function PricingPage() {
         ? "/auth/talent/signup"
         : "/auth/recruiter/signup";
       return (
-        <button
-          className={`pricing-btn ${isPopular ? "pricing-btn-primary" : "pricing-btn-ghost"}`}
+        <Button
+          variant={isPopular ? "default" : "ghost"}
+          className="w-full"
           onClick={() => router.push(signupPath)}
         >
           Get started free
-        </button>
+        </Button>
       );
     }
 
@@ -106,39 +123,38 @@ export default function PricingPage() {
 
     if (isTalent && !isTalentPlan) {
       return (
-        <button className="pricing-btn pricing-btn-ghost" disabled>
+        <Button variant="ghost" className="w-full" disabled>
           Talents only
-        </button>
+        </Button>
       );
     }
 
     if (isRecruiter && !isRecruiterPlan) {
       return (
-        <button className="pricing-btn pricing-btn-ghost" disabled>
+        <Button variant="ghost" className="w-full" disabled>
           Recruiters only
-        </button>
+        </Button>
       );
     }
 
     if (currentPlanKey === plan.key) {
       return (
-        <button className="pricing-btn pricing-btn-ghost" disabled>
+        <Button variant="ghost" className="w-full" disabled>
           Current Plan
-        </button>
+        </Button>
       );
     }
 
     return (
-      <button
-        className={`pricing-btn ${isPopular ? "pricing-btn-primary" : plan.price === 0 ? "pricing-btn-ghost" : "pricing-btn-outline"}`}
+      <Button
+        variant={isPopular ? "default" : plan.price === 0 ? "ghost" : "outline"}
+        className="w-full"
         onClick={() => handleUpgrade(plan.key)}
       >
         {plan.price === 0
           ? "Get started free"
-          : isPopular
-            ? `Upgrade to ${plan.display_name}`
-            : `Upgrade to ${plan.display_name}`}
-      </button>
+          : `Upgrade to ${plan.display_name}`}
+      </Button>
     );
   };
 
@@ -171,14 +187,6 @@ export default function PricingPage() {
         .feature-list li { display: flex; align-items: flex-start; gap: 9px; font-size: 13.5px; color: var(--color-ink-warm); line-height: 1.5; margin-bottom: 10px; }
         .feature-list li .icon { color: var(--color-msg-gold); font-size: 16px; flex-shrink: 0; margin-top: 1px; }
         .feature-list li .icon.dim { color: var(--color-warm-gray); }
-        .pricing-btn { width: 100%; padding: 11px; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; border: none; transition: all 0.18s; text-align: center; }
-        .pricing-btn-primary { background: var(--color-msg-gold); color: white; }
-        .pricing-btn-primary:hover:not(:disabled) { background: var(--color-gold-light); }
-        .pricing-btn-outline { background: transparent; color: var(--color-msg-gold); border: 1.5px solid var(--color-msg-gold); }
-        .pricing-btn-outline:hover:not(:disabled) { background: color-mix(in oklab, var(--color-msg-gold) 7%, transparent); }
-        .pricing-btn-ghost { background: transparent; color: var(--color-ink-faded); border: 1.5px solid var(--color-msg-border); }
-        .pricing-btn-ghost:hover:not(:disabled) { background: var(--color-cream-hover); }
-        .pricing-btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .faq-strip { max-width: 860px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
         .faq-item { background: white; border: 1px solid var(--color-msg-border); border-radius: 12px; padding: 1rem 1.25rem; }
         .faq-q { font-size: 13px; font-weight: 500; color: var(--color-ink-deep); margin-bottom: 0.3rem; }

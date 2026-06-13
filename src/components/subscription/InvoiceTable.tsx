@@ -25,6 +25,7 @@ export function InvoiceTable({ invoices }: { invoices: Invoice[] }) {
             <TableHead className="text-xs">Period</TableHead>
             <TableHead className="text-xs">Amount</TableHead>
             <TableHead className="text-xs">Status</TableHead>
+            <TableHead className="text-xs">Download</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -34,6 +35,20 @@ export function InvoiceTable({ invoices }: { invoices: Invoice[] }) {
               <TableCell className="text-xs">{formatDate(inv.period_start)} – {formatDate(inv.period_end)}</TableCell>
               <TableCell className="text-xs">{formatAmount(inv.amount, inv.currency)}</TableCell>
               <TableCell className="text-xs capitalize">{inv.status}</TableCell>
+              <TableCell className="text-xs">
+                {inv.pdf_url ? (
+                  <a
+                    href={inv.pdf_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    Download
+                  </a>
+                ) : (
+                  <span className="text-muted-foreground">—</span>
+                )}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>

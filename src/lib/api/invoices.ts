@@ -8,6 +8,7 @@ export interface Invoice {
   status: string;
   period_start?: string | null;
   period_end?: string | null;
+  pdf_url?: string | null;
   created_at?: string;
 }
 
