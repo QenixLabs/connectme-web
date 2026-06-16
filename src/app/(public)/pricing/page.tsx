@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Check, ShieldCheck } from "lucide-react";
@@ -31,30 +30,15 @@ const FAQS = [
   },
 ];
 
-function formatPrice(paise: number, annual: boolean): string {
+function formatPrice(paise: number): string {
   const monthly = paise / 100;
   if (monthly === 0) return "₹0";
-  const value = annual ? Math.floor(monthly * 0.8) : monthly;
-  return `₹${value.toLocaleString("en-IN")}`;
+  return `₹${monthly.toLocaleString("en-IN")}`;
 }
 
-const ANNUAL_KEY_MAP: Record<string, string> = {
-  recruiter_pro: "recruiter_pro_yearly",
-  recruiter_business: "recruiter_business_yearly",
-  talent_verified: "talent_verified_yearly",
-};
-
-function getUpgradeKey(monthlyKey: string, annual: boolean): string {
-  if (!annual) return monthlyKey;
-  return ANNUAL_KEY_MAP[monthlyKey] ?? monthlyKey;
-}
-
-function periodText(paise: number, annual: boolean): string {
+function periodText(paise: number, interval: string): string {
   if (paise === 0) return "forever";
-  if (annual) {
-    const yearly = Math.floor((paise / 100) * 0.8 * 12);
-    return `billed ₹${yearly.toLocaleString("en-IN")} annually`;
-  }
+  if (interval === "yearly") return "billed annually";
   return "billed monthly";
 }
 
@@ -65,7 +49,6 @@ export default function PricingPage() {
   const isRecruiter = user?.role === "recruiter";
   const isTalent = user?.role === "talent";
   const currentPlanKey = user?.active_plan;
-  const [annual, setAnnual] = useState(false);
 
   const {
     data: plans,
@@ -85,8 +68,7 @@ export default function PricingPage() {
 
   const handleUpgrade = async (planKey: string) => {
     try {
-      const upgradeKey = getUpgradeKey(planKey, annual);
-      const result = await subscriptionsApi.initiateUpgrade(upgradeKey);
+      const result = await subscriptionsApi.initiateUpgrade(planKey);
       if (result.shortUrl) {
         if (result.shortUrl.startsWith("http")) {
           window.open(result.shortUrl, "_self");
@@ -95,10 +77,11 @@ export default function PricingPage() {
         }
       }
     } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data
-          ?.message || "Failed to initiate upgrade";
-      popup.show({ title: message, variant: "error" });
+      const response = (err as { response?: { status?: number; data?: { message?: string } } }).response;
+      const message = response?.data?.message || "Failed to initiate upgrade";
+      if (response?.status !== 429) {
+        popup.show({ title: message, variant: "error" });
+      }
     }
   };
 
@@ -166,13 +149,6 @@ export default function PricingPage() {
         .pricing-eyebrow { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--color-gold-light); font-weight: 500; text-align: center; margin-bottom: 0.75rem; }
         .pricing-title { font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 600; text-align: center; color: var(--color-ink-deep); margin: 0 0 0.5rem; line-height: 1.2; }
         .pricing-sub { text-align: center; font-size: 15px; color: var(--color-ink-faded); font-weight: 300; margin: 0 0 3rem; }
-        .toggle-wrap { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 2.5rem; }
-        .toggle-label { font-size: 13px; color: var(--color-ink-faded); font-weight: 400; }
-        .toggle-label.active { color: var(--color-ink-deep); font-weight: 500; }
-        .toggle { width: 40px; height: 22px; background: var(--color-msg-gold); border-radius: 11px; cursor: pointer; position: relative; border: none; outline: none; }
-        .toggle-dot { width: 16px; height: 16px; background: white; border-radius: 50%; position: absolute; top: 3px; left: 3px; transition: transform 0.2s; }
-        .toggle.annual .toggle-dot { transform: translateX(18px); }
-        .save-pill { background: color-mix(in oklab, var(--color-msg-gold) 13%, transparent); color: var(--color-gold-dark); font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.04em; }
         .pricing-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; max-width: 860px; margin: 0 auto 2rem; }
         .pricing-card { background: white; border: 1px solid var(--color-msg-border); border-radius: 16px; padding: 1.75rem 1.5rem 1.5rem; position: relative; display: flex; flex-direction: column; }
         .pricing-card.featured { border: 2px solid var(--color-msg-gold); background: var(--color-cream-light); }
@@ -203,23 +179,6 @@ export default function PricingPage() {
           Pay only for what you need.
         </h1>
         <p className="pricing-sub">No hidden fees. Cancel anytime.</p>
-
-        {filteredPlans && filteredPlans.some((p) => p.price > 0) && (
-          <div className="toggle-wrap">
-            <span className={`toggle-label ${!annual ? "active" : ""}`}>Monthly</span>
-            <button
-              className={`toggle ${annual ? "annual" : ""}`}
-              aria-label="Switch billing period"
-              onClick={() => setAnnual((v) => !v)}
-            >
-              <div className="toggle-dot" />
-            </button>
-            <span className={`toggle-label ${annual ? "active" : ""}`}>Annual</span>
-            <span className="save-pill" style={{ opacity: annual ? 1 : 0.35 }}>
-              Save 20%
-            </span>
-          </div>
-        )}
 
         {plansLoading && (
           <div className="pricing-cards">
@@ -254,8 +213,8 @@ export default function PricingPage() {
             {filteredPlans.map((plan) => {
               const isPopular =
                 plan.key === "recruiter_pro" || plan.key === "talent_verified";
-              const priceDisplay = formatPrice(plan.price, annual);
-              const period = periodText(plan.price, annual);
+              const priceDisplay = formatPrice(plan.price);
+              const period = periodText(plan.price, plan.interval);
 
               return (
                 <div
@@ -269,7 +228,9 @@ export default function PricingPage() {
                   </div>
                   <div className="card-price">
                     {priceDisplay}
-                    {plan.price > 0 && <span>/mo</span>}
+                    {plan.price > 0 && (
+                      <span>/{plan.interval === "yearly" ? "yr" : "mo"}</span>
+                    )}
                   </div>
                   <div className="card-period">{period}</div>
                   <div className="card-divider" />

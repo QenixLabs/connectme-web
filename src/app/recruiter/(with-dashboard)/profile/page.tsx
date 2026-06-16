@@ -118,7 +118,7 @@ export default function RecruiterProfilePage() {
     setSending(true);
     try {
       if (t === "email") {
-        await authApi.resendOtp(user.email);
+        await authApi.sendEmailOtp();
       } else if (t === "phone") {
         await authApi.sendPhoneOtp();
       }
@@ -137,7 +137,7 @@ export default function RecruiterProfilePage() {
     setDialogSuccess(null);
     try {
       if (verifyTarget === "email") {
-        await authApi.verifyOtp(user.email, otp);
+        await authApi.verifyEmailOtp(user.email, otp);
       } else if (verifyTarget === "phone") {
         await authApi.verifyPhoneOtp(user.phone, otp);
       }

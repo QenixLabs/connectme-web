@@ -5,14 +5,14 @@ export interface PlanConfig {
   display_name: string;
   description: string;
   price: number;
-  interval: string;
+  interval: 'monthly' | 'yearly';
   features: string[];
   is_active: boolean;
   message_quota_limit?: number | null;
   campaign_quota_limit?: number | null;
   max_images?: number | null;
   max_videos?: number | null;
-  subscription_tier?: string | null;
+  subscription_tier?: 'free' | 'premium_talent' | 'pro_talent' | 'premium_recruiter' | 'enterprise_recruiter' | null;
   sort_order?: number;
 }
 
@@ -22,12 +22,12 @@ export interface UpdatePlanInput {
   price?: number;
   features?: string[];
   is_active?: boolean;
-  interval?: string;
+  interval?: 'monthly' | 'yearly';
   message_quota_limit?: number;
   campaign_quota_limit?: number;
   max_images?: number;
   max_videos?: number;
-  subscription_tier?: string;
+  subscription_tier?: 'free' | 'premium_talent' | 'pro_talent' | 'premium_recruiter' | 'enterprise_recruiter';
   sort_order?: number;
 }
 
@@ -36,14 +36,14 @@ export interface CreatePlanInput {
   display_name: string;
   description: string;
   price: number;
-  interval: string;
+  interval: 'monthly' | 'yearly';
   features?: string[];
   is_active?: boolean;
   message_quota_limit?: number;
   campaign_quota_limit?: number;
   max_images?: number;
   max_videos?: number;
-  subscription_tier?: string;
+  subscription_tier?: 'free' | 'premium_talent' | 'pro_talent' | 'premium_recruiter' | 'enterprise_recruiter';
   sort_order?: number;
 }
 

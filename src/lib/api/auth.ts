@@ -69,6 +69,16 @@ export const authApi = {
     return response.data;
   },
 
+  sendEmailOtp: async () => {
+    const response = await apiClient.post('/auth/send-email-otp');
+    return response.data;
+  },
+
+  verifyEmailOtp: async (email: string, otp: string) => {
+    const response = await apiClient.post('/auth/verify-email-otp', { email, otp });
+    return response.data;
+  },
+
   refreshToken: async () => {
     const response = await apiClient.post('/auth/refresh');
     return response.data as { access_token: string };

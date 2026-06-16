@@ -38,7 +38,7 @@ export function VerificationAlerts() {
     setSending(true);
     try {
       if (t === "email") {
-        await authApi.resendOtp(user.email);
+        await authApi.sendEmailOtp();
       } else if (t === "phone") {
         await authApi.sendPhoneOtp();
       }
@@ -57,7 +57,7 @@ export function VerificationAlerts() {
     setDialogSuccess(null);
     try {
       if (target === "email") {
-        await authApi.verifyOtp(user.email, otp);
+        await authApi.verifyEmailOtp(user.email, otp);
       } else if (target === "phone") {
         await authApi.verifyPhoneOtp(user.phone, otp);
       }

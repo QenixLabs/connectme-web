@@ -27,6 +27,13 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Sheet,
   SheetContent,
   SheetHeader,
@@ -45,18 +52,43 @@ import { plansApi, type PlanConfig, type UpdatePlanInput } from "@/lib/api/plans
 import { queryKeys } from "@/lib/api/query-keys";
 import { getApiErrorMessage } from "@/lib/formatters";
 
+const INTERVALS = ["monthly", "yearly"] as const;
+const SUBSCRIPTION_TIERS = [
+  { value: "none", label: "None" },
+  { value: "free", label: "Free" },
+  { value: "premium_talent", label: "Premium Talent" },
+  { value: "pro_talent", label: "Pro Talent" },
+  { value: "premium_recruiter", label: "Premium Recruiter" },
+  { value: "enterprise_recruiter", label: "Enterprise Recruiter" },
+] as const;
+
 const planSchema = z.object({
   display_name: z.string().min(1, "Display name is required").max(100),
   description: z.string().min(1, "Description is required").max(500),
   price: z.number().min(0, "Price must be at least 0"),
+  interval: z.enum(["monthly", "yearly"], {
+    message: "Interval must be monthly or yearly",
+  }),
   features: z.array(z.string().min(1, "Feature cannot be empty")).max(20),
   is_active: z.boolean(),
+  message_quota_limit: z.number().min(0, "Limit must be at least 0").nullable(),
+  campaign_quota_limit: z.number().min(0, "Limit must be at least 0").nullable(),
+  max_images: z.number().min(0, "Limit must be at least 0").nullable(),
+  max_videos: z.number().min(0, "Limit must be at least 0").nullable(),
+  subscription_tier: z
+    .enum(["none", "free", "premium_talent", "pro_talent", "premium_recruiter", "enterprise_recruiter"])
+    .nullable(),
+  sort_order: z.number().min(0, "Sort order must be at least 0"),
 });
 
 type PlanFormValues = z.infer<typeof planSchema>;
 
 function formatPriceInRupees(paise: number): string {
   return `₹${(paise / 100).toLocaleString("en-IN")}`;
+}
+
+function numberOrNull(value: string): number | null {
+  return value === "" ? null : Number(value);
 }
 
 function PlanEditSheet({
@@ -76,8 +108,15 @@ function PlanEditSheet({
       display_name: plan.display_name,
       description: plan.description,
       price: plan.price,
+      interval: plan.interval ?? "monthly",
       features: plan.features,
       is_active: plan.is_active,
+      message_quota_limit: plan.message_quota_limit ?? null,
+      campaign_quota_limit: plan.campaign_quota_limit ?? null,
+      max_images: plan.max_images ?? null,
+      max_videos: plan.max_videos ?? null,
+      subscription_tier: plan.subscription_tier ?? "none",
+      sort_order: plan.sort_order ?? 0,
     },
   });
 
@@ -102,8 +141,18 @@ function PlanEditSheet({
       display_name: values.display_name.trim(),
       description: values.description.trim(),
       price: Math.round(values.price),
+      interval: values.interval,
       features: values.features.map((f) => f.trim()).filter(Boolean),
       is_active: values.is_active,
+      message_quota_limit: values.message_quota_limit ?? undefined,
+      campaign_quota_limit: values.campaign_quota_limit ?? undefined,
+      max_images: values.max_images ?? undefined,
+      max_videos: values.max_videos ?? undefined,
+      subscription_tier:
+        values.subscription_tier && values.subscription_tier !== "none"
+          ? values.subscription_tier
+          : undefined,
+      sort_order: values.sort_order,
     });
   };
 
@@ -185,6 +234,80 @@ function PlanEditSheet({
               )}
             />
 
+            <FormField
+              control={form.control}
+              name="interval"
+              render={({ field }) => (
+                <FormItem className="space-y-1.5">
+                  <FormLabel className="text-xs">Billing Interval</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="h-9 text-sm w-full">
+                        <SelectValue placeholder="Select interval" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {INTERVALS.map((interval) => (
+                        <SelectItem key={interval} value={interval} className="text-sm capitalize">
+                          {interval}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="subscription_tier"
+              render={({ field }) => (
+                <FormItem className="space-y-1.5">
+                  <FormLabel className="text-xs">Subscription Tier</FormLabel>
+                  <Select
+                    onValueChange={(value) => field.onChange(value === "none" ? null : value)}
+                    value={field.value ?? "none"}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="h-9 text-sm w-full">
+                        <SelectValue placeholder="Select tier" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {SUBSCRIPTION_TIERS.map((tier) => (
+                        <SelectItem key={tier.value} value={tier.value} className="text-sm">
+                          {tier.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="sort_order"
+              render={({ field }) => (
+                <FormItem className="space-y-1.5">
+                  <FormLabel className="text-xs">Sort Order</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min={0}
+                      step={1}
+                      {...field}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                      className="h-9 text-sm"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label className="text-xs">Features</Label>
@@ -235,6 +358,92 @@ function PlanEditSheet({
                   {form.formState.errors.features.message}
                 </p>
               )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="message_quota_limit"
+                render={({ field }) => (
+                  <FormItem className="space-y-1.5">
+                    <FormLabel className="text-xs">Message Quota</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={0}
+                        step={1}
+                        value={field.value ?? ""}
+                        onChange={(e) => field.onChange(numberOrNull(e.target.value))}
+                        className="h-9 text-sm"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="campaign_quota_limit"
+                render={({ field }) => (
+                  <FormItem className="space-y-1.5">
+                    <FormLabel className="text-xs">Campaign Quota</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={0}
+                        step={1}
+                        value={field.value ?? ""}
+                        onChange={(e) => field.onChange(numberOrNull(e.target.value))}
+                        className="h-9 text-sm"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="max_images"
+                render={({ field }) => (
+                  <FormItem className="space-y-1.5">
+                    <FormLabel className="text-xs">Max Images</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={0}
+                        step={1}
+                        value={field.value ?? ""}
+                        onChange={(e) => field.onChange(numberOrNull(e.target.value))}
+                        className="h-9 text-sm"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="max_videos"
+                render={({ field }) => (
+                  <FormItem className="space-y-1.5">
+                    <FormLabel className="text-xs">Max Videos</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={0}
+                        step={1}
+                        value={field.value ?? ""}
+                        onChange={(e) => field.onChange(numberOrNull(e.target.value))}
+                        className="h-9 text-sm"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             <FormField
