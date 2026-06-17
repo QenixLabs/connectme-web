@@ -95,12 +95,16 @@ export default function AdminSubscriptionsPage() {
     : [];
 
   const planData = data?.counts_by_plan ?? [];
+  const activePlanData = planData.filter(
+    (p) => p.plan_key !== "recruiter_free"
+  );
 
   const trendData = data
     ? data.recent_subscriptions.map((item, index) => ({
         date: item.date.slice(5),
         created: item.count,
         cancelled: data.recent_cancellations[index]?.count ?? 0,
+        scheduled: data.recent_scheduled_cancellations[index]?.count ?? 0,
       }))
     : [];
 
@@ -196,13 +200,13 @@ export default function AdminSubscriptionsPage() {
             <div className="h-64">
               {isLoading ? (
                 <Skeleton className="h-full w-full" />
-              ) : planData.length === 0 ? (
+              ) : activePlanData.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-24">
                   No active plans.
                 </p>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={planData}>
+                  <BarChart data={activePlanData}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                     <XAxis
                       dataKey="display_name"
@@ -212,7 +216,7 @@ export default function AdminSubscriptionsPage() {
                     <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
                     <Tooltip />
                     <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                      {planData.map((_, index) => (
+                      {activePlanData.map((_, index) => (
                         <Cell
                           key={`cell-${index}`}
                           fill={PLAN_COLORS[index % PLAN_COLORS.length]}
@@ -259,6 +263,14 @@ export default function AdminSubscriptionsPage() {
                       dataKey="cancelled"
                       name="Cancelled"
                       stroke="#ef4444"
+                      strokeWidth={2}
+                      dot={false}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="scheduled"
+                      name="Scheduled for cancellation"
+                      stroke="#f97316"
                       strokeWidth={2}
                       dot={false}
                     />

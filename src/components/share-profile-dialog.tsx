@@ -37,6 +37,14 @@ export function ShareProfileDialog({
     urlProp ||
     `${typeof window !== "undefined" ? window.location.origin : ""}/talent/${username}`;
 
+  const getCssVar = (name: string, fallback: string): string => {
+    if (typeof window === "undefined") return fallback;
+    const value = getComputedStyle(document.documentElement)
+      .getPropertyValue(name)
+      .trim();
+    return value || fallback;
+  };
+
   useEffect(() => {
     if (!open || !url) return;
     QRCode.toDataURL(url, {
@@ -44,8 +52,8 @@ export function ShareProfileDialog({
       margin: 2,
       errorCorrectionLevel: "H",
       color: {
-        dark: "var(--color-ink-deep)",
-        light: "var(--color-white)",
+        dark: getCssVar("--color-ink-deep", "#1a160f"),
+        light: getCssVar("--color-white", "#ffffff"),
       },
     })
       .then(setQrDataUrl)

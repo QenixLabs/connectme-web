@@ -43,6 +43,14 @@ const STATUS_COLORS: Record<string, string> = {
   banned: "bg-rose-100 text-rose-800 border-rose-200",
 };
 
+const SUBSCRIPTION_STATUS_COLORS: Record<string, string> = {
+  active: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  past_due: "bg-amber-100 text-amber-800 border-amber-200",
+  cancelled: "bg-slate-100 text-slate-800 border-slate-200",
+  expired: "bg-slate-100 text-slate-800 border-slate-200",
+  pending: "bg-blue-100 text-blue-800 border-blue-200",
+};
+
 export default function AdminUsersPage() {
   const [data, setData] = useState<PaginatedUsers | null>(null);
   const [loading, setLoading] = useState(true);
@@ -175,6 +183,7 @@ export default function AdminUsersPage() {
             <TableRow>
               <TableHead className="text-xs">User</TableHead>
               <TableHead className="text-xs">Role</TableHead>
+              <TableHead className="text-xs">Subscription</TableHead>
               <TableHead className="text-xs">Status</TableHead>
               <TableHead className="text-xs">Reports</TableHead>
               <TableHead className="text-xs">Trust</TableHead>
@@ -185,14 +194,14 @@ export default function AdminUsersPage() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8">
+                <TableCell colSpan={8} className="text-center py-8">
                   <Loader2 className="w-5 h-5 animate-spin text-muted-foreground mx-auto" />
                 </TableCell>
               </TableRow>
             ) : !data || data.users.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={7}
+                  colSpan={8}
                   className="text-center py-8 text-sm text-muted-foreground"
                 >
                   No users found.
@@ -215,6 +224,22 @@ export default function AdminUsersPage() {
                     </div>
                   </TableCell>
                   <TableCell className="text-xs capitalize">{user.role}</TableCell>
+                  <TableCell className="text-xs">
+                    {user.subscription ? (
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-medium">{user.subscription.plan_display_name}</span>
+                        <Badge
+                          variant="outline"
+                          className={`text-[10px] px-1.5 py-0 w-fit capitalize ${SUBSCRIPTION_STATUS_COLORS[user.subscription.status] || ""}`}
+                        >
+                          {user.subscription.status}
+                          {user.subscription.cancel_at_period_end && " (ends at period end)"}
+                        </Badge>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <Badge
                       variant="outline"

@@ -36,8 +36,13 @@ export const subscriptionsApi = {
     return response.data;
   },
 
-  initiateUpgrade: async (planKey: string): Promise<{ subscriptionId: string; shortUrl: string }> => {
+  initiateUpgrade: async (planKey: string): Promise<{ razorpay_subscription_id: string; short_url: string | null; resume: boolean }> => {
     const response = await apiClient.post('/subscriptions/upgrade', { planKey });
+    return response.data;
+  },
+
+  getCheckoutStatus: async (): Promise<{ pending: boolean; razorpay_subscription_id?: string; short_url?: string; plan_key?: string }> => {
+    const response = await apiClient.get('/subscriptions/checkout/status');
     return response.data;
   },
 

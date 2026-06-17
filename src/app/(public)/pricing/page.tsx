@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Check, ShieldCheck } from "lucide-react";
@@ -10,6 +11,14 @@ import { queryKeys } from "@/lib/api/query-keys";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const FAQS = [
   {
@@ -60,6 +69,19 @@ export default function PricingPage() {
     queryFn: plansApi.getPlans,
   });
 
+  const {
+    data: checkoutStatus,
+    isLoading: isCheckoutLoading,
+  } = useQuery<Awaited<ReturnType<typeof subscriptionsApi.getCheckoutStatus>>>({
+    queryKey: queryKeys.subscriptions.checkoutStatus(),
+    queryFn: subscriptionsApi.getCheckoutStatus,
+    enabled: isAuthenticated,
+  });
+
+  const isLoading = plansLoading || isCheckoutLoading;
+
+  const [planToSwitch, setPlanToSwitch] = useState<string | null>(null);
+
   const filteredPlans = plans?.filter((plan) => {
     if (isTalent) return plan.key.startsWith("talent_");
     if (isRecruiter) return plan.key.startsWith("recruiter_");
@@ -69,11 +91,11 @@ export default function PricingPage() {
   const handleUpgrade = async (planKey: string) => {
     try {
       const result = await subscriptionsApi.initiateUpgrade(planKey);
-      if (result.shortUrl) {
-        if (result.shortUrl.startsWith("http")) {
-          window.open(result.shortUrl, "_self");
+      if (result.short_url) {
+        if (result.short_url.startsWith("http")) {
+          window.open(result.short_url, "_self");
         } else {
-          router.push(result.shortUrl);
+          router.push(result.short_url);
         }
       }
     } catch (err: unknown) {
@@ -124,6 +146,35 @@ export default function PricingPage() {
       return (
         <Button variant="ghost" className="w-full" disabled>
           Current Plan
+        </Button>
+      );
+    }
+
+    if (checkoutStatus?.pending && checkoutStatus.plan_key === plan.key) {
+      return (
+        <Button
+          variant="default"
+          className="w-full"
+          onClick={() => {
+            if (checkoutStatus.short_url) {
+              window.location.href = checkoutStatus.short_url;
+            }
+          }}
+          disabled={!checkoutStatus.short_url}
+        >
+          Resume your upgrade
+        </Button>
+      );
+    }
+
+    if (checkoutStatus?.pending && checkoutStatus.plan_key !== plan.key) {
+      return (
+        <Button
+          variant="outline"
+          className="w-full"
+          onClick={() => setPlanToSwitch(plan.key)}
+        >
+          Switch to this plan
         </Button>
       );
     }
@@ -180,7 +231,7 @@ export default function PricingPage() {
         </h1>
         <p className="pricing-sub">No hidden fees. Cancel anytime.</p>
 
-        {plansLoading && (
+        {isLoading && (
           <div className="pricing-cards">
             {[1, 2, 3].map((i) => (
               <div key={i} className="pricing-card">
@@ -268,6 +319,32 @@ export default function PricingPage() {
             </div>
           ))}
         </div>
+
+        <Dialog open={!!planToSwitch} onOpenChange={(open) => { if (!open) setPlanToSwitch(null); }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Switch plan?</DialogTitle>
+              <DialogDescription>
+                You have an incomplete checkout for another plan. Continuing will cancel it and start this one.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setPlanToSwitch(null)}>
+                Keep current checkout
+              </Button>
+              <Button
+                onClick={async () => {
+                  if (planToSwitch) {
+                    await handleUpgrade(planToSwitch);
+                    setPlanToSwitch(null);
+                  }
+                }}
+              >
+                Switch to this plan
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </>
   );

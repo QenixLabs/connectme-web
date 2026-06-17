@@ -33,9 +33,7 @@ import { getApiErrorMessage } from "@/lib/formatters";
 
 const ACTION_OPTIONS = [
   "all",
-  "message_sent",
   "message_read",
-  "message_blocked_profanity",
   "attachment_uploaded",
   "user_blocked",
   "user_unblocked",
@@ -157,7 +155,7 @@ export default function AdminAuditLogsPage() {
             <SelectValue placeholder="Target type" />
           </SelectTrigger>
           <SelectContent>
-            {["all", "message", "user", "report", "attachment"].map((t) => (
+            {["all", "user", "report", "attachment"].map((t) => (
               <SelectItem key={t} value={t} className="text-xs capitalize">
                 {t}
               </SelectItem>

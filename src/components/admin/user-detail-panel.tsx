@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   Loader2,
@@ -8,6 +8,7 @@ import {
   CheckCircle,
   ChevronLeft,
   ChevronRight,
+  Copy,
   ExternalLink,
   ShieldAlert,
   ShieldBan,
@@ -26,7 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { adminApi, type UserDetail, type AdminNote, type UserActivity, type PaginatedModerationActions } from "@/lib/api";
+import { adminApi, type UserDetail, type AdminNote, type UserActivity, type PaginatedModerationActions, type AdminUserSubscriptionDetail, type PaginatedAdminUserInvoices } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -68,6 +69,13 @@ export function UserDetailPanel({ userId, onClose, onStatusChange }: UserDetailP
   const [moderationPage, setModerationPage] = useState(1);
   const [moderationData, setModerationData] = useState<PaginatedModerationActions | null>(null);
   const [moderationLoading, setModerationLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("profile");
+  const [subscription, setSubscription] = useState<AdminUserSubscriptionDetail | null>(null);
+  const [subscriptionLoading, setSubscriptionLoading] = useState(false);
+  const [subscriptionError, setSubscriptionError] = useState<string | null>(null);
+  const [invoices, setInvoices] = useState<PaginatedAdminUserInvoices | null>(null);
+  const [invoicePage, setInvoicePage] = useState(1);
+  const [invoicesLoading, setInvoicesLoading] = useState(false);
 
   const fetchModerationActions = async (page = 1) => {
     if (!userId) return;
@@ -82,6 +90,31 @@ export function UserDetailPanel({ userId, onClose, onStatusChange }: UserDetailP
     }
   };
 
+  const fetchSubscriptionDetails = useCallback(async () => {
+    if (!userId) return;
+    setSubscriptionLoading(true);
+    setSubscriptionError(null);
+    try {
+      const sub = await adminApi.getUserSubscription(userId);
+      setSubscription(sub);
+    } catch (err) {
+      setSubscriptionError(getApiErrorMessage(err, "Failed to load subscription"));
+    } finally {
+      setSubscriptionLoading(false);
+    }
+  }, [userId]);
+
+  const fetchInvoices = useCallback(async () => {
+    if (!userId) return;
+    setInvoicesLoading(true);
+    try {
+      const inv = await adminApi.getUserInvoices(userId, { page: invoicePage, limit: 10 });
+      setInvoices(inv);
+    } finally {
+      setInvoicesLoading(false);
+    }
+  }, [userId, invoicePage]);
+
   useEffect(() => {
     if (!userId) {
       setDetail(null);
@@ -93,6 +126,10 @@ export function UserDetailPanel({ userId, onClose, onStatusChange }: UserDetailP
       setVerificationTier(1);
       setModerationPage(1);
       setModerationData(null);
+      setSubscription(null);
+      setInvoices(null);
+      setInvoicePage(1);
+      setSubscriptionError(null);
       return;
     }
 
@@ -132,6 +169,18 @@ export function UserDetailPanel({ userId, onClose, onStatusChange }: UserDetailP
     if (!userId || moderationPage === 1) return;
     fetchModerationActions(moderationPage);
   }, [moderationPage, userId]);
+
+  useEffect(() => {
+    if (activeTab === "subscription" && userId) {
+      fetchSubscriptionDetails();
+    }
+  }, [activeTab, userId, fetchSubscriptionDetails]);
+
+  useEffect(() => {
+    if (activeTab === "subscription" && userId) {
+      fetchInvoices();
+    }
+  }, [invoicePage, userId, activeTab, fetchInvoices]);
 
   const refreshData = async () => {
     if (!userId) return;
@@ -295,12 +344,13 @@ export function UserDetailPanel({ userId, onClose, onStatusChange }: UserDetailP
               )}
             </div>
 
-            <Tabs defaultValue="profile" className="w-full">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="w-full">
                 <TabsTrigger value="profile" className="text-xs flex-1">Profile</TabsTrigger>
                 <TabsTrigger value="moderation" className="text-xs flex-1">Moderation</TabsTrigger>
                 <TabsTrigger value="activity" className="text-xs flex-1">Activity</TabsTrigger>
                 <TabsTrigger value="notes" className="text-xs flex-1">Notes</TabsTrigger>
+                <TabsTrigger value="subscription" className="text-xs flex-1">Subscription</TabsTrigger>
               </TabsList>
 
               <TabsContent value="profile" className="space-y-3 mt-3">
@@ -647,6 +697,120 @@ export function UserDetailPanel({ userId, onClose, onStatusChange }: UserDetailP
                     ))
                   )}
                 </div>
+              </TabsContent>
+
+              <TabsContent value="subscription" className="space-y-3 mt-3">
+                {subscriptionLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                  </div>
+                ) : subscriptionError ? (
+                  <Alert variant="destructive">
+                    <AlertCircle className="w-4 h-4" />
+                    <AlertDescription>{subscriptionError}</AlertDescription>
+                  </Alert>
+                ) : subscription?.subscription ? (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="text-muted-foreground">Plan</div>
+                      <div>{subscription.plan?.display_name || subscription.subscription.plan_key}</div>
+
+                      <div className="text-muted-foreground">Status</div>
+                      <div className="capitalize">{subscription.subscription.status}</div>
+
+                      <div className="text-muted-foreground">Current Period Start</div>
+                      <div>{subscription.subscription.current_period_start ? new Date(subscription.subscription.current_period_start).toLocaleDateString() : "—"}</div>
+
+                      <div className="text-muted-foreground">Current Period End</div>
+                      <div>{subscription.subscription.current_period_end ? new Date(subscription.subscription.current_period_end).toLocaleDateString() : "—"}</div>
+
+                      <div className="text-muted-foreground">Cancel at Period End</div>
+                      <div>{subscription.subscription.cancel_at_period_end ? "Yes" : "No"}</div>
+
+                      {subscription.subscription.cancellation_reason && (
+                        <>
+                          <div className="text-muted-foreground">Cancellation Reason</div>
+                          <div>{subscription.subscription.cancellation_reason}</div>
+                        </>
+                      )}
+
+                      <div className="text-muted-foreground">Razorpay Subscription ID</div>
+                      <div className="flex items-center gap-1">
+                        <span className="truncate">{subscription.subscription.razorpay_subscription_id || "—"}</span>
+                        {subscription.subscription.razorpay_subscription_id && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-5 w-5"
+                            onClick={() => {
+                              const id = subscription.subscription?.razorpay_subscription_id;
+                              if (id) navigator.clipboard.writeText(id);
+                            }}
+                          >
+                            <Copy className="w-3 h-3" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="border-t pt-3 mt-3">
+                      <div className="text-xs font-medium mb-2">Invoices</div>
+                      {invoicesLoading ? (
+                        <div className="flex justify-center py-4">
+                          <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+                        </div>
+                      ) : invoices && invoices.data.length > 0 ? (
+                        <div className="space-y-2">
+                          {invoices.data.map((invoice) => (
+                            <div key={invoice._id} className="border rounded-md p-2 text-xs">
+                              <div className="flex items-center justify-between">
+                                <span className="font-medium">{invoice.razorpay_invoice_id}</span>
+                                <Badge variant="outline" className="text-[10px] capitalize">
+                                  {invoice.status}
+                                </Badge>
+                              </div>
+                              <div className="text-muted-foreground mt-1">
+                                {invoice.amount / 100} {invoice.currency} ·{" "}
+                                {invoice.period_start ? new Date(invoice.period_start).toLocaleDateString() : "—"}
+                              </div>
+                            </div>
+                          ))}
+                          {invoices.total_pages > 1 && (
+                            <div className="flex items-center justify-between pt-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-xs h-8 px-2"
+                                onClick={() => setInvoicePage((p) => Math.max(1, p - 1))}
+                                disabled={invoicePage <= 1}
+                              >
+                                <ChevronLeft className="w-3.5 h-3.5 mr-1" />
+                                Prev
+                              </Button>
+                              <span className="text-xs text-muted-foreground">
+                                Page {invoices.page} of {invoices.total_pages}
+                              </span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-xs h-8 px-2"
+                                onClick={() => setInvoicePage((p) => Math.min(invoices.total_pages, p + 1))}
+                                disabled={invoicePage >= invoices.total_pages}
+                              >
+                                Next
+                                <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-xs text-muted-foreground">No invoices found.</div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-xs text-muted-foreground">No subscription found.</div>
+                )}
               </TabsContent>
             </Tabs>
           </div>

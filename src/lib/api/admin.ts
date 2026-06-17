@@ -111,6 +111,57 @@ export interface UserHistory {
   verification_tier: number;
 }
 
+export interface AdminUserSubscription {
+  plan_key: string;
+  plan_display_name: string;
+  status: string;
+  current_period_end: string | null;
+  cancel_at_period_end: boolean;
+}
+
+export interface AdminUserSubscriptionDetail {
+  subscription: {
+    _id: string;
+    user_id: string;
+    plan_key: string;
+    status: string;
+    razorpay_subscription_id?: string | null;
+    current_period_start?: string | null;
+    current_period_end?: string | null;
+    cancel_at_period_end: boolean;
+    cancellation_reason?: string | null;
+    created_at?: string;
+    updated_at?: string;
+  } | null;
+  plan: {
+    _id: string;
+    key: string;
+    display_name: string;
+    description: string;
+    price: number;
+    interval: string;
+  } | null;
+}
+
+export interface AdminUserInvoice {
+  _id: string;
+  razorpay_invoice_id: string;
+  amount: number;
+  currency: string;
+  status: string;
+  period_start?: string | null;
+  period_end?: string | null;
+  created_at?: string;
+}
+
+export interface PaginatedAdminUserInvoices {
+  data: AdminUserInvoice[];
+  total: number;
+  page: number;
+  limit: number;
+  total_pages: number;
+}
+
 export interface AdminUser {
   _id: string;
   email: string;
@@ -128,6 +179,7 @@ export interface AdminUser {
   report_count: number;
   created_at: string;
   last_active_at?: string;
+  subscription: AdminUserSubscription | null;
 }
 
 export interface PaginatedUsers {
@@ -225,6 +277,7 @@ export interface SubscriptionAnalytics {
   total_revenue_inr: number;
   recent_subscriptions: Array<{ date: string; count: number }>;
   recent_cancellations: Array<{ date: string; count: number }>;
+  recent_scheduled_cancellations: Array<{ date: string; count: number }>;
   cancellation_reasons: Array<{ reason: string; count: number }>;
 }
 
@@ -409,6 +462,16 @@ export const adminApi = {
 
   getSubscriptionAnalytics: async (): Promise<SubscriptionAnalytics> => {
     const response = await apiClient.get('/admin/subscriptions/analytics');
+    return response.data;
+  },
+
+  getUserSubscription: async (id: string): Promise<AdminUserSubscriptionDetail> => {
+    const response = await apiClient.get(`/admin/subscriptions/${id}`);
+    return response.data;
+  },
+
+  getUserInvoices: async (id: string, params?: { page?: number; limit?: number }): Promise<PaginatedAdminUserInvoices> => {
+    const response = await apiClient.get(`/admin/subscriptions/${id}/invoices`, { params });
     return response.data;
   },
 };
