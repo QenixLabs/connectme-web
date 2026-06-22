@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { usePopup } from "@/hooks/use-popup";
 import { useTierGuard } from "@/hooks/use-tier-guard";
+import { useFeatureGuard } from "@/hooks/use-feature-guard";
 import Link from "next/link";
 
 interface InviteToCampaignModalProps {
@@ -45,6 +46,7 @@ export function InviteToCampaignModal({
   const bulkInvite = useBulkInviteTalent();
   const { show } = usePopup();
   const { guard } = useTierGuard(3);
+  const { handleFeatureError } = useFeatureGuard();
 
   const campaigns = campaignsData?.pages.flatMap((p) => p.data) ?? [];
   const isBulk = (talentIds?.length ?? 0) > 0;
@@ -84,8 +86,15 @@ export function InviteToCampaignModal({
         onClose();
         setSelectedCampaign("");
         setMessage("");
-      } catch {
-        show({ title: "Failed to send invite", variant: "error", position: "bottom-center" });
+      } catch (err) {
+        if (handleFeatureError(err)) return;
+        const error = err as { response?: { data?: { message?: string } } };
+        show({
+          title: isBulk ? "Failed to send invites" : "Failed to send invite",
+          description: error.response?.data?.message,
+          variant: "error",
+          position: "bottom-center",
+        });
       }
     });
   };

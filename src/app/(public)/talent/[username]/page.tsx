@@ -12,6 +12,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { useTierGuard } from "@/hooks/use-tier-guard";
 import { usePopup } from "@/hooks/use-popup";
+import { isFeatureForbidden } from "@/hooks/use-feature-guard";
+import { FeatureGateAlert } from "@/components/feature-gate-alert";
 import { useSectionVisibility } from "@/hooks/use-section-visibility";
 import { useCreateCollaborationRequest } from "@/lib/api/hooks/useCreateCollaborationRequest";
 import { ShortlistOrInviteModal } from "@/components/shortlist-or-invite-modal";
@@ -40,6 +42,7 @@ export default function PublicTalentProfilePage() {
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [featureError, setFeatureError] = useState<{ feature: string; plan?: string } | null>(null);
   const [shortlistModalOpen, setShortlistModalOpen] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isPrivate, setIsPrivate] = useState(false);
@@ -50,6 +53,11 @@ export default function PublicTalentProfilePage() {
   const popup = usePopup();
 
   const handleConnect = useCallback(() => {
+    if (!user) {
+      router.push("/auth/login");
+      return;
+    }
+
     const talentId = profile?.user_id;
     if (!talentId || !isRecruiter) return;
 
@@ -113,7 +121,7 @@ export default function PublicTalentProfilePage() {
         })
         .finally(() => setIsConnecting(false));
     });
-  }, [profile, isRecruiter, guard, createRequest, popup, router]);
+  }, [profile, isRecruiter, guard, createRequest, popup, router, user]);
 
   useEffect(() => {
     let cancelled = false;
@@ -143,7 +151,12 @@ export default function PublicTalentProfilePage() {
           }
         }
       } catch (err) {
-        if (!cancelled) setError(getApiErrorMessage(err));
+        const denied = isFeatureForbidden(err);
+        if (denied) {
+          if (!cancelled) setFeatureError(denied);
+        } else if (!cancelled) {
+          setError(getApiErrorMessage(err));
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -197,7 +210,7 @@ export default function PublicTalentProfilePage() {
     );
   }
 
-  if (error) {
+  if (error || featureError) {
     return (
       <div className="min-h-screen bg-background font-sans pb-10">
         <header className="sticky top-0 z-30 backdrop-blur-xl bg-background/75 border-b border-border/60">
@@ -212,9 +225,13 @@ export default function PublicTalentProfilePage() {
           </div>
         </header>
         <div className="px-4 py-6">
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
+          {featureError ? (
+            <FeatureGateAlert {...featureError} />
+          ) : (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
         </div>
       </div>
     );
@@ -255,18 +272,18 @@ export default function PublicTalentProfilePage() {
             onConnect={handleConnect}
             onBookmark={() => setShortlistModalOpen(true)}
             isConnecting={isConnecting}
-            connectDisabled={!isRecruiter}
+            connectDisabled={!!user && !isRecruiter}
           />
           {isPrivate ? (
             <div className="px-4 mt-6 text-center">
               <button
                 onClick={handleConnect}
-                disabled={isConnecting || !isRecruiter}
+                disabled={isConnecting || (!!user && !isRecruiter)}
                 className="inline-flex items-center justify-center rounded-xl bg-gold px-6 py-3 text-sm font-medium text-white shadow-sm hover:bg-gold/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isConnecting ? "Sending..." : "Send a connect request to view full profile"}
               </button>
-              {!isRecruiter && (
+              {!!user && !isRecruiter && (
                 <p className="mt-2 text-xs text-ink-muted">Only recruiters can send connection requests.</p>
               )}
             </div>

@@ -1,7 +1,8 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { campaignApi } from '@/lib/api';
 import { queryKeys } from '@/lib/api/query-keys';
 import { usePopup } from '@/hooks/use-popup';
+import { useFeatureGuard } from '@/hooks/use-feature-guard';
 
 export function useCampaignApplications(campaignId: string) {
   return useQuery({
@@ -79,6 +80,7 @@ export function useBulkUpdateApplicationStatus() {
 export function useAddToShortlist() {
   const queryClient = useQueryClient();
   const { show } = usePopup();
+  const { handleFeatureError } = useFeatureGuard();
 
   return useMutation({
     mutationFn: ({ campaignId, applicationId }: { campaignId: string; applicationId: string }) =>
@@ -90,6 +92,7 @@ export function useAddToShortlist() {
       show({ title: 'Added to shortlist', variant: 'success', position: 'bottom-center' });
     },
     onError: (error) => {
+      if (handleFeatureError(error)) return;
       const err = error as { response?: { data?: { message?: string } } };
       show({ title: 'Failed to add to shortlist', description: err.response?.data?.message, variant: 'error', position: 'bottom-center' });
     },
@@ -99,6 +102,7 @@ export function useAddToShortlist() {
 export function useRemoveFromShortlist() {
   const queryClient = useQueryClient();
   const { show } = usePopup();
+  const { handleFeatureError } = useFeatureGuard();
 
   return useMutation({
     mutationFn: ({ campaignId, applicationId }: { campaignId: string; applicationId: string }) =>
@@ -110,6 +114,7 @@ export function useRemoveFromShortlist() {
       show({ title: 'Removed from shortlist', variant: 'success', position: 'bottom-center' });
     },
     onError: (error) => {
+      if (handleFeatureError(error)) return;
       const err = error as { response?: { data?: { message?: string } } };
       show({ title: 'Failed to remove from shortlist', description: err.response?.data?.message, variant: 'error', position: 'bottom-center' });
     },

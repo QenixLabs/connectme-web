@@ -68,6 +68,15 @@ apiClient.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
+    if (error.response?.data instanceof Blob) {
+      try {
+        const text = await error.response.data.text();
+        error.response.data = JSON.parse(text);
+      } catch {
+        // leave blob as-is for non-JSON error bodies
+      }
+    }
+
     if (error.response?.status === 403) {
       const payload = error.response.data as Record<string, unknown>;
       const detail = payload?.data as Record<string, unknown> | undefined;

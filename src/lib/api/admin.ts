@@ -267,6 +267,38 @@ export interface PaginatedAuditLogs {
   total_pages: number;
 }
 
+export interface SubscriptionItem {
+  _id: string;
+  user_id: string;
+  plan_key: string;
+  plan_family_key?: string;
+  status: string;
+  razorpay_subscription_id?: string | null;
+  current_period_start?: string | null;
+  current_period_end?: string | null;
+  created_at?: string;
+  user?: {
+    _id: string;
+    email: string;
+    role: string;
+    display_name: string;
+  };
+}
+
+export interface PaginatedSubscriptions {
+  data: SubscriptionItem[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface CreateMigrationInput {
+  subscription_id: string;
+  to_plan_key: string;
+  effective_at: string;
+  reason: string;
+}
+
 export interface SubscriptionAnalytics {
   active_subscriptions: number;
   counts_by_status: Record<string, number>;
@@ -472,6 +504,26 @@ export const adminApi = {
 
   getUserInvoices: async (id: string, params?: { page?: number; limit?: number }): Promise<PaginatedAdminUserInvoices> => {
     const response = await apiClient.get(`/admin/subscriptions/${id}/invoices`, { params });
+    return response.data;
+  },
+
+  getSubscriptions: async (params?: { page?: number; limit?: number; status?: string; plan_key?: string; plan_family_key?: string }): Promise<PaginatedSubscriptions> => {
+    const response = await apiClient.get('/admin/subscriptions', { params });
+    return response.data;
+  },
+
+  createMigration: async (payload: CreateMigrationInput): Promise<{ message: string; data: { _id: string } }> => {
+    const response = await apiClient.post('/admin/subscriptions/migrations', payload);
+    return response.data;
+  },
+
+  getActiveSubscriptionCount: async (planKey: string): Promise<{ count: number }> => {
+    const response = await apiClient.get('/admin/subscriptions/count-by-plan', { params: { plan_key: planKey } });
+    return response.data;
+  },
+
+  bulkCreateMigrations: async (payload: { from_plan_key: string; to_plan_key: string; effective_at: string; reason: string }): Promise<{ message: string; data: { count: number } }> => {
+    const response = await apiClient.post('/admin/subscriptions/bulk-migrate', payload);
     return response.data;
   },
 };

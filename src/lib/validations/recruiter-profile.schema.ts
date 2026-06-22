@@ -17,7 +17,6 @@ export type RecruiterProfile = UpdateRecruiterProfileInput & {
   user_id?: string;
   company_email_domain?: string;
   verification_status?: string;
-  subscription_tier?: string;
   profile_photo?: string;
   created_at?: string;
   updated_at?: string;

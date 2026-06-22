@@ -15,6 +15,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { usePopup } from "@/hooks/use-popup";
+import { isFeatureForbidden } from "@/hooks/use-feature-guard";
+import { FeatureGateAlert } from "@/components/feature-gate-alert";
 import { MediaKitHeader } from "@/components/portfolio/media-kit-header";
 import { MediaKitIntro } from "@/components/portfolio/media-kit-intro";
 import { MediaTile } from "@/components/portfolio/media-tile";
@@ -309,6 +311,7 @@ export default function PublicPortfolioPage() {
   const [data, setData] = useState<PortfolioData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [featureError, setFeatureError] = useState<{ feature: string; plan?: string } | null>(null);
   const [isPrivate, setIsPrivate] = useState(false);
   const [hasConnection, setHasConnection] = useState(true);
   const [previewProfile, setPreviewProfile] = useState<Partial<TalentProfile> | null>(null);
@@ -366,7 +369,14 @@ export default function PublicPortfolioPage() {
           setData(res as PortfolioData);
         }
       })
-      .catch((err) => setError(getApiErrorMessage(err)))
+      .catch((err) => {
+        const denied = isFeatureForbidden(err);
+        if (denied) {
+          setFeatureError(denied);
+        } else {
+          setError(getApiErrorMessage(err));
+        }
+      })
       .finally(() => setLoading(false));
   }, [ownerChecked, isOwner, username]);
 
@@ -408,14 +418,18 @@ export default function PublicPortfolioPage() {
     );
   }
 
-  if (error) {
+  if (error || featureError) {
     return (
       <div className="min-h-screen bg-background font-sans pb-12">
         <MediaKitHeader />
         <div className="px-4 pt-5">
-          <Alert variant="destructive">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
+          {featureError ? (
+            <FeatureGateAlert {...featureError} />
+          ) : (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
           {isPrivate && !hasConnection && previewProfile?.user_id && (
             <div className="mt-6 text-center space-y-3">
               {requestSent ? (

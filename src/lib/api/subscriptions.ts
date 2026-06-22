@@ -36,8 +36,11 @@ export const subscriptionsApi = {
     return response.data;
   },
 
-  initiateUpgrade: async (planKey: string): Promise<{ razorpay_subscription_id: string; short_url: string | null; resume: boolean }> => {
-    const response = await apiClient.post('/subscriptions/upgrade', { planKey });
+  initiateUpgrade: async (
+    planKey: string,
+    interval: 'monthly' | 'yearly' = 'monthly',
+  ): Promise<{ razorpay_subscription_id: string; short_url: string | null; resume: boolean }> => {
+    const response = await apiClient.post('/subscriptions/upgrade', { planKey, interval });
     return response.data;
   },
 

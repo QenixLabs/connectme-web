@@ -110,17 +110,26 @@ export function DashboardLayout({
 
     const handleNewMessage = (message: {
       content?: string;
-      sender_id?: { _id?: string; full_legal_name?: string; username?: string; company_name?: string };
+      sender_id?: {
+        _id?: string;
+        full_legal_name?: string;
+        username?: string;
+        company_name?: string;
+        email?: string;
+        role?: string;
+      };
     }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.messages.unreadCount() });
 
       if (isMessagesPage) return;
       if (message.sender_id?._id === user?._id) return;
 
-      const senderName =
-        message.sender_id?.full_legal_name ||
-        message.sender_id?.company_name ||
-        message.sender_id?.username;
+      const sender = message.sender_id;
+      const senderName = sender?.role === "recruiter"
+        ? sender?.company_name || sender?.full_legal_name || sender?.email
+        : sender?.role === "talent"
+          ? sender?.username || sender?.full_legal_name || sender?.email
+          : sender?.full_legal_name || sender?.username || sender?.company_name || sender?.email;
 
       show({
         title: senderName ? `New message from ${senderName}` : "New message",

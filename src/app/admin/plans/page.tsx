@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -17,6 +17,9 @@ import {
   X,
   AlertTriangle,
   Check,
+  Info,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { usePopup } from "@/hooks/use-popup";
 
@@ -51,33 +54,25 @@ import {
 import { plansApi, type PlanConfig, type UpdatePlanInput } from "@/lib/api/plans";
 import { queryKeys } from "@/lib/api/query-keys";
 import { getApiErrorMessage } from "@/lib/formatters";
-
-const INTERVALS = ["monthly", "yearly"] as const;
-const SUBSCRIPTION_TIERS = [
-  { value: "none", label: "None" },
-  { value: "free", label: "Free" },
-  { value: "premium_talent", label: "Premium Talent" },
-  { value: "pro_talent", label: "Pro Talent" },
-  { value: "premium_recruiter", label: "Premium Recruiter" },
-  { value: "enterprise_recruiter", label: "Enterprise Recruiter" },
-] as const;
+import { CreatePlanVersionSheet } from "@/components/admin/create-plan-version-sheet";
+import { SunsetPlanDialog } from "@/components/admin/sunset-plan-dialog";
+import { ScheduleMigrationSheet } from "@/components/admin/schedule-migration-sheet";
+import { EditFamilyBenefitsSheet } from "@/components/admin/edit-family-benefits-sheet";
+import { CreatePlanSheet } from "@/components/admin/create-plan-sheet";
 
 const planSchema = z.object({
   display_name: z.string().min(1, "Display name is required").max(100),
   description: z.string().min(1, "Description is required").max(500),
-  price: z.number().min(0, "Price must be at least 0"),
-  interval: z.enum(["monthly", "yearly"], {
-    message: "Interval must be monthly or yearly",
-  }),
+  monthly_price: z.number().min(0, "Price must be at least 0"),
+  yearly_price: z.number().min(0, "Price must be at least 0"),
   features: z.array(z.string().min(1, "Feature cannot be empty")).max(20),
   is_active: z.boolean(),
+  is_popular: z.boolean(),
+  target_role: z.enum(["talent", "recruiter", "both"]),
   message_quota_limit: z.number().min(0, "Limit must be at least 0").nullable(),
   campaign_quota_limit: z.number().min(0, "Limit must be at least 0").nullable(),
   max_images: z.number().min(0, "Limit must be at least 0").nullable(),
   max_videos: z.number().min(0, "Limit must be at least 0").nullable(),
-  subscription_tier: z
-    .enum(["none", "free", "premium_talent", "pro_talent", "premium_recruiter", "enterprise_recruiter"])
-    .nullable(),
   sort_order: z.number().min(0, "Sort order must be at least 0"),
 });
 
@@ -107,20 +102,21 @@ function PlanEditSheet({
     defaultValues: {
       display_name: plan.display_name,
       description: plan.description,
-      price: plan.price,
-      interval: plan.interval ?? "monthly",
+      monthly_price: plan.monthly_price,
+      yearly_price: plan.yearly_price,
       features: plan.features,
       is_active: plan.is_active,
+      is_popular: plan.is_popular ?? false,
+      target_role: plan.target_role ?? "both",
       message_quota_limit: plan.message_quota_limit ?? null,
       campaign_quota_limit: plan.campaign_quota_limit ?? null,
       max_images: plan.max_images ?? null,
       max_videos: plan.max_videos ?? null,
-      subscription_tier: plan.subscription_tier ?? "none",
       sort_order: plan.sort_order ?? 0,
     },
   });
 
-  const priceChanged = form.watch("price") !== plan.price;
+  const priceChanged = form.watch("monthly_price") !== plan.monthly_price || form.watch("yearly_price") !== plan.yearly_price;
 
   const handleAddFeature = () => {
     const current = form.getValues("features");
@@ -140,18 +136,16 @@ function PlanEditSheet({
     onSave({
       display_name: values.display_name.trim(),
       description: values.description.trim(),
-      price: Math.round(values.price),
-      interval: values.interval,
+      monthly_price: Math.round(values.monthly_price),
+      yearly_price: Math.round(values.yearly_price),
       features: values.features.map((f) => f.trim()).filter(Boolean),
       is_active: values.is_active,
+      is_popular: values.is_popular,
+      target_role: values.target_role,
       message_quota_limit: values.message_quota_limit ?? undefined,
       campaign_quota_limit: values.campaign_quota_limit ?? undefined,
       max_images: values.max_images ?? undefined,
       max_videos: values.max_videos ?? undefined,
-      subscription_tier:
-        values.subscription_tier && values.subscription_tier !== "none"
-          ? values.subscription_tier
-          : undefined,
       sort_order: values.sort_order,
     });
   };
@@ -182,6 +176,13 @@ function PlanEditSheet({
               </div>
             )}
 
+            <div className="rounded-md bg-slate-50 border border-slate-200 p-3 flex gap-2 items-start">
+              <Info className="w-4 h-4 text-slate-600 shrink-0 mt-0.5" />
+              <p className="text-xs text-slate-700">
+                Benefits are shared across the family. Edit them with the Family Benefits action.
+              </p>
+            </div>
+
             <FormField
               control={form.control}
               name="display_name"
@@ -210,76 +211,66 @@ function PlanEditSheet({
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="price"
-              render={({ field }) => (
-                <FormItem className="space-y-1.5">
-                  <FormLabel className="text-xs">Price (₹)</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      min={0}
-                      step={1}
-                      {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
-                      className="h-9 text-sm"
-                    />
-                  </FormControl>
-                  <p className="text-[10px] text-muted-foreground">
-                    Stored in paise: {Math.round(field.value)}
-                  </p>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="monthly_price"
+                render={({ field }) => (
+                  <FormItem className="space-y-1.5">
+                    <FormLabel className="text-xs">Monthly Price (paise)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={0}
+                        step={1}
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        className="h-9 text-sm"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="yearly_price"
+                render={({ field }) => (
+                  <FormItem className="space-y-1.5">
+                    <FormLabel className="text-xs">Yearly Price (paise)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={0}
+                        step={1}
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        className="h-9 text-sm"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <FormField
               control={form.control}
-              name="interval"
+              name="target_role"
               render={({ field }) => (
                 <FormItem className="space-y-1.5">
-                  <FormLabel className="text-xs">Billing Interval</FormLabel>
+                  <FormLabel className="text-xs">Target Role</FormLabel>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger className="h-9 text-sm w-full">
-                        <SelectValue placeholder="Select interval" />
+                        <SelectValue placeholder="Select role" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {INTERVALS.map((interval) => (
-                        <SelectItem key={interval} value={interval} className="text-sm capitalize">
-                          {interval}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="subscription_tier"
-              render={({ field }) => (
-                <FormItem className="space-y-1.5">
-                  <FormLabel className="text-xs">Subscription Tier</FormLabel>
-                  <Select
-                    onValueChange={(value) => field.onChange(value === "none" ? null : value)}
-                    value={field.value ?? "none"}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="h-9 text-sm w-full">
-                        <SelectValue placeholder="Select tier" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {SUBSCRIPTION_TIERS.map((tier) => (
-                        <SelectItem key={tier.value} value={tier.value} className="text-sm">
-                          {tier.label}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="talent" className="text-sm">Talent Only</SelectItem>
+                      <SelectItem value="recruiter" className="text-sm">Recruiter Only</SelectItem>
+                      <SelectItem value="both" className="text-sm">Both</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -317,6 +308,7 @@ function PlanEditSheet({
                   size="sm"
                   className="h-7 text-xs gap-1"
                   onClick={handleAddFeature}
+                  disabled
                 >
                   <Plus className="w-3.5 h-3.5" />
                   Add
@@ -335,6 +327,7 @@ function PlanEditSheet({
                       }}
                       className="h-8 text-xs flex-1"
                       placeholder="Feature description"
+                      disabled
                     />
                     <Button
                       type="button"
@@ -342,6 +335,7 @@ function PlanEditSheet({
                       size="sm"
                       className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
                       onClick={() => handleRemoveFeature(idx)}
+                      disabled
                     >
                       <X className="w-3.5 h-3.5" />
                     </Button>
@@ -375,6 +369,7 @@ function PlanEditSheet({
                         value={field.value ?? ""}
                         onChange={(e) => field.onChange(numberOrNull(e.target.value))}
                         className="h-9 text-sm"
+                        disabled
                       />
                     </FormControl>
                     <FormMessage />
@@ -396,6 +391,7 @@ function PlanEditSheet({
                         value={field.value ?? ""}
                         onChange={(e) => field.onChange(numberOrNull(e.target.value))}
                         className="h-9 text-sm"
+                        disabled
                       />
                     </FormControl>
                     <FormMessage />
@@ -417,6 +413,7 @@ function PlanEditSheet({
                         value={field.value ?? ""}
                         onChange={(e) => field.onChange(numberOrNull(e.target.value))}
                         className="h-9 text-sm"
+                        disabled
                       />
                     </FormControl>
                     <FormMessage />
@@ -438,6 +435,7 @@ function PlanEditSheet({
                         value={field.value ?? ""}
                         onChange={(e) => field.onChange(numberOrNull(e.target.value))}
                         className="h-9 text-sm"
+                        disabled
                       />
                     </FormControl>
                     <FormMessage />
@@ -455,6 +453,27 @@ function PlanEditSheet({
                     <FormLabel className="text-sm">Active</FormLabel>
                     <p className="text-[10px] text-muted-foreground">
                       Inactive plans are hidden from the pricing page
+                    </p>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="is_popular"
+              render={({ field }) => (
+                <FormItem className="flex items-center justify-between rounded-lg border p-3">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-sm">Most Popular</FormLabel>
+                    <p className="text-[10px] text-muted-foreground">
+                      Badge shown on the pricing card. Only one plan per role can be popular.
                     </p>
                   </div>
                   <FormControl>
@@ -505,6 +524,7 @@ export default function AdminPlansPage() {
     onSuccess: () => {
       popup.show({ title: "Plan updated successfully", variant: "success" });
       queryClient.invalidateQueries({ queryKey: queryKeys.plans.admin() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.plans.public() });
       setEditingPlan(null);
     },
     onError: (err: unknown) => {
@@ -512,8 +532,40 @@ export default function AdminPlansPage() {
     },
   });
 
+  const handlePlanChange = () => {
+    refetch();
+    queryClient.invalidateQueries({ queryKey: queryKeys.plans.public() });
+  };
+
   const handleSave = (plan: PlanConfig, payload: UpdatePlanInput) => {
     updateMutation.mutate({ key: plan.key, payload });
+  };
+
+  const familyGroups = useMemo(() => {
+    const groups = new Map<string, PlanConfig[]>();
+    for (const plan of plans ?? []) {
+      const key = plan.family_key;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(plan);
+    }
+    for (const [, versions] of groups) {
+      versions.sort((a, b) => (b.version ?? 1) - (a.version ?? 1));
+    }
+    return groups;
+  }, [plans]);
+
+  const [expandedFamilies, setExpandedFamilies] = useState<Set<string>>(new Set());
+
+  const toggleFamily = (familyKey: string) => {
+    setExpandedFamilies((prev) => {
+      const next = new Set(prev);
+      if (next.has(familyKey)) {
+        next.delete(familyKey);
+      } else {
+        next.add(familyKey);
+      }
+      return next;
+    });
   };
 
   return (
@@ -523,6 +575,7 @@ export default function AdminPlansPage() {
           <CreditCard className="w-5 h-5 text-slate-600" strokeWidth={1.5} />
           <h1 className="text-lg font-semibold">Subscription Plans</h1>
         </div>
+        <CreatePlanSheet onSuccess={handlePlanChange} />
       </div>
 
       {isLoading ? (
@@ -540,60 +593,178 @@ export default function AdminPlansPage() {
         <p className="text-sm text-muted-foreground">No plans found.</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {plans.map((plan) => (
-            <div
-              key={plan.key}
-              className="rounded-xl border bg-card p-5 flex flex-col gap-4"
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <h2 className="font-[family-name:var(--font-playfair)] text-xl font-semibold">
-                    {plan.display_name}
-                  </h2>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {plan.description}
-                  </p>
-                </div>
-                <Badge
-                  variant={plan.is_active ? "default" : "secondary"}
-                  className="text-[10px]"
-                >
-                  {plan.is_active ? "Active" : "Inactive"}
-                </Badge>
-              </div>
+          {Array.from(familyGroups.entries()).map(([familyKey, versions]) => {
+            const latest = versions[0];
+            const older = versions.slice(1);
+            const isExpanded = expandedFamilies.has(familyKey);
 
-              <div className="text-2xl font-semibold tracking-tight">
-                {plan.price === 0 ? (
-                  <span>Free</span>
-                ) : (
-                  <span>{formatPriceInRupees(plan.price)}/mo</span>
-                )}
-              </div>
-
-              <ul className="space-y-2 flex-1">
-                {plan.features.map((feature, idx) => (
-                  <li
-                    key={idx}
-                    className="flex items-start gap-2 text-sm text-muted-foreground"
+            return (
+              <div key={familyKey} className="rounded-xl border bg-card p-5 flex flex-col gap-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h2 className="font-[family-name:var(--font-playfair)] text-xl font-semibold">
+                      {latest.display_name}
+                    </h2>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {latest.description}
+                    </p>
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      <Badge variant="outline" className="text-[10px]">
+                        v{latest.version ?? 1}
+                      </Badge>
+                      {latest.family_key && latest.family_key !== latest.key && (
+                        <Badge variant="outline" className="text-[10px]">
+                          {latest.family_key}
+                        </Badge>
+                      )}
+                      {latest.sunset_at && (
+                        <Badge variant="destructive" className="text-[10px]">
+                          sunsets {new Date(latest.sunset_at).toLocaleDateString()}
+                        </Badge>
+                      )}
+                      {latest.accepts_new_subscriptions === false && (
+                        <Badge variant="secondary" className="text-[10px]">
+                          no new subs
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  <Badge
+                    variant={latest.is_active ? "default" : "secondary"}
+                    className="text-[10px]"
                   >
-                    <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-                    <span>{feature}</span>
-                  </li>
-                ))}
-                {plan.features.length === 0 && (
-                  <li className="text-sm text-muted-foreground italic">
-                    No features listed
-                  </li>
-                )}
-              </ul>
+                    {latest.is_active ? "Active" : "Inactive"}
+                  </Badge>
+                </div>
 
-              <PlanEditSheet
-                plan={plan}
-                onSave={(payload) => handleSave(plan, payload)}
-                isSaving={updateMutation.isPending}
-              />
-            </div>
-          ))}
+                <div className="text-2xl font-semibold tracking-tight">
+                  {latest.monthly_price === 0 && latest.yearly_price === 0 ? (
+                    <span>Free</span>
+                  ) : (
+                    <span>
+                      {formatPriceInRupees(latest.monthly_price)}/mo
+                      {latest.yearly_price > 0 && (
+                        <span className="text-sm text-muted-foreground ml-1">
+                          · {formatPriceInRupees(latest.yearly_price)}/yr
+                        </span>
+                      )}
+                    </span>
+                  )}
+                </div>
+
+                <ul className="space-y-2 flex-1">
+                  {latest.features.map((feature, idx) => (
+                    <li
+                      key={idx}
+                      className="flex items-start gap-2 text-sm text-muted-foreground"
+                    >
+                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                  {latest.features.length === 0 && (
+                    <li className="text-sm text-muted-foreground italic">
+                      No features listed
+                    </li>
+                  )}
+                </ul>
+
+                <div className="flex flex-wrap items-center gap-2 pt-2">
+                  <PlanEditSheet
+                    plan={latest}
+                    onSave={(payload) => handleSave(latest, payload)}
+                    isSaving={updateMutation.isPending}
+                  />
+                  <CreatePlanVersionSheet plan={latest} onSuccess={handlePlanChange} />
+                  <EditFamilyBenefitsSheet plan={latest} onSuccess={handlePlanChange} />
+                  <SunsetPlanDialog plan={latest} plans={plans ?? []} onSuccess={handlePlanChange} />
+                  <ScheduleMigrationSheet plan={latest} plans={plans ?? []} onSuccess={handlePlanChange} />
+                </div>
+
+                {older.length > 0 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => toggleFamily(familyKey)}
+                      className="flex items-center justify-center gap-1.5 pt-1 text-xs text-muted-foreground hover:text-foreground transition-colors border-t border-border/50"
+                    >
+                      {isExpanded ? (
+                        <ChevronUp className="w-3.5 h-3.5" />
+                      ) : (
+                        <ChevronDown className="w-3.5 h-3.5" />
+                      )}
+                      {isExpanded
+                        ? "Hide older versions"
+                        : `Older versions (${older.length})`}
+                    </button>
+
+                    {isExpanded && (
+                      <div className="space-y-2 -mx-1">
+                        {older.map((v) => (
+                          <div
+                            key={v.key}
+                            className="rounded-lg border border-border/60 bg-muted/30 p-3 flex flex-col gap-2"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                                <Badge variant="outline" className="text-[10px] shrink-0">
+                                  v{v.version ?? 1}
+                                </Badge>
+                                <span className="text-xs font-mono text-muted-foreground truncate">
+                                  {v.key}
+                                </span>
+                                {v.sunset_at && (
+                                  <Badge variant="destructive" className="text-[10px]">
+                                    sunsets {new Date(v.sunset_at).toLocaleDateString()}
+                                  </Badge>
+                                )}
+                                {v.accepts_new_subscriptions === false && (
+                                  <Badge variant="secondary" className="text-[10px]">
+                                    no new subs
+                                  </Badge>
+                                )}
+                              </div>
+                              <Badge
+                                variant={v.is_active ? "default" : "secondary"}
+                                className="text-[10px] shrink-0"
+                              >
+                                {v.is_active ? "Active" : "Inactive"}
+                              </Badge>
+                            </div>
+
+                            <div className="text-sm font-medium">
+                              {v.monthly_price === 0 && v.yearly_price === 0 ? (
+                                "Free"
+                              ) : (
+                                <span>
+                                  {formatPriceInRupees(v.monthly_price)}/mo
+                                  {v.yearly_price > 0 && (
+                                    <span className="text-xs text-muted-foreground ml-1">
+                                      · {formatPriceInRupees(v.yearly_price)}/yr
+                                    </span>
+                                  )}
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <PlanEditSheet
+                                plan={v}
+                                onSave={(payload) => handleSave(v, payload)}
+                                isSaving={updateMutation.isPending}
+                              />
+                              <SunsetPlanDialog plan={v} plans={plans ?? []} onSuccess={handlePlanChange} />
+                              <ScheduleMigrationSheet plan={v} plans={plans ?? []} onSuccess={handlePlanChange} />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

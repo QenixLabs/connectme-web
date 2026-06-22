@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { talentApi } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
 import { usePopup } from "@/hooks/use-popup";
+import { useFeatureGuard } from "@/hooks/use-feature-guard";
 
 interface PortfolioUploaderProps {
   imagesUsed: number;
@@ -70,6 +71,7 @@ export function PortfolioUploader({
   const [fileError, setFileError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { show } = usePopup();
+  const { handleFeatureError } = useFeatureGuard();
 
   const canUploadImage = imagesUsed < maxImages;
   const canUploadVideo = videosUsed < maxVideos;
@@ -135,6 +137,10 @@ export function PortfolioUploader({
           show({ title: `${isImage ? "Image" : "Video"} uploaded`, variant: "success", position: "bottom-center" });
           onUpload();
         } catch (err) {
+          if (handleFeatureError(err)) {
+            setFileError(null);
+            return;
+          }
           const msg = getApiErrorMessage(err, "Upload failed");
           setFileError(msg);
           show({ title: msg, variant: "error", position: "bottom-center" });
@@ -143,7 +149,7 @@ export function PortfolioUploader({
         }
       }
     },
-    [canUploadImage, canUploadVideo, onUpload, uploading]
+    [canUploadImage, canUploadVideo, onUpload, uploading, handleFeatureError, show, validateFile]
   );
 
   const handleDragOver = useCallback((e: React.DragEvent) => {

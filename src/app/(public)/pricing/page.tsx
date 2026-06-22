@@ -40,24 +40,17 @@ const FAQS = [
 ];
 
 function formatPrice(paise: number): string {
-  const monthly = paise / 100;
-  if (monthly === 0) return "₹0";
-  return `₹${monthly.toLocaleString("en-IN")}`;
-}
-
-function periodText(paise: number, interval: string): string {
-  if (paise === 0) return "forever";
-  if (interval === "yearly") return "billed annually";
-  return "billed monthly";
+  if (paise === 0) return "₹0";
+  return `₹${(paise / 100).toLocaleString("en-IN")}`;
 }
 
 export default function PricingPage() {
   const router = useRouter();
   const popup = usePopup();
   const { user, isAuthenticated } = useAuthStore();
-  const isRecruiter = user?.role === "recruiter";
-  const isTalent = user?.role === "talent";
+  const role = user?.role ?? null;
   const currentPlanKey = user?.active_plan;
+  const [billingInterval, setBillingInterval] = useState<"monthly" | "yearly">("monthly");
 
   const {
     data: plans,
@@ -83,14 +76,14 @@ export default function PricingPage() {
   const [planToSwitch, setPlanToSwitch] = useState<string | null>(null);
 
   const filteredPlans = plans?.filter((plan) => {
-    if (isTalent) return plan.key.startsWith("talent_");
-    if (isRecruiter) return plan.key.startsWith("recruiter_");
+    if (role === "talent") return plan.target_role === "talent" || plan.target_role === "both";
+    if (role === "recruiter") return plan.target_role === "recruiter" || plan.target_role === "both";
     return true;
   });
 
   const handleUpgrade = async (planKey: string) => {
     try {
-      const result = await subscriptionsApi.initiateUpgrade(planKey);
+      const result = await subscriptionsApi.initiateUpgrade(planKey, billingInterval);
       if (result.short_url) {
         if (result.short_url.startsWith("http")) {
           window.open(result.short_url, "_self");
@@ -109,9 +102,9 @@ export default function PricingPage() {
 
   const getCta = (plan: PlanConfig, isPopular: boolean) => {
     if (!isAuthenticated) {
-      const signupPath = plan.key.startsWith("talent_")
-        ? "/auth/talent/signup"
-        : "/auth/recruiter/signup";
+      const signupPath = role === "recruiter"
+        ? "/auth/recruiter/signup"
+        : "/auth/talent/signup";
       return (
         <Button
           variant={isPopular ? "default" : "ghost"}
@@ -123,26 +116,7 @@ export default function PricingPage() {
       );
     }
 
-    const isTalentPlan = plan.key.startsWith("talent_");
-    const isRecruiterPlan = plan.key.startsWith("recruiter_");
-
-    if (isTalent && !isTalentPlan) {
-      return (
-        <Button variant="ghost" className="w-full" disabled>
-          Talents only
-        </Button>
-      );
-    }
-
-    if (isRecruiter && !isRecruiterPlan) {
-      return (
-        <Button variant="ghost" className="w-full" disabled>
-          Recruiters only
-        </Button>
-      );
-    }
-
-    if (currentPlanKey === plan.key) {
+    if (currentPlanKey === plan.key || currentPlanKey === plan.family_key) {
       return (
         <Button variant="ghost" className="w-full" disabled>
           Current Plan
@@ -179,13 +153,16 @@ export default function PricingPage() {
       );
     }
 
+    const currentPrice = billingInterval === "monthly" ? plan.monthly_price : plan.yearly_price;
+    const isFree = currentPrice === 0;
+
     return (
       <Button
-        variant={isPopular ? "default" : plan.price === 0 ? "ghost" : "outline"}
+        variant={isPopular ? "default" : isFree ? "ghost" : "outline"}
         className="w-full"
         onClick={() => handleUpgrade(plan.key)}
       >
-        {plan.price === 0
+        {isFree
           ? "Get started free"
           : `Upgrade to ${plan.display_name}`}
       </Button>
@@ -231,6 +208,33 @@ export default function PricingPage() {
         </h1>
         <p className="pricing-sub">No hidden fees. Cancel anytime.</p>
 
+        <div className="flex justify-center mb-8">
+          <div className="inline-flex items-center rounded-full border border-muted-foreground/20 p-0.5 bg-white shadow-sm">
+            <button
+              type="button"
+              className={`px-5 py-1.5 text-sm font-medium rounded-full transition-colors ${
+                billingInterval === "monthly"
+                  ? "bg-neutral-900 text-white shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setBillingInterval("monthly")}
+            >
+              Monthly
+            </button>
+            <button
+              type="button"
+              className={`px-5 py-1.5 text-sm font-medium rounded-full transition-colors ${
+                billingInterval === "yearly"
+                  ? "bg-neutral-900 text-white shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => setBillingInterval("yearly")}
+            >
+              Yearly
+            </button>
+          </div>
+        </div>
+
         {isLoading && (
           <div className="pricing-cards">
             {[1, 2, 3].map((i) => (
@@ -262,10 +266,10 @@ export default function PricingPage() {
         {filteredPlans && (
           <div className="pricing-cards" role="list">
             {filteredPlans.map((plan) => {
-              const isPopular =
-                plan.key === "recruiter_pro" || plan.key === "talent_verified";
-              const priceDisplay = formatPrice(plan.price);
-              const period = periodText(plan.price, plan.interval);
+              const isPopular = plan.is_popular === true;
+              const currentPrice = billingInterval === "monthly" ? plan.monthly_price : plan.yearly_price;
+              const otherPrice = billingInterval === "monthly" ? plan.yearly_price : plan.monthly_price;
+              const isFree = currentPrice === 0;
 
               return (
                 <div
@@ -274,16 +278,27 @@ export default function PricingPage() {
                   role="listitem"
                 >
                   {isPopular && <div className="card-badge">Most popular</div>}
-                  <div className={`card-tier ${plan.price === 0 ? "muted" : ""}`}>
+                  <div className={`card-tier ${isFree ? "muted" : ""}`}>
                     {plan.display_name}
                   </div>
                   <div className="card-price">
-                    {priceDisplay}
-                    {plan.price > 0 && (
-                      <span>/{plan.interval === "yearly" ? "yr" : "mo"}</span>
+                    {formatPrice(currentPrice)}
+                    {!isFree && (
+                      <span>/{billingInterval === "yearly" ? "yr" : "mo"}</span>
                     )}
                   </div>
-                  <div className="card-period">{period}</div>
+                  <div className="card-period">
+                    {isFree
+                      ? "forever"
+                      : billingInterval === "yearly"
+                        ? `billed annually — save ${Math.round((1 - plan.yearly_price / (plan.monthly_price * 12)) * 100)}%`
+                        : "billed monthly"}
+                    {otherPrice > 0 && billingInterval === "yearly" && (
+                      <span className="block text-[11px] text-muted-foreground/70">
+                        {formatPrice(plan.monthly_price)}/mo if paid monthly
+                      </span>
+                    )}
+                  </div>
                   <div className="card-divider" />
                   <ul className="feature-list">
                     {plan.features.map((feature, idx) => (

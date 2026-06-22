@@ -23,7 +23,7 @@ export { useCampaignTalentView } from './hooks/useCampaignTalentView';
 export { useCampaigns } from './hooks/useCampaigns';
 export { useCampaign } from './hooks/useCampaign';
 export { useCampaignApplications, useUpdateApplicationStatus } from './hooks/useCampaignApplications';
-export { useNotifications } from './hooks/useNotifications';
+export { useNotifications, useRespondToAction } from './hooks/useNotifications';
 export { useUnreadCount } from './hooks/useUnreadCount';
 export { useUnreadMessageCount } from './hooks/use-unread-message-count';
 export { useMarkAsRead } from './hooks/useMarkAsRead';

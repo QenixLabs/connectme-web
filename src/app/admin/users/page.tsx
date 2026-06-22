@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Users,
   Loader2,
@@ -52,6 +53,8 @@ const SUBSCRIPTION_STATUS_COLORS: Record<string, string> = {
 };
 
 export default function AdminUsersPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [data, setData] = useState<PaginatedUsers | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -99,6 +102,18 @@ export default function AdminUsersPage() {
     const cleanup = fetchUsers();
     return cleanup;
   }, [fetchUsers]);
+
+  useEffect(() => {
+    const userId = searchParams.get("userId");
+    if (userId) setSelectedUserId(userId);
+  }, [searchParams]);
+
+  const closeUserPanel = () => {
+    setSelectedUserId(null);
+    if (searchParams.has("userId")) {
+      router.replace("/admin/users");
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -297,7 +312,7 @@ export default function AdminUsersPage() {
 
       <UserDetailPanel
         userId={selectedUserId}
-        onClose={() => setSelectedUserId(null)}
+        onClose={closeUserPanel}
         onStatusChange={() => fetchUsers()}
       />
     </div>

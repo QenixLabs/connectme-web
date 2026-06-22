@@ -13,6 +13,7 @@ import {
   Mail,
   Loader2,
   CheckCheck,
+  ArrowRightLeft,
 } from "lucide-react";
 import {
   notificationsApi,
@@ -21,6 +22,7 @@ import {
   useMarkAsRead,
   useMarkAllAsRead,
   useDismissAuto,
+  useRespondToAction,
 } from "@/lib/api";
 import { useSocket } from "@/hooks/use-socket";
 import { getApiErrorMessage } from "@/lib/formatters";
@@ -127,6 +129,7 @@ export function NotificationList() {
   }, [socket, queryClient]);
 
   const respondToInvite = useRespondToInvite();
+  const respondToAction = useRespondToAction();
 
   const handleAcceptInvite = async (notificationId: string, inviteId: string) => {
     if (respondingId) return;
@@ -154,6 +157,32 @@ export function NotificationList() {
     }
   };
 
+  const handleAcceptMigration = async (notificationId: string) => {
+    if (respondingId) return;
+    setRespondingId(notificationId);
+    try {
+      await respondToAction.mutateAsync({ notificationId, action: "accepted" });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    } catch (err) {
+      // handled by component if needed
+    } finally {
+      setRespondingId(null);
+    }
+  };
+
+  const handleDeclineMigration = async (notificationId: string) => {
+    if (respondingId) return;
+    setRespondingId(notificationId);
+    try {
+      await respondToAction.mutateAsync({ notificationId, action: "declined" });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    } catch (err) {
+      // handled by component if needed
+    } finally {
+      setRespondingId(null);
+    }
+  };
+
   const handleMarkRead = useCallback(
     (id: string) => {
       markAsRead.mutate(id);
@@ -168,10 +197,12 @@ export function NotificationList() {
   const renderNotification = (notification: NotificationItem) => {
     const isVerificationStatus = notification.type === "verification_status";
     const isCampaignInvite = notification.type === "campaign_invite";
+    const isPlanMigrationRequest = notification.type === "plan_migration_request";
     const isApplicationReceived = notification.type === "application_received";
     const isApplicationStatusChanged =
       notification.type === "application_status_changed";
     const inviteId = notification.data?.invite_id;
+    const migrationId = notification.data?.migration_id;
     const actorName = getActorName(notification.actor_id);
 
     const handleCardClick = () => {
@@ -222,6 +253,12 @@ export function NotificationList() {
                   <Badge variant="secondary" className="text-2xs shrink-0">
                     <Mail className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
                     Campaign Invite
+                  </Badge>
+                )}
+                {isPlanMigrationRequest && (
+                  <Badge variant="secondary" className="text-2xs shrink-0">
+                    <ArrowRightLeft className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
+                    Plan Migration
                   </Badge>
                 )}
                 {isApplicationReceived && (
@@ -281,6 +318,55 @@ export function NotificationList() {
                   className="text-2xs capitalize"
                 >
                   {notification.action_status === "allowed" ? (
+                    <>
+                      <Check className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
+                      Accepted
+                    </>
+                  ) : (
+                    <>
+                      <X className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
+                      Declined
+                    </>
+                  )}
+                </Badge>
+              </div>
+            )}
+
+            {isPlanMigrationRequest && notification.action_status === "pending" && migrationId && (
+              <div className="mt-3 flex gap-2">
+                <Button
+                  size="sm"
+                  disabled={respondingId === notification._id}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAcceptMigration(notification._id);
+                  }}
+                >
+                  <Check className="w-4 h-4 mr-1" />
+                  Accept
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={respondingId === notification._id}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeclineMigration(notification._id);
+                  }}
+                >
+                  <X className="w-4 h-4 mr-1" />
+                  Decline
+                </Button>
+              </div>
+            )}
+
+            {isPlanMigrationRequest && notification.action_status !== "pending" && (
+              <div className="mt-3">
+                <Badge
+                  variant={notification.action_status === "accepted" ? "default" : "destructive"}
+                  className="text-2xs capitalize"
+                >
+                  {notification.action_status === "accepted" ? (
                     <>
                       <Check className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
                       Accepted

@@ -10,6 +10,7 @@ import {
   MessageSquareWarning,
   ChevronLeft,
   ChevronRight,
+  ExternalLink,
 } from "lucide-react";
 import {
   Table,
@@ -211,6 +212,18 @@ export default function AdminAppealsPage() {
 
           {selectedAppeal && (
             <div className="mt-4 space-y-4">
+              <div className="flex justify-end">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-xs h-8"
+                  onClick={() => router.push(`/admin/users?userId=${selectedAppeal.user_id._id}`)}
+                >
+                  <ExternalLink className="w-3.5 h-3.5 mr-1" />
+                  Open User
+                </Button>
+              </div>
+
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div className="text-muted-foreground">User</div>
                 <div>{selectedAppeal.user_id?.email || "Unknown"}</div>

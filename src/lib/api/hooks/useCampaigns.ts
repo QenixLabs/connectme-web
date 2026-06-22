@@ -2,6 +2,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { campaignApi } from '@/lib/api';
 import { queryKeys } from '@/lib/api/query-keys';
 import { usePopup } from '@/hooks/use-popup';
+import { useFeatureGuard } from '@/hooks/use-feature-guard';
 
 export function useCampaigns(filters: {
   status?: string;
@@ -109,6 +110,7 @@ export function useCloneCampaign() {
 export function useBookmarkCampaign() {
   const queryClient = useQueryClient();
   const { show } = usePopup();
+  const { handleFeatureError } = useFeatureGuard();
   return useMutation({
     mutationFn: campaignApi.bookmark,
     onSuccess: () => {
@@ -116,6 +118,7 @@ export function useBookmarkCampaign() {
       show({ title: 'Campaign saved', variant: 'success', position: 'bottom-center' });
     },
     onError: (error) => {
+      if (handleFeatureError(error)) return;
       const err = error as { response?: { data?: { message?: string } } };
       show({ title: 'Failed to save', description: err.response?.data?.message, variant: 'error', position: 'bottom-center' });
     },
@@ -125,6 +128,7 @@ export function useBookmarkCampaign() {
 export function useUnbookmarkCampaign() {
   const queryClient = useQueryClient();
   const { show } = usePopup();
+  const { handleFeatureError } = useFeatureGuard();
   return useMutation({
     mutationFn: campaignApi.unbookmark,
     onSuccess: () => {
@@ -132,6 +136,7 @@ export function useUnbookmarkCampaign() {
       show({ title: 'Removed from saved', variant: 'success', position: 'bottom-center' });
     },
     onError: (error) => {
+      if (handleFeatureError(error)) return;
       const err = error as { response?: { data?: { message?: string } } };
       show({ title: 'Failed to remove', description: err.response?.data?.message, variant: 'error', position: 'bottom-center' });
     },

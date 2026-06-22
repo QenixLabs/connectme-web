@@ -14,6 +14,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { usePopup } from "@/hooks/use-popup";
 import { useTierGuard } from "@/hooks/use-tier-guard";
+import { useFeatureGuard } from "@/hooks/use-feature-guard";
 import Link from "next/link";
 
 interface CampaignWithApps {
@@ -43,6 +44,7 @@ export function ShortlistOrInviteModal({
   const showRef = useRef(show);
   showRef.current = show;
   const { guard } = useTierGuard(3);
+  const { handleFeatureError } = useFeatureGuard();
 
   const loadCampaigns = useCallback(async () => {
     if (!open) return;
@@ -125,6 +127,7 @@ export function ShortlistOrInviteModal({
           ),
         );
       } catch (err: unknown) {
+        if (handleFeatureError(err)) return;
         const error = err as { response?: { data?: { message?: string } } };
         showRef.current({
           title:

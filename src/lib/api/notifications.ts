@@ -84,4 +84,8 @@ export const notificationsApi = {
   updateSettings: async (settings: Partial<NotificationSettings>): Promise<void> => {
     await apiClient.patch('/notifications/settings', settings);
   },
+
+  respondToAction: async (id: string, action: 'accepted' | 'declined'): Promise<void> => {
+    await apiClient.post(`/notifications/${id}/respond`, { action });
+  },
 };

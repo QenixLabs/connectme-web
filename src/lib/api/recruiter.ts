@@ -13,7 +13,6 @@ export const recruiterApi = {
     position?: string;
     profile_photo?: string;
     verification_status: string;
-    subscription_tier: string;
     created_at: string;
     updated_at: string;
   }> => {

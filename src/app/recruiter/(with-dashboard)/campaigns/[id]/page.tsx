@@ -73,6 +73,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { useTierGuard } from '@/hooks/use-tier-guard';
+import { useFeatureGuard, isFeatureForbidden } from '@/hooks/use-feature-guard';
+import { FeatureGateAlert } from '@/components/feature-gate-alert';
 import {
   LineChart,
   Line,
@@ -147,6 +149,7 @@ export default function CampaignDetailPage() {
   const [teamInviteRole, setTeamInviteRole] = useState('viewer');
   const [showShortlistedOnly, setShowShortlistedOnly] = useState(false);
   const { guard } = useTierGuard(3);
+  const { handleFeatureError } = useFeatureGuard();
   const updateCampaign = useUpdateCampaign();
 
   const {
@@ -239,8 +242,8 @@ export default function CampaignDetailPage() {
     if (!campaign) return;
     try {
       await campaignApi.exportCsv(campaignId, campaign.name);
-    } catch {
-      // ignore
+    } catch (err) {
+      if (handleFeatureError(err)) return;
     }
   };
 
@@ -906,9 +909,13 @@ export default function CampaignDetailPage() {
                 ))}
               </div>
             ) : teamError ? (
-              <Alert variant="destructive">
-                <AlertDescription>{getApiErrorMessage(teamError, 'Failed to load team')}</AlertDescription>
-              </Alert>
+              isFeatureForbidden(teamError) ? (
+                <FeatureGateAlert {...isFeatureForbidden(teamError)!} />
+              ) : (
+                <Alert variant="destructive">
+                  <AlertDescription>{getApiErrorMessage(teamError, 'Failed to load team')}</AlertDescription>
+                </Alert>
+              )
             ) : teamData?.members && teamData.members.length > 0 ? (
               <div className="space-y-2">
                 {teamData.members.map((member: { _id: string; user_id: { full_legal_name?: string; email?: string } | null; role: string }) => {
@@ -977,9 +984,15 @@ export default function CampaignDetailPage() {
               <Skeleton className="h-64 rounded-xl" />
             </div>
           ) : analyticsError || demographicsError ? (
-            <Alert variant="destructive">
-              <AlertDescription>{getApiErrorMessage(analyticsError || demographicsError, 'Failed to load analytics')}</AlertDescription>
-            </Alert>
+            isFeatureForbidden(analyticsError) ? (
+              <FeatureGateAlert {...isFeatureForbidden(analyticsError)!} />
+            ) : isFeatureForbidden(demographicsError) ? (
+              <FeatureGateAlert {...isFeatureForbidden(demographicsError)!} />
+            ) : (
+              <Alert variant="destructive">
+                <AlertDescription>{getApiErrorMessage(analyticsError || demographicsError, 'Failed to load analytics')}</AlertDescription>
+              </Alert>
+            )
           ) : (
             <>
               <div className="flex items-center gap-3 bg-card border border-border rounded-xl p-3">

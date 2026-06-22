@@ -48,4 +48,8 @@ export const queryKeys = {
     public: () => ['plans', 'public'] as const,
     admin: () => ['plans', 'admin'] as const,
   },
+  admin: {
+    subscriptionsForPlan: (planKey: string, familyKey: string) =>
+      ['admin', 'subscriptions', 'plan', planKey, familyKey] as const,
+  },
 };

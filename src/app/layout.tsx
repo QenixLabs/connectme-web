@@ -4,6 +4,7 @@ import { PopupProvider } from "@/providers/popup-provider";
 import { SocketProvider } from "@/providers/socket-provider";
 import { AuthStoreProvider } from "@/providers/auth-store-provider";
 import { QueryProvider } from "@/providers/query-provider";
+import { FeatureGateProvider } from "@/providers/feature-gate-provider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -44,6 +45,7 @@ export default function RootLayout({
             <QueryProvider>
               {children}
               <PopupProvider />
+              <FeatureGateProvider />
             </QueryProvider>
           </SocketProvider>
         </AuthStoreProvider>
