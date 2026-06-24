@@ -213,6 +213,7 @@ export const campaignApi = {
     total_applications_this_week: number;
     response_rate: number;
     pending_reviews: number;
+    shortlisted_count: number;
   }> => {
     const response = await apiClient.get('/campaigns/dashboard/stats');
     return response.data;

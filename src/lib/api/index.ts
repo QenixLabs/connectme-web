@@ -16,7 +16,7 @@ export { useSubscriptionUsage } from './hooks/useSubscriptionUsage';
 export { useCampaignAnalytics, useCampaignDemographics } from './hooks/useCampaignAnalytics';
 export { useCampaignInvites } from './hooks/useCampaignInvites';
 export { useRecruiterProfile } from './hooks/useRecruiterProfile';
-export { useRecommendedTalent } from './hooks/useRecommendedTalent';
+export { useDashboardRecommendations } from './hooks/useDashboardRecommendations';
 export { useInviteTalent, useBulkInviteTalent, useRespondToInvite } from './hooks/useInviteTalent';
 export { useRecruiterDashboardStats } from './hooks/useRecruiterDashboardStats';
 export { useCampaignTalentView } from './hooks/useCampaignTalentView';

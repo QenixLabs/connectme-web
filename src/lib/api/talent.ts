@@ -76,6 +76,7 @@ export const talentApi = {
       is_verified?: boolean;
     }>;
     nextCursor: string | null;
+    total: number;
   }> => {
     const response = await apiClient.get('/talent/all', { params });
     return response.data;
@@ -101,6 +102,27 @@ export const talentApi = {
     }>
   > => {
     const response = await apiClient.get('/talent/recommendations', {
+      params: limit ? { limit } : undefined,
+    });
+    return response.data;
+  },
+
+  getDashboardRecommendations: async (limit?: number): Promise<{
+    has_active_campaigns: boolean;
+    campaigns: Array<{ id: string; name: string }>;
+    data: Array<{
+      _id: string;
+      user_id: string;
+      username: string;
+      full_legal_name?: string;
+      profile_photo?: string;
+      professions?: string[];
+      location?: { city?: string; state?: string; country?: string };
+      match_score: number;
+      matched_campaign: string;
+    }>;
+  }> => {
+    const response = await apiClient.get('/recommendations/talents/dashboard', {
       params: limit ? { limit } : undefined,
     });
     return response.data;
