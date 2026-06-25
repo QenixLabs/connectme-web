@@ -21,12 +21,20 @@ import { useCampaign } from '@/lib/api/hooks/useCampaign';
 import { useUploadCampaignMedia } from '@/lib/api/hooks/useCampaigns';
 import { getApiErrorMessage } from '@/lib/formatters';
 import { campaignApi, type Campaign, type CampaignQuestion } from '@/lib/api';
-import { Check } from 'lucide-react';
+import {
+  Check,
+  FileText,
+  ListChecks,
+  Eye,
+  Save,
+  Send,
+  Loader2,
+} from 'lucide-react';
 
 const STEPS = [
-  { label: 'Basic info', number: 1 },
-  { label: 'Requirements', number: 2 },
-  { label: 'Review & publish', number: 3 },
+  { label: 'Basic info', number: 1, icon: FileText },
+  { label: 'Requirements', number: 2, icon: ListChecks },
+  { label: 'Review & publish', number: 3, icon: Eye },
 ];
 
 function getStepFields(step: number): string[] {
@@ -315,180 +323,182 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
 
   if (isEdit && isLoadingCampaign) {
     return (
-      <div className="max-w-[640px] mx-auto p-6 bg-card border border-border rounded-xl space-y-6">
-        <Skeleton className="h-6 w-48" />
-        <Skeleton className="h-4 w-64" />
-        <Skeleton className="h-8 w-full" />
+      <div className="max-w-[680px] mx-auto bg-card border border-border/60 rounded-2xl shadow-luxe p-8 space-y-6">
+        <Skeleton className="h-6 w-48 rounded-md" />
+        <Skeleton className="h-4 w-64 rounded-md" />
+        <Skeleton className="h-10 w-full rounded-xl" />
         <Skeleton className="h-72 rounded-xl" />
         <div className="flex justify-between">
-          <Skeleton className="h-10 w-20" />
-          <Skeleton className="h-10 w-24" />
+          <Skeleton className="h-10 w-20 rounded-xl" />
+          <Skeleton className="h-10 w-28 rounded-xl" />
         </div>
       </div>
     );
   }
 
   const isPending = createCampaign.isPending || updateCampaign.isPending || uploadMedia.isPending;
+  const isLastStep = step === 3;
 
   return (
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="max-w-[640px] mx-auto px-4 py-5 sm:p-6 bg-card border border-border rounded-xl"
+        className="max-w-[680px] mx-auto bg-card border border-border/60 rounded-2xl shadow-luxe overflow-hidden"
       >
-        {/* Header */}
-        <div className="mb-6">
-          <div className="text-lg font-medium text-text-primary">
+        <div className="px-6 sm:px-8 pt-6 sm:pt-8">
+          <h2 className="text-xl font-serif font-semibold text-ink tracking-tight">
             {isEdit ? 'Edit campaign' : 'New campaign'}
-          </div>
-          <div className="text-sm text-text-secondary mt-0.5">
-            {isEdit ? 'Update your casting call details' : 'Create a casting call or project'}
-          </div>
+          </h2>
+          <p className="mt-1 text-sm text-ink-muted leading-relaxed">
+            {isEdit ? 'Update your casting call details' : 'Create a casting call and start receiving applications'}
+          </p>
         </div>
 
-        {/* Stepper */}
-        <div className="flex items-start mb-6">
-          {STEPS.map((s, idx) => {
-            const isActive = step === s.number;
-            const isDone = step > s.number;
-            return (
-              <div key={s.number} className="flex items-center flex-1">
-                <button
-                  type="button"
-                  onClick={() => goToStep(s.number)}
-                  className="flex flex-col items-center gap-1 cursor-pointer min-w-0 flex-1"
-                >
-                  <span
+        <div className="px-6 sm:px-8 pt-8 pb-4">
+          <div className="flex items-center gap-1 mb-5">
+            {STEPS.map((s, idx) => {
+              const isActive = step === s.number;
+              const isDone = step > s.number;
+              const StepIcon = s.icon;
+              return (
+                <div key={s.number} className="flex items-center flex-1 last:flex-none">
+                  <button
+                    type="button"
+                    onClick={() => goToStep(s.number)}
                     className={cn(
-                      'w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium border-[1.5px] shrink-0 transition-all',
+                      "flex items-center gap-2 px-3 py-2 rounded-xl transition-all duration-200",
                       isActive
-                        ? 'bg-campaign border-campaign text-white'
+                        ? "bg-ink text-white shadow-sm"
                         : isDone
-                          ? 'bg-success-light border-success text-success-text'
-                          : 'border-border text-text-muted'
+                          ? "bg-emerald-50 text-emerald-700"
+                          : "text-ink-muted hover:bg-muted-bg",
                     )}
                   >
-                    {isDone ? (
-                      <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
-                    ) : (
-                      s.number
-                    )}
-                  </span>
-                  <span
-                    className={cn(
-                      'text-[10px] leading-tight text-center mt-0.5',
-                      isActive
-                        ? 'text-text-primary font-medium'
-                        : isDone
-                          ? 'text-success-text'
-                          : 'text-text-muted'
-                    )}
-                  >
-                    {s.label === 'Basic info' && (
-                      <>
-                        Basic
-                        <br />
-                        info
-                      </>
-                    )}
-                    {s.label === 'Requirements' && (
-                      <>
-                        Require
-                        <br />
-                        ments
-                      </>
-                    )}
-                    {s.label === 'Review & publish' && (
-                      <>
-                        Review &amp;
-                        <br />
-                        publish
-                      </>
-                    )}
-                  </span>
-                </button>
-                {idx < STEPS.length - 1 && (
-                  <div className="flex-1 h-px bg-border mx-1 mt-3.5" />
-                )}
+                    <span
+                      className={cn(
+                        "w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 transition-all",
+                        isActive
+                          ? "bg-white/20"
+                          : isDone
+                            ? "bg-emerald-100"
+                            : "bg-muted-bg",
+                      )}
+                    >
+                      {isDone ? (
+                        <Check className="w-3 h-3" strokeWidth={2.5} />
+                      ) : (
+                        <StepIcon className="w-3 h-3" strokeWidth={isActive ? 2 : 1.5} />
+                      )}
+                    </span>
+                    <span className={cn(
+                      "text-xs font-semibold hidden sm:inline",
+                      isDone && "text-emerald-700",
+                    )}>
+                      {s.label}
+                    </span>
+                  </button>
+                  {idx < STEPS.length - 1 && (
+                    <div className="flex-1 h-px bg-border mx-1" />
+                  )}
+                </div>
+              );
+            })}
           </div>
-            );
-          })}
+
+          <div className="h-1 bg-muted-bg rounded-full overflow-hidden mb-2">
+            <div
+              className="h-full bg-gradient-to-r from-gold to-gold-hover rounded-full transition-all duration-500 ease-out"
+              style={{ width: `${(step / 3) * 100}%` }}
+            />
+          </div>
         </div>
 
-        {/* Progress bar */}
-        <div className="h-0.5 bg-border rounded-full overflow-hidden mb-6">
-          <div
-            className="h-full bg-campaign rounded-full transition-all duration-300"
-            style={{ width: `${(step / 3) * 100}%` }}
-          />
+        <div className="px-6 sm:px-8 py-6 space-y-6">
+          <div className={cn(
+            "transition-all duration-300",
+            step === 1 ? 'block opacity-100' : 'hidden opacity-0',
+          )}>
+            <BasicInfoStep
+              mediaFile={pendingMediaFile}
+              onMediaChange={setPendingMediaFile}
+              existingBanner={existingCampaign?.banner}
+            />
+          </div>
+          <div className={cn(
+            "transition-all duration-300",
+            step === 2 ? 'block opacity-100' : 'hidden opacity-0',
+          )}>
+            <RequirementsStep />
+          </div>
+          <div className={cn(
+            "transition-all duration-300",
+            step === 3 ? 'block opacity-100' : 'hidden opacity-0',
+          )}>
+            <PublishStep />
+          </div>
+
+          {serverError && (
+            <Alert variant="destructive" className="rounded-xl border-error-muted animate-in fade-in slide-in-from-top-2">
+              <AlertDescription>{serverError}</AlertDescription>
+            </Alert>
+          )}
         </div>
 
-        {/* Step Content */}
-        <div className={cn(step === 1 ? 'block' : 'hidden')}>
-          <BasicInfoStep
-            mediaFile={pendingMediaFile}
-            onMediaChange={setPendingMediaFile}
-            existingBanner={existingCampaign?.banner}
-          />
-        </div>
-        <div className={cn(step === 2 ? 'block' : 'hidden')}>
-          <RequirementsStep />
-        </div>
-        <div className={cn(step === 3 ? 'block' : 'hidden')}>
-          <PublishStep />
-        </div>
-
-        {/* Server Error */}
-        {serverError && (
-          <Alert variant="destructive" className="mt-6">
-            <AlertDescription>{serverError}</AlertDescription>
-          </Alert>
-        )}
-
-        {/* Actions */}
-        <div className="flex items-center gap-2 mt-6 pt-4 border-t border-border">
+        <div className="flex items-center gap-3 px-6 sm:px-8 py-4 bg-muted-bg/30 border-t border-border/60">
           {step > 1 && (
             <button
               type="button"
               onClick={onBack}
-              className="px-3 py-2.5 rounded-lg text-sm font-medium border border-border text-text-secondary hover:bg-muted-bg transition-colors shrink-0"
+              className="px-4 py-2.5 rounded-xl text-sm font-medium border border-border/60 bg-card text-ink-soft hover:text-ink hover:bg-cream-soft transition-all shrink-0"
             >
-              ← Back
+              Back
             </button>
           )}
           <button
             type="button"
             onClick={saveDraft}
             disabled={isPending}
-            className="px-3 py-2.5 rounded-lg text-sm font-medium border border-border text-text-secondary bg-transparent hover:bg-muted-bg transition-colors disabled:opacity-50 flex-1"
+            className="px-4 py-2.5 rounded-xl text-sm font-medium border border-border/60 bg-card text-ink-soft hover:text-ink hover:bg-cream-soft transition-all disabled:opacity-50 flex items-center gap-1.5"
           >
+            <Save className="w-3.5 h-3.5" strokeWidth={1.5} />
             Save draft
           </button>
-          {step < 3 ? (
+          {!isLastStep ? (
             <button
               type="button"
               onClick={onNext}
               disabled={isNavigating}
-              className="px-3 py-2.5 rounded-lg text-sm font-medium bg-campaign text-white hover:bg-campaign-hover transition-colors disabled:opacity-50 flex-[2] flex items-center justify-center gap-1.5"
+              className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-br from-gold to-gold-hover text-white hover:from-gold-bright hover:to-gold shadow-[0_4px_14px_-4px_oklch(0.74_0.13_80/0.45)] transition-all active:scale-[0.98] disabled:opacity-50 ml-auto flex items-center gap-1.5"
             >
-              Next →
+              Next
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
             </button>
           ) : (
             <button
               type="submit"
               disabled={isNavigating || isPending}
               className={cn(
-                'px-3 py-2.5 rounded-lg text-sm font-medium text-white transition-colors disabled:opacity-50 flex-[2] flex items-center justify-center gap-1.5',
+                "px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all active:scale-[0.98] disabled:opacity-50 ml-auto flex items-center gap-1.5 shadow-md",
                 form.watch('publishOption') === 'draft'
-                  ? 'bg-campaign hover:bg-campaign-hover'
-                  : 'bg-success-strong hover:bg-success-deep'
+                  ? 'bg-gradient-to-br from-slate-700 to-slate-800 hover:from-slate-800 hover:to-slate-900 shadow-slate-500/20'
+                  : 'bg-gradient-to-br from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 shadow-emerald-500/20',
               )}
             >
-              {isPending
-                ? (form.watch('publishOption') === 'draft' ? 'Saving...' : 'Publishing...')
-                : (form.watch('publishOption') === 'draft'
+              {isPending ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" strokeWidth={2} />
+                  {form.watch('publishOption') === 'draft' ? 'Saving...' : 'Publishing...'}
+                </>
+              ) : (
+                <>
+                  <Send className="w-3.5 h-3.5" strokeWidth={1.5} />
+                  {form.watch('publishOption') === 'draft'
                     ? (isEdit ? 'Save draft' : 'Save draft')
-                    : (isEdit ? 'Update campaign' : 'Publish'))}
+                    : (isEdit ? 'Update & publish' : 'Publish campaign')}
+                </>
+              )}
             </button>
           )}
         </div>

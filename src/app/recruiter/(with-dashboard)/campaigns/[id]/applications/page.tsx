@@ -9,12 +9,12 @@ import {
   CheckCircle2,
   XCircle,
   User,
+  Users,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { SectionHeader } from '@/components/ui/section-header';
 import {
   Select,
   SelectContent,
@@ -37,17 +37,17 @@ const STATUS_META: Record<
   pending: {
     label: 'Pending',
     icon: Clock,
-    classes: 'bg-warning-light text-warning-text border-warning-muted',
+    classes: 'bg-amber-50 text-amber-700 border-amber-200',
   },
   accepted: {
     label: 'Accepted',
     icon: CheckCircle2,
-    classes: 'bg-success-light text-success-text border-success-muted',
+    classes: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   },
   rejected: {
     label: 'Rejected',
     icon: XCircle,
-    classes: 'bg-error-light text-error-text border-error-muted',
+    classes: 'bg-rose-50 text-rose-700 border-rose-200',
   },
 };
 
@@ -86,9 +86,9 @@ export default function CampaignApplicationsPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-[1280px] mx-auto w-full px-4 py-6 pb-24 lg:pb-8 space-y-6">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-6 w-72" />
+      <div className="max-w-[1280px] mx-auto w-full px-4 sm:px-6 py-8 pb-24 lg:pb-12 space-y-6">
+        <Skeleton className="h-8 w-48 rounded-lg" />
+        <Skeleton className="h-6 w-72 rounded-md" />
         <div className="space-y-3">
           {Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className="h-24 rounded-xl" />
@@ -100,8 +100,8 @@ export default function CampaignApplicationsPage() {
 
   if (error) {
     return (
-      <div className="max-w-[1280px] mx-auto w-full px-4 py-6">
-        <Alert variant="destructive">
+      <div className="max-w-[1280px] mx-auto w-full px-4 sm:px-6 py-8">
+        <Alert variant="destructive" className="rounded-xl border-error-muted">
           <AlertDescription>
             {getApiErrorMessage(error, 'Failed to load applications')}
           </AlertDescription>
@@ -111,21 +111,25 @@ export default function CampaignApplicationsPage() {
   }
 
   return (
-    <div className="max-w-[1280px] mx-auto w-full px-4 py-6 pb-24 lg:pb-8 flex flex-col gap-5">
+    <div className="max-w-[1280px] mx-auto w-full px-4 sm:px-6 py-8 pb-24 lg:pb-12 flex flex-col gap-6">
       <Button
         variant="ghost"
         size="sm"
-        className="w-fit -ml-2 text-text-secondary"
+        className="w-fit -ml-2 text-ink-muted hover:text-ink group font-medium"
         onClick={() => router.push('/recruiter/campaigns')}
       >
-        <ArrowLeft className="w-4 h-4 mr-1" strokeWidth={1.5} />
+        <ArrowLeft className="w-4 h-4 mr-1 transition-transform group-hover:-translate-x-0.5" strokeWidth={1.5} />
         Back to Campaigns
       </Button>
 
-      <SectionHeader
-        title={campaign?.name ?? 'Applications'}
-        subtitle={`${applications?.length ?? 0} application${applications?.length !== 1 ? 's' : ''} received`}
-      />
+      <div>
+        <h1 className="text-[26px] font-serif font-semibold text-ink tracking-tight">
+          {campaign?.name ?? 'Applications'}
+        </h1>
+        <p className="mt-1.5 text-sm text-ink-muted">
+          {applications?.length ?? 0} application{applications?.length !== 1 ? 's' : ''} received
+        </p>
+      </div>
 
       {applications && applications.length > 0 ? (
         <div className="space-y-3">
@@ -140,22 +144,20 @@ export default function CampaignApplicationsPage() {
             return (
               <article
                 key={app._id}
-                className="bg-card border border-border rounded-2xl p-[18px] shadow-card flex flex-col sm:flex-row sm:items-center gap-4"
+                className="bg-card border border-border/60 rounded-2xl p-5 shadow-luxe flex flex-col sm:flex-row sm:items-center gap-4 hover:shadow-luxe-lg transition-shadow"
               >
                 <div className="flex-1 min-w-0 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-muted-bg flex items-center justify-center">
-                      <User className="w-4 h-4 text-text-muted" strokeWidth={1.5} />
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center shrink-0">
+                      <User className="w-4 h-4 text-slate-500" strokeWidth={1.5} />
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-text-primary">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-ink truncate">
                         {talentEmail}
                       </p>
-                      <p className="text-xs text-text-muted">
-                        {new Date(app.created_at).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
+                      <p className="text-xs text-ink-muted font-medium mt-0.5">
+                        Applied {new Date(app.created_at).toLocaleDateString('en-US', {
+                          month: 'short', day: 'numeric', year: 'numeric',
                         })}
                       </p>
                     </div>
@@ -163,8 +165,8 @@ export default function CampaignApplicationsPage() {
 
                   {app.message && (
                     <div className="flex items-start gap-1.5">
-                      <Mail className="w-3.5 h-3.5 text-text-muted mt-0.5 shrink-0" strokeWidth={1.5} />
-                      <p className="text-sm text-text-secondary line-clamp-2">
+                      <Mail className="w-3.5 h-3.5 text-ink-muted/60 mt-0.5 shrink-0" strokeWidth={1.5} />
+                      <p className="text-sm text-ink-soft leading-relaxed line-clamp-2">
                         {app.message}
                       </p>
                     </div>
@@ -172,7 +174,10 @@ export default function CampaignApplicationsPage() {
                 </div>
 
                 <div className="flex items-center gap-3 shrink-0">
-                  <Badge className={cn('shrink-0', meta.classes)}>
+                  <Badge className={cn(
+                    'rounded-full text-[10px] font-semibold px-2.5 py-0.5 border shrink-0',
+                    meta.classes,
+                  )}>
                     <Icon className="w-3 h-3 mr-1" strokeWidth={1.5} />
                     {meta.label}
                   </Badge>
@@ -182,10 +187,10 @@ export default function CampaignApplicationsPage() {
                     onValueChange={(val) => handleStatusChange(app._id, val)}
                     disabled={updateStatus.isPending && updatingId === app._id}
                   >
-                    <SelectTrigger className="w-[140px] h-9 text-sm">
+                    <SelectTrigger className="w-[140px] h-9 text-sm rounded-xl border-border/60 bg-card">
                       <SelectValue placeholder="Update status" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="rounded-xl">
                       <SelectItem value="pending">Pending</SelectItem>
                       <SelectItem value="accepted">Accepted</SelectItem>
                       <SelectItem value="rejected">Rejected</SelectItem>
@@ -197,11 +202,15 @@ export default function CampaignApplicationsPage() {
           })}
         </div>
       ) : (
-        <div className="text-center py-20 bg-card border border-border rounded-2xl">
-          <User className="w-10 h-10 text-text-muted mx-auto mb-3" strokeWidth={1.5} />
-          <p className="text-sm text-text-muted mb-1">No applications yet</p>
-          <p className="text-xs text-text-muted">
-            Applications will appear here when talents apply.
+        <div className="text-center py-24 bg-card border border-border/60 rounded-2xl shadow-luxe">
+          <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-muted-bg mx-auto">
+            <Users className="w-9 h-9 text-ink-muted/40" strokeWidth={1.5} />
+          </div>
+          <p className="text-base font-serif font-semibold text-ink">
+            No applications yet
+          </p>
+          <p className="mt-2 text-sm text-ink-muted max-w-sm mx-auto leading-relaxed">
+            Applications will appear here when talents apply to your campaign.
           </p>
         </div>
       )}

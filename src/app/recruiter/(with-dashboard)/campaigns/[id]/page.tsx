@@ -1,7 +1,8 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { motion } from "motion/react";
 import {
   ArrowLeft,
   Pencil,
@@ -13,7 +14,6 @@ import {
   User,
   Users,
   Send,
-  CheckCheck,
   Ban,
   Play,
   RotateCcw,
@@ -26,16 +26,25 @@ import {
   MessageSquare,
   Shield,
   UserPlus,
-  UserCog,
   UserX,
   Pin,
+  Calendar,
+  MapPin,
+  Briefcase,
+  TrendingUp,
+  BarChart3,
+  PieChartIcon,
+  Activity,
+  ImagePlus,
+  FileUp,
+  ArrowUpRight,
+  Check,
+  AlertTriangle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { SectionHeader } from '@/components/ui/section-header';
-import { StatCard } from '@/components/ui/stat-card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
@@ -60,7 +69,14 @@ import {
 } from '@/lib/api';
 import { campaignApi } from '@/lib/api/campaign';
 import { getApiErrorMessage } from '@/lib/formatters';
-import { usePublishCampaign, useCloseCampaign, useReopenCampaign, useCloneCampaign, useUploadCampaignMedia, useDeleteCampaignMedia } from '@/lib/api/hooks/useCampaigns';
+import {
+  usePublishCampaign,
+  useCloseCampaign,
+  useReopenCampaign,
+  useCloneCampaign,
+  useUploadCampaignMedia,
+  useDeleteCampaignMedia,
+} from '@/lib/api/hooks/useCampaigns';
 import { useUpdateCampaign } from '@/lib/api/hooks/useUpdateCampaign';
 import { useBulkUpdateApplicationStatus } from '@/lib/api/hooks/useCampaignApplications';
 import {
@@ -97,17 +113,17 @@ const APP_STATUS_META: Record<
   pending: {
     label: 'Pending',
     icon: Clock,
-    classes: 'bg-warning-light text-warning-text border-warning-muted',
+    classes: 'bg-amber-50 text-amber-700 border-amber-200',
   },
   accepted: {
     label: 'Accepted',
     icon: CheckCircle2,
-    classes: 'bg-success-light text-success-text border-success-muted',
+    classes: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   },
   rejected: {
     label: 'Rejected',
     icon: XCircle,
-    classes: 'bg-error-light text-error-text border-error-muted',
+    classes: 'bg-rose-50 text-rose-700 border-rose-200',
   },
 };
 
@@ -118,22 +134,73 @@ const INVITE_STATUS_META: Record<
   pending: {
     label: 'Pending',
     icon: Clock,
-    classes: 'bg-warning-light text-warning-text border-warning-muted',
+    classes: 'bg-amber-50 text-amber-700 border-amber-200',
   },
   accepted: {
     label: 'Accepted',
     icon: CheckCircle2,
-    classes: 'bg-success-light text-success-text border-success-muted',
+    classes: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   },
   declined: {
     label: 'Declined',
     icon: Ban,
-    classes: 'bg-error-light text-error-text border-error-muted',
+    classes: 'bg-rose-50 text-rose-700 border-rose-200',
   },
 };
 
 const PIE_COLORS = ['var(--color-brand)', 'var(--color-success)', 'var(--color-error)'];
-const BAR_COLOR = 'var(--color-chart-blue)';
+const BAR_COLOR = '#6366f1';
+
+const INDUSTRY_GRADIENTS: Record<string, string> = {
+  film: "from-violet-600 via-purple-700 to-indigo-800",
+  tv: "from-sky-600 via-blue-700 to-indigo-800",
+  commercial: "from-rose-600 via-pink-700 to-fuchsia-800",
+  modeling: "from-teal-600 via-emerald-700 to-green-800",
+  theater: "from-fuchsia-600 via-purple-700 to-violet-800",
+  music: "from-indigo-600 via-violet-700 to-purple-800",
+};
+
+function getIndustryGradient(industry?: string): string {
+  if (!industry) return "from-slate-700 to-slate-900";
+  const key = industry.toLowerCase();
+  for (const [k, v] of Object.entries(INDUSTRY_GRADIENTS)) {
+    if (key.includes(k)) return v;
+  }
+  return "from-slate-700 to-slate-900";
+}
+
+function DetailStatCard({
+  label,
+  value,
+  icon: Icon,
+  accent,
+}: {
+  label: string;
+  value: number | string;
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+  accent: string;
+}) {
+  return (
+    <div className="relative overflow-hidden rounded-2xl bg-card border border-border/60 shadow-luxe p-5 hover:shadow-luxe-lg transition-shadow duration-300">
+      <div className="flex items-center justify-between mb-3">
+        <div
+          className={cn(
+            "h-10 w-10 rounded-xl bg-gradient-to-br grid place-items-center text-white",
+            accent,
+          )}
+        >
+          <Icon className="h-4 w-4" strokeWidth={1.5} />
+        </div>
+      </div>
+      <p className="font-serif text-[28px] font-semibold text-ink leading-none tracking-tight">
+        {typeof value === 'number' ? value.toLocaleString() : value}
+      </p>
+      <p className="mt-1 text-[12px] font-semibold uppercase tracking-[0.08em] text-ink-muted">
+        {label}
+      </p>
+    </div>
+  );
+}
 
 export default function CampaignDetailPage() {
   const params = useParams();
@@ -170,9 +237,10 @@ export default function CampaignDetailPage() {
     error: invitesError,
   } = useCampaignInvites(campaignId);
 
-  const analyticsRange = analyticsFrom || analyticsTo
-    ? { from: analyticsFrom || undefined, to: analyticsTo || undefined }
-    : undefined;
+  const analyticsRange =
+    analyticsFrom || analyticsTo
+      ? { from: analyticsFrom || undefined, to: analyticsTo || undefined }
+      : undefined;
 
   const {
     data: analytics,
@@ -194,13 +262,16 @@ export default function CampaignDetailPage() {
   const cloneCampaign = useCloneCampaign();
   const uploadMedia = useUploadCampaignMedia();
   const deleteMedia = useDeleteCampaignMedia();
-  const [mediaFile, setMediaFile] = useState<File | null>(null);
   const addToShortlist = useAddToShortlist();
   const removeFromShortlist = useRemoveFromShortlist();
   const upsertNote = useUpsertApplicantNote();
   const deleteNote = useDeleteApplicantNote();
 
-  const { data: teamData, isLoading: isLoadingTeam, error: teamError } = useCampaignTeam(campaignId);
+  const {
+    data: teamData,
+    isLoading: isLoadingTeam,
+    error: teamError,
+  } = useCampaignTeam(campaignId);
   const inviteTeamMember = useInviteTeamMember();
   const updateTeamRole = useUpdateTeamMemberRole();
   const removeTeamMember = useRemoveTeamMember();
@@ -212,7 +283,11 @@ export default function CampaignDetailPage() {
   const handleStatusChange = async (appId: string, status: string) => {
     setUpdatingId(appId);
     try {
-      await updateStatus.mutateAsync({ campaignId, applicationId: appId, status });
+      await updateStatus.mutateAsync({
+        campaignId,
+        applicationId: appId,
+        status,
+      });
     } finally {
       setUpdatingId(null);
     }
@@ -252,23 +327,32 @@ export default function CampaignDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-[1280px] mx-auto w-full px-4 py-6 pb-24 lg:pb-8 space-y-6">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-6 w-72" />
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+      <div className="max-w-[1280px] mx-auto w-full px-4 sm:px-6 py-8 pb-24 lg:pb-12 space-y-8">
+        <Skeleton className="h-8 w-48 rounded-lg" />
+        <Skeleton className="h-[140px] rounded-2xl w-full" />
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
           {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-24 rounded-xl" />
+            <Skeleton key={i} className="h-[100px] rounded-2xl" />
           ))}
         </div>
-        <Skeleton className="h-64 rounded-xl" />
+        <Skeleton className="h-64 rounded-2xl" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="max-w-[1280px] mx-auto w-full px-4 py-6">
-        <Alert variant="destructive">
+      <div className="max-w-[1280px] mx-auto w-full px-4 sm:px-6 py-8">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-fit -ml-2 mb-4 text-ink-muted hover:text-ink group"
+          onClick={() => router.push('/recruiter/campaigns')}
+        >
+          <ArrowLeft className="w-4 h-4 mr-1 transition-transform group-hover:-translate-x-0.5" strokeWidth={1.5} />
+          Back to Campaigns
+        </Button>
+        <Alert variant="destructive" className="rounded-xl border-error-muted">
           <AlertDescription>
             {getApiErrorMessage(error, 'Failed to load campaign')}
           </AlertDescription>
@@ -284,846 +368,1141 @@ export default function CampaignDetailPage() {
   const responseRate = analytics?.response_rate ?? 0;
 
   return (
-    <div className="max-w-[1280px] mx-auto w-full px-4 py-6 pb-24 lg:pb-8 flex flex-col gap-5">
-      <Button
-        variant="ghost"
-        size="sm"
-        className="w-fit -ml-2 text-text-secondary"
-        onClick={() => router.push('/recruiter/campaigns')}
+    <div className="max-w-[1280px] mx-auto w-full px-4 sm:px-6 py-8 pb-24 lg:pb-12 flex flex-col gap-8">
+      <motion.div
+        initial={{ opacity: 0, x: -6 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.3 }}
       >
-        <ArrowLeft className="w-4 h-4 mr-1" strokeWidth={1.5} />
-        Back to Campaigns
-      </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-fit -ml-2 text-ink-muted hover:text-ink group font-medium"
+          onClick={() => router.push('/recruiter/campaigns')}
+        >
+          <ArrowLeft className="w-4 h-4 mr-1 transition-transform group-hover:-translate-x-0.5" strokeWidth={1.5} />
+          Back to Campaigns
+        </Button>
+      </motion.div>
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-xl font-bold text-text-primary">{campaign?.name}</h1>
-            <Badge variant="secondary" className="text-2xs capitalize">
-              {campaign?.status}
-            </Badge>
-            <Badge variant="outline" className="text-2xs">
-              {campaign?.visibility === 'invite_only' ? 'Invite Only' : 'Public'}
-            </Badge>
-          </div>
-          {campaign?.deadline && (
-            <p className="text-xs text-text-muted mt-1">
-              Deadline: {new Date(campaign.deadline).toLocaleDateString()}
-            </p>
-          )}
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          {campaign?.status === 'draft' && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => guard(() => publishCampaign.mutate(campaignId))}
-              disabled={publishCampaign.isPending}
-            >
-              <Play className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.5} />
-              Publish
-            </Button>
-          )}
-          {campaign?.status === 'active' && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => guard(() => closeCampaign.mutate(campaignId))}
-              disabled={closeCampaign.isPending}
-            >
-              Close
-            </Button>
-          )}
-          {campaign?.status === 'closed' && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => guard(() => reopenCampaign.mutate(campaignId))}
-              disabled={reopenCampaign.isPending}
-            >
-              <RotateCcw className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.5} />
-              Reopen
-            </Button>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => guard(() => cloneCampaign.mutate(campaignId))}
-            disabled={cloneCampaign.isPending}
-          >
-            <Copy className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.5} />
-            Clone
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => guard(() => router.push(`/recruiter/campaigns/${campaignId}/edit`))}
-          >
-            <Pencil className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.5} />
-            Edit
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              const url = `${window.location.origin}/talent/opportunities/${campaignId}`;
-              navigator.clipboard.writeText(url);
-            }}
-          >
-            <Link2 className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.5} />
-            Copy Link
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleExport}>
-            <Download className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.5} />
-            Export
-          </Button>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        <StatCard label="Total Applicants" value={totalApplicants} align="left" />
-        <StatCard label="Pending Invites" value={pendingInvites} align="left" />
-        <StatCard label="Accepted Invites" value={acceptedInvites} align="left" />
-        <StatCard label="Declined Invites" value={declinedInvites} align="left" />
-        <StatCard label="Response Rate" value={`${Math.round(responseRate * 100)}%`} align="left" />
-      </div>
-
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="applicants">Applicants ({totalApplicants})</TabsTrigger>
-          <TabsTrigger value="invites">Invites ({invites?.length ?? 0})</TabsTrigger>
-          <TabsTrigger value="media">Media ({campaign?.media?.length ?? 0})</TabsTrigger>
-          <TabsTrigger value="team">Team</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="applicants" className="space-y-3">
-          {isLoadingApps ? (
-            <div className="space-y-3">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} className="h-24 rounded-xl" />
-              ))}
-            </div>
-          ) : appsError ? (
-            <Alert variant="destructive">
-              <AlertDescription>{getApiErrorMessage(appsError, 'Failed to load applications')}</AlertDescription>
-            </Alert>
-          ) : applications && applications.length > 0 ? (
-            <div className="space-y-3">
-              <div className="flex items-center gap-2"
-              >
-                <button
-                  onClick={() => setShowShortlistedOnly(false)}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="relative overflow-hidden rounded-2xl border border-border/60 bg-card shadow-luxe"
+      >
+        <div className="p-6 sm:p-8">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
+            <div className="flex-1 min-w-0 space-y-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Badge
                   className={cn(
-                    "px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
-                    !showShortlistedOnly
-                      ? "bg-brand text-white border-brand"
-                      : "bg-card text-text-secondary border-border hover:border-brand hover:text-brand"
+                    "rounded-full text-[10px] font-semibold uppercase tracking-[0.12em] border px-2.5 py-0.5",
+                    campaign?.status === 'active'
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      : campaign?.status === 'draft'
+                        ? 'bg-amber-50 text-amber-700 border-amber-200'
+                        : 'bg-slate-100 text-slate-600 border-slate-200',
                   )}
                 >
-                  All
-                </button>
-                <button
-                  onClick={() => setShowShortlistedOnly(true)}
-                  className={cn(
-                    "px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",
-                    showShortlistedOnly
-                      ? "bg-brand text-white border-brand"
-                      : "bg-card text-text-secondary border-border hover:border-brand hover:text-brand"
-                  )}
-                >
-                  Shortlisted
-                </button>
+                  {campaign?.status}
+                </Badge>
+                <Badge variant="outline" className="rounded-full text-[10px] font-semibold uppercase tracking-[0.12em] px-2.5 py-0.5">
+                  {campaign?.visibility === 'invite_only' ? 'Invite Only' : 'Public'}
+                </Badge>
               </div>
-              {selectedApps.size > 0 && (
-                <div className="flex items-center justify-between gap-3 bg-card border border-border rounded-xl p-3">
-                  <span className="text-sm text-text-secondary">
-                    {selectedApps.size} selected
+              <h1 className="text-[26px] font-serif font-semibold text-ink tracking-tight leading-tight">
+                {campaign?.name}
+              </h1>
+              <div className="flex items-center gap-5 text-sm text-ink-muted flex-wrap">
+                {campaign?.role_type && (
+                  <span className="flex items-center gap-1.5 font-medium">
+                    <Briefcase className="h-4 w-4 text-ink-muted/50" strokeWidth={1.5} />
+                    {campaign.role_type}
                   </span>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleBulkUpdate('accepted')}
-                      disabled={bulkUpdateStatus.isPending}
-                    >
-                      <CheckCircle2 className="w-3.5 h-3.5 mr-1" strokeWidth={1.5} />
-                      Accept
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-error-text hover:bg-error-light"
-                      onClick={() => handleBulkUpdate('rejected')}
-                      disabled={bulkUpdateStatus.isPending}
-                    >
-                      <XCircle className="w-3.5 h-3.5 mr-1" strokeWidth={1.5} />
-                      Reject
-                    </Button>
-                  </div>
-                </div>
+                )}
+                {campaign?.industry && (
+                  <span className="flex items-center gap-1.5 font-medium">
+                    <Activity className="h-4 w-4 text-ink-muted/50" strokeWidth={1.5} />
+                    {campaign.industry}
+                  </span>
+                )}
+                {campaign?.location?.city && (
+                  <span className="flex items-center gap-1.5 font-medium">
+                    <MapPin className="h-4 w-4 text-ink-muted/50" strokeWidth={1.5} />
+                    {[campaign.location.city, campaign.location.state].filter(Boolean).join(', ')}
+                  </span>
+                )}
+                {campaign?.deadline && (
+                  <span className="flex items-center gap-1.5 font-medium">
+                    <Calendar className="h-4 w-4 text-ink-muted/50" strokeWidth={1.5} />
+                    Deadline: {new Date(campaign.deadline).toLocaleDateString('en-US', {
+                      month: 'short', day: 'numeric', year: 'numeric',
+                    })}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              {campaign?.status === 'draft' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 rounded-xl border-border/60 bg-card shadow-luxe text-sm font-medium hover:bg-cream-soft"
+                  onClick={() => guard(() => publishCampaign.mutate(campaignId))}
+                  disabled={publishCampaign.isPending}
+                >
+                  <Play className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.5} />
+                  Publish
+                </Button>
               )}
-              {applications.filter((app) => !showShortlistedOnly || app.is_shortlisted).map((app) => {
-                const meta = APP_STATUS_META[app.status] ?? APP_STATUS_META.pending;
-                const Icon = meta.icon;
-                const talent =
-                  typeof app.talent_id === 'object' && app.talent_id !== null
-                    ? app.talent_id
-                    : null;
-                const isSelected = selectedApps.has(app._id);
-                const isEditingNote = noteAppId === app._id;
-                const note = app.note;
+              {campaign?.status === 'active' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 rounded-xl border-border/60 bg-card shadow-luxe text-sm font-medium hover:bg-cream-soft"
+                  onClick={() => guard(() => closeCampaign.mutate(campaignId))}
+                  disabled={closeCampaign.isPending}
+                >
+                  <XCircle className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.5} />
+                  Close
+                </Button>
+              )}
+              {campaign?.status === 'closed' && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 rounded-xl border-border/60 bg-card shadow-luxe text-sm font-medium hover:bg-cream-soft"
+                  onClick={() => guard(() => reopenCampaign.mutate(campaignId))}
+                  disabled={reopenCampaign.isPending}
+                >
+                  <RotateCcw className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.5} />
+                  Reopen
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 rounded-xl border-border/60 bg-card shadow-luxe text-sm font-medium hover:bg-cream-soft"
+                onClick={() => guard(() => cloneCampaign.mutate(campaignId))}
+                disabled={cloneCampaign.isPending}
+              >
+                <Copy className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.5} />
+                Clone
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 rounded-xl border-border/60 bg-card shadow-luxe text-sm font-medium hover:bg-cream-soft"
+                onClick={() =>
+                  guard(() => router.push(`/recruiter/campaigns/${campaignId}/edit`))
+                }
+              >
+                <Pencil className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.5} />
+                Edit
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-9 rounded-xl text-sm font-medium text-ink-muted hover:text-ink hover:bg-cream-soft"
+                onClick={() => {
+                  const url = `${window.location.origin}/talent/opportunities/${campaignId}`;
+                  navigator.clipboard.writeText(url);
+                }}
+              >
+                <Link2 className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.5} />
+                Copy Link
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-9 rounded-xl text-sm font-medium text-ink-muted hover:text-ink hover:bg-cream-soft"
+                onClick={handleExport}
+              >
+                <Download className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.5} />
+                Export
+              </Button>
+            </div>
+          </div>
+        </div>
+      </motion.div>
 
-                return (
-                  <article
-                    key={app._id}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.06, ease: "easeOut" }}
+        className="grid grid-cols-2 sm:grid-cols-5 gap-4"
+      >
+        <DetailStatCard
+          label="Total Applicants"
+          value={totalApplicants}
+          icon={Users}
+          accent="from-blue-500 to-blue-600"
+        />
+        <DetailStatCard
+          label="Pending Invites"
+          value={pendingInvites}
+          icon={Send}
+          accent="from-amber-500 to-amber-600"
+        />
+        <DetailStatCard
+          label="Accepted"
+          value={acceptedInvites}
+          icon={CheckCircle2}
+          accent="from-emerald-500 to-emerald-600"
+        />
+        <DetailStatCard
+          label="Declined"
+          value={declinedInvites}
+          icon={Ban}
+          accent="from-rose-500 to-pink-600"
+        />
+        <DetailStatCard
+          label="Response Rate"
+          value={`${Math.round(responseRate * 100)}%`}
+          icon={TrendingUp}
+          accent="from-violet-500 to-purple-600"
+        />
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
+      >
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="grid w-full grid-cols-5 bg-muted-bg/50 border border-border/60 rounded-xl p-1">
+            <TabsTrigger
+              value="applicants"
+              className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-luxe data-[state=active]:text-ink text-ink-muted text-xs font-semibold py-2.5"
+            >
+              Applicants
+              <span className="ml-1.5 px-1.5 py-0.5 rounded-md text-[10px] bg-muted-bg data-[state=active]:bg-muted-bg">
+                {totalApplicants}
+              </span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="invites"
+              className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-luxe data-[state=active]:text-ink text-ink-muted text-xs font-semibold py-2.5"
+            >
+              Invites
+              <span className="ml-1.5 px-1.5 py-0.5 rounded-md text-[10px] bg-muted-bg data-[state=active]:bg-muted-bg">
+                {invites?.length ?? 0}
+              </span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="media"
+              className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-luxe data-[state=active]:text-ink text-ink-muted text-xs font-semibold py-2.5"
+            >
+              Media
+              <span className="ml-1.5 px-1.5 py-0.5 rounded-md text-[10px] bg-muted-bg data-[state=active]:bg-muted-bg">
+                {campaign?.media?.length ?? 0}
+              </span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="team"
+              className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-luxe data-[state=active]:text-ink text-ink-muted text-xs font-semibold py-2.5"
+            >
+              Team
+            </TabsTrigger>
+            <TabsTrigger
+              value="analytics"
+              className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-luxe data-[state=active]:text-ink text-ink-muted text-xs font-semibold py-2.5"
+            >
+              Analytics
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="applicants" className="space-y-4 mt-6">
+            {isLoadingApps ? (
+              <div className="space-y-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton key={i} className="h-24 rounded-2xl" />
+                ))}
+              </div>
+            ) : appsError ? (
+              <Alert variant="destructive" className="rounded-xl border-error-muted">
+                <AlertDescription>
+                  {getApiErrorMessage(appsError, 'Failed to load applications')}
+                </AlertDescription>
+              </Alert>
+            ) : applications && applications.length > 0 ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowShortlistedOnly(false)}
                     className={cn(
-                      "bg-card border rounded-2xl p-[18px] shadow-card flex flex-col gap-4",
-                      isSelected ? "border-brand" : "border-border",
+                      "px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200",
+                      !showShortlistedOnly
+                        ? "bg-ink text-white border-ink shadow-sm"
+                        : "bg-card text-ink-muted border-border/60 shadow-luxe hover:border-border hover:text-ink",
                     )}
                   >
-                    <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-                      <div className="flex-1 min-w-0 space-y-2">
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => toggleAppSelection(app._id)}
-                            className="w-4 h-4 rounded border-border text-brand focus:ring-brand"
-                          />
-                          <div className="w-8 h-8 rounded-full bg-muted-bg flex items-center justify-center">
-                            <User className="w-4 h-4 text-text-muted" strokeWidth={1.5} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <p className="text-sm font-medium text-text-primary">
-                                {talent?.full_legal_name || talent?.email || 'Unknown'}
-                              </p>
-                              {app.is_shortlisted && (
-                                <Badge variant="outline" className="text-2xs text-brand border-brand-muted bg-brand-light">
-                                  <BookmarkCheck className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
-                                  Shortlisted
-                                </Badge>
-                              )}
-                            </div>
-                            <p className="text-xs text-text-muted">
-                              {new Date(app.created_at).toLocaleDateString('en-US', {
-                                month: 'short',
-                                day: 'numeric',
-                                year: 'numeric',
-                              })}
-                            </p>
-                          </div>
-                        </div>
-                        {app.message && (
-                          <div className="flex items-start gap-1.5">
-                            <Mail className="w-3.5 h-3.5 text-text-muted mt-0.5 shrink-0" strokeWidth={1.5} />
-                            <p className="text-sm text-text-secondary line-clamp-2">{app.message}</p>
-                          </div>
-                        )}
-                        {app.answers && app.answers.length > 0 && (
-                          <div className="space-y-1 mt-1">
-                            {app.answers.map((ans: { question_id: string; question_text: string; answer: string }) => (
-                              <div key={ans.question_id} className="text-xs text-text-secondary">
-                                <span className="font-medium text-text-primary">{ans.question_text}:</span>{' '}
-                                {ans.answer}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                        {note && !isEditingNote && (
-                          <div className="space-y-1.5 pt-1">
-                            {(() => {
-                              const r = note.rating;
-                              if (r == null || r <= 0) return null;
-                              return (
-                                <div className="flex items-center gap-0.5">
-                                  {Array.from({ length: 5 }).map((_, i) => (
-                                    <Star
-                                      key={i}
-                                      className={cn(
-                                        "w-3.5 h-3.5",
-                                        i < r ? "fill-amber-400 text-amber-400" : "text-text-muted"
-                                      )}
-                                      strokeWidth={1.5}
-                                    />
-                                  ))}
-                                </div>
-                              );
-                            })()}
-                            {note.note_text && (
-                              <div className="flex items-start gap-1.5">
-                                <MessageSquare className="w-3.5 h-3.5 text-text-muted mt-0.5 shrink-0" strokeWidth={1.5} />
-                                <p className="text-xs text-text-secondary">{note.note_text}</p>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
+                    All
+                  </button>
+                  <button
+                    onClick={() => setShowShortlistedOnly(true)}
+                    className={cn(
+                      "px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200 flex items-center gap-1",
+                      showShortlistedOnly
+                        ? "bg-ink text-white border-ink shadow-sm"
+                        : "bg-card text-ink-muted border-border/60 shadow-luxe hover:border-border hover:text-ink",
+                    )}
+                  >
+                    <BookmarkCheck className="w-3 h-3" strokeWidth={1.5} />
+                    Shortlisted
+                  </button>
+                </div>
 
-                      <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                        <Badge className={cn('shrink-0', meta.classes)}>
-                          <Icon className="w-3 h-3 mr-1" strokeWidth={1.5} />
-                          {meta.label}
-                        </Badge>
-                        <Select
-                          value={app.status}
-                          onValueChange={(val) => handleStatusChange(app._id, val)}
-                          disabled={updateStatus.isPending && updatingId === app._id}
-                        >
-                          <SelectTrigger className="w-[130px] h-9 text-sm">
-                            <SelectValue placeholder="Update status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="accepted">Accepted</SelectItem>
-                            <SelectItem value="rejected">Rejected</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    {/* Actions row */}
-                    <div className="flex items-center gap-2 pt-2 border-t border-border-subtle">
+                {selectedApps.size > 0 && (
+                  <div className="flex items-center justify-between gap-3 bg-card border border-ink/10 rounded-2xl p-4 shadow-luxe">
+                    <span className="text-sm font-semibold text-ink">
+                      {selectedApps.size} selected
+                    </span>
+                    <div className="flex gap-2">
                       <Button
                         size="sm"
-                        variant={app.is_shortlisted ? "default" : "outline"}
-                        className="h-8 text-xs"
-                        onClick={() => {
-                          if (app.is_shortlisted) {
-                            removeFromShortlist.mutate({ campaignId, applicationId: app._id });
-                          } else {
-                            addToShortlist.mutate({ campaignId, applicationId: app._id });
-                          }
-                        }}
-                        disabled={addToShortlist.isPending || removeFromShortlist.isPending}
+                        variant="outline"
+                        className="h-9 rounded-lg text-xs font-medium border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                        onClick={() => handleBulkUpdate('accepted')}
+                        disabled={bulkUpdateStatus.isPending}
                       >
-                        {app.is_shortlisted ? (
-                          <BookmarkCheck className="w-3.5 h-3.5 mr-1" strokeWidth={1.5} />
-                        ) : (
-                          <Bookmark className="w-3.5 h-3.5 mr-1" strokeWidth={1.5} />
-                        )}
-                        {app.is_shortlisted ? 'Shortlisted' : 'Shortlist'}
+                        <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.5} />
+                        Accept All
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
-                        className="h-8 text-xs"
-                        onClick={() => {
-                          if (isEditingNote) {
-                            setNoteAppId(null);
-                            setNoteText('');
-                            setNoteRating(0);
-                          } else {
-                            setNoteAppId(app._id);
-                            setNoteText(note?.note_text || '');
-                            setNoteRating(note?.rating || 0);
-                          }
-                        }}
+                        className="h-9 rounded-lg text-xs font-medium border-rose-200 text-rose-700 hover:bg-rose-50"
+                        onClick={() => handleBulkUpdate('rejected')}
+                        disabled={bulkUpdateStatus.isPending}
                       >
-                        <MessageSquare className="w-3.5 h-3.5 mr-1" strokeWidth={1.5} />
-                        {isEditingNote ? 'Cancel' : note ? 'Edit Note' : 'Add Note'}
+                        <XCircle className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.5} />
+                        Reject All
                       </Button>
                     </div>
-
-                    {isEditingNote && (
-                      <div className="space-y-3 bg-muted-bg rounded-xl p-3">
-                        <div className="flex items-center gap-1">
-                          {Array.from({ length: 5 }).map((_, i) => (
-                            <button
-                              key={i}
-                              onClick={() => setNoteRating(i + 1)}
-                              className="p-0.5"
-                            >
-                              <Star
-                                className={cn(
-                                  "w-5 h-5",
-                                  i < noteRating ? "fill-amber-400 text-amber-400" : "text-text-muted"
-                                )}
-                                strokeWidth={1.5}
-                              />
-                            </button>
-                          ))}
-                        </div>
-                        <Textarea
-                          value={noteText}
-                          onChange={(e) => setNoteText(e.target.value)}
-                          placeholder="Write a note about this applicant..."
-                          rows={3}
-                          className="resize-none text-sm bg-card"
-                        />
-                        <div className="flex items-center justify-end gap-2">
-                          {note && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-8 text-xs text-error-text"
-                              onClick={() => {
-                                deleteNote.mutate({ campaignId, applicationId: app._id }, {
-                                  onSuccess: () => setNoteAppId(null),
-                                });
-                              }}
-                              disabled={deleteNote.isPending}
-                            >
-                              <Trash2 className="w-3.5 h-3.5 mr-1" strokeWidth={1.5} />
-                              Delete
-                            </Button>
-                          )}
-                          <Button
-                            size="sm"
-                            className="h-8 text-xs"
-                            onClick={() => {
-                              upsertNote.mutate({
-                                campaignId,
-                                applicationId: app._id,
-                                payload: { note_text: noteText, rating: noteRating || undefined },
-                              }, {
-                                onSuccess: () => {
-                                  setNoteAppId(null);
-                                  setNoteText('');
-                                  setNoteRating(0);
-                                },
-                              });
-                            }}
-                            disabled={upsertNote.isPending}
-                          >
-                            Save Note
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </article>
-                );
-              })}
-              {applications.filter((app) => !showShortlistedOnly || app.is_shortlisted).length === 0 && (
-                <div className="text-center py-12 bg-card border border-border rounded-2xl"
-                >
-                  <p className="text-sm text-text-muted"
-                  >
-                    {showShortlistedOnly ? 'No shortlisted applications yet.' : 'No applications yet.'}
-                  </p>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="text-center py-20 bg-card border border-border rounded-2xl">
-              <Users className="w-10 h-10 text-text-muted mx-auto mb-3" strokeWidth={1.5} />
-              <p className="text-sm text-text-muted">No applications yet</p>
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="invites" className="space-y-3">
-          {isLoadingInvites ? (
-            <div className="space-y-3">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} className="h-20 rounded-xl" />
-              ))}
-            </div>
-          ) : invitesError ? (
-            <Alert variant="destructive">
-              <AlertDescription>{getApiErrorMessage(invitesError, 'Failed to load invites')}</AlertDescription>
-            </Alert>
-          ) : invites && invites.length > 0 ? (
-            <div className="space-y-3">
-              {invites.map((invite) => {
-                const meta = INVITE_STATUS_META[invite.status] ?? INVITE_STATUS_META.pending;
-                const Icon = meta.icon;
-                const talent =
-                  typeof invite.talent_id === 'object' && invite.talent_id !== null
-                    ? invite.talent_id
-                    : null;
-
-                return (
-                  <article
-                    key={invite._id}
-                    className="bg-card border border-border rounded-2xl p-[18px] shadow-card flex flex-col sm:flex-row sm:items-center gap-4"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-muted-bg flex items-center justify-center">
-                          <User className="w-4 h-4 text-text-muted" strokeWidth={1.5} />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-text-primary">
-                            {talent?.full_legal_name || talent?.email || 'Unknown'}
-                          </p>
-                          <p className="text-xs text-text-muted">
-                            {new Date(invite.created_at).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
-                            })}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    <Badge className={cn('shrink-0', meta.classes)}>
-                      <Icon className="w-3 h-3 mr-1" strokeWidth={1.5} />
-                      {meta.label}
-                    </Badge>
-                  </article>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="text-center py-20 bg-card border border-border rounded-2xl">
-              <Send className="w-10 h-10 text-text-muted mx-auto mb-3" strokeWidth={1.5} />
-              <p className="text-sm text-text-muted">No invites sent yet</p>
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="media" className="space-y-4">
-          <div className="flex items-center gap-3">
-            <input
-              type="file"
-              accept="image/*,video/*"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (!file || !campaignId) return;
-                const formData = new FormData();
-                formData.append('file', file);
-                uploadMedia.mutate({ campaignId, formData });
-                e.target.value = '';
-              }}
-              className="hidden"
-              id="media-upload"
-            />
-            <label htmlFor="media-upload">
-              <Button variant="outline" size="sm" className="cursor-pointer" asChild>
-                <span>Upload Media</span>
-              </Button>
-            </label>
-          </div>
-
-          {campaign?.media && campaign.media.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-              {campaign.media.map((item, idx) => {
-                const isPinned = campaign.cover_image_url === item.url;
-                return (
-                  <div
-                    key={idx}
-                    className={cn(
-                      "relative rounded-xl overflow-hidden aspect-square group",
-                      isPinned ? "border-2 border-brand ring-1 ring-brand" : "border border-border"
-                    )}
-                  >
-                    {item.type === 'video' ? (
-                      <video src={item.url} className="w-full h-full object-cover" controls />
-                    ) : (
-                      <img src={item.url} alt={item.caption || ''} className="w-full h-full object-cover" />
-                    )}
-                    <div className="absolute top-2 right-2 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {!isPinned && (
-                        <button
-                          onClick={() =>
-                            updateCampaign.mutate({
-                              id: campaignId,
-                              payload: { cover_image_url: item.url },
-                            })
-                          }
-                          disabled={updateCampaign.isPending}
-                          className="p-1.5 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
-                          title="Pin as cover"
-                        >
-                          <Pin className="w-3.5 h-3.5" strokeWidth={1.5} />
-                        </button>
-                      )}
-                      <button
-                        onClick={() => deleteMedia.mutate({ campaignId, url: item.url })}
-                        className="p-1.5 rounded-full bg-black/50 text-white hover:bg-black/70"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
-                      </button>
-                    </div>
-                    {isPinned && (
-                      <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-brand text-white text-[10px] font-semibold">
-                        Pinned
-                      </span>
-                    )}
-                    {item.caption && (
-                      <p className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[11px] px-2 py-1 truncate">
-                        {item.caption}
-                      </p>
-                    )}
                   </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="text-center py-16 bg-card border border-border rounded-2xl">
-              <p className="text-sm text-text-muted">No media yet</p>
-              <p className="text-xs text-text-muted mt-1">Upload images or videos to showcase this campaign.</p>
-            </div>
-          )}
-        </TabsContent>
+                )}
 
-        <TabsContent value="team" className="space-y-4">
-          <div className="bg-card border border-border rounded-2xl p-4 space-y-4">
-            <div className="flex items-center gap-3">
-              <Input
-                placeholder="Email address..."
-                value={teamInviteEmail}
-                onChange={(e) => setTeamInviteEmail(e.target.value)}
-                className="h-10 text-sm flex-1"
-              />
-              <Select value={teamInviteRole} onValueChange={setTeamInviteRole}>
-                <SelectTrigger className="w-[130px] h-10 text-sm">
-                  <SelectValue placeholder="Role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="viewer">Viewer</SelectItem>
-                  <SelectItem value="editor">Editor</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                size="sm"
-                className="h-10 text-xs"
-                onClick={() => {
-                  if (!teamInviteEmail.trim()) return;
-                  guard(() => inviteTeamMember.mutate(
-                    { campaignId, email: teamInviteEmail.trim(), role: teamInviteRole },
-                    {
-                      onSuccess: () => {
-                        setTeamInviteEmail('');
-                        setTeamInviteRole('viewer');
-                      },
-                    }
-                  ));
-                }}
-                disabled={inviteTeamMember.isPending || !teamInviteEmail.trim()}
-              >
-                <UserPlus className="w-3.5 h-3.5 mr-1" strokeWidth={1.5} />
-                Invite
-              </Button>
-            </div>
+                {applications
+                  .filter((app) => !showShortlistedOnly || app.is_shortlisted)
+                  .map((app, idx) => {
+                    const meta = APP_STATUS_META[app.status] ?? APP_STATUS_META.pending;
+                    const Icon = meta.icon;
+                    const talent =
+                      typeof app.talent_id === 'object' && app.talent_id !== null
+                        ? app.talent_id
+                        : null;
+                    const isSelected = selectedApps.has(app._id);
+                    const isEditingNote = noteAppId === app._id;
+                    const note = app.note;
 
-            {isLoadingTeam ? (
+                    return (
+                      <motion.article
+                        key={app._id}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: idx * 0.03 }}
+                        className={cn(
+                          "bg-card border rounded-2xl p-5 sm:p-6 shadow-luxe transition-all",
+                          isSelected
+                            ? "border-ink ring-1 ring-ink/10 bg-ink/[0.01]"
+                            : "border-border/60 hover:shadow-luxe-lg hover:border-border",
+                        )}
+                      >
+                        <div className="flex flex-col lg:flex-row lg:items-start gap-4">
+                          <div className="flex-1 min-w-0 space-y-3">
+                            <div className="flex items-center gap-3">
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => toggleAppSelection(app._id)}
+                                className="w-4 h-4 rounded border-border/60 text-ink focus:ring-ink/20 accent-slate-700 shrink-0"
+                              />
+                              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center shrink-0">
+                                <User className="w-4 h-4 text-slate-500" strokeWidth={1.5} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <p className="text-sm font-semibold text-ink">
+                                    {talent?.full_legal_name || talent?.email || 'Unknown'}
+                                  </p>
+                                  {app.is_shortlisted && (
+                                    <Badge className="rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border-amber-200 px-2 py-0">
+                                      <BookmarkCheck className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
+                                      Shortlisted
+                                    </Badge>
+                                  )}
+                                </div>
+                                <p className="text-xs text-ink-muted mt-0.5 font-medium">
+                                  Applied {new Date(app.created_at).toLocaleDateString('en-US', {
+                                    month: 'short', day: 'numeric', year: 'numeric',
+                                  })}
+                                </p>
+                              </div>
+                            </div>
+                            {app.message && (
+                              <div className="flex items-start gap-1.5 ml-[52px]">
+                                <Mail className="w-3.5 h-3.5 text-ink-muted/60 mt-0.5 shrink-0" strokeWidth={1.5} />
+                                <p className="text-sm text-ink-soft leading-relaxed line-clamp-2">
+                                  {app.message}
+                                </p>
+                              </div>
+                            )}
+                            {app.answers && app.answers.length > 0 && (
+                              <div className="space-y-1.5 ml-[52px] bg-muted-bg/50 rounded-xl p-3 border border-border/30">
+                                {app.answers.map(
+                                  (ans: {
+                                    question_id: string;
+                                    question_text: string;
+                                    answer: string;
+                                  }) => (
+                                    <div key={ans.question_id} className="text-sm text-ink-soft">
+                                      <span className="font-semibold text-ink">{ans.question_text}:</span>{' '}
+                                      {ans.answer}
+                                    </div>
+                                  ),
+                                )}
+                              </div>
+                            )}
+                            {note && !isEditingNote && (
+                              <div className="space-y-2 ml-[52px] bg-muted-bg/50 rounded-xl p-3 border border-border/30">
+                                {(() => {
+                                  const r = note.rating;
+                                  if (r == null || r <= 0) return null;
+                                  return (
+                                    <div className="flex items-center gap-0.5">
+                                      {Array.from({ length: 5 }).map((_, i) => (
+                                        <Star
+                                          key={i}
+                                          className={cn(
+                                            'w-4 h-4',
+                                            i < r
+                                              ? 'fill-amber-400 text-amber-400'
+                                              : 'text-slate-300',
+                                          )}
+                                          strokeWidth={1.5}
+                                        />
+                                      ))}
+                                    </div>
+                                  );
+                                })()}
+                                {note.note_text && (
+                                  <div className="flex items-start gap-1.5">
+                                    <MessageSquare
+                                      className="w-3.5 h-3.5 text-ink-muted/60 mt-0.5 shrink-0"
+                                      strokeWidth={1.5}
+                                    />
+                                    <p className="text-sm text-ink-soft leading-relaxed">{note.note_text}</p>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-2 shrink-0 flex-wrap lg:flex-col lg:items-end">
+                            <Badge className={cn(
+                              'rounded-full text-[10px] font-semibold px-2.5 py-0.5 border whitespace-nowrap',
+                              meta.classes,
+                            )}>
+                              <Icon className="w-3 h-3 mr-1" strokeWidth={1.5} />
+                              {meta.label}
+                            </Badge>
+                            <Select
+                              value={app.status}
+                              onValueChange={(val) => handleStatusChange(app._id, val)}
+                              disabled={updateStatus.isPending && updatingId === app._id}
+                            >
+                              <SelectTrigger className="w-[140px] h-9 text-sm rounded-xl border-border/60 bg-card">
+                                <SelectValue placeholder="Update" />
+                              </SelectTrigger>
+                              <SelectContent className="rounded-xl">
+                                <SelectItem value="pending">Pending</SelectItem>
+                                <SelectItem value="accepted">Accepted</SelectItem>
+                                <SelectItem value="rejected">Rejected</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 pt-4 mt-4 border-t border-border/60">
+                          <button
+                            onClick={() => {
+                              if (app.is_shortlisted) {
+                                removeFromShortlist.mutate({ campaignId, applicationId: app._id });
+                              } else {
+                                addToShortlist.mutate({ campaignId, applicationId: app._id });
+                              }
+                            }}
+                            disabled={addToShortlist.isPending || removeFromShortlist.isPending}
+                            className={cn(
+                              "flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium transition-all duration-200 border",
+                              app.is_shortlisted
+                                ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+                                : 'border-border/60 text-ink-muted hover:text-ink hover:bg-cream-soft',
+                            )}
+                          >
+                            {app.is_shortlisted ? (
+                              <BookmarkCheck className="w-3.5 h-3.5" strokeWidth={1.5} />
+                            ) : (
+                              <Bookmark className="w-3.5 h-3.5" strokeWidth={1.5} />
+                            )}
+                            {app.is_shortlisted ? 'Shortlisted' : 'Shortlist'}
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (isEditingNote) {
+                                setNoteAppId(null);
+                                setNoteText('');
+                                setNoteRating(0);
+                              } else {
+                                setNoteAppId(app._id);
+                                setNoteText(note?.note_text || '');
+                                setNoteRating(note?.rating || 0);
+                              }
+                            }}
+                            className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium transition-all duration-200 border border-border/60 text-ink-muted hover:text-ink hover:bg-cream-soft"
+                          >
+                            <MessageSquare className="w-3.5 h-3.5" strokeWidth={1.5} />
+                            {isEditingNote ? 'Cancel' : note ? 'Edit Note' : 'Add Note'}
+                          </button>
+                        </div>
+
+                        {isEditingNote && (
+                          <div className="space-y-3 bg-muted-bg/50 rounded-2xl p-5 mt-4 border border-border/40">
+                            <div className="flex items-center gap-1.5">
+                              {Array.from({ length: 5 }).map((_, i) => (
+                                <button
+                                  key={i}
+                                  onClick={() => setNoteRating(i + 1)}
+                                  className="p-0.5 transition-transform hover:scale-110"
+                                >
+                                  <Star
+                                    className={cn(
+                                      'w-5 h-5 transition-colors',
+                                      i < noteRating
+                                        ? 'fill-amber-400 text-amber-400'
+                                        : 'text-slate-300 hover:text-amber-300',
+                                    )}
+                                    strokeWidth={1.5}
+                                  />
+                                </button>
+                              ))}
+                            </div>
+                            <Textarea
+                              value={noteText}
+                              onChange={(e) => setNoteText(e.target.value)}
+                              placeholder="Write a note about this applicant..."
+                              rows={3}
+                              className="resize-none text-sm bg-card rounded-xl border-border/60 placeholder:text-ink-muted/50"
+                            />
+                            <div className="flex items-center justify-end gap-2">
+                              {note && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-9 text-xs rounded-lg text-error-text hover:bg-error-light px-3"
+                                  onClick={() => {
+                                    deleteNote.mutate(
+                                      { campaignId, applicationId: app._id },
+                                      { onSuccess: () => setNoteAppId(null) },
+                                    );
+                                  }}
+                                  disabled={deleteNote.isPending}
+                                >
+                                  <Trash2 className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.5} />
+                                  Delete Note
+                                </Button>
+                              )}
+                              <Button
+                                size="sm"
+                                className="h-9 text-xs rounded-lg bg-ink text-white hover:bg-ink-soft px-4 font-medium"
+                                onClick={() => {
+                                  upsertNote.mutate(
+                                    {
+                                      campaignId,
+                                      applicationId: app._id,
+                                      payload: {
+                                        note_text: noteText,
+                                        rating: noteRating || undefined,
+                                      },
+                                    },
+                                    {
+                                      onSuccess: () => {
+                                        setNoteAppId(null);
+                                        setNoteText('');
+                                        setNoteRating(0);
+                                      },
+                                    },
+                                  );
+                                }}
+                                disabled={upsertNote.isPending}
+                              >
+                                <Check className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.5} />
+                                Save Note
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </motion.article>
+                    );
+                  })}
+                {applications.filter((app) => !showShortlistedOnly || app.is_shortlisted)
+                  .length === 0 && (
+                  <div className="text-center py-20 bg-card border border-border/60 rounded-2xl shadow-luxe">
+                    <BookmarkCheck className="w-12 h-12 text-ink-muted/40 mx-auto mb-4" strokeWidth={1.5} />
+                    <p className="text-sm font-semibold text-ink">
+                      {showShortlistedOnly
+                        ? 'No shortlisted applications yet.'
+                        : 'No matching applications.'}
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-24 bg-card border border-border/60 rounded-2xl shadow-luxe">
+                <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-muted-bg mx-auto">
+                  <Users className="w-9 h-9 text-ink-muted/40" strokeWidth={1.5} />
+                </div>
+                <p className="text-base font-serif font-semibold text-ink">
+                  No applications yet
+                </p>
+                <p className="mt-2 text-sm text-ink-muted max-w-sm mx-auto leading-relaxed">
+                  Share your campaign link with talent or wait for organic applications to start rolling in.
+                </p>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="invites" className="space-y-4 mt-6">
+            {isLoadingInvites ? (
               <div className="space-y-3">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <Skeleton key={i} className="h-16 rounded-xl" />
+                  <Skeleton key={i} className="h-20 rounded-2xl" />
                 ))}
               </div>
-            ) : teamError ? (
-              isFeatureForbidden(teamError) ? (
-                <FeatureGateAlert {...isFeatureForbidden(teamError)!} />
-              ) : (
-                <Alert variant="destructive">
-                  <AlertDescription>{getApiErrorMessage(teamError, 'Failed to load team')}</AlertDescription>
-                </Alert>
-              )
-            ) : teamData?.members && teamData.members.length > 0 ? (
-              <div className="space-y-2">
-                {teamData.members.map((member: { _id: string; user_id: { full_legal_name?: string; email?: string } | null; role: string }) => {
-                  const user = member.user_id;
-                  const displayName = user?.full_legal_name || user?.email || 'Unknown';
+            ) : invitesError ? (
+              <Alert variant="destructive" className="rounded-xl border-error-muted">
+                <AlertDescription>
+                  {getApiErrorMessage(invitesError, 'Failed to load invites')}
+                </AlertDescription>
+              </Alert>
+            ) : invites && invites.length > 0 ? (
+              <div className="space-y-3">
+                {invites.map((invite, idx) => {
+                  const meta = INVITE_STATUS_META[invite.status] ?? INVITE_STATUS_META.pending;
+                  const Icon = meta.icon;
+                  const talent =
+                    typeof invite.talent_id === 'object' && invite.talent_id !== null
+                      ? invite.talent_id
+                      : null;
+
+                  return (
+                    <motion.article
+                      key={invite._id}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: idx * 0.04 }}
+                      className="bg-card border border-border/60 rounded-2xl px-5 py-4 shadow-luxe flex flex-col sm:flex-row sm:items-center gap-4 hover:shadow-luxe-lg transition-shadow"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center shrink-0">
+                            <User className="w-4 h-4 text-slate-500" strokeWidth={1.5} />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-ink">
+                              {talent?.full_legal_name || talent?.email || 'Unknown'}
+                            </p>
+                            <p className="text-xs text-ink-muted mt-0.5 font-medium">
+                              Invited {new Date(invite.created_at).toLocaleDateString('en-US', {
+                                month: 'short', day: 'numeric', year: 'numeric',
+                              })}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <Badge className={cn(
+                        'rounded-full text-[10px] font-semibold px-2.5 py-0.5 border shrink-0',
+                        meta.classes,
+                      )}>
+                        <Icon className="w-3 h-3 mr-1" strokeWidth={1.5} />
+                        {meta.label}
+                      </Badge>
+                    </motion.article>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-24 bg-card border border-border/60 rounded-2xl shadow-luxe">
+                <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-muted-bg mx-auto">
+                  <Send className="w-9 h-9 text-ink-muted/40" strokeWidth={1.5} />
+                </div>
+                <p className="text-base font-serif font-semibold text-ink">
+                  No invites sent yet
+                </p>
+                <p className="mt-2 text-sm text-ink-muted max-w-sm mx-auto leading-relaxed">
+                  Invite talent directly to apply for this campaign. They'll receive a notification.
+                </p>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="media" className="space-y-4 mt-6">
+            <div className="flex items-center gap-3">
+              <input
+                type="file"
+                accept="image/*,video/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file || !campaignId) return;
+                  const formData = new FormData();
+                  formData.append('file', file);
+                  uploadMedia.mutate({ campaignId, formData });
+                  e.target.value = '';
+                }}
+                className="hidden"
+                id="media-upload-detail"
+              />
+              <label htmlFor="media-upload-detail">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="cursor-pointer h-10 rounded-xl border-border/60 bg-card shadow-luxe text-sm font-medium hover:bg-cream-soft"
+                  asChild
+                >
+                  <span>
+                    <ImagePlus className="w-4 h-4 mr-1.5" strokeWidth={1.5} />
+                    Upload Media
+                  </span>
+                </Button>
+              </label>
+            </div>
+
+            {campaign?.media && campaign.media.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {campaign.media.map((item, idx) => {
+                  const isPinned = campaign.cover_image_url === item.url;
                   return (
                     <div
-                      key={member._id}
-                      className="flex items-center justify-between gap-3 bg-page border border-border rounded-xl p-3"
+                      key={idx}
+                      className={cn(
+                        'relative rounded-xl overflow-hidden aspect-square group border-2 transition-all',
+                        isPinned
+                          ? 'border-gold ring-2 ring-gold/20 shadow-luxe-lg'
+                          : 'border-border/60 hover:border-border shadow-luxe',
+                      )}
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-muted-bg flex items-center justify-center">
-                          <User className="w-4 h-4 text-text-muted" strokeWidth={1.5} />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-text-primary">{displayName}</p>
-                          <p className="text-xs text-text-muted">{user?.email}</p>
+                      {item.type === 'video' ? (
+                        <video
+                          src={item.url}
+                          className="w-full h-full object-cover"
+                          controls
+                        />
+                      ) : (
+                        <img
+                          src={item.url}
+                          alt={item.caption || ''}
+                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                      )}
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300">
+                        <div className="absolute top-2 right-2 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200">
+                          {!isPinned && (
+                            <button
+                              onClick={() =>
+                                updateCampaign.mutate({
+                                  id: campaignId,
+                                  payload: { cover_image_url: item.url },
+                                })
+                              }
+                              disabled={updateCampaign.isPending}
+                              className="p-1.5 rounded-lg bg-black/60 text-white hover:bg-black/80 backdrop-blur-sm transition-colors"
+                              title="Pin as cover"
+                            >
+                              <Pin className="w-3.5 h-3.5" strokeWidth={1.5} />
+                            </button>
+                          )}
+                          <button
+                            onClick={() =>
+                              deleteMedia.mutate({ campaignId, url: item.url })
+                            }
+                            className="p-1.5 rounded-lg bg-black/60 text-white hover:bg-red-600 backdrop-blur-sm transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
+                          </button>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-2xs capitalize">
-                          {member.role}
-                        </Badge>
-                        <Select
-                          value={member.role}
-                          onValueChange={(val) =>
-                            updateTeamRole.mutate({ campaignId, memberId: member._id, role: val })
-                          }
-                        >
-                          <SelectTrigger className="w-[100px] h-8 text-xs">
-                            <SelectValue placeholder="Role" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="viewer">Viewer</SelectItem>
-                            <SelectItem value="editor">Editor</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-8 w-8 p-0 text-error-text"
-                          onClick={() => removeTeamMember.mutate({ campaignId, memberId: member._id })}
-                          disabled={removeTeamMember.isPending}
-                        >
-                          <UserX className="w-4 h-4" strokeWidth={1.5} />
-                        </Button>
-                      </div>
+                      {isPinned && (
+                        <span className="absolute top-2 left-2 px-2.5 py-1 rounded-lg bg-gold text-white text-[10px] font-semibold shadow-md">
+                          Cover
+                        </span>
+                      )}
+                      {item.caption && (
+                        <p className="absolute bottom-0 left-0 right-0 bg-black/60 backdrop-blur-sm text-white text-[11px] px-3 py-2 truncate font-medium">
+                          {item.caption}
+                        </p>
+                      )}
                     </div>
                   );
                 })}
               </div>
             ) : (
-              <div className="text-center py-12">
-                <Shield className="w-8 h-8 text-text-muted mx-auto mb-2" strokeWidth={1.5} />
-                <p className="text-sm text-text-muted">No team members yet</p>
-                <p className="text-xs text-text-muted mt-1">Invite colleagues to collaborate on this campaign.</p>
+              <div className="text-center py-24 bg-card border border-border/60 rounded-2xl shadow-luxe">
+                <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-muted-bg mx-auto">
+                  <FileUp className="w-9 h-9 text-ink-muted/40" strokeWidth={1.5} />
+                </div>
+                <p className="text-base font-serif font-semibold text-ink">
+                  No media yet
+                </p>
+                <p className="mt-2 text-sm text-ink-muted max-w-sm mx-auto leading-relaxed">
+                  Upload images or videos to showcase this campaign and attract more talent.
+                </p>
               </div>
             )}
-          </div>
-        </TabsContent>
+          </TabsContent>
 
-        <TabsContent value="analytics" className="space-y-6">
-          {isLoadingAnalytics || isLoadingDemographics ? (
-            <div className="space-y-6">
-              <Skeleton className="h-64 rounded-xl" />
-              <Skeleton className="h-64 rounded-xl" />
-            </div>
-          ) : analyticsError || demographicsError ? (
-            isFeatureForbidden(analyticsError) ? (
-              <FeatureGateAlert {...isFeatureForbidden(analyticsError)!} />
-            ) : isFeatureForbidden(demographicsError) ? (
-              <FeatureGateAlert {...isFeatureForbidden(demographicsError)!} />
-            ) : (
-              <Alert variant="destructive">
-                <AlertDescription>{getApiErrorMessage(analyticsError || demographicsError, 'Failed to load analytics')}</AlertDescription>
-              </Alert>
-            )
-          ) : (
-            <>
-              <div className="flex items-center gap-3 bg-card border border-border rounded-xl p-3">
-                <span className="text-sm text-text-secondary">Date range:</span>
-                <input
-                  type="date"
-                  value={analyticsFrom}
-                  onChange={(e) => setAnalyticsFrom(e.target.value)}
-                  className="h-9 rounded-lg text-xs px-3 bg-page border border-border"
+          <TabsContent value="team" className="space-y-4 mt-6">
+            <div className="bg-card border border-border/60 rounded-2xl p-6 shadow-luxe space-y-5">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Input
+                  placeholder="Email address..."
+                  value={teamInviteEmail}
+                  onChange={(e) => setTeamInviteEmail(e.target.value)}
+                  className="h-10 text-sm flex-1 rounded-xl border-border/60 bg-card"
                 />
-                <span className="text-xs text-text-muted">to</span>
-                <input
-                  type="date"
-                  value={analyticsTo}
-                  onChange={(e) => setAnalyticsTo(e.target.value)}
-                  className="h-9 rounded-lg text-xs px-3 bg-page border border-border"
-                />
-                {(analyticsFrom || analyticsTo) && (
+                <div className="flex gap-2">
+                  <Select value={teamInviteRole} onValueChange={setTeamInviteRole}>
+                    <SelectTrigger className="w-[120px] h-10 text-sm rounded-xl border-border/60 bg-card">
+                      <SelectValue placeholder="Role" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl">
+                      <SelectItem value="viewer">Viewer</SelectItem>
+                      <SelectItem value="editor">Editor</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <Button
                     size="sm"
-                    variant="ghost"
-                    className="h-8 text-xs"
-                    onClick={() => { setAnalyticsFrom(''); setAnalyticsTo(''); }}
+                    className="h-10 text-sm rounded-xl bg-gradient-to-br from-gold to-gold-hover text-white hover:from-gold-bright hover:to-gold shadow-[0_4px_14px_-4px_oklch(0.74_0.13_80/0.45)] font-semibold px-5"
+                    onClick={() => {
+                      if (!teamInviteEmail.trim()) return;
+                      guard(() =>
+                        inviteTeamMember.mutate(
+                          {
+                            campaignId,
+                            email: teamInviteEmail.trim(),
+                            role: teamInviteRole,
+                          },
+                          {
+                            onSuccess: () => {
+                              setTeamInviteEmail('');
+                              setTeamInviteRole('viewer');
+                            },
+                          },
+                        ),
+                      );
+                    }}
+                    disabled={inviteTeamMember.isPending || !teamInviteEmail.trim()}
                   >
-                    Reset
+                    <UserPlus className="w-4 h-4 mr-1.5" strokeWidth={1.5} />
+                    Invite
                   </Button>
-                )}
-              </div>
-
-              <div className="bg-card border border-border rounded-2xl p-4 sm:p-6">
-                <h3 className="text-sm font-semibold text-text-primary mb-4">Applications Over Time</h3>
-                <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={analytics?.applications_over_time ?? []}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="var(--color-chart-grid)" />
-                      <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                      <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
-                      <Tooltip />
-                      <Line type="monotone" dataKey="count" stroke={BAR_COLOR} strokeWidth={2} dot={false} />
-                    </LineChart>
-                  </ResponsiveContainer>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-card border border-border rounded-2xl p-4 sm:p-6">
-                  <h3 className="text-sm font-semibold text-text-primary mb-4">Application Status Breakdown</h3>
-                  <div className="h-56">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={[
-                            { name: 'Pending', value: analytics?.status_breakdown.pending ?? 0 },
-                            { name: 'Accepted', value: analytics?.status_breakdown.accepted ?? 0 },
-                            { name: 'Rejected', value: analytics?.status_breakdown.rejected ?? 0 },
-                          ]}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={60}
-                          outerRadius={80}
-                          paddingAngle={5}
-                          dataKey="value"
+              {isLoadingTeam ? (
+                <div className="space-y-3">
+                  {Array.from({ length: 2 }).map((_, i) => (
+                    <Skeleton key={i} className="h-16 rounded-xl" />
+                  ))}
+                </div>
+              ) : teamError ? (
+                isFeatureForbidden(teamError) ? (
+                  <FeatureGateAlert {...isFeatureForbidden(teamError)!} />
+                ) : (
+                  <Alert variant="destructive" className="rounded-xl border-error-muted">
+                    <AlertDescription>
+                      {getApiErrorMessage(teamError, 'Failed to load team')}
+                    </AlertDescription>
+                  </Alert>
+                )
+              ) : teamData?.members && teamData.members.length > 0 ? (
+                <div className="space-y-2">
+                  {teamData.members.map(
+                    (member: {
+                      _id: string;
+                      user_id: { full_legal_name?: string; email?: string } | null;
+                      role: string;
+                    }) => {
+                      const user = member.user_id;
+                      const displayName = user?.full_legal_name || user?.email || 'Unknown';
+                      return (
+                        <div
+                          key={member._id}
+                          className="flex items-center justify-between gap-4 bg-muted-bg/50 border border-border/30 rounded-xl px-4 py-3"
                         >
-                          {[
-                            analytics?.status_breakdown.pending ?? 0,
-                            analytics?.status_breakdown.accepted ?? 0,
-                            analytics?.status_breakdown.rejected ?? 0,
-                          ].map((_, index) => (
-                            <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <div className="flex justify-center gap-4 mt-2">
-                    {['Pending', 'Accepted', 'Rejected'].map((label, i) => (
-                      <div key={label} className="flex items-center gap-1.5">
-                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: PIE_COLORS[i] }} />
-                        <span className="text-xs text-text-secondary">{label}</span>
-                      </div>
-                    ))}
-                  </div>
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center shrink-0">
+                              <User className="w-4 h-4 text-slate-500" strokeWidth={1.5} />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-ink truncate">{displayName}</p>
+                              <p className="text-xs text-ink-muted truncate">{user?.email}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <Badge variant="outline" className="rounded-lg text-[10px] font-medium capitalize py-0.5">
+                              {member.role}
+                            </Badge>
+                            <Select
+                              value={member.role}
+                              onValueChange={(val) =>
+                                updateTeamRole.mutate({
+                                  campaignId,
+                                  memberId: member._id,
+                                  role: val,
+                                })
+                              }
+                            >
+                              <SelectTrigger className="w-[100px] h-8 text-xs rounded-lg border-border/60">
+                                <SelectValue placeholder="Role" />
+                              </SelectTrigger>
+                              <SelectContent className="rounded-xl">
+                                <SelectItem value="viewer">Viewer</SelectItem>
+                                <SelectItem value="editor">Editor</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 w-8 p-0 text-error-text hover:bg-error-light rounded-lg"
+                              onClick={() =>
+                                removeTeamMember.mutate({
+                                  campaignId,
+                                  memberId: member._id,
+                                })
+                              }
+                              disabled={removeTeamMember.isPending}
+                            >
+                              <UserX className="w-4 h-4" strokeWidth={1.5} />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    },
+                  )}
                 </div>
-
-                <div className="bg-card border border-border rounded-2xl p-4 sm:p-6">
-                  <h3 className="text-sm font-semibold text-text-primary mb-4">Gender Distribution</h3>
-                  <div className="h-56">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart
-                        data={Object.entries(demographics?.gender ?? {}).map(([name, count]) => ({
-                          name: name.charAt(0).toUpperCase() + name.slice(1),
-                          count,
-                        }))}
-                        margin={{ top: 5, right: 5, bottom: 5, left: -20 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-chart-grid)" />
-                        <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                        <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
-                        <Tooltip />
-                        <Bar dataKey="count" fill={BAR_COLOR} radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              </div>
-
-              {demographics?.professions && demographics.professions.length > 0 && (
-                <div className="bg-card border border-border rounded-2xl p-4 sm:p-6">
-                  <h3 className="text-sm font-semibold text-text-primary mb-4">Top Professions</h3>
-                  <div className="h-56">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart
-                        data={demographics.professions}
-                        layout="vertical"
-                        margin={{ top: 5, right: 5, bottom: 5, left: 20 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-chart-grid)" />
-                        <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12 }} />
-                        <YAxis dataKey="name" type="category" tick={{ fontSize: 12 }} width={100} />
-                        <Tooltip />
-                        <Bar dataKey="count" fill={BAR_COLOR} radius={[0, 4, 4, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Shield className="w-10 h-10 text-ink-muted/40 mx-auto mb-3" strokeWidth={1.5} />
+                  <p className="text-sm font-semibold text-ink">No team members yet</p>
+                  <p className="text-xs text-ink-muted mt-1">
+                    Invite colleagues to collaborate on this campaign.
+                  </p>
                 </div>
               )}
-            </>
-          )}
-        </TabsContent>
-      </Tabs>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="analytics" className="space-y-6 mt-6">
+            {isLoadingAnalytics || isLoadingDemographics ? (
+              <div className="space-y-6">
+                <Skeleton className="h-64 rounded-2xl" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Skeleton className="h-72 rounded-2xl" />
+                  <Skeleton className="h-72 rounded-2xl" />
+                </div>
+              </div>
+            ) : analyticsError || demographicsError ? (
+              isFeatureForbidden(analyticsError) ? (
+                <FeatureGateAlert {...isFeatureForbidden(analyticsError)!} />
+              ) : isFeatureForbidden(demographicsError) ? (
+                <FeatureGateAlert {...isFeatureForbidden(demographicsError)!} />
+              ) : (
+                <Alert variant="destructive" className="rounded-xl border-error-muted">
+                  <AlertDescription>
+                    {getApiErrorMessage(
+                      analyticsError || demographicsError,
+                      'Failed to load analytics',
+                    )}
+                  </AlertDescription>
+                </Alert>
+              )
+            ) : (
+              <>
+                <div className="flex items-center gap-3 bg-card border border-border/60 rounded-2xl p-4 shadow-luxe flex-wrap">
+                  <span className="text-sm font-semibold text-ink">Date range:</span>
+                  <input
+                    type="date"
+                    value={analyticsFrom}
+                    onChange={(e) => setAnalyticsFrom(e.target.value)}
+                    className="h-9 rounded-xl text-sm px-3 bg-muted-bg/50 border border-border/60 text-ink"
+                  />
+                  <span className="text-xs text-ink-muted font-medium">to</span>
+                  <input
+                    type="date"
+                    value={analyticsTo}
+                    onChange={(e) => setAnalyticsTo(e.target.value)}
+                    className="h-9 rounded-xl text-sm px-3 bg-muted-bg/50 border border-border/60 text-ink"
+                  />
+                  {(analyticsFrom || analyticsTo) && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-9 text-xs rounded-lg hover:bg-cream-soft font-medium"
+                      onClick={() => {
+                        setAnalyticsFrom('');
+                        setAnalyticsTo('');
+                      }}
+                    >
+                      Reset
+                    </Button>
+                  )}
+                </div>
+
+                <div className="bg-card border border-border/60 rounded-2xl p-6 shadow-luxe">
+                  <div className="flex items-center gap-2.5 mb-6">
+                    <div className="h-8 w-8 rounded-lg bg-indigo-50 flex items-center justify-center">
+                      <BarChart3 className="w-4 h-4 text-indigo-500" strokeWidth={1.5} />
+                    </div>
+                    <h3 className="text-sm font-semibold text-ink">Applications Over Time</h3>
+                  </div>
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={analytics?.applications_over_time ?? []}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                        <XAxis dataKey="date" tick={{ fontSize: 12, fill: '#94a3b8' }} />
+                        <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
+                        <Tooltip />
+                        <Line
+                          type="monotone"
+                          dataKey="count"
+                          stroke={BAR_COLOR}
+                          strokeWidth={2.5}
+                          dot={false}
+                          activeDot={{ r: 4, fill: BAR_COLOR }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div className="bg-card border border-border/60 rounded-2xl p-6 shadow-luxe">
+                    <div className="flex items-center gap-2.5 mb-6">
+                      <div className="h-8 w-8 rounded-lg bg-amber-50 flex items-center justify-center">
+                        <PieChartIcon className="w-4 h-4 text-amber-500" strokeWidth={1.5} />
+                      </div>
+                      <h3 className="text-sm font-semibold text-ink">Status Breakdown</h3>
+                    </div>
+                    <div className="h-56">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={[
+                              { name: 'Pending', value: analytics?.status_breakdown.pending ?? 0 },
+                              { name: 'Accepted', value: analytics?.status_breakdown.accepted ?? 0 },
+                              { name: 'Rejected', value: analytics?.status_breakdown.rejected ?? 0 },
+                            ]}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={55}
+                            outerRadius={76}
+                            paddingAngle={4}
+                            dataKey="value"
+                          >
+                            {[
+                              analytics?.status_breakdown.pending ?? 0,
+                              analytics?.status_breakdown.accepted ?? 0,
+                              analytics?.status_breakdown.rejected ?? 0,
+                            ].map((_, index) => (
+                              <Cell
+                                key={`cell-${index}`}
+                                fill={PIE_COLORS[index % PIE_COLORS.length]}
+                              />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="flex justify-center gap-6 mt-3">
+                      {['Pending', 'Accepted', 'Rejected'].map((label, i) => (
+                        <div key={label} className="flex items-center gap-2">
+                          <span
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: PIE_COLORS[i] }}
+                          />
+                          <span className="text-xs text-ink-muted font-medium">{label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="bg-card border border-border/60 rounded-2xl p-6 shadow-luxe">
+                    <div className="flex items-center gap-2.5 mb-6">
+                      <div className="h-8 w-8 rounded-lg bg-pink-50 flex items-center justify-center">
+                        <BarChart3 className="w-4 h-4 text-pink-500" strokeWidth={1.5} />
+                      </div>
+                      <h3 className="text-sm font-semibold text-ink">Gender Distribution</h3>
+                    </div>
+                    <div className="h-56">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={Object.entries(demographics?.gender ?? {}).map(
+                            ([name, count]) => ({
+                              name: name.charAt(0).toUpperCase() + name.slice(1),
+                              count,
+                            }),
+                          )}
+                          margin={{ top: 5, right: 5, bottom: 5, left: -20 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                          <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#94a3b8' }} />
+                          <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
+                          <Tooltip />
+                          <Bar dataKey="count" fill={BAR_COLOR} radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                </div>
+
+                {demographics?.professions && demographics.professions.length > 0 && (
+                  <div className="bg-card border border-border/60 rounded-2xl p-6 shadow-luxe">
+                    <div className="flex items-center gap-2.5 mb-6">
+                      <div className="h-8 w-8 rounded-lg bg-teal-50 flex items-center justify-center">
+                        <Briefcase className="w-4 h-4 text-teal-500" strokeWidth={1.5} />
+                      </div>
+                      <h3 className="text-sm font-semibold text-ink">Top Professions</h3>
+                    </div>
+                    <div className="h-64">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={demographics.professions}
+                          layout="vertical"
+                          margin={{ top: 5, right: 5, bottom: 5, left: 20 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                          <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12, fill: '#94a3b8' }} />
+                          <YAxis
+                            dataKey="name"
+                            type="category"
+                            tick={{ fontSize: 12, fill: '#64748b' }}
+                            width={110}
+                          />
+                          <Tooltip />
+                          <Bar dataKey="count" fill={BAR_COLOR} radius={[0, 4, 4, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </TabsContent>
+        </Tabs>
+      </motion.div>
     </div>
   );
 }

@@ -101,6 +101,8 @@ interface TalentGridCardProps {
   selectable?: boolean;
   isSelected?: boolean;
   onToggleSelect?: () => void;
+  matchScore?: number;
+  campaignName?: string;
 }
 
 export function TalentGridCard({
@@ -111,6 +113,8 @@ export function TalentGridCard({
   selectable,
   isSelected,
   onToggleSelect,
+  matchScore,
+  campaignName,
 }: TalentGridCardProps) {
   const displayName = profile.full_legal_name || profile.username || "Talent";
   const loc = profile.location?.city || profile.location?.state || "";
@@ -175,8 +179,22 @@ export function TalentGridCard({
         )}
       </div>
 
-      {/* Body */}
+        {/* Body */}
       <div className="p-2.5">
+        {/* Match badge */}
+        {matchScore !== undefined && (
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="px-1.5 py-0.5 rounded-full bg-brand/10 text-brand text-[10px] font-bold">
+              {matchScore}% match
+            </span>
+            {campaignName && (
+              <span className="text-[10px] text-text-muted truncate">
+                {campaignName}
+              </span>
+            )}
+          </div>
+        )}
+
         {/* Name + verified */}
         <div className="flex items-center gap-1 mb-0.5">
           <h3 className="text-sm font-semibold text-text-primary truncate">

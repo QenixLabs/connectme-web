@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { ArrowLeft, UserX } from "lucide-react";
+import { useEffect, useState, useCallback, useMemo } from "react";
+import { ArrowLeft, UserX, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ConversationCard } from "./conversation-card";
 import { EmptyListState } from "./empty-list-state";
-import { UserAvatar } from "./utils";
+import { getDisplayName, getOtherParticipant, getOtherParticipantId } from "./utils";
 import { messagesApi, type Conversation } from "@/lib/api/messages";
 import { getApiErrorMessage } from "@/lib/formatters";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useSocket } from "@/hooks/use-socket";
+import { cn } from "@/lib/utils";
 
 interface ConversationListProps {
   currentUserId: string;
@@ -55,6 +56,7 @@ export function ConversationList({
     }[]
   >([]);
   const [loadingBlocked, setLoadingBlocked] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -67,7 +69,8 @@ export function ConversationList({
         setHasMore(!!data.nextCursor);
       })
       .catch((err) => {
-        if (!cancelled) setError(getApiErrorMessage(err, "Failed to load conversations"));
+        if (!cancelled)
+          setError(getApiErrorMessage(err, "Failed to load conversations"));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -157,11 +160,22 @@ export function ConversationList({
     }
   };
 
+  const filteredConversations = useMemo(() => {
+    if (!searchQuery.trim()) return conversations;
+    const q = searchQuery.toLowerCase();
+    return conversations.filter((c) => {
+      const other = getOtherParticipant(c, currentUserId);
+      const otherId = getOtherParticipantId(c, currentUserId);
+      const name = getDisplayName(other, otherId).toLowerCase();
+      return name.includes(q);
+    });
+  }, [conversations, searchQuery, currentUserId]);
+
   if (loading) {
     return (
-      <div className="flex flex-col h-full"
-      >
-        <div className="shrink-0 px-4 py-3 border-b border-msg-border"
+      <div className="flex flex-col h-full">
+        <div
+          className="shrink-0 px-4 py-3 border-b border-msg-border"
           style={{
             background:
               "linear-gradient(90deg, color-mix(in oklab, var(--color-msg-gold) 12%, transparent), color-mix(in oklab, var(--color-msg-gold) 2%, transparent))",
@@ -169,8 +183,7 @@ export function ConversationList({
         >
           <Skeleton className="h-7 w-32 rounded-lg" />
         </div>
-        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3"
-        >
+        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
             <Skeleton key={i} className="h-[72px] w-full rounded-2xl" />
           ))}
@@ -180,14 +193,13 @@ export function ConversationList({
   }
 
   return (
-    <div className="flex flex-col h-full"
-    >
-      {/* Header */}
+    <div className="flex flex-col h-full">
       <div
         className="shrink-0 px-4 py-3 border-b border-msg-border flex items-center gap-3 sticky top-0 z-10"
         style={{
           background:
-            "linear-gradient(90deg, color-mix(in oklab, var(--color-msg-gold) 12%, transparent), color-mix(in oklab, var(--color-msg-gold) 2%, transparent))",
+            "linear-gradient(135deg, color-mix(in oklab, var(--color-msg-gold) 10%, transparent) 0%, color-mix(in oklab, var(--color-msg-gold) 3%, transparent) 50%, transparent 100%)",
+          backdropFilter: "blur(8px)",
         }}
       >
         {dashboardUrl && (
@@ -198,8 +210,7 @@ export function ConversationList({
             <ArrowLeft className="w-5 h-5 text-msg-ink" strokeWidth={1.5} />
           </button>
         )}
-        <h1 className="text-lg font-semibold text-msg-ink font-[family-name:var(--font-playfair)] tracking-tight"
-        >
+        <h1 className="text-lg font-semibold text-msg-ink font-[family-name:var(--font-playfair)] tracking-tight">
           Messages
         </h1>
         <button
@@ -214,14 +225,37 @@ export function ConversationList({
         </button>
       </div>
 
-      {/* List */}
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2.5 max-w-2xl mx-auto w-full"
-      >
+      {conversations.length > 0 && (
+        <div className="shrink-0 px-4 py-2.5">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-msg-ink-muted" strokeWidth={1.5} />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search conversations..."
+              className="w-full text-xs bg-msg-cream/80 border border-msg-border rounded-xl pl-9 pr-3 py-2 outline-none focus:border-msg-gold/40 focus:bg-white transition-all placeholder:text-msg-ink-muted"
+            />
+          </div>
+        </div>
+      )}
+
+      <div className="flex-1 overflow-y-auto px-4 py-2 space-y-2 max-w-2xl mx-auto w-full">
         {conversations.length === 0 ? (
           <EmptyListState error={error} findPeopleUrl={findPeopleUrl} />
+        ) : filteredConversations.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 gap-2">
+            <p className="text-sm text-msg-ink-muted">No matches for &ldquo;{searchQuery}&rdquo;</p>
+            <button
+              onClick={() => setSearchQuery("")}
+              className="text-xs text-msg-gold hover:text-msg-gold-hover transition-colors font-medium"
+            >
+              Clear search
+            </button>
+          </div>
         ) : (
           <>
-            {conversations.map((conversation, index) => (
+            {filteredConversations.map((conversation, index) => (
               <ConversationCard
                 key={conversation._id}
                 conversation={conversation}
@@ -231,7 +265,7 @@ export function ConversationList({
                 role={role}
               />
             ))}
-            {hasMore && (
+            {hasMore && !searchQuery.trim() && (
               <button
                 onClick={loadMore}
                 disabled={loadingMore}
@@ -244,7 +278,6 @@ export function ConversationList({
         )}
       </div>
 
-      {/* Blocked Users Dialog */}
       <Dialog open={blockedUsersOpen} onOpenChange={setBlockedUsersOpen}>
         <DialogContent className="sm:max-w-sm p-0 overflow-hidden">
           <DialogHeader className="p-5 pb-3">
@@ -276,11 +309,14 @@ export function ConversationList({
                       className="flex items-center justify-between p-3 rounded-xl bg-msg-card border border-msg-border"
                     >
                       <div className="min-w-0 flex items-center gap-2.5">
-                        <UserAvatar
-                          photo={undefined}
-                          name={name}
-                          className="w-8 h-8 bg-msg-cream text-msg-ink-soft text-[10px] font-semibold"
-                        />
+                        <div className="w-8 h-8 rounded-full bg-msg-cream text-msg-ink-soft text-[10px] font-semibold flex items-center justify-center shrink-0">
+                          {name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .slice(0, 2)
+                            .toUpperCase()}
+                        </div>
                         <div>
                           <p className="text-sm font-medium truncate">{name}</p>
                           <p className="text-xs text-msg-ink-muted truncate">

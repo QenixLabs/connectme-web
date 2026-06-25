@@ -45,17 +45,21 @@ const INDUSTRIES = [
 
 function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return (
-    <label className="text-sm text-text-secondary">
+    <label className="text-sm font-medium text-ink-soft">
       {children}
-      {required && <span className="text-campaign"> *</span>}
+      {required && <span className="text-rose-500 ml-0.5">*</span>}
     </label>
   );
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="text-[11px] font-medium tracking-widest text-text-muted uppercase mt-5 mb-2.5">
-      {children}
+    <div className="flex items-center gap-2 pt-2 first:pt-0">
+      <div className="h-px flex-1 bg-border/40" />
+      <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-muted shrink-0">
+        {children}
+      </span>
+      <div className="h-px flex-1 bg-border/40" />
     </div>
   );
 }
@@ -87,17 +91,18 @@ function DateBlock({
 
   return (
     <div
-      className="relative bg-muted-bg border border-border rounded-lg px-3 py-2 flex flex-col gap-0.5 cursor-pointer hover:border-campaign/50 transition-colors"
+      className="relative bg-card border border-border/60 rounded-xl px-4 py-3 flex flex-col gap-0.5 cursor-pointer hover:border-gold/40 hover:shadow-sm transition-all"
       onClick={() => inputRef.current?.showPicker?.() || inputRef.current?.click()}
     >
-      <div className={`text-[10px] text-text-muted uppercase tracking-wide ${required ? "after:content-['_*'] after:text-campaign" : ''}`}>
+      <div className="text-[10px] text-ink-muted uppercase tracking-wider font-semibold">
         {label}
+        {required && <span className="text-rose-500 ml-0.5">*</span>}
       </div>
-      <div className="text-sm text-text-primary flex items-center gap-1.5">
-        <Calendar className="w-3.5 h-3.5 text-text-muted shrink-0" strokeWidth={1.5} />
-        <span className={value ? 'text-text-primary' : 'text-text-muted'}>
+      <div className="text-sm text-ink flex items-center gap-1.5 font-medium">
+        <Calendar className="w-3.5 h-3.5 text-ink-muted/60 shrink-0" strokeWidth={1.5} />
+        <span className={value ? 'text-ink' : 'text-ink-muted/60'}>
           {display}
-          {hint && !value && <span className="text-text-muted"> · {hint}</span>}
+          {hint && !value && <span className="text-ink-muted/40"> &middot; {hint}</span>}
         </span>
       </div>
       <input
@@ -118,15 +123,12 @@ interface BasicInfoStepProps {
 }
 
 export function BasicInfoStep({ mediaFile, onMediaChange, existingBanner }: BasicInfoStepProps) {
-  const { trigger, watch, setValue } = useFormContext();
+  const { watch, setValue } = useFormContext();
   const selectedState = watch('location.state');
-  const selectedCity = watch('location.city');
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const cityOptions = selectedState ? getCitiesForState(selectedState) : [];
-
-  const blurTrigger = (name: string) => () => trigger(name as any);
 
   const handleDrop = useCallback(
     (e: React.DragEvent<HTMLLabelElement>) => {
@@ -159,14 +161,18 @@ export function BasicInfoStep({ mediaFile, onMediaChange, existingBanner }: Basi
   }, []);
 
   return (
-    <div className="flex flex-col gap-2.5">
+    <div className="flex flex-col gap-4">
       <FormField
         name="name"
         render={({ field }) => (
-          <FormItem className="flex flex-col gap-1">
+          <FormItem className="flex flex-col gap-1.5">
             <FieldLabel required>Campaign name</FieldLabel>
             <FormControl>
-              <Input placeholder="e.g., Summer commercial casting" {...field} className="text-sm px-2.5 py-2 h-9" />
+              <Input
+                placeholder="e.g., Summer commercial casting"
+                {...field}
+                className="text-sm h-11 rounded-xl border-border/60 bg-card focus-visible:ring-gold/30 placeholder:text-ink-muted/50"
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -176,12 +182,12 @@ export function BasicInfoStep({ mediaFile, onMediaChange, existingBanner }: Basi
       <FormField
         name="description"
         render={({ field }) => (
-          <FormItem className="flex flex-col gap-1">
+          <FormItem className="flex flex-col gap-1.5">
             <FieldLabel required>Description</FieldLabel>
             <FormControl>
               <Textarea
                 placeholder="Describe the project, role, and what you're looking for..."
-                className="min-h-[72px] text-sm px-2.5 py-2 resize-y"
+                className="min-h-[80px] text-sm rounded-xl border-border/60 bg-card resize-y focus-visible:ring-gold/30 placeholder:text-ink-muted/50"
                 {...field}
               />
             </FormControl>
@@ -190,19 +196,19 @@ export function BasicInfoStep({ mediaFile, onMediaChange, existingBanner }: Basi
         )}
       />
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-3">
         <FormField
           name="role_type"
           render={({ field }) => (
-            <FormItem className="flex flex-col gap-1">
+            <FormItem className="flex flex-col gap-1.5">
               <FieldLabel required>Role type</FieldLabel>
               <Select value={field.value ?? ''} onValueChange={field.onChange}>
                 <FormControl>
-                  <SelectTrigger className="text-sm h-9 px-2.5">
+                  <SelectTrigger className="text-sm h-11 rounded-xl border-border/60 bg-card">
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent>
+                <SelectContent className="rounded-xl">
                   {ROLE_TYPES.map((r) => (
                     <SelectItem key={r} value={r}>{r}</SelectItem>
                   ))}
@@ -216,15 +222,15 @@ export function BasicInfoStep({ mediaFile, onMediaChange, existingBanner }: Basi
         <FormField
           name="industry"
           render={({ field }) => (
-            <FormItem className="flex flex-col gap-1">
+            <FormItem className="flex flex-col gap-1.5">
               <FieldLabel required>Industry</FieldLabel>
               <Select value={field.value ?? ''} onValueChange={field.onChange}>
                 <FormControl>
-                  <SelectTrigger className="text-sm h-9 px-2.5">
+                  <SelectTrigger className="text-sm h-11 rounded-xl border-border/60 bg-card">
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent>
+                <SelectContent className="rounded-xl">
                   {INDUSTRIES.map((i) => (
                     <SelectItem key={i} value={i}>{i}</SelectItem>
                   ))}
@@ -238,27 +244,27 @@ export function BasicInfoStep({ mediaFile, onMediaChange, existingBanner }: Basi
 
       <SectionLabel>Location</SectionLabel>
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-3">
         <FormField
           name="location.state"
           render={({ field }) => (
-            <FormItem className="flex flex-col gap-1">
+            <FormItem className="flex flex-col gap-1.5">
               <FieldLabel required>State</FieldLabel>
               <Select
                 value={field.value ?? ''}
                 onValueChange={(v) => {
                   field.onChange(v);
-                  if (selectedCity && !getCitiesForState(v).includes(selectedCity)) {
+                  if (cityOptions.length > 0 && !getCitiesForState(v).includes(watch('location.city') || '')) {
                     setValue('location.city', '', { shouldValidate: true });
                   }
                 }}
               >
                 <FormControl>
-                  <SelectTrigger className="text-sm h-9 px-2.5">
-                    <SelectValue placeholder="Select" />
+                  <SelectTrigger className="text-sm h-11 rounded-xl border-border/60 bg-card">
+                    <SelectValue placeholder="Select state" />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent>
+                <SelectContent className="rounded-xl">
                   {INDIAN_STATES.map((s) => (
                     <SelectItem key={s} value={s}>{s}</SelectItem>
                   ))}
@@ -272,7 +278,7 @@ export function BasicInfoStep({ mediaFile, onMediaChange, existingBanner }: Basi
         <FormField
           name="location.city"
           render={({ field }) => (
-            <FormItem className="flex flex-col gap-1">
+            <FormItem className="flex flex-col gap-1.5">
               <FieldLabel required>City</FieldLabel>
               <Select
                 value={field.value ?? ''}
@@ -280,11 +286,11 @@ export function BasicInfoStep({ mediaFile, onMediaChange, existingBanner }: Basi
                 disabled={!selectedState}
               >
                 <FormControl>
-                  <SelectTrigger className="text-sm h-9 px-2.5">
-                    <SelectValue placeholder={selectedState ? 'Select' : 'State first'} />
+                  <SelectTrigger className="text-sm h-11 rounded-xl border-border/60 bg-card">
+                    <SelectValue placeholder={selectedState ? 'Select city' : 'State first'} />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent>
+                <SelectContent className="rounded-xl">
                   {cityOptions.map((c) => (
                     <SelectItem key={c} value={c}>{c}</SelectItem>
                   ))}
@@ -323,44 +329,46 @@ export function BasicInfoStep({ mediaFile, onMediaChange, existingBanner }: Basi
         )}
       />
 
-      <div className="grid grid-cols-2 gap-2">
-        <DateBlock
-          label="Start date"
-          value={watch('dates.start') || ''}
-          onChange={(val) => {
-            setValue('dates.start', val, { shouldValidate: true });
-            if (val && !watch('deadline')) {
-              const start = new Date(val + 'T00:00:00');
-              const today = new Date();
-              today.setHours(0, 0, 0, 0);
-              const deadline = new Date(start);
-              deadline.setDate(deadline.getDate() - 3);
-              if (deadline < today) {
-                deadline.setTime(today.getTime());
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 gap-3">
+          <DateBlock
+            label="Start date"
+            value={watch('dates.start') || ''}
+            onChange={(val) => {
+              setValue('dates.start', val, { shouldValidate: true });
+              if (val && !watch('deadline')) {
+                const start = new Date(val + 'T00:00:00');
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const deadline = new Date(start);
+                deadline.setDate(deadline.getDate() - 3);
+                if (deadline < today) {
+                  deadline.setTime(today.getTime());
+                }
+                setValue('deadline', deadline.toISOString().slice(0, 10), { shouldValidate: false });
               }
-              setValue('deadline', deadline.toISOString().slice(0, 10), { shouldValidate: false });
-            }
-          }}
-        />
+            }}
+          />
+          <DateBlock
+            label="End date"
+            value={watch('dates.end') || ''}
+            onChange={(val) => setValue('dates.end', val, { shouldValidate: true })}
+          />
+        </div>
         <DateBlock
-          label="End date"
-          value={watch('dates.end') || ''}
-          onChange={(val) => setValue('dates.end', val, { shouldValidate: true })}
+          label="Application deadline"
+          value={watch('deadline') || ''}
+          required
+          onChange={(val) => setValue('deadline', val, { shouldValidate: true })}
+          hint="auto-fills 3 days before start"
         />
       </div>
-      <DateBlock
-        label="Application deadline"
-        value={watch('deadline') || ''}
-        required
-        onChange={(val) => setValue('deadline', val, { shouldValidate: true })}
-        hint="auto-fills 3 days before start"
-      />
 
       <SectionLabel>Media</SectionLabel>
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         {existingBanner && !mediaFile && (
-          <div className="relative rounded-xl overflow-hidden aspect-video border border-border w-full max-w-[280px]">
+          <div className="relative rounded-xl overflow-hidden aspect-video border border-border/60 w-full max-w-[320px] shadow-luxe">
             {existingBanner.type === 'video' ? (
               <video src={existingBanner.url} className="w-full h-full object-cover" controls poster={existingBanner.thumbnail} />
             ) : (
@@ -370,7 +378,7 @@ export function BasicInfoStep({ mediaFile, onMediaChange, existingBanner }: Basi
         )}
 
         {mediaFile ? (
-          <div className="relative rounded-xl overflow-hidden aspect-video border border-border w-full max-w-[280px]">
+          <div className="relative rounded-xl overflow-hidden aspect-video border border-border/60 w-full max-w-[320px] shadow-luxe">
             <img
               src={URL.createObjectURL(mediaFile)}
               alt="Preview"
@@ -379,9 +387,9 @@ export function BasicInfoStep({ mediaFile, onMediaChange, existingBanner }: Basi
             <button
               type="button"
               onClick={() => onMediaChange?.(null)}
-              className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+              className="absolute top-2 right-2 p-2 rounded-lg bg-black/50 text-white hover:bg-black/70 backdrop-blur-sm transition-colors"
             >
-              <X className="w-3.5 h-3.5" strokeWidth={1.5} />
+              <X className="w-4 h-4" strokeWidth={1.5} />
             </button>
           </div>
         ) : (
@@ -405,16 +413,22 @@ export function BasicInfoStep({ mediaFile, onMediaChange, existingBanner }: Basi
               onDragEnter={handleDragEnter}
               onDragLeave={handleDragLeave}
               className={cn(
-                "flex flex-col items-center justify-center gap-2 w-full max-w-[280px] aspect-video rounded-xl border border-dashed cursor-pointer transition-colors",
+                "flex flex-col items-center justify-center gap-3 w-full max-w-[320px] aspect-video rounded-xl border-2 border-dashed cursor-pointer transition-all duration-200",
                 dragOver
-                  ? "border-brand bg-brand/5"
-                  : "border-border bg-muted-bg/50 hover:bg-muted-bg"
+                  ? "border-gold bg-gold-soft/50"
+                  : "border-border/60 bg-muted-bg/40 hover:border-gold/40 hover:bg-muted-bg",
               )}
             >
-              <Upload className={cn("w-5 h-5", dragOver ? "text-brand" : "text-text-muted")} strokeWidth={1.5} />
-              <span className={cn("text-xs", dragOver ? "text-brand font-medium" : "text-text-secondary")}>
-                {dragOver ? "Drop image here" : "Tap or drop image"}
+              <div className={cn(
+                "rounded-full p-2.5 transition-colors",
+                dragOver ? "bg-gold/10" : "bg-muted-bg",
+              )}>
+                <Upload className={cn("w-5 h-5", dragOver ? "text-gold" : "text-ink-muted")} strokeWidth={1.5} />
+              </div>
+              <span className={cn("text-sm font-medium", dragOver ? "text-gold-ink" : "text-ink-muted")}>
+                {dragOver ? "Drop image here" : "Upload banner image"}
               </span>
+              <span className="text-xs text-ink-muted/60">PNG, JPG or WebP</span>
             </label>
           </>
         )}

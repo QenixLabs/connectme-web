@@ -20,23 +20,27 @@ import {
 import { Button } from '@/components/ui/button';
 import { CampaignWizardInput } from '@/lib/validations/campaign-wizard.schema';
 import { cn } from '@/lib/utils';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, GripVertical } from 'lucide-react';
 
 const GENDERS = ['Any', 'Male', 'Female', 'Non-binary'];
 
 function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return (
-    <label className="text-sm text-text-secondary">
+    <label className="text-sm font-medium text-ink-soft">
       {children}
-      {required && <span className="text-campaign"> *</span>}
+      {required && <span className="text-rose-500 ml-0.5">*</span>}
     </label>
   );
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="text-[11px] font-medium tracking-widest text-text-muted uppercase mt-5 mb-2.5">
-      {children}
+    <div className="flex items-center gap-2 pt-2 first:pt-0">
+      <div className="h-px flex-1 bg-border/40" />
+      <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-muted shrink-0">
+        {children}
+      </span>
+      <div className="h-px flex-1 bg-border/40" />
     </div>
   );
 }
@@ -54,23 +58,23 @@ export function RequirementsStep() {
   const gender = watch('requirements.gender') ?? '';
 
   return (
-    <div className="flex flex-col gap-2.5">
-      <SectionLabel>Skills &amp; languages</SectionLabel>
+    <div className="flex flex-col gap-4">
+      <SectionLabel>Skills & languages</SectionLabel>
 
       <FormField
         control={control}
         name="requirements.skills"
         render={() => (
-          <FormItem className="flex flex-col gap-1">
+          <FormItem className="flex flex-col gap-1.5">
             <FieldLabel>Skills</FieldLabel>
             <FormControl>
               <TagInput
                 value={skills}
                 onChange={(next) => setValue('requirements.skills', next, { shouldValidate: true })}
-                placeholder="Type and press Enter"
+                placeholder="e.g., Classical dance, Guitar..."
               />
             </FormControl>
-            <p className="text-[11px] text-text-muted mt-0.5">Press Enter to add a skill</p>
+            <p className="text-[11px] text-ink-muted/60">Press Enter to add a skill</p>
             <FormMessage />
           </FormItem>
         )}
@@ -80,15 +84,16 @@ export function RequirementsStep() {
         control={control}
         name="requirements.languages"
         render={() => (
-          <FormItem className="flex flex-col gap-1">
+          <FormItem className="flex flex-col gap-1.5">
             <FieldLabel>Languages</FieldLabel>
             <FormControl>
               <TagInput
                 value={languages}
                 onChange={(next) => setValue('requirements.languages', next, { shouldValidate: true })}
-                placeholder="Type and press Enter"
+                placeholder="e.g., Hindi, English..."
               />
             </FormControl>
+            <p className="text-[11px] text-ink-muted/60">Press Enter to add a language</p>
             <FormMessage />
           </FormItem>
         )}
@@ -100,7 +105,7 @@ export function RequirementsStep() {
         control={control}
         name="requirements.gender"
         render={() => (
-          <FormItem className="flex flex-col gap-1">
+          <FormItem className="flex flex-col gap-1.5">
             <FieldLabel>Gender preference</FieldLabel>
             <FormControl>
               <div className="flex flex-wrap gap-2">
@@ -112,10 +117,10 @@ export function RequirementsStep() {
                       type="button"
                       onClick={() => setValue('requirements.gender', g === 'Any' ? '' : g, { shouldValidate: true })}
                       className={cn(
-                        'px-3 py-1.5 rounded-full text-xs font-medium border transition-colors',
+                        'px-4 py-2 rounded-xl text-sm font-medium border transition-all duration-200',
                         selected
-                          ? 'bg-campaign-light border-campaign text-campaign'
-                          : 'bg-card border-border text-text-secondary hover:border-campaign/50'
+                          ? 'bg-ink text-white border-ink shadow-sm'
+                          : 'bg-card text-ink-muted border-border/60 hover:border-border hover:text-ink',
                       )}
                     >
                       {g}
@@ -129,11 +134,11 @@ export function RequirementsStep() {
         )}
       />
 
-      <div className="grid grid-cols-2 gap-2 mt-1">
+      <div className="grid grid-cols-2 gap-3">
         <FormField
           name="requirements.age_range.min"
           render={({ field }) => (
-            <FormItem className="flex flex-col gap-1">
+            <FormItem className="flex flex-col gap-1.5">
               <FieldLabel>Min age</FieldLabel>
               <FormControl>
                 <Input
@@ -144,7 +149,7 @@ export function RequirementsStep() {
                   {...field}
                   onChange={(e) => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))}
                   value={field.value ?? ''}
-                  className="text-sm px-2.5 py-2 h-9 text-center"
+                  className="text-sm h-11 rounded-xl border-border/60 bg-card text-center focus-visible:ring-gold/30"
                 />
               </FormControl>
               <FormMessage />
@@ -155,7 +160,7 @@ export function RequirementsStep() {
         <FormField
           name="requirements.age_range.max"
           render={({ field }) => (
-            <FormItem className="flex flex-col gap-1">
+            <FormItem className="flex flex-col gap-1.5">
               <FieldLabel>Max age</FieldLabel>
               <FormControl>
                 <Input
@@ -166,7 +171,7 @@ export function RequirementsStep() {
                   {...field}
                   onChange={(e) => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))}
                   value={field.value ?? ''}
-                  className="text-sm px-2.5 py-2 h-9 text-center"
+                  className="text-sm h-11 rounded-xl border-border/60 bg-card text-center focus-visible:ring-gold/30"
                 />
               </FormControl>
               <FormMessage />
@@ -177,12 +182,12 @@ export function RequirementsStep() {
 
       <SectionLabel>Budget</SectionLabel>
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-3">
         <FormField
           name="budget_range.min"
           render={({ field }) => (
-            <FormItem className="flex flex-col gap-1">
-              <FieldLabel>Min (₹)</FieldLabel>
+            <FormItem className="flex flex-col gap-1.5">
+              <FieldLabel>Min (&euro;)</FieldLabel>
               <FormControl>
                 <Input
                   type="number"
@@ -191,7 +196,7 @@ export function RequirementsStep() {
                   onChange={(e) => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))}
                   value={field.value ?? ''}
                   disabled={isUnpaid}
-                  className="text-sm px-2.5 py-2 h-9"
+                  className="text-sm h-11 rounded-xl border-border/60 bg-card focus-visible:ring-gold/30 disabled:opacity-40"
                 />
               </FormControl>
               <FormMessage />
@@ -202,8 +207,8 @@ export function RequirementsStep() {
         <FormField
           name="budget_range.max"
           render={({ field }) => (
-            <FormItem className="flex flex-col gap-1">
-              <FieldLabel>Max (₹)</FieldLabel>
+            <FormItem className="flex flex-col gap-1.5">
+              <FieldLabel>Max (&euro;)</FieldLabel>
               <FormControl>
                 <Input
                   type="number"
@@ -212,7 +217,7 @@ export function RequirementsStep() {
                   onChange={(e) => field.onChange(e.target.value === '' ? undefined : Number(e.target.value))}
                   value={field.value ?? ''}
                   disabled={isUnpaid}
-                  className="text-sm px-2.5 py-2 h-9"
+                  className="text-sm h-11 rounded-xl border-border/60 bg-card focus-visible:ring-gold/30 disabled:opacity-40"
                 />
               </FormControl>
               <FormMessage />
@@ -224,16 +229,16 @@ export function RequirementsStep() {
       <FormField
         name="is_budget_disclosed"
         render={({ field }) => (
-          <FormItem className="mt-1">
+          <FormItem>
             <FormControl>
-              <label className="flex items-start gap-2.5 p-2.5 bg-muted-bg rounded-lg cursor-pointer border border-transparent hover:border-border transition-colors">
+              <label className="flex items-center gap-3 p-3 bg-muted-bg/50 rounded-xl cursor-pointer border border-transparent hover:border-border/60 transition-all">
                 <input
                   type="checkbox"
                   checked={field.value}
                   onChange={(e) => field.onChange(e.target.checked)}
-                  className="w-4 h-4 accent-campaign shrink-0 mt-0.5"
+                  className="w-4 h-4 rounded accent-gold shrink-0"
                 />
-                <span className="text-xs text-text-secondary leading-relaxed">Budget not disclosed to applicants</span>
+                <span className="text-sm text-ink-soft">Budget not disclosed to applicants</span>
               </label>
             </FormControl>
           </FormItem>
@@ -245,7 +250,7 @@ export function RequirementsStep() {
         render={({ field }) => (
           <FormItem>
             <FormControl>
-              <label className="flex items-start gap-2.5 p-2.5 bg-muted-bg rounded-lg cursor-pointer border border-transparent hover:border-border transition-colors">
+              <label className="flex items-center gap-3 p-3 bg-muted-bg/50 rounded-xl cursor-pointer border border-transparent hover:border-border/60 transition-all">
                 <input
                   type="checkbox"
                   checked={field.value}
@@ -256,9 +261,9 @@ export function RequirementsStep() {
                       setValue('budget_range.max', undefined, { shouldValidate: false });
                     }
                   }}
-                  className="w-4 h-4 accent-campaign shrink-0 mt-0.5"
+                  className="w-4 h-4 rounded accent-gold shrink-0"
                 />
-                <span className="text-xs text-text-secondary leading-relaxed">Unpaid / voluntary role</span>
+                <span className="text-sm text-ink-soft">Unpaid / voluntary role</span>
               </label>
             </FormControl>
           </FormItem>
@@ -270,11 +275,11 @@ export function RequirementsStep() {
       <FormField
         name="requirements.attributes"
         render={({ field }) => (
-          <FormItem className="flex flex-col gap-1">
+          <FormItem className="flex flex-col gap-1.5">
             <FormControl>
               <Textarea
                 placeholder="Any specific attributes, equipment, availability, or other requirements..."
-                className="min-h-[72px] text-sm px-2.5 py-2 resize-y"
+                className="min-h-[80px] text-sm rounded-xl border-border/60 bg-card resize-y focus-visible:ring-gold/30 placeholder:text-ink-muted/50"
                 {...field}
               />
             </FormControl>
@@ -290,20 +295,25 @@ export function RequirementsStep() {
           const qType = watch(`questions.${index}.question_type`) ?? 'text';
           const options = watch(`questions.${index}.options`) ?? [];
           return (
-            <div key={field.id} className="border border-border rounded-xl p-3 space-y-2.5 bg-muted-bg/30">
-              <div className="flex items-start gap-2">
-                <span className="text-xs text-text-muted mt-2">{index + 1}</span>
-                <div className="flex-1 space-y-2">
+            <div
+              key={field.id}
+              className="border border-border/60 rounded-2xl p-4 space-y-3 bg-card shadow-luxe hover:shadow-luxe-lg transition-shadow"
+            >
+              <div className="flex items-start gap-3">
+                <span className="text-xs font-bold text-ink-muted mt-3 min-w-[20px]">
+                  {index + 1}.
+                </span>
+                <div className="flex-1 space-y-3">
                   <FormField
                     control={control}
                     name={`questions.${index}.question_text`}
                     render={({ field }) => (
-                      <FormItem className="flex flex-col gap-1">
+                      <FormItem className="flex flex-col gap-1.5">
                         <FormControl>
                           <Input
                             placeholder="Enter your question..."
                             {...field}
-                            className="text-sm h-9"
+                            className="text-sm h-11 rounded-xl border-border/60 bg-card focus-visible:ring-gold/30"
                           />
                         </FormControl>
                         <FormMessage />
@@ -311,12 +321,13 @@ export function RequirementsStep() {
                     )}
                   />
 
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-3">
                     <FormField
                       control={control}
                       name={`questions.${index}.question_type`}
                       render={({ field }) => (
-                        <FormItem className="flex flex-col gap-1">
+                        <FormItem className="flex flex-col gap-1.5">
+                          <FieldLabel>Type</FieldLabel>
                           <Select
                             value={field.value}
                             onValueChange={(val) => {
@@ -327,11 +338,11 @@ export function RequirementsStep() {
                             }}
                           >
                             <FormControl>
-                              <SelectTrigger className="text-sm h-9">
+                              <SelectTrigger className="text-sm h-10 rounded-xl border-border/60 bg-card">
                                 <SelectValue />
                               </SelectTrigger>
                             </FormControl>
-                            <SelectContent>
+                            <SelectContent className="rounded-xl">
                               <SelectItem value="text">Text</SelectItem>
                               <SelectItem value="number">Number</SelectItem>
                               <SelectItem value="select">Select</SelectItem>
@@ -344,21 +355,21 @@ export function RequirementsStep() {
                       )}
                     />
 
-                    <div className="flex items-center gap-2 h-9">
+                    <div className="flex items-end pb-1">
                       <FormField
                         control={control}
                         name={`questions.${index}.is_required`}
                         render={({ field }) => (
-                          <FormItem className="flex items-center gap-1.5">
+                          <FormItem className="flex items-center gap-2.5">
                             <FormControl>
                               <input
                                 type="checkbox"
                                 checked={field.value}
                                 onChange={(e) => field.onChange(e.target.checked)}
-                                className="w-4 h-4 accent-brand"
+                                className="w-4 h-4 rounded accent-gold"
                               />
                             </FormControl>
-                            <label className="text-sm text-text-secondary">Required</label>
+                            <label className="text-sm text-ink-soft font-medium">Required</label>
                           </FormItem>
                         )}
                       />
@@ -370,7 +381,8 @@ export function RequirementsStep() {
                       control={control}
                       name={`questions.${index}.options`}
                       render={() => (
-                        <FormItem className="flex flex-col gap-1">
+                        <FormItem className="flex flex-col gap-1.5">
+                          <FieldLabel>Options</FieldLabel>
                           <FormControl>
                             <TagInput
                               value={options}
@@ -389,10 +401,10 @@ export function RequirementsStep() {
                   type="button"
                   variant="ghost"
                   size="icon-xs"
-                  className="text-error-text hover:bg-error-light shrink-0"
+                  className="text-ink-muted hover:text-error-text hover:bg-error-light rounded-lg mt-1 shrink-0"
                   onClick={() => remove(index)}
                 >
-                  <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
+                  <Trash2 className="w-4 h-4" strokeWidth={1.5} />
                 </Button>
               </div>
             </div>
@@ -402,11 +414,18 @@ export function RequirementsStep() {
         <Button
           type="button"
           variant="outline"
-          size="sm"
-          className="w-full h-10 text-sm border-dashed"
-          onClick={() => append({ question_text: '', question_type: 'text', options: [], is_required: false, order: fields.length })}
+          className="w-full h-11 text-sm font-medium rounded-xl border-dashed hover:border-solid border-border/60 hover:bg-cream-soft transition-all"
+          onClick={() =>
+            append({
+              question_text: '',
+              question_type: 'text',
+              options: [],
+              is_required: false,
+              order: fields.length,
+            })
+          }
         >
-          <Plus className="w-4 h-4 mr-1.5" strokeWidth={1.5} />
+          <Plus className="w-4 h-4 mr-2" strokeWidth={1.5} />
           Add Question
         </Button>
       </div>
