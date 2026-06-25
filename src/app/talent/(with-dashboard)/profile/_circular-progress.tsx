@@ -25,7 +25,7 @@ export function CircularProgress({
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="var(--color-border-light)"
+          className="stroke-border"
           strokeWidth={strokeWidth}
         />
         <circle
@@ -33,7 +33,7 @@ export function CircularProgress({
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="var(--color-msg-gold)"
+          className="stroke-gold"
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeDasharray={circumference}
@@ -48,7 +48,7 @@ export function CircularProgress({
           dominantBaseline="central"
           fontSize="14"
           fontWeight="700"
-          fill="var(--color-msg-ink)"
+          className="fill-ink"
           fontFamily="var(--font-geist-sans), Arial, sans-serif"
         >
           {percentage}%

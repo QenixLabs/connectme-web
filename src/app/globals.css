@@ -275,3 +275,31 @@ html::-webkit-scrollbar {
   font-size: 0.625rem;
   line-height: 0.875rem;
 }
+
+@utility no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@layer base {
+  .overflow-x-auto,
+  .overflow-x-scroll {
+    touch-action: pan-x pan-y;
+  }
+}
+
+@utility msg-header-bg {
+  background: linear-gradient(
+    135deg,
+    oklch(from var(--color-msg-gold) l c h / 0.10) 0%,
+    oklch(from var(--color-msg-gold) l c h / 0.03) 50%,
+    transparent 100%
+  );
+}
+
+@utility msg-hero-bg {
+  background: linear-gradient(180deg, var(--color-msg-cream) 0%, var(--color-msg-page) 100%);
+}

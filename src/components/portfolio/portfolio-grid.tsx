@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { Image as ImageIcon } from "lucide-react";
 import type { PortfolioItem } from "@/lib/validations/talent-profile.schema";
 import { PortfolioItemCard } from "./portfolio-item-card";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface PortfolioGridProps {
   items: PortfolioItem[];
@@ -16,6 +18,7 @@ interface PortfolioGridProps {
   ) => void;
   onDelete: (id: string) => void;
   onReorder: (itemIds: string[]) => void;
+  onSelectItem: (item: PortfolioItem) => void;
 }
 
 export function PortfolioGrid({
@@ -23,11 +26,11 @@ export function PortfolioGrid({
   onUpdate,
   onDelete,
   onReorder,
+  onSelectItem,
 }: PortfolioGridProps) {
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
 
-  /* ---- Desktop DnD ---- */
   const handleDragStart = useCallback(
     (e: React.DragEvent, id: string) => {
       setDraggedId(id);
@@ -78,84 +81,21 @@ export function PortfolioGrid({
     if (el) el.style.opacity = "1";
   }, []);
 
-  /* ---- Touch DnD ---- */
-  const [touchDraggedId, setTouchDraggedId] = useState<string | null>(null);
-  const [touchOverId, setTouchOverId] = useState<string | null>(null);
-
-  const handleTouchStart = useCallback(
-    (e: React.TouchEvent, id: string) => {
-      const target = e.target as HTMLElement;
-      if (!target.closest("[data-drag-handle]")) return;
-      setTouchDraggedId(id);
-      setTouchOverId(null);
-    },
-    []
-  );
-
-  const handleTouchMove = useCallback(
-    (e: React.TouchEvent) => {
-      if (!touchDraggedId) return;
-      e.preventDefault();
-      const touch = e.touches[0];
-
-      // Temporarily disable pointer events on dragged element so elementFromPoint sees through it
-      const draggedEl = document.querySelector(
-        `[data-grid-item][data-item-id="${touchDraggedId}"]`
-      ) as HTMLElement | null;
-      if (draggedEl) draggedEl.style.pointerEvents = "none";
-
-      const el = document.elementFromPoint(
-        touch.clientX,
-        touch.clientY
-      ) as HTMLElement | null;
-
-      if (draggedEl) draggedEl.style.pointerEvents = "";
-
-      if (!el) return;
-      const wrapper = el.closest("[data-grid-item]") as HTMLElement | null;
-      if (wrapper) {
-        const overId = wrapper.getAttribute("data-item-id");
-        if (overId && overId !== touchDraggedId) setTouchOverId(overId);
-      }
-    },
-    [touchDraggedId]
-  );
-
-  const handleTouchEnd = useCallback(() => {
-    if (touchDraggedId && touchOverId && touchDraggedId !== touchOverId) {
-      const newOrder = [...items];
-      const draggedIndex = newOrder.findIndex((i) => i.id === touchDraggedId);
-      const targetIndex = newOrder.findIndex((i) => i.id === touchOverId);
-      if (draggedIndex !== -1 && targetIndex !== -1) {
-        const [removed] = newOrder.splice(draggedIndex, 1);
-        newOrder.splice(targetIndex, 0, removed);
-        onReorder(newOrder.map((i) => i.id));
-      }
-    }
-    setTouchDraggedId(null);
-    setTouchOverId(null);
-  }, [touchDraggedId, touchOverId, items, onReorder]);
-
   if (items.length === 0) {
     return (
-      <div className="text-center py-12 text-text-muted text-sm">
-        No media yet. Upload your first image or video above.
-      </div>
+      <EmptyState
+        icon={<ImageIcon className="w-6 h-6 text-text-muted" strokeWidth={1.5} />}
+        title="No media yet"
+        description="Upload your first image or video to showcase your work."
+      />
     );
   }
 
-  const activeDraggedId = draggedId || touchDraggedId;
-  const activeOverId = dragOverId || touchOverId;
-
   return (
-    <div
-      className="grid grid-cols-2 sm:grid-cols-3 gap-3 select-none"
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-    >
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
       {items.map((item) => {
-        const isDragged = activeDraggedId === item.id;
-        const isOver = activeOverId === item.id && !isDragged;
+        const isDragged = draggedId === item.id;
+        const isOver = dragOverId === item.id && !isDragged;
 
         return (
           <div
@@ -167,7 +107,6 @@ export function PortfolioGrid({
             onDragOver={(e) => handleDragOver(e, item.id)}
             onDrop={(e) => handleDrop(e, item.id)}
             onDragEnd={handleDragEnd}
-            onTouchStart={(e) => handleTouchStart(e, item.id)}
             className={
               isDragged
                 ? "w-full scale-105 shadow-xl opacity-80 z-10 transition-transform"
@@ -180,6 +119,7 @@ export function PortfolioGrid({
               item={item}
               onUpdate={onUpdate}
               onDelete={onDelete}
+              onSelect={onSelectItem}
             />
           </div>
         );

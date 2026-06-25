@@ -111,17 +111,17 @@ const SECTION_IDS = [
 /* ------------------------------------------------------------------ */
 
 const gold = {
-  primary: "var(--color-msg-gold)",
+  primary: "var(--color-gold)",
   primaryHover: "var(--color-gold-hover)",
-  accent: "var(--color-msg-gold-soft)",
-  accentBorder: "var(--color-border-gold)",
-  border: "var(--color-msg-border)",
-  muted: "var(--color-bg-warm)",
-  mutedFg: "var(--color-msg-ink-muted)",
-  textSecondary: "var(--color-msg-ink-soft)",
-  foreground: "var(--color-msg-ink)",
+  accent: "var(--color-gold-soft)",
+  accentBorder: "var(--color-gold)",
+  border: "var(--color-border)",
+  muted: "var(--color-cream)",
+  mutedFg: "var(--color-ink-muted)",
+  textSecondary: "var(--color-ink-soft)",
+  foreground: "var(--color-ink)",
   background: "var(--color-cream-pale)",
-  card: "var(--color-white)",
+  card: "var(--color-card)",
 };
 
 /* ------------------------------------------------------------------ */
@@ -170,10 +170,7 @@ function SectionDivider({ label }: { label: string }) {
 
 function FormCard({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div
-      className={cn("rounded-[14px] border p-4 flex flex-col gap-3", className)}
-      style={{ background: gold.card, borderColor: gold.border }}
-    >
+    <div className={cn("rounded-2xl border p-4 flex flex-col gap-3 bg-card border-border", className)}>
       {children}
     </div>
   );
@@ -403,7 +400,7 @@ function SkillRow({
         placeholder="Skill name"
         {...register(`skills.${idx}.name`)}
         aria-invalid={!!errors.skills?.[idx]?.name}
-        className="flex-1 min-w-0 bg-transparent text-sm font-medium outline-none placeholder:text-msg-ink-muted"
+        className="flex-1 min-w-0 bg-transparent text-sm font-medium outline-none placeholder:text-ink-muted"
         style={{ color: gold.foreground }}
       />
       <Controller
@@ -411,7 +408,7 @@ function SkillRow({
         name={`skills.${idx}.proficiency`}
         render={({ field }) => (
           <Select onValueChange={field.onChange} value={field.value || ""}>
-            <SelectTrigger className="h-8 w-[120px] text-xs rounded-lg border-msg-border">
+            <SelectTrigger className="h-8 w-[120px] text-xs rounded-lg border-border">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -457,7 +454,7 @@ function LanguageRow({
         placeholder="Language name"
         {...register(`languages.${idx}.name`)}
         aria-invalid={!!errors.languages?.[idx]?.name}
-        className="flex-1 min-w-0 bg-transparent text-sm font-medium outline-none placeholder:text-msg-ink-muted"
+        className="flex-1 min-w-0 bg-transparent text-sm font-medium outline-none placeholder:text-ink-muted"
         style={{ color: gold.foreground }}
       />
       <Controller
@@ -465,7 +462,7 @@ function LanguageRow({
         name={`languages.${idx}.fluency`}
         render={({ field }) => (
           <Select onValueChange={field.onChange} value={field.value || ""}>
-            <SelectTrigger className="h-8 w-[120px] text-xs rounded-lg border-msg-border">
+            <SelectTrigger className="h-8 w-[120px] text-xs rounded-lg border-border">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -1028,7 +1025,7 @@ export function EditForm({
                         <div
                           className="h-16 w-16 rounded-2xl flex items-center justify-center text-3xl font-bold text-white shrink-0"
                           style={{
-                            background: photoPreview ? undefined : "linear-gradient(135deg, var(--color-msg-gold), var(--color-gold-dark))",
+                            background: photoPreview ? undefined : "linear-gradient(135deg, var(--color-gold), var(--color-gold-dark))",
                           }}
                         >
                           {photoPreview ? (
@@ -1733,7 +1730,7 @@ export function EditForm({
                             render={({ field }) => (
                               <FormItem className="shrink-0 mb-0">
                                 <Select onValueChange={(v) => field.onChange(v || undefined)} value={field.value || ""}>
-                                  <SelectTrigger className="h-7 w-[110px] text-[11px] rounded-md border-msg-border">
+                                  <SelectTrigger className="h-7 w-[110px] text-[11px] rounded-md border-border">
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>

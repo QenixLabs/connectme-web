@@ -288,6 +288,7 @@ function PortfolioManager({ username }: { username: string }) {
         onUpdate={handleUpdate}
         onDelete={handleDelete}
         onReorder={handleReorder}
+        onSelectItem={() => {}}
       />
     </div>
   );

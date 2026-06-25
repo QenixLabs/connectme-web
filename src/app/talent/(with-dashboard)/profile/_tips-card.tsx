@@ -10,28 +10,16 @@ const DEFAULT_TIPS = [
 
 export function TipsCard() {
   return (
-    <Card className="border-msg-border shadow-sm">
+    <Card>
       <CardContent className="p-5">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-[13px] font-semibold text-msg-ink uppercase tracking-[0.02em]">
-            Tips to Improve
-          </h2>
-        </div>
-        <div className="space-y-0">
+        <h2 className="text-[13px] font-semibold text-ink uppercase tracking-[0.02em] mb-3">
+          Tips to Improve
+        </h2>
+        <div className="divide-y divide-border">
           {DEFAULT_TIPS.map((tip, i) => (
-            <div
-              key={tip}
-              className="flex items-start gap-2.5 py-1.5 text-[13px] text-ink-warm leading-relaxed"
-              style={{ borderBottom: i === DEFAULT_TIPS.length - 1 ? undefined : "0.5px solid var(--color-border-light)" }}
-            >
-              <div
-                className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0"
-                style={{
-                  background: "var(--color-msg-cream)",
-                  border: "0.5px solid var(--color-border-warm)",
-                }}
-              >
-                <span className="text-[10px] font-bold text-msg-ink-muted">{i + 1}</span>
+            <div key={tip} className="flex items-start gap-2.5 py-1.5 text-[13px] text-ink-warm leading-relaxed first:pt-0 last:pb-0">
+              <div className="w-5 h-5 rounded-full bg-cream border border-border grid place-items-center shrink-0 mt-0">
+                <span className="text-[10px] font-bold text-ink-muted">{i + 1}</span>
               </div>
               <span>{tip}</span>
             </div>

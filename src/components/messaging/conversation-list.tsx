@@ -174,13 +174,7 @@ export function ConversationList({
   if (loading) {
     return (
       <div className="flex flex-col h-full">
-        <div
-          className="shrink-0 px-4 py-3 border-b border-msg-border"
-          style={{
-            background:
-              "linear-gradient(90deg, color-mix(in oklab, var(--color-msg-gold) 12%, transparent), color-mix(in oklab, var(--color-msg-gold) 2%, transparent))",
-          }}
-        >
+        <div className="shrink-0 px-4 py-3 border-b border-msg-border bg-white/80">
           <Skeleton className="h-7 w-32 rounded-lg" />
         </div>
         <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
@@ -192,49 +186,44 @@ export function ConversationList({
     );
   }
 
-  return (
-    <div className="flex flex-col h-full">
-      <div
-        className="shrink-0 px-4 py-3 border-b border-msg-border flex items-center gap-3 sticky top-0 z-10"
-        style={{
-          background:
-            "linear-gradient(135deg, color-mix(in oklab, var(--color-msg-gold) 10%, transparent) 0%, color-mix(in oklab, var(--color-msg-gold) 3%, transparent) 50%, transparent 100%)",
-          backdropFilter: "blur(8px)",
-        }}
-      >
-        {dashboardUrl && (
-          <button
-            onClick={() => router.push(dashboardUrl)}
-            className="p-1.5 -ml-1 rounded-full hover:bg-msg-ink/5 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 text-msg-ink" strokeWidth={1.5} />
-          </button>
-        )}
-        <h1 className="text-lg font-semibold text-msg-ink font-[family-name:var(--font-playfair)] tracking-tight">
-          Messages
-        </h1>
-        <button
-          onClick={() => {
-            setBlockedUsersOpen(true);
-            loadBlockedUsers();
-          }}
-          className="ml-auto p-1.5 rounded-full text-msg-ink-muted hover:text-msg-ink hover:bg-msg-ink/5 transition-colors"
-          title="Blocked users"
+    return (
+      <div className="flex flex-col h-full">
+        <div
+          className="shrink-0 px-4 py-3 border-b border-msg-border flex items-center gap-3 sticky top-0 z-10 bg-white/80 backdrop-blur-sm"
         >
-          <UserX className="w-4 h-4" strokeWidth={1.5} />
-        </button>
-      </div>
+          {dashboardUrl && (
+            <button
+              onClick={() => router.push(dashboardUrl)}
+              className="p-1.5 -ml-1 rounded-full hover:bg-msg-ink/5 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 text-msg-ink" strokeWidth={1.5} />
+            </button>
+          )}
+          <h1 className="text-lg font-semibold text-msg-ink font-[family-name:var(--font-playfair)] tracking-tight">
+            Messages
+          </h1>
+          <button
+            onClick={() => {
+              setBlockedUsersOpen(true);
+              loadBlockedUsers();
+            }}
+            className="ml-auto p-1.5 rounded-full text-msg-ink-muted hover:text-msg-ink hover:bg-msg-ink/5 transition-colors"
+            title="Blocked users"
+          >
+            <UserX className="w-4 h-4" strokeWidth={1.5} />
+          </button>
+        </div>
 
       {conversations.length > 0 && (
         <div className="shrink-0 px-4 py-2.5">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-msg-ink-muted" strokeWidth={1.5} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-ink-muted" strokeWidth={1.5} />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search conversations..."
-              className="w-full text-xs bg-msg-cream/80 border border-msg-border rounded-xl pl-9 pr-3 py-2 outline-none focus:border-msg-gold/40 focus:bg-white transition-all placeholder:text-msg-ink-muted"
+              className="w-full text-[12px] bg-cream border border-border rounded-xl pl-9 pr-3 py-2 outline-none focus:border-gold/40 focus:bg-white transition-all placeholder:text-ink-muted"
             />
           </div>
         </div>
@@ -245,10 +234,10 @@ export function ConversationList({
           <EmptyListState error={error} findPeopleUrl={findPeopleUrl} />
         ) : filteredConversations.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 gap-2">
-            <p className="text-sm text-msg-ink-muted">No matches for &ldquo;{searchQuery}&rdquo;</p>
+            <p className="text-[13px] text-ink-muted">No matches for &ldquo;{searchQuery}&rdquo;</p>
             <button
               onClick={() => setSearchQuery("")}
-              className="text-xs text-msg-gold hover:text-msg-gold-hover transition-colors font-medium"
+              className="text-[12px] text-gold hover:text-gold-ink transition-colors font-medium"
             >
               Clear search
             </button>
@@ -269,7 +258,7 @@ export function ConversationList({
               <button
                 onClick={loadMore}
                 disabled={loadingMore}
-                className="w-full py-2.5 text-xs font-medium text-msg-ink-muted hover:text-msg-ink transition-colors disabled:opacity-50"
+                className="w-full py-2.5 text-[12px] font-medium text-ink-muted hover:text-ink transition-colors disabled:opacity-50"
               >
                 {loadingMore ? "Loading..." : "Load more"}
               </button>
@@ -291,7 +280,7 @@ export function ConversationList({
                 <Skeleton className="h-8 w-3/4" />
               </div>
             ) : blockedUsers.length === 0 ? (
-              <div className="text-center py-6 text-sm text-msg-ink-muted">
+              <div className="text-center py-6 text-sm text-ink-muted">
                 No blocked users.
               </div>
             ) : (
@@ -306,10 +295,10 @@ export function ConversationList({
                   return (
                     <div
                       key={b._id}
-                      className="flex items-center justify-between p-3 rounded-xl bg-msg-card border border-msg-border"
+                      className="flex items-center justify-between p-3 rounded-xl bg-card border border-border"
                     >
                       <div className="min-w-0 flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-full bg-msg-cream text-msg-ink-soft text-[10px] font-semibold flex items-center justify-center shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-cream text-ink-soft text-[10px] font-semibold flex items-center justify-center shrink-0">
                           {name
                             .split(" ")
                             .map((n) => n[0])
@@ -319,7 +308,7 @@ export function ConversationList({
                         </div>
                         <div>
                           <p className="text-sm font-medium truncate">{name}</p>
-                          <p className="text-xs text-msg-ink-muted truncate">
+                          <p className="text-xs text-ink-muted truncate">
                             {user.email}
                           </p>
                         </div>

@@ -134,30 +134,30 @@ export function MessageBubble({
       style={{ animationFillMode: "both" }}
     >
       {!isOwn && (
-        <div
-          className={cn(
-            "w-7 h-7 rounded-full bg-msg-cream border border-msg-border flex items-center justify-center flex-shrink-0 select-none",
-            showAvatar ? "opacity-100" : "opacity-0 pointer-events-none",
-          )}
-          style={{ marginTop: clusterPosition === "last" || clusterPosition === "single" ? 2 : 0 }}
-        >
-          <span className="text-[9px] font-semibold text-msg-ink-soft">
-            {message.sender_id?.email?.[0]?.toUpperCase() || "?"}
-          </span>
-        </div>
+          <div
+            className={cn(
+              "w-7 h-7 rounded-full bg-cream border border-border flex items-center justify-center flex-shrink-0 select-none",
+              showAvatar ? "opacity-100" : "opacity-0 pointer-events-none",
+            )}
+            style={{ marginTop: clusterPosition === "last" || clusterPosition === "single" ? 2 : 0 }}
+          >
+            <span className="text-[9px] font-semibold text-ink-soft">
+              {message.sender_id?.email?.[0]?.toUpperCase() || "?"}
+            </span>
+          </div>
       )}
 
       <div className={cn("max-w-[72%] md:max-w-[60%]", isOwn && "items-end flex flex-col")}>
-        <div
-          className={cn(
-            "px-3.5 py-2.5 text-[13px] leading-relaxed transition-all duration-150",
-            isOwn
-              ? "bg-gradient-to-br from-msg-gold to-msg-gold-dark text-white shadow-md shadow-msg-gold/10"
-              : "bg-msg-card text-msg-ink border border-msg-border shadow-sm",
-            clusterRadius(isOwn, clusterPosition),
-            hasFailed && "opacity-70",
-          )}
-        >
+          <div
+            className={cn(
+              "px-3.5 py-2.5 text-[13px] leading-relaxed transition-all duration-150",
+              isOwn
+                ? "bg-gradient-to-br from-gold to-gold-dark text-white shadow-md shadow-gold/10"
+                : "bg-card text-ink border border-border shadow-sm",
+              clusterRadius(isOwn, clusterPosition),
+              hasFailed && "opacity-70",
+            )}
+          >
           <ReactMarkdown
             disallowedElements={[
               "img",
@@ -183,7 +183,7 @@ export function MessageBubble({
               isOwn ? "justify-end" : "justify-start",
             )}
           >
-            <span className="text-[10px] text-msg-ink-muted select-none">
+            <span className="text-[10px] text-ink-muted select-none">
               {formatTime(message.created_at)}
             </span>
             {hasFailed && (
@@ -196,7 +196,7 @@ export function MessageBubble({
                 {hasBeenRead ? (
                   <CheckCheck className="w-3 h-3 text-emerald-500" strokeWidth={2.5} />
                 ) : (
-                  <Check className="w-3 h-3 text-msg-ink-muted" strokeWidth={2.5} />
+                  <Check className="w-3 h-3 text-ink-muted" strokeWidth={2.5} />
                 )}
               </span>
             )}

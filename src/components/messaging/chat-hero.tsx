@@ -23,31 +23,8 @@ export function ChatHero({
   onBack,
   onBlocked,
 }: ChatHeroProps) {
-  const initials = otherName
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-
   return (
-    <div className="relative w-full shrink-0 z-10">
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "linear-gradient(180deg, var(--color-msg-cream) 0%, #f0ede7 40%, var(--color-msg-page) 100%)",
-        }}
-      />
-      <div
-        className="absolute inset-0 opacity-[0.03]"
-        style={{
-          backgroundImage:
-            "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E\")",
-          backgroundSize: "256px 256px",
-        }}
-      />
-
+    <div className="relative w-full shrink-0 z-10 msg-hero-bg border-b border-msg-border">
       <div className="relative max-w-3xl mx-auto px-4 pt-4 pb-5 flex items-center gap-4">
         <button
           onClick={onBack}
@@ -57,13 +34,7 @@ export function ChatHero({
         </button>
 
         <div className="relative shrink-0">
-          <div
-            className="rounded-full p-[2.5px]"
-            style={{
-              background:
-                "linear-gradient(135deg, var(--color-msg-gold) 0%, var(--color-msg-gold-light) 50%, var(--color-msg-gold) 100%)",
-            }}
-          >
+          <div className="rounded-full p-[2.5px] bg-gradient-to-br from-msg-gold to-msg-gold-dark">
             <UserAvatar
               photo={otherUser?.profile_photo}
               name={otherName}

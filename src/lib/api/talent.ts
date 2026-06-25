@@ -58,6 +58,7 @@ export const talentApi = {
     availability?: string;
     gender?: string;
     search?: string;
+    sort?: string;
     cursor?: string;
     limit?: number;
   }): Promise<{
@@ -143,6 +144,18 @@ export const talentApi = {
     const response = await apiClient.post('/talent/upload/document', formData, {
       headers: { 'Content-Type': undefined },
     });
+    return response.data;
+  },
+
+  getPortfolioStats: async (): Promise<{
+    total_items: number;
+    items_by_type: { images: number; videos: number };
+    items_by_category: Record<string, number>;
+    total_views: number;
+    profile_views_7d: number;
+    profile_views_30d: number;
+  }> => {
+    const response = await apiClient.get('/talent/portfolio/stats');
     return response.data;
   },
 

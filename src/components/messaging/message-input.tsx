@@ -63,15 +63,15 @@ export function MessageInput({
       <div className="mx-3 mb-3">
         <div
           className={cn(
-            "relative flex items-end gap-2 bg-msg-card border rounded-2xl px-3 py-2 transition-all duration-200",
+            "relative flex items-end gap-2 bg-card border rounded-2xl px-3 py-2 transition-all duration-200",
             isFocused
-              ? "border-msg-gold/60 shadow-lg shadow-msg-gold/5 ring-1 ring-msg-gold/10"
-              : "border-msg-border shadow-sm",
+              ? "border-gold/60 shadow-lg shadow-gold/5 ring-1 ring-gold/10"
+              : "border-border shadow-sm",
           )}
         >
           <button
             type="button"
-            className="p-1.5 rounded-full text-msg-ink-muted hover:text-msg-ink-soft hover:bg-msg-cream transition-colors flex-shrink-0 mb-0.5"
+            className="p-1.5 rounded-full text-ink-muted hover:text-ink-soft hover:bg-cream transition-colors flex-shrink-0 mb-0.5"
             title="Attach file"
           >
             <Paperclip className="w-4 h-4" strokeWidth={1.5} />
@@ -86,12 +86,12 @@ export function MessageInput({
             onBlur={() => setIsFocused(false)}
             placeholder="Write a message..."
             rows={1}
-            className="flex-1 resize-none bg-transparent text-sm text-msg-ink placeholder:text-msg-ink-muted outline-none py-1.5 max-h-32"
+            className="flex-1 resize-none bg-transparent text-sm text-ink placeholder:text-ink-muted outline-none py-1.5 max-h-32"
           />
 
           <button
             type="button"
-            className="p-1.5 rounded-full text-msg-ink-muted hover:text-msg-ink-soft hover:bg-msg-cream transition-colors flex-shrink-0 mb-0.5"
+            className="p-1.5 rounded-full text-ink-muted hover:text-ink-soft hover:bg-cream transition-colors flex-shrink-0 mb-0.5"
             title="Add emoji"
           >
             <Smile className="w-4 h-4" strokeWidth={1.5} />
@@ -103,8 +103,8 @@ export function MessageInput({
             className={cn(
               "w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-200",
               canSend
-                ? "bg-msg-gold text-white hover:bg-msg-gold-hover hover:shadow-md hover:scale-105 active:scale-95 shadow-sm"
-                : "bg-msg-cream text-msg-ink-muted cursor-default",
+                ? "bg-gold text-white hover:bg-gold-hover hover:shadow-md hover:scale-105 active:scale-95 shadow-sm"
+                : "bg-cream text-ink-muted cursor-default",
             )}
           >
             <Send
@@ -118,7 +118,7 @@ export function MessageInput({
         </div>
 
         <div className="flex items-center justify-between px-1 mt-1.5">
-          <span className="text-[10px] text-msg-ink-muted select-none">
+          <span className="text-[10px] text-ink-muted select-none">
             Shift + Enter for new line
           </span>
           {charCount > 300 && (
@@ -129,7 +129,7 @@ export function MessageInput({
                   ? "text-red-500 font-medium"
                   : charCount > 500
                     ? "text-amber-500"
-                    : "text-msg-ink-muted",
+                    : "text-ink-muted",
               )}
             >
               {charCount}

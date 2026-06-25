@@ -31,17 +31,17 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const gold = {
-  primary: "var(--color-msg-gold)",
+  primary: "var(--color-gold)",
   primaryHover: "var(--color-gold-hover)",
-  accent: "var(--color-msg-gold-soft)",
-  accentBorder: "var(--color-border-gold)",
-  border: "var(--color-msg-border)",
-  muted: "var(--color-bg-warm)",
-  mutedFg: "var(--color-msg-ink-muted)",
-  textSecondary: "var(--color-msg-ink-soft)",
-  foreground: "var(--color-msg-ink)",
+  accent: "var(--color-gold-soft)",
+  accentBorder: "var(--color-gold)",
+  border: "var(--color-border)",
+  muted: "var(--color-cream)",
+  mutedFg: "var(--color-ink-muted)",
+  textSecondary: "var(--color-ink-soft)",
+  foreground: "var(--color-ink)",
   background: "var(--color-cream-pale)",
-  card: "var(--color-white)",
+  card: "var(--color-card)",
 };
 
 function SectionCard({ title, icon: Icon, children }: {
@@ -188,7 +188,7 @@ export default function ProfilePreviewPage() {
           <div
             className="w-[88px] h-[88px] rounded-full flex items-center justify-center text-[28px] font-bold text-white shrink-0 border-[3px]"
             style={{
-              background: profile?.profile_photo ? undefined : "linear-gradient(135deg, var(--color-msg-gold), var(--color-gold-dark))",
+              background: profile?.profile_photo ? undefined : "linear-gradient(135deg, var(--color-gold), var(--color-gold-dark))",
               borderColor: gold.accentBorder,
             }}
           >

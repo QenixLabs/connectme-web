@@ -113,6 +113,7 @@ export const portfolioItemSchema = z.object({
   thumbnail_url: z.string().optional(),
   caption: z.string().optional(),
   is_pinned: z.boolean(),
+  view_count: z.number().optional(),
   created_at: z.string(),
 });
 

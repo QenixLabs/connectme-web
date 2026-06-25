@@ -1,39 +1,56 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PortfolioUploader } from "@/components/portfolio/portfolio-uploader";
+import { PortfolioStats } from "@/components/portfolio/portfolio-stats";
+import { PortfolioCategoryFilter } from "@/components/portfolio/portfolio-category-filter";
 import { PortfolioGrid } from "@/components/portfolio/portfolio-grid";
+import { PortfolioItemDetailSheet } from "@/components/portfolio/portfolio-item-detail-sheet";
 import { talentApi } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
+import { cn } from "@/lib/utils";
+import { Sparkles, TrendingUp } from "lucide-react";
 import type { PortfolioItem } from "@/lib/validations/talent-profile.schema";
+
+type CategoryFilter = "all" | "work" | "personal" | "intro";
 
 export default function TalentPortfolioPage() {
   const [items, setItems] = useState<PortfolioItem[]>([]);
-  const [mediaLimits, setMediaLimits] = useState<{
-    images_used: number;
-    videos_used: number;
-    plan_max_images: number;
-    plan_max_videos: number;
-  }>({
+  const [mediaLimits, setMediaLimits] = useState({
     images_used: 0,
     videos_used: 0,
     plan_max_images: 5,
     plan_max_videos: 1,
   });
+  const [stats, setStats] = useState<{
+    total_items: number;
+    items_by_type: { images: number; videos: number };
+    items_by_category: Record<string, number>;
+    total_views: number;
+    profile_views_7d: number;
+    profile_views_30d: number;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("all");
+  const [selectedItem, setSelectedItem] = useState<PortfolioItem | null>(null);
+  const [detailSheetOpen, setDetailSheetOpen] = useState(false);
 
   const fetchPortfolio = useCallback(async () => {
     try {
       setError(null);
-      const [portfolioRes, profileRes] = await Promise.all([
+      const [portfolioRes, profileRes, statsRes] = await Promise.all([
         talentApi.getPortfolio(),
         talentApi.getMyProfile(),
+        talentApi.getPortfolioStats().catch(() => null),
       ]);
       setItems(portfolioRes.items || []);
       if (profileRes?.media_limits) {
         setMediaLimits(profileRes.media_limits);
+      }
+      if (statsRes) {
+        setStats(statsRes);
       }
     } catch (err) {
       setError(getApiErrorMessage(err, "Failed to load portfolio"));
@@ -71,25 +88,42 @@ export default function TalentPortfolioPage() {
             )
           );
         }
+        if (selectedItem?.id === id) {
+          setSelectedItem((prev) =>
+            prev
+              ? { ...prev, caption: item.caption, category: item.category, is_pinned: item.is_pinned }
+              : null
+          );
+        }
       } catch (err) {
         setError(getApiErrorMessage(err, "Failed to update item"));
       }
     },
-    []
+    [selectedItem]
   );
 
-  const handleDelete = useCallback(async (id: string) => {
-    try {
-      await talentApi.deletePortfolioItem(id);
-      setItems((prev) => prev.filter((i) => i.id !== id));
-      const profile = await talentApi.getMyProfile();
-      if (profile?.media_limits) {
-        setMediaLimits(profile.media_limits);
+  const handleDelete = useCallback(
+    async (id: string) => {
+      try {
+        await talentApi.deletePortfolioItem(id);
+        setItems((prev) => prev.filter((i) => i.id !== id));
+        const profile = await talentApi.getMyProfile();
+        if (profile?.media_limits) {
+          setMediaLimits(profile.media_limits);
+        }
+        setStats((prev) =>
+          prev ? { ...prev, total_items: prev.total_items - 1 } : null
+        );
+        if (selectedItem?.id === id) {
+          setSelectedItem(null);
+          setDetailSheetOpen(false);
+        }
+      } catch (err) {
+        setError(getApiErrorMessage(err, "Failed to delete item"));
       }
-    } catch (err) {
-      setError(getApiErrorMessage(err, "Failed to delete item"));
-    }
-  }, []);
+    },
+    [selectedItem]
+  );
 
   const handleReorder = useCallback(
     async (itemIds: string[]) => {
@@ -111,32 +145,57 @@ export default function TalentPortfolioPage() {
     [items, fetchPortfolio]
   );
 
-  const imagesPct = Math.round((mediaLimits.images_used / mediaLimits.plan_max_images) * 100);
-  const videosPct = Math.round((mediaLimits.videos_used / mediaLimits.plan_max_videos) * 100);
+  const handleSelectItem = useCallback((item: PortfolioItem) => {
+    setSelectedItem(item);
+    setDetailSheetOpen(true);
+  }, []);
+
+  const filteredItems = useMemo(
+    () =>
+      categoryFilter === "all"
+        ? items
+        : items.filter((i) => i.category === categoryFilter),
+    [items, categoryFilter]
+  );
+
+  const categoryCounts = useMemo(
+    () => ({
+      work: items.filter((i) => i.category === "work").length,
+      personal: items.filter((i) => i.category === "personal").length,
+      intro: items.filter((i) => i.category === "intro").length,
+    }),
+    [items]
+  );
+
+  const imagesPct = Math.round(
+    (mediaLimits.images_used / mediaLimits.plan_max_images) * 100
+  );
+  const videosPct = Math.round(
+    (mediaLimits.videos_used / mediaLimits.plan_max_videos) * 100
+  );
 
   if (loading) {
     return (
-      <div className="max-w-3xl mx-auto space-y-6 py-4">
-        {/* Header skeleton */}
-        <div className="flex items-end justify-between border-b border-border pb-4">
-          <div className="h-10 w-48 bg-muted rounded animate-pulse" />
-          <div className="h-4 w-20 bg-muted rounded animate-pulse" />
-        </div>
-
-        {/* Quota skeleton */}
-        <div className="grid grid-cols-3 gap-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-20 bg-muted rounded-xl animate-pulse" />
+      <div className="max-w-3xl mx-auto space-y-5 py-4">
+        <div className="h-6 w-32 bg-muted rounded animate-pulse" />
+        <div className="flex gap-2.5 overflow-x-auto">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-14 w-28 bg-muted rounded-xl animate-pulse flex-shrink-0" />
           ))}
         </div>
-
-        {/* Upload skeleton */}
-        <div className="h-36 bg-muted rounded-xl animate-pulse" />
-
-        {/* Grid skeleton */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="h-28 bg-muted rounded-2xl animate-pulse" />
+          <div className="h-28 bg-muted rounded-2xl animate-pulse" />
+        </div>
+        <div className="h-36 bg-muted rounded-2xl animate-pulse" />
+        <div className="flex gap-1.5">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-7 w-16 bg-muted rounded-full animate-pulse" />
+          ))}
+        </div>
         <div className="grid grid-cols-3 gap-3">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="aspect-square bg-muted rounded-xl animate-pulse" />
+            <div key={i} className="aspect-square bg-muted rounded-2xl animate-pulse" />
           ))}
         </div>
       </div>
@@ -144,141 +203,108 @@ export default function TalentPortfolioPage() {
   }
 
   return (
-    <div
-      className="max-w-3xl mx-auto py-4 space-y-6"
-      style={{ fontFamily: "'DM Sans', sans-serif" }}
-    >
-      {/* ── Page header ── */}
-      <div className="flex items-end justify-between border-b border-border pb-4">
-        <h1
-          style={{
-            fontFamily: "'DM Serif Display', serif",
-            fontSize: "clamp(28px, 5vw, 40px)",
-            fontWeight: 400,
-            lineHeight: 1,
-            letterSpacing: "-0.5px",
-            margin: 0,
-          }}
-        >
-          My{" "}
-          <em
-            style={{
-              fontStyle: "italic",
-              color: "var(--muted-foreground)",
-            }}
-          >
-            Portfolio
-          </em>
-        </h1>
-        <span
-          style={{
-            fontSize: "11px",
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            color: "var(--muted-foreground)",
-          }}
-        >
+    <div className="max-w-3xl mx-auto py-4 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-text-primary tracking-tight">
+            My Portfolio
+          </h1>
+          <p className="text-xs text-text-muted mt-0.5">
+            Showcase your best work to recruiters
+          </p>
+        </div>
+        <span className="text-[11px] font-medium text-text-muted bg-muted px-2.5 py-1 rounded-full">
           {items.length} item{items.length !== 1 ? "s" : ""}
         </span>
       </div>
 
-      {/* ── Error alert ── */}
+      {/* Error alert */}
       {error && (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
-      {/* ── Quota cards ── */}
-      <div className="grid grid-cols-3 gap-3">
+      {/* Stats bar */}
+      {stats && (
+        <PortfolioStats
+          totalItems={stats.total_items}
+          imagesCount={stats.items_by_type.images}
+          videosCount={stats.items_by_type.videos}
+          totalViews={stats.total_views}
+          profileViews7d={stats.profile_views_7d}
+        />
+      )}
+
+      {/* Quota + Upgrade row */}
+      <div className="grid grid-cols-2 gap-3">
         {/* Images quota */}
-        <div className="rounded-xl border border-border bg-muted/40 p-4 space-y-2">
-          <p
-            style={{
-              fontSize: "11px",
-              letterSpacing: "0.07em",
-              textTransform: "uppercase",
-              color: "var(--muted-foreground)",
-              margin: 0,
-            }}
-          >
-            Images
-          </p>
-          <div
-            className="rounded-full overflow-hidden"
-            style={{ height: 4, background: "var(--border)" }}
-          >
+        <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] font-medium text-text-muted uppercase tracking-wider">
+              Images
+            </p>
+            <span className="text-sm font-semibold tabular-nums text-text-primary">
+              {mediaLimits.images_used}/{mediaLimits.plan_max_images}
+            </span>
+          </div>
+          <div className="h-1.5 rounded-full bg-muted overflow-hidden">
             <div
-              className="h-full rounded-full transition-all duration-500"
-              style={{
-                width: `${imagesPct}%`,
-                background: imagesPct >= 80 ? "var(--color-amber)" : "var(--foreground)",
-              }}
+              className={cn(
+                "h-full rounded-full transition-all duration-500",
+                imagesPct >= 80 ? "bg-amber" : "bg-foreground"
+              )}
+              style={{ width: `${imagesPct}%` }}
             />
           </div>
-          <p style={{ fontSize: "13px", color: "var(--muted-foreground)", margin: 0 }}>
-            <strong style={{ color: "var(--foreground)", fontWeight: 500 }}>
-              {mediaLimits.images_used}
-            </strong>{" "}
-            / {mediaLimits.plan_max_images} used
-          </p>
         </div>
 
         {/* Videos quota */}
-        <div className="rounded-xl border border-border bg-muted/40 p-4 space-y-2">
-          <p
-            style={{
-              fontSize: "11px",
-              letterSpacing: "0.07em",
-              textTransform: "uppercase",
-              color: "var(--muted-foreground)",
-              margin: 0,
-            }}
-          >
-            Videos
-          </p>
-          <div
-            className="rounded-full overflow-hidden"
-            style={{ height: 4, background: "var(--border)" }}
-          >
+        <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] font-medium text-text-muted uppercase tracking-wider">
+              Videos
+            </p>
+            <span className="text-sm font-semibold tabular-nums text-text-primary">
+              {mediaLimits.videos_used}/{mediaLimits.plan_max_videos}
+            </span>
+          </div>
+          <div className="h-1.5 rounded-full bg-muted overflow-hidden">
             <div
-              className="h-full rounded-full transition-all duration-500"
-              style={{
-                width: `${videosPct}%`,
-                background: videosPct >= 80 ? "var(--color-amber)" : "var(--foreground)",
-              }}
+              className={cn(
+                "h-full rounded-full transition-all duration-500",
+                videosPct >= 80 ? "bg-amber" : "bg-foreground"
+              )}
+              style={{ width: `${videosPct}%` }}
             />
           </div>
-          <p style={{ fontSize: "13px", color: "var(--muted-foreground)", margin: 0 }}>
-            <strong style={{ color: "var(--foreground)", fontWeight: 500 }}>
-              {mediaLimits.videos_used}
-            </strong>{" "}
-            / {mediaLimits.plan_max_videos} used
-          </p>
-        </div>
-
-        {/* Upgrade nudge */}
-        <div className="rounded-xl border border-border bg-muted/40 p-4 flex flex-col justify-between gap-2">
-          <p style={{ fontSize: "13px", color: "var(--muted-foreground)", margin: 0 }}>
-            Unlock{" "}
-            <strong style={{ color: "var(--foreground)", fontWeight: 500 }}>20 images</strong>{" "}
-            &amp;{" "}
-            <strong style={{ color: "var(--foreground)", fontWeight: 500 }}>5 videos</strong>
-          </p>
-          <button
-            className="self-start text-xs border border-border rounded-lg px-3 py-1 bg-transparent hover:bg-muted transition-colors"
-            style={{
-              fontFamily: "inherit",
-              letterSpacing: "0.03em",
-              cursor: "pointer",
-            }}
-          >
-            Upgrade plan →
-          </button>
         </div>
       </div>
 
-      {/* ── Upload zone ── */}
+      {/* Upgrade nudge */}
+      <div className="rounded-2xl border border-border bg-gradient-to-br from-cream to-cream-soft p-4 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-brand/10">
+            <TrendingUp className="w-5 h-5 text-brand" strokeWidth={1.5} />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-text-primary">
+              Unlock <span className="font-semibold">20 images</span> &{" "}
+              <span className="font-semibold">5 videos</span>
+            </p>
+            <p className="text-xs text-text-muted truncate">
+              Upgrade your plan for more portfolio space
+            </p>
+          </div>
+        </div>
+        <button className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-full bg-foreground text-background px-4 py-2 text-xs font-medium hover:bg-text-primary transition-colors">
+          <Sparkles className="w-3 h-3" strokeWidth={1.5} />
+          Upgrade
+        </button>
+      </div>
+
+      {/* Upload zone */}
       <PortfolioUploader
         imagesUsed={mediaLimits.images_used}
         videosUsed={mediaLimits.videos_used}
@@ -287,30 +313,31 @@ export default function TalentPortfolioPage() {
         onUpload={fetchPortfolio}
       />
 
-      {/* ── Section label ── */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          fontSize: "11px",
-          letterSpacing: "0.1em",
-          textTransform: "uppercase",
-          color: "var(--muted-foreground)",
-        }}
-      >
-        <span>Portfolio items</span>
-        <span
-          style={{ flex: 1, height: "0.5px", background: "var(--border)", display: "block" }}
+      {/* Category filter */}
+      {items.length > 0 && (
+        <PortfolioCategoryFilter
+          active={categoryFilter}
+          onChange={setCategoryFilter}
+          counts={categoryCounts}
         />
-      </div>
+      )}
 
-      {/* ── Portfolio grid ── */}
+      {/* Portfolio grid */}
       <PortfolioGrid
-        items={items}
+        items={filteredItems}
         onUpdate={handleUpdate}
         onDelete={handleDelete}
         onReorder={handleReorder}
+        onSelectItem={handleSelectItem}
+      />
+
+      {/* Item detail sheet */}
+      <PortfolioItemDetailSheet
+        item={selectedItem}
+        open={detailSheetOpen}
+        onOpenChange={setDetailSheetOpen}
+        onUpdate={handleUpdate}
+        onDelete={handleDelete}
       />
     </div>
   );

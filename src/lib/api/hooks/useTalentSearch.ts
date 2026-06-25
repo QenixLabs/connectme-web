@@ -8,6 +8,7 @@ export function useTalentSearch(filters: {
   availability?: string;
   gender?: string;
   search?: string;
+  sort?: string;
 }) {
   return useInfiniteQuery({
     queryKey: queryKeys.talent.all(filters),

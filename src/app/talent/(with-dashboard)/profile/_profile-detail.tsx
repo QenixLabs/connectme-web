@@ -1,6 +1,7 @@
 "use client";
 
 import type { TalentProfile } from "@/lib/validations/talent-profile.schema";
+import { Card } from "@/components/ui/card";
 
 interface ProfileDetailProps {
   profile: TalentProfile;
@@ -24,22 +25,10 @@ export function ProfileDetail({ profile }: ProfileDetailProps) {
   return (
     <div className="grid grid-cols-3 gap-2">
       {stats.map((s) => (
-        <div
-          key={s.label}
-          className="bg-white text-center py-3 px-2"
-          style={{
-            borderRadius: "12px",
-            borderColor: "var(--color-msg-border)",
-          }}
-        >
-          <p
-            className="text-[20px] font-bold text-msg-ink leading-none"
-            style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
-          >
-            {s.value}
-          </p>
-          <p className="text-[11px] text-msg-ink-muted mt-1">{s.label}</p>
-        </div>
+        <Card key={s.label} className="text-center py-3 px-2">
+          <p className="text-[20px] font-bold text-ink leading-none font-serif">{s.value}</p>
+          <p className="text-[11px] text-ink-muted mt-1">{s.label}</p>
+        </Card>
       ))}
     </div>
   );

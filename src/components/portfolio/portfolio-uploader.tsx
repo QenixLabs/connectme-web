@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
-import { Upload, Image as ImageIcon, Film, X, Loader2, AlertCircle } from "lucide-react";
+import { Upload, Image as ImageIcon, Film, X, Loader2, AlertCircle, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { talentApi } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
@@ -16,8 +16,8 @@ interface PortfolioUploaderProps {
   onUpload: () => void;
 }
 
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
-const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
 
 function formatSize(bytes: number): string {
   if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -93,11 +93,11 @@ export function PortfolioUploader({
     }
 
     if (isImage && !canUploadImage) {
-      return "Image upload limit reached. Delete an existing image or upgrade your plan.";
+      return "Image upload limit reached.";
     }
 
     if (isVideo && !canUploadVideo) {
-      return "Video upload limit reached. Delete an existing video or upgrade your plan.";
+      return "Video upload limit reached.";
     }
 
     return null;
@@ -149,7 +149,7 @@ export function PortfolioUploader({
         }
       }
     },
-    [canUploadImage, canUploadVideo, onUpload, uploading, handleFeatureError, show, validateFile]
+    [canUploadImage, canUploadVideo, onUpload, uploading, handleFeatureError, show]
   );
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -172,66 +172,89 @@ export function PortfolioUploader({
     [handleFiles]
   );
 
-  return (
-    <div className="space-y-3">
-      {/* Limits bar */}
-      <div className="flex items-center gap-4 text-xs text-text-muted">
-        <div className="flex items-center gap-1.5">
-          <ImageIcon className="w-3.5 h-3.5" strokeWidth={1.5} />
-          <span>
-            {imagesUsed}/{maxImages} images
-          </span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <Film className="w-3.5 h-3.5" strokeWidth={1.5} />
-          <span>
-            {videosUsed}/{maxVideos} videos
-          </span>
-        </div>
-      </div>
+  const outOfSlots = !canUploadImage && !canUploadVideo;
 
-      {/* Error banner */}
+  return (
+    <div className="space-y-2.5">
       {fileError && (
-        <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
+        <div className="flex items-start gap-2 rounded-lg border border-error-border bg-error-surface px-3 py-2.5 text-sm text-error">
           <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" strokeWidth={1.5} />
           <span className="flex-1">{fileError}</span>
           <button
             onClick={() => setFileError(null)}
-            className="text-destructive/70 hover:text-destructive"
+            className="text-error/70 hover:text-error"
           >
             <X className="w-4 h-4" strokeWidth={1.5} />
           </button>
         </div>
       )}
 
-      {/* Dropzone */}
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        onClick={() => inputRef.current?.click()}
+        onClick={() => !outOfSlots && inputRef.current?.click()}
         className={cn(
-          "relative border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors",
+          "relative rounded-2xl border-2 border-dashed p-5 flex flex-col items-center justify-center gap-2.5 transition-all duration-200",
+          outOfSlots
+            ? "border-border bg-muted/50 cursor-default"
+            : "cursor-pointer",
           isDragging
-            ? "border-brand bg-brand/5"
+            ? "border-brand bg-brand/5 shadow-[0_0_0_4px_var(--color-brand-light)]"
             : fileError
-              ? "border-destructive/50 bg-destructive/5 hover:border-destructive/70"
-              : "border-border hover:border-text-muted hover:bg-muted/50"
+              ? "border-error-border bg-error-surface"
+              : "border-border hover:border-text-muted hover:bg-cream-soft"
         )}
       >
-        {uploading ? (
-          <Loader2 className="w-6 h-6 text-brand animate-spin" strokeWidth={1.5} />
-        ) : (
-          <Upload className="w-6 h-6 text-text-muted" strokeWidth={1.5} />
+        <div
+          className={cn(
+            "flex h-12 w-12 items-center justify-center rounded-xl transition-colors",
+            uploading
+              ? "bg-brand/10"
+              : isDragging
+                ? "bg-brand/10"
+                : "bg-cream-soft"
+          )}
+        >
+          {uploading ? (
+            <Loader2 className="w-5 h-5 text-brand animate-spin" strokeWidth={1.5} />
+          ) : isDragging ? (
+            <Sparkles className="w-5 h-5 text-brand" strokeWidth={1.5} />
+          ) : (
+            <Upload className="w-5 h-5 text-text-muted" strokeWidth={1.5} />
+          )}
+        </div>
+
+        <div className="text-center">
+          <p className="text-sm text-text-primary font-medium">
+            {uploading
+              ? "Uploading..."
+              : outOfSlots
+                ? "Upload slots full"
+                : isDragging
+                  ? "Drop to upload"
+                  : "Drag & drop or click to upload"}
+          </p>
+          <p className="text-xs text-text-muted mt-0.5">
+            {outOfSlots
+              ? "Delete items or upgrade your plan"
+              : `Images: JPG, PNG, WEBP (max ${formatSize(MAX_IMAGE_SIZE)}) · Videos: MP4, MOV, WEBM (max ${formatSize(MAX_VIDEO_SIZE)})`}
+          </p>
+        </div>
+
+        {!outOfSlots && (
+          <div className="flex items-center gap-3 text-[11px] text-text-muted mt-0.5">
+            <span className="inline-flex items-center gap-1">
+              <ImageIcon className="w-3 h-3" strokeWidth={1.5} />
+              {imagesUsed}/{maxImages}
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <Film className="w-3 h-3" strokeWidth={1.5} />
+              {videosUsed}/{maxVideos}
+            </span>
+          </div>
         )}
-        <p className="text-sm text-text-muted text-center">
-          {uploading
-            ? "Uploading..."
-            : "Drag & drop images or videos, or click to browse"}
-        </p>
-        <p className="text-2xs text-text-muted">
-          Images: JPG, PNG, WEBP (max {formatSize(MAX_IMAGE_SIZE)}) · Videos: MP4, MOV, WEBM (max {formatSize(MAX_VIDEO_SIZE)})
-        </p>
+
         <input
           ref={inputRef}
           type="file"

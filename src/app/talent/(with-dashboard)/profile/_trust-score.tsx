@@ -26,29 +26,19 @@ export function TrustScore({ completeness }: TrustScoreProps) {
   const label = completenessLabel(completeness);
 
   return (
-    <Card className="border-msg-border shadow-sm">
+    <Card>
       <CardContent className="p-5">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-[13px] font-semibold text-msg-ink uppercase tracking-[0.02em]">
-            Trust Score
-          </h2>
-          <button
-            className="inline-flex items-center gap-0.5 text-[12px] font-medium text-msg-gold transition-colors"
-          >
+          <h2 className="text-[13px] font-semibold text-ink uppercase tracking-[0.02em]">Trust Score</h2>
+          <span className="inline-flex items-center gap-0.5 text-[12px] font-medium text-gold">
             {label}
             <ChevronRight className="w-4 h-4" strokeWidth={2} />
-          </button>
+          </span>
         </div>
-        <div className="space-y-0">
-          {DEFAULT_ITEMS.map((item, idx) => (
-            <div
-              key={item}
-              className="flex items-center gap-2.5 py-1.5"
-              style={{ borderBottom: idx === DEFAULT_ITEMS.length - 1 ? undefined : "0.5px solid var(--color-border-light)" }}
-            >
-              <div
-                className="flex items-center justify-center w-5 h-5 rounded-full bg-msg-gold shrink-0"
-              >
+        <div className="divide-y divide-border">
+          {DEFAULT_ITEMS.map((item) => (
+            <div key={item} className="flex items-center gap-2.5 py-1.5 first:pt-0 last:pb-0">
+              <div className="w-5 h-5 rounded-full bg-gold grid place-items-center shrink-0">
                 <Check className="w-3 h-3 text-white" strokeWidth={2.5} />
               </div>
               <span className="text-[13px] text-ink-warm">{item}</span>

@@ -92,10 +92,7 @@ export function MessageThread({
 
   if (loading) {
     return (
-      <div
-        className="flex-1 overflow-y-auto px-4 py-4 space-y-3"
-        style={{ backgroundColor: "var(--color-msg-page)" }}
-      >
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-msg-page">
         <div className="flex justify-center">
           <Skeleton className="h-5 w-24 rounded-full" />
         </div>
@@ -130,51 +127,45 @@ export function MessageThread({
 
   if (messages.length === 0) {
     return (
-      <div className="flex-1 overflow-y-auto px-4" style={{ backgroundColor: "var(--color-msg-page)" }}>
+      <div className="flex-1 overflow-y-auto px-4 bg-msg-page">
         <EmptyChatState />
       </div>
     );
   }
 
-  return (
-    <div
-      ref={containerRef}
-      className="flex-1 overflow-y-auto"
-      style={{
-        backgroundColor: "var(--color-msg-page)",
-        backgroundImage:
-          "radial-gradient(circle at 50% 50%, var(--color-msg-border) 0.5px, transparent 0.5px)",
-        backgroundSize: "20px 20px",
-      }}
-    >
-      <div className="px-4 py-4">
-        {threadMessages.map((msg, index) => {
-          const showDate =
-            index === 0 ||
-            formatDate(messages[index - 1].created_at) !==
-              formatDate(msg.created_at);
+    return (
+      <div
+        ref={containerRef}
+        className="flex-1 overflow-y-auto bg-msg-page"
+      >
+        <div className="px-4 py-4">
+          {threadMessages.map((msg, index) => {
+            const showDate =
+              index === 0 ||
+              formatDate(messages[index - 1].created_at) !==
+                formatDate(msg.created_at);
 
-          return (
-            <div key={msg._id}>
-              {showDate && (
-                <div className="flex justify-center my-5 first:mt-0">
-                  <span className="text-[10px] font-medium text-msg-ink-muted bg-msg-page/80 backdrop-blur-sm border border-msg-border/60 px-3 py-1 rounded-full shadow-sm select-none">
-                    {formatDate(msg.created_at)}
-                  </span>
-                </div>
-              )}
-              <MessageBubble
-                message={msg}
-                isOwn={msg.isOwn}
-                currentUserId={currentUserId}
-                clusterPosition={msg.clusterPosition}
-                showAvatar={msg.showAvatar}
-              />
-            </div>
-          );
-        })}
-        <div ref={bottomRef} className="h-1" />
+            return (
+              <div key={msg._id}>
+                {showDate && (
+                  <div className="flex justify-center my-5 first:mt-0">
+                    <span className="text-[10px] font-medium text-msg-ink-muted bg-msg-page/80 backdrop-blur-sm border border-msg-border/60 px-3 py-1 rounded-full shadow-sm select-none">
+                      {formatDate(msg.created_at)}
+                    </span>
+                  </div>
+                )}
+                <MessageBubble
+                  message={msg}
+                  isOwn={msg.isOwn}
+                  currentUserId={currentUserId}
+                  clusterPosition={msg.clusterPosition}
+                  showAvatar={msg.showAvatar}
+                />
+              </div>
+            );
+          })}
+          <div ref={bottomRef} className="h-1" />
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }

@@ -48,7 +48,12 @@ export interface CollaborationRequest {
     full_legal_name?: string;
     username?: string;
     company_name?: string;
+    company_website?: string;
+    company_size?: string;
+    industry?: string;
+    position?: string;
     profile_photo?: string;
+    verification_status?: string;
   };
   receiver_id: string;
   status: 'pending' | 'accepted' | 'rejected';
