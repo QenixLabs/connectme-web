@@ -90,7 +90,11 @@ export default function PricingPage() {
         } else {
           router.push(result.short_url);
         }
+        return;
       }
+      popup.show({ title: "Plan changed successfully", variant: "success" });
+      const billingPath = role === "recruiter" ? "/recruiter/billing" : "/talent/billing";
+      router.push(billingPath);
     } catch (err: unknown) {
       const response = (err as { response?: { status?: number; data?: { message?: string } } }).response;
       const message = response?.data?.message || "Failed to initiate upgrade";

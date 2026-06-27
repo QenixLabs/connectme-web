@@ -29,16 +29,7 @@ import {
 
 type Step = 1 | 2 | 3;
 
-const PROFESSIONS = [
-  "Actor",
-  "Model",
-  "Content Creator",
-  "Dancer",
-  "Musician",
-  "Voice Artist",
-  "Photographer",
-  "Other",
-];
+import { PROFESSIONS } from "@/lib/professions";
 
 const schema = z
   .object({
@@ -257,7 +248,7 @@ export default function TalentSignupPage() {
                   </p>
 
                   <div className="grid grid-cols-2 gap-3">
-                    {PROFESSIONS.map((p) => (
+                    {[...PROFESSIONS, 'Other'].map((p) => (
                       <button
                         key={p}
                         type="button"

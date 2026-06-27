@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, useCallback } from "react";
 import {
   Loader2,
   AlertCircle,
@@ -10,8 +9,11 @@ import {
   MessageSquareWarning,
   ChevronLeft,
   ChevronRight,
-  ExternalLink,
+  Clock,
+  User,
+  FileText,
 } from "lucide-react";
+
 import {
   Table,
   TableBody,
@@ -20,20 +22,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { UserDetailPanel } from "@/components/admin/user-detail-panel";
 import { adminApi, type AppealItem, type PaginatedAppeals } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
+import { format } from "date-fns";
 
 const STATUS_COLORS: Record<string, string> = {
   open: "bg-amber-100 text-amber-800 border-amber-200",
@@ -41,10 +43,16 @@ const STATUS_COLORS: Record<string, string> = {
   rejected: "bg-rose-100 text-rose-800 border-rose-200",
 };
 
+const STATUS_ICONS: Record<string, React.ReactNode> = {
+  open: <Clock className="w-3 h-3" />,
+  resolved: <CheckCircle className="w-3 h-3" />,
+  rejected: <XCircle className="w-3 h-3" />,
+  all: <FileText className="w-3 h-3" />,
+};
+
 const STATUS_OPTIONS = ["all", "open", "resolved", "rejected"];
 
 export default function AdminAppealsPage() {
-  const router = useRouter();
   const [data, setData] = useState<PaginatedAppeals | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,38 +61,49 @@ export default function AdminAppealsPage() {
   const [selectedAppeal, setSelectedAppeal] = useState<AppealItem | null>(null);
   const [adminResponse, setAdminResponse] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [viewingUserId, setViewingUserId] = useState<string | null>(null);
+  const [refresh, setRefresh] = useState(0);
 
   const limit = 20;
 
-  const fetchAppeals = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await adminApi.getAppeals({
+  useEffect(() => {
+    let cancelled = false;
+
+    adminApi
+      .getAppeals({
         status: statusFilter === "all" ? undefined : statusFilter,
         page,
         limit,
+      })
+      .then((res) => {
+        if (!cancelled) {
+          setData(res);
+          setLoading(false);
+          setError(null);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(getApiErrorMessage(err, "Failed to load appeals"));
+          setLoading(false);
+        }
       });
-      setData(res);
-    } catch (err) {
-      setError(getApiErrorMessage(err, "Failed to load appeals"));
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  useEffect(() => {
-    fetchAppeals();
-  }, [page, statusFilter]);
+    return () => { cancelled = true; };
+  }, [page, statusFilter, limit, refresh]);
 
   const handleStatusUpdate = async (status: string) => {
     if (!selectedAppeal) return;
     setActionLoading(status);
     try {
-      await adminApi.updateAppealStatus(selectedAppeal._id, status, adminResponse.trim() || undefined);
+      await adminApi.updateAppealStatus(
+        selectedAppeal._id,
+        status,
+        adminResponse.trim() || undefined
+      );
       setSelectedAppeal(null);
       setAdminResponse("");
-      fetchAppeals();
+      setRefresh((r) => r + 1);
     } catch (err) {
       setError(getApiErrorMessage(err, `Failed to ${status} appeal`));
     } finally {
@@ -92,27 +111,54 @@ export default function AdminAppealsPage() {
     }
   };
 
+  const handleViewUser = useCallback((userId: string) => {
+    setViewingUserId(userId);
+  }, []);
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <MessageSquareWarning className="w-5 h-5 text-slate-600" strokeWidth={1.5} />
-          <h1 className="text-lg font-semibold">Appeals</h1>
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-100">
+            <MessageSquareWarning
+              className="w-4 h-4 text-amber-600"
+              strokeWidth={1.5}
+            />
+          </div>
+          <div>
+            <h1 className="text-lg font-semibold">Appeals</h1>
+            <p className="text-xs text-muted-foreground">
+              Review user appeals against moderation actions
+            </p>
+          </div>
         </div>
-        <span className="text-xs text-muted-foreground">{data?.total ?? 0} total</span>
+        {data && (
+          <span className="text-xs text-muted-foreground bg-muted/50 px-2.5 py-1 rounded-full">
+            {data.total.toLocaleString()} total appeals
+          </span>
+        )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
-          <SelectTrigger className="w-32 text-xs h-8">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            {STATUS_OPTIONS.map((s) => (
-              <SelectItem key={s} value={s} className="text-xs capitalize">{s}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      {/* Status Tabs */}
+      <div className="flex flex-wrap items-center gap-1.5 p-1 bg-muted/50 rounded-lg">
+        {STATUS_OPTIONS.map((status) => (
+          <button
+            key={status}
+            onClick={() => {
+              setStatusFilter(status);
+              setPage(1);
+            }}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-150 ${
+              statusFilter === status
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground hover:bg-background/50"
+            }`}
+          >
+            {STATUS_ICONS[status]}
+            <span className="capitalize">{status}</span>
+          </button>
+        ))}
       </div>
 
       {error && (
@@ -122,27 +168,31 @@ export default function AdminAppealsPage() {
         </Alert>
       )}
 
-      <div className="border border-border rounded-lg overflow-hidden bg-card">
+      {/* Table */}
+      <div className="border border-border rounded-xl overflow-hidden bg-card shadow-sm">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead className="text-xs">User</TableHead>
-              <TableHead className="text-xs">Type</TableHead>
-              <TableHead className="text-xs">Reason</TableHead>
-              <TableHead className="text-xs">Status</TableHead>
-              <TableHead className="text-xs">Submitted</TableHead>
+            <TableRow className="bg-muted/30">
+              <TableHead className="text-xs font-semibold">User</TableHead>
+              <TableHead className="text-xs font-semibold">Type</TableHead>
+              <TableHead className="text-xs font-semibold">Reason</TableHead>
+              <TableHead className="text-xs font-semibold">Status</TableHead>
+              <TableHead className="text-xs font-semibold">Submitted</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8">
+                <TableCell colSpan={5} className="text-center py-12">
                   <Loader2 className="w-5 h-5 animate-spin text-muted-foreground mx-auto" />
                 </TableCell>
               </TableRow>
             ) : !data || data.appeals.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-sm text-muted-foreground">
+                <TableCell
+                  colSpan={5}
+                  className="text-center py-12 text-sm text-muted-foreground"
+                >
                   No appeals found.
                 </TableCell>
               </TableRow>
@@ -150,28 +200,53 @@ export default function AdminAppealsPage() {
               data.appeals.map((appeal) => (
                 <TableRow
                   key={appeal._id}
-                  className="cursor-pointer hover:bg-muted/50"
+                  className="cursor-pointer hover:bg-muted/30 transition-colors"
                   onClick={() => {
                     setSelectedAppeal(appeal);
                     setAdminResponse(appeal.admin_response || "");
                   }}
                 >
                   <TableCell className="text-xs">
-                    <div>{appeal.user_id?.email || "Unknown"}</div>
-                    <div className="text-[10px] text-muted-foreground capitalize">{appeal.user_id?.role}</div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleViewUser(appeal.user_id._id);
+                      }}
+                      className="text-left hover:text-primary hover:underline underline-offset-2 transition-colors"
+                      title="View user details"
+                    >
+                      <div className="font-medium">
+                        {appeal.user_id?.email || "Unknown"}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground capitalize flex items-center gap-1">
+                        <User className="w-2.5 h-2.5" />
+                        {appeal.user_id?.role}
+                      </div>
+                    </button>
                   </TableCell>
-                  <TableCell className="text-xs capitalize">{appeal.type}</TableCell>
-                  <TableCell className="text-xs max-w-[200px] truncate">{appeal.reason}</TableCell>
+                  <TableCell className="text-xs">
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] px-1.5 py-0 capitalize font-medium"
+                    >
+                      {appeal.type}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-xs max-w-[220px]">
+                    <span className="line-clamp-2">{appeal.reason}</span>
+                  </TableCell>
                   <TableCell>
                     <Badge
                       variant="outline"
-                      className={`text-[10px] px-1.5 py-0 capitalize ${STATUS_COLORS[appeal.status] || ""}`}
+                      className={`text-[10px] px-1.5 py-0 capitalize font-medium ${
+                        STATUS_COLORS[appeal.status] || ""
+                      }`}
                     >
                       {appeal.status}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
-                    {new Date(appeal.created_at).toLocaleDateString()}
+                    {format(new Date(appeal.created_at), "MMM d, yyyy")}
                   </TableCell>
                 </TableRow>
               ))
@@ -180,127 +255,214 @@ export default function AdminAppealsPage() {
         </Table>
       </div>
 
+      {/* Pagination */}
       {data && data.total_pages > 1 && (
         <div className="flex items-center justify-between">
           <span className="text-xs text-muted-foreground">
-            Page {data.page} of {data.total_pages} ({data.total} total)
+            Page {data.page} of {data.total_pages} ({data.total.toLocaleString()}{" "}
+            total)
           </span>
           <div className="flex items-center gap-2">
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page <= 1}
-              className="p-1.5 rounded-md border border-border hover:bg-accent disabled:opacity-40 transition-colors"
+              className="h-8 text-xs"
             >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setPage((p) => Math.min(data.total_pages, p + 1))}
+              <ChevronLeft className="w-3.5 h-3.5 mr-1" />
+              Previous
+            </Button>
+            <span className="text-xs text-muted-foreground tabular-nums px-1">
+              {data.page}/{data.total_pages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                setPage((p) => Math.min(data.total_pages, p + 1))
+              }
               disabled={page >= data.total_pages}
-              className="p-1.5 rounded-md border border-border hover:bg-accent disabled:opacity-40 transition-colors"
+              className="h-8 text-xs"
             >
-              <ChevronRight className="w-4 h-4" />
-            </button>
+              Next
+              <ChevronRight className="w-3.5 h-3.5 ml-1" />
+            </Button>
           </div>
         </div>
       )}
 
-      <Sheet open={!!selectedAppeal} onOpenChange={(v) => !v && setSelectedAppeal(null)}>
+      {/* Appeal Detail Sheet */}
+      <Sheet
+        open={!!selectedAppeal}
+        onOpenChange={(v) => !v && setSelectedAppeal(null)}
+      >
         <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
           <SheetHeader>
-            <SheetTitle className="text-base">Appeal Details</SheetTitle>
+            <SheetTitle className="text-base flex items-center gap-2">
+              <MessageSquareWarning className="w-4 h-4 text-muted-foreground" />
+              Appeal Details
+            </SheetTitle>
           </SheetHeader>
 
           {selectedAppeal && (
-            <div className="mt-4 space-y-4">
-              <div className="flex justify-end">
-                <Button
-                  size="sm"
+            <div className="mt-6 space-y-5">
+              <div className="flex items-center gap-2">
+                <Badge
                   variant="outline"
-                  className="text-xs h-8"
-                  onClick={() => router.push(`/admin/users?userId=${selectedAppeal.user_id._id}`)}
+                  className={`text-xs px-2 py-0.5 capitalize font-medium ${
+                    STATUS_COLORS[selectedAppeal.status] || ""
+                  }`}
                 >
-                  <ExternalLink className="w-3.5 h-3.5 mr-1" />
-                  Open User
-                </Button>
+                  {selectedAppeal.status}
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="text-xs px-2 py-0.5 capitalize"
+                >
+                  {selectedAppeal.type}
+                </Badge>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="text-muted-foreground">User</div>
-                <div>{selectedAppeal.user_id?.email || "Unknown"}</div>
-                <div className="text-muted-foreground">Role</div>
-                <div className="capitalize">{selectedAppeal.user_id?.role}</div>
-                <div className="text-muted-foreground">User Status</div>
-                <div className="capitalize">{selectedAppeal.user_id?.status}</div>
-                <div className="text-muted-foreground">Type</div>
-                <div className="capitalize">{selectedAppeal.type}</div>
-                <div className="text-muted-foreground">Status</div>
-                <div className="capitalize">{selectedAppeal.status}</div>
-                <div className="text-muted-foreground">Submitted</div>
-                <div>{new Date(selectedAppeal.created_at).toLocaleString()}</div>
+              <div className="rounded-lg border bg-card p-4 space-y-3">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  User Information
+                </h4>
+                <div className="grid grid-cols-[100px_1fr] gap-y-2 text-xs">
+                  <span className="text-muted-foreground">Email</span>
+                  <button
+                    onClick={() =>
+                      handleViewUser(selectedAppeal.user_id._id)
+                    }
+                    className="text-primary hover:underline text-left font-medium"
+                  >
+                    {selectedAppeal.user_id?.email || "Unknown"}
+                  </button>
+
+                  <span className="text-muted-foreground">Role</span>
+                  <span className="capitalize">
+                    {selectedAppeal.user_id?.role}
+                  </span>
+
+                  <span className="text-muted-foreground">Status</span>
+                  <Badge
+                    variant="outline"
+                    className={`text-[10px] px-1.5 py-0 capitalize ${
+                      selectedAppeal.user_id?.status === "active"
+                        ? "bg-emerald-100 text-emerald-800 border-emerald-200"
+                        : selectedAppeal.user_id?.status === "suspended"
+                        ? "bg-amber-100 text-amber-800 border-amber-200"
+                        : selectedAppeal.user_id?.status === "banned"
+                        ? "bg-rose-100 text-rose-800 border-rose-200"
+                        : "bg-slate-100 text-slate-700 border-slate-200"
+                    }`}
+                  >
+                    {selectedAppeal.user_id?.status}
+                  </Badge>
+
+                  <span className="text-muted-foreground">Submitted</span>
+                  <span>
+                    {format(
+                      new Date(selectedAppeal.created_at),
+                      "PPP p"
+                    )}
+                  </span>
+                </div>
+
+                <div className="pt-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs w-full"
+                    onClick={() =>
+                      handleViewUser(selectedAppeal.user_id._id)
+                    }
+                  >
+                    <User className="w-3.5 h-3.5 mr-1.5" />
+                    View Full User Details
+                  </Button>
+                </div>
               </div>
 
-              <div className="border-t pt-3">
-                <div className="text-xs font-medium mb-1">Appeal Reason</div>
-                <div className="text-xs bg-muted rounded-md p-2">{selectedAppeal.reason}</div>
+              <div className="rounded-lg border bg-card p-4 space-y-3">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Appeal Content
+                </h4>
+                <p className="text-sm leading-relaxed">
+                  {selectedAppeal.reason}
+                </p>
               </div>
 
               {selectedAppeal.status !== "open" && (
-                <div className="border-t pt-3">
-                  <div className="text-xs font-medium mb-1">Admin Response</div>
-                  <div className="text-xs bg-muted rounded-md p-2">{selectedAppeal.admin_response || "—"}</div>
+                <div className="rounded-lg border bg-card p-4 space-y-3">
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Resolution
+                  </h4>
+                  <div className="text-sm bg-muted/50 rounded-md p-3">
+                    {selectedAppeal.admin_response || (
+                      <span className="text-muted-foreground italic">
+                        No response provided
+                      </span>
+                    )}
+                  </div>
                   {selectedAppeal.reviewed_by && (
-                    <div className="text-[10px] text-muted-foreground mt-1">
-                      By: {selectedAppeal.reviewed_by?.email || "Admin"} on{" "}
-                      {selectedAppeal.reviewed_at
-                        ? new Date(selectedAppeal.reviewed_at).toLocaleString()
-                        : "—"}
+                    <div className="text-[11px] text-muted-foreground flex items-center gap-1">
+                      <User className="w-3 h-3" />
+                      <span className="font-medium">
+                        {selectedAppeal.reviewed_by?.email || "Admin"}
+                      </span>
+                      <span className="mx-1">·</span>
+                      <span>
+                        {selectedAppeal.reviewed_at
+                          ? format(
+                              new Date(selectedAppeal.reviewed_at),
+                              "MMM d, yyyy HH:mm"
+                            )
+                          : "—"}
+                      </span>
                     </div>
                   )}
                 </div>
               )}
 
               {selectedAppeal.status === "open" && (
-                <div className="border-t pt-3 space-y-3">
-                  <div className="space-y-1">
-                    <div className="text-xs font-medium">Admin Response</div>
-                    <Textarea
-                      placeholder="Enter your response..."
-                      value={adminResponse}
-                      onChange={(e) => setAdminResponse(e.target.value)}
-                      className="text-xs min-h-[80px]"
-                    />
-                  </div>
+                <div className="rounded-lg border bg-card p-4 space-y-4">
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    Your Response
+                  </h4>
+                  <Textarea
+                    placeholder="Enter your response to this appeal..."
+                    value={adminResponse}
+                    onChange={(e) => setAdminResponse(e.target.value)}
+                    className="text-sm min-h-[100px] resize-none"
+                  />
                   <div className="flex gap-2">
                     <Button
                       size="sm"
-                      className="text-xs h-8"
+                      className="text-xs"
                       onClick={() => handleStatusUpdate("resolved")}
                       disabled={actionLoading === "resolved"}
                     >
                       {actionLoading === "resolved" ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
                       ) : (
-                        <>
-                          <CheckCircle className="w-3.5 h-3.5 mr-1" />
-                          Resolve
-                        </>
+                        <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
                       )}
+                      Resolve
                     </Button>
                     <Button
                       size="sm"
                       variant="destructive"
-                      className="text-xs h-8"
+                      className="text-xs"
                       onClick={() => handleStatusUpdate("rejected")}
                       disabled={actionLoading === "rejected"}
                     >
                       {actionLoading === "rejected" ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
                       ) : (
-                        <>
-                          <XCircle className="w-3.5 h-3.5 mr-1" />
-                          Reject
-                        </>
+                        <XCircle className="w-3.5 h-3.5 mr-1.5" />
                       )}
+                      Reject
                     </Button>
                   </div>
                 </div>
@@ -309,6 +471,12 @@ export default function AdminAppealsPage() {
           )}
         </SheetContent>
       </Sheet>
+
+      <UserDetailPanel
+        userId={viewingUserId}
+        onClose={() => setViewingUserId(null)}
+        onStatusChange={() => {}}
+      />
     </div>
   );
 }

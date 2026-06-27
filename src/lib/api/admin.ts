@@ -13,6 +13,20 @@ export interface DashboardStats {
   avg_resolution_hours: number;
 }
 
+export interface TimeSeriesPoint {
+  date: string;
+  count: number;
+}
+
+export interface DashboardActivity {
+  days: number;
+  signups: TimeSeriesPoint[];
+  reports_created: TimeSeriesPoint[];
+  reports_resolved: TimeSeriesPoint[];
+  campaigns_created: TimeSeriesPoint[];
+  verifications_submitted: TimeSeriesPoint[];
+}
+
 export interface PendingVerificationItem {
   _id: string;
   user_id: string;
@@ -180,6 +194,29 @@ export interface AdminUser {
   created_at: string;
   last_active_at?: string;
   subscription: AdminUserSubscription | null;
+  location?: {
+    country?: string;
+    state?: string;
+    city?: string;
+  };
+  professions?: string[];
+  industries?: string[];
+  skills?: { name: string; proficiency: string; order: number }[];
+  availability?: string;
+  languages?: { name: string; fluency: string }[];
+  accents?: string[];
+  gender?: string;
+  analytics?: {
+    profile_views_7d: number;
+    profile_views_30d: number;
+    shortlist_count: number;
+  };
+  company_name?: string;
+  company_size?: string;
+  industry?: string;
+  verification_status?: string;
+  message_quota?: { used: number; limit: number };
+  campaign_quota?: { used: number; limit: number };
 }
 
 export interface PaginatedUsers {
@@ -327,6 +364,13 @@ export const adminApi = {
     return response.data;
   },
 
+  getDashboardActivity: async (days = 7): Promise<DashboardActivity> => {
+    const response = await apiClient.get('/admin/dashboard-stats/activity', {
+      params: { days },
+    });
+    return response.data;
+  },
+
   getPendingVerifications: async (): Promise<PendingVerificationItem[]> => {
     const response = await apiClient.get('/admin/verifications/pending');
     return response.data;
@@ -395,8 +439,27 @@ export const adminApi = {
     signup_to?: string;
     last_active_from?: string;
     last_active_to?: string;
+    verification_tier?: number;
+    is_email_verified?: boolean;
+    is_phone_verified?: boolean;
+    auth_provider?: string;
+    trust_score_min?: number;
+    trust_score_max?: number;
+    report_count_min?: number;
+    report_count_max?: number;
     sort_by?: string;
     sort_order?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    availability?: string;
+    profession?: string;
+    industry?: string;
+    skill?: string;
+    language?: string;
+    gender?: string;
+    recruiter_verification_status?: string;
+    company_size?: string;
   }): Promise<PaginatedUsers> => {
     const response = await apiClient.get('/admin/users', { params });
     return response.data;

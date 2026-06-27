@@ -80,18 +80,9 @@ export const PROFICIENCY_OPTIONS: Option[] = [
   opt('expert', 'Expert'),
 ];
 
-export const PROFESSION_SUGGESTIONS: string[] = [
-  'Actor',
-  'Model',
-  'Dancer',
-  'Singer',
-  'Voice artist',
-  'Stunt performer',
-  'Director',
-  'Choreographer',
-  'Writer',
-  'Producer',
-];
+import { PROFESSIONS } from '@/lib/professions';
+
+export const PROFESSION_SUGGESTIONS: string[] = [...PROFESSIONS];
 
 export const INDUSTRY_SUGGESTIONS: string[] = [
   'Film',

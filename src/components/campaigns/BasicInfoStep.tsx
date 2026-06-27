@@ -21,16 +21,7 @@ import { INDIAN_STATES, getCitiesForState } from '@/lib/indian-cities';
 import { Upload, X, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-const ROLE_TYPES = [
-  'Lead',
-  'Supporting',
-  'Background / extra',
-  'Voice over',
-  'Model',
-  'Dancer',
-  'Musician',
-  'Anchor / host',
-];
+import { PROFESSIONS } from '@/lib/professions';
 
 const INDUSTRIES = [
   'Film',
@@ -209,7 +200,7 @@ export function BasicInfoStep({ mediaFile, onMediaChange, existingBanner }: Basi
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent className="rounded-xl">
-                  {ROLE_TYPES.map((r) => (
+                  {PROFESSIONS.map((r) => (
                     <SelectItem key={r} value={r}>{r}</SelectItem>
                   ))}
                 </SelectContent>

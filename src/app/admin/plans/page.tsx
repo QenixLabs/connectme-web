@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -20,6 +20,7 @@ import {
   Info,
   ChevronDown,
   ChevronUp,
+  Star,
 } from "lucide-react";
 import { usePopup } from "@/hooks/use-popup";
 
@@ -51,6 +52,7 @@ import {
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
+import { Separator } from "@/components/ui/separator";
 import { plansApi, type PlanConfig, type UpdatePlanInput } from "@/lib/api/plans";
 import { queryKeys } from "@/lib/api/query-keys";
 import { getApiErrorMessage } from "@/lib/formatters";
@@ -116,7 +118,9 @@ function PlanEditSheet({
     },
   });
 
-  const priceChanged = form.watch("monthly_price") !== plan.monthly_price || form.watch("yearly_price") !== plan.yearly_price;
+  const priceChanged =
+    form.watch("monthly_price") !== plan.monthly_price ||
+    form.watch("yearly_price") !== plan.yearly_price;
 
   const handleAddFeature = () => {
     const current = form.getValues("features");
@@ -153,7 +157,7 @@ function PlanEditSheet({
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1">
+        <Button variant="outline" size="sm" className="gap-1.5">
           <Pencil className="w-3.5 h-3.5" />
           Edit
         </Button>
@@ -165,7 +169,10 @@ function PlanEditSheet({
           </SheetTitle>
         </SheetHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="mt-6 space-y-5">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="mt-6 space-y-5"
+          >
             {priceChanged && (
               <div className="rounded-md bg-amber-50 border border-amber-200 p-3 flex gap-2 items-start">
                 <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
@@ -179,7 +186,8 @@ function PlanEditSheet({
             <div className="rounded-md bg-slate-50 border border-slate-200 p-3 flex gap-2 items-start">
               <Info className="w-4 h-4 text-slate-600 shrink-0 mt-0.5" />
               <p className="text-xs text-slate-700">
-                Benefits are shared across the family. Edit them with the Family Benefits action.
+                Benefits are shared across the family. Edit them with the Family
+                Benefits action.
               </p>
             </div>
 
@@ -204,7 +212,10 @@ function PlanEditSheet({
                 <FormItem className="space-y-1.5">
                   <FormLabel className="text-xs">Description</FormLabel>
                   <FormControl>
-                    <Textarea {...field} className="text-sm min-h-[80px] resize-none" />
+                    <Textarea
+                      {...field}
+                      className="text-sm min-h-[80px] resize-none"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -217,7 +228,9 @@ function PlanEditSheet({
                 name="monthly_price"
                 render={({ field }) => (
                   <FormItem className="space-y-1.5">
-                    <FormLabel className="text-xs">Monthly Price (paise)</FormLabel>
+                    <FormLabel className="text-xs">
+                      Monthly Price (paise)
+                    </FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -238,7 +251,9 @@ function PlanEditSheet({
                 name="yearly_price"
                 render={({ field }) => (
                   <FormItem className="space-y-1.5">
-                    <FormLabel className="text-xs">Yearly Price (paise)</FormLabel>
+                    <FormLabel className="text-xs">
+                      Yearly Price (paise)
+                    </FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -268,9 +283,15 @@ function PlanEditSheet({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="talent" className="text-sm">Talent Only</SelectItem>
-                      <SelectItem value="recruiter" className="text-sm">Recruiter Only</SelectItem>
-                      <SelectItem value="both" className="text-sm">Both</SelectItem>
+                      <SelectItem value="talent" className="text-sm">
+                        Talent Only
+                      </SelectItem>
+                      <SelectItem value="recruiter" className="text-sm">
+                        Recruiter Only
+                      </SelectItem>
+                      <SelectItem value="both" className="text-sm">
+                        Both
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -323,7 +344,9 @@ function PlanEditSheet({
                       onChange={(e) => {
                         const current = form.getValues("features");
                         current[idx] = e.target.value;
-                        form.setValue("features", current, { shouldValidate: true });
+                        form.setValue("features", current, {
+                          shouldValidate: true,
+                        });
                       }}
                       className="h-8 text-xs flex-1"
                       placeholder="Feature description"
@@ -367,7 +390,9 @@ function PlanEditSheet({
                         min={0}
                         step={1}
                         value={field.value ?? ""}
-                        onChange={(e) => field.onChange(numberOrNull(e.target.value))}
+                        onChange={(e) =>
+                          field.onChange(numberOrNull(e.target.value))
+                        }
                         className="h-9 text-sm"
                         disabled
                       />
@@ -389,7 +414,9 @@ function PlanEditSheet({
                         min={0}
                         step={1}
                         value={field.value ?? ""}
-                        onChange={(e) => field.onChange(numberOrNull(e.target.value))}
+                        onChange={(e) =>
+                          field.onChange(numberOrNull(e.target.value))
+                        }
                         className="h-9 text-sm"
                         disabled
                       />
@@ -411,7 +438,9 @@ function PlanEditSheet({
                         min={0}
                         step={1}
                         value={field.value ?? ""}
-                        onChange={(e) => field.onChange(numberOrNull(e.target.value))}
+                        onChange={(e) =>
+                          field.onChange(numberOrNull(e.target.value))
+                        }
                         className="h-9 text-sm"
                         disabled
                       />
@@ -433,7 +462,9 @@ function PlanEditSheet({
                         min={0}
                         step={1}
                         value={field.value ?? ""}
-                        onChange={(e) => field.onChange(numberOrNull(e.target.value))}
+                        onChange={(e) =>
+                          field.onChange(numberOrNull(e.target.value))
+                        }
                         className="h-9 text-sm"
                         disabled
                       />
@@ -473,7 +504,8 @@ function PlanEditSheet({
                   <div className="space-y-0.5">
                     <FormLabel className="text-sm">Most Popular</FormLabel>
                     <p className="text-[10px] text-muted-foreground">
-                      Badge shown on the pricing card. Only one plan per role can be popular.
+                      Badge shown on the pricing card. Only one plan per role
+                      can be popular.
                     </p>
                   </div>
                   <FormControl>
@@ -506,7 +538,6 @@ function PlanEditSheet({
 export default function AdminPlansPage() {
   const queryClient = useQueryClient();
   const popup = usePopup();
-  const [editingPlan, setEditingPlan] = useState<PlanConfig | null>(null);
 
   const {
     data: plans,
@@ -519,16 +550,23 @@ export default function AdminPlansPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ key, payload }: { key: string; payload: UpdatePlanInput }) =>
-      plansApi.updatePlan(key, payload),
+    mutationFn: ({
+      key,
+      payload,
+    }: {
+      key: string;
+      payload: UpdatePlanInput;
+    }) => plansApi.updatePlan(key, payload),
     onSuccess: () => {
       popup.show({ title: "Plan updated successfully", variant: "success" });
       queryClient.invalidateQueries({ queryKey: queryKeys.plans.admin() });
       queryClient.invalidateQueries({ queryKey: queryKeys.plans.public() });
-      setEditingPlan(null);
     },
     onError: (err: unknown) => {
-      popup.show({ title: getApiErrorMessage(err, "Failed to update plan"), variant: "error" });
+      popup.show({
+        title: getApiErrorMessage(err, "Failed to update plan"),
+        variant: "error",
+      });
     },
   });
 
@@ -537,9 +575,12 @@ export default function AdminPlansPage() {
     queryClient.invalidateQueries({ queryKey: queryKeys.plans.public() });
   };
 
-  const handleSave = (plan: PlanConfig, payload: UpdatePlanInput) => {
-    updateMutation.mutate({ key: plan.key, payload });
-  };
+  const handleSave = useCallback(
+    (plan: PlanConfig, payload: UpdatePlanInput) => {
+      updateMutation.mutate({ key: plan.key, payload });
+    },
+    [updateMutation]
+  );
 
   const familyGroups = useMemo(() => {
     const groups = new Map<string, PlanConfig[]>();
@@ -554,9 +595,11 @@ export default function AdminPlansPage() {
     return groups;
   }, [plans]);
 
-  const [expandedFamilies, setExpandedFamilies] = useState<Set<string>>(new Set());
+  const [expandedFamilies, setExpandedFamilies] = useState<Set<string>>(
+    new Set()
+  );
 
-  const toggleFamily = (familyKey: string) => {
+  const toggleFamily = useCallback((familyKey: string) => {
     setExpandedFamilies((prev) => {
       const next = new Set(prev);
       if (next.has(familyKey)) {
@@ -566,206 +609,369 @@ export default function AdminPlansPage() {
       }
       return next;
     });
-  };
+  }, []);
+
+  const activeCount = plans?.filter((p) => p.is_active).length ?? 0;
+  const totalPlans = plans?.length ?? 0;
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <CreditCard className="w-5 h-5 text-slate-600" strokeWidth={1.5} />
-          <h1 className="text-lg font-semibold">Subscription Plans</h1>
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-100">
+            <CreditCard className="w-4 h-4 text-indigo-600" strokeWidth={1.5} />
+          </div>
+          <div>
+            <h1 className="text-lg font-semibold">Subscription Plans</h1>
+            <p className="text-xs text-muted-foreground">
+              Manage plan families, versions, and pricing
+            </p>
+          </div>
         </div>
         <CreatePlanSheet onSuccess={handlePlanChange} />
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
+        <div className="flex items-center justify-center py-16">
           <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
         </div>
       ) : error ? (
-        <div className="rounded-md border border-destructive/50 bg-destructive/5 p-4 text-sm text-destructive space-y-2">
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-6 text-sm text-destructive space-y-3">
           <p>{getApiErrorMessage(error, "Failed to load plans")}</p>
           <Button variant="outline" size="sm" onClick={() => refetch()}>
             Retry
           </Button>
         </div>
       ) : !plans || plans.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No plans found.</p>
+        <div className="rounded-xl border border-border bg-card p-12 text-center space-y-3">
+          <CreditCard className="w-8 h-8 text-muted-foreground/40 mx-auto" />
+          <p className="text-sm text-muted-foreground">No plans found.</p>
+          <CreatePlanSheet onSuccess={handlePlanChange} />
+        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {Array.from(familyGroups.entries()).map(([familyKey, versions]) => {
-            const latest = versions[0];
-            const older = versions.slice(1);
-            const isExpanded = expandedFamilies.has(familyKey);
+        <>
+          {/* Stats */}
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <Badge variant="outline" className="text-xs px-2 py-0.5">
+              {totalPlans} plan{totalPlans !== 1 ? "s" : ""} total
+            </Badge>
+            <Badge
+              variant="outline"
+              className="text-xs px-2 py-0.5 bg-emerald-50 text-emerald-700 border-emerald-200"
+            >
+              {activeCount} active
+            </Badge>
+            <Badge
+              variant="outline"
+              className="text-xs px-2 py-0.5 bg-slate-50 text-slate-600 border-slate-200"
+            >
+              {familyGroups.size} familie{familyGroups.size !== 1 ? "s" : "y"}
+            </Badge>
+          </div>
 
-            return (
-              <div key={familyKey} className="rounded-xl border bg-card p-5 flex flex-col gap-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h2 className="font-[family-name:var(--font-playfair)] text-xl font-semibold">
-                      {latest.display_name}
-                    </h2>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {latest.description}
-                    </p>
-                    <div className="flex flex-wrap gap-1.5 mt-2">
-                      <Badge variant="outline" className="text-[10px]">
-                        v{latest.version ?? 1}
-                      </Badge>
-                      {latest.family_key && latest.family_key !== latest.key && (
-                        <Badge variant="outline" className="text-[10px]">
-                          {latest.family_key}
+          {/* Plan Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+            {Array.from(familyGroups.entries()).map(
+              ([familyKey, versions]) => {
+                const latest = versions[0];
+                const older = versions.slice(1);
+                const isExpanded = expandedFamilies.has(familyKey);
+                const isFree =
+                  latest.monthly_price === 0 && latest.yearly_price === 0;
+
+                return (
+                  <div
+                    key={familyKey}
+                    className={`rounded-2xl border bg-card flex flex-col overflow-hidden transition-shadow hover:shadow-md ${
+                      latest.is_popular
+                        ? "ring-2 ring-brand/30 shadow-[0_0_20px_-5px_rgba(245,158,11,0.15)]"
+                        : "shadow-sm"
+                    }`}
+                  >
+                    {/* Card Header */}
+                    <div className="p-5 pb-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 mb-1.5">
+                            {latest.is_popular && (
+                              <Badge className="text-[10px] px-1.5 py-0 gap-1 bg-brand text-primary-foreground">
+                                <Star className="w-2.5 h-2.5 fill-current" />
+                                Popular
+                              </Badge>
+                            )}
+                            <h2 className="text-base font-semibold tracking-tight truncate">
+                              {latest.display_name}
+                            </h2>
+                          </div>
+                          <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+                            {latest.description}
+                          </p>
+                        </div>
+                        <Badge
+                          variant={
+                            latest.is_active ? "default" : "secondary"
+                          }
+                          className="text-[10px] shrink-0"
+                        >
+                          {latest.is_active ? "Active" : "Inactive"}
                         </Badge>
-                      )}
-                      {latest.sunset_at && (
-                        <Badge variant="destructive" className="text-[10px]">
-                          sunsets {new Date(latest.sunset_at).toLocaleDateString()}
+                      </div>
+
+                      {/* Badges row */}
+                      <div className="flex flex-wrap gap-1.5 mt-3">
+                        <Badge
+                          variant="outline"
+                          className="text-[10px]"
+                        >
+                          v{latest.version ?? 1}
                         </Badge>
-                      )}
-                      {latest.accepts_new_subscriptions === false && (
-                        <Badge variant="secondary" className="text-[10px]">
-                          no new subs
+                        <Badge
+                          variant="outline"
+                          className={`text-[10px] capitalize ${
+                            latest.target_role === "talent"
+                              ? "bg-blue-50 text-blue-700 border-blue-200"
+                              : latest.target_role === "recruiter"
+                              ? "bg-purple-50 text-purple-700 border-purple-200"
+                              : "bg-slate-50 text-slate-600 border-slate-200"
+                          }`}
+                        >
+                          {latest.target_role}
                         </Badge>
+                        {latest.family_key &&
+                          latest.family_key !== latest.key && (
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] font-mono"
+                            >
+                              {latest.family_key}
+                            </Badge>
+                          )}
+                        {latest.sunset_at && (
+                          <Badge
+                            variant="destructive"
+                            className="text-[10px]"
+                          >
+                            Sunsets{" "}
+                            {new Date(
+                              latest.sunset_at
+                            ).toLocaleDateString()}
+                          </Badge>
+                        )}
+                        {latest.accepts_new_subscriptions ===
+                          false && (
+                          <Badge
+                            variant="secondary"
+                            className="text-[10px]"
+                          >
+                            no new subs
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Price */}
+                    <div className="px-5 pb-1">
+                      {isFree ? (
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-3xl font-bold tracking-tight">
+                            Free
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-3xl font-bold tracking-tight">
+                            {formatPriceInRupees(latest.monthly_price)}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            /month
+                          </span>
+                          {latest.yearly_price > 0 && (
+                            <span className="text-sm text-muted-foreground">
+                              · {formatPriceInRupees(latest.yearly_price)}
+                              /yr
+                            </span>
+                          )}
+                        </div>
                       )}
                     </div>
-                  </div>
-                  <Badge
-                    variant={latest.is_active ? "default" : "secondary"}
-                    className="text-[10px]"
-                  >
-                    {latest.is_active ? "Active" : "Inactive"}
-                  </Badge>
-                </div>
 
-                <div className="text-2xl font-semibold tracking-tight">
-                  {latest.monthly_price === 0 && latest.yearly_price === 0 ? (
-                    <span>Free</span>
-                  ) : (
-                    <span>
-                      {formatPriceInRupees(latest.monthly_price)}/mo
-                      {latest.yearly_price > 0 && (
-                        <span className="text-sm text-muted-foreground ml-1">
-                          · {formatPriceInRupees(latest.yearly_price)}/yr
-                        </span>
-                      )}
-                    </span>
-                  )}
-                </div>
+                    <Separator className="mt-4" />
 
-                <ul className="space-y-2 flex-1">
-                  {latest.features.map((feature, idx) => (
-                    <li
-                      key={idx}
-                      className="flex items-start gap-2 text-sm text-muted-foreground"
-                    >
-                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                  {latest.features.length === 0 && (
-                    <li className="text-sm text-muted-foreground italic">
-                      No features listed
-                    </li>
-                  )}
-                </ul>
-
-                <div className="flex flex-wrap items-center gap-2 pt-2">
-                  <PlanEditSheet
-                    plan={latest}
-                    onSave={(payload) => handleSave(latest, payload)}
-                    isSaving={updateMutation.isPending}
-                  />
-                  <CreatePlanVersionSheet plan={latest} onSuccess={handlePlanChange} />
-                  <EditFamilyBenefitsSheet plan={latest} onSuccess={handlePlanChange} />
-                  <SunsetPlanDialog plan={latest} plans={plans ?? []} onSuccess={handlePlanChange} />
-                  <ScheduleMigrationSheet plan={latest} plans={plans ?? []} onSuccess={handlePlanChange} />
-                </div>
-
-                {older.length > 0 && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => toggleFamily(familyKey)}
-                      className="flex items-center justify-center gap-1.5 pt-1 text-xs text-muted-foreground hover:text-foreground transition-colors border-t border-border/50"
-                    >
-                      {isExpanded ? (
-                        <ChevronUp className="w-3.5 h-3.5" />
-                      ) : (
-                        <ChevronDown className="w-3.5 h-3.5" />
-                      )}
-                      {isExpanded
-                        ? "Hide older versions"
-                        : `Older versions (${older.length})`}
-                    </button>
-
-                    {isExpanded && (
-                      <div className="space-y-2 -mx-1">
-                        {older.map((v) => (
-                          <div
-                            key={v.key}
-                            className="rounded-lg border border-border/60 bg-muted/30 p-3 flex flex-col gap-2"
+                    {/* Features */}
+                    <div className="px-5 py-4 flex-1">
+                      <ul className="space-y-2.5">
+                        {latest.features.map((feature, idx) => (
+                          <li
+                            key={idx}
+                            className="flex items-start gap-2.5 text-sm text-muted-foreground"
                           >
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                                <Badge variant="outline" className="text-[10px] shrink-0">
-                                  v{v.version ?? 1}
-                                </Badge>
-                                <span className="text-xs font-mono text-muted-foreground truncate">
-                                  {v.key}
-                                </span>
-                                {v.sunset_at && (
-                                  <Badge variant="destructive" className="text-[10px]">
-                                    sunsets {new Date(v.sunset_at).toLocaleDateString()}
-                                  </Badge>
-                                )}
-                                {v.accepts_new_subscriptions === false && (
-                                  <Badge variant="secondary" className="text-[10px]">
-                                    no new subs
-                                  </Badge>
-                                )}
-                              </div>
-                              <Badge
-                                variant={v.is_active ? "default" : "secondary"}
-                                className="text-[10px] shrink-0"
-                              >
-                                {v.is_active ? "Active" : "Inactive"}
-                              </Badge>
-                            </div>
+                            <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                            <span>{feature}</span>
+                          </li>
+                        ))}
+                        {latest.features.length === 0 && (
+                          <li className="text-sm text-muted-foreground italic">
+                            No features listed
+                          </li>
+                        )}
+                      </ul>
+                    </div>
 
-                            <div className="text-sm font-medium">
-                              {v.monthly_price === 0 && v.yearly_price === 0 ? (
-                                "Free"
-                              ) : (
-                                <span>
-                                  {formatPriceInRupees(v.monthly_price)}/mo
-                                  {v.yearly_price > 0 && (
-                                    <span className="text-xs text-muted-foreground ml-1">
-                                      · {formatPriceInRupees(v.yearly_price)}/yr
+                    {/* Actions */}
+                    <div className="px-4 pb-4">
+                      <div className="flex flex-wrap items-center gap-2 pt-3 border-t">
+                        <PlanEditSheet
+                          plan={latest}
+                          onSave={(payload) =>
+                            handleSave(latest, payload)
+                          }
+                          isSaving={updateMutation.isPending}
+                        />
+                        <CreatePlanVersionSheet
+                          plan={latest}
+                          onSuccess={handlePlanChange}
+                        />
+                        <EditFamilyBenefitsSheet
+                          plan={latest}
+                          onSuccess={handlePlanChange}
+                        />
+                        <SunsetPlanDialog
+                          plan={latest}
+                          plans={plans ?? []}
+                          onSuccess={handlePlanChange}
+                        />
+                        <ScheduleMigrationSheet
+                          plan={latest}
+                          plans={plans ?? []}
+                          onSuccess={handlePlanChange}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Older versions */}
+                    {older.length > 0 && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => toggleFamily(familyKey)}
+                          className="flex items-center justify-center gap-1.5 py-2.5 text-xs text-muted-foreground hover:text-foreground transition-colors border-t bg-muted/20"
+                        >
+                          {isExpanded ? (
+                            <ChevronUp className="w-3.5 h-3.5" />
+                          ) : (
+                            <ChevronDown className="w-3.5 h-3.5" />
+                          )}
+                          {isExpanded
+                            ? "Hide versions"
+                            : `${older.length} older version${older.length !== 1 ? "s" : ""}`}
+                        </button>
+
+                        {isExpanded && (
+                          <div className="px-4 pb-4 space-y-2.5 bg-muted/10 pt-3 border-t">
+                            {older.map((v) => (
+                              <div
+                                key={v.key}
+                                className="rounded-lg border bg-card p-3 space-y-2.5"
+                              >
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                                    <Badge
+                                      variant="outline"
+                                      className="text-[10px] shrink-0"
+                                    >
+                                      v{v.version ?? 1}
+                                    </Badge>
+                                    <span className="text-[11px] font-mono text-muted-foreground truncate">
+                                      {v.key}
+                                    </span>
+                                    {v.sunset_at && (
+                                      <Badge
+                                        variant="destructive"
+                                        className="text-[10px]"
+                                      >
+                                        sunsets{" "}
+                                        {new Date(
+                                          v.sunset_at
+                                        ).toLocaleDateString()}
+                                      </Badge>
+                                    )}
+                                    {v.accepts_new_subscriptions ===
+                                      false && (
+                                      <Badge
+                                        variant="secondary"
+                                        className="text-[10px]"
+                                      >
+                                        no new subs
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <Badge
+                                    variant={
+                                      v.is_active
+                                        ? "default"
+                                        : "secondary"
+                                    }
+                                    className="text-[10px] shrink-0"
+                                  >
+                                    {v.is_active ? "Active" : "Inactive"}
+                                  </Badge>
+                                </div>
+
+                                <div className="text-sm font-medium">
+                                  {v.monthly_price === 0 &&
+                                  v.yearly_price === 0 ? (
+                                    "Free"
+                                  ) : (
+                                    <span>
+                                      {formatPriceInRupees(
+                                        v.monthly_price
+                                      )}
+                                      /mo
+                                      {v.yearly_price > 0 && (
+                                        <span className="text-xs text-muted-foreground ml-1">
+                                          ·{" "}
+                                          {formatPriceInRupees(
+                                            v.yearly_price
+                                          )}
+                                          /yr
+                                        </span>
+                                      )}
                                     </span>
                                   )}
-                                </span>
-                              )}
-                            </div>
+                                </div>
 
-                            <div className="flex flex-wrap items-center gap-1.5">
-                              <PlanEditSheet
-                                plan={v}
-                                onSave={(payload) => handleSave(v, payload)}
-                                isSaving={updateMutation.isPending}
-                              />
-                              <SunsetPlanDialog plan={v} plans={plans ?? []} onSuccess={handlePlanChange} />
-                              <ScheduleMigrationSheet plan={v} plans={plans ?? []} onSuccess={handlePlanChange} />
-                            </div>
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                  <PlanEditSheet
+                                    plan={v}
+                                    onSave={(payload) =>
+                                      handleSave(v, payload)
+                                    }
+                                    isSaving={updateMutation.isPending}
+                                  />
+                                  <SunsetPlanDialog
+                                    plan={v}
+                                    plans={plans ?? []}
+                                    onSuccess={handlePlanChange}
+                                  />
+                                  <ScheduleMigrationSheet
+                                    plan={v}
+                                    plans={plans ?? []}
+                                    onSuccess={handlePlanChange}
+                                  />
+                                </div>
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
+                        )}
+                      </>
                     )}
-                  </>
-                )}
-              </div>
-            );
-          })}
-        </div>
+                  </div>
+                );
+              }
+            )}
+          </div>
+        </>
       )}
     </div>
   );

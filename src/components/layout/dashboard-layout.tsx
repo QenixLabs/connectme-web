@@ -38,6 +38,7 @@ const NAV_ITEMS_BY_ROLE: Record<"talent" | "recruiter", NavItem[]> = {
     { href: "/recruiter/dashboard", label: "Home", icon: Home },
     { href: "/recruiter/find-talent", label: "Search", icon: Search },
     { href: "/recruiter/campaigns", label: "Campaigns", icon: Briefcase },
+    { href: "/recruiter/requests", label: "Requests", icon: UserCheck },
     { href: "/recruiter/messages", label: "Messages", icon: MessageSquare },
   ],
 };
@@ -108,6 +109,39 @@ export function DashboardLayout({
       });
     };
 
+    const handleCollaborationAccepted = (data: {
+      requestId?: string;
+      actorId?: string;
+      name?: string;
+      username?: string;
+      profilePhoto?: string;
+      conversationId?: string;
+    }) => {
+      queryClient.invalidateQueries({ queryKey: ["collaboration-requests"] });
+      const displayName = data.name || data.username || "Talent";
+      show({
+        title: `${displayName} accepted your connection request`,
+        variant: "success",
+        position: "top-right",
+      });
+    };
+
+    const handleCollaborationRejected = (data: {
+      requestId?: string;
+      actorId?: string;
+      name?: string;
+      username?: string;
+      profilePhoto?: string;
+    }) => {
+      queryClient.invalidateQueries({ queryKey: ["collaboration-requests"] });
+      const displayName = data.name || data.username || "Talent";
+      show({
+        title: `${displayName} declined your connection request`,
+        variant: "info",
+        position: "top-right",
+      });
+    };
+
     const handleNewMessage = (message: {
       content?: string;
       sender_id?: {
@@ -166,6 +200,8 @@ export function DashboardLayout({
 
     socket.on("notification:new", handleNotification);
     socket.on("collaboration-request:new", handleCollaborationRequest);
+    socket.on("collaboration-request:accepted", handleCollaborationAccepted);
+    socket.on("collaboration-request:rejected", handleCollaborationRejected);
     socket.on("message:new", handleNewMessage);
     socket.on("moderation:warning", handleModerationWarning);
     socket.on("moderation:suspension", handleModerationSuspension);
@@ -173,6 +209,8 @@ export function DashboardLayout({
     return () => {
       socket.off("notification:new", handleNotification);
       socket.off("collaboration-request:new", handleCollaborationRequest);
+      socket.off("collaboration-request:accepted", handleCollaborationAccepted);
+      socket.off("collaboration-request:rejected", handleCollaborationRejected);
       socket.off("message:new", handleNewMessage);
       socket.off("moderation:warning", handleModerationWarning);
       socket.off("moderation:suspension", handleModerationSuspension);
@@ -265,13 +303,11 @@ export function DashboardLayout({
                     Profile
                   </Link>
                 </DropdownMenuItem>
-                {role === "talent" && (
-                  <DropdownMenuItem asChild>
-                    <Link href="/talent/requests" className="cursor-pointer">
-                      Requests
-                    </Link>
-                  </DropdownMenuItem>
-                )}
+                <DropdownMenuItem asChild>
+                  <Link href={`/${role}/requests`} className="cursor-pointer">
+                    Requests
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={async () => {
                     await logout();
