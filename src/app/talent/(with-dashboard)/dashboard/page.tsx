@@ -19,6 +19,8 @@ import {
   Compass,
   MapPin,
   Users,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "motion/react";
@@ -33,7 +35,16 @@ import {
 } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { queryKeys } from "@/lib/api/query-keys";
-import { Card } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+  CardAction,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 
 /* ------------------------------------------------------------------ */
@@ -130,6 +141,7 @@ export default function TalentDashboardPage() {
         profilePhoto={profile?.profile_photo}
         location={locationStr}
         isLoading={profileQuery.isLoading}
+        username={profile?.username ?? null}
       />
 
       <ProfileStrengthCard
@@ -156,9 +168,9 @@ export default function TalentDashboardPage() {
       <QuickActions username={profile?.username ?? null} />
 
       {profileQuery.isError && (
-        <div className="rounded-xl bg-error-light border border-error-muted p-4 text-sm text-error-text">
-          Failed to load profile data
-        </div>
+        <Alert variant="destructive">
+          <AlertDescription>Failed to load profile data</AlertDescription>
+        </Alert>
       )}
     </div>
   );
@@ -168,6 +180,13 @@ export default function TalentDashboardPage() {
 /*  WELCOME BAR                                                       */
 /* ------------------------------------------------------------------ */
 
+function getGreetingIcon() {
+  const hour = new Date().getHours();
+  if (hour < 12) return Sun;
+  if (hour < 17) return Sun;
+  return Moon;
+}
+
 function WelcomeBar({
   displayName,
   greeting,
@@ -175,6 +194,7 @@ function WelcomeBar({
   profilePhoto,
   location,
   isLoading,
+  username,
 }: {
   displayName: string;
   greeting: string;
@@ -182,80 +202,113 @@ function WelcomeBar({
   profilePhoto?: string | null;
   location: string;
   isLoading: boolean;
+  username: string | null;
 }) {
+  const today = new Date().toLocaleDateString("en-IN", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+
+  const GreetingIcon = getGreetingIcon();
+
   if (isLoading) {
     return (
-      <Card className="p-4">
-        <div className="flex items-center gap-4">
-          <Skeleton className="h-12 w-12 rounded-full shrink-0" />
+      <Card className="overflow-hidden">
+        <CardHeader className="flex-row items-center gap-4 pb-4 pt-5">
+          <Skeleton className="h-14 w-14 rounded-full shrink-0" />
           <div className="space-y-2 flex-1">
             <Skeleton className="h-3 w-20 rounded-full" />
             <Skeleton className="h-5 w-40" />
             <Skeleton className="h-3 w-28 rounded-full" />
           </div>
-          <Skeleton className="h-9 w-9 rounded-full shrink-0" />
-        </div>
+          <Skeleton className="h-9 w-9 rounded-xl shrink-0" />
+        </CardHeader>
       </Card>
     );
   }
 
   return (
-    <Card className="p-4">
-      <div className="flex items-center gap-4">
-        <div className="h-12 w-12 rounded-full bg-cream border-2 border-gold/20 shrink-0 overflow-hidden grid place-items-center">
-          {profilePhoto ? (
-            <img
-              src={profilePhoto}
-              alt={displayName}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <span className="text-gold-ink font-serif font-semibold text-lg">
-              {displayName.charAt(0).toUpperCase()}
-            </span>
-          )}
-        </div>
+    <motion.div
+      initial={{ opacity: 0, y: -6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, ease: "easeOut" }}
+    >
+      <Link href={`/talent/${username ?? ""}`} className="block">
+        <Card className="overflow-hidden relative">
+          {/* Gold accent line */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2/3 h-0.5 rounded-b-full bg-gradient-to-r from-transparent via-gold/70 to-transparent" />
 
-        <div className="flex-1 min-w-0">
-          <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-ink-muted">
-            {greeting}
-          </p>
-          <h1 className="text-lg font-serif font-semibold text-ink truncate mt-0.5">
-            {displayName}
-          </h1>
-          <div className="flex items-center gap-2 mt-1 flex-wrap">
-            {location && (
-              <span className="inline-flex items-center gap-1 text-[11px] text-ink-soft">
-                <MapPin className="h-3 w-3 text-ink-muted" />
-                {location}
-              </span>
-            )}
-            {isVerified ? (
-              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-success-text bg-success-light border border-success-soft rounded-full px-2.5 py-0.5">
-                <BadgeCheck className="h-3 w-3" />
-                Verified
-              </span>
-            ) : (
-              <Link
-                href="/talent/verify-documents"
-                className="inline-flex items-center gap-1 text-[11px] font-medium text-gold-ink bg-gold-soft border border-gold/20 rounded-full px-2.5 py-0.5 hover:bg-gold-soft/80 transition-colors"
-              >
-                <ShieldCheck className="h-3 w-3" />
-                Verify identity
-              </Link>
-            )}
+        <CardHeader className="flex-row items-center gap-4 pb-4 pt-5">
+          {/* Avatar with subtle glow */}
+          <div className="relative shrink-0">
+            <div className="absolute inset-0 rounded-full bg-gold/10 blur-lg scale-125" />
+            <div className="relative h-14 w-14 rounded-full bg-cream ring-2 ring-gold/30 ring-offset-2 ring-offset-white overflow-hidden grid place-items-center">
+              {profilePhoto ? (
+                <img
+                  src={profilePhoto}
+                  alt={displayName}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="text-gold-ink font-serif font-semibold text-xl">
+                  {displayName.charAt(0).toUpperCase()}
+                </span>
+              )}
+            </div>
           </div>
-        </div>
 
-        <Link
-          href="/talent/profile?edit=1"
-          className="shrink-0 h-9 w-9 rounded-xl bg-cream border border-border flex items-center justify-center text-ink-soft hover:bg-cream-hover transition-colors"
-          aria-label="Edit profile"
-        >
-          <Pencil className="h-4 w-4" />
-        </Link>
-      </div>
-    </Card>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-1.5">
+              <GreetingIcon className="h-3.5 w-3.5 text-gold" />
+              <p className="text-2xs font-medium uppercase tracking-[0.15em] text-muted-foreground">
+                {greeting}
+              </p>
+            </div>
+            <CardTitle className="text-lg font-serif truncate mt-0.5">
+              {displayName}
+            </CardTitle>
+            <p className="text-[11px] text-muted-foreground/70 mt-0.5">
+              {today}
+            </p>
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
+              {location && (
+                <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                  <MapPin className="h-3 w-3" />
+                  {location}
+                </span>
+              )}
+              {isVerified ? (
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-success-text bg-success-light rounded-full px-2.5 py-0.5">
+                  <BadgeCheck className="h-3 w-3" />
+                  Verified
+                </span>
+              ) : (
+                <Link
+                  href="/talent/verify-documents"
+                  className="inline-flex items-center gap-1 text-xs font-medium text-gold-ink bg-gold-soft rounded-full px-2.5 py-0.5 hover:bg-brand-soft transition-colors"
+                >
+                  <ShieldCheck className="h-3 w-3" />
+                  Verify identity
+                </Link>
+              )}
+            </div>
+          </div>
+
+          <CardAction>
+            <Link
+              href="/talent/profile?edit=1"
+              className="h-9 w-9 rounded-xl bg-cream hover:bg-cream-hover inline-flex items-center justify-center text-ink-soft hover:text-ink transition-colors"
+              aria-label="Edit profile"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Pencil className="h-4 w-4" />
+            </Link>
+          </CardAction>
+        </CardHeader>
+        </Card>
+      </Link>
+    </motion.div>
   );
 }
 
@@ -278,34 +331,40 @@ function ProfileStrengthCard({
 }) {
   if (isLoading) {
     return (
-      <Card className="p-4">
-        <div className="flex items-center gap-4">
-          <Skeleton className="h-16 w-16 rounded-full" />
-          <div className="space-y-2 flex-1">
-            <Skeleton className="h-4 w-28" />
-            <Skeleton className="h-3 w-48 rounded-full" />
-            <Skeleton className="h-3 w-36 rounded-full" />
+      <Card>
+        <CardContent className="pt-4">
+          <div className="flex items-center gap-4">
+            <Skeleton className="h-16 w-16 rounded-full" />
+            <div className="space-y-2 flex-1">
+              <Skeleton className="h-4 w-28" />
+              <Skeleton className="h-3 w-48 rounded-full" />
+              <Skeleton className="h-3 w-36 rounded-full" />
+            </div>
+            <Skeleton className="h-8 w-24 rounded-xl" />
           </div>
-          <Skeleton className="h-8 w-24 rounded-xl" />
-        </div>
+        </CardContent>
       </Card>
     );
   }
 
   if (isError || !completeness) {
     return (
-      <Card className="p-4">
-        <div className="flex items-center gap-3">
-          <AlertCircle className="h-4 w-4 text-error shrink-0" />
-          <span className="text-[13px] text-ink-soft flex-1">Could not load profile strength</span>
-          <button
-            onClick={onRetry}
-            className="rounded-xl bg-cream hover:bg-cream-hover p-1.5 transition-colors"
-            aria-label="Retry"
-          >
-            <RefreshCcw className="h-3.5 w-3.5 text-ink-muted" />
-          </button>
-        </div>
+      <Card>
+        <CardContent className="pt-4">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-full bg-error-light inline-flex items-center justify-center shrink-0">
+              <AlertCircle className="h-4 w-4 text-error" />
+            </div>
+            <span className="text-sm text-muted-foreground flex-1">Could not load profile strength</span>
+            <button
+              onClick={onRetry}
+              className="rounded-xl bg-cream hover:bg-cream-hover p-1.5 transition-colors"
+              aria-label="Retry"
+            >
+              <RefreshCcw className="h-3.5 w-3.5 text-ink-muted" />
+            </button>
+          </div>
+        </CardContent>
       </Card>
     );
   }
@@ -319,66 +378,74 @@ function ProfileStrengthCard({
   const priorityMissing = completeness.missingFields.slice(0, 3);
 
   return (
-    <Card className="p-4">
-      <div className="flex items-center gap-4">
-        <div className="relative shrink-0">
-          <svg width={68} height={68} className="-rotate-90">
-            <circle
-              cx={34}
-              cy={34}
-              r={radius}
-              fill="none"
-              stroke="var(--color-cream-deep)"
-              strokeWidth={5}
-            />
-            <motion.circle
-              cx={34}
-              cy={34}
-              r={radius}
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={5}
-              strokeLinecap="round"
-              className="text-gold"
-              strokeDasharray={circumference}
-              initial={{ strokeDashoffset: circumference }}
-              animate={{ strokeDashoffset: offset }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-            />
-          </svg>
-          <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-ink font-mono">
-            {pct}%
-          </span>
-        </div>
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, delay: 0.08, ease: "easeOut" }}
+    >
+      <Card>
+        <CardContent className="flex items-center gap-4 pt-4">
+          <div className="relative shrink-0">
+            <svg width={68} height={68} className="-rotate-90">
+              <circle
+                cx={34}
+                cy={34}
+                r={radius}
+                fill="none"
+                stroke="var(--color-cream-deep)"
+                strokeWidth={5}
+              />
+              <motion.circle
+                cx={34}
+                cy={34}
+                r={radius}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={5}
+                strokeLinecap="round"
+                className="text-gold"
+                strokeDasharray={circumference}
+                initial={{ strokeDashoffset: circumference }}
+                animate={{ strokeDashoffset: offset }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+              />
+            </svg>
+            <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-ink font-mono">
+              {pct}%
+            </span>
+          </div>
 
-        <div className="flex-1 min-w-0">
-          <p className="text-[13px] font-semibold text-ink">Profile Strength</p>
-          <p className="text-[12px] text-ink-soft mt-0.5">
-            {complete} of {TOTAL_CHECK_FIELDS} fields complete
-          </p>
-          {priorityMissing.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mt-2">
-              {priorityMissing.map((field) => (
-                <span
-                  key={field}
-                  className="inline-flex items-center gap-1 text-[10.5px] text-ink-soft bg-cream border border-border/50 rounded-full px-2 py-1"
-                >
-                  <Circle className="h-2.5 w-2.5 text-ink-muted/60" />
-                  {fieldLabel(field)}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-ink">Profile Strength</p>
+            <CardDescription className="mt-0.5">
+              {complete} of {TOTAL_CHECK_FIELDS} fields complete
+            </CardDescription>
+            {priorityMissing.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {priorityMissing.map((field) => (
+                  <span
+                    key={field}
+                    className="inline-flex items-center gap-1 text-2xs text-muted-foreground bg-cream rounded-full px-2 py-1"
+                  >
+                    <Circle className="h-2 w-2 text-ink-muted/50" />
+                    {fieldLabel(field)}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        </CardContent>
 
-        <Link
-          href="/talent/profile?edit=1"
-          className="shrink-0 rounded-xl bg-cream hover:bg-cream-hover border border-border/60 text-ink text-[12px] font-medium px-3.5 h-8 inline-flex items-center gap-1 transition-colors"
-        >
-          Complete <ChevronRight className="h-3 w-3" />
-        </Link>
-      </div>
-    </Card>
+        <CardFooter className="pt-0">
+          <Link
+            href="/talent/profile?edit=1"
+            className="rounded-xl bg-cream hover:bg-cream-hover text-ink text-xs font-medium px-4 h-8 inline-flex items-center gap-1.5 transition-colors w-full justify-center"
+          >
+            Complete profile <ChevronRight className="h-3 w-3" />
+          </Link>
+        </CardFooter>
+      </Card>
+    </motion.div>
   );
 }
 
@@ -440,12 +507,14 @@ function StatsRow({
 }) {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-3 gap-2.5">
+      <div className="grid grid-cols-3 gap-3">
         {[0, 1, 2].map((i) => (
-          <Card key={i} className="p-3">
-            <Skeleton className="h-3 w-8 rounded-full mb-2" />
-            <Skeleton className="h-6 w-12 mb-1" />
-            <Skeleton className="h-3 w-12 rounded-full" />
+          <Card key={i}>
+            <CardContent className="flex flex-col items-center gap-2 pt-4">
+              <Skeleton className="h-8 w-8 rounded-full" />
+              <Skeleton className="h-6 w-12" />
+              <Skeleton className="h-3 w-8 rounded-full" />
+            </CardContent>
           </Card>
         ))}
       </div>
@@ -453,23 +522,34 @@ function StatsRow({
   }
 
   const items = [
-    { label: "7d Views", value: views7d, icon: Eye },
-    { label: "30d Views", value: views30d, icon: CalendarDays },
-    { label: "Messages", value: messages, icon: Inbox },
+    { label: "7d Views", value: views7d, icon: Eye, tone: "bg-gold-soft text-gold-ink" },
+    { label: "30d Views", value: views30d, icon: CalendarDays, tone: "bg-blue-light text-blue" },
+    { label: "Messages", value: messages, icon: Inbox, tone: "bg-green-light text-green" },
   ] as const;
 
   return (
-    <div className="grid grid-cols-3 gap-2.5">
-      {items.map((item) => (
-        <Card key={item.label} className="p-3">
-          <div className="flex items-center gap-1.5 mb-1.5">
-            <item.icon className="h-3.5 w-3.5 text-ink-muted" />
-            <span className="text-[10px] uppercase tracking-[0.1em] text-ink-muted font-medium">
-              {item.label}
-            </span>
-          </div>
-          <p className="text-xl font-serif font-semibold text-ink">{item.value.toLocaleString()}</p>
-        </Card>
+    <div className="grid grid-cols-3 gap-3">
+      {items.map((item, i) => (
+        <motion.div
+          key={item.label}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.12 + i * 0.08, ease: "easeOut" }}
+        >
+          <Card className="py-3">
+            <CardContent className="flex flex-col items-center gap-2">
+              <div className={cn("h-8 w-8 rounded-full inline-flex items-center justify-center shrink-0", item.tone)}>
+                <item.icon className="h-3.5 w-3.5" />
+              </div>
+              <p className="text-xl font-serif font-bold text-card-foreground tabular-nums">
+                {item.value.toLocaleString()}
+              </p>
+              <p className="text-2xs uppercase tracking-[0.12em] text-muted-foreground font-medium">
+                {item.label}
+              </p>
+            </CardContent>
+          </Card>
+        </motion.div>
       ))}
     </div>
   );
@@ -494,23 +574,37 @@ function SubscriptionPill() {
 
   if (isLoading) {
     return (
-      <Card className="p-3">
-        <Skeleton className="h-4 w-48 rounded-full" />
-      </Card>
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.28, ease: "easeOut" }}
+      >
+        <Card className="py-2.5">
+          <CardContent className="flex items-center gap-2.5">
+            <Skeleton className="h-4 w-48 rounded-full" />
+          </CardContent>
+        </Card>
+      </motion.div>
     );
   }
 
   if (error || !data) {
     return (
-      <Card className="p-3">
-        <div className="flex items-center gap-2 text-[12px] text-ink-soft">
-          <AlertCircle className="h-3.5 w-3.5 text-error shrink-0" />
-          Plan info unavailable
-          <button onClick={() => refetch()} className="ml-auto text-gold text-[11px] font-medium">
-            Retry
-          </button>
-        </div>
-      </Card>
+      <motion.div
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.28, ease: "easeOut" }}
+      >
+        <Card className="py-2.5">
+          <CardContent className="flex items-center gap-2 text-xs text-muted-foreground">
+            <AlertCircle className="h-3.5 w-3.5 text-error shrink-0" />
+            Plan info unavailable
+            <button onClick={() => refetch()} className="ml-auto text-gold text-xs font-medium hover:underline">
+              Retry
+            </button>
+          </CardContent>
+        </Card>
+      </motion.div>
     );
   }
 
@@ -525,39 +619,47 @@ function SubscriptionPill() {
     : null;
 
   return (
-    <Link href="/billing" className="block">
-      <Card className="p-3 hover:border-gold/20 transition-colors cursor-pointer">
-        <div className="flex items-center gap-2">
-          <Zap className="h-3.5 w-3.5 text-gold shrink-0" />
-          <span
-            className={cn(
-              "text-[12px] font-medium rounded-full px-2.5 py-0.5",
-              isFree
-                ? "bg-cream-deep/80 border border-border/40 text-ink-soft"
-                : "bg-gold-soft border border-gold/15 text-gold-ink",
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: 0.28, ease: "easeOut" }}
+    >
+      <Link href="/talent/billing" className="block group">
+        <Card className="py-2.5 transition-shadow group-hover:shadow-md">
+          <CardContent className="flex items-center gap-2.5">
+            <div className="h-7 w-7 rounded-full bg-gold-soft inline-flex items-center justify-center shrink-0">
+              <Zap className="h-3.5 w-3.5 text-gold" />
+            </div>
+            <span
+              className={cn(
+                "text-xs font-semibold rounded-full px-2.5 py-0.5",
+                isFree
+                  ? "bg-muted text-muted-foreground"
+                  : "bg-gold-soft text-gold-ink",
+              )}
+            >
+              {plan?.display_name || "Free"}
+            </span>
+            {!isFree && (
+              <>
+                <span className={cn("h-1.5 w-1.5 rounded-full", dot)} />
+                <span className="text-xs text-muted-foreground">{status === "active" ? "Active" : status}</span>
+              </>
             )}
-          >
-            {plan?.display_name || "Free"}
-          </span>
-          {!isFree && (
-            <>
-              <span className={cn("h-1.5 w-1.5 rounded-full", dot)} />
-              <span className="text-[11px] text-ink-soft">{status === "active" ? "Active" : status}</span>
-            </>
-          )}
-          {endDate && (
-            <span className="text-[11px] text-ink-muted ml-auto">
-              Renews {endDate}
-            </span>
-          )}
-          {isFree && (
-            <span className="ml-auto inline-flex items-center gap-1 text-[11px] font-medium text-gold">
-              Upgrade <ChevronRight className="h-3 w-3" />
-            </span>
-          )}
-        </div>
-      </Card>
-    </Link>
+            {endDate && (
+              <span className="text-xs text-muted-foreground ml-auto">
+                Renews {endDate}
+              </span>
+            )}
+            {isFree && (
+              <span className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-gold group-hover:text-gold-hover transition-colors">
+                Upgrade <ChevronRight className="h-3 w-3" />
+              </span>
+            )}
+          </CardContent>
+        </Card>
+      </Link>
+    </motion.div>
   );
 }
 
@@ -601,20 +703,22 @@ function OpportunityStrip({
       </div>
 
       {campaigns.length === 0 ? (
-        <Card className="p-6 flex flex-col items-center text-center">
-          <div className="h-10 w-10 rounded-xl bg-gold-soft grid place-items-center mb-3">
-            <Compass className="h-5 w-5 text-gold-ink" />
-          </div>
-          <p className="text-[13px] font-medium text-ink">No recommendations yet</p>
-          <p className="text-[12px] text-ink-muted mt-1 max-w-[240px]">
-            Complete your profile to get matched with verified opportunities.
-          </p>
-          <Link
-            href="/talent/profile?edit=1"
-            className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-b from-gold to-gold-light text-white text-[12px] font-medium px-4 h-9 shadow-[0_6px_18px_-8px_oklch(0.74_0.13_80/0.7)]"
-          >
-            Complete profile
-          </Link>
+        <Card>
+          <CardContent className="flex flex-col items-center text-center pt-0">
+            <div className="h-10 w-10 rounded-full bg-gold-soft inline-flex items-center justify-center mb-3">
+              <Compass className="h-5 w-5 text-gold-ink" />
+            </div>
+            <p className="text-sm font-semibold text-ink">No recommendations yet</p>
+            <CardDescription className="mt-1 max-w-[240px]">
+              Complete your profile to get matched with verified opportunities.
+            </CardDescription>
+            <Link
+              href="/talent/profile?edit=1"
+              className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-b from-gold to-gold-light text-white text-xs font-medium px-5 h-9 shadow-[0_6px_18px_-8px_oklch(0.74_0.13_80/0.7)] hover:brightness-105 transition-all"
+            >
+              Complete profile
+            </Link>
+          </CardContent>
         </Card>
       ) : (
         <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-1 px-1">
@@ -707,10 +811,10 @@ function QuickActions({ username }: { username: string | null }) {
             key={a.label}
             href={a.href}
             className={cn(
-              "shrink-0 inline-flex items-center gap-1.5 rounded-full px-4 h-9 text-[12px] font-medium transition-colors",
+              "shrink-0 inline-flex items-center gap-1.5 rounded-full px-4 h-9 text-xs font-medium transition-all",
               a.primary
-                ? "bg-gradient-to-b from-gold to-gold-light text-white shadow-[0_6px_18px_-8px_oklch(0.74_0.13_80/0.7)]"
-                : "bg-card border border-border text-ink-soft hover:bg-cream",
+                ? "bg-gradient-to-b from-gold to-gold-light text-white shadow-[0_6px_18px_-8px_oklch(0.74_0.13_80/0.7)] hover:brightness-105"
+                : "bg-card shadow-sm text-muted-foreground hover:text-foreground hover:shadow-md",
             )}
           >
             <Icon className="h-3.5 w-3.5" />

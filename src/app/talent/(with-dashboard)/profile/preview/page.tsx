@@ -28,6 +28,7 @@ import { talentApi } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
 import type { TalentProfile } from "@/lib/validations/talent-profile.schema";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const gold = {
@@ -50,16 +51,18 @@ function SectionCard({ title, icon: Icon, children }: {
   children: React.ReactNode;
 }) {
   return (
-    <div
-      className="rounded-[14px] border p-4 flex flex-col gap-3"
+    <Card
+      className="rounded-[14px] p-4 gap-3"
       style={{ background: gold.card, borderColor: gold.border }}
     >
-      <div className="flex items-center gap-2">
+      <CardHeader className="p-0 flex-row items-center gap-2">
         {Icon && <Icon className="w-4 h-4" style={{ color: gold.primary }} strokeWidth={2} />}
-        <span className="text-[13px] font-semibold" style={{ color: gold.foreground }}>{title}</span>
-      </div>
-      {children}
-    </div>
+        <CardTitle className="text-[13px] font-semibold" style={{ color: gold.foreground }}>{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="p-0">
+        {children}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -181,8 +184,8 @@ export default function ProfilePreviewPage() {
 
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-5">
         {/* Hero */}
-        <div
-          className="rounded-[14px] border p-5 flex flex-col sm:flex-row items-start gap-5"
+        <Card
+          className="rounded-[14px] p-5 flex flex-col sm:flex-row items-start gap-5"
           style={{ background: gold.card, borderColor: gold.border }}
         >
           <div
@@ -240,7 +243,7 @@ export default function ProfilePreviewPage() {
               </div>
             )}
           </div>
-        </div>
+        </Card>
 
         {/* About */}
         {profile?.about && (

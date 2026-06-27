@@ -36,6 +36,7 @@ import { Switch } from "@/components/ui/switch";
 import { AxiosError } from "axios";
 
 import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -170,9 +171,11 @@ function SectionDivider({ label }: { label: string }) {
 
 function FormCard({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("rounded-2xl border p-4 flex flex-col gap-3 bg-card border-border", className)}>
-      {children}
-    </div>
+    <Card className={cn("rounded-2xl p-4 gap-3 border-border", className)}>
+      <CardContent className="p-0 flex flex-col gap-3">
+        {children}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -541,7 +544,7 @@ function CompletionBanner({ control }: { control: Control<CreateTalentProfileInp
 
   return (
     <section className="px-4 pt-5">
-      <div className="relative overflow-hidden rounded-[24px] shadow-luxe border border-border/60 bg-card">
+      <Card className="relative overflow-hidden rounded-[24px] shadow-luxe border-border/60 p-0 gap-0">
         <div
           className="absolute inset-0 opacity-90"
           style={{
@@ -549,7 +552,7 @@ function CompletionBanner({ control }: { control: Control<CreateTalentProfileInp
               "radial-gradient(120% 80% at 0% 0%, oklch(0.74 0.13 80 / 0.12) 0%, transparent 55%), radial-gradient(120% 80% at 100% 100%, oklch(0.74 0.13 80 / 0.10) 0%, transparent 50%)",
           }}
         />
-        <div className="relative px-5 py-4 flex items-center gap-4">
+        <CardContent className="relative px-5 py-4 flex items-center gap-4">
           <div className="h-12 w-12 rounded-2xl bg-gold-soft border border-gold/30 grid place-items-center">
             <Sparkles className="h-5 w-5 text-gold-ink" />
           </div>
@@ -563,14 +566,14 @@ function CompletionBanner({ control }: { control: Control<CreateTalentProfileInp
             <div className="text-[11px] text-ink-muted">Completion</div>
             <div className="font-serif text-[18px] text-gold leading-none mt-0.5">{pct}%</div>
           </div>
-        </div>
+        </CardContent>
         <div className="relative h-1.5 bg-cream-deep/60">
           <div
             className="h-full bg-gradient-to-r from-gold to-gold/60 transition-all"
             style={{ width: `${pct}%` }}
           />
         </div>
-      </div>
+      </Card>
     </section>
   );
 }
@@ -631,14 +634,14 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl bg-card border border-border/60 shadow-luxe overflow-hidden">
-      <header className="px-5 pt-4 pb-3 flex items-start gap-3">
+    <Card className="rounded-2xl border-border/60 shadow-luxe overflow-hidden p-0 gap-0">
+      <CardHeader className="px-5 pt-4 pb-3 flex-row items-start gap-3">
         <div className="h-10 w-10 rounded-xl bg-gold-soft border border-gold/20 grid place-items-center shrink-0">
           <Icon className="h-4 w-4 text-gold-ink" />
         </div>
         <div className="flex-1 min-w-0">
-          <h2 className="font-serif text-[16px] text-ink leading-tight">{label}</h2>
-          <p className="text-[11.5px] text-ink-muted mt-0.5">{description}</p>
+          <CardTitle className="font-serif text-[16px] text-ink leading-tight">{label}</CardTitle>
+          <CardDescription className="text-[11.5px] text-ink-muted mt-0.5">{description}</CardDescription>
         </div>
         {alwaysPublic ? (
           <span className="flex items-center gap-1.5 text-[10.5px] font-medium uppercase tracking-[0.1em] text-gold-ink bg-gold-soft border border-gold/30 rounded-full pl-2.5 pr-3 py-1">
@@ -648,10 +651,10 @@ function SectionCard({
         ) : (
           <VisibilityToggle isPublic={isPublic!} onToggle={onToggle!} />
         )}
-      </header>
+      </CardHeader>
       <div className="h-px bg-border/60 mx-5" />
-      <div className="px-5 py-4">{children}</div>
-    </section>
+      <CardContent className="px-5 py-4">{children}</CardContent>
+    </Card>
   );
 }
 
@@ -1640,7 +1643,8 @@ export function EditForm({
                                 ref={resumeInputRef}
                                 onChange={handleResumeChange}
                               />
-                              <div className="flex items-center justify-between rounded-[14px] border border-dashed border-gold/40 p-4 bg-card">
+                              <Card className="rounded-[14px] border-dashed border-gold/40 p-0 gap-0">
+                                <CardContent className="flex items-center justify-between p-4">
                                 <div className="flex items-center gap-3 min-w-0">
                                   <div className="w-10 h-10 rounded-xl flex items-center justify-center border border-gold/30 bg-gold-soft">
                                     <FileText className="w-5 h-5 text-gold" strokeWidth={2} />
@@ -1676,7 +1680,8 @@ export function EditForm({
                                     </button>
                                   )}
                                 </div>
-                              </div>
+                                </CardContent>
+                              </Card>
                               <input type="hidden" {...field} value={field.value ?? ''} />
                             </div>
                           </FormControl>
@@ -1786,7 +1791,8 @@ export function EditForm({
 
       {/* ---------- STICKY SAVE BAR ---------- */}
       <div className="fixed bottom-0 inset-x-0 z-30 px-4 pb-4 pt-3 bg-gradient-to-t from-background via-background/95 to-background/0">
-        <div className="max-w-3xl mx-auto rounded-2xl bg-card border border-border/60 shadow-luxe-lg p-2.5 flex items-center gap-2">
+        <Card className="max-w-3xl mx-auto rounded-2xl border-border/60 shadow-luxe-lg p-0 gap-0">
+          <CardContent className="p-2.5 flex items-center gap-2">
           {mode === "edit" && (
             <Button
               type="button"
@@ -1808,7 +1814,8 @@ export function EditForm({
             <Save className="h-4 w-4" />
             {mode === "create" ? "Create profile" : "Save changes"}
           </Button>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

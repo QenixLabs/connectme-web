@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Card, CardContent } from "@/components/ui/card";
 import { PortfolioUploader } from "@/components/portfolio/portfolio-uploader";
 import { PortfolioStats } from "@/components/portfolio/portfolio-stats";
 import { PortfolioCategoryFilter } from "@/components/portfolio/portfolio-category-filter";
@@ -240,7 +241,8 @@ export default function TalentPortfolioPage() {
       {/* Quota + Upgrade row */}
       <div className="grid grid-cols-2 gap-3">
         {/* Images quota */}
-        <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
+        <Card className="rounded-2xl border-border p-4 gap-3">
+          <CardContent className="p-0 space-y-3">
           <div className="flex items-center justify-between">
             <p className="text-[11px] font-medium text-text-muted uppercase tracking-wider">
               Images
@@ -257,11 +259,13 @@ export default function TalentPortfolioPage() {
               )}
               style={{ width: `${imagesPct}%` }}
             />
-          </div>
-        </div>
+           </div>
+          </CardContent>
+        </Card>
 
         {/* Videos quota */}
-        <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
+        <Card className="rounded-2xl border-border p-4 gap-3">
+          <CardContent className="p-0 space-y-3">
           <div className="flex items-center justify-between">
             <p className="text-[11px] font-medium text-text-muted uppercase tracking-wider">
               Videos
@@ -279,11 +283,13 @@ export default function TalentPortfolioPage() {
               style={{ width: `${videosPct}%` }}
             />
           </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Upgrade nudge */}
-      <div className="rounded-2xl border border-border bg-gradient-to-br from-cream to-cream-soft p-4 flex items-center justify-between gap-3">
+      <Card className="rounded-2xl border-border p-0 gap-0 bg-gradient-to-br from-cream to-cream-soft">
+        <CardContent className="p-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-brand/10">
             <TrendingUp className="w-5 h-5 text-brand" strokeWidth={1.5} />
@@ -302,7 +308,8 @@ export default function TalentPortfolioPage() {
           <Sparkles className="w-3 h-3" strokeWidth={1.5} />
           Upgrade
         </button>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Upload zone */}
       <PortfolioUploader

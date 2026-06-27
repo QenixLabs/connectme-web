@@ -49,7 +49,16 @@ export default function TalentRequestsPage() {
   const [profileSheetOpen, setProfileSheetOpen] = useState(false);
 
   const received: RequestItem[] = (data?.received ?? []) as RequestItem[];
-  const sent: RequestItem[] = (data?.sent ?? []) as RequestItem[];
+  const rawSent: RequestItem[] = (data?.sent ?? []) as RequestItem[];
+
+  const sent = useMemo(
+    () =>
+      rawSent.map((req) => ({
+        ...req,
+        requester_id: ((req as unknown as Record<string, unknown>).receiver_id as RequesterProfile) || req.requester_id,
+      })),
+    [rawSent]
+  );
 
   const pendingReceived = received.filter((r) => r.status === "pending");
   const acceptedReceived = received.filter((r) => r.status === "accepted");

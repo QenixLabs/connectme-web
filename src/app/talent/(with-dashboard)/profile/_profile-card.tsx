@@ -2,6 +2,7 @@
 
 import { CheckCircle2, Pencil, LayoutGrid, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Card, CardContent } from "@/components/ui/card";
 import type { TalentProfile } from "@/lib/validations/talent-profile.schema";
 import { ShareProfileDialog } from "@/components/share-profile-dialog";
 
@@ -53,8 +54,8 @@ export function ProfileCard({
     .slice(0, 2);
 
   return (
-    <div className="rounded-2xl bg-card border border-border overflow-hidden">
-      <div className="flex items-center gap-3 p-4">
+    <Card className="rounded-2xl border-border overflow-hidden p-0 gap-0">
+      <CardContent className="p-4 flex items-center gap-3">
         <div className="relative shrink-0">
           {profile.profile_photo ? (
             <img src={profile.profile_photo} alt="" className="w-[52px] h-[52px] rounded-full object-cover" />
@@ -94,9 +95,9 @@ export function ProfileCard({
             ))}
           </div>
         </div>
-      </div>
+      </CardContent>
 
-      <div className="grid grid-cols-3 gap-2 px-4 pb-4">
+      <CardContent className="p-0 grid grid-cols-3 gap-2 px-4 pb-4">
         <button
           onClick={onPortfolio}
           className="h-[34px] rounded-[10px] flex items-center justify-center gap-1.5 text-[12px] font-medium text-ink-soft bg-cream-soft border border-border transition-colors hover:bg-cream-hover"
@@ -121,7 +122,7 @@ export function ProfileCard({
             Share
           </button>
         </ShareProfileDialog>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

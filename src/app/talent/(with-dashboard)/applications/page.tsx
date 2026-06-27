@@ -16,6 +16,7 @@ import { useCampaigns } from "@/lib/api/hooks/useCampaigns";
 import { Campaign } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
 import { SectionHeader } from "@/components/ui/section-header";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -63,10 +64,11 @@ function ApplicationCard({ campaign }: { campaign: Campaign }) {
     .join(", ");
 
   return (
-    <div
-      className="bg-card border border-border rounded-2xl p-[18px] shadow-card hover:-translate-y-0.5 hover:shadow-card-hover transition-all duration-200 flex flex-col gap-3 cursor-pointer"
+    <Card
+      className="rounded-2xl border-border p-[18px] gap-3 shadow-card hover:-translate-y-0.5 hover:shadow-card-hover transition-all duration-200 cursor-pointer"
       onClick={() => router.push(`/talent/opportunities/${campaign._id}`)}
     >
+      <CardContent className="p-0 flex flex-col gap-3">
       <div className="flex items-start justify-between gap-3">
         <div>
           <h3 className="text-base font-bold text-text-primary leading-tight line-clamp-2">
@@ -116,7 +118,8 @@ function ApplicationCard({ campaign }: { campaign: Campaign }) {
           })}
         </p>
       )}
-    </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -165,8 +168,9 @@ export default function TalentApplicationsPage() {
       )}
 
       {!isLoading && !error && campaigns.length === 0 && (
-        <div className="text-center py-20 bg-card border border-border rounded-2xl">
-          <Clock className="w-10 h-10 text-text-muted mx-auto mb-3" strokeWidth={1.5} />
+        <Card className="text-center rounded-2xl border-border">
+          <CardContent className="py-20 flex flex-col items-center">
+          <Clock className="w-10 h-10 text-text-muted mb-3" strokeWidth={1.5} />
           <p className="text-sm text-text-muted mb-1">No applications yet</p>
           <p className="text-xs text-text-muted">
             Browse opportunities and apply to campaigns that match your profile.
@@ -177,7 +181,8 @@ export default function TalentApplicationsPage() {
           >
             Browse Opportunities
           </Button>
-        </div>
+          </CardContent>
+        </Card>
       )}
 
       {!isLoading && !error && campaigns.length > 0 && (
