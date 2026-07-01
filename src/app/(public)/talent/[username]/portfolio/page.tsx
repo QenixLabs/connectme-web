@@ -460,7 +460,7 @@ export default function PublicPortfolioPage() {
 
   if (!data) return null;
 
-  const pinnedItem = data.items.find((i) => i.is_pinned);
+  const pinnedItems = data.items.filter((i) => i.is_pinned).slice(0, 3);
   const rest = data.items.filter((i) => !i.is_pinned);
   const imageCount = data.items.filter((i) => i.type === "image").length;
   const videoCount = data.items.filter((i) => i.type === "video").length;
@@ -474,15 +474,19 @@ export default function PublicPortfolioPage() {
         videoCount={videoCount}
       />
 
-      {pinnedItem && (
+      {pinnedItems.length > 0 && (
         <section className="px-4 pt-5">
           <div className="flex items-center justify-between mb-2 px-1">
             <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-ink-muted flex items-center gap-1.5">
               <Pin className="h-3 w-3 text-gold" /> Pinned
             </p>
-            <span className="text-[10px] text-ink-muted">Featured at top</span>
+            <span className="text-[10px] text-ink-muted">{pinnedItems.length} of 3</span>
           </div>
-          <MediaTile item={pinnedItem} pinned large />
+          <div className="space-y-2.5">
+            {pinnedItems.map((item, idx) => (
+              <MediaTile key={item.id} item={item} pinned large={idx === 0} />
+            ))}
+          </div>
         </section>
       )}
 

@@ -13,6 +13,7 @@ import {
   ScrollText,
   CreditCard,
   BarChart3,
+  Image,
   LogOut,
   Menu,
   ChevronRight,
@@ -46,6 +47,7 @@ const navigation = [
     items: [
       { label: "Reports", href: "/admin/reports", icon: Flag },
       { label: "Appeals", href: "/admin/appeals", icon: MessageSquareWarning },
+      { label: "Portfolio", href: "/admin/portfolio", icon: Image },
     ],
   },
   {
@@ -67,6 +69,7 @@ const pageTitles: Record<string, string> = {
   "/admin/audit-logs": "Audit Logs",
   "/admin/plans": "Plans",
   "/admin/subscriptions": "Subscriptions",
+  "/admin/portfolio": "Portfolio",
 };
 
 function getPageTitle(pathname: string): string {

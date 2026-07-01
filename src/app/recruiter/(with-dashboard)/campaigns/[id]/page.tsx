@@ -40,6 +40,8 @@ import {
   ArrowUpRight,
   Check,
   AlertTriangle,
+  Sparkles,
+  Compass,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -66,6 +68,7 @@ import {
   useCampaignInvites,
   useCampaignAnalytics,
   useCampaignDemographics,
+  useInviteTalent,
 } from '@/lib/api';
 import { campaignApi } from '@/lib/api/campaign';
 import { getApiErrorMessage } from '@/lib/formatters';
@@ -90,6 +93,9 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { useTierGuard } from '@/hooks/use-tier-guard';
 import { useFeatureGuard, isFeatureForbidden } from '@/hooks/use-feature-guard';
+import { usePopup } from '@/hooks/use-popup';
+import { TalentGridCard } from '@/components/talent-grid-card';
+import { useTalentRecommendations } from '@/lib/api/hooks/useTalentRecommendations';
 import { FeatureGateAlert } from '@/components/feature-gate-alert';
 import {
   LineChart,
@@ -275,6 +281,32 @@ export default function CampaignDetailPage() {
   const inviteTeamMember = useInviteTeamMember();
   const updateTeamRole = useUpdateTeamMemberRole();
   const removeTeamMember = useRemoveTeamMember();
+
+  const {
+    data: recResponse,
+    isLoading: isLoadingRecs,
+    error: recsError,
+  } = useTalentRecommendations(campaignId, 10, campaign?.status === 'active');
+
+  const inviteTalent = useInviteTalent();
+  const { show: showPopup } = usePopup();
+
+  const handleInvite = (talentId: string) => {
+    guard(() =>
+      inviteTalent.mutate(
+        { campaignId, talentId },
+        {
+          onSuccess: () =>
+            showPopup({ title: 'Talent invited', variant: 'success', position: 'bottom-center' }),
+          onError: (err) => {
+            if (handleFeatureError(err)) return;
+            const e = err as { response?: { data?: { message?: string } } };
+            showPopup({ title: 'Failed to invite', description: e.response?.data?.message, variant: 'error', position: 'bottom-center' });
+          },
+        },
+      ),
+    );
+  };
 
   const [noteAppId, setNoteAppId] = useState<string | null>(null);
   const [noteText, setNoteText] = useState('');
@@ -571,7 +603,7 @@ export default function CampaignDetailPage() {
         transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
       >
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-5 bg-muted-bg/50 border border-border/60 rounded-xl p-1">
+          <TabsList className="grid w-full grid-cols-6 bg-muted-bg/50 border border-border/60 rounded-xl p-1">
             <TabsTrigger
               value="applicants"
               className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-luxe data-[state=active]:text-ink text-ink-muted text-xs font-semibold py-2.5"
@@ -604,6 +636,12 @@ export default function CampaignDetailPage() {
               className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-luxe data-[state=active]:text-ink text-ink-muted text-xs font-semibold py-2.5"
             >
               Team
+            </TabsTrigger>
+            <TabsTrigger
+              value="recommended"
+              className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-luxe data-[state=active]:text-ink text-ink-muted text-xs font-semibold py-2.5"
+            >
+              Recommended
             </TabsTrigger>
             <TabsTrigger
               value="analytics"
@@ -972,6 +1010,55 @@ export default function CampaignDetailPage() {
                 </p>
               </div>
             )}
+
+            {campaign?.status === 'active' && applications && applications.length > 0 && (() => {
+              const talentRecs = recResponse?.data;
+              if (!talentRecs || talentRecs.length === 0) return null;
+              return (
+                <div className="mt-6 pt-6 border-t border-border/60">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-gold" strokeWidth={1.5} />
+                      <p className="text-[13px] font-semibold text-ink">
+                        You Might Also Like
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setActiveTab('recommended')}
+                      className="text-[11px] font-medium text-gold flex items-center gap-0.5 hover:text-gold-hover transition-colors"
+                    >
+                      View all recommended
+                      <ArrowUpRight className="h-3 w-3" />
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {talentRecs.slice(0, 3).map((r) => {
+                      const talent = r.talent as Record<string, unknown>;
+                      return (
+                        <TalentGridCard
+                          key={r._id}
+                          profile={{
+                            _id: talent?._id as string,
+                            user_id: talent?.user_id as string,
+                            username: talent?.username as string,
+                            full_legal_name: talent?.full_legal_name as string,
+                            profile_photo: talent?.profile_photo as string,
+                            location: talent?.location as Record<string, string>,
+                            professions: talent?.professions as string[],
+                            is_verified: true,
+                          }}
+                          matchScore={r.total_score}
+                          onViewProfile={() =>
+                            router.push("/talent/" + (talent?.username as string))
+                          }
+                          onInvite={() => handleInvite(talent?.user_id as string)}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
           </TabsContent>
 
           <TabsContent value="invites" className="space-y-4 mt-6">
@@ -1302,6 +1389,78 @@ export default function CampaignDetailPage() {
                 </div>
               )}
             </div>
+          </TabsContent>
+
+          <TabsContent value="recommended" className="space-y-4 mt-6">
+            {campaign?.status !== 'active' ? (
+              <div className="text-center py-24 bg-card border border-border/60 rounded-2xl shadow-luxe">
+                <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-muted-bg mx-auto">
+                  <Compass className="w-9 h-9 text-ink-muted/40" strokeWidth={1.5} />
+                </div>
+                <p className="text-base font-serif font-semibold text-ink">
+                  Campaign is not active
+                </p>
+                <p className="mt-2 text-sm text-ink-muted max-w-sm mx-auto leading-relaxed">
+                  Publish this campaign to get AI-powered talent recommendations.
+                </p>
+              </div>
+            ) : isLoadingRecs ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <Skeleton key={i} className="aspect-[3/4] rounded-2xl" />
+                ))}
+              </div>
+            ) : recsError ? (
+              <Alert variant="destructive" className="rounded-xl border-error-muted">
+                <AlertDescription>
+                  {getApiErrorMessage(recsError, 'Failed to load recommendations')}
+                </AlertDescription>
+              </Alert>
+            ) : (() => {
+              const talentRecs = recResponse?.data;
+              if (!talentRecs || talentRecs.length === 0) {
+                return (
+                  <div className="text-center py-24 bg-card border border-border/60 rounded-2xl shadow-luxe">
+                    <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-muted-bg mx-auto">
+                      <Sparkles className="w-9 h-9 text-ink-muted/40" strokeWidth={1.5} />
+                    </div>
+                    <p className="text-base font-serif font-semibold text-ink">
+                      No strong matches yet
+                    </p>
+                    <p className="mt-2 text-sm text-ink-muted max-w-sm mx-auto leading-relaxed">
+                      Try broadening your campaign requirements to find more matching talent.
+                    </p>
+                  </div>
+                );
+              }
+              return (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {talentRecs.map((r) => {
+                    const talent = r.talent as Record<string, unknown>;
+                    return (
+                      <TalentGridCard
+                        key={r._id}
+                        profile={{
+                          _id: talent?._id as string,
+                          user_id: talent?.user_id as string,
+                          username: talent?.username as string,
+                          full_legal_name: talent?.full_legal_name as string,
+                          profile_photo: talent?.profile_photo as string,
+                          location: talent?.location as Record<string, string>,
+                          professions: talent?.professions as string[],
+                          is_verified: true,
+                        }}
+                        matchScore={r.total_score}
+                        onViewProfile={() =>
+                          router.push("/talent/" + (talent?.username as string))
+                        }
+                        onInvite={() => handleInvite(talent?.user_id as string)}
+                      />
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </TabsContent>
 
           <TabsContent value="analytics" className="space-y-6 mt-6">

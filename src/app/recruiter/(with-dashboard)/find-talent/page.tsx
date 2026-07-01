@@ -15,11 +15,13 @@ import {
   Loader2,
   Users,
   Filter,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getApiErrorMessage } from "@/lib/formatters";
 import { useTalentSearch } from "@/lib/api/hooks/useTalentSearch";
 import { useDistinctProfessions } from "@/lib/api/hooks/useDistinctProfessions";
+import { useDashboardRecommendations } from "@/lib/api/hooks/useDashboardRecommendations";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
@@ -226,6 +228,12 @@ export default function FindTalentPage() {
     isFetching,
     error,
   } = useTalentSearch(filters);
+
+  const isSearching = !!debouncedSearch || hasActiveFilters;
+  const {
+    data: dashRec,
+    isLoading: dashRecLoading,
+  } = useDashboardRecommendations(4, !isSearching);
 
   const { data: professionOptions, isLoading: professionsLoading } =
     useDistinctProfessions("");
@@ -578,6 +586,57 @@ export default function FindTalentPage() {
           </div>
         )}
       </div>
+
+      {/* -------- Recommended for You -------- */}
+      {!isSearching && (() => {
+        const recs = dashRec?.data;
+        if (dashRecLoading) {
+          return (
+            <div className="mb-5">
+              <div className="flex items-center gap-2 mb-3">
+                <Skeleton className="h-4 w-36 rounded-full" />
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[0, 1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="aspect-[3/4] rounded-2xl" />
+                ))}
+              </div>
+            </div>
+          );
+        }
+        if (recs && recs.length > 0) {
+          return (
+            <div className="mb-5">
+              <div className="flex items-center gap-2 mb-3">
+                <Sparkles className="h-4 w-4 text-gold" strokeWidth={1.5} />
+                <p className="text-[13px] font-semibold text-ink">
+                  Recommended for You
+                </p>
+                <span className="text-[10px] text-ink-muted font-medium">
+                  AI-matched from your active campaigns
+                </span>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {recs.map((talent) => (
+                  <TalentGridCard
+                    key={talent._id}
+                    profile={{
+                      ...talent,
+                      is_verified: true,
+                    }}
+                    matchScore={talent.match_score}
+                    campaignName={talent.matched_campaign}
+                    onViewProfile={() =>
+                      router.push("/talent/" + talent.username)
+                    }
+                  />
+                ))}
+              </div>
+            </div>
+          );
+        }
+        return null;
+      })()}
 
       {/* -------- Results -------- */}
       <div className="flex-1 min-w-0">

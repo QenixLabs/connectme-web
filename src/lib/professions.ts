@@ -5,7 +5,7 @@ export const PROFESSIONS = [
   'Musician',
   'Voice Artist',
   'Photographer',
-  'Content Creator',
+  'Influencer',
   'Extra / Background',
 ] as const;
 

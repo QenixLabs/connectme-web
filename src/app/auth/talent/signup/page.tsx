@@ -6,9 +6,31 @@ import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ChevronRight, Check, X, Eye, EyeOff } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import {
+  ChevronRight,
+  Check,
+  X,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  ArrowLeft,
+  User,
+  Mail,
+  Phone,
+  LockKeyhole,
+  Globe,
+  Clapperboard,
+  Camera,
+  Music4,
+  Mic2,
+  Video,
+  PenTool,
+  Sparkles,
+} from "lucide-react";
 import { authApi, talentApi } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
+import { PROFESSIONS } from "@/lib/professions";
 import { AuthLayout } from "@/components/layout/auth-layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,7 +39,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { PasswordStrength } from "@/components/ui/password-strength";
 import { PasswordRules } from "@/components/ui/password-rules";
-import { DividerLabel } from "@/components/ui/divider-label";
+import { StepIndicator } from "@/components/ui/step-indicator";
 import {
   Form,
   FormField,
@@ -29,12 +51,33 @@ import {
 
 type Step = 1 | 2 | 3;
 
-import { PROFESSIONS } from "@/lib/professions";
+const PROFESSION_ICONS: Record<string, React.ReactNode> = {
+  Actor: <Clapperboard className="w-5 h-5" strokeWidth={1.5} />,
+  Model: <Camera className="w-5 h-5" strokeWidth={1.5} />,
+  Dancer: <Music4 className="w-5 h-5" strokeWidth={1.5} />,
+  Musician: <Music4 className="w-5 h-5" strokeWidth={1.5} />,
+  "Voice Artist": <Mic2 className="w-5 h-5" strokeWidth={1.5} />,
+  Photographer: <Camera className="w-5 h-5" strokeWidth={1.5} />,
+  Influencer: <Video className="w-5 h-5" strokeWidth={1.5} />,
+  "Extra / Background": <PenTool className="w-5 h-5" strokeWidth={1.5} />,
+  Other: <Sparkles className="w-5 h-5" strokeWidth={1.5} />,
+};
+
+const STEP_LABELS = [
+  { label: "Profession", description: "Who are you?" },
+  { label: "Details", description: "About you" },
+  { label: "Security", description: "Set password" },
+];
 
 const schema = z
   .object({
     profession: z.string().min(1, "Please select your profession"),
     customProfession: z.string().optional(),
+    creatorLink: z
+      .string()
+      .url("Enter a valid URL")
+      .optional()
+      .or(z.literal("")),
     username: z
       .string()
       .min(6, "Username must be at least 6 characters")
@@ -52,13 +95,29 @@ const schema = z
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
     path: ["confirmPassword"],
-  });
+  })
+  .refine(
+    (data) => {
+      if (data.profession === "Influencer") {
+        return data.creatorLink && data.creatorLink.length > 0;
+      }
+      return true;
+    },
+    { message: "Creator link is required for influencers", path: ["creatorLink"] },
+  );
 
 type FormValues = z.infer<typeof schema>;
+
+const stepVariants = {
+  enter: (dir: number) => ({ x: dir > 0 ? 60 : -60, opacity: 0 }),
+  center: { x: 0, opacity: 1 },
+  exit: (dir: number) => ({ x: dir > 0 ? -60 : 60, opacity: 0 }),
+};
 
 export default function TalentSignupPage() {
   const router = useRouter();
   const [step, setStep] = useState<Step>(1);
+  const [direction, setDirection] = useState(1);
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -75,6 +134,7 @@ export default function TalentSignupPage() {
     defaultValues: {
       profession: "",
       customProfession: "",
+      creatorLink: "",
       username: "",
       email: "",
       phone: "",
@@ -85,8 +145,8 @@ export default function TalentSignupPage() {
   });
 
   const password = form.watch("password");
-  const confirmPassword = form.watch("confirmPassword");
   const usernameValue = form.watch("username");
+  const selectedProfession = form.watch("profession");
 
   const checkUsername = async (username: string) => {
     if (!username || username.length < 6 || username.length > 20) {
@@ -144,21 +204,26 @@ export default function TalentSignupPage() {
     };
   }, []);
 
-  const totalSteps = 3;
+  const goToStep = (next: Step) => {
+    setDirection(next > step ? 1 : -1);
+    setStep(next);
+  };
 
   const handleNext = async () => {
     setServerError(null);
     if (step === 1) {
-      const ok = await form.trigger(["profession"]);
+      const ok = await form.trigger(["profession", "creatorLink"]);
       const profession = form.getValues("profession");
+      if (profession === "Influencer" && !form.getValues("creatorLink")?.trim()) {
+        form.setError("creatorLink", { message: "Creator link is required for influencers" });
+        return;
+      }
       if (profession === "Other" && !form.getValues("customProfession")?.trim()) {
-        form.setError("customProfession", {
-          message: "Please enter your profession",
-        });
+        form.setError("customProfession", { message: "Please enter your profession" });
         return;
       }
       if (!ok) return;
-      setStep(2);
+      goToStep(2);
     } else if (step === 2) {
       const ok = await form.trigger(["username", "email", "phone"]);
       if (usernameStatus === "taken") {
@@ -166,13 +231,13 @@ export default function TalentSignupPage() {
         return;
       }
       if (!ok) return;
-      setStep(3);
+      goToStep(3);
     }
   };
 
   const handleBack = () => {
     setServerError(null);
-    setStep((s) => Math.max(s - 1, 1) as Step);
+    goToStep(Math.max(step - 1, 1) as Step);
   };
 
   const onSubmit = async (values: FormValues) => {
@@ -190,18 +255,18 @@ export default function TalentSignupPage() {
         auth_provider: "credentials",
         username: values.username,
         profession: finalProfession,
+        creator_link: values.creatorLink || undefined,
         verification_method: verificationMethod,
       });
-      router.push(`/auth/verify-email?email=${encodeURIComponent(values.email)}&method=${verificationMethod}`);
+      router.push(
+        `/auth/verify-email?email=${encodeURIComponent(values.email)}&method=${verificationMethod}`,
+      );
     } catch (err: unknown) {
       setServerError(getApiErrorMessage(err, "Registration failed"));
     } finally {
       setLoading(false);
     }
   };
-
-  const stepTitle =
-    step === 1 ? "Your Profession" : step === 2 ? "Your Details" : "Secure Your Account";
 
   const passwordRules = [
     { ok: password.length >= 8, text: "At least 8 characters" },
@@ -211,348 +276,488 @@ export default function TalentSignupPage() {
 
   return (
     <AuthLayout subtitle="Create your talent account" showGlow>
-      <Card progress={(step / totalSteps) * 100}>
-        <CardContent className="px-8 py-8">
-          <div className="flex items-center justify-between mb-6">
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15, duration: 0.45, ease: [0.25, 0.4, 0.25, 1] }}
+      >
+        <div className="mb-6">
+          <StepIndicator steps={STEP_LABELS} current={step - 1} className="justify-center" />
+        </div>
+
+        <Card>
+          <CardContent className="px-8 py-8">
             <div>
-              <h1 className="text-xl font-bold text-text-primary">{stepTitle}</h1>
-              <p className="text-sm text-text-muted font-light mt-0.5">
-                Step {step} of {totalSteps}
+              <h2 className="text-xl font-serif font-bold text-text-primary text-center tracking-tight">
+                {step === 1 ? "What do you do?" : step === 2 ? "Tell us about you" : "Secure your account"}
+              </h2>
+              <p className="text-sm text-text-tertiary font-light text-center mt-1">
+                {step === 1
+                  ? "Select your primary profession to get started"
+                  : step === 2
+                    ? "Set up your profile details"
+                    : "Choose a strong password"}
               </p>
             </div>
-            <div className="flex gap-1.5">
-              {Array.from({ length: totalSteps }).map((_, i) => (
-                <div
-                  key={i}
-                  className={`h-1.5 rounded-full transition-all duration-300 ${
-                    i < step ? "bg-brand w-6" : "bg-surface-secondary w-3"
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
 
-          {serverError && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertDescription>{serverError}</AlertDescription>
-            </Alert>
-          )}
+            {serverError && (
+              <Alert variant="destructive" className="mt-4">
+                <AlertDescription>{serverError}</AlertDescription>
+              </Alert>
+            )}
 
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-              {/* STEP 1 */}
-              {step === 1 && (
-                <div className="space-y-5">
-                  <p className="text-sm text-text-tertiary mb-4">
-                    Select your primary profession to personalize your experience.
-                  </p>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    {[...PROFESSIONS, 'Other'].map((p) => (
-                      <button
-                        key={p}
-                        type="button"
-                        onClick={() => {
-                          form.setValue("profession", p, { shouldValidate: true });
-                          form.clearErrors("profession");
-                          if (p !== "Other") form.clearErrors("customProfession");
-                        }}
-                        className={`relative rounded-xl border-2 p-4 text-center transition-all ${
-                          form.watch("profession") === p
-                            ? "border-brand bg-brand-light"
-                            : "border-border bg-card hover:border-border"
-                        }`}
-                      >
-                        <div className="font-medium text-sm text-text-primary">{p}</div>
-                        {form.watch("profession") === p && (
-                          <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-brand flex items-center justify-center"
-                          >
-                            <ChevronRight className="w-3 h-3 text-on-brand" strokeWidth={2.5} />
-                          </div>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                  <FormMessage>
-                    {form.formState.errors.profession?.message}
-                  </FormMessage>
-
-                  {form.watch("profession") === "Other" && (
-                    <FormField
-                      control={form.control}
-                      name="customProfession"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Your Profession</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Enter your profession" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
-
-                  <Button
-                    type="button"
-                    variant="dark"
-                    className="w-full"
-                    onClick={handleNext}
-                    disabled={
-                      !form.watch("profession") ||
-                      (form.watch("profession") === "Other" &&
-                        !form.watch("customProfession")?.trim())
-                    }
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)}>
+                <AnimatePresence mode="wait" custom={direction}>
+                  <motion.div
+                    key={step}
+                    custom={direction}
+                    variants={stepVariants}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    transition={{ duration: 0.35, ease: [0.25, 0.4, 0.25, 1] }}
                   >
-                    Continue
-                    <ChevronRight className="w-4 h-4" strokeWidth={1.5} />
-                  </Button>
-                </div>
-              )}
-
-              {/* STEP 2 */}
-              {step === 2 && (
-                <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="username"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Username</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="alphanumeric (6-20)"
-                            {...field}
-                            onChange={(e) => handleUsernameChange(e.target.value)}
-                            onBlur={handleUsernameBlur}
-                          />
-                        </FormControl>
-                        <div className="flex items-center gap-2 mt-1.5 h-5">
-                          {usernameStatus === "checking" && (
-                            <span className="text-xs text-text-muted">Checking...</span>
-                          )}
-                          {usernameStatus === "available" && (
-                            <span className="text-xs text-green-600 flex items-center gap-1">
-                              <Check className="w-3 h-3" /> Available
-                            </span>
-                          )}
-                          {usernameStatus === "taken" && (
-                            <span className="text-xs text-red-500 flex items-center gap-1">
-                              <X className="w-3 h-3" /> Already taken
-                            </span>
-                          )}
+                    {/* STEP 1: Profession */}
+                    {step === 1 && (
+                      <div className="mt-6 space-y-5">
+                        <div className="grid grid-cols-2 gap-3">
+                          {[...PROFESSIONS, "Other"].map((p) => {
+                            const isSelected = selectedProfession === p;
+                            return (
+                              <motion.button
+                                key={p}
+                                type="button"
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={() => {
+                                  form.setValue("profession", p, { shouldValidate: true });
+                                  form.clearErrors("profession");
+                                  form.clearErrors("customProfession");
+                                  form.clearErrors("creatorLink");
+                                }}
+                                className={`relative rounded-xl border-2 p-4 text-center transition-all duration-200 ${
+                                  isSelected
+                                    ? "border-brand bg-brand-light/50 shadow-sm shadow-brand/5"
+                                    : "border-border/60 bg-card hover:border-brand/20 hover:bg-card-hover"
+                                }`}
+                              >
+                                <div
+                                  className={`mx-auto mb-2 w-10 h-10 rounded-xl flex items-center justify-center transition-colors duration-200 ${
+                                    isSelected
+                                      ? "bg-brand/10 text-brand"
+                                      : "bg-muted-bg text-text-muted"
+                                  }`}
+                                >
+                                  {PROFESSION_ICONS[p] ?? <Sparkles className="w-5 h-5" strokeWidth={1.5} />}
+                                </div>
+                                <div className="font-medium text-sm text-text-primary">
+                                  {p}
+                                </div>
+                                {isSelected && (
+                                  <motion.div
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    className="absolute top-2 right-2 w-5 h-5 rounded-full bg-brand flex items-center justify-center"
+                                  >
+                                    <Check className="w-3 h-3 text-white" strokeWidth={2.5} />
+                                  </motion.div>
+                                )}
+                              </motion.button>
+                            );
+                          })}
                         </div>
-                        <p className="text-xs text-text-muted mt-1">
-                          6-20 characters, letters and numbers only
-                        </p>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                        <FormMessage>
+                          {form.formState.errors.profession?.message}
+                        </FormMessage>
 
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email Address</FormLabel>
-                        <FormControl>
-                          <Input type="email" placeholder="you@example.com" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Mobile Number</FormLabel>
-                        <FormControl>
-                          <PhoneInput
-                            value={field.value}
-                            onChange={field.onChange}
-                            showFlag
-                            placeholder="9876543210"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <p className="text-xs text-text-muted -mt-2">
-                    OTP will be sent to verify your account
-                  </p>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-text-primary">
-                      Receive OTP via
-                    </label>
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setVerificationMethod("email")}
-                        className={`flex-1 py-2.5 px-4 rounded-lg border-2 text-sm font-medium transition-all ${
-                          verificationMethod === "email"
-                            ? "border-brand bg-brand-light text-text-primary"
-                            : "border-border bg-card text-text-muted hover:border-border"
-                        }`}
-                      >
-                        Email
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setVerificationMethod("phone")}
-                        className={`flex-1 py-2.5 px-4 rounded-lg border-2 text-sm font-medium transition-all ${
-                          verificationMethod === "phone"
-                            ? "border-brand bg-brand-light text-text-primary"
-                            : "border-border bg-card text-text-muted hover:border-border"
-                        }`}
-                      >
-                        Phone
-                      </button>
-                    </div>
-                    <p className="text-xs text-text-muted">
-                      {verificationMethod === "email"
-                        ? "OTP will be sent to your email address"
-                        : "OTP will be sent to your phone number"}
-                    </p>
-                  </div>
-
-                  <div className="flex gap-3 pt-2">
-                    <Button type="button" variant="secondary" onClick={handleBack}>
-                      Back
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="dark"
-                      className="flex-1"
-                      onClick={handleNext}
-                    >
-                      Continue
-                      <ChevronRight className="w-4 h-4" strokeWidth={1.5} />
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {/* STEP 3 */}
-              {step === 3 && (
-                <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Password</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Input
-                              type={showPassword ? "text" : "password"}
-                              placeholder="Min. 8 characters"
-                              className="pr-10"
-                              {...field}
+                        {selectedProfession === "Other" && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                          >
+                            <FormField
+                              control={form.control}
+                              name="customProfession"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Your Profession</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      placeholder="Enter your profession"
+                                      className="h-11 rounded-xl"
+                                      {...field}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
                             />
+                          </motion.div>
+                        )}
+
+                        {selectedProfession && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                          >
+                            <FormField
+                              control={form.control}
+                              name="creatorLink"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>
+                                    Creator link
+                                    {selectedProfession === "Influencer" ? (
+                                      <span className="text-rose-500"> *</span>
+                                    ) : (
+                                      <span className="text-text-muted font-normal">
+                                        {" "}
+                                        (optional)
+                                      </span>
+                                    )}
+                                  </FormLabel>
+                                  <FormControl>
+                                    <div className="relative group">
+                                      <div className="absolute left-0 top-0 bottom-0 w-10 flex items-center justify-center text-text-muted group-focus-within:text-brand transition-colors duration-200">
+                                        <Globe className="w-4 h-4" strokeWidth={1.5} />
+                                      </div>
+                                      <Input
+                                        placeholder="https://instagram.com/yourhandle"
+                                        className="pl-10 h-11 rounded-xl"
+                                        {...field}
+                                      />
+                                    </div>
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </motion.div>
+                        )}
+
+                        <Button
+                          type="button"
+                          variant="dark"
+                          size="lg"
+                          className="w-full h-11 rounded-xl text-sm font-semibold"
+                          onClick={handleNext}
+                          disabled={
+                            !selectedProfession ||
+                            (selectedProfession === "Other" &&
+                              !form.watch("customProfession")?.trim())
+                          }
+                        >
+                          Continue
+                          <ArrowRight className="w-4 h-4" strokeWidth={1.5} />
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* STEP 2: Details */}
+                    {step === 2 && (
+                      <div className="mt-6 space-y-4">
+                        <FormField
+                          control={form.control}
+                          name="username"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs font-medium uppercase tracking-widest text-text-muted">
+                                Username
+                              </FormLabel>
+                              <FormControl>
+                                <div className="relative group">
+                                  <div className="absolute left-0 top-0 bottom-0 w-10 flex items-center justify-center text-text-muted group-focus-within:text-brand transition-colors duration-200">
+                                    <User className="w-4 h-4" strokeWidth={1.5} />
+                                  </div>
+                                  <Input
+                                    placeholder="alphanumeric (6-20)"
+                                    className="pl-10 h-11 rounded-xl"
+                                    {...field}
+                                    onChange={(e) => handleUsernameChange(e.target.value)}
+                                    onBlur={handleUsernameBlur}
+                                  />
+                                </div>
+                              </FormControl>
+                              <div className="flex items-center gap-2 mt-1.5 min-h-[18px]">
+                                {usernameStatus === "checking" && (
+                                  <span className="text-xs text-text-muted">
+                                    Checking availability...
+                                  </span>
+                                )}
+                                {usernameStatus === "available" && (
+                                  <span className="text-xs text-success flex items-center gap-1 font-medium">
+                                    <Check className="w-3 h-3" /> Available
+                                  </span>
+                                )}
+                                {usernameStatus === "taken" && (
+                                  <span className="text-xs text-destructive flex items-center gap-1 font-medium">
+                                    <X className="w-3 h-3" /> Already taken
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-text-muted mt-0.5 font-light">
+                                6-20 characters, letters and numbers only
+                              </p>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs font-medium uppercase tracking-widest text-text-muted">
+                                Email Address
+                              </FormLabel>
+                              <FormControl>
+                                <div className="relative group">
+                                  <div className="absolute left-0 top-0 bottom-0 w-10 flex items-center justify-center text-text-muted group-focus-within:text-brand transition-colors duration-200">
+                                    <Mail className="w-4 h-4" strokeWidth={1.5} />
+                                  </div>
+                                  <Input
+                                    type="email"
+                                    placeholder="you@example.com"
+                                    className="pl-10 h-11 rounded-xl"
+                                    {...field}
+                                  />
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="phone"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs font-medium uppercase tracking-widest text-text-muted">
+                                Mobile Number
+                              </FormLabel>
+                              <FormControl>
+                                <div className="relative group">
+                                  <div className="absolute left-0 top-0 bottom-0 w-10 flex items-center justify-center text-text-muted z-10">
+                                    <Phone className="w-4 h-4" strokeWidth={1.5} />
+                                  </div>
+                                  <div className="pl-10">
+                                    <PhoneInput
+                                      value={field.value}
+                                      onChange={field.onChange}
+                                      showFlag
+                                      placeholder="9876543210"
+                                    />
+                                  </div>
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <div className="space-y-3 pt-1">
+                          <label className="text-xs font-medium uppercase tracking-widest text-text-muted">
+                            Receive OTP via
+                          </label>
+                          <div className="flex gap-2">
                             <button
                               type="button"
-                              tabIndex={-1}
-                              onClick={() => setShowPassword((v) => !v)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary transition-colors"
+                              onClick={() => setVerificationMethod("email")}
+                              className={`flex-1 py-2.5 px-4 rounded-xl border-2 text-sm font-medium transition-all duration-200 ${
+                                verificationMethod === "email"
+                                  ? "border-brand bg-brand-light/50 text-text-primary"
+                                  : "border-border/60 bg-card text-text-muted hover:border-border"
+                              }`}
                             >
-                              {showPassword ? (
-                                <Eye className="w-4 h-4" strokeWidth={1.3} />
-                              ) : (
-                                <EyeOff className="w-4 h-4" strokeWidth={1.3} />
-                              )}
+                              Email
                             </button>
-                          </div>
-                        </FormControl>
-                        <PasswordStrength password={password} />
-                        <PasswordRules rules={passwordRules} />
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="confirmPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Confirm Password</FormLabel>
-                        <FormControl>
-                          <div className="relative">
-                            <Input
-                              type={showConfirm ? "text" : "password"}
-                              placeholder="Re-enter your password"
-                              className="pr-10"
-                              {...field}
-                            />
                             <button
                               type="button"
-                              tabIndex={-1}
-                              onClick={() => setShowConfirm((v) => !v)}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary transition-colors"
+                              onClick={() => setVerificationMethod("phone")}
+                              className={`flex-1 py-2.5 px-4 rounded-xl border-2 text-sm font-medium transition-all duration-200 ${
+                                verificationMethod === "phone"
+                                  ? "border-brand bg-brand-light/50 text-text-primary"
+                                  : "border-border/60 bg-card text-text-muted hover:border-border"
+                              }`}
                             >
-                              {showConfirm ? (
-                                <Eye className="w-4 h-4" strokeWidth={1.3} />
-                              ) : (
-                                <EyeOff className="w-4 h-4" strokeWidth={1.3} />
-                              )}
+                              Phone
                             </button>
                           </div>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+                        </div>
+
+                        <div className="flex gap-3 pt-4">
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="lg"
+                            className="h-11 rounded-xl"
+                            onClick={handleBack}
+                          >
+                            <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
+                            Back
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="dark"
+                            size="lg"
+                            className="flex-1 h-11 rounded-xl text-sm font-semibold"
+                            onClick={handleNext}
+                          >
+                            Continue
+                            <ArrowRight className="w-4 h-4" strokeWidth={1.5} />
+                          </Button>
+                        </div>
+                      </div>
                     )}
-                  />
 
-                  <div className="flex gap-3 pt-2">
-                    <Button type="button" variant="secondary" onClick={handleBack}>
-                      Back
-                    </Button>
-                    <Button
-                      type="submit"
-                      variant="primary"
-                      className="flex-1"
-                      disabled={loading}
-                      isLoading={loading}
-                      loadingLabel="Creating account..."
-                    >
-                      Create account
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </form>
-          </Form>
+                    {/* STEP 3: Security */}
+                    {step === 3 && (
+                      <div className="mt-6 space-y-4">
+                        <FormField
+                          control={form.control}
+                          name="password"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs font-medium uppercase tracking-widest text-text-muted">
+                                Password
+                              </FormLabel>
+                              <FormControl>
+                                <div className="relative group">
+                                  <div className="absolute left-0 top-0 bottom-0 w-10 flex items-center justify-center text-text-muted group-focus-within:text-brand transition-colors duration-200">
+                                    <LockKeyhole className="w-4 h-4" strokeWidth={1.5} />
+                                  </div>
+                                  <Input
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder="Min. 8 characters"
+                                    className="pl-10 pr-10 h-11 rounded-xl"
+                                    {...field}
+                                  />
+                                  <button
+                                    type="button"
+                                    tabIndex={-1}
+                                    onClick={() => setShowPassword((v) => !v)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md text-text-muted hover:text-text-secondary hover:bg-muted-bg transition-colors"
+                                  >
+                                    {showPassword ? (
+                                      <EyeOff className="w-4 h-4" strokeWidth={1.3} />
+                                    ) : (
+                                      <Eye className="w-4 h-4" strokeWidth={1.3} />
+                                    )}
+                                  </button>
+                                </div>
+                              </FormControl>
+                              <PasswordStrength password={password} />
+                              <PasswordRules rules={passwordRules} />
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
 
-          {step === 1 && (
-            <>
-              <DividerLabel label="Already have an account?" />
-              <Link
-                href="/auth/login"
-                className="block w-full h-11 rounded-lg border border-border text-text-primary text-sm font-medium hover:bg-page active:scale-[0.98] transition-all flex items-center justify-center"
-              >
-                Sign in instead
-              </Link>
-            </>
-          )}
-        </CardContent>
-      </Card>
+                        <FormField
+                          control={form.control}
+                          name="confirmPassword"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-xs font-medium uppercase tracking-widest text-text-muted">
+                                Confirm Password
+                              </FormLabel>
+                              <FormControl>
+                                <div className="relative group">
+                                  <div className="absolute left-0 top-0 bottom-0 w-10 flex items-center justify-center text-text-muted group-focus-within:text-brand transition-colors duration-200">
+                                    <LockKeyhole className="w-4 h-4" strokeWidth={1.5} />
+                                  </div>
+                                  <Input
+                                    type={showConfirm ? "text" : "password"}
+                                    placeholder="Re-enter your password"
+                                    className="pl-10 pr-10 h-11 rounded-xl"
+                                    {...field}
+                                  />
+                                  <button
+                                    type="button"
+                                    tabIndex={-1}
+                                    onClick={() => setShowConfirm((v) => !v)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md text-text-muted hover:text-text-secondary hover:bg-muted-bg transition-colors"
+                                  >
+                                    {showConfirm ? (
+                                      <EyeOff className="w-4 h-4" strokeWidth={1.3} />
+                                    ) : (
+                                      <Eye className="w-4 h-4" strokeWidth={1.3} />
+                                    )}
+                                  </button>
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
 
-      <p className="text-center text-xs text-text-muted mt-6">
-        By creating an account you agree to our{" "}
-        <Link href="/terms" className="text-text-tertiary hover:text-text-primary underline underline-offset-2">
-          Terms
-        </Link>{" "}
-        and{" "}
-        <Link href="/privacy" className="text-text-tertiary hover:text-text-primary underline underline-offset-2">
-          Privacy Policy
-        </Link>
-      </p>
+                        <div className="flex gap-3 pt-4">
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="lg"
+                            className="h-11 rounded-xl"
+                            onClick={handleBack}
+                          >
+                            <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
+                            Back
+                          </Button>
+                          <Button
+                            type="submit"
+                            variant="primary"
+                            size="lg"
+                            className="flex-1 h-11 rounded-xl text-sm font-semibold"
+                            disabled={loading}
+                            isLoading={loading}
+                            loadingLabel="Creating account..."
+                          >
+                            Create account
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+              </form>
+            </Form>
+
+            {step === 1 && (
+              <div className="mt-6 pt-6 border-t border-border/40">
+                <p className="text-center text-xs text-text-muted font-light mb-3">
+                  Already have an account?
+                </p>
+                <Link
+                  href="/auth/login"
+                  className="block w-full h-11 rounded-xl border border-border/60 bg-card text-text-primary text-sm font-medium hover:border-brand/30 hover:bg-brand-light/30 active:scale-[0.98] transition-all duration-200 flex items-center justify-center"
+                >
+                  Sign in instead
+                </Link>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <p className="text-center text-xs text-text-muted mt-6 font-light">
+          By creating an account you agree to our{" "}
+          <Link
+            href="/terms"
+            className="text-text-tertiary hover:text-text-primary underline underline-offset-2 transition-colors"
+          >
+            Terms
+          </Link>{" "}
+          and{" "}
+          <Link
+            href="/privacy"
+            className="text-text-tertiary hover:text-text-primary underline underline-offset-2 transition-colors"
+          >
+            Privacy Policy
+          </Link>
+        </p>
+      </motion.div>
     </AuthLayout>
   );
 }

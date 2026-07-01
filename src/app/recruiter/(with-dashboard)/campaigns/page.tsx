@@ -47,6 +47,7 @@ import {
   useCloneCampaign,
 } from "@/lib/api/hooks/useCampaigns";
 import { useSaveCampaignTemplate } from "@/lib/api/hooks/useCampaignTemplates";
+import { useCampaignTopMatches } from "@/lib/api/hooks/useCampaignTopMatches";
 import { useTierGuard } from "@/hooks/use-tier-guard";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -272,6 +273,12 @@ export default function RecruiterCampaignsPage() {
   const draftCount = statusCounts.draft ?? 0;
   const closedCount = statusCounts.closed ?? 0;
   const totalCount = (data?.pages?.[0] as Record<string, unknown>)?.total as number ?? allCampaigns.length;
+
+  const activeCampaignIds = useMemo(
+    () => allCampaigns.filter((c) => c.status === 'active').map((c) => c._id),
+    [allCampaigns],
+  );
+  const { data: topMatchesMap } = useCampaignTopMatches(activeCampaignIds);
 
   if (isLoading) {
     return (
@@ -511,6 +518,7 @@ export default function RecruiterCampaignsPage() {
                 campaign={campaign}
                 guard={guard}
                 index={idx}
+                topMatch={topMatchesMap?.get(campaign._id) ?? undefined}
               />
             ))}
 
@@ -717,10 +725,12 @@ function CampaignCard({
   campaign,
   guard,
   index,
+  topMatch,
 }: {
   campaign: Campaign;
   guard: (action: () => void) => void;
   index: number;
+  topMatch?: { username: string; matchScore: number };
 }) {
   const router = useRouter();
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -806,6 +816,21 @@ function CampaignCard({
                   {tag}
                 </Badge>
               ))}
+            </div>
+          )}
+
+          {topMatch && (
+            <div className="px-1">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  router.push("/talent/" + topMatch.username);
+                }}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-brand/10 text-brand text-[10px] font-semibold hover:bg-brand/20 transition-colors"
+              >
+                <Sparkles className="h-2.5 w-2.5" strokeWidth={1.5} />
+                Top match: @{topMatch.username} ({topMatch.matchScore}%)
+              </button>
             </div>
           )}
         </div>

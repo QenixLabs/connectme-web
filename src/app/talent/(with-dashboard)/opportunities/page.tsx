@@ -15,6 +15,7 @@ import {
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { getApiErrorMessage } from "@/lib/formatters";
+import { INDUSTRIES } from "@/lib/industries";
 import {
   useCampaigns,
   useBookmarkCampaign,
@@ -44,11 +45,7 @@ const TABS = [
 
 const INDUSTRY_OPTIONS = [
   { value: "all", label: "Industry" },
-  { value: "Film", label: "Film" },
-  { value: "Fashion", label: "Fashion" },
-  { value: "TV", label: "TV" },
-  { value: "Theater", label: "Theater" },
-  { value: "Commercial", label: "Commercial" },
+  ...INDUSTRIES.map((i) => ({ value: i, label: i })),
 ];
 
 const ROLE_TYPE_OPTIONS = [

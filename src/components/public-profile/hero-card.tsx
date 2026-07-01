@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { MapPin, Sparkles, BadgeCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { resolveHeroBackground } from "@/lib/hero-color";
 import type { TalentProfile } from "@/lib/validations/talent-profile.schema";
 
 interface HeroCardProps {
@@ -11,6 +13,7 @@ interface HeroCardProps {
 }
 
 export function HeroCard({ profile, showLocation = true, showAvailability = true }: HeroCardProps) {
+  const [imgFailed, setImgFailed] = useState(false);
   const displayName = profile.full_legal_name || profile.username || "Talent";
   const loc = [profile.location?.city, profile.location?.state]
     .filter(Boolean)
@@ -19,117 +22,167 @@ export function HeroCard({ profile, showLocation = true, showAvailability = true
 
   const isAvailable = profile.availability === "available";
 
+  const hero = resolveHeroBackground(
+    imgFailed ? undefined : profile.hero_background,
+    profile.username ?? "default",
+  );
+  const fallbackBg = resolveHeroBackground(
+    undefined,
+    profile.username ?? "default",
+  ).background;
+  const showBgImage = hero.isImage && !imgFailed;
+
   return (
     <section className="px-4 pt-5">
-      <div className="relative overflow-hidden rounded-[28px] shadow-luxe-lg border border-border/60">
-        {/* Layered background */}
+      <div className="relative overflow-hidden rounded-[32px] shadow-2xl">
+        {/* Hero banner */}
         <div
-          className="relative h-[300px]"
+          className="relative h-[340px] transition-colors duration-700"
           style={{
-            background:
-              "radial-gradient(120% 80% at 20% 0%, oklch(0.42 0.06 60) 0%, transparent 55%), radial-gradient(120% 90% at 100% 100%, oklch(0.30 0.04 50) 0%, transparent 50%), linear-gradient(160deg, oklch(0.22 0.03 55) 0%, oklch(0.30 0.04 55) 60%, oklch(0.18 0.03 50) 100%)",
+            background: showBgImage ? undefined : (imgFailed ? fallbackBg : hero.background),
+            backgroundImage: showBgImage ? hero.background : undefined,
           }}
         >
-          {/* Subtle gold grain rings */}
+          {/* Grain texture */}
           <div
-            className="absolute inset-0 opacity-[0.18] mix-blend-screen"
+            className="absolute inset-0 z-0"
             style={{
-              backgroundImage:
-                "radial-gradient(circle at 30% 20%, oklch(0.74 0.13 80 / 0.5), transparent 35%), radial-gradient(circle at 80% 70%, oklch(0.74 0.13 80 / 0.35), transparent 40%)",
+              background: `
+                radial-gradient(ellipse 120% 60% at 50% 30%, rgba(255,255,255,0.04) 0%, transparent 65%),
+                radial-gradient(ellipse 80% 40% at 50% 85%, rgba(0,0,0,0.15) 0%, transparent 60%)
+              `,
             }}
           />
+          <div
+            className="absolute inset-0 z-[1] opacity-[0.03] mix-blend-overlay"
+            style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E\")" }}
+          />
 
-          {/* Status chip */}
+          {/* Hidden img for URL detection */}
+          {hero.isImage && !imgFailed && (
+            <img
+              src={profile.hero_background!}
+              alt=""
+              className="hidden"
+              onError={() => setImgFailed(true)}
+            />
+          )}
+
+          {/* Tier badge — top left */}
+          <div className="absolute top-4 left-4 z-10 flex items-center gap-1.5 rounded-full bg-black/25 backdrop-blur-md border border-white/10 px-2.5 py-1">
+            <Sparkles className="h-3 w-3 text-white/80" />
+            <span className="text-[10px] font-medium uppercase tracking-[0.12em] text-white/80">
+              Tier {(profile.verification_tier || 1) > 3 ? 3 : profile.verification_tier || 1}
+            </span>
+          </div>
+
+          {/* Verified badge — top left after tier */}
+          {profile.is_verified && (
+            <div
+              className="absolute top-4 z-10 flex items-center gap-1 rounded-full bg-black/25 backdrop-blur-md border border-white/10 px-2.5 py-1"
+              style={{ left: profile.verification_tier ? "86px" : "16px" }}
+            >
+              <BadgeCheck className="h-3 w-3 text-emerald-400" strokeWidth={2.5} />
+              <span className="text-[10px] font-medium text-white/80 tracking-wide">Verified</span>
+            </div>
+          )}
+
+          {/* Availability — top right */}
           {showAvailability && (
-            <div className="absolute top-4 right-4 flex items-center gap-1.5 rounded-full bg-black/35 backdrop-blur-md px-2.5 py-1 border border-white/10">
+            <div className="absolute top-4 right-4 z-10 flex items-center gap-1.5 rounded-full bg-black/25 backdrop-blur-md border border-white/10 px-2.5 py-1">
               <span className="relative flex h-1.5 w-1.5">
-                <span className={cn(
-                  "absolute inline-flex h-full w-full animate-ping rounded-full opacity-75",
-                  isAvailable ? "bg-emerald-400" : "bg-amber-400"
-                )} />
-                <span className={cn(
-                  "relative inline-flex h-1.5 w-1.5 rounded-full",
-                  isAvailable ? "bg-emerald-400" : "bg-amber-400"
-                )} />
+                <span
+                  className={cn(
+                    "absolute inline-flex h-full w-full animate-ping rounded-full opacity-75",
+                    isAvailable ? "bg-emerald-400" : "bg-amber-400",
+                  )}
+                />
+                <span
+                  className={cn(
+                    "relative inline-flex h-1.5 w-1.5 rounded-full",
+                    isAvailable ? "bg-emerald-400" : "bg-amber-400",
+                  )}
+                />
               </span>
-              <span className="text-[11px] font-medium text-white tracking-wide">
+              <span className="text-[10px] font-medium text-white/80 tracking-wide">
                 {isAvailable ? "Available" : "Busy"}
               </span>
             </div>
           )}
 
-          {/* Tier ribbon */}
-          <div className="absolute top-4 left-4 flex items-center gap-1.5 rounded-full bg-gold/15 backdrop-blur-md border border-gold/30 px-2.5 py-1">
-            <Sparkles className="h-3 w-3 text-gold" />
-            <span className="text-[10px] font-medium uppercase tracking-[0.12em] text-gold">
-              Tier {profile.verification_tier || 1}
-            </span>
-          </div>
-
-          {/* Avatar */}
-          <div className="absolute inset-x-0 top-12 grid place-items-center">
+          {/* Avatar + name cluster — centered */}
+          <div className="absolute inset-x-0 top-[42px] z-10 flex flex-col items-center">
+            {/* Avatar */}
             <div className="relative">
-              <div
-                className="absolute -inset-3 rounded-[26px] blur-2xl opacity-60"
-                style={{ background: "radial-gradient(circle, oklch(0.74 0.13 80 / 0.55), transparent 70%)" }}
-              />
-              <div className="relative h-28 w-28 rounded-[22px] p-[1.5px] bg-gradient-to-br from-gold via-gold/40 to-transparent">
-                <div className="h-full w-full rounded-[20px] bg-gradient-to-br from-[oklch(0.32_0.03_55)] to-[oklch(0.20_0.03_50)] grid place-items-center overflow-hidden">
+              <div className="absolute -inset-1 rounded-full bg-white/10 blur-lg" />
+              <div className="relative h-[120px] w-[120px] rounded-full p-[3px] bg-gradient-to-b from-white/30 to-white/5">
+                <div className="h-full w-full rounded-full bg-white/10 backdrop-blur-sm overflow-hidden ring-1 ring-white/15">
                   {profile.profile_photo ? (
                     <img
                       src={profile.profile_photo}
                       alt={displayName}
-                      className="h-full w-full object-cover rounded-[20px]"
+                      className="h-full w-full object-cover"
                     />
                   ) : (
-                    <span className="font-serif text-[60px] leading-none font-semibold text-white/25 select-none">
+                    <span className="h-full w-full grid place-items-center font-serif text-[52px] leading-none font-semibold text-white/30 select-none">
                       {displayName.charAt(0).toUpperCase()}
                     </span>
                   )}
                 </div>
               </div>
-              {/* verified badge */}
+              {/* Verified checkmark */}
               {profile.is_verified && (
-                <div className="absolute -bottom-1.5 -right-1.5 h-7 w-7 rounded-full bg-gold grid place-items-center shadow-lg ring-4 ring-[oklch(0.22_0.03_55)]">
+                <div className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full bg-emerald-500 grid place-items-center shadow-lg ring-[3px] ring-[#1a1c2a]">
                   <BadgeCheck className="h-4 w-4 text-white" strokeWidth={2.4} />
                 </div>
+              )}
+            </div>
+
+            {/* Name */}
+            <h1 className="mt-4 font-serif text-[26px] font-semibold text-white leading-tight tracking-tight">
+              {displayName}
+            </h1>
+
+            {/* Profession + Location */}
+            <div className="mt-1.5 flex items-center gap-2 text-[13px] text-white/70">
+              {professionStr && <span className="font-medium text-white/90">{professionStr}</span>}
+              {professionStr && loc && showLocation && (
+                <span className="w-1 h-1 rounded-full bg-white/30" />
+              )}
+              {showLocation && loc && (
+                <span className="flex items-center gap-1">
+                  <MapPin className="h-3 w-3 text-white/50" />
+                  {loc}
+                </span>
               )}
             </div>
           </div>
         </div>
 
-        {/* Identity card overlapping the hero base */}
-        <div className="-mt-10 mx-3 mb-3 relative">
-          <div className="rounded-2xl bg-card/95 backdrop-blur-xl border border-border/70 shadow-luxe px-5 pt-4 pb-4">
-            <div className="flex items-center justify-center gap-2">
-              <h1 className="font-serif text-[22px] font-semibold text-ink leading-tight">
-                {displayName}
-              </h1>
-            </div>
-            {profile.active_plan === 'talent_verified' && (
-              <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-full bg-gold/15 backdrop-blur-md border border-gold/30 px-2.5 py-1">
-                <BadgeCheck className="h-3.5 w-3.5 text-gold" strokeWidth={2.5} />
-                <span className="text-[11px] font-medium text-gold tracking-wide">Verified</span>
+        {/* Identity card — overlapping */}
+        <div className="-mt-10 mx-3 mb-3 relative z-10">
+          <div className="rounded-2xl bg-card/95 backdrop-blur-xl border border-border/60 shadow-lg px-5 pt-4 pb-4">
+            {/* Active plan badge */}
+            {profile.active_plan === "talent_verified" && (
+              <div className="mb-3 flex justify-center">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-gold-soft border border-gold/30 px-2.5 py-1">
+                  <BadgeCheck className="h-3.5 w-3.5 text-gold-ink" strokeWidth={2.5} />
+                  <span className="text-[11px] font-medium text-gold-ink tracking-wide">Verified</span>
+                </span>
               </div>
             )}
-            <p className="mt-1 text-[12.5px] text-ink-muted text-center flex items-center justify-center gap-1.5">
-              <span className="text-ink-soft font-medium">{professionStr || "Talent"}</span>
-              {professionStr && loc && showLocation && <span className="text-ink-muted/60">·</span>}
-              {showLocation && loc && (
-                <>
-                  <MapPin className="h-3 w-3 text-gold" />
-                  {loc}
-                </>
-              )}
-            </p>
-
-            {/* Stat strip */}
-            <div className="mt-4 grid grid-cols-3 gap-2">
-              <Stat label="Projects" value={String(profile.analytics?.profile_views_30d ?? "42")} />
+            <div className="grid grid-cols-3 gap-1">
+              <Stat
+                label="Projects"
+                value={String(profile.analytics?.profile_views_30d ?? "—")}
+              />
               <StatDivider />
-              <Stat label="Experience" value="6+ yrs" />
+              <Stat label="Shortlists" value={String(profile.analytics?.shortlist_count ?? "—")} />
               <StatDivider />
-              <Stat label="Rating" value={String(profile.trust_score ? (profile.trust_score / 20).toFixed(1) : "4.9")} suffix="★" />
+              <Stat
+                label="Trust Score"
+                value={String(profile.trust_score ?? "—")}
+              />
             </div>
           </div>
         </div>
@@ -138,18 +191,19 @@ export function HeroCard({ profile, showLocation = true, showAvailability = true
   );
 }
 
-function Stat({ label, value, suffix }: { label: string; value: string; suffix?: string }) {
+function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="text-center">
-      <div className="font-serif text-[18px] font-semibold text-ink leading-none">
+      <div className="font-serif text-[20px] font-semibold text-ink leading-none">
         {value}
-        {suffix && <span className="text-gold ml-0.5">{suffix}</span>}
       </div>
-      <div className="mt-1 text-[10px] uppercase tracking-[0.12em] text-ink-muted">{label}</div>
+      <div className="mt-1.5 text-[10px] uppercase tracking-[0.12em] text-ink-muted">
+        {label}
+      </div>
     </div>
   );
 }
 
 function StatDivider() {
-  return <div className="w-px h-8 bg-border/80 mx-auto self-center" />;
+  return <div className="w-px h-8 bg-border/60 mx-auto self-center" />;
 }

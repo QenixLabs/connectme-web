@@ -19,6 +19,7 @@ export const authApi = {
     company_website?: string;
     company_size?: string;
     industry?: string;
+    creator_link?: string;
   }) => {
     const response = await apiClient.post('/auth/signup', data);
     return response.data;

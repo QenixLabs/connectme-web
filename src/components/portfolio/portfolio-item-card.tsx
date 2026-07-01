@@ -1,6 +1,6 @@
 "use client";
 
-import { Pin, Trash2, GripVertical, Play, Maximize2 } from "lucide-react";
+import { Pin, Trash2, GripVertical, Play, Maximize2, Film, Camera } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { PortfolioItem } from "@/lib/validations/talent-profile.schema";
 
@@ -24,14 +24,15 @@ export function PortfolioItemCard({
   onDelete,
   onSelect,
 }: PortfolioItemCardProps) {
-  const isIntro = item.category === "intro";
+  const isYoutube = item.type === "youtube";
+  const isInstagram = item.type === "instagram";
 
   return (
     <div
       className={cn(
         "group relative w-full bg-card rounded-2xl border border-border overflow-hidden transition-all duration-200 hover:shadow-lg hover:shadow-ink/5",
-        isIntro && item.is_pinned && "ring-1 ring-brand/50",
-        isIntro && "bg-cream-soft/50"
+        item.is_pinned && "ring-1 ring-brand/50",
+        item.category === "intro" && "bg-cream-soft/50"
       )}
     >
       <div className="relative w-full pt-[100%] bg-muted">
@@ -42,7 +43,7 @@ export function PortfolioItemCard({
             draggable={false}
             className="absolute inset-0 w-full h-full object-cover"
           />
-        ) : (
+        ) : item.type === "video" ? (
           <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-black">
             <video
               src={item.url}
@@ -65,9 +66,35 @@ export function PortfolioItemCard({
               </div>
             </div>
           </div>
-        )}
+        ) : isYoutube ? (
+          <div className="absolute inset-0 flex items-center justify-center bg-neutral-900">
+            <img
+              src={item.thumbnail_url || ""}
+              alt={item.caption || "YouTube"}
+              className="absolute inset-0 w-full h-full object-cover opacity-60"
+              draggable={false}
+            />
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
+              <div className="w-10 h-10 rounded-full bg-black/40 flex items-center justify-center backdrop-blur-sm">
+                <Film className="w-4 h-4 text-red-500" strokeWidth={1.5} />
+              </div>
+            </div>
+          </div>
+        ) : isInstagram ? (
+          <div
+            className="absolute inset-0 flex items-center justify-center"
+            style={{
+              background: "linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)",
+              opacity: 0.85,
+            }}
+          >
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
+              <Camera className="w-6 h-6 text-white" strokeWidth={1.5} />
+            </div>
+          </div>
+        ) : null}
 
-        {isIntro && item.is_pinned && (
+        {item.is_pinned && (
           <div className="absolute top-2.5 left-2.5 z-10">
             <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-brand text-white uppercase tracking-wider">
               Pinned

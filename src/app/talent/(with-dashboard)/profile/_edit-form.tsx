@@ -7,8 +7,6 @@ import { useRouter } from "next/navigation";
 import {
   Plus,
   Trash2,
-  Pencil,
-  X,
   Loader2,
   Upload,
   FileText,
@@ -17,7 +15,6 @@ import {
   Briefcase,
   Zap,
   Languages,
-  Mic,
   ScanLine,
   Share2,
   Shield,
@@ -26,14 +23,14 @@ import {
   Save,
   Sparkles,
   Camera,
-  Check,
-  ChevronRight,
   ArrowLeft,
+  Palette,
+  AtSign,
 } from "lucide-react";
 import { usePopup } from "@/hooks/use-popup";
-import { Avatar } from "@/components/ui/avatar";
-import { Switch } from "@/components/ui/switch";
 import { AxiosError } from "axios";
+import { motion } from "motion/react";
+import { Switch } from "@/components/ui/switch";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -60,6 +57,7 @@ import { TalentCard } from "@/components/talent-card";
 import { talentApi } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
+import { PALETTE_COLORS } from "@/lib/hero-color";
 import {
   createTalentProfileSchema,
   type CreateTalentProfileInput,
@@ -96,6 +94,7 @@ interface EditFormProps {
 }
 
 const SECTION_IDS = [
+  "hero_bg",
   "identity",
   "location",
   "career",
@@ -108,21 +107,26 @@ const SECTION_IDS = [
 ];
 
 /* ------------------------------------------------------------------ */
-/*  Theme helpers                                                      */
+/*  Design tokens - all sourced from CSS variables                     */
 /* ------------------------------------------------------------------ */
 
-const gold = {
-  primary: "var(--color-gold)",
-  primaryHover: "var(--color-gold-hover)",
-  accent: "var(--color-gold-soft)",
-  accentBorder: "var(--color-gold)",
+const T = {
+  gold: "var(--color-gold)",
+  goldHover: "var(--color-gold-hover)",
+  goldSoft: "var(--color-gold-soft)",
+  goldInk: "var(--color-gold-ink)",
+  goldDark: "var(--color-gold-dark)",
+  cream: "var(--color-cream)",
+  creamPale: "var(--color-cream-pale)",
+  creamDeep: "var(--color-cream-deep)",
+  creamHover: "var(--color-cream-hover)",
+  ink: "var(--color-ink)",
+  inkSoft: "var(--color-ink-soft)",
+  inkMuted: "var(--color-ink-muted)",
   border: "var(--color-border)",
-  muted: "var(--color-cream)",
-  mutedFg: "var(--color-ink-muted)",
-  textSecondary: "var(--color-ink-soft)",
-  foreground: "var(--color-ink)",
-  background: "var(--color-cream-pale)",
   card: "var(--color-card)",
+  destructive: "var(--color-destructive)",
+  white: "var(--color-white)",
 };
 
 /* ------------------------------------------------------------------ */
@@ -158,77 +162,90 @@ function useActiveSection(ids: string[]) {
 function SectionDivider({ label }: { label: string }) {
   return (
     <div className="flex items-center gap-3 mt-2">
-      <span
-        className="text-[10px] font-bold tracking-[0.12em] uppercase whitespace-nowrap"
-        style={{ color: gold.primary }}
-      >
+      <span className="text-[10px] font-bold tracking-[0.14em] uppercase whitespace-nowrap text-gold">
         {label}
       </span>
-      <div className="flex-1 h-px" style={{ background: gold.border }} />
+      <div className="flex-1 h-px bg-border/60" />
     </div>
   );
 }
 
-function FormCard({ children, className }: { children: React.ReactNode; className?: string }) {
-  return (
-    <Card className={cn("rounded-2xl p-4 gap-3 border-border", className)}>
-      <CardContent className="p-0 flex flex-col gap-3">
-        {children}
-      </CardContent>
-    </Card>
-  );
-}
+/* ---- Visibility toggle pill ---- */
 
-function SectionToggle({
-  control,
-  sectionKey,
-}: {
-  control: Control<CreateTalentProfileInput>;
-  sectionKey: keyof NonNullable<CreateTalentProfileInput["section_visibility"]>;
-}) {
+function VisibilityToggle({ isPublic, onToggle }: { isPublic: boolean; onToggle: () => void }) {
   return (
-    <Controller
-      control={control}
-      name={`section_visibility.${sectionKey}`}
-      render={({ field }) => (
-        <div className="flex items-center gap-2">
-          <span className="text-xs hidden sm:inline" style={{ color: gold.mutedFg }}>
-            Show
-          </span>
-          <Switch checked={field.value ?? true} onCheckedChange={field.onChange} />
-        </div>
+    <button
+      type="button"
+      role="switch"
+      aria-checked={isPublic}
+      onClick={onToggle}
+      className={cn(
+        "group relative inline-flex items-center gap-2 rounded-full pl-3 pr-1.5 py-1.5 border transition-all duration-300",
+        isPublic
+          ? "bg-gold-soft border-gold/30 text-gold-ink shadow-[0_0_0_4px_var(--color-gold-soft)]"
+          : "bg-cream border-border text-ink-muted",
       )}
-    />
+    >
+      <span className="flex items-center gap-1 text-[10.5px] font-semibold uppercase tracking-[0.08em]">
+        {isPublic ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+        {isPublic ? "Visible" : "Hidden"}
+      </span>
+      <span
+        className={cn(
+          "relative h-5 w-9 rounded-full transition-all duration-300",
+          isPublic ? "bg-gold shadow-inner" : "bg-ink-muted/30",
+        )}
+      >
+        <span
+          className={cn(
+            "absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-all duration-300",
+            isPublic ? "left-[18px]" : "left-0.5",
+          )}
+        />
+      </span>
+    </button>
   );
 }
 
-function TopBar({ mode, onSave, isSubmitting, isDirty, username }: {
+function TopBar({ mode, onSave, isSubmitting, isDirty, username, completionPct }: {
   mode: "create" | "edit";
   onSave: () => void;
   isSubmitting: boolean;
   isDirty: boolean;
   username?: string;
+  completionPct?: number;
 }) {
   const router = useRouter();
   return (
-    <header className="sticky top-0 z-40 backdrop-blur-xl bg-background/80 border-b border-border/60">
-      <div className="flex items-center justify-between px-5 py-3.5">
+    <header className="sticky top-0 z-40 backdrop-blur-xl bg-cream-pale/85 border-b border-border/40">
+      <div className="flex items-center justify-between px-5 py-3">
         <button
           type="button"
           onClick={() => router.push("/talent/dashboard")}
-          className="flex items-center gap-2 text-ink"
+          className="flex items-center gap-2 text-ink hover:text-gold-ink transition-colors"
         >
-          <ArrowLeft className="h-4 w-4 text-gold" />
+          <ArrowLeft className="h-4 w-4 text-gold" strokeWidth={2} />
           <span className="font-serif text-[15px] font-semibold tracking-tight">
             {mode === "create" ? "Create profile" : "Edit profile"}
           </span>
         </button>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          {mode === "edit" && completionPct !== undefined && (
+            <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-full bg-gold-soft/60 border border-gold/15">
+              <div className="w-4 h-4 rounded-full border-2 flex items-center justify-center"
+                style={{
+                  borderColor: "var(--color-gold)",
+                  background: `conic-gradient(var(--color-gold) ${completionPct * 3.6}deg, transparent ${completionPct * 3.6}deg)`,
+                }}
+              />
+              <span className="text-[11px] font-semibold text-gold-ink">{completionPct}%</span>
+            </div>
+          )}
           {mode === "edit" && username && (
             <button
               type="button"
               onClick={() => router.push(`/talent/${username}`)}
-              className="flex items-center gap-1.5 text-[12px] font-medium px-3 py-1.5 rounded-full border border-gold/30 bg-gold-soft text-gold-ink transition-colors"
+              className="hidden sm:inline-flex items-center gap-1.5 text-[12px] font-medium px-3 py-1.5 rounded-full border border-gold/25 bg-gold-soft text-gold-ink hover:bg-gold-soft/80 transition-colors"
             >
               <Eye className="h-3.5 w-3.5" />
               Preview
@@ -237,79 +254,141 @@ function TopBar({ mode, onSave, isSubmitting, isDirty, username }: {
           <Button
             type="button"
             onClick={onSave}
-            disabled={mode === "edit" && !isDirty}
-            className="h-8 px-4 text-[13px] text-white rounded-xl"
-            style={{ background: gold.primary }}
+            disabled={mode === "edit" && !isDirty && !isSubmitting}
+            className={cn(
+              "h-9 px-5 rounded-xl text-[13px] font-semibold text-white transition-all duration-200",
+              "bg-gradient-to-b from-gold to-gold-dark",
+              "hover:from-gold-hover hover:to-gold-dark",
+              "shadow-[0_6px_20px_-10px_var(--color-gold-dark)] hover:shadow-[0_8px_24px_-10px_var(--color-gold-dark)]",
+              "active:scale-[0.97]",
+              "disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:from-gold disabled:hover:to-gold-dark",
+            )}
           >
-            {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />}
+            {isSubmitting && <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />}
             {mode === "create" ? "Create" : "Save"}
           </Button>
         </div>
       </div>
+      {mode === "edit" && username && (
+        <div className="sm:hidden px-5 pb-2.5">
+          <button
+            type="button"
+            onClick={() => router.push(`/talent/${username}`)}
+            className="w-full inline-flex items-center justify-center gap-1.5 text-[12px] font-medium px-3 py-2 rounded-xl border border-gold/25 bg-gold-soft/60 text-gold-ink active:scale-[0.98] transition-all"
+          >
+            <Eye className="h-3.5 w-3.5" />
+            Preview profile
+          </button>
+        </div>
+      )}
     </header>
   );
+}
+
+const NAV_ITEMS: { id: (typeof SECTION_IDS)[number]; label: string; icon: React.ComponentType<{ className?: string; strokeWidth?: number | string }> }[] = [
+  { id: "hero_bg", label: "Hero BG", icon: Palette },
+  { id: "identity", label: "Identity", icon: User },
+  { id: "location", label: "Location", icon: MapPin },
+  { id: "career", label: "Career", icon: Briefcase },
+  { id: "skills", label: "Skills", icon: Zap },
+  { id: "languages", label: "Languages", icon: Languages },
+  { id: "physical", label: "Body", icon: ScanLine },
+  { id: "documents", label: "Docs", icon: FileText },
+  { id: "social", label: "Social", icon: Share2 },
+  { id: "privacy", label: "Privacy", icon: Shield },
+];
+
+function computeCompletions(values: CreateTalentProfileInput, errors: FieldErrors<CreateTalentProfileInput>) {
+  const has = (v: unknown): boolean => {
+    if (v === undefined || v === null || v === "") return false;
+    if (Array.isArray(v)) return v.length > 0;
+    if (typeof v === "object") return Object.values(v as object).some((iv) => has(iv));
+    return true;
+  };
+  const sections = [
+    { id: "hero_bg", filled: has(values.hero_background), errorFree: !errors.hero_background },
+    { id: "identity", filled: has(values.username) || has(values.full_legal_name) || has(values.headline), errorFree: !errors.username && !errors.full_legal_name && !errors.headline && !errors.about },
+    { id: "location", filled: has(values.location?.country) || has(values.location?.city), errorFree: !errors.location },
+    { id: "career", filled: has(values.professions) || has(values.industries) || has(values.availability), errorFree: !errors.professions && !errors.industries && !errors.availability },
+    { id: "skills", filled: has(values.skills), errorFree: !errors.skills || (Array.isArray(errors.skills) && (errors.skills as unknown[]).length === 0) },
+    { id: "languages", filled: has(values.languages) || has(values.accents), errorFree: !errors.languages && !errors.accents },
+    { id: "physical", filled: has(values.physical_attributes), errorFree: !errors.physical_attributes },
+    { id: "documents", filled: has(values.documents?.resume_url), errorFree: !errors.documents },
+    { id: "social", filled: has(values.social_links?.instagram?.url) || has(values.social_links?.youtube?.url) || has(values.social_links?.linkedin?.url), errorFree: !errors.social_links },
+    { id: "privacy", filled: has(values.privacy_mode), errorFree: !errors.privacy_mode },
+  ];
+  const filledCount = sections.filter((s) => s.filled).length;
+  return { sections, count: filledCount, total: sections.length, pct: Math.round((filledCount / sections.length) * 100) };
 }
 
 function SectionNav({
   activeId,
   onSelect,
   username,
+  completions,
 }: {
   activeId: string;
   onSelect: (id: string) => void;
   username?: string;
+  completions: ReturnType<typeof computeCompletions>;
 }) {
-  const items = [
-    { id: "identity", label: "Identity", icon: User },
-    { id: "location", label: "Location", icon: MapPin },
-    { id: "career", label: "Career", icon: Briefcase },
-    { id: "skills", label: "Skills", icon: Zap },
-    { id: "languages", label: "Languages", icon: Languages },
-    { id: "physical", label: "Body", icon: ScanLine },
-    { id: "documents", label: "Docs", icon: FileText },
-    { id: "social", label: "Social", icon: Share2 },
-    { id: "privacy", label: "Privacy", icon: Shield },
-  ];
-
   return (
     <aside
-      className="hidden lg:block w-[190px] shrink-0 border-r"
-      style={{ borderColor: gold.border }}
+      className="hidden lg:block w-[196px] shrink-0 border-r border-border/40"
+      style={{ background: "var(--color-cream-pale)" }}
     >
-      <div className="sticky top-[57px] pt-4 pb-4">
-        <div className="px-4 pb-3 border-b mb-2" style={{ borderColor: gold.border }}>
-          <div className="text-[15px] font-medium" style={{ color: gold.foreground }}>
-            Connect<span style={{ color: gold.primary }}>Me</span>
+      <div className="sticky top-[57px] pt-4 pb-6">
+        <div className="px-4 pb-3.5 mb-2 border-b border-border/30">
+          <div className="text-[15px] font-serif font-semibold tracking-tight text-ink">
+            Connect<span className="text-gold">Me</span>
           </div>
           {username && (
-            <div className="text-xs mt-0.5" style={{ color: gold.mutedFg }}>
-              @{username}
+            <div className="flex items-center gap-1.5 mt-1">
+              <AtSign className="w-3 h-3 text-gold" strokeWidth={2} />
+              <span className="text-[11px] text-ink-muted font-medium">{username}</span>
             </div>
           )}
         </div>
-        <div className="space-y-0.5">
-          {items.map((item) => {
+        <div className="space-y-0.5 px-2">
+          {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const active = activeId === item.id;
+            const comp = completions.sections.find((s) => s.id === item.id);
+            const filled = comp?.filled ?? false;
+            const hasError = comp ? !comp.errorFree : false;
             return (
               <button
                 key={item.id}
                 type="button"
                 onClick={() => onSelect(item.id)}
                 className={cn(
-                  "w-full flex items-center gap-2.5 px-4 py-[7px] text-[13px] transition-colors border-l-2"
+                  "w-full flex items-center gap-3 px-3 py-[7px] rounded-lg text-[12.5px] font-medium transition-all duration-200",
+                  active
+                    ? "bg-gold-soft text-gold-ink shadow-[0_2px_8px_-4px_var(--color-gold-soft)]"
+                    : "text-ink-muted hover:text-ink-soft hover:bg-cream/80",
                 )}
-                style={{
-                  color: active ? gold.primary : gold.mutedFg,
-                  background: active ? gold.accent : "transparent",
-                  borderLeftColor: active ? gold.primary : "transparent",
-                }}
               >
-                <Icon className="w-[15px] h-[15px]" strokeWidth={1.5} />
-                {item.label}
+                <Icon className="w-[16px] h-[16px] shrink-0" strokeWidth={active ? 2 : 1.5} />
+                <span className="flex-1 text-left">{item.label}</span>
+                {filled && !hasError && <span className="w-[6px] h-[6px] rounded-full bg-gold shrink-0" />}
+                {hasError && <span className="w-[6px] h-[6px] rounded-full bg-destructive shrink-0" />}
               </button>
             );
           })}
+        </div>
+        <div className="mx-3 mt-4 pt-3 border-t border-border/30">
+          <div className="flex items-center justify-between mb-1.5 px-1">
+            <span className="text-[10px] uppercase tracking-[0.1em] text-ink-muted font-semibold">Complete</span>
+            <span className="text-[11px] font-semibold text-gold-ink">{completions.pct}%</span>
+          </div>
+          <div className="mx-1 h-1.5 rounded-full bg-cream overflow-hidden">
+            <motion.div
+              className="h-full rounded-full bg-gradient-to-r from-gold to-gold/60"
+              initial={{ width: 0 }}
+              animate={{ width: `${completions.pct}%` }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+            />
+          </div>
         </div>
       </div>
     </aside>
@@ -324,16 +403,17 @@ function MobileNav({
   onSelect: (id: string) => void;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const items = [
-    { id: "identity", label: "Identity" },
-    { id: "location", label: "Location" },
-    { id: "career", label: "Career" },
-    { id: "skills", label: "Skills" },
-    { id: "languages", label: "Lang" },
-    { id: "physical", label: "Body" },
-    { id: "documents", label: "Docs" },
-    { id: "social", label: "Social" },
-    { id: "privacy", label: "Privacy" },
+  const mobileItems = [
+    { id: "hero_bg", label: "Hero", icon: Palette },
+    { id: "identity", label: "Identity", icon: User },
+    { id: "location", label: "Location", icon: MapPin },
+    { id: "career", label: "Career", icon: Briefcase },
+    { id: "skills", label: "Skills", icon: Zap },
+    { id: "languages", label: "Lang", icon: Languages },
+    { id: "physical", label: "Body", icon: ScanLine },
+    { id: "documents", label: "Docs", icon: FileText },
+    { id: "social", label: "Social", icon: Share2 },
+    { id: "privacy", label: "Privacy", icon: Shield },
   ];
 
   useEffect(() => {
@@ -347,15 +427,12 @@ function MobileNav({
 
   return (
     <div
-      className="lg:hidden sticky top-[53px] z-30 px-4 py-2 border-b"
-      style={{ background: "var(--color-cream-pale)/95", backdropFilter: "blur(8px)", borderColor: gold.border }}
+      className="lg:hidden sticky top-[53px] z-30 px-3 py-2.5 border-b border-border/30"
+      style={{ backdropFilter: "blur(16px)", background: "var(--color-cream-pale)/90" }}
     >
-      <div
-        ref={scrollRef}
-        className="flex gap-2 overflow-x-auto pb-0.5"
-        style={{ scrollbarWidth: "none" }}
-      >
-        {items.map((item) => {
+      <div ref={scrollRef} className="flex gap-1.5 overflow-x-auto no-scrollbar">
+        {mobileItems.map((item) => {
+          const Icon = item.icon;
           const active = activeId === item.id;
           return (
             <button
@@ -364,15 +441,14 @@ function MobileNav({
               data-nav-id={item.id}
               onClick={() => onSelect(item.id)}
               className={cn(
-                "shrink-0 px-3 py-1.5 min-h-8 rounded-lg text-xs font-medium transition-colors border inline-flex items-center justify-center"
+                "shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[11.5px] font-semibold transition-all duration-200 border",
+                active
+                  ? "bg-gold-soft text-gold-ink border-gold/30 shadow-sm"
+                  : "bg-card text-ink-muted border-border/60 hover:border-gold/20 active:scale-[0.97]",
               )}
-              style={{
-                background: active ? gold.accent : gold.card,
-                color: active ? gold.primary : gold.mutedFg,
-                borderColor: active ? gold.accentBorder : gold.border,
-              }}
             >
-              {item.label}
+              <Icon className="w-3.5 h-3.5" strokeWidth={active ? 2 : 1.5} />
+              <span className="hidden sm:inline">{item.label}</span>
             </button>
           );
         })}
@@ -394,24 +470,35 @@ function SkillRow({
   errors: FieldErrors<CreateTalentProfileInput>;
   onRemove: () => void;
 }) {
+  const hasError = !!errors.skills?.[idx]?.name || !!errors.skills?.[idx]?.proficiency;
   return (
-    <div
-      className="flex items-center gap-2.5 rounded-xl border p-3"
-      style={{ background: gold.card, borderColor: gold.border }}
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      className={cn(
+        "flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-colors duration-200",
+        hasError
+          ? "border-error/40 bg-error-light/30"
+          : "bg-cream-pale/80 border-border hover:border-gold/25 hover:bg-cream",
+      )}
     >
+      <span className="shrink-0 w-6 h-6 rounded-lg bg-gold-soft/60 border border-gold/15 grid place-items-center text-[11px] font-semibold text-gold-ink select-none">
+        {idx + 1}
+      </span>
       <input
         placeholder="Skill name"
         {...register(`skills.${idx}.name`)}
         aria-invalid={!!errors.skills?.[idx]?.name}
-        className="flex-1 min-w-0 bg-transparent text-sm font-medium outline-none placeholder:text-ink-muted"
-        style={{ color: gold.foreground }}
+        className="flex-1 min-w-0 bg-transparent text-[13px] font-medium outline-none placeholder:text-ink-muted/60 text-ink"
       />
       <Controller
         control={control}
         name={`skills.${idx}.proficiency`}
         render={({ field }) => (
           <Select onValueChange={field.onChange} value={field.value || ""}>
-            <SelectTrigger className="h-8 w-[120px] text-xs rounded-lg border-border">
+            <SelectTrigger className="h-8 w-[120px] text-xs rounded-lg border-border bg-white/60 hover:border-gold/25 transition-colors shadow-none">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -425,13 +512,12 @@ function SkillRow({
       <button
         type="button"
         onClick={onRemove}
-        className="w-7 h-7 flex items-center justify-center rounded-lg border transition-colors hover:text-destructive"
-        style={{ background: gold.background, borderColor: gold.border, color: gold.mutedFg }}
+        className="w-7 h-7 flex items-center justify-center rounded-lg border border-border/60 bg-cream hover:bg-error-light hover:border-error/30 hover:text-destructive transition-all duration-200 text-ink-muted"
         aria-label="Remove skill"
       >
         <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
       </button>
-    </div>
+    </motion.div>
   );
 }
 
@@ -448,24 +534,35 @@ function LanguageRow({
   errors: FieldErrors<CreateTalentProfileInput>;
   onRemove: () => void;
 }) {
+  const hasError = !!errors.languages?.[idx]?.name || !!errors.languages?.[idx]?.fluency;
   return (
-    <div
-      className="flex items-center gap-2.5 rounded-xl border p-3"
-      style={{ background: gold.card, borderColor: gold.border }}
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
+      className={cn(
+        "flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-colors duration-200",
+        hasError
+          ? "border-error/40 bg-error-light/30"
+          : "bg-cream-pale/80 border-border hover:border-gold/25 hover:bg-cream",
+      )}
     >
+      <span className="shrink-0 w-6 h-6 rounded-lg bg-gold-soft/60 border border-gold/15 grid place-items-center text-[11px] font-semibold text-gold-ink select-none">
+        {idx + 1}
+      </span>
       <input
         placeholder="Language name"
         {...register(`languages.${idx}.name`)}
         aria-invalid={!!errors.languages?.[idx]?.name}
-        className="flex-1 min-w-0 bg-transparent text-sm font-medium outline-none placeholder:text-ink-muted"
-        style={{ color: gold.foreground }}
+        className="flex-1 min-w-0 bg-transparent text-[13px] font-medium outline-none placeholder:text-ink-muted/60 text-ink"
       />
       <Controller
         control={control}
         name={`languages.${idx}.fluency`}
         render={({ field }) => (
           <Select onValueChange={field.onChange} value={field.value || ""}>
-            <SelectTrigger className="h-8 w-[120px] text-xs rounded-lg border-border">
+            <SelectTrigger className="h-8 w-[120px] text-xs rounded-lg border-border bg-white/60 hover:border-gold/25 transition-colors shadow-none">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -479,21 +576,20 @@ function LanguageRow({
       <button
         type="button"
         onClick={onRemove}
-        className="w-7 h-7 flex items-center justify-center rounded-lg border transition-colors hover:text-destructive"
-        style={{ background: gold.background, borderColor: gold.border, color: gold.mutedFg }}
+        className="w-7 h-7 flex items-center justify-center rounded-lg border border-border/60 bg-cream hover:bg-error-light hover:border-error/30 hover:text-destructive transition-all duration-200 text-ink-muted"
         aria-label="Remove language"
       >
         <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
       </button>
-    </div>
+    </motion.div>
   );
 }
 
 function SocialIcon({ platform }: { platform: "instagram" | "youtube" | "linkedin" }) {
   if (platform === "instagram") {
     return (
-      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "var(--color-pink-light)" }}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-pink)" strokeWidth="2" className="w-4 h-4">
+      <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--color-pink-light)" }}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-pink)" strokeWidth="2" className="w-[18px] h-[18px]">
           <rect x="2" y="2" width="20" height="20" rx="5" />
           <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
           <circle cx="17.5" cy="6.5" r="1" fill="var(--color-pink)" stroke="none" />
@@ -503,8 +599,8 @@ function SocialIcon({ platform }: { platform: "instagram" | "youtube" | "linkedi
   }
   if (platform === "youtube") {
     return (
-      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "var(--color-red-light)" }}>
-        <svg viewBox="0 0 24 24" fill="var(--color-red)" className="w-4 h-4">
+      <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--color-red-light)" }}>
+        <svg viewBox="0 0 24 24" fill="var(--color-red)" className="w-[18px] h-[18px]">
           <path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58A2.78 2.78 0 0 0 3.41 19.54C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z" />
           <polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="white" />
         </svg>
@@ -512,8 +608,8 @@ function SocialIcon({ platform }: { platform: "instagram" | "youtube" | "linkedi
     );
   }
   return (
-    <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "var(--color-blue-light)" }}>
-      <svg viewBox="0 0 24 24" fill="var(--color-blue)" className="w-4 h-4">
+    <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--color-blue-light)" }}>
+      <svg viewBox="0 0 24 24" fill="var(--color-blue)" className="w-[18px] h-[18px]">
         <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
         <rect x="2" y="9" width="4" height="12" />
         <circle cx="4" cy="4" r="2" />
@@ -522,99 +618,7 @@ function SocialIcon({ platform }: { platform: "instagram" | "youtube" | "linkedi
   );
 }
 
-/* ------------------------------------------------------------------ */
-/*  New design components (match samplefrontend)                       */
-/* ------------------------------------------------------------------ */
-
-function CompletionBanner({ control }: { control: Control<CreateTalentProfileInput> }) {
-  const sectionVisibility = useWatch({ control, name: "section_visibility" });
-  const controllable = [
-    "skills",
-    "languages",
-    "accents",
-    "physical_attributes",
-    "documents",
-    "social_links",
-    "location",
-    "availability",
-  ] as const;
-  const publicCount = controllable.filter((k) => sectionVisibility?.[k] ?? true).length;
-  const totalCount = controllable.length;
-  const pct = Math.round((publicCount / totalCount) * 100);
-
-  return (
-    <section className="px-4 pt-5">
-      <Card className="relative overflow-hidden rounded-[24px] shadow-luxe border-border/60 p-0 gap-0">
-        <div
-          className="absolute inset-0 opacity-90"
-          style={{
-            background:
-              "radial-gradient(120% 80% at 0% 0%, oklch(0.74 0.13 80 / 0.12) 0%, transparent 55%), radial-gradient(120% 80% at 100% 100%, oklch(0.74 0.13 80 / 0.10) 0%, transparent 50%)",
-          }}
-        />
-        <CardContent className="relative px-5 py-4 flex items-center gap-4">
-          <div className="h-12 w-12 rounded-2xl bg-gold-soft border border-gold/30 grid place-items-center">
-            <Sparkles className="h-5 w-5 text-gold-ink" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] uppercase tracking-[0.14em] text-ink-muted">Public profile</p>
-            <p className="font-serif text-[16px] text-ink leading-tight mt-0.5">
-              {publicCount} of {totalCount} sections visible
-            </p>
-          </div>
-          <div className="text-right">
-            <div className="text-[11px] text-ink-muted">Completion</div>
-            <div className="font-serif text-[18px] text-gold leading-none mt-0.5">{pct}%</div>
-          </div>
-        </CardContent>
-        <div className="relative h-1.5 bg-cream-deep/60">
-          <div
-            className="h-full bg-gradient-to-r from-gold to-gold/60 transition-all"
-            style={{ width: `${pct}%` }}
-          />
-        </div>
-      </Card>
-    </section>
-  );
-}
-
-function VisibilityToggle({
-  isPublic,
-  onToggle,
-}: {
-  isPublic: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={isPublic}
-      onClick={onToggle}
-      className={`group flex items-center gap-2 rounded-full pl-2.5 pr-1 py-1 border transition-colors ${
-        isPublic
-          ? "bg-gold-soft border-gold/30 text-gold-ink"
-          : "bg-cream border-border text-ink-muted"
-      }`}
-    >
-      <span className="flex items-center gap-1 text-[10.5px] font-medium uppercase tracking-[0.1em]">
-        {isPublic ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
-        {isPublic ? "Public" : "Hidden"}
-      </span>
-      <span
-        className={`relative h-5 w-9 rounded-full transition-colors ${
-          isPublic ? "bg-gold" : "bg-ink-muted/40"
-        }`}
-      >
-        <span
-          className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${
-            isPublic ? "left-[18px]" : "left-0.5"
-          }`}
-        />
-      </span>
-    </button>
-  );
-}
+/* ---- Section card ---- */
 
 function SectionCard({
   icon: Icon,
@@ -625,7 +629,7 @@ function SectionCard({
   alwaysPublic,
   children,
 }: {
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number | string }>;
   label: string;
   description: string;
   isPublic?: boolean;
@@ -634,29 +638,73 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <Card className="rounded-2xl border-border/60 shadow-luxe overflow-hidden p-0 gap-0">
-      <CardHeader className="px-5 pt-4 pb-3 flex-row items-start gap-3">
+    <Card className="relative rounded-2xl border-border/50 shadow-luxe overflow-hidden p-0 gap-0 group/card transition-shadow duration-300 hover:shadow-[0_12px_40px_-20px_oklch(0.30_0.05_60/0.30)]">
+      <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-gold/40 via-gold/15 to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-500" />
+      <CardHeader className="px-5 pt-5 pb-3.5 flex-row items-start gap-3.5">
         <div className="h-10 w-10 rounded-xl bg-gold-soft border border-gold/20 grid place-items-center shrink-0">
-          <Icon className="h-4 w-4 text-gold-ink" />
+          <Icon className="h-[18px] w-[18px] text-gold-ink" strokeWidth={1.5} />
         </div>
-        <div className="flex-1 min-w-0">
-          <CardTitle className="font-serif text-[16px] text-ink leading-tight">{label}</CardTitle>
-          <CardDescription className="text-[11.5px] text-ink-muted mt-0.5">{description}</CardDescription>
+        <div className="flex-1 min-w-0 pt-0.5">
+          <CardTitle className="font-serif text-[15px] text-ink leading-tight tracking-tight">{label}</CardTitle>
+          <CardDescription className="text-[11.5px] text-ink-muted mt-0.5 leading-relaxed">{description}</CardDescription>
         </div>
         {alwaysPublic ? (
-          <span className="flex items-center gap-1.5 text-[10.5px] font-medium uppercase tracking-[0.1em] text-gold-ink bg-gold-soft border border-gold/30 rounded-full pl-2.5 pr-3 py-1">
+          <span className="shrink-0 flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-gold-ink bg-gold-soft border border-gold/30 rounded-full pl-2.5 pr-3 py-1.5 select-none">
             <Eye className="h-3 w-3" />
             Always public
           </span>
         ) : (
-          <VisibilityToggle isPublic={isPublic!} onToggle={onToggle!} />
+          <div className="shrink-0">
+            <VisibilityToggle isPublic={isPublic!} onToggle={onToggle!} />
+          </div>
         )}
       </CardHeader>
-      <div className="h-px bg-border/60 mx-5" />
-      <CardContent className="px-5 py-4">{children}</CardContent>
+      <div className="h-px bg-gradient-to-r from-border/60 via-border/40 to-transparent mx-5" />
+      <CardContent className="px-5 pt-4 pb-5">{children}</CardContent>
     </Card>
   );
 }
+
+/* ---- Completion banner ---- */
+
+function CompletionBanner({ pct, count, total }: { pct: number; count: number; total: number }) {
+  return (
+    <div className="px-4 pt-5 pb-1">
+      <Card className="relative overflow-hidden rounded-2xl border-border/40 shadow-luxe p-0 gap-0">
+        <div
+          className="absolute inset-0 opacity-70 pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(140% 90% at 0% 0%, oklch(0.74 0.13 80 / 0.10) 0%, transparent 55%), radial-gradient(140% 90% at 100% 100%, oklch(0.74 0.13 80 / 0.08) 0%, transparent 50%)",
+          }}
+        />
+        <CardContent className="relative px-5 py-4 flex items-center gap-4">
+          <div className="h-11 w-11 rounded-2xl bg-gold-soft border border-gold/25 grid place-items-center shrink-0">
+            <Sparkles className="h-[20px] w-[20px] text-gold-ink" strokeWidth={1.5} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] uppercase tracking-[0.14em] text-ink-muted font-semibold">Profile completion</p>
+            <p className="font-serif text-[15px] text-ink leading-tight mt-0.5">{count} of {total} sections filled</p>
+          </div>
+          <div className="text-right shrink-0">
+            <div className="text-[10px] text-ink-muted font-medium">Score</div>
+            <div className="font-serif text-[22px] text-gold leading-none mt-0.5 font-semibold">{pct}%</div>
+          </div>
+        </CardContent>
+        <div className="relative h-[3px] bg-cream-deep/50">
+          <motion.div
+            className="h-full bg-gradient-to-r from-gold via-gold to-gold/50 rounded-r-full"
+            initial={{ width: 0 }}
+            animate={{ width: `${pct}%` }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+          />
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+/* ---- Form helper components ---- */
 
 function Field({
   label,
@@ -675,34 +723,15 @@ function Field({
   );
 }
 
-function Row({
-  title,
-  meta,
-  trailing,
-}: {
-  title: string;
-  meta?: string;
-  trailing?: React.ReactNode;
-}) {
-  return (
-    <button type="button" className="w-full flex items-center justify-between rounded-xl bg-cream/60 border border-border/60 px-3.5 py-2.5 text-left active:scale-[0.99] transition">
-      <div className="min-w-0">
-        <div className="text-[13.5px] text-ink font-medium truncate">{title}</div>
-        {meta && <div className="text-[11px] text-gold mt-0.5">{meta}</div>}
-      </div>
-      {trailing ?? <ChevronRight className="h-4 w-4 text-ink-muted" />}
-    </button>
-  );
-}
-
 function AddRow({ label, onClick }: { label: string; onClick?: () => void }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="w-full flex items-center justify-center gap-2 rounded-xl border border-dashed border-gold/40 bg-gold-soft/40 px-3.5 py-2.5 text-[12.5px] font-medium text-gold-ink hover:bg-gold-soft transition"
+      className="w-full flex items-center justify-center gap-2 rounded-xl border border-dashed border-gold/35 bg-gold-soft/30 px-4 py-3 text-[13px] font-medium text-gold-ink hover:bg-gold-soft/60 hover:border-gold/50 active:scale-[0.99] transition-all duration-200"
     >
-      + {label}
+      <Plus className="w-4 h-4" strokeWidth={2} />
+      {label}
     </button>
   );
 }
@@ -731,6 +760,11 @@ export function EditForm({
   const [resumeUploading, setResumeUploading] = useState(false);
   const resumeInputRef = useRef<HTMLInputElement>(null);
 
+  const [heroBgPreview, setHeroBgPreview] = useState<string | null>(null);
+  const [heroBgError, setHeroBgError] = useState<string | null>(null);
+  const [heroBgUploading, setHeroBgUploading] = useState(false);
+  const heroBgInputRef = useRef<HTMLInputElement>(null);
+
   const form = useForm<CreateTalentProfileInput>({
     resolver: zodResolver(createTalentProfileSchema),
     defaultValues:
@@ -751,6 +785,8 @@ export function EditForm({
   const languagesArray = useFieldArray({ control, name: "languages" });
 
   const watchedUsername = useWatch({ control, name: "username" });
+  const watchedValues = useWatch({ control }) as CreateTalentProfileInput;
+  const completions = computeCompletions(watchedValues, errors);
   const activeSection = useActiveSection(SECTION_IDS);
   const lastUsernameRef = useRef(profile?.username);
 
@@ -815,6 +851,23 @@ export function EditForm({
       setResumeName(base.replace(/^\d+-/, ''));
     }
   }, [profile, form]);
+
+  useEffect(() => {
+    if (!profile) {
+      setHeroBgPreview(null);
+      return;
+    }
+    const bg = profile.hero_background;
+    if (!bg) {
+      setHeroBgPreview(null);
+      return;
+    }
+    if (bg.startsWith("#")) {
+      setHeroBgPreview(bg);
+    } else {
+      setHeroBgPreview(bg);
+    }
+  }, [profile]);
 
   const handlePhotoChange = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -885,6 +938,48 @@ export function EditForm({
     setResumePreview(null);
     setResumeName(null);
     setResumeError(null);
+  }, [form]);
+
+  const handleHeroBgChange = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      setHeroBgError(null);
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+        setHeroBgError('Only JPEG, PNG, and WEBP images are allowed');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setHeroBgError('File size must be less than 5MB');
+        return;
+      }
+      setHeroBgUploading(true);
+      try {
+        const { relativePath, signedUrl } = await talentApi.uploadProfilePhoto(file);
+        form.setValue('hero_background', relativePath, { shouldDirty: true });
+        setHeroBgPreview(signedUrl);
+      } catch (err) {
+        setHeroBgError(getApiErrorMessage(err, 'Failed to upload background'));
+      } finally {
+        setHeroBgUploading(false);
+      }
+    },
+    [form],
+  );
+
+  const handleHeroBgColor = useCallback(
+    (color: string) => {
+      form.setValue('hero_background', color, { shouldDirty: true });
+      setHeroBgPreview(color);
+      setHeroBgError(null);
+    },
+    [form],
+  );
+
+  const handleHeroBgClear = useCallback(() => {
+    form.setValue('hero_background', '', { shouldDirty: true });
+    setHeroBgPreview(null);
+    setHeroBgError(null);
   }, [form]);
 
   const scrollTo = useCallback((id: string) => {
@@ -974,18 +1069,18 @@ export function EditForm({
   return (
     <div
       className="flex flex-col lg:flex-row lg:min-h-[600px]"
-      style={{ background: gold.background }}
+      style={{ background: T.creamPale }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
       {/* Top bar + mobile nav inside main content area */}
       <div className="flex-1 min-w-0">
-        <TopBar mode={mode} onSave={triggerSave} isSubmitting={isSubmitting} isDirty={isDirty} username={watchedUsername || profile?.username} />
+        <TopBar mode={mode} onSave={triggerSave} isSubmitting={isSubmitting} isDirty={isDirty} username={watchedUsername || profile?.username} completionPct={completions.pct} />
 
-        {mode === "edit" && <CompletionBanner control={control} />}
+        {mode === "edit" && <CompletionBanner pct={completions.pct} count={completions.count} total={completions.total} />}
 
         <div className="flex">
-          <SectionNav activeId={activeSection} onSelect={scrollTo} username={watchedUsername || profile?.username} />
+          <SectionNav activeId={activeSection} onSelect={scrollTo} username={watchedUsername || profile?.username} completions={completions} />
 
           <div className="flex-1 min-w-0">
             <MobileNav activeId={activeSection} onSelect={scrollTo} />
@@ -993,7 +1088,7 @@ export function EditForm({
             <div className="px-4 pt-4 lg:px-8 lg:pt-6 max-w-5xl mx-auto">
               <p
                 className="text-sm mb-6"
-                style={{ color: gold.textSecondary }}
+                style={{ color: T.inkSoft }}
               >
                 {mode === "create"
                   ? "Pick a username to get started. You can fill the rest later."
@@ -1003,7 +1098,7 @@ export function EditForm({
 
             {mode === "create" && (
               <div className="px-4 mb-6 lg:px-8 max-w-5xl mx-auto">
-                <p className="text-xs sm:text-sm mb-3 px-1" style={{ color: gold.mutedFg }}>
+                <p className="text-xs sm:text-sm mb-3 px-1" style={{ color: T.inkMuted }}>
                   Preview: how recruiters will see you
                 </p>
                 <TalentCard sample />
@@ -1020,19 +1115,127 @@ export function EditForm({
 
             <Form {...form}>
               <form id="profile-form" onSubmit={onSubmit} className="px-4 lg:px-8 space-y-6 max-w-5xl mx-auto">
+                {/* ---------- HERO BACKGROUND ---------- */}
+                <div id="hero_bg" className="scroll-mt-[120px] lg:scroll-mt-28">
+                  <SectionCard icon={Sparkles} label="Hero background" description="Customize the banner behind your profile photo" alwaysPublic>
+                    {/* Upload image */}
+                    <Field label="Upload image">
+                      <div className="flex items-center gap-4">
+                        <button
+                          type="button"
+                          onClick={() => heroBgInputRef.current?.click()}
+                          disabled={heroBgUploading}
+                          className="flex items-center gap-2 rounded-xl border border-dashed border-gold/30 bg-gold-soft/30 px-4 py-3 text-[13px] font-medium text-gold-ink hover:bg-gold-soft/60 hover:border-gold/50 transition disabled:opacity-50"
+                        >
+                          {heroBgUploading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Upload className="h-4 w-4" />
+                          )}
+                          {heroBgUploading ? "Uploading..." : "Choose image"}
+                        </button>
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          className="hidden"
+                          ref={heroBgInputRef}
+                          onChange={handleHeroBgChange}
+                        />
+                        {heroBgPreview && (
+                          <button
+                            type="button"
+                            onClick={handleHeroBgClear}
+                            className="text-[12px] text-destructive"
+                          >
+                            Remove
+                          </button>
+                        )}
+                        {heroBgError && (
+                          <p className="text-[11px] text-destructive">{heroBgError}</p>
+                        )}
+                      </div>
+                    </Field>
+
+                    {/* Color palette */}
+                    <Field label="Or pick a solid color">
+                      <div className="grid grid-cols-6 gap-2">
+                        {PALETTE_COLORS.map((color) => {
+                          const isSelected = form.watch("hero_background") === color;
+                          return (
+                            <button
+                              key={color}
+                              type="button"
+                              onClick={() => handleHeroBgColor(color)}
+                              className={cn(
+                                "h-10 rounded-xl border-2 transition-all duration-200 hover:scale-110 active:scale-95",
+                                isSelected
+                                  ? "border-card shadow-[0_0_0_3px_var(--color-gold),0_0_0_5px_var(--color-gold-soft)] scale-110"
+                                  : "border-transparent hover:border-gold/30",
+                              )}
+                              style={{ background: color }}
+                              title={color}
+                              aria-label={`Hero color ${color}`}
+                            />
+                          );
+                        })}
+                      </div>
+                    </Field>
+
+                    {/* Custom hex */}
+                    <Field label="Custom hex color">
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="color"
+                          value={form.watch("hero_background")?.startsWith("#") ? form.watch("hero_background") : "#1a1c2a"}
+                          onChange={(e) => handleHeroBgColor(e.target.value)}
+                          className="h-10 w-14 rounded-xl border border-border/60 cursor-pointer bg-transparent hover:border-gold/30 transition-colors"
+                        />
+                        <Input
+                          value={form.watch("hero_background")?.startsWith("#") ? form.watch("hero_background") : ""}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            if (v === "") {
+                              handleHeroBgClear();
+                            } else if (/^#[0-9a-fA-F]{0,6}$/.test(v)) {
+                              form.setValue("hero_background", v, { shouldDirty: true });
+                              setHeroBgPreview(v);
+                            }
+                          }}
+                          placeholder="#1a1c2a"
+                          className="h-10 text-sm rounded-xl border-border bg-cream-pale/80 focus:border-gold/50 focus:bg-card focus:ring-2 focus:ring-gold/25 transition-all flex-1"
+                          maxLength={7}
+                        />
+                      </div>
+                    </Field>
+
+                    {/* Preview */}
+                    {heroBgPreview && (
+                      <div
+                        className="mt-3 h-20 rounded-xl border border-border/60 overflow-hidden shadow-inner"
+                        style={{
+                          background: heroBgPreview.startsWith("#") ? heroBgPreview : `url(${heroBgPreview}) center/cover`,
+                        }}
+                      />
+                    )}
+                    <div className="mt-3 text-[11px] text-ink-muted">
+                      Leave empty for a random color (same every time for your profile).
+                    </div>
+                  </SectionCard>
+                </div>
+
                 {/* ---------- BASIC INFO ---------- */}
                 <div id="identity" className="scroll-mt-[120px] lg:scroll-mt-28">
                   <SectionCard icon={User} label="Basic info" description="Name, role, location and bio" alwaysPublic>
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="relative">
+                    <div className="flex items-center gap-4 mb-5">
+                      <div className="relative shrink-0">
                         <div
-                          className="h-16 w-16 rounded-2xl flex items-center justify-center text-3xl font-bold text-white shrink-0"
-                          style={{
-                            background: photoPreview ? undefined : "linear-gradient(135deg, var(--color-gold), var(--color-gold-dark))",
-                          }}
+                          className={cn(
+                            "h-[72px] w-[72px] rounded-2xl flex items-center justify-center text-[28px] font-bold text-white",
+                            !photoPreview && "bg-gradient-to-br from-gold to-gold-dark",
+                          )}
                         >
                           {photoPreview ? (
-                            <img src={photoPreview} alt="" className="w-full h-full rounded-2xl object-cover" />
+                            <img src={photoPreview} alt="Profile photo" className="w-full h-full rounded-2xl object-cover" />
                           ) : (
                             <span className="font-serif">
                               {(form.getValues("full_legal_name") || form.getValues("username") || "T")
@@ -1054,23 +1257,23 @@ export function EditForm({
                         <button
                           type="button"
                           onClick={() => photoInputRef.current?.click()}
-                          className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full bg-gold grid place-items-center shadow-md ring-4 ring-card"
+                          className="absolute -bottom-1.5 -right-1.5 h-[30px] w-[30px] rounded-full bg-gold grid place-items-center shadow-lg ring-[3px] ring-card hover:bg-gold-hover active:scale-95 transition-all duration-200"
                         >
-                          <Camera className="h-3.5 w-3.5 text-white" />
+                          <Camera className="h-[15px] w-[15px] text-white" strokeWidth={2} />
                         </button>
                       </div>
                       <div className="flex flex-col gap-1">
-                        <span className="text-[12px] text-ink-muted">Tap the camera to update your photo.</span>
+                        <span className="text-[12px] text-ink-muted leading-snug">Tap the camera to update your photo.</span>
                         {photoPreview && (
                           <button
                             type="button"
                             onClick={handlePhotoClear}
-                            className="text-xs text-left text-destructive"
+                            className="text-[11px] text-left text-ink-muted hover:text-destructive transition-colors w-fit"
                           >
-                            Remove
+                            Remove photo
                           </button>
                         )}
-                        {photoError && <p className="text-xs text-destructive">{photoError}</p>}
+                        {photoError && <p className="text-[11px] text-destructive">{photoError}</p>}
                       </div>
                     </div>
 
@@ -1086,7 +1289,7 @@ export function EditForm({
                                 {...field}
                                 disabled={mode === "edit"}
                                 placeholder="e.g. john_doe"
-                                className="h-10 text-sm rounded-xl border-border bg-cream/60 focus:border-gold/50 focus:bg-card transition"
+                                className="h-10 text-sm rounded-xl border-border bg-cream-pale/80 focus:border-gold/50 focus:bg-card focus:ring-2 focus:ring-gold/25 transition-all"
                               />
                             </FormControl>
                             <FormMessage />
@@ -1109,7 +1312,7 @@ export function EditForm({
                                 <Input
                                   {...field}
                                   value={field.value ?? ""}
-                                  className="h-10 text-sm rounded-xl border-border bg-cream/60 focus:border-gold/50 focus:bg-card transition"
+                                  className="h-10 text-sm rounded-xl border-border bg-cream-pale/80 focus:border-gold/50 focus:bg-card focus:ring-2 focus:ring-gold/25 transition-all"
                                 />
                               </FormControl>
                               <FormMessage />
@@ -1127,7 +1330,7 @@ export function EditForm({
                                   type="date"
                                   {...field}
                                   value={field.value ?? ""}
-                                  className="h-10 text-sm rounded-xl border-border bg-cream/60 focus:border-gold/50 focus:bg-card transition"
+                                  className="h-10 text-sm rounded-xl border-border bg-cream-pale/80 focus:border-gold/50 focus:bg-card focus:ring-2 focus:ring-gold/25 transition-all"
                                 />
                               </FormControl>
                               <FormMessage />
@@ -1142,7 +1345,7 @@ export function EditForm({
                               <FormLabel className="text-[13px] font-medium">Gender</FormLabel>
                               <Select onValueChange={(v) => field.onChange(v || undefined)} value={field.value || ""}>
                                 <FormControl>
-                                  <SelectTrigger className="h-10 text-sm rounded-xl border-border bg-cream/60">
+                                  <SelectTrigger className="h-10 text-sm rounded-xl border-border bg-cream-pale/80 shadow-none">
                                     <SelectValue placeholder="Select…" />
                                   </SelectTrigger>
                                 </FormControl>
@@ -1168,7 +1371,7 @@ export function EditForm({
                                   value={field.value ?? ""}
                                   maxLength={120}
                                   placeholder="One line that describes you"
-                                  className="h-10 text-sm rounded-xl border-border bg-cream/60 focus:border-gold/50 focus:bg-card transition"
+                                  className="h-10 text-sm rounded-xl border-border bg-cream-pale/80 focus:border-gold/50 focus:bg-card focus:ring-2 focus:ring-gold/25 transition-all"
                                 />
                               </FormControl>
                               <FormMessage />
@@ -1189,7 +1392,7 @@ export function EditForm({
                                 maxLength={500}
                                 rows={4}
                                 placeholder="A short bio (max 500 characters)"
-                                className="text-sm rounded-xl border-border bg-cream/60 focus:border-gold/50 focus:bg-card transition resize-none"
+                                className="text-sm rounded-xl border-border bg-cream-pale/80 focus:border-gold/50 focus:bg-card focus:ring-2 focus:ring-gold/25 transition-all resize-none"
                               />
                             </FormControl>
                             <FormMessage />
@@ -1227,7 +1430,7 @@ export function EditForm({
                               <Input
                                 {...field}
                                 value={field.value ?? ""}
-                                className="h-10 text-sm rounded-xl border-border bg-cream/60 focus:border-gold/50 focus:bg-card transition"
+                                className="h-10 text-sm rounded-xl border-border bg-cream-pale/80 focus:border-gold/50 focus:bg-card focus:ring-2 focus:ring-gold/25 transition-all"
                               />
                             </FormControl>
                             <FormMessage />
@@ -1245,7 +1448,7 @@ export function EditForm({
                                 <Input
                                   {...field}
                                   value={field.value ?? ""}
-                                  className="h-10 text-sm rounded-xl border-border bg-cream/60 focus:border-gold/50 focus:bg-card transition"
+                                  className="h-10 text-sm rounded-xl border-border bg-cream-pale/80 focus:border-gold/50 focus:bg-card focus:ring-2 focus:ring-gold/25 transition-all"
                                 />
                               </FormControl>
                               <FormMessage />
@@ -1262,7 +1465,7 @@ export function EditForm({
                                 <Input
                                   {...field}
                                   value={field.value ?? ""}
-                                  className="h-10 text-sm rounded-xl border-border bg-cream/60 focus:border-gold/50 focus:bg-card transition"
+                                  className="h-10 text-sm rounded-xl border-border bg-cream-pale/80 focus:border-gold/50 focus:bg-card focus:ring-2 focus:ring-gold/25 transition-all"
                                 />
                               </FormControl>
                               <FormMessage />
@@ -1298,7 +1501,7 @@ export function EditForm({
                               onChange={field.onChange}
                               suggestions={PROFESSION_SUGGESTIONS}
                               placeholder="Add profession…"
-                              containerClassName="[&>div]:rounded-xl [&>div]:border-border [&>div]:focus-within:border-gold/50 [&>div]:bg-cream/60"
+                              containerClassName="[&>div]:rounded-xl [&>div]:border-border [&>div]:focus-within:border-gold/50 [&>div]:focus-within:ring-2 [&>div]:focus-within:ring-gold/25 [&>div]:bg-cream-pale/80"
                             />
                             <FormMessage />
                           </FormItem>
@@ -1315,7 +1518,7 @@ export function EditForm({
                               onChange={field.onChange}
                               suggestions={INDUSTRY_SUGGESTIONS}
                               placeholder="Add industry…"
-                              containerClassName="[&>div]:rounded-xl [&>div]:border-border [&>div]:focus-within:border-gold/50 [&>div]:bg-cream/60"
+                              containerClassName="[&>div]:rounded-xl [&>div]:border-border [&>div]:focus-within:border-gold/50 [&>div]:focus-within:ring-2 [&>div]:focus-within:ring-gold/25 [&>div]:bg-cream-pale/80"
                             />
                             <FormMessage />
                           </FormItem>
@@ -1329,7 +1532,7 @@ export function EditForm({
                             <FormLabel className="text-[13px] font-medium">Availability</FormLabel>
                             <Select onValueChange={(v) => field.onChange(v || undefined)} value={field.value || ""}>
                               <FormControl>
-                                <SelectTrigger className="h-10 text-sm rounded-xl border-border bg-cream/60">
+                                <SelectTrigger className="h-10 text-sm rounded-xl border-border bg-cream-pale/80 shadow-none">
                                   <SelectValue placeholder="Select…" />
                                 </SelectTrigger>
                               </FormControl>
@@ -1424,7 +1627,7 @@ export function EditForm({
                               value={field.value ?? []}
                               onChange={field.onChange}
                               placeholder="Add accent…"
-                              containerClassName="[&>div]:rounded-xl [&>div]:border-border [&>div]:focus-within:border-gold/50 [&>div]:bg-cream/60"
+                              containerClassName="[&>div]:rounded-xl [&>div]:border-border [&>div]:focus-within:border-gold/50 [&>div]:focus-within:ring-2 [&>div]:focus-within:ring-gold/25 [&>div]:bg-cream-pale/80"
                             />
                             <FormMessage />
                           </FormItem>
@@ -1459,7 +1662,7 @@ export function EditForm({
                               {...field}
                               value={field.value ?? ""}
                               onChange={(e) => field.onChange(e.target.value === "" ? undefined : Number(e.target.value))}
-                              className="h-10 text-sm rounded-xl border-border bg-cream/60 focus:border-gold/50 focus:bg-card transition"
+                              className="h-10 text-sm rounded-xl border-border bg-cream-pale/80 focus:border-gold/50 focus:bg-card focus:ring-2 focus:ring-gold/25 transition-all"
                             />
                           </FormControl>
                           <FormMessage />
@@ -1478,7 +1681,7 @@ export function EditForm({
                               {...field}
                               value={field.value ?? ""}
                               onChange={(e) => field.onChange(e.target.value === "" ? undefined : Number(e.target.value))}
-                              className="h-10 text-sm rounded-xl border-border bg-cream/60 focus:border-gold/50 focus:bg-card transition"
+                              className="h-10 text-sm rounded-xl border-border bg-cream-pale/80 focus:border-gold/50 focus:bg-card focus:ring-2 focus:ring-gold/25 transition-all"
                             />
                           </FormControl>
                           <FormMessage />
@@ -1493,7 +1696,7 @@ export function EditForm({
                           <FormLabel className="text-[13px] font-medium">Body type</FormLabel>
                           <Select onValueChange={(v) => field.onChange(v || undefined)} value={field.value || ""}>
                             <FormControl>
-                              <SelectTrigger className="h-10 text-sm rounded-xl border-border bg-cream/60">
+                              <SelectTrigger className="h-10 text-sm rounded-xl border-border bg-cream-pale/80 shadow-none">
                                 <SelectValue placeholder="Select…" />
                               </SelectTrigger>
                             </FormControl>
@@ -1515,7 +1718,7 @@ export function EditForm({
                           <FormLabel className="text-[13px] font-medium">Complexion</FormLabel>
                           <Select onValueChange={(v) => field.onChange(v || undefined)} value={field.value || ""}>
                             <FormControl>
-                              <SelectTrigger className="h-10 text-sm rounded-xl border-border bg-cream/60">
+                              <SelectTrigger className="h-10 text-sm rounded-xl border-border bg-cream-pale/80 shadow-none">
                                 <SelectValue placeholder="Select…" />
                               </SelectTrigger>
                             </FormControl>
@@ -1537,7 +1740,7 @@ export function EditForm({
                           <FormLabel className="text-[13px] font-medium">Hair color</FormLabel>
                           <Select onValueChange={(v) => field.onChange(v || undefined)} value={field.value || ""}>
                             <FormControl>
-                              <SelectTrigger className="h-10 text-sm rounded-xl border-border bg-cream/60">
+                              <SelectTrigger className="h-10 text-sm rounded-xl border-border bg-cream-pale/80 shadow-none">
                                 <SelectValue placeholder="Select…" />
                               </SelectTrigger>
                             </FormControl>
@@ -1559,7 +1762,7 @@ export function EditForm({
                           <FormLabel className="text-[13px] font-medium">Hair length</FormLabel>
                           <Select onValueChange={(v) => field.onChange(v || undefined)} value={field.value || ""}>
                             <FormControl>
-                              <SelectTrigger className="h-10 text-sm rounded-xl border-border bg-cream/60">
+                              <SelectTrigger className="h-10 text-sm rounded-xl border-border bg-cream-pale/80 shadow-none">
                                 <SelectValue placeholder="Select…" />
                               </SelectTrigger>
                             </FormControl>
@@ -1581,7 +1784,7 @@ export function EditForm({
                           <FormLabel className="text-[13px] font-medium">Eye color</FormLabel>
                           <Select onValueChange={(v) => field.onChange(v || undefined)} value={field.value || ""}>
                             <FormControl>
-                              <SelectTrigger className="h-10 text-sm rounded-xl border-border bg-cream/60 max-w-xs">
+                              <SelectTrigger className="h-10 text-sm rounded-xl border-border bg-cream-pale/80 max-w-xs shadow-none">
                                 <SelectValue placeholder="Select…" />
                               </SelectTrigger>
                             </FormControl>
@@ -1606,7 +1809,7 @@ export function EditForm({
                               {...field}
                               value={field.value ?? ""}
                               placeholder="e.g. birthmark, scar, tattoo"
-                              className="h-10 text-sm rounded-xl border-border bg-cream/60 focus:border-gold/50 focus:bg-card transition"
+                              className="h-10 text-sm rounded-xl border-border bg-cream-pale/80 focus:border-gold/50 focus:bg-card focus:ring-2 focus:ring-gold/25 transition-all"
                             />
                           </FormControl>
                           <FormMessage />
@@ -1735,7 +1938,7 @@ export function EditForm({
                             render={({ field }) => (
                               <FormItem className="shrink-0 mb-0">
                                 <Select onValueChange={(v) => field.onChange(v || undefined)} value={field.value || ""}>
-                                  <SelectTrigger className="h-7 w-[110px] text-[11px] rounded-md border-border">
+                                  <SelectTrigger className="h-7 w-[110px] text-[11px] rounded-md border-border shadow-none">
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
@@ -1766,7 +1969,7 @@ export function EditForm({
                             <FormLabel className="text-[13px] font-medium">Profile visibility</FormLabel>
                             <Select onValueChange={(v) => field.onChange(v || undefined)} value={field.value || ""}>
                               <FormControl>
-                                <SelectTrigger className="h-10 text-sm rounded-xl border-border bg-cream/60">
+                                <SelectTrigger className="h-10 text-sm rounded-xl border-border bg-cream-pale/80 shadow-none">
                                   <SelectValue placeholder="Select…" />
                                 </SelectTrigger>
                               </FormControl>
@@ -1790,8 +1993,8 @@ export function EditForm({
       </div>
 
       {/* ---------- STICKY SAVE BAR ---------- */}
-      <div className="fixed bottom-0 inset-x-0 z-30 px-4 pb-4 pt-3 bg-gradient-to-t from-background via-background/95 to-background/0">
-        <Card className="max-w-3xl mx-auto rounded-2xl border-border/60 shadow-luxe-lg p-0 gap-0">
+      <div className="fixed bottom-0 inset-x-0 z-30 px-4 pb-4 pt-3 bg-gradient-to-t from-cream-pale via-cream-pale/95 to-transparent">
+        <Card className="max-w-3xl mx-auto rounded-2xl border-border/50 shadow-luxe-lg p-0 gap-0 backdrop-blur-sm">
           <CardContent className="p-2.5 flex items-center gap-2">
           {mode === "edit" && (
             <Button
@@ -1799,7 +2002,7 @@ export function EditForm({
               variant="outline"
               onClick={onCancel}
               disabled={isSubmitting}
-              className="h-11 px-4 rounded-xl bg-cream border-border text-ink-soft text-[13px] font-medium"
+              className="h-11 px-4 rounded-xl bg-cream border-border/60 text-ink-soft text-[13px] font-medium hover:bg-cream-hover transition-colors"
             >
               Cancel
             </Button>
@@ -1807,11 +2010,19 @@ export function EditForm({
           <Button
             type="submit"
             form="profile-form"
-            disabled={mode === "edit" && !isDirty}
-            className="flex-1 h-11 rounded-xl bg-gradient-to-b from-gold to-gold/80 text-white font-medium text-[13px] flex items-center justify-center gap-2 shadow-[0_8px_24px_-10px_oklch(0.74_0.13_80/0.7)]"
+            disabled={mode === "edit" && !isDirty && !isSubmitting}
+            className={cn(
+              "flex-1 h-11 rounded-xl text-white font-semibold text-[13px] flex items-center justify-center gap-2 transition-all duration-200",
+              "bg-gradient-to-b from-gold to-gold-dark",
+              "shadow-[0_8px_24px_-10px_var(--color-gold-dark)]",
+              "hover:shadow-[0_12px_28px_-10px_var(--color-gold-dark)]",
+              "hover:from-gold-hover hover:to-gold-dark",
+              "active:scale-[0.98]",
+              "disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:from-gold disabled:hover:to-gold-dark",
+            )}
           >
             {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-            <Save className="h-4 w-4" />
+            <Save className="h-4 w-4" strokeWidth={2} />
             {mode === "create" ? "Create profile" : "Save changes"}
           </Button>
           </CardContent>

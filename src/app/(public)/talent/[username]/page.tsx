@@ -18,6 +18,7 @@ import { useSectionVisibility } from "@/hooks/use-section-visibility";
 import { useCreateCollaborationRequest } from "@/lib/api/hooks/useCreateCollaborationRequest";
 import { ShortlistOrInviteModal } from "@/components/shortlist-or-invite-modal";
 import { ShareProfileDialog } from "@/components/share-profile-dialog";
+import { TalentGridCard } from "@/components/talent-grid-card";
 import { HeroCard } from "@/components/public-profile/hero-card";
 import { ActionBar } from "@/components/public-profile/action-bar";
 import { SegmentedTabs, type TabId } from "@/components/public-profile/segmented-tabs";
@@ -25,6 +26,8 @@ import { OverviewPane } from "@/components/public-profile/overview-pane";
 import { LooksPane } from "@/components/public-profile/looks-pane";
 import { SkillsPane } from "@/components/public-profile/skills-pane";
 import { LinksPane } from "@/components/public-profile/links-pane";
+import { PinnedPortfolioBar } from "@/components/public-profile/pinned-portfolio-bar";
+import { PortfolioLightbox } from "@/components/portfolio/portfolio-lightbox";
 
 /* ------------------------------------------------------------------ */
 /*  Main Page                                                         */
@@ -47,6 +50,19 @@ export default function PublicTalentProfilePage() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [isPrivate, setIsPrivate] = useState(false);
   const [tab, setTab] = useState<TabId>("overview");
+  const [lightboxItem, setLightboxItem] = useState<PortfolioItem | null>(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [similarTalents, setSimilarTalents] = useState<
+    Array<{
+      username?: string;
+      full_legal_name?: string;
+      profile_photo?: string;
+      location?: Record<string, string>;
+      professions?: string[];
+      is_verified?: boolean;
+    }>
+  >([]);
+  const [similarLoading, setSimilarLoading] = useState(false);
 
   const { guard } = useTierGuard(3);
   const createRequest = useCreateCollaborationRequest();
@@ -166,6 +182,32 @@ export default function PublicTalentProfilePage() {
     return () => { cancelled = true; };
   }, [username]);
 
+  useEffect(() => {
+    if (!profile || isPrivate) return;
+
+    const profession = profile.professions?.[0];
+    if (!profession) return;
+
+    let cancelled = false;
+    setSimilarLoading(true);
+
+    talentApi
+      .getAllTalent({ profession, limit: 4 })
+      .then((res) => {
+        if (!cancelled) {
+          setSimilarTalents(
+            (res.data ?? []).filter((t) => t.username !== username),
+          );
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setSimilarLoading(false);
+      });
+
+    return () => { cancelled = true; };
+  }, [profile, isPrivate, username]);
+
   const activeProfile = profile;
   const { tabVisibility, cardVisibility, heroVisibility } = useSectionVisibility(activeProfile);
 
@@ -274,6 +316,15 @@ export default function PublicTalentProfilePage() {
             isConnecting={isConnecting}
             connectDisabled={!!user && !isRecruiter}
           />
+          {!isPrivate && (
+            <PinnedPortfolioBar
+              items={portfolioItems}
+              onItemClick={(item) => {
+                setLightboxItem(item);
+                setLightboxOpen(true);
+              }}
+            />
+          )}
           {isPrivate ? (
             <div className="px-4 mt-6 text-center">
               <button
@@ -315,6 +366,42 @@ export default function PublicTalentProfilePage() {
                   />
                 )}
               </main>
+
+              {!isPrivate && (() => {
+                if (similarLoading) {
+                  return (
+                    <section className="px-4 mt-6">
+                      <Skeleton className="h-4 w-28 rounded-full mb-3" />
+                      <div className="grid grid-cols-2 gap-3">
+                        {[0, 1, 2, 3].map((i) => (
+                          <Skeleton key={i} className="aspect-[3/4] rounded-2xl" />
+                        ))}
+                      </div>
+                    </section>
+                  );
+                }
+                if (similarTalents.length > 0) {
+                  return (
+                    <section className="px-4 mt-6">
+                      <p className="text-[13px] font-semibold text-ink mb-3">
+                        Similar Talent
+                      </p>
+                      <div className="grid grid-cols-2 gap-3">
+                        {similarTalents.map((talent) => (
+                          <TalentGridCard
+                            key={talent.username}
+                            profile={talent}
+                            onViewProfile={() =>
+                              router.push("/talent/" + talent.username)
+                            }
+                          />
+                        ))}
+                      </div>
+                    </section>
+                  );
+                }
+                return null;
+              })()}
             </>
           )}
         </>
@@ -325,6 +412,11 @@ export default function PublicTalentProfilePage() {
         onClose={() => setShortlistModalOpen(false)}
         talentUserId={activeProfile?.user_id || ""}
         talentName={(activeProfile?.full_legal_name || username).split(" ")[0]}
+      />
+      <PortfolioLightbox
+        item={lightboxItem}
+        open={lightboxOpen}
+        onOpenChange={setLightboxOpen}
       />
     </div>
   );

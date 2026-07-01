@@ -129,6 +129,41 @@ export const talentApi = {
     return response.data;
   },
 
+  getTalentRecommendations: async (
+    campaignId: string,
+    limit = 10,
+    excludeIds?: string,
+  ): Promise<{
+    data: Array<{
+      _id: string;
+      talent: Record<string, unknown>;
+      match_score: number;
+      total_score: number;
+    }>;
+  }> => {
+    const response = await apiClient.get('/recommendations/talents', {
+      params: { campaign_id: campaignId, limit, exclude_ids: excludeIds },
+    });
+    return { data: response.data };
+  },
+
+  getCampaignRecommendations: async (
+    limit = 10,
+    minScore = 0,
+  ): Promise<{
+    data: Array<{
+      _id: string;
+      campaign: Record<string, unknown>;
+      match_score: number;
+      total_score: number;
+    }>;
+  }> => {
+    const response = await apiClient.get('/recommendations/campaigns', {
+      params: { limit, min_score: minScore },
+    });
+    return { data: response.data };
+  },
+
   uploadProfilePhoto: async (file: File): Promise<{ relativePath: string; signedUrl: string }> => {
     const formData = new FormData();
     formData.append('file', file);
@@ -209,6 +244,14 @@ export const talentApi = {
 
   reorderPortfolioItems: async (itemIds: string[]): Promise<{ items: PortfolioItem[] }> => {
     const response = await apiClient.patch('/talent/portfolio/reorder', { item_ids: itemIds });
+    return response.data;
+  },
+
+  addPortfolioLink: async (
+    url: string,
+    dto: { caption?: string; category?: 'work' | 'personal' | 'intro'; is_pinned?: boolean },
+  ): Promise<{ item: PortfolioItem }> => {
+    const response = await apiClient.post('/talent/portfolio/link', { url, ...dto });
     return response.data;
   },
 };

@@ -22,17 +22,7 @@ import { Upload, X, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 import { PROFESSIONS } from '@/lib/professions';
-
-const INDUSTRIES = [
-  'Film',
-  'TV / OTT',
-  'Commercial / ad',
-  'Music video',
-  'Theatre',
-  'Digital / social',
-  'Fashion',
-  'Corporate',
-];
+import { INDUSTRIES } from '@/lib/industries';
 
 function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return (

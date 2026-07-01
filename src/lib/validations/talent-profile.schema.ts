@@ -76,6 +76,7 @@ export const sectionVisibilitySchema = z.object({
 });
 
 export const updateTalentProfileSchema = z.object({
+  hero_background: z.string().optional(),
   username: z.string().optional(),
   full_legal_name: z.string().max(120).optional(),
   date_of_birth: z.string().optional(),
@@ -107,12 +108,13 @@ export type CreateTalentProfileInput = z.infer<typeof createTalentProfileSchema>
 
 export const portfolioItemSchema = z.object({
   id: z.string(),
-  type: z.enum(['image', 'video']),
+  type: z.enum(['image', 'video', 'youtube', 'instagram']),
   category: z.enum(['work', 'personal', 'intro']),
   url: z.string(),
   thumbnail_url: z.string().optional(),
   caption: z.string().optional(),
   is_pinned: z.boolean(),
+  embed_url: z.string().optional(),
   view_count: z.number().optional(),
   created_at: z.string(),
 });
@@ -122,6 +124,7 @@ export type PortfolioItem = z.infer<typeof portfolioItemSchema>;
 export type TalentProfile = UpdateTalentProfileInput & {
   _id?: string;
   user_id?: string;
+  hero_background?: string;
   username?: string;
   email?: string;
   phone?: string;

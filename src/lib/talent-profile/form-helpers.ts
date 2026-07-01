@@ -13,6 +13,7 @@ export const numberOrUndefined = (v: unknown): number | undefined => {
 };
 
 export const DEFAULT_VALUES: CreateTalentProfileInput = {
+  hero_background: "",
   username: "",
   full_legal_name: "",
   date_of_birth: "",
@@ -67,6 +68,7 @@ export function hydrateFromServer(profile: TalentProfile): CreateTalentProfileIn
     : "";
 
   return {
+    hero_background: profile.hero_background ?? "",
     username: profile.username ?? "",
     full_legal_name: profile.full_legal_name ?? "",
     date_of_birth: dob,

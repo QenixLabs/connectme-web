@@ -650,7 +650,6 @@ export default function RecruiterProfilePage() {
             <OtpInput
               value={otp}
               onChange={setOtp}
-              placeholder="000000"
               disabled={verifying}
             />
           </div>

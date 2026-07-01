@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import {
   Eye,
@@ -28,21 +29,19 @@ import { useAuthStore } from "@/providers/auth-store-provider";
 import { getGreeting } from "@/lib/greeting";
 import {
   talentApi,
-  campaignApi,
   subscriptionsApi,
   useUnreadMessageCount,
+  useTalentCampaignRecommendations,
   type Campaign,
 } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { resolveHeroBackground } from "@/lib/hero-color";
 import { queryKeys } from "@/lib/api/query-keys";
 import {
   Card,
-  CardHeader,
-  CardTitle,
   CardDescription,
   CardContent,
   CardFooter,
-  CardAction,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -88,14 +87,6 @@ function useDashboardCompleteness() {
   });
 }
 
-function useRecommended(limit: number) {
-  return useQuery<Campaign[]>({
-    queryKey: ["campaigns", "recommendations", limit],
-    queryFn: () => campaignApi.getRecommendations(limit),
-    staleTime: 120_000,
-  });
-}
-
 function useDashboardSub() {
   return useQuery({
     queryKey: queryKeys.subscriptions.me(),
@@ -116,7 +107,7 @@ export default function TalentDashboardPage() {
 
   const profileQuery = useDashboardProfile();
   const completenessQuery = useDashboardCompleteness();
-  const recommendationsQuery = useRecommended(5);
+  const recommendationsQuery = useTalentCampaignRecommendations(5);
   const { data: unreadData } = useUnreadMessageCount();
   const messageCount = unreadData?.count ?? 0;
 
@@ -142,6 +133,7 @@ export default function TalentDashboardPage() {
         location={locationStr}
         isLoading={profileQuery.isLoading}
         username={profile?.username ?? null}
+        heroBackground={profile?.hero_background ?? null}
       />
 
       <ProfileStrengthCard
@@ -161,7 +153,7 @@ export default function TalentDashboardPage() {
       <SubscriptionPill />
 
       <OpportunityStrip
-        campaigns={recommendationsQuery.data ?? []}
+        campaigns={(recommendationsQuery.data?.data ?? []).map((r) => r.campaign as unknown as Campaign)}
         isLoading={recommendationsQuery.isLoading}
       />
 
@@ -195,6 +187,7 @@ function WelcomeBar({
   location,
   isLoading,
   username,
+  heroBackground,
 }: {
   displayName: string;
   greeting: string;
@@ -203,7 +196,10 @@ function WelcomeBar({
   location: string;
   isLoading: boolean;
   username: string | null;
+  heroBackground?: string | null;
 }) {
+  const [imgFailed, setImgFailed] = useState(false);
+
   const today = new Date().toLocaleDateString("en-IN", {
     weekday: "long",
     day: "numeric",
@@ -212,19 +208,37 @@ function WelcomeBar({
 
   const GreetingIcon = getGreetingIcon();
 
+  const hero = resolveHeroBackground(
+    imgFailed ? undefined : heroBackground,
+    username ?? "default",
+  );
+  const fallbackBg = resolveHeroBackground(
+    undefined,
+    username ?? "default",
+  ).background;
+  const showBgImage = hero.isImage && !imgFailed;
+
   if (isLoading) {
     return (
-      <Card className="overflow-hidden">
-        <CardHeader className="flex-row items-center gap-4 pb-4 pt-5">
-          <Skeleton className="h-14 w-14 rounded-full shrink-0" />
-          <div className="space-y-2 flex-1">
-            <Skeleton className="h-3 w-20 rounded-full" />
-            <Skeleton className="h-5 w-40" />
-            <Skeleton className="h-3 w-28 rounded-full" />
+      <motion.div
+        initial={{ opacity: 0, y: -6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, ease: "easeOut" }}
+      >
+        <Card className="overflow-hidden">
+          <div className="h-[180px] bg-muted/50">
+            <div className="flex items-end gap-4 px-5 pb-4 pt-20">
+              <Skeleton className="h-14 w-14 rounded-full shrink-0 ring-2 ring-white/20" />
+              <div className="space-y-2 flex-1">
+                <Skeleton className="h-3 w-20 rounded-full" />
+                <Skeleton className="h-5 w-40" />
+                <Skeleton className="h-3 w-28 rounded-full" />
+              </div>
+              <Skeleton className="h-8 w-8 rounded-xl shrink-0" />
+            </div>
           </div>
-          <Skeleton className="h-9 w-9 rounded-xl shrink-0" />
-        </CardHeader>
-      </Card>
+        </Card>
+      </motion.div>
     );
   }
 
@@ -234,78 +248,120 @@ function WelcomeBar({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45, ease: "easeOut" }}
     >
-      <Link href={`/talent/${username ?? ""}`} className="block">
-        <Card className="overflow-hidden relative">
-          {/* Gold accent line */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2/3 h-0.5 rounded-b-full bg-gradient-to-r from-transparent via-gold/70 to-transparent" />
+      <Link href={`/talent/${username ?? ""}`} className="block group">
+        <Card className="overflow-hidden relative rounded-[20px] border-0 shadow-lg">
+          {/* Hero background banner */}
+          <div
+            className="relative h-[200px] transition-colors duration-700"
+            style={{
+              background: showBgImage ? undefined : (imgFailed ? fallbackBg : hero.background),
+              backgroundImage: showBgImage ? hero.background : undefined,
+            }}
+          >
+            {/* Depth overlays */}
+            <div
+              className="absolute inset-0 z-0"
+              style={{
+                background: `
+                  radial-gradient(ellipse 120% 60% at 50% 30%, rgba(255,255,255,0.04) 0%, transparent 65%),
+                  radial-gradient(ellipse 80% 40% at 50% 85%, rgba(0,0,0,0.15) 0%, transparent 60%)
+                `,
+              }}
+            />
+            {/* Grain texture */}
+            <div
+              className="absolute inset-0 z-[1] opacity-[0.03] mix-blend-overlay"
+              style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E\")" }}
+            />
 
-        <CardHeader className="flex-row items-center gap-4 pb-4 pt-5">
-          {/* Avatar with subtle glow */}
-          <div className="relative shrink-0">
-            <div className="absolute inset-0 rounded-full bg-gold/10 blur-lg scale-125" />
-            <div className="relative h-14 w-14 rounded-full bg-cream ring-2 ring-gold/30 ring-offset-2 ring-offset-white overflow-hidden grid place-items-center">
-              {profilePhoto ? (
-                <img
-                  src={profilePhoto}
-                  alt={displayName}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <span className="text-gold-ink font-serif font-semibold text-xl">
-                  {displayName.charAt(0).toUpperCase()}
-                </span>
-              )}
-            </div>
-          </div>
+            {/* Hidden img for image error detection */}
+            {hero.isImage && !imgFailed && (
+              <img
+                src={heroBackground!}
+                alt=""
+                className="hidden"
+                onError={() => setImgFailed(true)}
+              />
+            )}
 
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5">
-              <GreetingIcon className="h-3.5 w-3.5 text-gold" />
-              <p className="text-2xs font-medium uppercase tracking-[0.15em] text-muted-foreground">
-                {greeting}
-              </p>
-            </div>
-            <CardTitle className="text-lg font-serif truncate mt-0.5">
-              {displayName}
-            </CardTitle>
-            <p className="text-[11px] text-muted-foreground/70 mt-0.5">
-              {today}
-            </p>
-            <div className="flex items-center gap-2 mt-2 flex-wrap">
-              {location && (
-                <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-                  <MapPin className="h-3 w-3" />
-                  {location}
-                </span>
-              )}
-              {isVerified ? (
-                <span className="inline-flex items-center gap-1 text-xs font-medium text-success-text bg-success-light rounded-full px-2.5 py-0.5">
-                  <BadgeCheck className="h-3 w-3" />
-                  Verified
-                </span>
-              ) : (
-                <Link
-                  href="/talent/verify-documents"
-                  className="inline-flex items-center gap-1 text-xs font-medium text-gold-ink bg-gold-soft rounded-full px-2.5 py-0.5 hover:bg-brand-soft transition-colors"
-                >
-                  <ShieldCheck className="h-3 w-3" />
-                  Verify identity
-                </Link>
-              )}
-            </div>
-          </div>
+            {/* Gold accent line */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2/3 h-0.5 rounded-b-full bg-gradient-to-r from-transparent via-white/40 to-transparent z-20" />
 
-          <CardAction>
+            {/* Edit button — top right */}
             <Link
               href="/talent/profile?edit=1"
-              className="h-9 w-9 rounded-xl bg-cream hover:bg-cream-hover inline-flex items-center justify-center text-ink-soft hover:text-ink transition-colors"
+              className="absolute top-3 right-3 z-20 h-8 w-8 rounded-xl bg-black/25 backdrop-blur-md border border-white/10 inline-flex items-center justify-center text-white/70 hover:text-white hover:bg-black/35 transition-all"
               aria-label="Edit profile"
               onClick={(e) => e.stopPropagation()}
             >
-              <Pencil className="h-4 w-4" />
+              <Pencil className="h-3.5 w-3.5" />
             </Link>
-          </CardAction>
-        </CardHeader>
+
+            {/* Content overlay at bottom */}
+            <div className="absolute inset-x-0 bottom-0 z-10 flex items-end gap-4 px-5 pb-4">
+              {/* Avatar */}
+              <div className="relative shrink-0">
+                <div className="absolute -inset-0.5 rounded-full bg-white/10 blur-md" />
+                <div className="relative h-14 w-14 rounded-full p-[2px] bg-gradient-to-b from-white/25 to-white/5">
+                  <div className="h-full w-full rounded-full bg-white/10 backdrop-blur-sm overflow-hidden ring-1 ring-white/15 grid place-items-center">
+                    {profilePhoto ? (
+                      <img
+                        src={profilePhoto}
+                        alt={displayName}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span className="font-serif font-semibold text-xl text-white/40">
+                        {displayName.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Name + info */}
+              <div className="flex-1 min-w-0 pb-0.5">
+                <div className="flex items-center gap-1.5">
+                  <GreetingIcon className="h-3 w-3 text-white/60" />
+                  <p className="text-2xs font-medium uppercase tracking-[0.15em] text-white/50">
+                    {greeting}
+                  </p>
+                </div>
+                <h2 className="text-lg font-serif font-semibold text-white leading-tight truncate mt-0.5">
+                  {displayName}
+                </h2>
+                <p className="text-[10.5px] text-white/45 mt-0.5">
+                  {today}
+                </p>
+                <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                  {location && (
+                    <span className="inline-flex items-center gap-1 text-[10.5px] text-white/55">
+                      <MapPin className="h-3 w-3" />
+                      {location}
+                    </span>
+                  )}
+                  {isVerified ? (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-300 bg-emerald-500/20 backdrop-blur-sm rounded-full px-2.5 py-0.5 border border-emerald-400/20">
+                      <BadgeCheck className="h-3 w-3" />
+                      Verified
+                    </span>
+                  ) : (
+                    <span
+                      className="inline-flex items-center gap-1 text-[10px] font-medium text-white/70 bg-white/10 backdrop-blur-sm rounded-full px-2.5 py-0.5 border border-white/10 hover:bg-white/15 transition-colors cursor-pointer"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        window.location.href = "/talent/verify-documents";
+                      }}
+                    >
+                      <ShieldCheck className="h-3 w-3" />
+                      Verify identity
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         </Card>
       </Link>
     </motion.div>

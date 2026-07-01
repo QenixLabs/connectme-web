@@ -144,7 +144,6 @@ export function VerificationAlerts() {
             <OtpInput
               value={otp}
               onChange={setOtp}
-              placeholder="000000"
               disabled={verifying}
             />
           </div>

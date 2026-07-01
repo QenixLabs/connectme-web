@@ -11,7 +11,7 @@ import { PortfolioItemDetailSheet } from "@/components/portfolio/portfolio-item-
 import { talentApi } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
-import { Sparkles, TrendingUp } from "lucide-react";
+import { Sparkles, TrendingUp, Pin } from "lucide-react";
 import type { PortfolioItem } from "@/lib/validations/talent-profile.schema";
 
 type CategoryFilter = "all" | "work" | "personal" | "intro";
@@ -82,13 +82,6 @@ export default function TalentPortfolioPage() {
               : i
           )
         );
-        if (dto.is_pinned && dto.category === "intro") {
-          setItems((prev) =>
-            prev.map((i) =>
-              i.id !== id && i.category === "intro" ? { ...i, is_pinned: false } : i
-            )
-          );
-        }
         if (selectedItem?.id === id) {
           setSelectedItem((prev) =>
             prev
@@ -159,6 +152,8 @@ export default function TalentPortfolioPage() {
     [items, categoryFilter]
   );
 
+  const pinnedCount = useMemo(() => items.filter((i) => i.is_pinned).length, [items]);
+
   const categoryCounts = useMemo(
     () => ({
       work: items.filter((i) => i.category === "work").length,
@@ -215,9 +210,15 @@ export default function TalentPortfolioPage() {
             Showcase your best work to recruiters
           </p>
         </div>
-        <span className="text-[11px] font-medium text-text-muted bg-muted px-2.5 py-1 rounded-full">
-          {items.length} item{items.length !== 1 ? "s" : ""}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] font-medium text-brand bg-brand/10 px-2.5 py-1 rounded-full flex items-center gap-1">
+            <Pin className="h-3 w-3" />
+            {pinnedCount}/3
+          </span>
+          <span className="text-[11px] font-medium text-text-muted bg-muted px-2.5 py-1 rounded-full">
+            {items.length} item{items.length !== 1 ? "s" : ""}
+          </span>
+        </div>
       </div>
 
       {/* Error alert */}

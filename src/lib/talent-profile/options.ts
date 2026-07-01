@@ -1,3 +1,6 @@
+import { PROFESSIONS } from '@/lib/professions';
+import { INDUSTRIES } from '@/lib/industries';
+
 export type Option = { value: string; label: string };
 
 const opt = (value: string, label?: string): Option => ({ value, label: label ?? value });
@@ -80,21 +83,9 @@ export const PROFICIENCY_OPTIONS: Option[] = [
   opt('expert', 'Expert'),
 ];
 
-import { PROFESSIONS } from '@/lib/professions';
-
 export const PROFESSION_SUGGESTIONS: string[] = [...PROFESSIONS];
 
-export const INDUSTRY_SUGGESTIONS: string[] = [
-  'Film',
-  'Television',
-  'Theatre',
-  'Advertising',
-  'Music video',
-  'Digital content',
-  'Fashion',
-  'Web series',
-  'Documentary',
-];
+export const INDUSTRY_SUGGESTIONS: string[] = [...INDUSTRIES];
 
 export function dynamicOptions(currentValue: string | undefined, options: Option[]): Option[] {
   if (!currentValue) return options;

@@ -358,6 +358,54 @@ export interface PaginatedAppeals {
   total_pages: number;
 }
 
+export interface PendingPortfolioItem {
+  portfolio_id: string;
+  user_id: string;
+  item_id: string;
+  type: string;
+  category: string;
+  url: string;
+  thumbnail_url?: string;
+  caption?: string;
+  ai_moderation_status: string;
+  view_count: number;
+  created_at: string;
+  user_email: string;
+  user_name: string;
+  user_role: string;
+  username?: string;
+  profile_photo?: string;
+}
+
+export interface PortfolioItem {
+  id: string;
+  type: string;
+  category: string;
+  url: string;
+  thumbnail_url?: string;
+  caption?: string;
+  is_pinned: boolean;
+  embed_url?: string;
+  ai_moderation_status: string;
+  moderation_notes?: string;
+  view_count: number;
+  created_at: string;
+}
+
+export interface PortfolioTalent {
+  portfolio_id: string;
+  user_id: string;
+  items: PortfolioItem[];
+  created_at: string;
+  updated_at: string;
+  user_email: string;
+  user_name: string;
+  user_role: string;
+  user_status: string;
+  username?: string;
+  profile_photo?: string;
+}
+
 export const adminApi = {
   getDashboardStats: async (): Promise<DashboardStats> => {
     const response = await apiClient.get('/admin/dashboard-stats');
@@ -587,6 +635,26 @@ export const adminApi = {
 
   bulkCreateMigrations: async (payload: { from_plan_key: string; to_plan_key: string; effective_at: string; reason: string }): Promise<{ message: string; data: { count: number } }> => {
     const response = await apiClient.post('/admin/subscriptions/bulk-migrate', payload);
+    return response.data;
+  },
+
+  getAllPortfoliosByTalent: async (): Promise<PortfolioTalent[]> => {
+    const response = await apiClient.get('/admin/portfolio/talents');
+    return response.data;
+  },
+
+  getPendingPortfolioItems: async (): Promise<PendingPortfolioItem[]> => {
+    const response = await apiClient.get('/admin/portfolio/items');
+    return response.data;
+  },
+
+  approvePortfolioItem: async (userId: string, itemId: string): Promise<unknown> => {
+    const response = await apiClient.post(`/admin/portfolio/${userId}/items/${itemId}/approve`);
+    return response.data;
+  },
+
+  rejectPortfolioItem: async (userId: string, itemId: string, reason: string): Promise<unknown> => {
+    const response = await apiClient.post(`/admin/portfolio/${userId}/items/${itemId}/reject`, { reason });
     return response.data;
   },
 };

@@ -6,5 +6,6 @@ export function useUnreadMessageCount() {
   return useQuery({
     queryKey: queryKeys.messages.unreadCount(),
     queryFn: () => messagesApi.getUnreadCount(),
+    refetchOnWindowFocus: true,
   });
 }

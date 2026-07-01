@@ -21,6 +21,7 @@ import { useCampaign } from '@/lib/api/hooks/useCampaign';
 import { useUploadCampaignMedia } from '@/lib/api/hooks/useCampaigns';
 import { getApiErrorMessage } from '@/lib/formatters';
 import { campaignApi, type Campaign, type CampaignQuestion } from '@/lib/api';
+import { useTalentRecommendations } from '@/lib/api/hooks/useTalentRecommendations';
 import {
   Check,
   FileText,
@@ -29,6 +30,7 @@ import {
   Save,
   Send,
   Loader2,
+  Users,
 } from 'lucide-react';
 
 const STEPS = [
@@ -149,9 +151,19 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
   const [serverError, setServerError] = useState<string | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
   const [pendingMediaFile, setPendingMediaFile] = useState<File | null>(null);
+  const [draftCampaignId, setDraftCampaignId] = useState<string | null>(campaignId ?? null);
+  const [previewCount, setPreviewCount] = useState<number | null>(null);
 
   const createCampaign = useCreateCampaign();
   const uploadMedia = useUploadCampaignMedia();
+  const { data: recData } = useTalentRecommendations(
+    draftCampaignId ?? '',
+    1,
+    !!draftCampaignId,
+  );
+
+  const matchCount = recData?.data?.length ?? null;
+
   const updateCampaign = useUpdateCampaign();
   const { data: existingCampaign, isLoading: isLoadingCampaign } = useCampaign(
     campaignId ?? '',
@@ -295,6 +307,9 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
       } else {
         const created = await createCampaign.mutateAsync(payload as Parameters<typeof campaignApi.create>[0]);
         resultCampaignId = created._id;
+        if (!draftCampaignId) {
+          setDraftCampaignId(created._id);
+        }
       }
 
       if (pendingMediaFile && resultCampaignId) {
@@ -319,6 +334,33 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
   const saveDraft = () => {
     form.setValue('publishOption', 'draft', { shouldValidate: true });
     form.handleSubmit(onSubmit)();
+  };
+
+  const [checkingMatches, setCheckingMatches] = useState(false);
+  const checkMatches = async () => {
+    const fields = getStepFields(2);
+    const valid = await form.trigger(fields as unknown as Parameters<typeof form.trigger>[0]);
+    if (!valid) return;
+
+    setCheckingMatches(true);
+    try {
+      if (isEdit && campaignId) {
+        const payload = buildPayload(form.getValues());
+        await updateCampaign.mutateAsync({ id: campaignId, payload });
+        setDraftCampaignId(campaignId);
+      } else if (draftCampaignId) {
+        const payload = buildPayload(form.getValues());
+        await updateCampaign.mutateAsync({ id: draftCampaignId, payload });
+      } else {
+        const payload = buildPayload({ ...form.getValues(), publishOption: 'draft' });
+        const created = await createCampaign.mutateAsync(payload as Parameters<typeof campaignApi.create>[0]);
+        setDraftCampaignId(created._id);
+      }
+    } catch {
+      // silently fail — user can still continue
+    } finally {
+      setCheckingMatches(false);
+    }
   };
 
   if (isEdit && isLoadingCampaign) {
@@ -435,6 +477,28 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
             step === 3 ? 'block opacity-100' : 'hidden opacity-0',
           )}>
             <PublishStep />
+
+            {draftCampaignId && (
+              <div className="mt-6 rounded-2xl bg-gradient-to-br from-brand/5 to-brand/10 border border-brand/20 p-5">
+                <div className="flex items-center gap-2 mb-2">
+                  <Users className="h-4 w-4 text-brand" strokeWidth={1.5} />
+                  <p className="text-sm font-semibold text-ink">Match Preview</p>
+                </div>
+                {matchCount !== null ? (
+                  <p className="text-[13px] text-ink-soft leading-relaxed">
+                    Based on your requirements, we found{' '}
+                    <span className="font-bold text-brand">{matchCount}</span>
+                    {matchCount === 1 ? ' matching talent' : ' matching talents'}{' '}
+                    who meet your criteria.
+                  </p>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-ink-muted" />
+                    <p className="text-[13px] text-ink-muted">Checking matches...</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {serverError && (
@@ -463,6 +527,21 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
             <Save className="w-3.5 h-3.5" strokeWidth={1.5} />
             Save draft
           </button>
+          {step === 2 && (
+            <button
+              type="button"
+              onClick={checkMatches}
+              disabled={checkingMatches}
+              className="px-4 py-2.5 rounded-xl text-sm font-medium border border-brand/30 bg-brand/5 text-brand hover:bg-brand/10 transition-all disabled:opacity-50 flex items-center gap-1.5"
+            >
+              {checkingMatches ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" strokeWidth={2} />
+              ) : (
+                <Users className="w-3.5 h-3.5" strokeWidth={1.5} />
+              )}
+              Check Matches
+            </button>
+          )}
           {!isLastStep ? (
             <button
               type="button"

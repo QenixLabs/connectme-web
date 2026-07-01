@@ -6,7 +6,7 @@ export { recruiterApi } from './recruiter';
 export { messagesApi, collaborationRequestsApi } from './messages';
 export { notificationsApi } from './notifications';
 export { verificationApi, type VerificationRecord, type VerificationDocResponse, type VerificationStatusResponse } from './verification';
-export { adminApi, type DashboardStats, type DashboardActivity, type TimeSeriesPoint, type PendingVerificationItem, type ReportItem, type PaginatedReports, type ReportDetail, type MessageContextItem, type UserHistory, type AdminUser, type PaginatedUsers, type UserDetail, type AdminNote, type UserActivity, type PaginatedModerationActions, type AppealItem, type PaginatedAppeals, type AuditLogItem, type PaginatedAuditLogs, type SubscriptionAnalytics, type AdminUserSubscriptionDetail, type PaginatedAdminUserInvoices } from './admin';
+export { adminApi, type DashboardStats, type DashboardActivity, type TimeSeriesPoint, type PendingVerificationItem, type ReportItem, type PaginatedReports, type ReportDetail, type MessageContextItem, type UserHistory, type AdminUser, type PaginatedUsers, type UserDetail, type AdminNote, type UserActivity, type PaginatedModerationActions, type AppealItem, type PaginatedAppeals, type AuditLogItem, type PaginatedAuditLogs, type SubscriptionAnalytics, type AdminUserSubscriptionDetail, type PaginatedAdminUserInvoices, type PendingPortfolioItem, type PortfolioTalent, type PortfolioItem } from './admin';
 export { plansApi, type PlanConfig } from './plans';
 export { appealsApi, type Appeal } from './appeals';
 export { subscriptionsApi, type Subscription, type SubscriptionWithPlan, type SubscriptionUsage } from './subscriptions';
@@ -17,6 +17,9 @@ export { useCampaignAnalytics, useCampaignDemographics } from './hooks/useCampai
 export { useCampaignInvites } from './hooks/useCampaignInvites';
 export { useRecruiterProfile } from './hooks/useRecruiterProfile';
 export { useDashboardRecommendations } from './hooks/useDashboardRecommendations';
+export { useTalentRecommendations } from './hooks/useTalentRecommendations';
+export { useTalentCampaignRecommendations } from './hooks/useTalentCampaignRecommendations';
+export { useCampaignTopMatches } from './hooks/useCampaignTopMatches';
 export { useTalentProfile } from './hooks/useTalentProfile';
 export { useTalentCompleteness } from './hooks/useTalentCompleteness';
 export { useInviteTalent, useBulkInviteTalent, useRespondToInvite } from './hooks/useInviteTalent';
