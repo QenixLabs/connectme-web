@@ -20,14 +20,14 @@ npm install
 npm run dev
 ```
 
-Runs on `http://localhost:3000` by default. Backend also defaults to `:3000`, so set `PORT` on one of them or run the backend on `:3000` and the frontend on a different port (e.g. `next dev -p 3001`).
+Runs on `http://localhost:3000` by default. Backend runs on `:3001`.
 
 ## Environment
 
 Create `.env.local`:
 
 ```
-NEXT_PUBLIC_API_URL=http://localhost:3000/api/v1
+NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1
 ```
 
 Points to the NestJS backend (global prefix `api/v1`). Code fallback is `http://localhost:3001/api/v1` if unset.

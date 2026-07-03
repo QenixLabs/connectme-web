@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Lock, ShieldCheck } from "lucide-react";
-import { talentApi } from "@/lib/api";
+import { ArrowLeft } from "lucide-react";
+import { talentApi, collaborationRequestsApi } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
 import type { TalentProfile } from "@/lib/validations/talent-profile.schema";
 import type { PortfolioItem } from "@/lib/validations/talent-profile.schema";
@@ -14,6 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
+import { useAuthStore } from "@/providers/auth-store-provider";
+import { usePopup } from "@/hooks/use-popup";
 
 interface PortfolioData {
   profile: Partial<TalentProfile>;
@@ -303,11 +305,14 @@ export default function PublicPortfolioPage() {
   const [ownerChecked, setOwnerChecked] = useState(false);
 
   const [data, setData] = useState<PortfolioData | null>(null);
-  const [previewProfile, setPreviewProfile] = useState<TalentProfile | null>(null);
-  const [isPrivate, setIsPrivate] = useState(false);
-  const [requestSent, setRequestSent] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isPrivate, setIsPrivate] = useState(false);
+  const [hasConnection, setHasConnection] = useState(true);
+  const [previewProfile, setPreviewProfile] = useState<Partial<TalentProfile> | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const { user } = useAuthStore();
+  const { show } = usePopup();
 
   /* ---- Owner detection ---- */
   useEffect(() => {
@@ -331,8 +336,9 @@ export default function PublicPortfolioPage() {
       .then((res) => {
         if ((res as any).private) {
           setIsPrivate(true);
-          setRequestSent((res as any).requestSent ?? false);
+          setHasConnection((res as any).hasConnection !== false);
           setPreviewProfile((res as any).preview ?? null);
+          setError("This portfolio is private");
         } else {
           setData(res as PortfolioData);
         }
@@ -340,15 +346,6 @@ export default function PublicPortfolioPage() {
       .catch((err) => setError(getApiErrorMessage(err)))
       .finally(() => setLoading(false));
   }, [ownerChecked, isOwner, username]);
-
-  const handleRequestAccess = async () => {
-    try {
-      await talentApi.requestAccess(username);
-      setRequestSent(true);
-    } catch (err) {
-      setError(getApiErrorMessage(err, "Failed to send request"));
-    }
-  };
 
   if (!ownerChecked) {
     return (
@@ -386,6 +383,28 @@ export default function PublicPortfolioPage() {
     );
   }
 
+  const [requestSent, setRequestSent] = useState(false);
+
+  const handleConnect = async () => {
+    const talentId = previewProfile?.user_id;
+    if (!talentId) return;
+    if (!user) {
+      router.push("/auth/login");
+      return;
+    }
+    setIsConnecting(true);
+    try {
+      await collaborationRequestsApi.createRequest(talentId, "I'd like to view your full portfolio and profile.");
+      setRequestSent(true);
+      show({ title: "Request sent! The talent will be notified.", variant: "success", position: "top-center" });
+    } catch (err: any) {
+      const msg = getApiErrorMessage(err, "Could not send request");
+      show({ title: msg, variant: "error", position: "bottom-center" });
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
   if (error) {
     return (
       <div className="max-w-2xl mx-auto py-6 px-4 pb-20">
@@ -399,52 +418,28 @@ export default function PublicPortfolioPage() {
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
-      </div>
-    );
-  }
-
-  if (isPrivate) {
-    return (
-      <div className="max-w-2xl mx-auto py-6 px-4 pb-20">
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-2 text-sm text-text-muted hover:text-text-primary transition-colors mb-6"
-        >
-          <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
-          Back
-        </button>
-
-        {previewProfile && (
-          <div className="mb-4">
-            <MediaKitView profile={previewProfile} items={[]} showBack={false} />
+        {isPrivate && !hasConnection && previewProfile?.user_id && (
+          <div className="mt-6 text-center space-y-3">
+            {requestSent ? (
+              <p className="text-sm text-success-text">
+                Request sent. You will be able to view the portfolio once the talent accepts your request.
+              </p>
+            ) : (
+              <>
+                <p className="text-sm text-text-secondary">
+                  Send a connection request to view the full profile and portfolio.
+                </p>
+                <Button
+                  onClick={handleConnect}
+                  disabled={isConnecting}
+                  className="shrink-0"
+                >
+                  {isConnecting ? "Sending..." : "Send Connection Request"}
+                </Button>
+              </>
+            )}
           </div>
         )}
-
-        <div className="bg-card border border-border rounded-xl p-5 text-center space-y-4">
-          <div className="mx-auto w-12 h-12 rounded-full bg-warning/10 flex items-center justify-center">
-            <Lock className="w-5 h-5 text-warning" strokeWidth={1.5} />
-          </div>
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-text-primary">Portfolio is private</p>
-            <p className="text-xs text-text-muted">
-              Only approved recruiters can view the full portfolio.
-            </p>
-          </div>
-
-          {requestSent ? (
-            <div className="flex items-center justify-center gap-2 text-xs text-success-text font-medium py-2">
-              <ShieldCheck className="w-4 h-4" strokeWidth={1.5} />
-              Request sent. Waiting for approval.
-            </div>
-          ) : (
-            <Button
-              onClick={handleRequestAccess}
-              className="w-full bg-warning hover:bg-warning/90 text-white"
-            >
-              Request Access
-            </Button>
-          )}
-        </div>
       </div>
     );
   }

@@ -22,11 +22,7 @@ interface TalentCardProps {
   onMessage?: () => void;
   onViewProfile?: () => void;
   onEdit?: () => void;
-  onRequestAccess?: () => void;
-  requestSent?: boolean;
   isOwner?: boolean;
-  privacyMode?: string;
-  hasAccess?: boolean;
   onViewPortfolio?: () => void;
 }
 
@@ -96,11 +92,7 @@ export function TalentCard({
   onMessage,
   onViewProfile,
   onEdit,
-  onRequestAccess,
-  requestSent,
   isOwner,
-  privacyMode,
-  hasAccess,
   onViewPortfolio,
 }: TalentCardProps) {
   const data = sample ? (SAMPLE_PROFILE as TalentProfile) : profile;
@@ -222,7 +214,7 @@ export function TalentCard({
         )}
 
         {/* View full profile */}
-        {onViewProfile && (!privacyMode || privacyMode !== 'private' || isOwner || hasAccess) && (
+        {onViewProfile && (
           <button
             onClick={onViewProfile}
             className="mt-3 w-full flex items-center justify-center gap-1 text-xs font-medium text-text-muted hover:text-text-secondary transition-colors"
@@ -230,26 +222,6 @@ export function TalentCard({
             View full profile
             <ChevronDown className="w-3.5 h-3.5" strokeWidth={1.5} />
           </button>
-        )}
-
-        {/* Request access for private profiles */}
-        {privacyMode === 'private' && !hasAccess && onRequestAccess && (
-          <div className="mt-4 pt-3 border-t border-border-subtle text-center space-y-2"
-          >
-            <p className="text-xs text-text-muted">This profile is private.</p>
-            {requestSent ? (
-              <p className="text-xs text-success-text font-medium">Request sent. Waiting for approval.</p>
-            ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full bg-amber-500 hover:bg-amber-600 text-white border-amber-500 hover:border-amber-600"
-                onClick={onRequestAccess}
-              >
-                Request Access
-              </Button>
-            )}
-          </div>
         )}
       </div>
     </Card>

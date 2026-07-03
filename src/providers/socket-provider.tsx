@@ -6,8 +6,10 @@ import {
   useEffect,
   useState,
   ReactNode,
+  useRef,
 } from "react";
 import { io, Socket } from "socket.io-client";
+import { useAuthStore } from "@/providers/auth-store-provider";
 
 interface SocketContextValue {
   socket: Socket | null;
@@ -20,10 +22,20 @@ const SocketContext = createContext<SocketContextValue>({
 });
 
 export function SocketProvider({ children }: { children: ReactNode }) {
-  const [socket, setSocket] = useState<Socket | null>(null);
+  const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+      setIsConnected(false);
+      return;
+    }
+
     const wsUrl = (
       process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1"
     ).replace("/api/v1", "");
@@ -36,15 +48,17 @@ export function SocketProvider({ children }: { children: ReactNode }) {
     newSocket.on("connect", () => setIsConnected(true));
     newSocket.on("disconnect", () => setIsConnected(false));
 
-    setSocket(newSocket);
+    socketRef.current = newSocket;
 
     return () => {
       newSocket.disconnect();
+      socketRef.current = null;
+      setIsConnected(false);
     };
-  }, []);
+  }, [isAuthenticated]);
 
   return (
-    <SocketContext.Provider value={{ socket, isConnected }}>
+    <SocketContext.Provider value={{ socket: socketRef.current, isConnected }}>
       {children}
     </SocketContext.Provider>
   );

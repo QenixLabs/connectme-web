@@ -4,7 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #ffffff;
+  --background: #f5f3ef;
   --foreground: #171717;
   --glow: rgba(245, 158, 11, 0.07);
 

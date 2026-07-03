@@ -114,10 +114,10 @@ function DateBlock({
 interface BasicInfoStepProps {
   mediaFile?: File | null;
   onMediaChange?: (file: File | null) => void;
-  existingMedia?: { url: string; type: string; caption?: string } | null;
+  existingBanner?: { url: string; type: 'image' | 'video'; thumbnail?: string } | null;
 }
 
-export function BasicInfoStep({ mediaFile, onMediaChange, existingMedia }: BasicInfoStepProps) {
+export function BasicInfoStep({ mediaFile, onMediaChange, existingBanner }: BasicInfoStepProps) {
   const { trigger, watch, setValue } = useFormContext();
   const selectedState = watch('location.state');
   const selectedCity = watch('location.city');
@@ -134,7 +134,7 @@ export function BasicInfoStep({ mediaFile, onMediaChange, existingMedia }: Basic
       e.stopPropagation();
       setDragOver(false);
       const file = e.dataTransfer.files?.[0];
-      if (file && (file.type.startsWith('image/') || file.type.startsWith('video/'))) {
+      if (file && file.type.startsWith('image/')) {
         onMediaChange?.(file);
       }
     },
@@ -330,9 +330,15 @@ export function BasicInfoStep({ mediaFile, onMediaChange, existingMedia }: Basic
           onChange={(val) => {
             setValue('dates.start', val, { shouldValidate: true });
             if (val && !watch('deadline')) {
-              const d = new Date(val + 'T00:00:00');
-              d.setDate(d.getDate() - 3);
-              setValue('deadline', d.toISOString().slice(0, 10), { shouldValidate: false });
+              const start = new Date(val + 'T00:00:00');
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              const deadline = new Date(start);
+              deadline.setDate(deadline.getDate() - 3);
+              if (deadline < today) {
+                deadline.setTime(today.getTime());
+              }
+              setValue('deadline', deadline.toISOString().slice(0, 10), { shouldValidate: false });
             }
           }}
         />
@@ -353,31 +359,23 @@ export function BasicInfoStep({ mediaFile, onMediaChange, existingMedia }: Basic
       <SectionLabel>Media</SectionLabel>
 
       <div className="space-y-2">
-        {existingMedia && !mediaFile && (
+        {existingBanner && !mediaFile && (
           <div className="relative rounded-xl overflow-hidden aspect-video border border-border w-full max-w-[280px]">
-            {existingMedia.type === 'video' ? (
-              <video src={existingMedia.url} className="w-full h-full object-cover" controls />
+            {existingBanner.type === 'video' ? (
+              <video src={existingBanner.url} className="w-full h-full object-cover" controls poster={existingBanner.thumbnail} />
             ) : (
-              <img src={existingMedia.url} alt="" className="w-full h-full object-cover" />
+              <img src={existingBanner.url} alt="" className="w-full h-full object-cover" />
             )}
           </div>
         )}
 
         {mediaFile ? (
           <div className="relative rounded-xl overflow-hidden aspect-video border border-border w-full max-w-[280px]">
-            {mediaFile.type.startsWith('video/') ? (
-              <video
-                src={URL.createObjectURL(mediaFile)}
-                className="w-full h-full object-cover"
-                controls
-              />
-            ) : (
-              <img
-                src={URL.createObjectURL(mediaFile)}
-                alt="Preview"
-                className="w-full h-full object-cover"
-              />
-            )}
+            <img
+              src={URL.createObjectURL(mediaFile)}
+              alt="Preview"
+              className="w-full h-full object-cover"
+            />
             <button
               type="button"
               onClick={() => onMediaChange?.(null)}
@@ -391,7 +389,7 @@ export function BasicInfoStep({ mediaFile, onMediaChange, existingMedia }: Basic
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*,video/*"
+              accept="image/*"
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) onMediaChange?.(file);
@@ -415,7 +413,7 @@ export function BasicInfoStep({ mediaFile, onMediaChange, existingMedia }: Basic
             >
               <Upload className={cn("w-5 h-5", dragOver ? "text-brand" : "text-text-muted")} strokeWidth={1.5} />
               <span className={cn("text-xs", dragOver ? "text-brand font-medium" : "text-text-secondary")}>
-                {dragOver ? "Drop media here" : "Tap or drop image / video"}
+                {dragOver ? "Drop image here" : "Tap or drop image"}
               </span>
             </label>
           </>

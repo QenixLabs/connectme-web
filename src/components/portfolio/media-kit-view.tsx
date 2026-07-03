@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -16,6 +15,7 @@ import type { TalentProfile } from "@/lib/validations/talent-profile.schema";
 import type { PortfolioItem } from "@/lib/validations/talent-profile.schema";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { ShareProfileDialog } from "@/components/share-profile-dialog";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -322,32 +322,25 @@ function MediaKitGrid({ items }: { items: PortfolioItem[] }) {
 /*  Footer                                                             */
 /* ------------------------------------------------------------------ */
 
-function MediaKitFooter({ username }: { username?: string }) {
-  const [copied, setCopied] = useState(false);
-
-  const handleShare = async () => {
-    const url = `${window.location.origin}/talent/${username}/portfolio`;
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // ignore
-    }
-  };
-
+function MediaKitFooter({ profile }: { profile: MediaKitProfile }) {
   return (
     <div className="px-5 sm:px-6 py-5 mt-4 border-t border-border-subtle">
       <div className="flex items-center justify-center gap-3">
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex-1 max-w-[200px]"
-          onClick={handleShare}
+        <ShareProfileDialog
+          username={profile.username}
+          profilePhoto={profile.profile_photo}
+          name={profile.full_legal_name}
+          url={`${typeof window !== "undefined" ? window.location.origin : ""}/talent/${profile.username}/portfolio`}
         >
-          <Share2 className="w-4 h-4 mr-1.5" strokeWidth={1.5} />
-          {copied ? "Copied!" : "Share Link"}
-        </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex-1 max-w-[200px]"
+          >
+            <Share2 className="w-4 h-4 mr-1.5" strokeWidth={1.5} />
+            Share Link
+          </Button>
+        </ShareProfileDialog>
       </div>
     </div>
   );
@@ -378,7 +371,7 @@ export function MediaKitView({ profile, items, showBack = true }: MediaKitViewPr
         <MediaKitHero profile={profile} />
         <MediaKitStats profile={profile} />
         <MediaKitGrid items={items} />
-        <MediaKitFooter username={profile.username} />
+        <MediaKitFooter profile={profile} />
       </Card>
     </div>
   );

@@ -1,8 +1,7 @@
 "use client";
 
-import { Check } from "lucide-react";
+import { Check, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useRequestProfileAccess } from "@/lib/api/hooks/useRequestProfileAccess";
 
 type ProfileWithAccess = Partial<{
   _id?: string;
@@ -18,7 +17,6 @@ type ProfileWithAccess = Partial<{
   skills?: Array<{ name?: string; proficiency?: string }>;
   availability?: string;
   privacy_mode?: string;
-  access_status?: "allowed" | "pending" | "none";
   is_verified?: boolean;
   gender?: string;
   date_of_birth?: string;
@@ -99,6 +97,7 @@ interface TalentGridCardProps {
   profile: ProfileWithAccess;
   onViewProfile: () => void;
   onInvite?: () => void;
+  onConnect?: () => void;
   selectable?: boolean;
   isSelected?: boolean;
   onToggleSelect?: () => void;
@@ -108,18 +107,15 @@ export function TalentGridCard({
   profile,
   onViewProfile,
   onInvite,
+  onConnect,
   selectable,
   isSelected,
   onToggleSelect,
 }: TalentGridCardProps) {
-  const requestAccess = useRequestProfileAccess();
   const displayName = profile.full_legal_name || profile.username || "Talent";
   const loc = profile.location?.city || profile.location?.state || "";
   const profession = profile.professions?.[0] ?? profile.industries?.[0] ?? "";
   const completion = getProfileCompletion(profile);
-  const isPrivateLocked =
-    profile.privacy_mode === "private" && profile.access_status !== "allowed";
-  const isPending = profile.access_status === "pending";
 
   return (
     <article
@@ -226,52 +222,42 @@ export function TalentGridCard({
         </div>
 
         {/* Actions */}
-        {isPrivateLocked ? (
-          <div className="flex flex-col gap-1.5">
-            {isPending ? (
-              <button
-                disabled
-                className="w-full py-1.5 rounded-full border border-border bg-muted-bg text-text-muted text-[11px] font-medium cursor-not-allowed"
-              >
-                Request Pending
-              </button>
-            ) : (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (profile.username) requestAccess.mutate(profile.username);
-                }}
-                disabled={requestAccess.isPending || !profile.username}
-                className="w-full py-1.5 rounded-full border border-[#B85C00] bg-[#FFF7F0] text-[#B85C00] text-[11px] font-medium transition-colors hover:bg-[#FAEEDA] disabled:opacity-50"
-              >
-                Request Access
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="flex flex-col gap-1.5">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onViewProfile();
-              }}
-              className="w-full py-1.5 rounded-full border border-border bg-card text-text-secondary text-[11px] font-medium transition-colors hover:bg-muted-bg"
-            >
-              View Profile
-            </button>
+        <div className="flex flex-col gap-1.5">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onViewProfile();
+            }}
+            className="w-full py-1.5 rounded-full border border-border bg-card text-text-secondary text-[11px] font-medium transition-colors hover:bg-muted-bg"
+          >
+            View Profile
+          </button>
+          <div className="flex gap-1.5">
             {onInvite && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onInvite();
                 }}
-                className="w-full py-1.5 rounded-full border border-[#B85C00] bg-[#FFF7F0] text-[#B85C00] text-[11px] font-medium transition-colors hover:bg-[#FAEEDA]"
+                className="flex-1 py-1.5 rounded-full border border-[#B85C00] bg-[#FFF7F0] text-[#B85C00] text-[11px] font-medium transition-colors hover:bg-[#FAEEDA]"
               >
                 Invite
               </button>
             )}
+            {onConnect && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onConnect();
+                }}
+                className="flex-1 py-1.5 rounded-full border border-border bg-card text-text-secondary text-[11px] font-medium transition-colors hover:bg-muted-bg flex items-center justify-center gap-1"
+              >
+                <UserPlus className="w-3 h-3" strokeWidth={1.5} />
+                Connect
+              </button>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </article>
   );

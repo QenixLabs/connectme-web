@@ -7,7 +7,6 @@ import {
   Bell,
   Check,
   X,
-  Shield,
   User,
   Clock,
   FileCheck,
@@ -17,7 +16,6 @@ import {
 } from "lucide-react";
 import {
   notificationsApi,
-  talentApi,
   useRespondToInvite,
   useNotifications,
   useMarkAsRead,
@@ -128,32 +126,6 @@ export function NotificationList() {
     };
   }, [socket, queryClient]);
 
-  const handleAllow = async (notificationId: string, requesterId: string) => {
-    if (respondingId) return;
-    setRespondingId(requesterId);
-    try {
-      await talentApi.respondToAccessRequest(requesterId, "allowed");
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
-    } catch (err) {
-      // handled by component if needed
-    } finally {
-      setRespondingId(null);
-    }
-  };
-
-  const handleDeny = async (notificationId: string, requesterId: string) => {
-    if (respondingId) return;
-    setRespondingId(requesterId);
-    try {
-      await talentApi.respondToAccessRequest(requesterId, "denied");
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
-    } catch (err) {
-      // handled by component if needed
-    } finally {
-      setRespondingId(null);
-    }
-  };
-
   const respondToInvite = useRespondToInvite();
 
   const handleAcceptInvite = async (notificationId: string, inviteId: string) => {
@@ -194,8 +166,6 @@ export function NotificationList() {
   }, [markAllAsRead]);
 
   const renderNotification = (notification: NotificationItem) => {
-    const isRequest = notification.type === "access_request";
-    const isResponse = notification.type === "access_response";
     const isVerificationStatus = notification.type === "verification_status";
     const isCampaignInvite = notification.type === "campaign_invite";
     const isApplicationReceived = notification.type === "application_received";
@@ -242,18 +212,6 @@ export function NotificationList() {
                 <span className="text-sm font-semibold text-text-primary truncate">
                   {notification.title}
                 </span>
-                {isRequest && (
-                  <Badge variant="secondary" className="text-2xs shrink-0">
-                    <Shield className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
-                    Access request
-                  </Badge>
-                )}
-                {isResponse && (
-                  <Badge variant="outline" className="text-2xs shrink-0">
-                    <User className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
-                    Response
-                  </Badge>
-                )}
                 {isVerificationStatus && (
                   <Badge variant="outline" className="text-2xs shrink-0">
                     <FileCheck className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
@@ -287,83 +245,6 @@ export function NotificationList() {
 
             <p className="text-xs text-text-muted mt-0.5">{actorName}</p>
             <p className="text-sm text-text-secondary mt-2">{notification.body}</p>
-
-            {isRequest && notification.action_status === "pending" && (
-              <div className="mt-3 flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={respondingId === notification.data.requester_id}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleAllow(
-                      notification._id,
-                      notification.data.requester_id
-                    );
-                  }}
-                >
-                  <Check className="w-4 h-4 mr-1" />
-                  Allow
-                </Button>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  disabled={respondingId === notification.data.requester_id}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeny(
-                      notification._id,
-                      notification.data.requester_id
-                    );
-                  }}
-                >
-                  <X className="w-4 h-4 mr-1" />
-                  Don&apos;t Allow
-                </Button>
-              </div>
-            )}
-
-            {isRequest && notification.action_status !== "pending" && (
-              <div className="mt-3">
-                <Badge
-                  variant={notification.action_status === "allowed" ? "default" : "destructive"}
-                  className="text-2xs capitalize"
-                >
-                  {notification.action_status === "allowed" ? (
-                    <>
-                      <Check className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
-                      Allowed
-                    </>
-                  ) : (
-                    <>
-                      <X className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
-                      Denied
-                    </>
-                  )}
-                </Badge>
-              </div>
-            )}
-
-            {isResponse && (
-              <div className="mt-3">
-                <Badge
-                  variant={notification.action_status === "allowed" ? "default" : "destructive"}
-                  className="text-2xs capitalize"
-                >
-                  {notification.action_status === "allowed" ? (
-                    <>
-                      <Check className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
-                      Approved
-                    </>
-                  ) : (
-                    <>
-                      <X className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
-                      Declined
-                    </>
-                  )}
-                </Badge>
-              </div>
-            )}
 
             {isCampaignInvite && notification.action_status === "pending" && inviteId && (
               <div className="mt-3 flex gap-2">

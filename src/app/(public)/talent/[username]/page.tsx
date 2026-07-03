@@ -1,19 +1,18 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
-  Lock,
-  ShieldCheck,
   Mail,
   BookmarkPlus,
   Download,
   Check,
   Play,
   ChevronRight,
+  Share2,
 } from "lucide-react";
-import { talentApi } from "@/lib/api";
+import { talentApi, messagesApi } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
 import type { TalentProfile } from "@/lib/validations/talent-profile.schema";
 import type { PortfolioItem } from "@/lib/validations/talent-profile.schema";
@@ -21,37 +20,26 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/providers/auth-store-provider";
+import { useTierGuard } from "@/hooks/use-tier-guard";
+import { usePopup } from "@/hooks/use-popup";
+import { useCreateCollaborationRequest } from "@/lib/api/hooks/useCreateCollaborationRequest";
 import { ShortlistOrInviteModal } from "@/components/shortlist-or-invite-modal";
+import { ShareProfileDialog } from "@/components/share-profile-dialog";
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                           */
 /* ------------------------------------------------------------------ */
 
-function formatCount(n?: number): string {
-  if (!n) return "0";
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-  return String(n);
-}
-
-function getMockMatchPct(seed: string): number {
-  let hash = 0;
-  for (let i = 0; i < seed.length; i++) {
-    hash = seed.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return 75 + (Math.abs(hash) % 24);
-}
-
-function getMockMatchReasons(profile: TalentProfile): string[] {
+function getProfileHighlights(profile: TalentProfile): string[] {
   const reasons: string[] = [];
   if (profile.professions?.length) {
-    reasons.push(`Professions match campaign needs: ${profile.professions.slice(0, 2).join(", ")}`);
+    reasons.push(`Professions: ${profile.professions.slice(0, 2).join(", ")}`);
   }
   if (profile.languages?.length) {
     reasons.push(`Fluent in ${profile.languages.map((l) => l.name).filter(Boolean).slice(0, 2).join(" and ")}`);
   }
   if (profile.location?.city) {
-    reasons.push(`Based in ${profile.location.city} — fits location requirements`);
+    reasons.push(`Based in ${profile.location.city}`);
   }
   if (profile.availability === "available") {
     reasons.push("Currently available for new opportunities");
@@ -60,36 +48,8 @@ function getMockMatchReasons(profile: TalentProfile): string[] {
     reasons.push(`Strong ${profile.skills[0].name?.toLowerCase()} skills`);
   }
   return reasons.length ? reasons.slice(0, 3) : [
-    "Audience engagement aligns with role",
-    "Proven track record with brands",
-    "Strong portfolio and presence",
+    "Complete profile to unlock matching insights",
   ];
-}
-
-function getMockSocialStats(profile: TalentProfile) {
-  const seed = profile.username || profile.full_legal_name || "";
-  let hash = 0;
-  for (let i = 0; i < seed.length; i++) {
-    hash = seed.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const abs = Math.abs(hash);
-  const ig = 100_000 + (abs % 900_000);
-  const yt = 50_000 + (abs % 400_000);
-  return {
-    instagram: ig,
-    youtube: yt,
-  };
-}
-
-function getMockDuration(itemId: string): string {
-  let hash = 0;
-  for (let i = 0; i < itemId.length; i++) {
-    hash = itemId.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const abs = Math.abs(hash);
-  const min = abs % 15;
-  const sec = abs % 60;
-  return `${min}:${sec.toString().padStart(2, "0")}`;
 }
 
 /* ------------------------------------------------------------------ */
@@ -112,52 +72,15 @@ function GoldShieldBadge({ className }: { className?: string }) {
   );
 }
 
-function InstagramIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
-    </svg>
-  );
-}
-
-function YoutubeIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      className={className}
-    >
-      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-    </svg>
-  );
-}
-
-function WhyThisTalentFits({ profile }: { profile: TalentProfile }) {
-  const seed = profile.username || profile.full_legal_name || "";
-  const pct = useMemo(() => getMockMatchPct(seed), [seed]);
-  const reasons = useMemo(() => getMockMatchReasons(profile), [profile]);
+function ProfileHighlights({ profile }: { profile: TalentProfile }) {
+  const reasons = useMemo(() => getProfileHighlights(profile), [profile]);
 
   return (
     <div className="bg-card border border-border rounded-2xl p-4 space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="text-[15px] font-semibold text-text-primary">
-          Why this talent fits
+          Profile highlights
         </h3>
-        <span className="inline-flex items-center justify-center px-2.5 py-1 rounded-lg bg-amber-100 text-amber-700 text-sm font-bold">
-          {pct}%
-        </span>
       </div>
       <div className="h-px bg-border" />
       <ul className="space-y-2.5">
@@ -168,33 +91,6 @@ function WhyThisTalentFits({ profile }: { profile: TalentProfile }) {
           </li>
         ))}
       </ul>
-    </div>
-  );
-}
-
-function SocialStats({ profile }: { profile: TalentProfile }) {
-  const stats = useMemo(() => getMockSocialStats(profile), [profile]);
-
-  return (
-    <div className="grid grid-cols-2 gap-3">
-      <div className="bg-card border border-border rounded-xl p-3.5 flex items-center gap-3">
-        <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 flex items-center justify-center shrink-0">
-          <InstagramIcon className="w-4 h-4 text-white" />
-        </div>
-        <div>
-          <p className="text-sm font-bold text-text-primary">{formatCount(stats.instagram)}</p>
-          <p className="text-[11px] text-text-muted">Followers</p>
-        </div>
-      </div>
-      <div className="bg-card border border-border rounded-xl p-3.5 flex items-center gap-3">
-        <div className="w-9 h-9 rounded-full bg-red-600 flex items-center justify-center shrink-0">
-          <YoutubeIcon className="w-4 h-4 text-white" />
-        </div>
-        <div>
-          <p className="text-sm font-bold text-text-primary">{formatCount(stats.youtube)}</p>
-          <p className="text-[11px] text-text-muted">Subscribers</p>
-        </div>
-      </div>
     </div>
   );
 }
@@ -267,15 +163,6 @@ function PortfolioSection({
                 </>
               )}
 
-              {/* Duration badge for videos */}
-              {item.type === "video" && (
-                <div className="absolute top-2 right-2">
-                  <span className="px-1.5 py-0.5 text-[11px] font-medium rounded-md bg-black/60 text-white">
-                    {getMockDuration(item.id)}
-                  </span>
-                </div>
-              )}
-
               {/* Pinned badge */}
               {item.is_pinned && (
                 <div className="absolute top-2 left-2">
@@ -306,13 +193,81 @@ export default function PublicTalentProfilePage() {
   const isRecruiter = user?.role === "recruiter";
 
   const [profile, setProfile] = useState<TalentProfile | null>(null);
-  const [previewProfile, setPreviewProfile] = useState<TalentProfile | null>(null);
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([]);
-  const [isPrivate, setIsPrivate] = useState(false);
-  const [requestSent, setRequestSent] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [shortlistModalOpen, setShortlistModalOpen] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
+
+  const { guard } = useTierGuard(3);
+  const createRequest = useCreateCollaborationRequest();
+  const popup = usePopup();
+
+  const handleConnect = useCallback(() => {
+    const talentId = profile?.user_id;
+    if (!talentId || !isRecruiter) return;
+
+    guard(() => {
+      if (profile?.privacy_mode === "private") {
+        const name = profile?.full_legal_name || profile?.username || "Talent";
+        createRequest.mutate({ receiverId: talentId }, {
+          onSuccess: () => {
+            popup.show({
+              title: "Request sent",
+              description: `Collaboration request sent to ${name}. You can message once they accept.`,
+              variant: "success",
+            });
+          },
+          onError: (err: any) => {
+            const msg = err?.response?.data?.message || "";
+            if (msg.toLowerCase().includes("already accepted")) {
+              messagesApi
+                .startDirectConversation(talentId)
+                .then(({ conversation }) => {
+                  router.push(`/recruiter/messages?conversationId=${conversation._id}`);
+                })
+                .catch((err2) => {
+                  popup.show({
+                    title: "Could not open messages",
+                    description: getApiErrorMessage(err2, "Something went wrong"),
+                    variant: "error",
+                  });
+                });
+            } else if (msg.toLowerCase().includes("already pending")) {
+              popup.show({
+                title: "Request pending",
+                description: "You already have a pending request with this talent.",
+                variant: "info",
+              });
+            } else {
+              popup.show({
+                title: "Failed to send request",
+                description: getApiErrorMessage(err, "Something went wrong"),
+                variant: "error",
+              });
+            }
+          },
+        });
+        return;
+      }
+
+      setIsConnecting(true);
+      messagesApi
+        .startDirectConversation(talentId)
+        .then(({ conversation }) => {
+          const draft = "Hi, I came across your profile and would love to connect regarding a potential opportunity. Looking forward to hearing from you!";
+          router.push(`/recruiter/messages?conversationId=${conversation._id}&draft=${encodeURIComponent(draft)}`);
+        })
+        .catch((err) => {
+          popup.show({
+            title: "Could not start conversation",
+            description: getApiErrorMessage(err, "Something went wrong"),
+            variant: "error",
+          });
+        })
+        .finally(() => setIsConnecting(false));
+    });
+  }, [profile, isRecruiter, guard, createRequest, popup, router]);
 
   useEffect(() => {
     let cancelled = false;
@@ -322,9 +277,7 @@ export default function PublicTalentProfilePage() {
         const profileRes = await talentApi.getPublicProfile(username);
         if ((profileRes as any).private) {
           if (!cancelled) {
-            setIsPrivate(true);
-            setRequestSent((profileRes as any).requestSent ?? false);
-            setPreviewProfile((profileRes as any).preview ?? null);
+            setProfile((profileRes as any).preview ?? null);
             setLoading(false);
           }
           return;
@@ -351,16 +304,7 @@ export default function PublicTalentProfilePage() {
     return () => { cancelled = true; };
   }, [username]);
 
-  const handleRequestAccess = async () => {
-    try {
-      await talentApi.requestAccess(username);
-      setRequestSent(true);
-    } catch (err) {
-      setError(getApiErrorMessage(err, "Failed to send request"));
-    }
-  };
-
-  const activeProfile = profile ?? previewProfile;
+  const activeProfile = profile;
 
   if (loading) {
     return (
@@ -467,13 +411,14 @@ export default function PublicTalentProfilePage() {
           {/* Content */}
           <div className="px-4 pt-4 space-y-4">
             {/* Action buttons */}
-            <div className="grid grid-cols-3 gap-2.5">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
               <button
-                onClick={() => router.push("/recruiter/messages")}
-                className="flex items-center justify-center gap-1.5 py-3 rounded-xl text-xs font-medium bg-muted-bg text-text-primary border border-border hover:bg-muted-bg/80 transition-colors"
+                onClick={handleConnect}
+                disabled={isConnecting || !isRecruiter}
+                className="flex items-center justify-center gap-1.5 py-3 rounded-xl text-xs font-medium bg-muted-bg text-text-primary border border-border hover:bg-muted-bg/80 transition-colors disabled:opacity-50"
               >
                 <Mail className="w-3.5 h-3.5" strokeWidth={1.5} />
-                Message
+                {isConnecting ? "Connecting..." : "Connect"}
               </button>
               <button
                 onClick={() => {
@@ -495,54 +440,31 @@ export default function PublicTalentProfilePage() {
                 <Download className="w-3.5 h-3.5" strokeWidth={1.5} />
                 Media Kit
               </button>
+              <ShareProfileDialog
+                username={username}
+                profilePhoto={profile?.profile_photo}
+                name={profile?.full_legal_name}
+              >
+                <button className="flex items-center justify-center gap-1.5 py-3 rounded-xl text-xs font-medium bg-muted-bg text-text-primary border border-border hover:bg-muted-bg/80 transition-colors w-full">
+                  <Share2 className="w-3.5 h-3.5" strokeWidth={1.5} />
+                  Share
+                </button>
+              </ShareProfileDialog>
             </div>
 
-            {/* Why this talent fits */}
-            {!isPrivate && profile && (
-              <WhyThisTalentFits profile={profile} />
-            )}
-
-            {/* Social stats */}
-            {!isPrivate && profile && (
-              <SocialStats profile={profile} />
+            {/* Profile highlights */}
+            {profile && (
+              <ProfileHighlights profile={profile} />
             )}
 
             {/* Portfolio */}
-            {!isPrivate && profile && (
+            {profile && (
               <PortfolioSection items={portfolioItems} username={username} />
             )}
           </div>
         </>
       )}
 
-      {isPrivate && (
-        <div className="px-4 mt-4">
-          <div className="bg-card border border-border rounded-xl p-6 text-center space-y-4">
-            <div className="mx-auto w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
-              <Lock className="w-5 h-5 text-amber-600" strokeWidth={1.5} />
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-text-primary">This profile is private</p>
-              <p className="text-xs text-text-muted">
-                Only approved recruiters can view the full profile.
-              </p>
-            </div>
-            {requestSent ? (
-              <div className="flex items-center justify-center gap-2 text-xs text-success-text font-medium py-2">
-                <ShieldCheck className="w-4 h-4" strokeWidth={1.5} />
-                Request sent. Waiting for approval.
-              </div>
-            ) : (
-              <button
-                onClick={handleRequestAccess}
-                className="w-full py-2.5 rounded-xl text-xs font-medium bg-amber-500 hover:bg-amber-600 text-white transition-colors"
-              >
-                Request Access
-              </button>
-            )}
-          </div>
-        </div>
-      )}
 
       <ShortlistOrInviteModal
         open={shortlistModalOpen}

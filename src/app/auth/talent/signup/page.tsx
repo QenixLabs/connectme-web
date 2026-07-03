@@ -77,6 +77,7 @@ export default function TalentSignupPage() {
     "idle" | "checking" | "available" | "taken"
   >("idle");
   const usernameCheckTimeout = useRef<NodeJS.Timeout | null>(null);
+  const [verificationMethod, setVerificationMethod] = useState<"email" | "phone">("email");
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -198,8 +199,9 @@ export default function TalentSignupPage() {
         auth_provider: "credentials",
         username: values.username,
         profession: finalProfession,
+        verification_method: verificationMethod,
       });
-      router.push(`/auth/verify-email?email=${encodeURIComponent(values.email)}`);
+      router.push(`/auth/verify-email?email=${encodeURIComponent(values.email)}&method=${verificationMethod}`);
     } catch (err: any) {
       setServerError(getApiErrorMessage(err, "Registration failed"));
     } finally {
@@ -390,8 +392,43 @@ export default function TalentSignupPage() {
                     )}
                   />
                   <p className="text-xs text-text-muted -mt-2">
-                    OTP will be sent to verify this number
+                    OTP will be sent to verify your account
                   </p>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-text-primary">
+                      Receive OTP via
+                    </label>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setVerificationMethod("email")}
+                        className={`flex-1 py-2.5 px-4 rounded-lg border-2 text-sm font-medium transition-all ${
+                          verificationMethod === "email"
+                            ? "border-brand bg-brand-light text-text-primary"
+                            : "border-border bg-card text-text-muted hover:border-border"
+                        }`}
+                      >
+                        Email
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setVerificationMethod("phone")}
+                        className={`flex-1 py-2.5 px-4 rounded-lg border-2 text-sm font-medium transition-all ${
+                          verificationMethod === "phone"
+                            ? "border-brand bg-brand-light text-text-primary"
+                            : "border-border bg-card text-text-muted hover:border-border"
+                        }`}
+                      >
+                        Phone
+                      </button>
+                    </div>
+                    <p className="text-xs text-text-muted">
+                      {verificationMethod === "email"
+                        ? "OTP will be sent to your email address"
+                        : "OTP will be sent to your phone number"}
+                    </p>
+                  </div>
 
                   <div className="flex gap-3 pt-2">
                     <Button type="button" variant="secondary" onClick={handleBack}>

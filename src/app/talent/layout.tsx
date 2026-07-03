@@ -1,4 +1,4 @@
-import { DashboardLayout } from "@/components/layout/dashboard-layout";
+import { Suspense } from "react";
 
 export default function TalentLayout({
   children,
@@ -6,8 +6,8 @@ export default function TalentLayout({
   children: React.ReactNode;
 }) {
   return (
-    <DashboardLayout role="talent" homeHref="/talent/dashboard">
+    <Suspense fallback={<div className="min-h-screen bg-page" />}>
       {children}
-    </DashboardLayout>
+    </Suspense>
   );
 }

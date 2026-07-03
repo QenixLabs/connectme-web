@@ -39,7 +39,7 @@ export const talentApi = {
     return response.data as TalentProfile;
   },
 
-  getPublicProfile: async (username: string): Promise<TalentProfile | { private: true; requestSent?: boolean }> => {
+  getPublicProfile: async (username: string): Promise<TalentProfile | { private: true; preview?: Partial<TalentProfile> }> => {
     const response = await apiClient.get(`/talent/profile/${username}`);
     return response.data;
   },
@@ -47,28 +47,8 @@ export const talentApi = {
   getPublicPortfolio: async (username: string): Promise<{
     profile: Partial<TalentProfile>;
     items: PortfolioItem[];
-  } | { private: true; requestSent?: boolean; preview: Partial<TalentProfile> }> => {
+  } | { private: true; hasConnection?: boolean; preview: Partial<TalentProfile> }> => {
     const response = await apiClient.get(`/talent/portfolio/${username}`);
-    return response.data;
-  },
-
-  requestAccess: async (username: string): Promise<{ success: boolean }> => {
-    const response = await apiClient.post('/profile-access-request/request', { username });
-    return response.data;
-  },
-
-  respondToAccessRequest: async (requesterId: string, status: 'allowed' | 'denied'): Promise<{ success: boolean }> => {
-    const response = await apiClient.post('/profile-access-request/respond', { requester_id: requesterId, status });
-    return response.data;
-  },
-
-  getAccessRequests: async (): Promise<Array<{
-    _id: string;
-    requester_id: { _id: string; email?: string };
-    status: string;
-    created_at: string;
-  }>> => {
-    const response = await apiClient.get('/profile-access-request/my-requests');
     return response.data;
   },
 
@@ -77,6 +57,7 @@ export const talentApi = {
     location_city?: string;
     availability?: string;
     gender?: string;
+    search?: string;
     cursor?: string;
     limit?: number;
   }): Promise<{
@@ -92,7 +73,6 @@ export const talentApi = {
       industries?: string[];
       availability?: string;
       privacy_mode?: string;
-      access_status?: 'allowed' | 'pending' | 'none';
       is_verified?: boolean;
     }>;
     nextCursor: string | null;
