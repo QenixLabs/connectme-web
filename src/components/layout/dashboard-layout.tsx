@@ -58,6 +58,7 @@ export function DashboardLayout({
   const router = useRouter();
   const pathname = usePathname();
   const isMessagesPage = pathname.includes("/messages");
+  const isProfilePage = pathname.includes("/profile");
   const isChatPage = /\/messages\/.+/.test(pathname);
   const queryClient = useQueryClient();
   const { user, isAuthenticated, isLoading, fetchUser, logout } =
@@ -264,7 +265,7 @@ export function DashboardLayout({
 
   return (
     <div className={cn("bg-page flex flex-col", isMessagesPage ? "h-screen overflow-hidden" : "min-h-screen")}>
-      <header className={cn("bg-card border-b border-border px-4 py-3 sticky top-0 z-40", isMessagesPage && "hidden")}>
+      <header className={cn("bg-card border-b border-border px-4 py-3 sticky top-0 z-40", (isMessagesPage || isProfilePage) && "hidden")}>
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <Link
             href={homeHref}

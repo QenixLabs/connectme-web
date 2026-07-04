@@ -20,6 +20,8 @@ interface PortfolioItemDetailSheetProps {
     id: string,
     dto: {
       caption?: string;
+      title?: string;
+      description?: string;
       category?: "work" | "personal" | "intro";
       is_pinned?: boolean;
     }
@@ -34,12 +36,16 @@ export function PortfolioItemDetailSheet({
   onUpdate,
   onDelete,
 }: PortfolioItemDetailSheetProps) {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [caption, setCaption] = useState("");
 
   if (!item) return null;
 
   const handleOpenChange = (open: boolean) => {
     if (open && item) {
+      setTitle(item.title || "");
+      setDescription(item.description || "");
       setCaption(item.caption || "");
     }
     onOpenChange(open);
@@ -84,6 +90,46 @@ export function PortfolioItemDetailSheet({
             </div>
 
             <div className="p-4 space-y-5">
+              {/* Title input */}
+              <div>
+                <label className="text-[11px] font-medium text-text-muted uppercase tracking-wider block mb-1.5">
+                  Title
+                </label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  onBlur={() => {
+                    if (title !== (item.title || "")) {
+                      onUpdate(item.id, { title });
+                    }
+                  }}
+                  placeholder="Add a title..."
+                  maxLength={120}
+                  className="w-full text-sm bg-transparent border-0 border-b border-border px-0 py-1.5 focus:outline-none focus:border-brand text-text-primary placeholder:text-text-muted"
+                />
+              </div>
+
+              {/* Description input */}
+              <div>
+                <label className="text-[11px] font-medium text-text-muted uppercase tracking-wider block mb-1.5">
+                  Description
+                </label>
+                <input
+                  type="text"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  onBlur={() => {
+                    if (description !== (item.description || "")) {
+                      onUpdate(item.id, { description });
+                    }
+                  }}
+                  placeholder="Add a description..."
+                  maxLength={200}
+                  className="w-full text-sm bg-transparent border-0 border-b border-border px-0 py-1.5 focus:outline-none focus:border-brand text-text-primary placeholder:text-text-muted"
+                />
+              </div>
+
               {/* Caption input */}
               <div>
                 <label className="text-[11px] font-medium text-text-muted uppercase tracking-wider block mb-1.5">
@@ -98,7 +144,7 @@ export function PortfolioItemDetailSheet({
                       onUpdate(item.id, { caption });
                     }
                   }}
-                  placeholder="Add a caption..."
+                  placeholder="Alt text / caption..."
                   className="w-full text-sm bg-transparent border-0 border-b border-border px-0 py-1.5 focus:outline-none focus:border-brand text-text-primary placeholder:text-text-muted"
                 />
               </div>

@@ -42,6 +42,7 @@ interface RequestsStatsBarProps {
   rejectedCount: number;
   sentCount: number;
   sentAcceptedCount: number;
+  className?: string;
 }
 
 export function RequestsStatsBar({
@@ -50,9 +51,10 @@ export function RequestsStatsBar({
   rejectedCount,
   sentCount,
   sentAcceptedCount,
+  className,
 }: RequestsStatsBarProps) {
   return (
-    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+    <div className={cn("grid grid-cols-2 gap-2.5 sm:grid-cols-4", className)}>
       <StatsCard
         icon={<UserCheck className="h-4 w-4" strokeWidth={1.5} />}
         label="Pending"

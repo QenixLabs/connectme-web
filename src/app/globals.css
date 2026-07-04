@@ -250,6 +250,9 @@
 
   /* Messaging gold light (gradient variant) */
   --color-msg-gold-light: #e8c86a;
+
+  /* Spec: olive-green checkmark (semantic positive signal) */
+  --color-msg-olive: #8A8560;
 }
 
 body {

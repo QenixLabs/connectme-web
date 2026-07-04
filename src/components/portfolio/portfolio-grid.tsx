@@ -12,6 +12,8 @@ interface PortfolioGridProps {
     id: string,
     dto: {
       caption?: string;
+      title?: string;
+      description?: string;
       category?: "work" | "personal" | "intro";
       is_pinned?: boolean;
     }
@@ -19,6 +21,7 @@ interface PortfolioGridProps {
   onDelete: (id: string) => void;
   onReorder: (itemIds: string[]) => void;
   onSelectItem: (item: PortfolioItem) => void;
+  onPreview: (item: PortfolioItem) => void;
 }
 
 export function PortfolioGrid({
@@ -27,6 +30,7 @@ export function PortfolioGrid({
   onDelete,
   onReorder,
   onSelectItem,
+  onPreview,
 }: PortfolioGridProps) {
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
@@ -120,6 +124,7 @@ export function PortfolioGrid({
               onUpdate={onUpdate}
               onDelete={onDelete}
               onSelect={onSelectItem}
+              onPreview={onPreview}
             />
           </div>
         );

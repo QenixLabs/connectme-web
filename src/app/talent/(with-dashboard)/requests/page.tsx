@@ -15,6 +15,8 @@ import { RequestsStatsBar } from "@/components/requests/requests-stats-bar";
 import { RequestCard, type RequestItem } from "@/components/requests/request-card";
 import { RequesterProfileSheet } from "@/components/requests/requester-profile-sheet";
 import { RequestsFilter } from "@/components/requests/requests-filter";
+import { SafetyBanner } from "@/components/requests/safety-banner";
+import { GrainOverlay } from "@/components/requests/grain-overlay";
 
 type SortKey = "newest" | "oldest";
 
@@ -55,7 +57,9 @@ export default function TalentRequestsPage() {
     () =>
       rawSent.map((req) => ({
         ...req,
-        requester_id: ((req as unknown as Record<string, unknown>).receiver_id as RequesterProfile) || req.requester_id,
+        requester_id:
+          ((req as unknown as Record<string, unknown>).receiver_id as RequesterProfile) ||
+          req.requester_id,
       })),
     [rawSent]
   );
@@ -70,7 +74,8 @@ export default function TalentRequestsPage() {
 
   const sortRequests = (requests: RequestItem[], sort: SortKey) => {
     return [...requests].sort((a, b) => {
-      const diff = new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      const diff =
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       return sort === "newest" ? diff : -diff;
     });
   };
@@ -105,7 +110,9 @@ export default function TalentRequestsPage() {
         variant: "success",
       });
       if (result?.conversation?._id) {
-        router.push(`/talent/messages?conversationId=${result.conversation._id}`);
+        router.push(
+          `/talent/messages?conversationId=${result.conversation._id}`
+        );
       }
     } catch (err) {
       popup.show({
@@ -143,178 +150,206 @@ export default function TalentRequestsPage() {
     setProfileSheetOpen(true);
   };
 
+  const emptyStateIcon = (
+    <UserCheck className="w-5 h-5 text-text-muted" strokeWidth={1.5} />
+  );
+
   if (isLoading) {
     return (
-      <div className="px-4 pt-6 space-y-4 pb-20">
-        <Skeleton className="h-6 w-40" />
-        <div className="grid grid-cols-2 gap-2.5">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-16 rounded-xl" />
-          ))}
+      <div className="relative min-h-screen bg-page">
+        <GrainOverlay />
+        <div className="relative z-10 px-4 pt-6 pb-20 space-y-4">
+          <Skeleton className="h-5 w-40" />
+          <Skeleton className="h-14 w-full rounded-xl" />
+          <div className="flex gap-2">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-9 w-20 rounded-lg" />
+            ))}
+          </div>
+          <div className="rounded-2xl bg-card border border-border divide-y divide-border-subtle">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="px-4 py-4">
+                <div className="flex gap-4">
+                  <Skeleton className="w-[56px] h-[56px] rounded-xl flex-shrink-0" />
+                  <div className="flex-1 space-y-2.5 py-1">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-40" />
+                    <div className="flex gap-2.5 pt-1">
+                      <Skeleton className="h-10 flex-1 rounded-lg" />
+                      <Skeleton className="h-10 flex-1 rounded-lg" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-        <Skeleton className="h-10 w-full rounded-lg" />
-        {Array.from({ length: 3 }).map((_, i) => (
-          <Skeleton key={i} className="h-36 w-full rounded-2xl" />
-        ))}
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="px-4 pt-6 pb-20">
-        <h1 className="text-lg font-semibold text-text-primary mb-4">Connection Requests</h1>
-        <div className="bg-error-surface text-error border border-error-border text-sm rounded-xl p-4">
-          {getApiErrorMessage(error, "Failed to load requests")}
+      <div className="relative min-h-screen bg-page">
+        <GrainOverlay />
+        <div className="relative z-10 px-4 pt-6 pb-20">
+          <h1 className="text-lg font-semibold text-text-primary mb-4">
+            Connection Requests
+          </h1>
+          <div className="bg-error-surface text-error border border-error-border text-sm rounded-xl p-4">
+            {getApiErrorMessage(error, "Failed to load requests")}
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="px-4 pt-6 pb-20 space-y-5">
-      <h1 className="text-lg font-semibold text-text-primary">Connection Requests</h1>
+    <div className="relative min-h-screen bg-page">
+      <GrainOverlay />
 
-      <RequestsStatsBar
-        pendingCount={pendingReceived.length}
-        acceptedCount={acceptedReceived.length}
-        rejectedCount={rejectedReceived.length}
-        sentCount={sent.length}
-        sentAcceptedCount={acceptedSent.length}
-      />
+      <div className="relative z-10 px-4 pt-5 pb-20 space-y-4">
+        <h1 className="text-lg font-semibold text-text-primary">
+          Connection Requests
+        </h1>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full grid grid-cols-3 h-auto p-[3px] bg-muted rounded-xl">
-          <TabsTrigger
-            value="received"
-            className="text-xs py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:border-border border border-transparent rounded-lg"
-          >
-            Received
-            {pendingReceived.length > 0 && (
-              <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-amber text-white text-[10px] font-semibold px-1">
-                {pendingReceived.length}
-              </span>
+        <SafetyBanner />
+
+        <RequestsStatsBar
+          pendingCount={pendingReceived.length}
+          acceptedCount={acceptedReceived.length}
+          rejectedCount={rejectedReceived.length}
+          sentCount={sent.length}
+          sentAcceptedCount={acceptedSent.length}
+        />
+
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="w-full grid grid-cols-3 h-auto p-[3px] bg-muted rounded-xl border border-border">
+            <TabsTrigger
+              value="received"
+              className="text-xs py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:border-border rounded-lg text-text-secondary data-[state=active]:text-text-primary border border-transparent"
+            >
+              Received
+              {pendingReceived.length > 0 && (
+                <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-brand text-white text-[10px] font-semibold px-1">
+                  {pendingReceived.length}
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger
+              value="sent"
+              className="text-xs py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:border-border rounded-lg text-text-secondary data-[state=active]:text-text-primary border border-transparent"
+            >
+              Sent
+              {pendingSent.length > 0 && (
+                <span className="ml-1.5 text-[10px] text-text-muted">
+                  ({pendingSent.length})
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger
+              value="history"
+              className="text-xs py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:border-border rounded-lg text-text-secondary data-[state=active]:text-text-primary border border-transparent"
+            >
+              History
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="received" className="mt-4 space-y-3">
+            <RequestsFilter
+              sort={receivedSort}
+              onSortChange={setReceivedSort}
+              showMessageFilter
+              hasMessageOnly={hasMessageOnly}
+              onHasMessageToggle={() => setHasMessageOnly(!hasMessageOnly)}
+            />
+
+            {displayedPending.length === 0 ? (
+              <EmptyState
+                icon={emptyStateIcon}
+                title="No pending requests"
+                description={
+                  hasMessageOnly
+                    ? "No pending requests with messages."
+                    : "When recruiters request to connect, they'll appear here."
+                }
+              />
+            ) : (
+              <div className="rounded-2xl bg-card border border-border divide-y divide-border-subtle overflow-hidden">
+                {displayedPending.map((req) => (
+                  <RequestCard
+                    key={req._id}
+                    request={req}
+                    isProcessing={processingId === req._id}
+                    onAccept={handleAccept}
+                    onReject={handleReject}
+                    onViewProfile={handleViewProfile}
+                    mode="received"
+                  />
+                ))}
+              </div>
             )}
-          </TabsTrigger>
-          <TabsTrigger
-            value="sent"
-            className="text-xs py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:border-border border border-transparent rounded-lg"
-          >
-            Sent
-            {pendingSent.length > 0 && (
-              <span className="ml-1.5 text-[10px] text-text-muted">
-                ({pendingSent.length})
-              </span>
+          </TabsContent>
+
+          <TabsContent value="sent" className="mt-4 space-y-3">
+            <RequestsFilter sort={sentSort} onSortChange={setSentSort} />
+
+            {displayedSent.length === 0 ? (
+              <EmptyState
+                icon={emptyStateIcon}
+                title="No sent requests"
+                description="Requests you've sent to other users will appear here."
+              />
+            ) : (
+              <div className="rounded-2xl bg-card border border-border divide-y divide-border-subtle overflow-hidden">
+                {displayedSent.map((req) => (
+                  <RequestCard
+                    key={req._id}
+                    request={req}
+                    isProcessing={false}
+                    onAccept={() => {}}
+                    onReject={() => {}}
+                    onViewProfile={handleViewProfile}
+                    mode="sent"
+                  />
+                ))}
+              </div>
             )}
-          </TabsTrigger>
-          <TabsTrigger
-            value="history"
-            className="text-xs py-2 data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:border-border border border-transparent rounded-lg"
-          >
-            History
-          </TabsTrigger>
-        </TabsList>
+          </TabsContent>
 
-        <TabsContent value="received" className="mt-4 space-y-4">
-          <RequestsFilter
-            sort={receivedSort}
-            onSortChange={setReceivedSort}
-            showMessageFilter
-            hasMessageOnly={hasMessageOnly}
-            onHasMessageToggle={() => setHasMessageOnly(!hasMessageOnly)}
-          />
+          <TabsContent value="history" className="mt-4 space-y-3">
+            <RequestsFilter sort={historySort} onSortChange={setHistorySort} />
 
-          {displayedPending.length === 0 ? (
-            <EmptyState
-              icon={<UserCheck className="w-6 h-6 text-text-muted" strokeWidth={1.5} />}
-              title="No pending requests"
-              description={
-                hasMessageOnly
-                  ? "No pending requests with messages."
-                  : "When recruiters request to connect, they'll appear here."
-              }
-            />
-          ) : (
-            <div className="space-y-3">
-              {displayedPending.map((req) => (
-                <RequestCard
-                  key={req._id}
-                  request={req}
-                  isProcessing={processingId === req._id}
-                  onAccept={handleAccept}
-                  onReject={handleReject}
-                  onViewProfile={handleViewProfile}
-                  mode="received"
-                />
-              ))}
-            </div>
-          )}
-        </TabsContent>
+            {displayedHistory.length === 0 ? (
+              <EmptyState
+                icon={emptyStateIcon}
+                title="No past requests"
+                description="Accepted and declined requests will appear here."
+              />
+            ) : (
+              <div className="rounded-2xl bg-card border border-border divide-y divide-border-subtle overflow-hidden">
+                {displayedHistory.map((req) => (
+                  <RequestCard
+                    key={req._id}
+                    request={req}
+                    isProcessing={false}
+                    onAccept={handleAccept}
+                    onReject={handleReject}
+                    onViewProfile={handleViewProfile}
+                    mode="history"
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
 
-        <TabsContent value="sent" className="mt-4 space-y-4">
-          <RequestsFilter
-            sort={sentSort}
-            onSortChange={setSentSort}
-          />
-
-          {displayedSent.length === 0 ? (
-            <EmptyState
-              icon={<UserCheck className="w-6 h-6 text-text-muted" strokeWidth={1.5} />}
-              title="No sent requests"
-              description="Requests you've sent to other users will appear here."
-            />
-          ) : (
-            <div className="space-y-3">
-              {displayedSent.map((req) => (
-                <RequestCard
-                  key={req._id}
-                  request={req}
-                  isProcessing={false}
-                  onAccept={() => {}}
-                  onReject={() => {}}
-                  onViewProfile={handleViewProfile}
-                  mode="sent"
-                />
-              ))}
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="history" className="mt-4 space-y-4">
-          <RequestsFilter
-            sort={historySort}
-            onSortChange={setHistorySort}
-          />
-
-          {displayedHistory.length === 0 ? (
-            <EmptyState
-              icon={<UserCheck className="w-6 h-6 text-text-muted" strokeWidth={1.5} />}
-              title="No past requests"
-              description="Accepted and declined requests will appear here."
-            />
-          ) : (
-            <div className="space-y-3">
-              {displayedHistory.map((req) => (
-                <RequestCard
-                  key={req._id}
-                  request={req}
-                  isProcessing={false}
-                  onAccept={handleAccept}
-                  onReject={handleReject}
-                  onViewProfile={handleViewProfile}
-                  mode="history"
-                />
-              ))}
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
-
-      <RequesterProfileSheet
-        open={profileSheetOpen}
-        onOpenChange={setProfileSheetOpen}
-        requester={selectedRequester}
-      />
+        <RequesterProfileSheet
+          open={profileSheetOpen}
+          onOpenChange={setProfileSheetOpen}
+          requester={selectedRequester}
+        />
+      </div>
     </div>
   );
 }

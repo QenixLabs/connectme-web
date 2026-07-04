@@ -26,6 +26,8 @@ function extractYoutubeId(url: string): string | null {
 
 export function PortfolioLinkInput({ onItemAdded, onError }: PortfolioLinkInputProps) {
   const [url, setUrl] = useState("");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [caption, setCaption] = useState("");
   const [category, setCategory] = useState<"work" | "personal" | "intro">("work");
   const [isPinned, setIsPinned] = useState(false);
@@ -47,11 +49,15 @@ export function PortfolioLinkInput({ onItemAdded, onError }: PortfolioLinkInputP
     try {
       const { item } = await talentApi.addPortfolioLink(url.trim(), {
         caption: caption.trim() || undefined,
+        title: title.trim() || undefined,
+        description: description.trim() || undefined,
         category,
         is_pinned: isPinned,
       });
       onItemAdded(item);
       setUrl("");
+      setTitle("");
+      setDescription("");
       setCaption("");
       setPlatform(null);
       setYoutubeId(null);
@@ -112,9 +118,25 @@ export function PortfolioLinkInput({ onItemAdded, onError }: PortfolioLinkInputP
         <>
           <input
             type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Add a title..."
+            maxLength={120}
+            className="w-full text-sm bg-transparent border-0 border-b border-border px-0 py-1.5 focus:outline-none focus:border-brand text-text-primary placeholder:text-text-muted"
+          />
+          <input
+            type="text"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Add a description..."
+            maxLength={200}
+            className="w-full text-sm bg-transparent border-0 border-b border-border px-0 py-1.5 focus:outline-none focus:border-brand text-text-primary placeholder:text-text-muted"
+          />
+          <input
+            type="text"
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
-            placeholder="Add a caption..."
+            placeholder="Alt text / caption..."
             className="w-full text-sm bg-transparent border-0 border-b border-border px-0 py-1.5 focus:outline-none focus:border-brand text-text-primary placeholder:text-text-muted"
           />
 

@@ -95,9 +95,15 @@ export function PortfolioLightbox({ item, open, onOpenChange }: PortfolioLightbo
           </div>
         )}
 
-        {(item.caption || item.category) && (
+        {(item.title || item.description || item.caption || item.category) && (
           <div className="absolute bottom-0 inset-x-0 p-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
-            {item.caption && (
+            {item.title && (
+              <p className="text-white text-sm font-semibold">{item.title}</p>
+            )}
+            {item.description && (
+              <p className="text-white/80 text-xs mt-0.5">{item.description}</p>
+            )}
+            {!item.title && !item.description && item.caption && (
               <p className="text-white text-sm font-medium">{item.caption}</p>
             )}
             <p className="text-white/60 text-xs capitalize mt-0.5">{item.category}</p>

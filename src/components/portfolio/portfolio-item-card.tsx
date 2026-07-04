@@ -1,6 +1,6 @@
 "use client";
 
-import { Pin, Trash2, GripVertical, Play, Maximize2, Film, Camera } from "lucide-react";
+import { Pin, Trash2, GripVertical, Play, Maximize2, Film, Camera, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { PortfolioItem } from "@/lib/validations/talent-profile.schema";
 
@@ -10,12 +10,15 @@ interface PortfolioItemCardProps {
     id: string,
     dto: {
       caption?: string;
+      title?: string;
+      description?: string;
       category?: "work" | "personal" | "intro";
       is_pinned?: boolean;
     }
   ) => void;
   onDelete: (id: string) => void;
   onSelect: (item: PortfolioItem) => void;
+  onPreview: (item: PortfolioItem) => void;
 }
 
 export function PortfolioItemCard({
@@ -23,6 +26,7 @@ export function PortfolioItemCard({
   onUpdate,
   onDelete,
   onSelect,
+  onPreview,
 }: PortfolioItemCardProps) {
   const isYoutube = item.type === "youtube";
   const isInstagram = item.type === "instagram";
@@ -137,25 +141,58 @@ export function PortfolioItemCard({
             >
               <Pin className={cn("w-3.5 h-3.5", item.is_pinned && "fill-current")} strokeWidth={1.5} />
             </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(item.id);
-              }}
-              className="p-2 rounded-lg bg-white/90 text-ink hover:bg-error hover:text-white transition-colors shadow-sm"
-              title="Delete"
-            >
-              <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
-            </button>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPreview(item);
+                }}
+                className="p-2 rounded-lg bg-white/90 text-ink hover:bg-white transition-colors shadow-sm"
+                title="Preview"
+              >
+                <Eye className="w-3.5 h-3.5" strokeWidth={1.5} />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(item.id);
+                }}
+                className="p-2 rounded-lg bg-white/90 text-ink hover:bg-error hover:text-white transition-colors shadow-sm"
+                title="Delete"
+              >
+                <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {item.caption && (
-        <div className="px-3 py-2.5">
+      <div className="px-3 py-2.5">
+        {item.title && (
+          <p className="text-sm font-semibold text-text-primary leading-snug truncate">{item.title}</p>
+        )}
+        {item.description && (
+          <p className="text-xs text-text-muted leading-snug truncate mt-0.5">{item.description}</p>
+        )}
+        {!item.title && !item.description && item.caption && (
           <p className="text-xs text-text-secondary leading-snug truncate">{item.caption}</p>
-        </div>
-      )}
+        )}
+      </div>
+
+      <div className="px-3 pb-2.5">
+        <span
+          className={cn(
+            "inline-block text-[9px] font-medium uppercase tracking-wider rounded-full px-2 py-0.5",
+            item.category === "intro"
+              ? "bg-brand/10 text-brand"
+              : item.category === "personal"
+                ? "bg-amber/10 text-amber"
+                : "bg-muted text-text-muted",
+          )}
+        >
+          {item.category}
+        </span>
+      </div>
     </div>
   );
 }

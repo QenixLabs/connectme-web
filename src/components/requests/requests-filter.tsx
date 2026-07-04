@@ -11,6 +11,7 @@ interface RequestsFilterProps {
   showMessageFilter?: boolean;
   hasMessageOnly?: boolean;
   onHasMessageToggle?: () => void;
+  className?: string;
 }
 
 export function RequestsFilter({
@@ -19,9 +20,10 @@ export function RequestsFilter({
   showMessageFilter = false,
   hasMessageOnly = false,
   onHasMessageToggle,
+  className,
 }: RequestsFilterProps) {
   return (
-    <div className="flex items-center gap-2 flex-wrap">
+    <div className={cn("flex items-center gap-2 flex-wrap", className)}>
       <button
         onClick={() => onSortChange("newest")}
         className={cn(

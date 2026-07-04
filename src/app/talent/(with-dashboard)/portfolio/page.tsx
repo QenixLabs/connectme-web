@@ -8,10 +8,12 @@ import { PortfolioStats } from "@/components/portfolio/portfolio-stats";
 import { PortfolioCategoryFilter } from "@/components/portfolio/portfolio-category-filter";
 import { PortfolioGrid } from "@/components/portfolio/portfolio-grid";
 import { PortfolioItemDetailSheet } from "@/components/portfolio/portfolio-item-detail-sheet";
+import { PortfolioLightbox } from "@/components/portfolio/portfolio-lightbox";
+import { PortfolioSection } from "@/components/public-profile/portfolio-section";
 import { talentApi } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
-import { Sparkles, TrendingUp, Pin } from "lucide-react";
+import { Sparkles, TrendingUp, Pin, Eye, PenLine } from "lucide-react";
 import type { PortfolioItem } from "@/lib/validations/talent-profile.schema";
 
 type CategoryFilter = "all" | "work" | "personal" | "intro";
@@ -37,6 +39,9 @@ export default function TalentPortfolioPage() {
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("all");
   const [selectedItem, setSelectedItem] = useState<PortfolioItem | null>(null);
   const [detailSheetOpen, setDetailSheetOpen] = useState(false);
+  const [previewMode, setPreviewMode] = useState(false);
+  const [lightboxItem, setLightboxItem] = useState<PortfolioItem | null>(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   const fetchPortfolio = useCallback(async () => {
     try {
@@ -69,6 +74,8 @@ export default function TalentPortfolioPage() {
       id: string,
       dto: {
         caption?: string;
+        title?: string;
+        description?: string;
         category?: "work" | "personal" | "intro";
         is_pinned?: boolean;
       }
@@ -78,14 +85,14 @@ export default function TalentPortfolioPage() {
         setItems((prev) =>
           prev.map((i) =>
             i.id === id
-              ? { ...i, caption: item.caption, category: item.category, is_pinned: item.is_pinned }
+              ? { ...i, caption: item.caption, title: item.title, description: item.description, category: item.category, is_pinned: item.is_pinned }
               : i
           )
         );
         if (selectedItem?.id === id) {
           setSelectedItem((prev) =>
             prev
-              ? { ...prev, caption: item.caption, category: item.category, is_pinned: item.is_pinned }
+              ? { ...prev, caption: item.caption, title: item.title, description: item.description, category: item.category, is_pinned: item.is_pinned }
               : null
           );
         }
@@ -144,6 +151,11 @@ export default function TalentPortfolioPage() {
     setDetailSheetOpen(true);
   }, []);
 
+  const handlePreview = useCallback((item: PortfolioItem) => {
+    setLightboxItem(item);
+    setLightboxOpen(true);
+  }, []);
+
   const filteredItems = useMemo(
     () =>
       categoryFilter === "all"
@@ -198,6 +210,51 @@ export default function TalentPortfolioPage() {
     );
   }
 
+  if (previewMode) {
+    return (
+      <div className="max-w-3xl mx-auto py-4 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-semibold text-text-primary tracking-tight">
+              Public Preview
+            </h1>
+            <p className="text-xs text-text-muted mt-0.5">
+              This is how recruiters see your portfolio
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setPreviewMode(false)}
+            className="inline-flex items-center gap-1.5 rounded-full bg-foreground text-background px-4 py-2 text-xs font-medium hover:bg-text-primary transition-colors"
+          >
+            <PenLine className="w-3.5 h-3.5" />
+            Edit
+          </button>
+        </div>
+
+        {error && (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        <PortfolioSection
+          items={items}
+          onItemClick={(item) => {
+            setLightboxItem(item);
+            setLightboxOpen(true);
+          }}
+        />
+
+        <PortfolioLightbox
+          item={lightboxItem}
+          open={lightboxOpen}
+          onOpenChange={setLightboxOpen}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-3xl mx-auto py-4 space-y-6">
       {/* Header */}
@@ -211,6 +268,14 @@ export default function TalentPortfolioPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setPreviewMode(true)}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-1.5 text-[11px] font-medium text-text-secondary hover:bg-muted transition-colors"
+          >
+            <Eye className="h-3 w-3" />
+            Preview
+          </button>
           <span className="text-[11px] font-medium text-brand bg-brand/10 px-2.5 py-1 rounded-full flex items-center gap-1">
             <Pin className="h-3 w-3" />
             {pinnedCount}/3
@@ -337,6 +402,7 @@ export default function TalentPortfolioPage() {
         onDelete={handleDelete}
         onReorder={handleReorder}
         onSelectItem={handleSelectItem}
+        onPreview={handlePreview}
       />
 
       {/* Item detail sheet */}
@@ -346,6 +412,12 @@ export default function TalentPortfolioPage() {
         onOpenChange={setDetailSheetOpen}
         onUpdate={handleUpdate}
         onDelete={handleDelete}
+      />
+
+      <PortfolioLightbox
+        item={lightboxItem}
+        open={lightboxOpen}
+        onOpenChange={setLightboxOpen}
       />
     </div>
   );

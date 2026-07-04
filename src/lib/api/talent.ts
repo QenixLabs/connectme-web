@@ -5,6 +5,7 @@ import type {
   UpdateTalentProfileInput,
   PortfolioItem,
 } from '@/lib/validations/talent-profile.schema';
+import type { MediaKitData } from '@/types/media-kit';
 import { AxiosError } from 'axios';
 
 export const talentApi = {
@@ -201,11 +202,13 @@ export const talentApi = {
 
   uploadPortfolioImage: async (
     file: File,
-    dto: { caption?: string; category?: 'work' | 'personal' | 'intro'; is_pinned?: boolean },
+    dto: { caption?: string; title?: string; description?: string; category?: 'work' | 'personal' | 'intro'; is_pinned?: boolean },
   ): Promise<{ item: PortfolioItem }> => {
     const formData = new FormData();
     formData.append('file', file);
     if (dto.caption) formData.append('caption', dto.caption);
+    if (dto.title) formData.append('title', dto.title);
+    if (dto.description) formData.append('description', dto.description);
     if (dto.category) formData.append('category', dto.category);
     if (dto.is_pinned !== undefined) formData.append('is_pinned', String(dto.is_pinned));
     const response = await apiClient.post('/talent/portfolio/upload/image', formData, {
@@ -216,11 +219,13 @@ export const talentApi = {
 
   uploadPortfolioVideo: async (
     file: File,
-    dto: { caption?: string; category?: 'work' | 'personal' | 'intro'; is_pinned?: boolean },
+    dto: { caption?: string; title?: string; description?: string; category?: 'work' | 'personal' | 'intro'; is_pinned?: boolean },
   ): Promise<{ item: PortfolioItem }> => {
     const formData = new FormData();
     formData.append('file', file);
     if (dto.caption) formData.append('caption', dto.caption);
+    if (dto.title) formData.append('title', dto.title);
+    if (dto.description) formData.append('description', dto.description);
     if (dto.category) formData.append('category', dto.category);
     if (dto.is_pinned !== undefined) formData.append('is_pinned', String(dto.is_pinned));
     const response = await apiClient.post('/talent/portfolio/upload/video', formData, {
@@ -231,7 +236,7 @@ export const talentApi = {
 
   updatePortfolioItem: async (
     itemId: string,
-    dto: { caption?: string; category?: 'work' | 'personal' | 'intro'; is_pinned?: boolean },
+    dto: { caption?: string; title?: string; description?: string; category?: 'work' | 'personal' | 'intro'; is_pinned?: boolean },
   ): Promise<{ item: PortfolioItem }> => {
     const response = await apiClient.patch(`/talent/portfolio/items/${itemId}`, dto);
     return response.data;
@@ -249,9 +254,14 @@ export const talentApi = {
 
   addPortfolioLink: async (
     url: string,
-    dto: { caption?: string; category?: 'work' | 'personal' | 'intro'; is_pinned?: boolean },
+    dto: { caption?: string; title?: string; description?: string; category?: 'work' | 'personal' | 'intro'; is_pinned?: boolean },
   ): Promise<{ item: PortfolioItem }> => {
     const response = await apiClient.post('/talent/portfolio/link', { url, ...dto });
+    return response.data;
+  },
+
+  getMediaKit: async (username: string): Promise<MediaKitData | { private: true; preview?: unknown }> => {
+    const response = await apiClient.get(`/talent/media-kit/${username}`);
     return response.data;
   },
 };

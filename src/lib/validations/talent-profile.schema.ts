@@ -106,6 +106,10 @@ export const createTalentProfileSchema = updateTalentProfileSchema.extend({
 export type UpdateTalentProfileInput = z.infer<typeof updateTalentProfileSchema>;
 export type CreateTalentProfileInput = z.infer<typeof createTalentProfileSchema>;
 
+export function getProfileSchema(mode: "create" | "edit") {
+  return mode === "create" ? createTalentProfileSchema : updateTalentProfileSchema;
+}
+
 export const portfolioItemSchema = z.object({
   id: z.string(),
   type: z.enum(['image', 'video', 'youtube', 'instagram']),
@@ -113,6 +117,8 @@ export const portfolioItemSchema = z.object({
   url: z.string(),
   thumbnail_url: z.string().optional(),
   caption: z.string().optional(),
+  title: z.string().optional(),
+  description: z.string().optional(),
   is_pinned: z.boolean(),
   embed_url: z.string().optional(),
   view_count: z.number().optional(),

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MapPin, Sparkles, BadgeCheck } from "lucide-react";
+import { MapPin, Sparkles, BadgeCheck, Film, Tv, Drama, Megaphone } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { resolveHeroBackground } from "@/lib/hero-color";
 import type { TalentProfile } from "@/lib/validations/talent-profile.schema";
@@ -10,10 +10,17 @@ interface HeroCardProps {
   profile: TalentProfile;
   showLocation?: boolean;
   showAvailability?: boolean;
+  about?: string;
 }
 
-export function HeroCard({ profile, showLocation = true, showAvailability = true }: HeroCardProps) {
+export function HeroCard({
+  profile,
+  showLocation = true,
+  showAvailability = true,
+  about,
+}: HeroCardProps) {
   const [imgFailed, setImgFailed] = useState(false);
+  const [aboutExpanded, setAboutExpanded] = useState(false);
   const displayName = profile.full_legal_name || profile.username || "Talent";
   const loc = [profile.location?.city, profile.location?.state]
     .filter(Boolean)
@@ -21,6 +28,7 @@ export function HeroCard({ profile, showLocation = true, showAvailability = true
   const professionStr = profile.professions?.slice(0, 2).join(" / ") || "";
 
   const isAvailable = profile.availability === "available";
+  const aboutText = about || "";
 
   const hero = resolveHeroBackground(
     imgFailed ? undefined : profile.hero_background,
@@ -39,8 +47,7 @@ export function HeroCard({ profile, showLocation = true, showAvailability = true
         <div
           className="relative h-[340px] transition-colors duration-700"
           style={{
-            background: showBgImage ? undefined : (imgFailed ? fallbackBg : hero.background),
-            backgroundImage: showBgImage ? hero.background : undefined,
+            background: showBgImage ? hero.background : (imgFailed ? fallbackBg : hero.background),
           }}
         >
           {/* Grain texture */}
@@ -162,27 +169,27 @@ export function HeroCard({ profile, showLocation = true, showAvailability = true
         {/* Identity card — overlapping */}
         <div className="-mt-10 mx-3 mb-3 relative z-10">
           <div className="rounded-2xl bg-card/95 backdrop-blur-xl border border-border/60 shadow-lg px-5 pt-4 pb-4">
-            {/* Active plan badge */}
-            {profile.active_plan === "talent_verified" && (
-              <div className="mb-3 flex justify-center">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-gold-soft border border-gold/30 px-2.5 py-1">
-                  <BadgeCheck className="h-3.5 w-3.5 text-gold-ink" strokeWidth={2.5} />
-                  <span className="text-[11px] font-medium text-gold-ink tracking-wide">Verified</span>
-                </span>
-              </div>
+            <p
+              className={cn(
+                "text-[13.5px] leading-[1.65] text-ink-soft",
+                !aboutExpanded && "line-clamp-3",
+              )}
+            >
+              {aboutText || "No bio added yet."}
+            </p>
+            {aboutText && aboutText.length > 250 && (
+              <button
+                onClick={() => setAboutExpanded(!aboutExpanded)}
+                className="mt-1 text-[12px] font-medium text-gold hover:text-gold/80 transition-colors"
+              >
+                {aboutExpanded ? "Show less" : "Read more"}
+              </button>
             )}
-            <div className="grid grid-cols-3 gap-1">
-              <Stat
-                label="Projects"
-                value={String(profile.analytics?.profile_views_30d ?? "—")}
-              />
-              <StatDivider />
-              <Stat label="Shortlists" value={String(profile.analytics?.shortlist_count ?? "—")} />
-              <StatDivider />
-              <Stat
-                label="Trust Score"
-                value={String(profile.trust_score ?? "—")}
-              />
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Pill gold><Film className="h-3 w-3" /> Film</Pill>
+              <Pill gold><Tv className="h-3 w-3" /> OTT</Pill>
+              <Pill gold><Drama className="h-3 w-3" /> Stage</Pill>
+              <Pill><Megaphone className="h-3 w-3" /> Commercial</Pill>
             </div>
           </div>
         </div>
@@ -191,19 +198,16 @@ export function HeroCard({ profile, showLocation = true, showAvailability = true
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Pill({ children, gold }: { children: React.ReactNode; gold?: boolean }) {
   return (
-    <div className="text-center">
-      <div className="font-serif text-[20px] font-semibold text-ink leading-none">
-        {value}
-      </div>
-      <div className="mt-1.5 text-[10px] uppercase tracking-[0.12em] text-ink-muted">
-        {label}
-      </div>
-    </div>
+    <span
+      className={`inline-flex items-center gap-1.5 text-[12px] px-3 py-1.5 rounded-full border ${
+        gold
+          ? "bg-gold-soft border-gold/40 text-gold-ink"
+          : "bg-cream border-border text-ink-soft"
+      }`}
+    >
+      {children}
+    </span>
   );
-}
-
-function StatDivider() {
-  return <div className="w-px h-8 bg-border/60 mx-auto self-center" />;
 }

@@ -5,6 +5,7 @@ import { tokenStorage } from '@/lib/token-storage';
 
 export interface User {
   _id: string;
+  username?: string;
   email: string;
   phone: string;
   role: 'talent' | 'recruiter' | 'admin';

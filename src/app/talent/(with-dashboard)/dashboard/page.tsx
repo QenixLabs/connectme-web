@@ -254,8 +254,7 @@ function WelcomeBar({
           <div
             className="relative h-[200px] transition-colors duration-700"
             style={{
-              background: showBgImage ? undefined : (imgFailed ? fallbackBg : hero.background),
-              backgroundImage: showBgImage ? hero.background : undefined,
+              background: showBgImage ? hero.background : (imgFailed ? fallbackBg : hero.background),
             }}
           >
             {/* Depth overlays */}

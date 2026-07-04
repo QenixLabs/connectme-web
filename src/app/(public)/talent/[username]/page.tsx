@@ -26,7 +26,7 @@ import { OverviewPane } from "@/components/public-profile/overview-pane";
 import { LooksPane } from "@/components/public-profile/looks-pane";
 import { SkillsPane } from "@/components/public-profile/skills-pane";
 import { LinksPane } from "@/components/public-profile/links-pane";
-import { PinnedPortfolioBar } from "@/components/public-profile/pinned-portfolio-bar";
+import { PortfolioSection } from "@/components/public-profile/portfolio-section";
 import { PortfolioLightbox } from "@/components/portfolio/portfolio-lightbox";
 
 /* ------------------------------------------------------------------ */
@@ -308,6 +308,7 @@ export default function PublicTalentProfilePage() {
             profile={activeProfile}
             showLocation={heroVisibility.location}
             showAvailability={heroVisibility.availability}
+            about={activeProfile.about}
           />
           <ActionBar
             username={username}
@@ -317,8 +318,10 @@ export default function PublicTalentProfilePage() {
             connectDisabled={!!user && !isRecruiter}
           />
           {!isPrivate && (
-            <PinnedPortfolioBar
-              items={portfolioItems}
+            <PortfolioSection
+              items={portfolioItems.filter((i) => i.is_pinned)}
+              showStats={false}
+              showCategoryFilter={false}
               onItemClick={(item) => {
                 setLightboxItem(item);
                 setLightboxOpen(true);
@@ -346,7 +349,7 @@ export default function PublicTalentProfilePage() {
 
               <main className="px-4 mt-4 space-y-4">
                 {tab === "overview" && (
-                  <OverviewPane profile={activeProfile} showAbout={cardVisibility.bio} />
+                  <OverviewPane profile={activeProfile} showAbout={false} />
                 )}
                 {tab === "looks" && (
                   <LooksPane

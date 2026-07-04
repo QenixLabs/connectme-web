@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Clock, Building2, Briefcase, ShieldCheck, ShieldAlert, ChevronRight } from "lucide-react";
+import { Handshake, GraduationCap, MessageCircle, ShieldCheck, ChevronRight, Clock } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import { formatDistanceToNow } from "date-fns";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
 interface RequesterProfile {
@@ -28,21 +27,14 @@ export interface RequestItem {
   status: "pending" | "accepted" | "rejected";
   message?: string;
   created_at: string;
+  reason?: "collaboration" | "mentorship" | "referral";
 }
 
-const AVATAR_COLORS = [
-  { bg: "bg-violet-100", text: "text-violet-700", border: "border-violet-200" },
-  { bg: "bg-emerald-100", text: "text-emerald-700", border: "border-emerald-200" },
-  { bg: "bg-rose-100", text: "text-rose-700", border: "border-rose-200" },
-  { bg: "bg-amber-100", text: "text-amber-700", border: "border-amber-200" },
-  { bg: "bg-sky-100", text: "text-sky-700", border: "border-sky-200" },
-  { bg: "bg-indigo-100", text: "text-indigo-700", border: "border-indigo-200" },
-];
-
-function getAvatarColor(name: string) {
-  const idx = name.charCodeAt(0) % AVATAR_COLORS.length;
-  return AVATAR_COLORS[idx];
-}
+const CONNECTION_CONFIG = {
+  collaboration: { icon: Handshake, label: "Collaboration" },
+  mentorship: { icon: GraduationCap, label: "Mentorship" },
+  referral: { icon: MessageCircle, label: "Referral" },
+} as const;
 
 function getInitials(name: string): string {
   return name
@@ -54,55 +46,7 @@ function getInitials(name: string): string {
 }
 
 function getDisplayName(requester: RequesterProfile): string {
-  return (
-    requester.full_legal_name ||
-    requester.username ||
-    requester.email ||
-    "Unknown"
-  );
-}
-
-function RequesterAvatar({
-  requester,
-  size = "md",
-}: {
-  requester: RequesterProfile;
-  size?: "sm" | "md";
-}) {
-  const name = getDisplayName(requester);
-  const color = getAvatarColor(name);
-  const sizeClass = size === "md" ? "w-11 h-11 text-sm" : "w-9 h-9 text-xs";
-
-  if (requester.profile_photo) {
-    return (
-      <div
-        className={cn(
-          "rounded-full overflow-hidden flex-shrink-0 border-2 border-border",
-          sizeClass
-        )}
-      >
-        <img
-          src={requester.profile_photo}
-          alt={name}
-          className="w-full h-full object-cover"
-        />
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className={cn(
-        "rounded-full flex items-center justify-center font-semibold flex-shrink-0 border-2",
-        sizeClass,
-        color.bg,
-        color.text,
-        color.border
-      )}
-    >
-      {getInitials(name)}
-    </div>
-  );
+  return requester.full_legal_name || requester.username || requester.email || "Unknown";
 }
 
 interface RequestCardProps {
@@ -130,158 +74,218 @@ export function RequestCard({
     requester.verification_status === "trusted_partner" ||
     requester.verification_status === "enterprise";
 
+  const reason = request.reason || "collaboration";
+  const { icon: ConnIcon, label: connLabel } =
+    CONNECTION_CONFIG[reason] || CONNECTION_CONFIG.collaboration;
+
+  const subtitle = [requester.position, requester.company_name || requester.industry]
+    .filter(Boolean)
+    .join(" • ");
+  const role =
+    requester.role === "recruiter"
+      ? "Recruiter"
+      : requester.role === "talent"
+        ? "Talent"
+        : null;
+  const displaySubtitle = subtitle || role || null;
+
+  const isPending = request.status === "pending";
+  const isAccepted = request.status === "accepted";
+  const isRejected = request.status === "rejected";
+  const isSent = mode === "sent";
+  const isHistory = mode === "history";
+
   const handleAccept = () => {
     setIsLeaving(true);
-    setTimeout(() => onAccept(request._id), 200);
+    setTimeout(() => onAccept(request._id), 250);
   };
 
   const handleReject = () => {
     setIsLeaving(true);
-    setTimeout(() => onReject(request._id), 200);
+    setTimeout(() => onReject(request._id), 250);
   };
 
-  const isAccepted = request.status === "accepted";
-  const isRejected = request.status === "rejected";
-  const isPending = request.status === "pending";
-  const isSent = mode === "sent";
-
   return (
-    <div
-      className={cn(
-        "rounded-2xl border border-border bg-card overflow-hidden transition-all duration-300",
-        isLeaving && "opacity-0 scale-95 -translate-y-1",
-        isPending && "border-l-2 border-l-amber",
-        isAccepted && "border-l-2 border-l-success",
-        isRejected && "border-l-2 border-l-muted-foreground/30 opacity-80",
-        "hover:shadow-md"
-      )}
-    >
-      <div className="p-4 space-y-3">
-        <div className="flex items-start gap-3">
-          <RequesterAvatar requester={requester} />
-
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5">
-              <p className="text-sm font-semibold text-text-primary truncate">
-                {name}
-              </p>
-              {isVerified && (
-                <ShieldCheck className="w-3.5 h-3.5 text-success flex-shrink-0" strokeWidth={2} />
-              )}
-              {!isVerified && requester.verification_status === "pending" && (
-                <ShieldAlert className="w-3.5 h-3.5 text-text-muted flex-shrink-0" strokeWidth={2} />
-              )}
-            </div>
-
-            {requester.position && (
-              <div className="flex items-center gap-1 mt-0.5">
-                <Briefcase className="w-3 h-3 text-text-muted flex-shrink-0" strokeWidth={1.5} />
-                <p className="text-xs text-text-secondary truncate">
-                  {requester.position}
-                  {requester.company_name && (
-                    <span className="text-text-muted">
-                      {" "}at {requester.company_name}
-                    </span>
+    <AnimatePresence>
+      {!isLeaving && (
+        <motion.div
+          exit={{ opacity: 0, height: 0, overflow: "hidden" }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
+          className="overflow-hidden"
+        >
+          <div className={cn("px-4 py-4", isLeaving && "opacity-0")}>
+            <div className="flex items-start gap-4">
+              {/* Avatar */}
+              <div className="relative flex-shrink-0">
+                <div
+                  className={cn(
+                    "w-[56px] h-[56px] rounded-xl overflow-hidden bg-surface-light",
+                    "ring-1 ring-border"
                   )}
-                </p>
+                >
+                  {requester.profile_photo ? (
+                    <img
+                      src={requester.profile_photo}
+                      alt={name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <span className="text-ink-pale text-base font-semibold">
+                        {getInitials(name)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                {isVerified && (
+                  <div className="absolute -bottom-0.5 -right-0.5 w-[18px] h-[18px] rounded-full bg-brand flex items-center justify-center ring-2 ring-background">
+                    <ShieldCheck className="w-2.5 h-2.5 text-white" strokeWidth={3} />
+                  </div>
+                )}
               </div>
-            )}
 
-            {!requester.position && requester.company_name && (
-              <div className="flex items-center gap-1 mt-0.5">
-                <Building2 className="w-3 h-3 text-text-muted flex-shrink-0" strokeWidth={1.5} />
-                <p className="text-xs text-text-secondary truncate">
-                  {requester.company_name}
-                </p>
+              {/* Content */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[15px] font-semibold text-text-primary truncate">
+                        {name}
+                      </span>
+                      {isVerified && (
+                        <ShieldCheck
+                          className="w-[14px] h-[14px] text-success flex-shrink-0"
+                          strokeWidth={2.5}
+                        />
+                      )}
+                    </div>
+                    {displaySubtitle && (
+                      <p className="text-xs text-text-secondary mt-0.5 truncate">
+                        {displaySubtitle}
+                      </p>
+                    )}
+                  </div>
+                  <span className="text-[11px] text-text-muted whitespace-nowrap flex-shrink-0 mt-0.5">
+                    {formatDistanceToNow(new Date(request.created_at), {
+                      addSuffix: true,
+                    })}
+                  </span>
+                </div>
+
+                {/* Reason tag */}
+                {isPending && !isHistory && !isSent && (
+                  <div className="flex items-center gap-1.5 mt-2">
+                    <ConnIcon className="w-3 h-3 text-brand" strokeWidth={1.5} />
+                    <span className="text-[11px] text-text-secondary">{connLabel}</span>
+                  </div>
+                )}
+
+                {/* Message preview */}
+                {request.message && (
+                  <div className="mt-2.5 px-3 py-2 rounded-lg bg-cream-soft border border-border-warm">
+                    <p className="text-xs text-text-secondary leading-relaxed italic">
+                      &ldquo;{request.message}&rdquo;
+                    </p>
+                  </div>
+                )}
+
+                {/* Action buttons — received pending */}
+                {isPending && !isSent && !isHistory && (
+                  <div className="flex gap-2.5 mt-3">
+                    <button
+                      onClick={handleReject}
+                      disabled={isProcessing}
+                      className={cn(
+                        "flex-1 h-10 rounded-lg text-sm font-medium transition-all active:scale-[0.98]",
+                        "border border-border bg-card text-text-secondary",
+                        "hover:bg-error-light hover:text-error hover:border-error-border",
+                        "disabled:opacity-40 disabled:cursor-not-allowed",
+                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                      )}
+                    >
+                      {isProcessing ? "..." : "Decline"}
+                    </button>
+                    <button
+                      onClick={handleAccept}
+                      disabled={isProcessing}
+                      className={cn(
+                        "flex-1 h-10 rounded-lg text-sm font-medium transition-all active:scale-[0.98]",
+                        "bg-foreground text-background",
+                        "hover:bg-text-primary",
+                        "disabled:opacity-40 disabled:cursor-not-allowed",
+                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                      )}
+                    >
+                      {isProcessing ? "..." : "Accept"}
+                    </button>
+                  </div>
+                )}
+
+                {/* Accepted state */}
+                {isAccepted && !isHistory && (
+                  <div className="flex items-center justify-between mt-2.5">
+                    <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-success-text">
+                      <span className="w-1.5 h-1.5 rounded-full bg-success" />
+                      Connected
+                    </span>
+                    <button
+                      onClick={() => onViewProfile(requester)}
+                      className="flex items-center gap-1 text-xs text-text-muted hover:text-text-secondary transition-colors"
+                    >
+                      View profile
+                      <ChevronRight className="w-3 h-3" strokeWidth={1.5} />
+                    </button>
+                  </div>
+                )}
+
+                {/* Rejected state */}
+                {isRejected && (
+                  <span className="inline-flex items-center gap-1.5 mt-2.5 text-[11px] font-medium text-text-muted">
+                    <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />
+                    Declined
+                  </span>
+                )}
+
+                {/* Sent — pending */}
+                {isSent && isPending && (
+                  <div className="flex items-center gap-1.5 mt-2.5">
+                    <Clock className="w-3 h-3 text-text-muted" strokeWidth={1.5} />
+                    <span className="text-[11px] text-text-muted">Awaiting response</span>
+                  </div>
+                )}
+
+                {/* Sent — accepted */}
+                {isSent && isAccepted && (
+                  <div className="flex items-center justify-between mt-2.5">
+                    <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-success-text">
+                      <span className="w-1.5 h-1.5 rounded-full bg-success" />
+                      Accepted
+                    </span>
+                  </div>
+                )}
+
+                {/* History states */}
+                {isHistory && (
+                  <div className="mt-2.5">
+                    {isAccepted && (
+                      <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-success-text">
+                        <span className="w-1.5 h-1.5 rounded-full bg-success" />
+                        Connected
+                      </span>
+                    )}
+                    {isRejected && (
+                      <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-text-muted">
+                        <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/40" />
+                        Declined
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
-
-          <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-            <span className="text-[11px] text-text-muted whitespace-nowrap">
-              {formatDistanceToNow(new Date(request.created_at), { addSuffix: true })}
-            </span>
-            {requester.industry && (
-              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                {requester.industry}
-              </Badge>
-            )}
-          </div>
-        </div>
-
-        {/* Company size info row */}
-        {(requester.company_size || requester.company_website) && (
-          <div className="flex items-center gap-3 text-[11px] text-text-muted">
-            {requester.company_size && (
-              <span className="capitalize">{requester.company_size} company</span>
-            )}
-            {requester.company_website && (
-              <span className="truncate">{requester.company_website}</span>
-            )}
-          </div>
-        )}
-
-        {request.message && (
-          <div className="relative bg-cream-soft rounded-xl px-3.5 py-2.5 border border-border-warm">
-            <div className="absolute left-0 top-3 bottom-3 w-0.5 rounded-full bg-brand/30" />
-            <p className="text-xs text-text-secondary leading-relaxed italic pl-2">
-              &ldquo;{request.message}&rdquo;
-            </p>
-          </div>
-        )}
-
-        {isPending && !isSent && (
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex-1 h-9 text-xs font-medium border-border bg-card hover:bg-error-light hover:text-error hover:border-error-border transition-colors"
-              onClick={handleReject}
-              disabled={isProcessing}
-            >
-              {isProcessing ? "..." : "Decline"}
-            </Button>
-            <Button
-              size="sm"
-              className="flex-1 h-9 text-xs font-medium bg-foreground text-background hover:bg-text-primary transition-colors"
-              onClick={handleAccept}
-              disabled={isProcessing}
-            >
-              {isProcessing ? "..." : "Accept"}
-            </Button>
-          </div>
-        )}
-
-        {isAccepted && (
-          <div className="flex items-center justify-between">
-            <Badge className="bg-success-light text-success-text border-success-soft text-[11px]">
-              Connected
-            </Badge>
-            <button
-              onClick={() => onViewProfile(requester)}
-              className="flex items-center gap-1 text-xs text-text-muted hover:text-text-secondary transition-colors"
-            >
-              View profile
-              <ChevronRight className="w-3 h-3" strokeWidth={1.5} />
-            </button>
-          </div>
-        )}
-
-        {isRejected && (
-          <Badge
-            variant="secondary"
-            className="text-[11px]"
-          >
-            Declined
-          </Badge>
-        )}
-
-        {isSent && isPending && (
-          <Badge variant="secondary" className="text-[11px]">
-            Awaiting response
-          </Badge>
-        )}
-      </div>
-    </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

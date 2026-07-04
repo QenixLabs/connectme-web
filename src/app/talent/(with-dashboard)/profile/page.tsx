@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Shield } from "lucide-react";
+import { Shield, ChevronLeft, SlidersHorizontal } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { talentApi } from "@/lib/api";
@@ -11,11 +11,9 @@ import { getApiErrorMessage } from "@/lib/formatters";
 import type { TalentProfile } from "@/lib/validations/talent-profile.schema";
 import { ProfileSkeleton } from "@/components/skeletons/profile-skeleton";
 import { Card } from "@/components/ui/card";
-import { ProfileDetail } from "./_profile-detail";
-import { CompletenessBanner } from "./_completeness-banner";
+import { IdentityCard } from "./_identity-card";
+import { CompletenessCard, CompletenessCardSkeleton } from "./_completeness-card";
 import { TrustScore } from "./_trust-score";
-import { ProfileCard } from "./_profile-card";
-import { VerifiedCard } from "./_verified-card";
 import { TipsCard } from "./_tips-card";
 import { EditForm } from "./_edit-form";
 import { VerificationAlerts } from "@/components/verification-alerts";
@@ -62,8 +60,11 @@ export default function TalentProfilePage() {
   }, [completenessVersion]);
 
   const completenessPct = completenessQuery.data
-    ? Math.round(((35 - completenessQuery.data.missingFields.length) / 35) * 100)
+    ? Math.round(
+        ((35 - completenessQuery.data.missingFields.length) / 35) * 100,
+      )
     : undefined;
+  const completenessLoading = completenessQuery.isLoading;
 
   if (profileQuery.isLoading) {
     return <ProfileSkeleton />;
@@ -82,13 +83,33 @@ export default function TalentProfilePage() {
   if (mode === "edit" && !isEditing && profile) {
     return (
       <div className="max-w-2xl mx-auto px-4 pt-5 pb-24 space-y-3">
+        {/* TopBar */}
+        <header className="flex items-center justify-between py-1">
+          <button
+            onClick={() => router.push("/talent/dashboard")}
+            className="text-ink-muted hover:text-ink transition-colors"
+            aria-label="Back"
+          >
+            <ChevronLeft size={24} strokeWidth={1.5} />
+          </button>
+          <h1 className="text-[18px] font-medium text-ink font-serif">
+            Account Status
+          </h1>
+          <button
+            className="text-ink-muted hover:text-ink transition-colors"
+            aria-label="Options"
+          >
+            <SlidersHorizontal size={22} strokeWidth={1.5} />
+          </button>
+        </header>
+
         {saveSuccess && (
           <Card className="p-3 border-success-muted bg-success-light text-[13px] text-success-text">
             Profile saved.
           </Card>
         )}
 
-        <ProfileCard
+        <IdentityCard
           profile={profile}
           completeness={completenessPct}
           verificationTier={user?.verification_tier}
@@ -96,26 +117,26 @@ export default function TalentProfilePage() {
             setIsEditing(true);
             setSaveSuccess(false);
           }}
-          onPortfolio={() => router.push(`/talent/${profile.username}/portfolio`)}
+          onPortfolio={() =>
+            router.push("/talent/portfolio")
+          }
         />
 
-        {(user?.verification_tier ?? 0) >= 2 && (
-          <VerifiedCard onClick={() => router.push("/talent/verify-documents")} />
-        )}
-
-        <CompletenessBanner
-          version={completenessVersion}
-          onCompleteProfile={() => {
-            setIsEditing(true);
-            setSaveSuccess(false);
-          }}
-        />
+        {completenessLoading ? (
+          <CompletenessCardSkeleton />
+        ) : completenessPct !== undefined ? (
+          <CompletenessCard
+            percentage={completenessPct}
+            onCompleteProfile={() => {
+              setIsEditing(true);
+              setSaveSuccess(false);
+            }}
+          />
+        ) : null}
 
         <TrustScore completeness={completenessPct} />
 
         <TipsCard />
-
-        <ProfileDetail profile={profile} />
 
         <VerificationAlerts />
 
@@ -129,8 +150,12 @@ export default function TalentProfilePage() {
                 <Shield className="h-5 w-5 text-gold-ink" />
               </div>
               <div>
-                <h3 className="text-[15px] font-semibold text-ink">Verify Your Identity</h3>
-                <p className="text-[13px] text-ink-soft">Build trust with recruiters</p>
+                <h3 className="text-[15px] font-semibold text-ink">
+                  Verify Your Identity
+                </h3>
+                <p className="text-[13px] text-ink-soft">
+                  Build trust with recruiters
+                </p>
               </div>
             </div>
           </Card>
