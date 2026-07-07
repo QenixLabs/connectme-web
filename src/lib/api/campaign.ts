@@ -16,7 +16,6 @@ export interface Campaign {
   name: string;
   description?: string;
   role_type?: string;
-  industry?: string;
   location?: { city?: string; state?: string };
   dates?: { start?: string; end?: string };
   budget_range?: { min?: number; max?: number; currency?: string };
@@ -36,6 +35,7 @@ export interface Campaign {
   scheduled_publish_at?: string;
   auto_close_on_deadline?: boolean;
   questions?: CampaignQuestion[];
+  specialties?: string[];
   cover_image_url?: string;
   media?: Array<{ url: string; type: string; caption?: string; order: number }>;
   banner?: { type: 'image' | 'video'; url: string; thumbnail?: string };
@@ -48,7 +48,6 @@ export const campaignApi = {
   getAll: async (params?: {
     status?: string;
     search?: string;
-    industry?: string;
     role_type?: string;
     gender?: string;
     location_city?: string;
@@ -74,7 +73,6 @@ export const campaignApi = {
     name: string;
     description?: string;
     role_type?: string;
-    industry?: string;
     location?: { city?: string; state?: string };
     dates?: { start?: string; end?: string };
     budget_range?: { min?: number; max?: number; currency?: string };

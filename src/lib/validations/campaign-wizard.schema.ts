@@ -11,7 +11,6 @@ export const campaignWizardSchema = z
       .max(2000, 'Must be 2000 characters or fewer')
       .optional(),
     role_type: z.string().optional(),
-    industry: z.string().optional(),
     location: z
       .object({
         city: z.string().optional(),
@@ -61,6 +60,7 @@ export const campaignWizardSchema = z
       )
       .max(20, 'Max 20 questions')
       .optional(),
+    specialties: z.array(z.string()).optional(),
     publishOption: z.enum(['draft', 'public', 'invite_only']),
     scheduled_publish_at: z.string().optional(),
     auto_close_on_deadline: z.boolean().default(true),

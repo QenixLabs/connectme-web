@@ -73,7 +73,7 @@ function getStepFields(step: number): (keyof CreateTalentProfileInput)[] {
     case 2:
       return [
         "professions",
-        "industries",
+        "specialties",
         "availability",
         "skills",
         "languages",
@@ -134,14 +134,14 @@ export function ProfileEditWizard({
     reset,
   } = form;
 
-  const lastUsernameRef = useRef(profile?.username);
+  const lastProfileRef = useRef<TalentProfile | null>(null);
 
   useEffect(() => {
-    if (profile && profile.username !== lastUsernameRef.current) {
-      lastUsernameRef.current = profile.username;
+    if (mode === "edit" && profile && profile !== lastProfileRef.current) {
+      lastProfileRef.current = profile;
       reset(hydrateFromServer(profile));
     }
-  }, [profile, reset]);
+  }, [mode, profile, reset]);
 
   useEffect(() => {
     if (!profile) {

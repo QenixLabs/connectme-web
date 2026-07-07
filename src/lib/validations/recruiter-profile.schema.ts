@@ -5,7 +5,7 @@ export const updateRecruiterProfileSchema = z.object({
   company_website: z.string().max(200, 'Website must be 200 characters or fewer').optional().or(z.literal('')),
   linkedin_company_url: z.string().max(300, 'LinkedIn URL must be 300 characters or fewer').optional().or(z.literal('')),
   company_size: z.string().max(50).optional().or(z.literal('')),
-  industry: z.string().max(80).optional().or(z.literal('')),
+  specialties: z.array(z.string()).optional(),
   position: z.string().max(100, 'Position must be 100 characters or fewer').optional().or(z.literal('')),
   profile_photo: z.string().optional(),
 });

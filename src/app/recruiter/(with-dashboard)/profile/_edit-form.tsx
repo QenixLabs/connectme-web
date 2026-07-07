@@ -50,12 +50,16 @@ import {
   type UpdateRecruiterProfileInput,
   type RecruiterProfile,
 } from "@/lib/validations/recruiter-profile.schema";
+import { TagInput } from "@/components/ui/tag-input";
+import { PROFESSION_SPECIALTIES } from "@/lib/profession-fields";
 import {
   COMPANY_SIZE_OPTIONS,
-  INDUSTRY_OPTIONS,
   POSITION_OPTIONS,
   dynamicOptions,
 } from "@/lib/recruiter-profile/options";
+
+const ALL_SPECIALTIES = [...new Set(Object.values(PROFESSION_SPECIALTIES).flat())].sort();
+
 import {
   DEFAULT_VALUES,
   hydrateFromServer,
@@ -82,7 +86,7 @@ const SECTION_CONFIG = [
     id: "details",
     label: "Details",
     title: "Company details",
-    subtitle: "Size, industry",
+        subtitle: "Size, specialties",
     icon: PieChart,
   },
   {
@@ -401,7 +405,7 @@ export function EditForm({ profile, onSaved, onCancel }: EditFormProps) {
 
   const watched = watch();
   const companyDone = !!watched.company_name;
-  const detailsDone = !!watched.company_size && !!watched.industry;
+  const detailsDone = !!watched.company_size && !!watched.specialties?.length;
   const roleDone = !!watched.position;
 
   const checks = {
@@ -416,7 +420,7 @@ export function EditForm({ profile, onSaved, onCancel }: EditFormProps) {
   if (watched.company_website) filledFields++;
   if (watched.linkedin_company_url) filledFields++;
   if (watched.company_size) filledFields++;
-  if (watched.industry) filledFields++;
+  if (watched.specialties?.length) filledFields++;
   if (watched.position) filledFields++;
   if (watched.profile_photo) filledFields++;
   const completeness = Math.round((filledFields / totalFields) * 100);
@@ -611,7 +615,7 @@ export function EditForm({ profile, onSaved, onCancel }: EditFormProps) {
               <FormSection
                 id="details"
                 title="Company details"
-                subtitle="Size, industry"
+                subtitle="Size, specialties"
                 icon={PieChart}
               >
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -647,30 +651,18 @@ export function EditForm({ profile, onSaved, onCancel }: EditFormProps) {
                   />
                   <FormField
                     control={control}
-                    name="industry"
+                    name="specialties"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Industry</FormLabel>
-                        <Select
-                          onValueChange={(v) => field.onChange(v || undefined)}
-                          value={field.value || ""}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select…" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {dynamicOptions(
-                              field.value,
-                              INDUSTRY_OPTIONS
-                            ).map((opt) => (
-                              <SelectItem key={opt.value} value={opt.value}>
-                                {opt.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <FormLabel>Specialties</FormLabel>
+                        <FormControl>
+                          <TagInput
+                            value={field.value ?? []}
+                            onChange={field.onChange}
+                            suggestions={ALL_SPECIALTIES}
+                            placeholder="Add specialties..."
+                          />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}

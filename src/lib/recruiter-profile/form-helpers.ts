@@ -8,7 +8,7 @@ export const DEFAULT_VALUES: UpdateRecruiterProfileInput = {
   company_website: '',
   linkedin_company_url: '',
   company_size: '',
-  industry: '',
+  specialties: [],
   position: '',
   profile_photo: '',
 };
@@ -19,7 +19,7 @@ export function hydrateFromServer(profile: RecruiterProfile): UpdateRecruiterPro
     company_website: profile.company_website ?? '',
     linkedin_company_url: profile.linkedin_company_url ?? '',
     company_size: profile.company_size ?? '',
-    industry: profile.industry ?? '',
+    specialties: profile.specialties ?? [],
     position: profile.position ?? '',
     profile_photo: profile.profile_photo ?? '',
   };
@@ -30,6 +30,9 @@ export function buildPayload(values: UpdateRecruiterProfileInput): Record<string
   for (const [key, val] of Object.entries(values)) {
     if (val === undefined || val === null) continue;
     if (typeof val === 'string' && val !== '') {
+      out[key] = val;
+    }
+    if (Array.isArray(val) && val.length > 0) {
       out[key] = val;
     }
   }

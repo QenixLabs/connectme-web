@@ -412,8 +412,8 @@ export function UserDetailPanel({ userId, onClose, onStatusChange }: UserDetailP
                           <div>{detail.profile.username || "—"}</div>
                           <div className="text-muted-foreground">Professions</div>
                           <div>{detail.profile.professions?.join(", ") || "—"}</div>
-                          <div className="text-muted-foreground">Industries</div>
-                          <div>{detail.profile.industries?.join(", ") || "—"}</div>
+                          <div className="text-muted-foreground">Specialties</div>
+                          <div>{detail.profile.specialties?.join(", ") || "—"}</div>
                           <div className="text-muted-foreground">Headline</div>
                           <div>{detail.profile.headline || "—"}</div>
                           <div className="text-muted-foreground">Location</div>
@@ -431,8 +431,8 @@ export function UserDetailPanel({ userId, onClose, onStatusChange }: UserDetailP
                           <div>{detail.profile.company_name || "—"}</div>
                           <div className="text-muted-foreground">Website</div>
                           <div>{detail.profile.company_website || "—"}</div>
-                          <div className="text-muted-foreground">Industry</div>
-                          <div>{detail.profile.industry || "—"}</div>
+                          <div className="text-muted-foreground">Specialties</div>
+                          <div>{detail.profile.specialties?.join(", ") || "—"}</div>
                           <div className="text-muted-foreground">Position</div>
                           <div>{detail.profile.position || "—"}</div>
                           <div className="text-muted-foreground">Verification Status</div>

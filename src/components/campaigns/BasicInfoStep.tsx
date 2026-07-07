@@ -22,7 +22,8 @@ import { Upload, X, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 import { PROFESSIONS } from '@/lib/professions';
-import { INDUSTRIES } from '@/lib/industries';
+import { getSpecialtiesForProfession } from '@/lib/profession-fields';
+import { TagInput } from '@/components/ui/tag-input';
 
 function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return (
@@ -105,6 +106,7 @@ interface BasicInfoStepProps {
 
 export function BasicInfoStep({ mediaFile, onMediaChange, existingBanner }: BasicInfoStepProps) {
   const { watch, setValue } = useFormContext();
+  const selectedRole = watch('role_type');
   const selectedState = watch('location.state');
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -200,28 +202,29 @@ export function BasicInfoStep({ mediaFile, onMediaChange, existingBanner }: Basi
           )}
         />
 
-        <FormField
-          name="industry"
-          render={({ field }) => (
-            <FormItem className="flex flex-col gap-1.5">
-              <FieldLabel required>Industry</FieldLabel>
-              <Select value={field.value ?? ''} onValueChange={field.onChange}>
-                <FormControl>
-                  <SelectTrigger className="text-sm h-11 rounded-xl border-border/60 bg-card">
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent className="rounded-xl">
-                  {INDUSTRIES.map((i) => (
-                    <SelectItem key={i} value={i}>{i}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
       </div>
+
+      {getSpecialtiesForProfession(selectedRole).length > 0 && (
+          <div className="flex flex-col gap-3">
+            <SectionLabel>Specialties</SectionLabel>
+            <FormField
+              name="specialties"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <TagInput
+                      value={field.value ?? []}
+                      onChange={field.onChange}
+                      suggestions={getSpecialtiesForProfession(selectedRole)}
+                      placeholder="Add specialties..."
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        )}
 
       <SectionLabel>Location</SectionLabel>
 
@@ -311,7 +314,7 @@ export function BasicInfoStep({ mediaFile, onMediaChange, existingBanner }: Basi
       />
 
       <div className="space-y-3">
-        <div className="grid grid-cols-2 gap-3">
+      <div className="space-y-3">
           <DateBlock
             label="Start date"
             value={watch('dates.start') || ''}

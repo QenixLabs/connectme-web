@@ -1,5 +1,3 @@
-import { INDUSTRIES } from '@/lib/industries';
-
 export type Option = { value: string; label: string };
 
 const opt = (value: string, label?: string): Option => ({ value, label: label ?? value });
@@ -14,8 +12,6 @@ export const COMPANY_SIZE_OPTIONS: Option[] = [
   opt('5001-10000', '5001-10000 employees'),
   opt('10001+', '10001+ employees'),
 ];
-
-export const INDUSTRY_OPTIONS: Option[] = INDUSTRIES.map((label) => opt(label, label));
 
 export const POSITION_OPTIONS: Option[] = [
   opt('casting_director', 'Casting Director'),

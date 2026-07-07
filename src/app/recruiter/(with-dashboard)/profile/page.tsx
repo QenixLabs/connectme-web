@@ -234,7 +234,7 @@ export default function RecruiterProfilePage() {
   const trustScore = user?.trust_score ?? 0;
   const companyName = profile?.company_name || "Company";
   const userName = user?.email?.split("@")[0] || "User";
-  const industry = profile?.industry || "Not set";
+  const specialties = profile?.specialties?.join(", ") || "Not set";
   const initials = companyName
     .split(" ")
     .map((w) => w[0])
@@ -326,8 +326,8 @@ export default function RecruiterProfilePage() {
                 <Building2 className="h-4 w-4 text-slate-500" strokeWidth={1.5} />
               </div>
               <div className="text-left">
-                <p className="text-[13px] font-medium text-slate-700">{industry}</p>
-                <p className="text-[11px] text-slate-400">Industry</p>
+                <p className="text-[13px] font-medium text-slate-700">{specialties}</p>
+                <p className="text-[11px] text-slate-400">Specialties</p>
               </div>
             </div>
             <ChevronRight className="h-4 w-4 text-slate-400" />

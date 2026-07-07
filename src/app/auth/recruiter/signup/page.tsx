@@ -22,7 +22,8 @@ import {
 } from "lucide-react";
 import { authApi } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
-import { INDUSTRIES } from "@/lib/industries";
+import { PROFESSION_SPECIALTIES } from "@/lib/profession-fields";
+import { TagInput } from "@/components/ui/tag-input";
 import { AuthLayout } from "@/components/layout/auth-layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -52,6 +53,8 @@ type Step = 1 | 2 | 3;
 
 const COMPANY_SIZES = ["1-10", "11-50", "51-200", "201-500", "500+"];
 
+const ALL_SPECIALTIES = [...new Set(Object.values(PROFESSION_SPECIALTIES).flat())].sort();
+
 const STEP_LABELS = [
   { label: "Company", description: "About your org" },
   { label: "Contact", description: "Reach you" },
@@ -63,7 +66,7 @@ const schema = z
     companyName: z.string().min(1, "Company name is required"),
     companyWebsite: z.string().optional(),
     companySize: z.string().min(1, "Please select company size"),
-    industry: z.string().min(1, "Please select industry"),
+    specialties: z.array(z.string()).optional(),
     email: z.string().min(1, "Email is required").email("Enter a valid work email"),
     phone: z.string().regex(/^[6-9]\d{9}$/, "Enter a valid 10-digit mobile number"),
     password: z
@@ -102,7 +105,7 @@ export default function RecruiterSignupPage() {
       companyName: "",
       companyWebsite: "",
       companySize: "",
-      industry: "",
+      specialties: [],
       email: "",
       phone: "",
       password: "",
@@ -121,7 +124,7 @@ export default function RecruiterSignupPage() {
   const handleNext = async () => {
     setServerError(null);
     if (step === 1) {
-      const ok = await form.trigger(["companyName", "companySize", "industry"]);
+      const ok = await form.trigger(["companyName", "companySize"]);
       if (!ok) return;
       goToStep(2);
     } else if (step === 2) {
@@ -150,7 +153,7 @@ export default function RecruiterSignupPage() {
         company_name: values.companyName,
         company_website: values.companyWebsite,
         company_size: values.companySize,
-        industry: values.industry,
+        specialties: values.specialties?.length ? values.specialties : undefined,
         verification_method: verificationMethod,
       });
       router.push(
@@ -306,29 +309,20 @@ export default function RecruiterSignupPage() {
 
                         <FormField
                           control={form.control}
-                          name="industry"
+                          name="specialties"
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel className="text-xs font-medium uppercase tracking-widest text-text-muted">
-                                Industry
+                                Specialties
                               </FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl>
-                                  <SelectTrigger className="h-11 rounded-xl border-border/60 bg-card group">
-                                    <div className="flex items-center gap-2 text-text-muted group-focus-within:text-brand">
-                                      <Briefcase className="w-4 h-4" strokeWidth={1.5} />
-                                    </div>
-                                    <SelectValue placeholder="Select industry..." />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent className="rounded-xl max-h-[240px]">
-                                  {INDUSTRIES.map((i) => (
-                                    <SelectItem key={i} value={i}>
-                                      {i}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+                              <FormControl>
+                                <TagInput
+                                  value={field.value ?? []}
+                                  onChange={field.onChange}
+                                  suggestions={ALL_SPECIALTIES}
+                                  placeholder="Add specialties..."
+                                />
+                              </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}

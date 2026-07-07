@@ -1,8 +1,8 @@
 "use client";
 
 import { useFormContext, useFieldArray } from "react-hook-form";
+import { useMemo } from "react";
 import { Briefcase, Zap, Languages } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import {
   FormField,
   FormItem,
@@ -22,8 +22,8 @@ import type { CreateTalentProfileInput } from "@/lib/validations/talent-profile.
 import {
   AVAILABILITY_OPTIONS,
   PROFESSION_SUGGESTIONS,
-  INDUSTRY_SUGGESTIONS,
 } from "@/lib/talent-profile/options";
+import { getSpecialtiesForProfession } from "@/lib/profession-fields";
 import { SectionCard, AddRow, SkillRow, LanguageRow } from "./shared";
 
 export function WorkStep() {
@@ -39,13 +39,20 @@ export function WorkStep() {
   const skillsArray = useFieldArray({ control, name: "skills" });
   const languagesArray = useFieldArray({ control, name: "languages" });
 
+  const selectedProfessions = watch("professions") ?? [];
+
+  const specialtySuggestions = useMemo(() => {
+    const all = selectedProfessions.flatMap((p) => getSpecialtiesForProfession(p));
+    return [...new Set(all)];
+  }, [selectedProfessions]);
+
   return (
     <div className="space-y-6">
       {/* ---------- CAREER ---------- */}
       <SectionCard
         icon={Briefcase}
         label="Career"
-        description="Professions, industries and availability"
+        description="Professions, specialty and availability"
         isPublic={watch("section_visibility.availability") ?? true}
         onToggle={() => {
           const current =
@@ -68,6 +75,7 @@ export function WorkStep() {
                   value={field.value ?? []}
                   onChange={field.onChange}
                   suggestions={PROFESSION_SUGGESTIONS}
+                  normalizeFromSuggestions
                   placeholder="Add profession..."
                   containerClassName="[&>div]:rounded-xl [&>div]:border-border [&>div]:focus-within:border-gold/50 [&>div]:focus-within:ring-2 [&>div]:focus-within:ring-gold/25 [&>div]:bg-cream-pale/80"
                 />
@@ -77,17 +85,21 @@ export function WorkStep() {
           />
           <FormField
             control={control}
-            name="industries"
+            name="specialties"
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-[13px] font-medium">
-                  Industries
+                  Specialties
                 </FormLabel>
                 <TagInput
                   value={field.value ?? []}
                   onChange={field.onChange}
-                  suggestions={INDUSTRY_SUGGESTIONS}
-                  placeholder="Add industry..."
+                  suggestions={specialtySuggestions}
+                  placeholder={
+                    selectedProfessions.length > 0
+                      ? "Add specialty..."
+                      : "Select a profession first"
+                  }
                   containerClassName="[&>div]:rounded-xl [&>div]:border-border [&>div]:focus-within:border-gold/50 [&>div]:focus-within:ring-2 [&>div]:focus-within:ring-gold/25 [&>div]:bg-cream-pale/80"
                 />
                 <FormMessage />

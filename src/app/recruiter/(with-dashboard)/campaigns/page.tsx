@@ -36,6 +36,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PROFESSIONS } from "@/lib/professions";
 import { Campaign } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
 import {
@@ -96,31 +97,37 @@ const STATUS_CONFIG = {
   },
 };
 
-const INDUSTRY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-  film: Film,
-  tv: Tv,
-  commercial: Megaphone,
-  modeling: Palette,
-  theater: Theater,
-  music: Music,
+const PROFESSION_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  Actor: Theater,
+  Model: Palette,
+  Dancer: Music,
+  Musician: Music,
+  "Voice Artist": Megaphone,
+  Photographer: Film,
+  Influencer: Tv,
+  "Extra / Background": Briefcase,
 };
 
-const INDUSTRY_BG: Record<string, string> = {
-  film: "bg-violet-100 text-violet-700",
-  tv: "bg-sky-100 text-sky-700",
-  commercial: "bg-rose-100 text-rose-700",
-  modeling: "bg-teal-100 text-teal-700",
-  theater: "bg-fuchsia-100 text-fuchsia-700",
-  music: "bg-indigo-100 text-indigo-700",
+const PROFESSION_BG: Record<string, string> = {
+  Actor: "bg-fuchsia-100 text-fuchsia-700",
+  Model: "bg-teal-100 text-teal-700",
+  Dancer: "bg-indigo-100 text-indigo-700",
+  Musician: "bg-indigo-100 text-indigo-700",
+  "Voice Artist": "bg-rose-100 text-rose-700",
+  Photographer: "bg-violet-100 text-violet-700",
+  Influencer: "bg-sky-100 text-sky-700",
+  "Extra / Background": "bg-slate-100 text-slate-700",
 };
 
-const INDUSTRY_GRADIENTS: Record<string, string> = {
-  film: "from-violet-600 via-purple-700 to-indigo-800",
-  tv: "from-sky-600 via-blue-700 to-indigo-800",
-  commercial: "from-rose-600 via-pink-700 to-fuchsia-800",
-  modeling: "from-teal-600 via-emerald-700 to-green-800",
-  theater: "from-fuchsia-600 via-purple-700 to-violet-800",
-  music: "from-indigo-600 via-violet-700 to-purple-800",
+const PROFESSION_GRADIENTS: Record<string, string> = {
+  Actor: "from-fuchsia-600 via-purple-700 to-violet-800",
+  Model: "from-teal-600 via-emerald-700 to-green-800",
+  Dancer: "from-indigo-600 via-violet-700 to-purple-800",
+  Musician: "from-indigo-600 via-violet-700 to-purple-800",
+  "Voice Artist": "from-rose-600 via-pink-700 to-fuchsia-800",
+  Photographer: "from-violet-600 via-purple-700 to-indigo-800",
+  Influencer: "from-sky-600 via-blue-700 to-indigo-800",
+  "Extra / Background": "from-slate-600 to-slate-800",
 };
 
 const ROLE_COLORS: Record<string, string> = {
@@ -134,15 +141,6 @@ const ROLE_COLORS: Record<string, string> = {
   "anchor / host": "bg-lime-50 text-lime-700 border-lime-200",
 };
 
-const INDUSTRY_FILTERS = [
-  { key: "film", label: "Film", icon: Film },
-  { key: "tv", label: "TV", icon: Tv },
-  { key: "commercial", label: "Commercial", icon: Megaphone },
-  { key: "modeling", label: "Modeling", icon: Palette },
-  { key: "theater", label: "Theater", icon: Theater },
-  { key: "music", label: "Music", icon: Music },
-] as const;
-
 function getTagClass(value?: string): string {
   if (!value) return "bg-slate-50 text-slate-600 border-slate-200";
   const key = value.toLowerCase();
@@ -152,29 +150,29 @@ function getTagClass(value?: string): string {
   return "bg-slate-50 text-slate-600 border-slate-200";
 }
 
-function getIndustryGradient(industry?: string): string {
-  if (!industry) return "from-slate-700 to-slate-900";
-  const key = industry.toLowerCase();
-  for (const [k, v] of Object.entries(INDUSTRY_GRADIENTS)) {
-    if (key.includes(k)) return v;
+function getProfessionGradient(roleType?: string): string {
+  if (!roleType) return "from-slate-700 to-slate-900";
+  const key = roleType.toLowerCase();
+  for (const [k, v] of Object.entries(PROFESSION_GRADIENTS)) {
+    if (key.includes(k.toLowerCase())) return v;
   }
   return "from-slate-700 to-slate-900";
 }
 
-function getIndustryIcon(industry?: string) {
-  if (!industry) return Film;
-  const key = industry.toLowerCase();
-  for (const [k, v] of Object.entries(INDUSTRY_ICONS)) {
-    if (key.includes(k)) return v;
+function getProfessionIcon(roleType?: string) {
+  if (!roleType) return Film;
+  const key = roleType.toLowerCase();
+  for (const [k, v] of Object.entries(PROFESSION_ICONS)) {
+    if (key.includes(k.toLowerCase())) return v;
   }
   return Film;
 }
 
-function getIndustryBg(industry?: string): string {
-  if (!industry) return "bg-slate-100 text-slate-700";
-  const key = industry.toLowerCase();
-  for (const [k, v] of Object.entries(INDUSTRY_BG)) {
-    if (key.includes(k)) return v;
+function getProfessionBg(roleType?: string): string {
+  if (!roleType) return "bg-slate-100 text-slate-700";
+  const key = roleType.toLowerCase();
+  for (const [k, v] of Object.entries(PROFESSION_BG)) {
+    if (key.includes(k.toLowerCase())) return v;
   }
   return "bg-slate-100 text-slate-700";
 }
@@ -206,7 +204,7 @@ export default function RecruiterCampaignsPage() {
   const { guard } = useTierGuard(3);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [search, setSearch] = useState("");
-  const [industryFilter, setIndustryFilter] = useState<string | null>(null);
+  const [professionFilter, setProfessionFilter] = useState<string | null>(null);
   const [toolbarStuck, setToolbarStuck] = useState(false);
   const toolbarSentinelRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -250,11 +248,11 @@ export default function RecruiterCampaignsPage() {
   );
 
   const filteredCampaigns = useMemo(() => {
-    if (!industryFilter) return allCampaigns;
+    if (!professionFilter) return allCampaigns;
     return allCampaigns.filter((c) =>
-      c.industry?.toLowerCase().includes(industryFilter),
+      c.role_type?.toLowerCase().includes(professionFilter.toLowerCase()),
     );
-  }, [allCampaigns, industryFilter]);
+  }, [allCampaigns, professionFilter]);
 
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -428,7 +426,7 @@ export default function RecruiterCampaignsPage() {
                       : "bg-card text-ink-muted border-border/60 shadow-luxe hover:border-border hover:text-ink",
                   )}
                 >
-                  <Icon className="h-3 w-3" strokeWidth={1.5} />
+<Icon className="h-3 w-3" />
                   {p.label}
                   {p.value === "all" && totalCount > 0 && (
                     <span
@@ -448,25 +446,25 @@ export default function RecruiterCampaignsPage() {
 
         <div className="flex gap-1.5 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
           <button
-            onClick={() => setIndustryFilter(null)}
+            onClick={() => setProfessionFilter(null)}
             className={cn(
               "shrink-0 rounded-lg px-3 py-1.5 text-[11px] font-semibold border transition-all duration-200 flex items-center gap-1.5",
-              !industryFilter
+              !professionFilter
                 ? "bg-ink text-white border-ink shadow-sm"
                 : "bg-card text-ink-muted border-border/60 shadow-luxe hover:border-border hover:text-ink",
             )}
           >
-            All Industries
+            All Professions
           </button>
-          {INDUSTRY_FILTERS.map((item) => {
-            const Icon = item.icon;
-            const isActive = industryFilter === item.key;
+          {PROFESSIONS.map((profession) => {
+            const Icon = PROFESSION_ICONS[profession] ?? Film;
+            const isActive = professionFilter === profession;
             return (
               <button
-                key={item.key}
+                key={profession}
                 onClick={() =>
-                  setIndustryFilter(
-                    industryFilter === item.key ? null : item.key,
+                  setProfessionFilter(
+                    professionFilter === profession ? null : profession,
                   )
                 }
                 className={cn(
@@ -476,8 +474,8 @@ export default function RecruiterCampaignsPage() {
                     : "bg-card text-ink-muted border-border/60 shadow-luxe hover:border-border hover:text-ink",
                 )}
               >
-                <Icon className="h-3 w-3" strokeWidth={1.5} />
-                {item.label}
+                <Icon className="h-3 w-3" />
+                {profession}
               </button>
             );
           })}
@@ -496,9 +494,9 @@ export default function RecruiterCampaignsPage() {
             <EmptyState
               statusFilter={statusFilter}
               search={search}
-              industryFilter={industryFilter}
+              professionFilter={professionFilter}
               onClearSearch={() => setSearch("")}
-              onClearIndustry={() => setIndustryFilter(null)}
+              onClearProfession={() => setProfessionFilter(null)}
               onCreateCampaign={() =>
                 guard(() => router.push("/recruiter/campaigns/new"))
               }
@@ -589,19 +587,19 @@ function StatCard({
 function EmptyState({
   statusFilter,
   search,
-  industryFilter,
+  professionFilter,
   onClearSearch,
-  onClearIndustry,
+  onClearProfession,
   onCreateCampaign,
 }: {
   statusFilter: StatusFilter;
   search: string;
-  industryFilter: string | null;
+  professionFilter: string | null;
   onClearSearch: () => void;
-  onClearIndustry: () => void;
+  onClearProfession: () => void;
   onCreateCampaign: () => void;
 }) {
-  const isDefault = statusFilter === "all" && !search && !industryFilter;
+  const isDefault = statusFilter === "all" && !search && !professionFilter;
 
   return (
     <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/60 bg-muted-bg/40 px-6 py-28 text-center">
@@ -617,11 +615,11 @@ function EmptyState({
       </p>
       <p className="mt-2.5 max-w-md text-[15px] text-ink-muted leading-relaxed">
         {isDefault
-          ? "Create your first casting call to start receiving applications from talented professionals across the industry."
+          ? "Create your first casting call to start receiving applications from talented professionals across the board."
           : "Try adjusting your filters or search term to find what you're looking for."}
       </p>
       <div className="mt-8 flex gap-3 flex-wrap justify-center">
-        {(search || industryFilter) && (
+        {(search || professionFilter) && (
           <>
             {search && (
               <Button
@@ -632,13 +630,13 @@ function EmptyState({
                 Clear search
               </Button>
             )}
-            {industryFilter && (
+            {professionFilter && (
               <Button
                 variant="outline"
-                onClick={onClearIndustry}
+                onClick={onClearProfession}
                 className="h-10 rounded-xl border-border/60 text-sm font-medium"
               >
-                Clear industry
+                Clear profession
               </Button>
             )}
           </>
@@ -662,8 +660,8 @@ function EmptyState({
 /* ------------------------------------------------------------------ */
 
 function CampaignBanner({ campaign }: { campaign: Campaign }) {
-  const gradient = getIndustryGradient(campaign.industry);
-  const IndustryIcon = getIndustryIcon(campaign.industry);
+  const gradient = getProfessionGradient(campaign.role_type);
+  const ProfessionIcon = getProfessionIcon(campaign.role_type);
 
   const hasMedia =
     campaign.banner?.type === "image" || campaign.cover_image_url;
@@ -689,7 +687,7 @@ function CampaignBanner({ campaign }: { campaign: Campaign }) {
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_rgba(255,255,255,0.08),_transparent_50%)]" />
 
           <div className="absolute bottom-8 right-6 opacity-[0.08] group-hover/banner:opacity-[0.12] transition-opacity duration-500">
-            <IndustryIcon className="h-40 w-40 text-white" strokeWidth={0.5} />
+            <ProfessionIcon className="h-40 w-40 text-white" strokeWidth={0.5} />
           </div>
 
           <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-white/20 via-white/40 to-white/20" />
@@ -747,7 +745,7 @@ function CampaignCard({
 
   const statusCfg = STATUS_CONFIG[campaign.status as keyof typeof STATUS_CONFIG] ?? STATUS_CONFIG.draft;
   const StatusIcon = statusCfg.icon;
-  const tags = [campaign.industry, campaign.role_type].filter(Boolean);
+  const tags = [campaign.role_type].filter(Boolean);
 
   return (
     <>

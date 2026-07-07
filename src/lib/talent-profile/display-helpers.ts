@@ -42,7 +42,6 @@ const COMPLETENESS_FIELDS = [
   "location.state",
   "location.city",
   "professions",
-  "industries",
   "availability",
   "headline",
   "about",

@@ -15,7 +15,7 @@ import {
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { getApiErrorMessage } from "@/lib/formatters";
-import { INDUSTRIES } from "@/lib/industries";
+import { PROFESSIONS } from "@/lib/professions";
 import {
   useCampaigns,
   useBookmarkCampaign,
@@ -43,9 +43,9 @@ const TABS = [
   { key: "applied" as const, label: "Applied" },
 ];
 
-const INDUSTRY_OPTIONS = [
-  { value: "all", label: "Industry" },
-  ...INDUSTRIES.map((i) => ({ value: i, label: i })),
+const PROFESSION_OPTIONS = [
+  { value: "all", label: "Profession" },
+  ...PROFESSIONS.map((p) => ({ value: p, label: p })),
 ];
 
 const ROLE_TYPE_OPTIONS = [
@@ -64,25 +64,28 @@ const GENDER_OPTIONS = [
   { value: "other", label: "Other" },
 ];
 
-const INDUSTRY_GRADIENT: Record<string, string> = {
-  film: "from-[var(--color-opportunity-film-start)] to-[var(--color-opportunity-film-end)]",
-  cinema: "from-[var(--color-opportunity-film-start)] to-[var(--color-opportunity-film-end)]",
-  fashion: "from-[var(--color-opportunity-fashion-start)] to-[var(--color-opportunity-fashion-end)]",
-  modeling: "from-[var(--color-opportunity-fashion-start)] to-[var(--color-opportunity-fashion-end)]",
-  television: "from-[var(--color-opportunity-tv-start)] to-[var(--color-opportunity-tv-end)]",
-  tv: "from-[var(--color-opportunity-tv-start)] to-[var(--color-opportunity-tv-end)]",
-  theater: "from-[var(--color-opportunity-theater-start)] to-[var(--color-opportunity-theater-end)]",
-  theatre: "from-[var(--color-opportunity-theater-start)] to-[var(--color-opportunity-theater-end)]",
+const PROFESSION_GRADIENT: Record<string, string> = {
+  Actor: "from-[var(--color-opportunity-theater-start)] to-[var(--color-opportunity-theater-end)]",
+  Model: "from-[var(--color-opportunity-fashion-start)] to-[var(--color-opportunity-fashion-end)]",
+  Dancer: "from-[var(--color-opportunity-theater-start)] to-[var(--color-opportunity-theater-end)]",
+  Musician: "from-[var(--color-opportunity-theater-start)] to-[var(--color-opportunity-theater-end)]",
+  "Voice Artist": "from-[var(--color-opportunity-film-start)] to-[var(--color-opportunity-film-end)]",
+  Photographer: "from-[var(--color-opportunity-film-start)] to-[var(--color-opportunity-film-end)]",
+  Influencer: "from-[var(--color-opportunity-tv-start)] to-[var(--color-opportunity-tv-end)]",
+  "Extra / Background": "from-[var(--color-opportunity-default-start)] to-[var(--color-opportunity-default-end)]",
 };
 
 /* ------------------------------------------------------------------ */
 /*  HELPERS                                                           */
 /* ------------------------------------------------------------------ */
 
-function resolveGradient(industry?: string) {
-  if (!industry) return "from-[var(--color-opportunity-default-start)] to-[var(--color-opportunity-default-end)]";
-  const key = industry.toLowerCase();
-  return INDUSTRY_GRADIENT[key] ?? "from-[var(--color-opportunity-default-start)] to-[var(--color-opportunity-default-end)]";
+function resolveGradient(roleType?: string) {
+  if (!roleType) return "from-[var(--color-opportunity-default-start)] to-[var(--color-opportunity-default-end)]";
+  const key = roleType.toLowerCase();
+  for (const [k, v] of Object.entries(PROFESSION_GRADIENT)) {
+    if (key.includes(k.toLowerCase())) return v;
+  }
+  return "from-[var(--color-opportunity-default-start)] to-[var(--color-opportunity-default-end)]";
 }
 
 function formatDeadline(deadline?: string) {
@@ -116,7 +119,7 @@ export default function TalentOpportunitiesPage() {
     tabParam === "applied" || tabParam === "saved" ? tabParam : "available",
   );
 
-  const industry = searchParams.get("industry") || "all";
+  const profession = searchParams.get("profession") || "all";
   const role_type = searchParams.get("role_type") || "all";
   const gender = searchParams.get("gender") || "all";
   const locationCity = searchParams.get("location_city") || "";
@@ -140,7 +143,7 @@ export default function TalentOpportunitiesPage() {
   }, [pathname, router]);
 
   const hasActiveFilters =
-    industry !== "all" ||
+    profession !== "all" ||
     role_type !== "all" ||
     gender !== "all" ||
     !!locationCity ||
@@ -148,7 +151,7 @@ export default function TalentOpportunitiesPage() {
 
   const filters = useMemo(
     () => ({
-      industry: industry === "all" ? undefined : industry,
+      profession: profession === "all" ? undefined : profession,
       role_type: role_type === "all" ? undefined : role_type,
       gender: gender === "all" ? undefined : gender,
       location_city: locationCity || undefined,
@@ -159,7 +162,7 @@ export default function TalentOpportunitiesPage() {
             ? "false"
             : undefined,
     }),
-    [industry, role_type, gender, locationCity, activeTab],
+    [profession, role_type, gender, locationCity, activeTab],
   );
 
   const { ref: sentinelRef, inView } = useInView({ threshold: 0 });
@@ -204,7 +207,7 @@ export default function TalentOpportunitiesPage() {
       (c) =>
         (c.name?.toLowerCase().includes(q) ?? false) ||
         (c.description?.toLowerCase().includes(q) ?? false) ||
-        (c.industry?.toLowerCase().includes(q) ?? false),
+        (c.role_type?.toLowerCase().includes(q) ?? false),
     );
   }, [allCampaigns, search]);
 
@@ -231,7 +234,7 @@ export default function TalentOpportunitiesPage() {
       <SearchBar
         search={search}
         onSearchChange={setSearch}
-        industry={industry}
+        profession={profession}
         roleType={role_type}
         gender={gender}
         locationCity={locationCity}
@@ -294,7 +297,7 @@ function TabBar({
 function SearchBar({
   search,
   onSearchChange,
-  industry,
+  profession,
   roleType,
   gender,
   locationCity,
@@ -304,7 +307,7 @@ function SearchBar({
 }: {
   search: string;
   onSearchChange: (v: string) => void;
-  industry: string;
+  profession: string;
   roleType: string;
   gender: string;
   locationCity: string;
@@ -331,19 +334,19 @@ function SearchBar({
       </div>
 
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar flex-wrap">
-        <Select value={industry} onValueChange={(v) => onParamChange("industry", v)}>
+        <Select value={profession} onValueChange={(v) => onParamChange("profession", v)}>
           <SelectTrigger
             className={cn(
               "h-7 rounded-full text-[11px] px-3 gap-1 shrink-0 border transition-colors",
-              industry !== "all"
+              profession !== "all"
                 ? "bg-gold-soft border-gold/30 text-gold-ink"
                 : "bg-card border-border text-ink-soft",
             )}
           >
-            <SelectValue placeholder="Industry" />
+            <SelectValue placeholder="Profession" />
           </SelectTrigger>
           <SelectContent>
-            {INDUSTRY_OPTIONS.map((opt) => (
+            {PROFESSION_OPTIONS.map((opt) => (
               <SelectItem key={opt.value} value={opt.value}>
                 {opt.label}
               </SelectItem>
@@ -540,7 +543,7 @@ function OpportunityCard({
   activeTab: string;
 }) {
   const router = useRouter();
-  const gradient = resolveGradient(campaign.industry);
+  const gradient = resolveGradient(campaign.role_type);
   const loc = [campaign.location?.city, campaign.location?.state]
     .filter((s): s is string => !!s && s.trim() !== "")
     .join(", ");
@@ -569,11 +572,6 @@ function OpportunityCard({
                 {campaign.role_type && (
                   <span className="text-[10.5px] bg-white/15 backdrop-blur-sm rounded-full px-2.5 py-1 font-medium">
                     {campaign.role_type}
-                  </span>
-                )}
-                {campaign.industry && (
-                  <span className="text-[10.5px] bg-white/15 backdrop-blur-sm rounded-full px-2.5 py-1 font-medium">
-                    {campaign.industry}
                   </span>
                 )}
               </div>

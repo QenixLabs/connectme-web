@@ -19,7 +19,7 @@ type ProfileWithAccess = Partial<{
   profile_photo?: string;
   location?: { country?: string; state?: string; city?: string };
   professions?: string[];
-  industries?: string[];
+  specialties?: string[];
   availability?: string;
   privacy_mode?: string;
   is_verified?: boolean;

@@ -47,24 +47,27 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 
 /* ------------------------------------------------------------------ */
-/*  INDUSTRY GRADIENT MAP                                             */
+/*  PROFESSION GRADIENT MAP                                           */
 /* ------------------------------------------------------------------ */
 
-const INDUSTRY_GRADIENT: Record<string, string> = {
-  film: "from-[var(--color-opportunity-film-start)] to-[var(--color-opportunity-film-end)]",
-  cinema: "from-[var(--color-opportunity-film-start)] to-[var(--color-opportunity-film-end)]",
-  fashion: "from-[var(--color-opportunity-fashion-start)] to-[var(--color-opportunity-fashion-end)]",
-  modeling: "from-[var(--color-opportunity-fashion-start)] to-[var(--color-opportunity-fashion-end)]",
-  television: "from-[var(--color-opportunity-tv-start)] to-[var(--color-opportunity-tv-end)]",
-  tv: "from-[var(--color-opportunity-tv-start)] to-[var(--color-opportunity-tv-end)]",
-  theater: "from-[var(--color-opportunity-theater-start)] to-[var(--color-opportunity-theater-end)]",
-  theatre: "from-[var(--color-opportunity-theater-start)] to-[var(--color-opportunity-theater-end)]",
+const PROFESSION_GRADIENT: Record<string, string> = {
+  Actor: "from-[var(--color-opportunity-theater-start)] to-[var(--color-opportunity-theater-end)]",
+  Model: "from-[var(--color-opportunity-fashion-start)] to-[var(--color-opportunity-fashion-end)]",
+  Dancer: "from-[var(--color-opportunity-theater-start)] to-[var(--color-opportunity-theater-end)]",
+  Musician: "from-[var(--color-opportunity-theater-start)] to-[var(--color-opportunity-theater-end)]",
+  "Voice Artist": "from-[var(--color-opportunity-film-start)] to-[var(--color-opportunity-film-end)]",
+  Photographer: "from-[var(--color-opportunity-film-start)] to-[var(--color-opportunity-film-end)]",
+  Influencer: "from-[var(--color-opportunity-tv-start)] to-[var(--color-opportunity-tv-end)]",
+  "Extra / Background": "from-[var(--color-opportunity-default-start)] to-[var(--color-opportunity-default-end)]",
 };
 
-function resolveGradient(industry?: string) {
-  if (!industry) return "from-[var(--color-opportunity-default-start)] to-[var(--color-opportunity-default-end)]";
-  const key = industry.toLowerCase();
-  return INDUSTRY_GRADIENT[key] ?? "from-[var(--color-opportunity-default-start)] to-[var(--color-opportunity-default-end)]";
+function resolveGradient(roleType?: string) {
+  if (!roleType) return "from-[var(--color-opportunity-default-start)] to-[var(--color-opportunity-default-end)]";
+  const key = roleType.toLowerCase();
+  for (const [k, v] of Object.entries(PROFESSION_GRADIENT)) {
+    if (key.includes(k.toLowerCase())) return v;
+  }
+  return "from-[var(--color-opportunity-default-start)] to-[var(--color-opportunity-default-end)]";
 }
 
 /* ------------------------------------------------------------------ */
@@ -516,7 +519,7 @@ function fieldLabel(path: string): string {
     "location.state": "State",
     "location.city": "City",
     professions: "Professions",
-    industries: "Industries",
+    specialties: "Specialties",
     availability: "Availability",
     headline: "Headline",
     about: "About",
@@ -791,7 +794,7 @@ function OpportunityCard({ campaign, index }: { campaign: Campaign; index: numbe
     .filter((s): s is string => !!s && s.trim() !== "")
     .join(", ");
 
-  const gradient = resolveGradient(campaign.industry);
+  const gradient = resolveGradient(campaign.role_type);
 
   return (
     <motion.div
@@ -815,11 +818,6 @@ function OpportunityCard({ campaign, index }: { campaign: Campaign; index: numbe
               {campaign.role_type && (
                 <span className="text-[10.5px] bg-white/15 backdrop-blur-sm rounded-full px-2.5 py-1 font-medium">
                   {campaign.role_type}
-                </span>
-              )}
-              {campaign.industry && (
-                <span className="text-[10.5px] bg-white/15 backdrop-blur-sm rounded-full px-2.5 py-1 font-medium">
-                  {campaign.industry}
                 </span>
               )}
             </div>

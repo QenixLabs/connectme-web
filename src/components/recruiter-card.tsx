@@ -14,7 +14,7 @@ interface RecruiterCardProps {
 const SAMPLE_PROFILE: Partial<RecruiterProfile> = {
   company_name: "Starlight Productions",
   company_website: "starlight.com",
-  industry: "Film",
+  specialties: ["Casting"],
   company_size: "51-200",
   position: "Casting Director",
   linkedin_company_url: "https://linkedin.com/company/starlight",
@@ -87,8 +87,8 @@ export function RecruiterCard({ profile, sample, onEdit }: RecruiterCardProps) {
               )}
             </div>
 
-            {data.industry && (
-              <p className="text-sm text-text-tertiary">{data.industry}</p>
+            {(data.specialties?.length ?? 0) > 0 && (
+              <p className="text-sm text-text-tertiary">{data.specialties?.join(", ")}</p>
             )}
 
             <div className="mt-2 flex flex-wrap items-center gap-3">

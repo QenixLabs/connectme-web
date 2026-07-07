@@ -157,20 +157,22 @@ const INVITE_STATUS_META: Record<
 const PIE_COLORS = ['var(--color-brand)', 'var(--color-success)', 'var(--color-error)'];
 const BAR_COLOR = '#6366f1';
 
-const INDUSTRY_GRADIENTS: Record<string, string> = {
-  film: "from-violet-600 via-purple-700 to-indigo-800",
-  tv: "from-sky-600 via-blue-700 to-indigo-800",
-  commercial: "from-rose-600 via-pink-700 to-fuchsia-800",
-  modeling: "from-teal-600 via-emerald-700 to-green-800",
-  theater: "from-fuchsia-600 via-purple-700 to-violet-800",
-  music: "from-indigo-600 via-violet-700 to-purple-800",
+const PROFESSION_GRADIENTS: Record<string, string> = {
+  Actor: "from-fuchsia-600 via-purple-700 to-violet-800",
+  Model: "from-teal-600 via-emerald-700 to-green-800",
+  Dancer: "from-indigo-600 via-violet-700 to-purple-800",
+  Musician: "from-indigo-600 via-violet-700 to-purple-800",
+  "Voice Artist": "from-rose-600 via-pink-700 to-fuchsia-800",
+  Photographer: "from-violet-600 via-purple-700 to-indigo-800",
+  Influencer: "from-sky-600 via-blue-700 to-indigo-800",
+  "Extra / Background": "from-slate-600 to-slate-800",
 };
 
-function getIndustryGradient(industry?: string): string {
-  if (!industry) return "from-slate-700 to-slate-900";
-  const key = industry.toLowerCase();
-  for (const [k, v] of Object.entries(INDUSTRY_GRADIENTS)) {
-    if (key.includes(k)) return v;
+function getProfessionGradient(roleType?: string): string {
+  if (!roleType) return "from-slate-700 to-slate-900";
+  const key = roleType.toLowerCase();
+  for (const [k, v] of Object.entries(PROFESSION_GRADIENTS)) {
+    if (key.includes(k.toLowerCase())) return v;
   }
   return "from-slate-700 to-slate-900";
 }
@@ -453,10 +455,10 @@ export default function CampaignDetailPage() {
                     {campaign.role_type}
                   </span>
                 )}
-                {campaign?.industry && (
+                {campaign?.specialties && campaign.specialties.length > 0 && (
                   <span className="flex items-center gap-1.5 font-medium">
                     <Activity className="h-4 w-4 text-ink-muted/50" strokeWidth={1.5} />
-                    {campaign.industry}
+                    {campaign.specialties.join(', ')}
                   </span>
                 )}
                 {campaign?.location?.city && (

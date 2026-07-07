@@ -12,7 +12,7 @@ type ProfileWithAccess = Partial<{
   profile_photo?: string;
   location?: { country?: string; state?: string; city?: string };
   professions?: string[];
-  industries?: string[];
+  specialties?: string[];
   languages?: Array<{ name?: string; fluency?: string }>;
   skills?: Array<{ name?: string; proficiency?: string }>;
   availability?: string;
@@ -58,7 +58,7 @@ export function TalentListRow({
   const loc = [profile.location?.city, profile.location?.state]
     .filter(Boolean)
     .join(", ");
-  const profession = profile.professions?.[0] ?? profile.industries?.[0] ?? "";
+  const profession = profile.professions?.[0] ?? profile.specialties?.[0] ?? "";
 
   return (
     <div

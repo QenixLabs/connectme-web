@@ -12,7 +12,7 @@ type ProfileWithAccess = Partial<{
   profile_photo?: string;
   location?: { country?: string; state?: string; city?: string };
   professions?: string[];
-  industries?: string[];
+  specialties?: string[];
   languages?: Array<{ name?: string; fluency?: string }>;
   skills?: Array<{ name?: string; proficiency?: string }>;
   availability?: string;
@@ -48,7 +48,7 @@ function getProfileCompletion(profile: ProfileWithAccess): number {
     profile.location?.state,
     profile.location?.country,
     profile.professions?.length ? profile.professions : null,
-    profile.industries?.length ? profile.industries : null,
+    profile.specialties?.length ? profile.specialties : null,
     profile.languages?.length ? profile.languages : null,
     profile.skills?.length ? profile.skills : null,
     profile.availability,
@@ -118,7 +118,7 @@ export function TalentGridCard({
 }: TalentGridCardProps) {
   const displayName = profile.full_legal_name || profile.username || "Talent";
   const loc = profile.location?.city || profile.location?.state || "";
-  const profession = profile.professions?.[0] ?? profile.industries?.[0] ?? "";
+  const profession = profile.professions?.[0] ?? profile.specialties?.[0] ?? "";
   const completion = getProfileCompletion(profile);
 
   return (

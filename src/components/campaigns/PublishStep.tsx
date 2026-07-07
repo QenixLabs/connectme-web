@@ -7,7 +7,8 @@ import {
 } from '@/components/ui/form';
 import { CampaignWizardInput } from '@/lib/validations/campaign-wizard.schema';
 import { cn } from '@/lib/utils';
-import { Lock, Globe, UserPlus, Calendar, Clock, Eye, Info, MapPin, Briefcase, DollarSign, Tag } from 'lucide-react';
+import { getSpecialtiesForProfession } from '@/lib/profession-fields';
+import { Lock, Globe, UserPlus, Calendar, Clock, Info, Tag } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 const OPTIONS = [
@@ -78,7 +79,7 @@ export function PublishStep() {
   const autoCloseOnDeadline = watch('auto_close_on_deadline');
   const values = watch();
 
-  const roleIndustry = [values.role_type, values.industry].filter(Boolean).join(' / ') || '\u2014';
+  const roleLine = [values.role_type, values.specialties?.join(', ')].filter(Boolean).join(' / ') || '\u2014';
   const loc = [values.location?.city, values.location?.state].filter(Boolean).join(', ') || '\u2014';
   const genderAge = [
     values.requirements?.gender || 'Any',
@@ -100,7 +101,7 @@ export function PublishStep() {
       <div className="space-y-3">
         <RevCard title="Basic Info" icon={Info}>
           <RevRow label="Campaign name" value={values.name || '\u2014'} />
-          <RevRow label="Role / industry" value={roleIndustry} />
+          <RevRow label="Role / specialties" value={roleLine} />
           <RevRow label="Location" value={loc} />
           <RevRow label="Application deadline" value={values.deadline || '\u2014'} />
           {values.dates?.start && (
@@ -127,7 +128,13 @@ export function PublishStep() {
           )}
         </RevCard>
 
-        {values.questions && values.questions.length > 0 && (
+          {values.specialties && values.specialties.length > 0 && (
+            <RevCard title="Specialties" icon={Tag}>
+              <RevRow label="Required" value={values.specialties.join(', ')} />
+            </RevCard>
+          )}
+
+          {values.questions && values.questions.length > 0 && (
           <RevCard title="Questions" icon={Info}>
             {values.questions.map((q, i) => (
               <div key={i} className="flex items-center gap-2 py-1.5 border-b border-border/30 last:border-b-0">

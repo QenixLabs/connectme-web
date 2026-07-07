@@ -46,12 +46,12 @@ function getStepFields(step: number): string[] {
         'name',
         'description',
         'role_type',
-        'industry',
         'location.city',
         'location.state',
         'dates.start',
         'dates.end',
         'deadline',
+        'specialties',
       ];
     case 2:
       return [
@@ -99,7 +99,6 @@ function mapCampaignToDefaults(campaign: Campaign): CampaignWizardInput {
     name: campaign.name ?? '',
     description: campaign.description ?? '',
     role_type: campaign.role_type ?? '',
-    industry: campaign.industry ?? '',
     location: {
       city: campaign.location?.city ?? '',
       state: campaign.location?.state ?? '',
@@ -134,6 +133,7 @@ function mapCampaignToDefaults(campaign: Campaign): CampaignWizardInput {
       is_required: q.is_required,
       order: q.order,
     })),
+    specialties: campaign.specialties ?? [],
     publishOption,
     scheduled_publish_at: toDatetimeInputValue(campaign.scheduled_publish_at),
     auto_close_on_deadline: campaign.auto_close_on_deadline ?? true,
@@ -176,7 +176,6 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
       name: '',
       description: '',
       role_type: '',
-      industry: '',
       location: { city: '', state: '' },
       dates: { start: '', end: '' },
       deadline: '',
@@ -191,6 +190,7 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
       is_budget_disclosed: false,
       is_unpaid: false,
       questions: [],
+      specialties: [],
       publishOption: 'draft',
       scheduled_publish_at: '',
       auto_close_on_deadline: true,
@@ -234,7 +234,6 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
     name: values.name,
     description: values.description || undefined,
     role_type: values.role_type || undefined,
-    industry: values.industry || undefined,
     location: values.location?.city || values.location?.state
       ? {
           city: values.location.city || undefined,
@@ -294,6 +293,9 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
     visibility: values.publishOption === 'invite_only' ? 'invite_only' : 'public',
     scheduled_publish_at: values.scheduled_publish_at || undefined,
     auto_close_on_deadline: values.auto_close_on_deadline,
+    specialties: values.specialties && values.specialties.length > 0
+      ? values.specialties
+      : undefined,
   });
 
   const onSubmit = async (values: CampaignWizardInput) => {

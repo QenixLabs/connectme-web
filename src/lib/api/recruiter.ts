@@ -9,7 +9,7 @@ export const recruiterApi = {
     company_email_domain: string;
     linkedin_company_url?: string;
     company_size?: string;
-    industry?: string;
+    specialties?: string[];
     position?: string;
     profile_photo?: string;
     verification_status: string;
@@ -26,7 +26,7 @@ export const recruiterApi = {
     company_website?: string;
     linkedin_company_url?: string;
     company_size?: string;
-    industry?: string;
+    specialties?: string[];
     position?: string;
     profile_photo?: string;
   }): Promise<{
@@ -35,7 +35,7 @@ export const recruiterApi = {
     company_website?: string;
     linkedin_company_url?: string;
     company_size?: string;
-    industry?: string;
+    specialties?: string[];
     position?: string;
     profile_photo?: string;
   }> => {

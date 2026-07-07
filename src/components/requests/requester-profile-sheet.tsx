@@ -18,7 +18,7 @@ interface RequesterProfile {
   company_name?: string;
   company_website?: string;
   company_size?: string;
-  industry?: string;
+  specialties?: string[];
   position?: string;
   profile_photo?: string;
   verification_status?: string;
@@ -113,8 +113,8 @@ export function RequesterProfileSheet({
               value={requester.company_size.replace("_", " ")}
             />
           )}
-          {requester.industry && (
-            <InfoRow icon={Tag} label="Industry" value={requester.industry} />
+          {requester.specialties && (
+            <InfoRow icon={Tag} label="Specialties" value={requester.specialties.join(", ")} />
           )}
           {requester.company_website && (
             <InfoRow icon={Globe} label="Website" value={requester.company_website} />

@@ -293,7 +293,7 @@ function ProfileProgress({
   const steps = [
     { label: "Add company name", done: !!profile.company_name },
     { label: "Add company website", done: !!profile.company_website },
-    { label: "Select your industry", done: !!profile.industry },
+    { label: "Add your specialties", done: !!(profile.specialties as string[])?.length },
     { label: "Add your position", done: !!profile.position },
     {
       label: "Verify your company",

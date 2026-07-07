@@ -1,5 +1,4 @@
 import { PROFESSIONS } from '@/lib/professions';
-import { INDUSTRIES } from '@/lib/industries';
 
 export type Option = { value: string; label: string };
 
@@ -84,8 +83,6 @@ export const PROFICIENCY_OPTIONS: Option[] = [
 ];
 
 export const PROFESSION_SUGGESTIONS: string[] = [...PROFESSIONS];
-
-export const INDUSTRY_SUGGESTIONS: string[] = [...INDUSTRIES];
 
 export function dynamicOptions(currentValue: string | undefined, options: Option[]): Option[] {
   if (!currentValue) return options;

@@ -50,7 +50,6 @@ export interface CollaborationRequest {
     company_name?: string;
     company_website?: string;
     company_size?: string;
-    industry?: string;
     position?: string;
     profile_photo?: string;
     verification_status?: string;

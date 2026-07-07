@@ -31,11 +31,21 @@ import {
 import { authApi, talentApi } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
 import { PROFESSIONS } from "@/lib/professions";
+import { getSpecialtiesForProfession } from "@/lib/profession-fields";
 import { AuthLayout } from "@/components/layout/auth-layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { TagInput } from "@/components/ui/tag-input";
+
 import { PhoneInput } from "@/components/ui/phone-input";
 import { PasswordStrength } from "@/components/ui/password-strength";
 import { PasswordRules } from "@/components/ui/password-rules";
@@ -91,6 +101,7 @@ const schema = z
       .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
       .regex(/\d/, "Password must contain at least one number"),
     confirmPassword: z.string().min(1, "Please confirm your password"),
+    specialties: z.array(z.string()).optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -106,7 +117,7 @@ const schema = z
     { message: "Creator link is required for influencers", path: ["creatorLink"] },
   );
 
-type FormValues = z.infer<typeof schema>;
+type FormValues = z.input<typeof schema>;
 
 const stepVariants = {
   enter: (dir: number) => ({ x: dir > 0 ? 60 : -60, opacity: 0 }),
@@ -140,6 +151,7 @@ export default function TalentSignupPage() {
       phone: "",
       password: "",
       confirmPassword: "",
+      specialties: [],
     },
     mode: "onChange",
   });
@@ -257,6 +269,7 @@ export default function TalentSignupPage() {
         profession: finalProfession,
         creator_link: values.creatorLink || undefined,
         verification_method: verificationMethod,
+        specialties: values.specialties?.length ? values.specialties : undefined,
       });
       router.push(
         `/auth/verify-email?email=${encodeURIComponent(values.email)}&method=${verificationMethod}`,
@@ -436,6 +449,39 @@ export default function TalentSignupPage() {
                             />
                           </motion.div>
                         )}
+
+                        {selectedProfession &&
+                          selectedProfession !== "Other" &&
+                          getSpecialtiesForProfession(selectedProfession).length > 0 && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: "auto", opacity: 1 }}
+                            >
+                              <div className="border-t border-border/40 pt-4 mt-2">
+                                <FormField
+                                  control={form.control}
+                                  name="specialties"
+                                  render={({ field: rhfField }) => (
+                                    <FormItem>
+                                      <FormLabel className="text-sm font-medium text-text-primary">
+                                        Specialties
+                                      </FormLabel>
+                                      <TagInput
+                                        value={rhfField.value ?? []}
+                                        onChange={rhfField.onChange}
+                                        suggestions={getSpecialtiesForProfession(
+                                          selectedProfession,
+                                        )}
+                                        placeholder="Add specialty..."
+                                        containerClassName="[&>div]:rounded-xl [&>div]:border-border [&>div]:focus-within:border-gold/50 [&>div]:focus-within:ring-2 [&>div]:focus-within:ring-gold/25 [&>div]:bg-cream-pale/80"
+                                      />
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
+                            </motion.div>
+                          )}
 
                         <Button
                           type="button"

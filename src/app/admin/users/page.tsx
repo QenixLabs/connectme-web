@@ -241,7 +241,7 @@ export default function AdminUsersPage() {
 
   const [availability, setAvailability] = useState("all");
   const [profession, setProfession] = useState("");
-  const [industryFilter, setIndustryFilter] = useState("");
+  const [specialtiesFilter, setSpecialtiesFilter] = useState("");
   const [skill, setSkill] = useState("");
   const [language, setLanguage] = useState("");
   const [gender, setGender] = useState("all");
@@ -274,7 +274,7 @@ export default function AdminUsersPage() {
     country !== "" ||
     availability !== "all" ||
     profession !== "" ||
-    industryFilter !== "" ||
+
     skill !== "" ||
     language !== "" ||
     gender !== "all" ||
@@ -328,7 +328,6 @@ export default function AdminUsersPage() {
         country: country.trim() || undefined,
         availability: availability === "all" ? undefined : availability,
         profession: profession.trim() || undefined,
-        industry: industryFilter.trim() || undefined,
         skill: skill.trim() || undefined,
         language: language.trim() || undefined,
         gender: gender === "all" ? undefined : gender,
@@ -376,7 +375,6 @@ export default function AdminUsersPage() {
     country,
     availability,
     profession,
-    industryFilter,
     skill,
     language,
     gender,
@@ -432,7 +430,7 @@ export default function AdminUsersPage() {
     setCountry("");
     setAvailability("all");
     setProfession("");
-    setIndustryFilter("");
+    setSpecialtiesFilter("");
     setSkill("");
     setLanguage("");
     setGender("all");
@@ -884,23 +882,8 @@ export default function AdminUsersPage() {
                             </SelectContent>
                           </Select>
                         </div>
-                        <div className="space-y-1">
-                          <label className="text-[11px] font-medium text-muted-foreground">
-                            <Building2 className="h-2.5 w-2.5 inline mr-1" />
-                            Industry
-                          </label>
-                          <Input
-                            placeholder="e.g. Film"
-                            value={industryFilter}
-                            onChange={(e) => {
-                              setIndustryFilter(e.target.value);
-                              setPage(1);
-                            }}
-                            className="h-8 text-xs"
-                          />
-                        </div>
-                      </div>
-                      <Separator className="mt-2" />
+                        <Separator className="mt-2" />
+                    </div>
                     </div>
                   )}
 
@@ -936,21 +919,6 @@ export default function AdminUsersPage() {
                               ))}
                             </SelectContent>
                           </Select>
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[11px] font-medium text-muted-foreground">
-                            <Building2 className="h-2.5 w-2.5 inline mr-1" />
-                            Industry
-                          </label>
-                          <Input
-                            placeholder="e.g. Advertising"
-                            value={industryFilter}
-                            onChange={(e) => {
-                              setIndustryFilter(e.target.value);
-                              setPage(1);
-                            }}
-                            className="h-8 text-xs"
-                          />
                         </div>
                         <div className="space-y-1">
                           <label className="text-[11px] font-medium text-muted-foreground">
@@ -1346,7 +1314,7 @@ export default function AdminUsersPage() {
                           Verification
                         </TableHead>
                         <TableHead className="text-[11px] font-semibold text-muted-foreground whitespace-nowrap hidden lg:table-cell">
-                          Industry
+                          Specialties
                         </TableHead>
                         <TableHead className="text-[11px] font-semibold text-muted-foreground whitespace-nowrap hidden xl:table-cell">
                           Msg Quota
@@ -1611,10 +1579,10 @@ export default function AdminUsersPage() {
                           </TableCell>
                         )}
 
-                        {/* Recruiter: Industry */}
+                        {/* Recruiter: Specialties */}
                         {isRecruiterTab && (
                           <TableCell className="hidden lg:table-cell text-xs text-muted-foreground">
-                            {user.industry || "\u2014"}
+                            {user.specialties?.join(", ") || "\u2014"}
                           </TableCell>
                         )}
 
@@ -1890,12 +1858,12 @@ export default function AdminUsersPage() {
                             </p>
                           </div>
                         )}
-                        {isRecruiterTab && user.industry && (
+                        {isRecruiterTab && (user.specialties?.length ?? 0) > 0 && (
                           <div>
                             <span className="text-muted-foreground">
-                              Industry
+                              Specialties
                             </span>
-                            <p className="font-medium">{user.industry}</p>
+                            <p className="font-medium">{user.specialties?.join(", ")}</p>
                           </div>
                         )}
 

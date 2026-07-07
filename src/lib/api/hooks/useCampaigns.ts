@@ -7,7 +7,6 @@ import { useFeatureGuard } from '@/hooks/use-feature-guard';
 export function useCampaigns(filters: {
   status?: string;
   search?: string;
-  industry?: string;
   role_type?: string;
   gender?: string;
   location_city?: string;

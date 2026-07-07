@@ -200,7 +200,6 @@ export interface AdminUser {
     city?: string;
   };
   professions?: string[];
-  industries?: string[];
   skills?: { name: string; proficiency: string; order: number }[];
   availability?: string;
   languages?: { name: string; fluency: string }[];
@@ -213,7 +212,7 @@ export interface AdminUser {
   };
   company_name?: string;
   company_size?: string;
-  industry?: string;
+  specialties?: string[];
   verification_status?: string;
   message_quota?: { used: number; limit: number };
   campaign_quota?: { used: number; limit: number };
@@ -232,13 +231,12 @@ export interface UserDetail {
   profile: {
     username?: string;
     professions?: string[];
-    industries?: string[];
     headline?: string;
     location?: { city?: string; country?: string };
     privacy_mode?: string;
     company_name?: string;
     company_website?: string;
-    industry?: string;
+    specialties?: string[];
     position?: string;
     verification_status?: string;
   } | null;
@@ -502,7 +500,6 @@ export const adminApi = {
     country?: string;
     availability?: string;
     profession?: string;
-    industry?: string;
     skill?: string;
     language?: string;
     gender?: string;

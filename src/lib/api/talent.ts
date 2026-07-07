@@ -72,7 +72,6 @@ export const talentApi = {
       profile_photo?: string;
       location?: { country?: string; state?: string; city?: string };
       professions?: string[];
-      industries?: string[];
       availability?: string;
       privacy_mode?: string;
       is_verified?: boolean;

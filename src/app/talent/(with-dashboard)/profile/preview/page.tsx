@@ -270,11 +270,11 @@ export default function ProfilePreviewPage() {
           {/* Career */}
           <SectionCard title="Career" icon={Briefcase}>
             <div className="space-y-2">
-              {profile?.industries && profile.industries.length > 0 && (
+              {profile?.specialties && profile.specialties.length > 0 && (
                 <div>
-                  <p className="text-[11px] font-medium uppercase tracking-wide mb-1.5" style={{ color: gold.mutedFg }}>Industries</p>
+                  <p className="text-[11px] font-medium uppercase tracking-wide mb-1.5" style={{ color: gold.mutedFg }}>Specialties</p>
                   <div className="flex flex-wrap gap-1.5">
-                    {profile.industries.map((i) => <Tag key={i}>{i}</Tag>)}
+                    {profile.specialties.map((i) => <Tag key={i}>{i}</Tag>)}
                   </div>
                 </div>
               )}

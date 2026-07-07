@@ -15,7 +15,7 @@ interface RequesterProfile {
   company_name?: string;
   company_website?: string;
   company_size?: string;
-  industry?: string;
+  specialties?: string[];
   position?: string;
   profile_photo?: string;
   verification_status?: string;
@@ -78,7 +78,7 @@ export function RequestCard({
   const { icon: ConnIcon, label: connLabel } =
     CONNECTION_CONFIG[reason] || CONNECTION_CONFIG.collaboration;
 
-  const subtitle = [requester.position, requester.company_name || requester.industry]
+  const subtitle = [requester.position, requester.company_name || requester.specialties?.[0]]
     .filter(Boolean)
     .join(" • ");
   const role =

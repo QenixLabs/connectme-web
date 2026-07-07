@@ -29,7 +29,7 @@ interface RequesterProfile {
   company_name?: string;
   company_website?: string;
   company_size?: string;
-  industry?: string;
+  specialties?: string[];
   position?: string;
   profile_photo?: string;
   verification_status?: string;

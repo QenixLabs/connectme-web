@@ -84,7 +84,7 @@ export const updateTalentProfileSchema = z.object({
   profile_photo: z.string().optional(),
   location: locationSchema.optional(),
   professions: z.array(z.string()).optional(),
-  industries: z.array(z.string()).optional(),
+  specialties: z.array(z.string()).optional(),
   availability: z.enum(AVAILABILITY).optional(),
   headline: z.string().max(120, 'Headline must be 120 characters or fewer').optional(),
   about: z.string().max(500, 'About must be 500 characters or fewer').optional(),
@@ -128,6 +128,7 @@ export const portfolioItemSchema = z.object({
 export type PortfolioItem = z.infer<typeof portfolioItemSchema>;
 
 export type TalentProfile = UpdateTalentProfileInput & {
+  specialties?: string[];
   _id?: string;
   user_id?: string;
   hero_background?: string;

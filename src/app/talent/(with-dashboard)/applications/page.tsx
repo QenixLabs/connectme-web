@@ -74,8 +74,11 @@ function ApplicationCard({ campaign }: { campaign: Campaign }) {
           <h3 className="text-base font-bold text-text-primary leading-tight line-clamp-2">
             {campaign.name}
           </h3>
-          {campaign.industry && (
-            <p className="text-xs text-text-muted mt-0.5">{campaign.industry}</p>
+          {campaign.role_type && (
+            <p className="text-xs text-text-muted mt-0.5 font-medium">{campaign.role_type}</p>
+          )}
+          {campaign.specialties && campaign.specialties.length > 0 && (
+            <p className="text-xs text-text-muted mt-0.5">{campaign.specialties.join(', ')}</p>
           )}
         </div>
         <ApplicationStatusBadge status={campaign.my_application?.status || "pending"} />
