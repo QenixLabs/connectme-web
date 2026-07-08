@@ -180,6 +180,8 @@ export default function FindTalentPage() {
   );
 
   const clearFilters = useCallback(() => {
+    setSearch("");
+    setDebouncedSearch("");
     router.push(pathname);
   }, [pathname, router]);
 
@@ -203,7 +205,7 @@ export default function FindTalentPage() {
   }, [selectedIds, guard]);
 
   const hasActiveFilters =
-    profession !== "all" || availability !== "all" || gender !== "all" || !!locationCity;
+    profession !== "all" || availability !== "all" || gender !== "all" || !!locationCity || !!debouncedSearch;
 
   const filters = useMemo(
     () => ({
@@ -212,7 +214,7 @@ export default function FindTalentPage() {
       gender: gender === "all" ? undefined : gender,
       location_city: locationCity || undefined,
       search: debouncedSearch || undefined,
-      sort: sort !== "relevance" ? sort : undefined,
+      sort,
     }),
     [profession, availability, gender, locationCity, debouncedSearch, sort],
   );
@@ -672,6 +674,8 @@ export default function FindTalentPage() {
                     <TalentGridCard
                       key={username}
                       profile={profile}
+                      matchScore={profile.match_score}
+                      campaignName={profile.matched_campaign}
                       onViewProfile={() => router.push(`/talent/${username}`)}
                       onInvite={!selectMode ? () => {
                         guard(() => {
@@ -698,6 +702,8 @@ export default function FindTalentPage() {
                     <TalentListRow
                       key={username}
                       profile={profile}
+                      matchScore={profile.match_score}
+                      campaignName={profile.matched_campaign}
                       onViewProfile={() => router.push(`/talent/${username}`)}
                       onInvite={!selectMode ? () => {
                         guard(() => {

@@ -158,9 +158,16 @@ export function TalentGridCard({
           </div>
         )}
 
-        {/* Completion badge */}
-        <span className="absolute top-2 right-2 bg-campaign-soft text-campaign-dark text-[11px] font-semibold px-2 py-0.5 rounded-lg">
-          {completion}%
+        {/* Score badge — match score when available, else profile completion */}
+        <span
+          className={cn(
+            "absolute top-2 right-2 text-[11px] font-semibold px-2 py-0.5 rounded-lg",
+            matchScore !== undefined
+              ? "bg-brand/90 text-white"
+              : "bg-campaign-soft text-campaign-dark",
+          )}
+        >
+          {matchScore !== undefined ? `${matchScore}%` : `${completion}%`}
         </span>
 
         {/* Select checkbox */}

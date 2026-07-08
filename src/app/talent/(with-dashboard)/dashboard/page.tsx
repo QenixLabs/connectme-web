@@ -127,7 +127,7 @@ export default function TalentDashboardPage() {
     .join(", ");
 
   return (
-    <div className="min-h-screen bg-page pb-24 space-y-4 px-4 pt-5 max-w-2xl mx-auto">
+    <div className="min-h-screen bg-page space-y-4 px-4 pt-5 max-w-2xl mx-auto">
       <WelcomeBar
         displayName={displayName}
         greeting={greeting}

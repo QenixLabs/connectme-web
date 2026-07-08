@@ -158,7 +158,7 @@ export default function TalentCampaignDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-5 pb-24 space-y-4">
+      <div className="max-w-2xl mx-auto px-4 py-5 space-y-4">
         <Skeleton className="h-48 rounded-2xl" />
         <Skeleton className="h-6 w-48" />
         <Skeleton className="h-40 rounded-2xl" />
@@ -187,7 +187,7 @@ export default function TalentCampaignDetailPage() {
   const gradient = resolveGradient(campaign.role_type);
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-5 pb-24 space-y-4">
+    <div className="max-w-2xl mx-auto px-4 py-5 space-y-4">
       <BackButton onClick={() => router.push("/talent/opportunities")} />
 
       <CampaignHeader

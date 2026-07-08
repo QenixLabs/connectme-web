@@ -62,6 +62,7 @@ export const talentApi = {
     sort?: string;
     cursor?: string;
     limit?: number;
+    page?: number;
   }): Promise<{
     data: Array<{
       _id?: string;
@@ -75,9 +76,13 @@ export const talentApi = {
       availability?: string;
       privacy_mode?: string;
       is_verified?: boolean;
+      match_score?: number;
+      matched_campaign?: string;
     }>;
     nextCursor: string | null;
     total: number;
+    page?: number;
+    hasMore?: boolean;
   }> => {
     const response = await apiClient.get('/talent/all', { params });
     return response.data;
