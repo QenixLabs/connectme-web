@@ -2,21 +2,46 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Shield, ChevronLeft, SlidersHorizontal } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
+import {
+  Shield,
+  ChevronLeft,
+  SlidersHorizontal,
+  ExternalLink,
+  Share2,
+  Lock,
+  CreditCard,
+  Settings,
+  Check,
+} from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { talentApi } from "@/lib/api";
 import { queryKeys } from "@/lib/api/query-keys";
 import { getApiErrorMessage } from "@/lib/formatters";
-import type { TalentProfile } from "@/lib/validations/talent-profile.schema";
+import { toast } from "sonner";
+import { PRIVACY_MODE, type PrivacyMode, type TalentProfile } from "@/lib/validations/talent-profile.schema";
 import { ProfileSkeleton } from "@/components/skeletons/profile-skeleton";
 import { Card } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+} from "@/components/ui/dropdown-menu";
 import { IdentityCard } from "./_identity-card";
 import { CompletenessCard, CompletenessCardSkeleton } from "./_completeness-card";
 import { TrustScore } from "./_trust-score";
 import { TipsCard } from "./_tips-card";
 import { EditForm } from "./_edit-form";
 import { VerificationAlerts } from "@/components/verification-alerts";
+import { ShareProfileDialog } from "@/components/share-profile-dialog";
 
 type Mode = "create" | "edit";
 
@@ -30,6 +55,8 @@ export default function TalentProfilePage() {
   const [isEditing, setIsEditing] = useState(true);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [completenessVersion, setCompletenessVersion] = useState(0);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const profileQuery = useQuery({
     queryKey: queryKeys.talent.myProfile(),
@@ -41,6 +68,18 @@ export default function TalentProfilePage() {
     queryKey: queryKeys.talent.completeness(),
     queryFn: () => talentApi.getCompleteness(),
     staleTime: 120_000,
+  });
+
+  const privacyMutation = useMutation({
+    mutationFn: (privacy_mode: PrivacyMode) =>
+      talentApi.updateProfile({ privacy_mode }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.talent.myProfile() });
+      toast.success("Privacy updated");
+    },
+    onError: () => {
+      toast.error("Failed to update privacy");
+    },
   });
 
   useEffect(() => {
@@ -95,13 +134,100 @@ export default function TalentProfilePage() {
           <h1 className="text-[18px] font-medium text-ink font-serif">
             Account Status
           </h1>
-          <button
-            className="text-ink-muted hover:text-ink transition-colors"
-            aria-label="Options"
-          >
-            <SlidersHorizontal size={22} strokeWidth={1.5} />
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="text-ink-muted hover:text-ink transition-colors"
+                aria-label="Options"
+              >
+                <SlidersHorizontal size={22} strokeWidth={1.5} />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52">
+              <DropdownMenuItem asChild>
+                <Link
+                  href={`/talent/${profile.username}`}
+                  className="cursor-pointer"
+                >
+                  <ExternalLink className="w-4 h-4" strokeWidth={1.5} />
+                  View Public Profile
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setShareDialogOpen(true)}
+                className="cursor-pointer"
+              >
+                <Share2 className="w-4 h-4" strokeWidth={1.5} />
+                Share Profile
+              </DropdownMenuItem>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger className="cursor-pointer">
+                  <Lock className="w-4 h-4" strokeWidth={1.5} />
+                  Privacy
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className="w-44">
+                  <DropdownMenuRadioGroup
+                    value={profile.privacy_mode || "public"}
+                    onValueChange={(v) =>
+                      privacyMutation.mutate(v as PrivacyMode)
+                    }
+                  >
+                    {PRIVACY_MODE.map((mode) => (
+                      <DropdownMenuRadioItem
+                        key={mode}
+                        value={mode}
+                        className="cursor-pointer"
+                      >
+                        {mode === "public"
+                          ? "Public"
+                          : mode === "recruiters_only"
+                            ? "Recruiters Only"
+                            : "Private"}
+                        {privacyMutation.isPending &&
+                          (profile.privacy_mode || "public") !== mode && (
+                            <span className="ml-auto text-[10px] text-muted-foreground">
+                              ...
+                            </span>
+                          )}
+                        {!privacyMutation.isPending &&
+                          (profile.privacy_mode || "public") === mode && (
+                            <Check className="ml-auto w-3.5 h-3.5 text-ink-muted" />
+                          )}
+                      </DropdownMenuRadioItem>
+                    ))}
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+              <DropdownMenuItem asChild>
+                <Link
+                  href="/talent/billing"
+                  className="cursor-pointer"
+                >
+                  <CreditCard className="w-4 h-4" strokeWidth={1.5} />
+                  Billing / Subscription
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link
+                  href="/talent/settings"
+                  className="cursor-pointer"
+                >
+                  <Settings className="w-4 h-4" strokeWidth={1.5} />
+                  Account Settings
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </header>
+
+        <ShareProfileDialog
+          username={profile.username}
+          profilePhoto={profile.profile_photo}
+          name={profile.full_legal_name}
+          open={shareDialogOpen}
+          onOpenChange={setShareDialogOpen}
+        />
 
         {saveSuccess && (
           <Card className="p-3 border-success-muted bg-success-light text-[13px] text-success-text">

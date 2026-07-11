@@ -2,6 +2,7 @@
 
 import { Pin, Trash2, GripVertical, Play, Maximize2, Film, Camera, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import type { PortfolioItem } from "@/lib/validations/talent-profile.schema";
 
 interface PortfolioItemCardProps {
@@ -126,42 +127,54 @@ export function PortfolioItemCard({
 
           {/* Quick actions */}
           <div className="absolute bottom-2.5 left-2.5 right-2.5 z-10 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onUpdate(item.id, { is_pinned: !item.is_pinned });
-              }}
-              className={cn(
-                "p-2 rounded-lg transition-colors shadow-sm",
-                item.is_pinned
-                  ? "bg-brand text-white"
-                  : "bg-white/90 text-ink hover:bg-white"
-              )}
-              title={item.is_pinned ? "Unpin" : "Pin"}
-            >
-              <Pin className={cn("w-3.5 h-3.5", item.is_pinned && "fill-current")} strokeWidth={1.5} />
-            </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onUpdate(item.id, { is_pinned: !item.is_pinned });
+                  }}
+                  className={cn(
+                    "p-2 rounded-lg transition-colors shadow-sm",
+                    item.is_pinned
+                      ? "bg-brand text-white"
+                      : "bg-white/90 text-ink hover:bg-white"
+                  )}
+                >
+                  <Pin className={cn("w-3.5 h-3.5", item.is_pinned && "fill-current")} strokeWidth={1.5} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>{item.is_pinned ? "Unpin" : "Pin"}</TooltipContent>
+            </Tooltip>
             <div className="flex items-center gap-1.5">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onPreview(item);
-                }}
-                className="p-2 rounded-lg bg-white/90 text-ink hover:bg-white transition-colors shadow-sm"
-                title="Preview"
-              >
-                <Eye className="w-3.5 h-3.5" strokeWidth={1.5} />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(item.id);
-                }}
-                className="p-2 rounded-lg bg-white/90 text-ink hover:bg-error hover:text-white transition-colors shadow-sm"
-                title="Delete"
-              >
-                <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
-              </button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onPreview(item);
+                    }}
+                    className="p-2 rounded-lg bg-white/90 text-ink hover:bg-white transition-colors shadow-sm"
+                  >
+                    <Eye className="w-3.5 h-3.5" strokeWidth={1.5} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Preview</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(item.id);
+                    }}
+                    className="p-2 rounded-lg bg-white/90 text-ink hover:bg-error hover:text-white transition-colors shadow-sm"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Delete</TooltipContent>
+              </Tooltip>
             </div>
           </div>
         </div>

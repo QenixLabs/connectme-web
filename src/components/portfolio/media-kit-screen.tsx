@@ -37,15 +37,21 @@ function Pill({ children }: { children: React.ReactNode }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Hero                                                               */
+/*  Hero + Identity (unified)                                          */
 /* ------------------------------------------------------------------ */
 
-function MediaKitHero({ data }: { data: MediaKitData }) {
+function MediaKitHeroIdentity({ data }: { data: MediaKitData }) {
+  const [expanded, setExpanded] = useState(false);
   const displayName = data.full_legal_name || data.username || "Talent";
+  const loc = [data.location?.city, data.location?.state]
+    .filter((s): s is string => !!s && s.trim() !== "")
+    .join(", ");
 
   return (
-    <div className="relative">
-      <div className="relative h-48 sm:h-52 w-full overflow-hidden bg-cream-deep">
+    <div className="px-4 pt-5">
+      <div className="rounded-2xl border border-border overflow-hidden">
+      {/* Hero banner */}
+      <div className="relative h-48 sm:h-52 w-full bg-cream-deep">
         {data.hero_background ? (
           <img
             src={data.hero_background}
@@ -55,91 +61,89 @@ function MediaKitHero({ data }: { data: MediaKitData }) {
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-gold-soft/40 to-cream" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-card/80 via-card/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-card/40 via-card/5 to-transparent" />
       </div>
 
-      <div className="absolute left-1/2 -translate-x-1/2 bottom-0 translate-y-1/2">
-        <div className="w-24 h-24 rounded-full border-[3px] border-card shadow-luxe bg-card overflow-hidden">
-          {data.profile_photo ? (
-            <img
-              src={data.profile_photo}
-              alt={displayName}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-cream">
-              <span className="text-2xl font-serif font-semibold text-ink-muted">
-                {displayName
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")
-                  .slice(0, 2)
-                  .toUpperCase()}
-              </span>
+      {/* Unified card — overlaps hero bottom */}
+      <div className="-mt-4 mx-3 relative z-10">
+        <div className="bg-card px-5 pt-4 pb-4">
+          {/* Avatar + name cluster */}
+          <div className="flex items-center gap-4">
+            {/* Avatar */}
+            <div className="relative shrink-0">
+              <div className="relative h-[72px] w-[72px] rounded-full border-[2px] border-border overflow-hidden bg-muted">
+                {data.profile_photo ? (
+                  <img
+                    src={data.profile_photo}
+                    alt={displayName}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center bg-cream">
+                    <span className="text-[28px] font-serif font-semibold text-ink-muted">
+                      {displayName
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .slice(0, 2)
+                        .toUpperCase()}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Name + details */}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <h1 className="font-serif text-[20px] font-semibold text-ink leading-tight tracking-tight truncate">
+                  {displayName}
+                </h1>
+                {data.is_verified && (
+                  <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gold shrink-0">
+                    <Check className="w-3 h-3 text-white" strokeWidth={2.5} />
+                  </span>
+                )}
+              </div>
+              <p className="text-[13px] text-ink-muted mt-0.5">@{data.username}</p>
+            </div>
+          </div>
+
+          {/* Profession pills + location */}
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {data.professions?.map((p) => <Pill key={p}>{p}</Pill>)}
+            {loc && (
+              <Pill>
+                <MapPin className="h-3 w-3 text-gold" />
+                {loc}
+              </Pill>
+            )}
+          </div>
+
+          {/* About text */}
+          {data.about && (
+            <div className="mt-3 pt-3 border-t border-border/60">
+              <p
+                className={cn(
+                  "text-[13.5px] leading-[1.65] text-ink-soft",
+                  !expanded && "line-clamp-4",
+                )}
+              >
+                {data.about}
+              </p>
+              {data.about.length > 280 && (
+                <button
+                  onClick={() => setExpanded(!expanded)}
+                  className="text-[12px] font-medium text-gold mt-1 hover:text-gold/80 transition-colors"
+                >
+                  {expanded ? "Show less" : "Read more"}
+                </button>
+              )}
             </div>
           )}
         </div>
       </div>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Identity                                                           */
-/* ------------------------------------------------------------------ */
-
-function MediaKitIdentity({ data }: { data: MediaKitData }) {
-  const [expanded, setExpanded] = useState(false);
-  const displayName = data.full_legal_name || data.username || "Talent";
-  const loc = [data.location?.city, data.location?.state]
-    .filter((s): s is string => !!s && s.trim() !== "")
-    .join(", ");
-
-  return (
-    <div className="px-4 pt-14 text-center">
-      <div className="flex items-center justify-center gap-2">
-        <h1 className="font-serif text-[22px] font-semibold text-ink">
-          {displayName}
-        </h1>
-        {data.is_verified && (
-          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gold shrink-0">
-            <Check className="w-3 h-3 text-white" strokeWidth={2.5} />
-          </span>
-        )}
       </div>
-
-      <p className="text-[13px] text-ink-muted mt-0.5">@{data.username}</p>
-
-      <div className="flex flex-wrap items-center justify-center gap-2 mt-3">
-        {data.professions?.map((p) => <Pill key={p}>{p}</Pill>)}
-        {loc && (
-          <Pill>
-            <MapPin className="h-3 w-3 text-gold" />
-            {loc}
-          </Pill>
-        )}
-      </div>
-
-      {data.about && (
-        <div className="mt-3">
-          <p
-            className={cn(
-              "text-[13.5px] leading-[1.65] text-ink-soft text-left",
-              !expanded && "line-clamp-4"
-            )}
-          >
-            {data.about}
-          </p>
-          {data.about.length > 280 && (
-            <button
-              onClick={() => setExpanded(!expanded)}
-              className="text-[12px] font-medium text-gold mt-1 hover:text-gold-hover transition-colors"
-            >
-              {expanded ? "Show less" : "Read more"}
-            </button>
-          )}
-        </div>
-      )}
     </div>
   );
 }
@@ -149,29 +153,49 @@ function MediaKitIdentity({ data }: { data: MediaKitData }) {
 /* ------------------------------------------------------------------ */
 
 function MediaKitStats({ data }: { data: MediaKitData }) {
+  const hasInstagram = (data.instagramFollowers ?? 0) > 0;
+  const hasYoutube = (data.youtubeSubscribers ?? 0) > 0;
+
+  const stats: { icon: React.ReactNode; value: string; label: string }[] = [];
+
+  if (hasInstagram) {
+    stats.push({
+      icon: <FaInstagram className="w-4 h-4" />,
+      value: formatCount(data.instagramFollowers ?? 0),
+      label: "Instagram",
+    });
+  }
+
+  if (hasYoutube) {
+    stats.push({
+      icon: <FaYoutube className="w-4 h-4" />,
+      value: formatCount(data.youtubeSubscribers ?? 0),
+      label: "YouTube",
+    });
+  }
+
+  stats.push({
+    icon: <Eye className="w-4 h-4" strokeWidth={1.5} />,
+    value: formatCount(data.avgMonthlyViews ?? 0),
+    label: "Monthly Views",
+  });
+
+  const cols = stats.length >= 3 ? 3 : stats.length;
+
   return (
-    <div className="grid grid-cols-3 gap-3 px-4 mt-5">
-      <div className="bg-card border border-border rounded-2xl p-4 text-center">
-        <FaInstagram className="w-4 h-4 mx-auto text-gold mb-1.5" />
-        <p className="text-xl font-bold text-text-primary">
-          {formatCount(data.instagramFollowers)}
-        </p>
-        <p className="text-xs text-text-tertiary mt-1">Instagram</p>
-      </div>
-      <div className="bg-card border border-border rounded-2xl p-4 text-center">
-        <FaYoutube className="w-4 h-4 mx-auto text-gold mb-1.5" />
-        <p className="text-xl font-bold text-text-primary">
-          {formatCount(data.youtubeSubscribers)}
-        </p>
-        <p className="text-xs text-text-tertiary mt-1">YouTube</p>
-      </div>
-      <div className="bg-card border border-border rounded-2xl p-4 text-center">
-        <Eye className="w-4 h-4 mx-auto text-gold mb-1.5" strokeWidth={1.5} />
-        <p className="text-xl font-bold text-text-primary">
-          {formatCount(data.avgMonthlyViews)}
-        </p>
-        <p className="text-xs text-text-tertiary mt-1">Monthly Views</p>
-      </div>
+    <div
+      className="grid gap-3 px-4 mt-5"
+      style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
+    >
+      {stats.map((s) => (
+        <div key={s.label} className="bg-card border border-border rounded-2xl p-4 text-center">
+          <div className="inline-flex items-center justify-center text-gold mb-1.5">
+            {s.icon}
+          </div>
+          <p className="text-xl font-bold text-text-primary">{s.value}</p>
+          <p className="text-xs text-text-tertiary mt-1">{s.label}</p>
+        </div>
+      ))}
     </div>
   );
 }
@@ -260,7 +284,6 @@ function MediaKitFooter({ data }: { data: MediaKitData }) {
       : "";
 
   const handleDownloadPdf = () => {
-    // TODO: Integrate PDF export utility when implemented
     console.log("[TODO] PDF export not yet implemented for media kit");
   };
 
@@ -326,8 +349,7 @@ export function MediaKitScreen({ data, isOwner }: { data: MediaKitData; isOwner?
   return (
     <div className="min-h-screen bg-background font-sans pb-12">
       <MediaKitHeader isOwner={isOwner} />
-      <MediaKitHero data={data} />
-      <MediaKitIdentity data={data} />
+      <MediaKitHeroIdentity data={data} />
       <MediaKitStats data={data} />
       <MediaKitHighlights data={data} />
       <MediaKitFooter data={data} />

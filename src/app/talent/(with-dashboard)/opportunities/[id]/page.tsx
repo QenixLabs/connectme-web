@@ -222,7 +222,7 @@ export default function TalentCampaignDetailPage() {
         onWithdraw={() => setShowWithdrawConfirm(true)}
       />
 
-      <MediaGallery campaign={campaign} />
+      <CoverImage campaign={campaign} />
 
       <DetailsCard campaign={campaign} loc={loc} deadline={deadline} />
 
@@ -509,36 +509,20 @@ function ApplicationBanner({
 }
 
 /* ------------------------------------------------------------------ */
-/*  MEDIA GALLERY                                                     */
+/*  COVER IMAGE                                                       */
 /* ------------------------------------------------------------------ */
 
-function MediaGallery({ campaign }: { campaign: NonNullable<ReturnType<typeof useCampaignTalentView>["data"]> }) {
-  const media = campaign.media && campaign.media.length > 0 ? campaign.media : [];
-  const hasCover = !!campaign.cover_image_url;
-
-  if (!hasCover && media.length === 0) return null;
-
-  const allItems = [
-    ...(hasCover ? [{ url: campaign.cover_image_url!, type: "image" as const, caption: undefined as string | undefined }] : []),
-    ...media,
-  ];
+function CoverImage({ campaign }: { campaign: NonNullable<ReturnType<typeof useCampaignTalentView>["data"]> }) {
+  if (!campaign.cover_image_url) return null;
 
   return (
-    <div className="space-y-2">
-      {allItems.map((item, i) => (
-        <Card key={i} className="overflow-hidden border-0 rounded-xl">
-          {item.type === "video" ? (
-            <video src={item.url} className="w-full h-48 sm:h-64 object-cover" controls />
-          ) : (
-            <img
-              src={item.url}
-              alt={item.caption || campaign.name}
-              className="w-full h-48 sm:h-64 object-cover"
-            />
-          )}
-        </Card>
-      ))}
-    </div>
+    <Card className="overflow-hidden border-0 rounded-xl">
+      <img
+        src={campaign.cover_image_url}
+        alt={campaign.name}
+        className="w-full h-48 sm:h-64 object-cover"
+      />
+    </Card>
   );
 }
 

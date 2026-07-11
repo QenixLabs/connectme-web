@@ -70,6 +70,17 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 type StatusFilter = "all" | "draft" | "active" | "closed";
 
@@ -411,7 +422,8 @@ export default function RecruiterCampaignsPage() {
             )}
           </div>
 
-          <div className="flex gap-1.5 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+          <ScrollArea className="w-full">
+            <div className="flex gap-1.5">
             {STATUS_PILLS.map((p) => {
               const isActive = statusFilter === p.value;
               const Icon = p.icon;
@@ -442,9 +454,11 @@ export default function RecruiterCampaignsPage() {
               );
             })}
           </div>
+          </ScrollArea>
         </div>
 
-        <div className="flex gap-1.5 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+        <ScrollArea className="w-full">
+          <div className="flex gap-1.5">
           <button
             onClick={() => setProfessionFilter(null)}
             className={cn(
@@ -480,6 +494,7 @@ export default function RecruiterCampaignsPage() {
             );
           })}
         </div>
+        </ScrollArea>
       </div>
 
       <AnimatePresence mode="wait">
@@ -663,16 +678,11 @@ function CampaignBanner({ campaign }: { campaign: Campaign }) {
   const gradient = getProfessionGradient(campaign.role_type);
   const ProfessionIcon = getProfessionIcon(campaign.role_type);
 
-  const hasMedia =
-    campaign.banner?.type === "image" || campaign.cover_image_url;
-  const imageUrl =
-    campaign.banner?.type === "image"
-      ? campaign.banner.url
-      : campaign.cover_image_url;
+  const imageUrl = campaign.cover_image_url;
 
   return (
     <div className="relative h-[220px] w-full overflow-hidden group/banner">
-      {hasMedia ? (
+      {imageUrl ? (
         <>
           <img
             src={imageUrl}
@@ -926,40 +936,29 @@ function CampaignCard({
         </div>
       </motion.article>
 
-      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <DialogContent className="sm:max-w-md rounded-2xl gap-0">
-          <DialogHeader className="pb-4">
-            <DialogTitle className="text-lg font-serif">
-              Delete Campaign
-            </DialogTitle>
-            <DialogDescription className="text-sm leading-relaxed">
-              Are you sure you want to delete &quot;{campaign.name}&quot;? This
-              action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setDeleteOpen(false)}
-              className="rounded-xl"
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Campaign</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete &quot;{campaign.name}&quot;? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
               onClick={() => {
                 deleteCampaign.mutate(campaign._id, {
                   onSuccess: () => setDeleteOpen(false),
                 });
               }}
               disabled={deleteCampaign.isPending}
-              className="rounded-xl"
             >
               Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog open={saveTemplateOpen} onOpenChange={setSaveTemplateOpen}>
         <DialogContent className="sm:max-w-md rounded-2xl gap-0">

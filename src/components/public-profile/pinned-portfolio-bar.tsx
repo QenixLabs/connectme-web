@@ -1,6 +1,7 @@
 "use client";
 
 import { Pin } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { MediaTile } from "@/components/portfolio/media-tile";
 import type { PortfolioItem } from "@/lib/validations/talent-profile.schema";
 
@@ -23,7 +24,8 @@ export function PinnedPortfolioBar({ items, onItemClick }: PinnedPortfolioBarPro
           {pinned.length} of 3
         </span>
       </div>
-      <div className="flex gap-2.5 overflow-x-auto snap-x snap-mandatory scrollbar-none pb-1">
+      <ScrollArea className="w-full">
+        <div className="flex gap-2.5 snap-x snap-mandatory pb-1">
         {pinned.map((item) => (
           <button
             key={item.id}
@@ -34,7 +36,8 @@ export function PinnedPortfolioBar({ items, onItemClick }: PinnedPortfolioBarPro
             <MediaTile item={item} pinned />
           </button>
         ))}
-      </div>
+        </div>
+      </ScrollArea>
     </section>
   );
 }

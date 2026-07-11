@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import type { MessageContextItem } from "@/lib/api";
 
 interface MessageContextViewerProps {
@@ -70,7 +71,8 @@ export function MessageContextViewer({
   }
 
   return (
-    <div className="space-y-3 max-h-[500px] overflow-y-auto pr-1">
+    <ScrollArea className="max-h-[500px] pr-1">
+      <div className="space-y-3">
       {!reportedMessage && previousMessages.length > 0 && (
         <div className="flex items-center gap-2 text-xs text-amber-600 bg-amber-50 p-2 rounded-md">
           <AlertCircle className="w-3.5 h-3.5" />
@@ -87,7 +89,8 @@ export function MessageContextViewer({
           ref={msg.type === "reported" ? reportedRef : undefined}
         />
       ))}
-    </div>
+      </div>
+    </ScrollArea>
   );
 }
 

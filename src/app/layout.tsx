@@ -5,6 +5,7 @@ import { SocketProvider } from "@/providers/socket-provider";
 import { AuthStoreProvider } from "@/providers/auth-store-provider";
 import { QueryProvider } from "@/providers/query-provider";
 import { FeatureGateProvider } from "@/providers/feature-gate-provider";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -40,15 +41,17 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col overflow-x-hidden">
-        <AuthStoreProvider>
-          <SocketProvider>
-            <QueryProvider>
-              {children}
-              <PopupProvider />
-              <FeatureGateProvider />
-            </QueryProvider>
-          </SocketProvider>
-        </AuthStoreProvider>
+        <TooltipProvider>
+          <AuthStoreProvider>
+            <SocketProvider>
+              <QueryProvider>
+                {children}
+                <PopupProvider />
+                <FeatureGateProvider />
+              </QueryProvider>
+            </SocketProvider>
+          </AuthStoreProvider>
+        </TooltipProvider>
       </body>
     </html>
   );

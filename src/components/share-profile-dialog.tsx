@@ -18,6 +18,8 @@ interface ShareProfileDialogProps {
   url?: string;
   triggerClassName?: string;
   children?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export function ShareProfileDialog({
@@ -27,8 +29,12 @@ export function ShareProfileDialog({
   url: urlProp,
   triggerClassName,
   children,
+  open: controlledOpen,
+  onOpenChange,
 }: ShareProfileDialogProps) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
   const [copied, setCopied] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
@@ -98,7 +104,7 @@ export function ShareProfileDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      {children ? (
+      {controlledOpen !== undefined ? null : children ? (
         <DialogTrigger asChild>
           {children as React.ReactElement}
         </DialogTrigger>

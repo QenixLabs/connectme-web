@@ -19,6 +19,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { SafetyMenu } from "./safety-menu";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 
 interface ChatInterfaceProps {
   currentUserId: string;
@@ -516,16 +521,20 @@ export default function ChatInterface({ currentUserId, initialConversationId, in
             </button>
           )}
           <h2 className="text-sm font-semibold text-foreground">Messages</h2>
-          <button
-            onClick={() => {
-              setBlockedUsersOpen(true);
-              loadBlockedUsers();
-            }}
-            className="ml-auto p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            title="Blocked users"
-          >
-            <UserX className="w-4 h-4" strokeWidth={1.5} />
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => {
+                  setBlockedUsersOpen(true);
+                  loadBlockedUsers();
+                }}
+                className="ml-auto p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              >
+                <UserX className="w-4 h-4" strokeWidth={1.5} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Blocked users</TooltipContent>
+          </Tooltip>
         </div>
 
         <div ref={conversationListRef} className="flex-1 overflow-y-auto">

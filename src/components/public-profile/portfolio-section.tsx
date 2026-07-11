@@ -6,6 +6,7 @@ import { PortfolioStats } from "@/components/portfolio/portfolio-stats";
 import { PortfolioCategoryFilter } from "@/components/portfolio/portfolio-category-filter";
 import { MediaTile } from "@/components/portfolio/media-tile";
 import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import type { PortfolioItem } from "@/lib/validations/talent-profile.schema";
 
 type CategoryFilter = "all" | "work" | "personal" | "intro";
@@ -100,7 +101,8 @@ export function PortfolioSection({
           No items in this category
         </p>
       ) : (
-        <div className="flex gap-3 overflow-x-auto no-scrollbar snap-x snap-mandatory">
+        <ScrollArea className="w-full">
+          <div className="flex gap-3 snap-x snap-mandatory">
           {(showCategoryFilter ? filteredItems : items).map((item) => (
             <button
               key={item.id}
@@ -113,7 +115,8 @@ export function PortfolioSection({
               <MediaTile item={item} />
             </button>
           ))}
-        </div>
+          </div>
+        </ScrollArea>
       )}
     </section>
   );

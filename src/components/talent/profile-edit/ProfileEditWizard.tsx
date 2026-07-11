@@ -537,7 +537,7 @@ export function ProfileEditWizard({
                 >
                   Preview: how recruiters will see you
                 </p>
-                <TalentCard sample heroBackground={heroBgPreview} />
+                <TalentCard profile={mode === 'edit' ? profile : null} sample={mode !== 'edit'} heroBackground={heroBgPreview} />
               </div>
 
               {serverError && (
@@ -715,8 +715,7 @@ export function ProfileEditWizard({
                 ) : (
                   <button
                     type="submit"
-                    form="profile-form"
-                    disabled={isSubmitting || (mode === "edit" && !isDirty)}
+                    disabled={isNavigating || isSubmitting || (mode === "edit" && !isDirty)}
                     className={cn(
                       "px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all active:scale-[0.98] disabled:opacity-50 ml-auto flex items-center gap-1.5 shadow-md",
                       "bg-gradient-to-b from-gold to-gold-dark",
@@ -737,40 +736,42 @@ export function ProfileEditWizard({
         </div>
       </div>
 
-      {/* Mobile sticky save */}
-      <div className="fixed bottom-0 inset-x-0 z-30 px-4 pb-4 pt-3 bg-gradient-to-t from-cream-pale via-cream-pale/95 to-transparent lg:hidden">
-        <div className="max-w-3xl mx-auto rounded-2xl border border-border/50 bg-card shadow-luxe-lg p-2.5 flex items-center gap-2">
-          {mode === "edit" && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onCancel}
-              disabled={isSubmitting}
-              className="h-11 px-4 rounded-xl bg-cream border-border/60 text-ink-soft text-[13px] font-medium hover:bg-cream-hover transition-colors"
-            >
-              Cancel
-            </Button>
-          )}
-          <Button
-            type="submit"
-            form="profile-form"
-            disabled={isSubmitting || (mode === "edit" && !isDirty)}
-            className={cn(
-              "flex-1 h-11 rounded-xl text-white font-semibold text-[13px] flex items-center justify-center gap-2 transition-all duration-200",
-              "bg-gradient-to-b from-gold to-gold-dark",
-              "shadow-[0_8px_24px_-10px_var(--color-gold-dark)]",
-              "hover:shadow-[0_12px_28px_-10px_var(--color-gold-dark)]",
-              "hover:from-gold-hover hover:to-gold-dark",
-              "active:scale-[0.98]",
-              "disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:from-gold disabled:hover:to-gold-dark",
+      {/* Mobile sticky save — only on last step to prevent implicit submission on earlier steps */}
+      {isLastStep && (
+        <div className="fixed bottom-0 inset-x-0 z-30 px-4 pb-4 pt-3 bg-gradient-to-t from-cream-pale via-cream-pale/95 to-transparent lg:hidden">
+          <div className="max-w-3xl mx-auto rounded-2xl border border-border/50 bg-card shadow-luxe-lg p-2.5 flex items-center gap-2">
+            {mode === "edit" && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onCancel}
+                disabled={isSubmitting}
+                className="h-11 px-4 rounded-xl bg-cream border-border/60 text-ink-soft text-[13px] font-medium hover:bg-cream-hover transition-colors"
+              >
+                Cancel
+              </Button>
             )}
-          >
-            {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-            <Save className="h-4 w-4" strokeWidth={2} />
-            {mode === "create" ? "Create profile" : "Save changes"}
-          </Button>
+            <Button
+              type="submit"
+              form="profile-form"
+              disabled={isNavigating || isSubmitting || (mode === "edit" && !isDirty)}
+              className={cn(
+                "flex-1 h-11 rounded-xl text-white font-semibold text-[13px] flex items-center justify-center gap-2 transition-all duration-200",
+                "bg-gradient-to-b from-gold to-gold-dark",
+                "shadow-[0_8px_24px_-10px_var(--color-gold-dark)]",
+                "hover:shadow-[0_12px_28px_-10px_var(--color-gold-dark)]",
+                "hover:from-gold-hover hover:to-gold-dark",
+                "active:scale-[0.98]",
+                "disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:from-gold disabled:hover:to-gold-dark",
+              )}
+            >
+              {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+              <Save className="h-4 w-4" strokeWidth={2} />
+              {mode === "create" ? "Create profile" : "Save changes"}
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -177,8 +177,8 @@ export function useDeleteCampaignMedia() {
   const queryClient = useQueryClient();
   const { show } = usePopup();
   return useMutation({
-    mutationFn: ({ campaignId, url }: { campaignId: string; url: string }) =>
-      campaignApi.deleteMedia(campaignId, url),
+    mutationFn: ({ campaignId }: { campaignId: string }) =>
+      campaignApi.deleteMedia(campaignId),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.detail(variables.campaignId) });
       show({ title: 'Media deleted', variant: 'success', position: 'bottom-center' });

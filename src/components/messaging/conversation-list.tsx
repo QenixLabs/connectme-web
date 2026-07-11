@@ -16,6 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { useSocket } from "@/hooks/use-socket";
 import { cn } from "@/lib/utils";
 
@@ -202,16 +203,20 @@ export function ConversationList({
           <h1 className="text-lg font-semibold text-msg-ink font-[family-name:var(--font-playfair)] tracking-tight">
             Messages
           </h1>
-          <button
-            onClick={() => {
-              setBlockedUsersOpen(true);
-              loadBlockedUsers();
-            }}
-            className="ml-auto p-1.5 rounded-full text-msg-ink-muted hover:text-msg-ink hover:bg-msg-ink/5 transition-colors"
-            title="Blocked users"
-          >
-            <UserX className="w-4 h-4" strokeWidth={1.5} />
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => {
+                  setBlockedUsersOpen(true);
+                  loadBlockedUsers();
+                }}
+                className="ml-auto p-1.5 rounded-full text-msg-ink-muted hover:text-msg-ink hover:bg-msg-ink/5 transition-colors"
+              >
+                <UserX className="w-4 h-4" strokeWidth={1.5} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Blocked users</TooltipContent>
+          </Tooltip>
         </div>
 
       {conversations.length > 0 && (

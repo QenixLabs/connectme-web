@@ -84,4 +84,9 @@ export const authApi = {
     const response = await apiClient.post('/auth/refresh');
     return response.data as { access_token: string };
   },
+
+  changePassword: async (current_password: string, new_password: string) => {
+    const response = await apiClient.post('/auth/change-password', { current_password, new_password });
+    return response.data;
+  },
 };

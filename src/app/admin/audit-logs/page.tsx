@@ -43,6 +43,8 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { UserDetailPanel } from "@/components/admin/user-detail-panel";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { adminApi, type AuditLogItem, type PaginatedAuditLogs } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
 import { format } from "date-fns";
@@ -104,9 +106,11 @@ function MetadataCell({ metadata }: { metadata: Record<string, unknown> }) {
   if (expanded) {
     return (
       <div className="relative">
-        <pre className="text-[11px] font-mono text-muted-foreground whitespace-pre-wrap break-all bg-muted/50 rounded-md p-2 max-w-[300px] max-h-[200px] overflow-y-auto">
-          {fullText}
-        </pre>
+        <ScrollArea className="max-w-[300px] max-h-[200px]">
+          <pre className="text-[11px] font-mono text-muted-foreground whitespace-pre-wrap break-all bg-muted/50 rounded-md p-2">
+            {fullText}
+          </pre>
+        </ScrollArea>
         <button
           onClick={() => setExpanded(false)}
           className="absolute top-1 right-1 p-0.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
@@ -118,15 +122,19 @@ function MetadataCell({ metadata }: { metadata: Record<string, unknown> }) {
   }
 
   return (
-    <button
-      onClick={() => setExpanded(true)}
-      className="text-xs text-muted-foreground hover:text-foreground transition-colors text-left max-w-[180px] truncate block font-mono cursor-pointer group"
-      title="Click to expand"
-    >
-      <span className="group-hover:underline decoration-dotted underline-offset-2">
-        {preview}
-      </span>
-    </button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          onClick={() => setExpanded(true)}
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors text-left max-w-[180px] truncate block font-mono cursor-pointer group"
+        >
+          <span className="group-hover:underline decoration-dotted underline-offset-2">
+            {preview}
+          </span>
+        </button>
+      </TooltipTrigger>
+      <TooltipContent>Click to expand</TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -149,28 +157,36 @@ function IdCell({
 
   return (
     <div className="flex items-center gap-1 group/id">
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onViewUser(id);
-        }}
-        className="flex items-center gap-1 text-xs font-mono text-muted-foreground hover:text-foreground hover:underline underline-offset-2 transition-colors cursor-pointer"
-        title="View user details"
-      >
-        <User className="w-3 h-3 shrink-0 opacity-60 group-hover/id:opacity-100" />
-        <span className="truncate max-w-[140px]">{id}</span>
-      </button>
-      <button
-        onClick={handleCopy}
-        className="shrink-0 p-0.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground opacity-0 group-hover/id:opacity-100 transition-all"
-        title="Copy ID"
-      >
-        {copied ? (
-          <Check className="w-3 h-3 text-emerald-600" />
-        ) : (
-          <Copy className="w-3 h-3" />
-        )}
-      </button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onViewUser(id);
+            }}
+            className="flex items-center gap-1 text-xs font-mono text-muted-foreground hover:text-foreground hover:underline underline-offset-2 transition-colors cursor-pointer"
+          >
+            <User className="w-3 h-3 shrink-0 opacity-60 group-hover/id:opacity-100" />
+            <span className="truncate max-w-[140px]">{id}</span>
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>View user details</TooltipContent>
+      </Tooltip>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            onClick={handleCopy}
+            className="shrink-0 p-0.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground opacity-0 group-hover/id:opacity-100 transition-all"
+          >
+            {copied ? (
+              <Check className="w-3 h-3 text-emerald-600" />
+            ) : (
+              <Copy className="w-3 h-3" />
+            )}
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>Copy ID</TooltipContent>
+      </Tooltip>
     </div>
   );
 }
@@ -258,9 +274,11 @@ function AuditLogDetailSheet({
               {Object.keys(log.metadata || {}).length === 0 ? (
                 <p className="text-xs text-muted-foreground italic">No metadata</p>
               ) : (
-                <pre className="text-[11px] font-mono text-muted-foreground whitespace-pre-wrap break-all bg-muted/50 rounded-md p-3 max-h-[300px] overflow-y-auto">
-                  {JSON.stringify(log.metadata, null, 2)}
-                </pre>
+                <ScrollArea className="max-h-[300px]">
+                  <pre className="text-[11px] font-mono text-muted-foreground whitespace-pre-wrap break-all bg-muted/50 rounded-md p-3">
+                    {JSON.stringify(log.metadata, null, 2)}
+                  </pre>
+                </ScrollArea>
               )}
             </div>
 

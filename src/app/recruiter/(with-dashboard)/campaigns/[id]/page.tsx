@@ -27,7 +27,6 @@ import {
   Shield,
   UserPlus,
   UserX,
-  Pin,
   Calendar,
   MapPin,
   Briefcase,
@@ -35,8 +34,6 @@ import {
   BarChart3,
   PieChartIcon,
   Activity,
-  ImagePlus,
-  FileUp,
   ArrowUpRight,
   Check,
   AlertTriangle,
@@ -78,9 +75,7 @@ import {
   useReopenCampaign,
   useCloneCampaign,
   useUploadCampaignMedia,
-  useDeleteCampaignMedia,
 } from '@/lib/api/hooks/useCampaigns';
-import { useUpdateCampaign } from '@/lib/api/hooks/useUpdateCampaign';
 import { useBulkUpdateApplicationStatus } from '@/lib/api/hooks/useCampaignApplications';
 import {
   useCampaignTeam,
@@ -225,7 +220,6 @@ export default function CampaignDetailPage() {
   const [showShortlistedOnly, setShowShortlistedOnly] = useState(false);
   const { guard } = useTierGuard(3);
   const { handleFeatureError } = useFeatureGuard();
-  const updateCampaign = useUpdateCampaign();
 
   const {
     data: campaign,
@@ -269,7 +263,6 @@ export default function CampaignDetailPage() {
   const reopenCampaign = useReopenCampaign();
   const cloneCampaign = useCloneCampaign();
   const uploadMedia = useUploadCampaignMedia();
-  const deleteMedia = useDeleteCampaignMedia();
   const addToShortlist = useAddToShortlist();
   const removeFromShortlist = useRemoveFromShortlist();
   const upsertNote = useUpsertApplicantNote();
@@ -356,6 +349,15 @@ export default function CampaignDetailPage() {
     }
   };
 
+  const handleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !campaignId) return;
+    const formData = new FormData();
+    formData.append('file', file);
+    guard(() => uploadMedia.mutate({ campaignId, formData }));
+    e.target.value = '';
+  };
+
   const isLoading = isLoadingCampaign;
   const error = campaignError;
 
@@ -425,6 +427,48 @@ export default function CampaignDetailPage() {
         transition={{ duration: 0.4, ease: "easeOut" }}
         className="relative overflow-hidden rounded-2xl border border-border/60 bg-card shadow-luxe"
       >
+        {campaign?.cover_image_url ? (
+          <div className="relative h-[200px] w-full overflow-hidden group/cover">
+            <img
+              src={campaign.cover_image_url}
+              alt={campaign.name}
+              className="h-full w-full object-cover transition-transform duration-700 group-hover/cover:scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+            <label
+              htmlFor="cover-upload-detail"
+              className="absolute top-3 right-3 opacity-0 group-hover/cover:opacity-100 transition-opacity cursor-pointer px-3 py-1.5 rounded-lg bg-black/50 text-white text-xs font-medium backdrop-blur-sm hover:bg-black/70"
+            >
+              <Pencil className="w-3 h-3 inline mr-1" strokeWidth={1.5} />
+              Change cover
+            </label>
+          </div>
+        ) : (
+          <div
+            className={cn(
+              "relative h-[200px] w-full overflow-hidden group/cover bg-gradient-to-br",
+              getProfessionGradient(campaign?.role_type),
+            )}
+          >
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.10),_transparent_55%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_rgba(255,255,255,0.08),_transparent_50%)]" />
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-white/20 via-white/40 to-white/20" />
+            <label
+              htmlFor="cover-upload-detail"
+              className="absolute top-3 right-3 opacity-0 group-hover/cover:opacity-100 transition-opacity cursor-pointer px-3 py-1.5 rounded-lg bg-black/50 text-white text-xs font-medium backdrop-blur-sm hover:bg-black/70"
+            >
+              <Pencil className="w-3 h-3 inline mr-1" strokeWidth={1.5} />
+              Add cover
+            </label>
+          </div>
+        )}
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleCoverUpload}
+          className="hidden"
+          id="cover-upload-detail"
+        />
         <div className="p-6 sm:p-8">
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
             <div className="flex-1 min-w-0 space-y-3">
@@ -605,7 +649,7 @@ export default function CampaignDetailPage() {
         transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
       >
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-6 bg-muted-bg/50 border border-border/60 rounded-xl p-1">
+          <TabsList className="grid w-full grid-cols-5 bg-muted-bg/50 border border-border/60 rounded-xl p-1">
             <TabsTrigger
               value="applicants"
               className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-luxe data-[state=active]:text-ink text-ink-muted text-xs font-semibold py-2.5"
@@ -622,15 +666,6 @@ export default function CampaignDetailPage() {
               Invites
               <span className="ml-1.5 px-1.5 py-0.5 rounded-md text-[10px] bg-muted-bg data-[state=active]:bg-muted-bg">
                 {invites?.length ?? 0}
-              </span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="media"
-              className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-luxe data-[state=active]:text-ink text-ink-muted text-xs font-semibold py-2.5"
-            >
-              Media
-              <span className="ml-1.5 px-1.5 py-0.5 rounded-md text-[10px] bg-muted-bg data-[state=active]:bg-muted-bg">
-                {campaign?.media?.length ?? 0}
               </span>
             </TabsTrigger>
             <TabsTrigger
@@ -1132,120 +1167,6 @@ export default function CampaignDetailPage() {
                 </p>
                 <p className="mt-2 text-sm text-ink-muted max-w-sm mx-auto leading-relaxed">
                   Invite talent directly to apply for this campaign. They'll receive a notification.
-                </p>
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="media" className="space-y-4 mt-6">
-            <div className="flex items-center gap-3">
-              <input
-                type="file"
-                accept="image/*,video/*"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (!file || !campaignId) return;
-                  const formData = new FormData();
-                  formData.append('file', file);
-                  uploadMedia.mutate({ campaignId, formData });
-                  e.target.value = '';
-                }}
-                className="hidden"
-                id="media-upload-detail"
-              />
-              <label htmlFor="media-upload-detail">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="cursor-pointer h-10 rounded-xl border-border/60 bg-card shadow-luxe text-sm font-medium hover:bg-cream-soft"
-                  asChild
-                >
-                  <span>
-                    <ImagePlus className="w-4 h-4 mr-1.5" strokeWidth={1.5} />
-                    Upload Media
-                  </span>
-                </Button>
-              </label>
-            </div>
-
-            {campaign?.media && campaign.media.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {campaign.media.map((item, idx) => {
-                  const isPinned = campaign.cover_image_url === item.url;
-                  return (
-                    <div
-                      key={idx}
-                      className={cn(
-                        'relative rounded-xl overflow-hidden aspect-square group border-2 transition-all',
-                        isPinned
-                          ? 'border-gold ring-2 ring-gold/20 shadow-luxe-lg'
-                          : 'border-border/60 hover:border-border shadow-luxe',
-                      )}
-                    >
-                      {item.type === 'video' ? (
-                        <video
-                          src={item.url}
-                          className="w-full h-full object-cover"
-                          controls
-                        />
-                      ) : (
-                        <img
-                          src={item.url}
-                          alt={item.caption || ''}
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                      )}
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300">
-                        <div className="absolute top-2 right-2 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200">
-                          {!isPinned && (
-                            <button
-                              onClick={() =>
-                                updateCampaign.mutate({
-                                  id: campaignId,
-                                  payload: { cover_image_url: item.url },
-                                })
-                              }
-                              disabled={updateCampaign.isPending}
-                              className="p-1.5 rounded-lg bg-black/60 text-white hover:bg-black/80 backdrop-blur-sm transition-colors"
-                              title="Pin as cover"
-                            >
-                              <Pin className="w-3.5 h-3.5" strokeWidth={1.5} />
-                            </button>
-                          )}
-                          <button
-                            onClick={() =>
-                              deleteMedia.mutate({ campaignId, url: item.url })
-                            }
-                            className="p-1.5 rounded-lg bg-black/60 text-white hover:bg-red-600 backdrop-blur-sm transition-colors"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
-                          </button>
-                        </div>
-                      </div>
-                      {isPinned && (
-                        <span className="absolute top-2 left-2 px-2.5 py-1 rounded-lg bg-gold text-white text-[10px] font-semibold shadow-md">
-                          Cover
-                        </span>
-                      )}
-                      {item.caption && (
-                        <p className="absolute bottom-0 left-0 right-0 bg-black/60 backdrop-blur-sm text-white text-[11px] px-3 py-2 truncate font-medium">
-                          {item.caption}
-                        </p>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-24 bg-card border border-border/60 rounded-2xl shadow-luxe">
-                <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-muted-bg mx-auto">
-                  <FileUp className="w-9 h-9 text-ink-muted/40" strokeWidth={1.5} />
-                </div>
-                <p className="text-base font-serif font-semibold text-ink">
-                  No media yet
-                </p>
-                <p className="mt-2 text-sm text-ink-muted max-w-sm mx-auto leading-relaxed">
-                  Upload images or videos to showcase this campaign and attract more talent.
                 </p>
               </div>
             )}

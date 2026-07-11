@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Film, Tv, Drama, Megaphone } from "lucide-react";
+import { Check } from "lucide-react";
 import type { TalentProfile } from "@/lib/validations/talent-profile.schema";
 
 interface OverviewPaneProps {
@@ -12,7 +12,7 @@ export function OverviewPane({ profile, showAbout = true }: OverviewPaneProps) {
   const highlights = [
     profile.professions?.length
       ? profile.professions.slice(0, 3).join(" · ")
-      : "Actor · Voice Artist · OTT",
+      : "No professions listed",
     profile.languages?.length
       ? `${profile.languages[0]?.name} (Native)${profile.languages[1] ? ` · ${profile.languages[1].name} (${profile.languages[1].fluency})` : ""}`
       : "Hindi (Native) · English (Fluent)",
@@ -22,8 +22,7 @@ export function OverviewPane({ profile, showAbout = true }: OverviewPaneProps) {
     `Verified · Tier ${profile.verification_tier || 1}`,
   ];
 
-  const about = profile.about ||
-    "Versatile actor with 6+ years across film, OTT & stage. Known for naturalistic performances and command over dialects. Open to lead and supporting roles.";
+  const about = profile.about || "No bio added yet.";
 
   return (
     <>
@@ -43,12 +42,13 @@ export function OverviewPane({ profile, showAbout = true }: OverviewPaneProps) {
       {showAbout && (
         <Card label="About">
           <p className="text-[13.5px] leading-[1.65] text-ink-soft">{about}</p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Pill gold><Film className="h-3 w-3" /> Film</Pill>
-            <Pill gold><Tv className="h-3 w-3" /> OTT</Pill>
-            <Pill gold><Drama className="h-3 w-3" /> Stage</Pill>
-            <Pill><Megaphone className="h-3 w-3" /> Commercial</Pill>
-          </div>
+          {profile.professions && profile.professions.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {profile.professions.map((profession) => (
+                <Pill key={profession} gold>{profession}</Pill>
+              ))}
+            </div>
+          )}
         </Card>
       )}
     </>

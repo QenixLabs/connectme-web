@@ -101,10 +101,10 @@ function DateBlock({
 interface BasicInfoStepProps {
   mediaFile?: File | null;
   onMediaChange?: (file: File | null) => void;
-  existingBanner?: { url: string; type: 'image' | 'video'; thumbnail?: string } | null;
+  existingCoverUrl?: string | null;
 }
 
-export function BasicInfoStep({ mediaFile, onMediaChange, existingBanner }: BasicInfoStepProps) {
+export function BasicInfoStep({ mediaFile, onMediaChange, existingCoverUrl }: BasicInfoStepProps) {
   const { watch, setValue } = useFormContext();
   const selectedRole = watch('role_type');
   const selectedState = watch('location.state');
@@ -351,13 +351,9 @@ export function BasicInfoStep({ mediaFile, onMediaChange, existingBanner }: Basi
       <SectionLabel>Media</SectionLabel>
 
       <div className="space-y-3">
-        {existingBanner && !mediaFile && (
+        {existingCoverUrl && !mediaFile && (
           <div className="relative rounded-xl overflow-hidden aspect-video border border-border/60 w-full max-w-[320px] shadow-luxe">
-            {existingBanner.type === 'video' ? (
-              <video src={existingBanner.url} className="w-full h-full object-cover" controls poster={existingBanner.thumbnail} />
-            ) : (
-              <img src={existingBanner.url} alt="" className="w-full h-full object-cover" />
-            )}
+            <img src={existingCoverUrl} alt="" className="w-full h-full object-cover" />
           </div>
         )}
 
@@ -410,7 +406,7 @@ export function BasicInfoStep({ mediaFile, onMediaChange, existingBanner }: Basi
                 <Upload className={cn("w-5 h-5", dragOver ? "text-gold" : "text-ink-muted")} strokeWidth={1.5} />
               </div>
               <span className={cn("text-sm font-medium", dragOver ? "text-gold-ink" : "text-ink-muted")}>
-                {dragOver ? "Drop image here" : "Upload banner image"}
+                {dragOver ? "Drop image here" : "Upload cover image"}
               </span>
               <span className="text-xs text-ink-muted/60">PNG, JPG or WebP</span>
             </label>

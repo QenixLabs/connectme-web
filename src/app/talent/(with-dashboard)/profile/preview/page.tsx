@@ -55,7 +55,7 @@ function SectionCard({ title, icon: Icon, children }: {
       className="rounded-[14px] p-4 gap-3"
       style={{ background: gold.card, borderColor: gold.border }}
     >
-      <CardHeader className="p-0 flex-row items-center gap-2">
+      <CardHeader className="p-0 flex flex-row items-center gap-2">
         {Icon && <Icon className="w-4 h-4" style={{ color: gold.primary }} strokeWidth={2} />}
         <CardTitle className="text-[13px] font-semibold" style={{ color: gold.foreground }}>{title}</CardTitle>
       </CardHeader>

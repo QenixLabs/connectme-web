@@ -158,7 +158,7 @@ export default function TalentRequestsPage() {
     return (
       <div className="relative min-h-screen bg-page">
         <GrainOverlay />
-        <div className="relative z-10 px-4 pt-6 pb-20 space-y-4">
+        <div className="relative z-10 px-4 pt-6 pb-0 space-y-4">
           <Skeleton className="h-5 w-40" />
           <Skeleton className="h-14 w-full rounded-xl" />
           <div className="flex gap-2">

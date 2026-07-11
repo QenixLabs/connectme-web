@@ -2,7 +2,8 @@ import { z } from 'zod';
 
 export const PROFICIENCY = ['beginner', 'intermediate', 'expert'] as const;
 export const AVAILABILITY = ['available', 'busy', 'not_available'] as const;
-export const PRIVACY_MODE = ['public', 'private'] as const;
+export const PRIVACY_MODE = ['public', 'recruiters_only', 'private'] as const;
+export type PrivacyMode = (typeof PRIVACY_MODE)[number];
 export const VISIBILITY = ['public', 'recruiters_only', 'private'] as const;
 
 const usernameSchema = z

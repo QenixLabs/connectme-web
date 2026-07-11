@@ -60,6 +60,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Separator } from "@/components/ui/separator";
@@ -652,42 +653,54 @@ export default function AdminUsersPage() {
                     </SelectContent>
                   </Select>
 
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-9 w-9 shrink-0"
-                    onClick={() =>
-                      setSortOrder((o) => (o === "asc" ? "desc" : "asc"))
-                    }
-                    title={sortOrder === "asc" ? "Ascending" : "Descending"}
-                  >
-                    {sortOrder === "asc" ? (
-                      <ArrowUp className="h-3.5 w-3.5" />
-                    ) : (
-                      <ArrowDown className="h-3.5 w-3.5" />
-                    )}
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-9 w-9 shrink-0"
+                        onClick={() =>
+                          setSortOrder((o) => (o === "asc" ? "desc" : "asc"))
+                        }
+                      >
+                        {sortOrder === "asc" ? (
+                          <ArrowUp className="h-3.5 w-3.5" />
+                        ) : (
+                          <ArrowDown className="h-3.5 w-3.5" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{sortOrder === "asc" ? "Ascending" : "Descending"}</TooltipContent>
+                  </Tooltip>
 
                   <div className="hidden sm:flex items-center border border-border rounded-md">
-                    <Button
-                      variant={viewMode === "table" ? "secondary" : "ghost"}
-                      size="icon"
-                      className="h-7 w-7 rounded-r-none"
-                      onClick={() => setViewMode("table")}
-                      title="Table view"
-                    >
-                      <List className="h-3.5 w-3.5" />
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant={viewMode === "table" ? "secondary" : "ghost"}
+                          size="icon"
+                          className="h-7 w-7 rounded-r-none"
+                          onClick={() => setViewMode("table")}
+                        >
+                          <List className="h-3.5 w-3.5" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Table view</TooltipContent>
+                    </Tooltip>
                     <div className="w-px h-4 bg-border" />
-                    <Button
-                      variant={viewMode === "cards" ? "secondary" : "ghost"}
-                      size="icon"
-                      className="h-7 w-7 rounded-l-none"
-                      onClick={() => setViewMode("cards")}
-                      title="Card view"
-                    >
-                      <LayoutGrid className="h-3.5 w-3.5" />
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant={viewMode === "cards" ? "secondary" : "ghost"}
+                          size="icon"
+                          className="h-7 w-7 rounded-l-none"
+                          onClick={() => setViewMode("cards")}
+                        >
+                          <LayoutGrid className="h-3.5 w-3.5" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Card view</TooltipContent>
+                    </Tooltip>
                   </div>
                 </div>
               </div>

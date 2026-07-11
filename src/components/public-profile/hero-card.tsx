@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MapPin, Sparkles, BadgeCheck, Film, Tv, Drama, Megaphone } from "lucide-react";
+import { MapPin, Sparkles, BadgeCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { resolveHeroBackground } from "@/lib/hero-color";
 import type { TalentProfile } from "@/lib/validations/talent-profile.schema";
@@ -42,157 +42,155 @@ export function HeroCard({
 
   return (
     <section className="px-4 pt-5">
-      <div className="relative overflow-hidden rounded-[32px] shadow-2xl">
-        {/* Hero banner */}
+      <div className="rounded-2xl border border-border overflow-hidden">
+      {/* Hero banner */}
+      <div
+        className="relative h-[280px] transition-colors duration-700"
+        style={{
+          background: showBgImage ? hero.background : (imgFailed ? fallbackBg : hero.background),
+        }}
+      >
+        {/* Subtle grain texture */}
         <div
-          className="relative h-[340px] transition-colors duration-700"
-          style={{
-            background: showBgImage ? hero.background : (imgFailed ? fallbackBg : hero.background),
-          }}
-        >
-          {/* Grain texture */}
-          <div
-            className="absolute inset-0 z-0"
-            style={{
-              background: `
-                radial-gradient(ellipse 120% 60% at 50% 30%, rgba(255,255,255,0.04) 0%, transparent 65%),
-                radial-gradient(ellipse 80% 40% at 50% 85%, rgba(0,0,0,0.15) 0%, transparent 60%)
-              `,
-            }}
-          />
-          <div
-            className="absolute inset-0 z-[1] opacity-[0.03] mix-blend-overlay"
-            style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E\")" }}
-          />
+          className="absolute inset-0 z-0 opacity-[0.03] mix-blend-overlay"
+          style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E\")" }}
+        />
 
-          {/* Hidden img for URL detection */}
-          {hero.isImage && !imgFailed && (
-            <img
-              src={profile.hero_background!}
-              alt=""
-              className="hidden"
-              onError={() => setImgFailed(true)}
-            />
-          )}
+        {/* Hidden img for URL detection */}
+        {hero.isImage && !imgFailed && (
+          <img
+            src={profile.hero_background!}
+            alt=""
+            className="hidden"
+            onError={() => setImgFailed(true)}
+          />
+        )}
 
-          {/* Tier badge — top left */}
-          <div className="absolute top-4 left-4 z-10 flex items-center gap-1.5 rounded-full bg-black/25 backdrop-blur-md border border-white/10 px-2.5 py-1">
-            <Sparkles className="h-3 w-3 text-white/80" />
-            <span className="text-[10px] font-medium uppercase tracking-[0.12em] text-white/80">
-              Tier {(profile.verification_tier || 1) > 3 ? 3 : profile.verification_tier || 1}
+        {/* Bottom gradient fade for text legibility */}
+        <div className="absolute inset-x-0 bottom-0 h-[50%] bg-gradient-to-t from-black/50 via-black/10 to-transparent z-[2] pointer-events-none" />
+
+        {/* Tier badge — top left */}
+        <div className="absolute top-4 left-4 z-10 flex items-center gap-1.5 rounded-full bg-black/25 border border-white/10 px-2.5 py-1">
+          <Sparkles className="h-3 w-3 text-white/80" />
+          <span className="text-[10px] font-medium uppercase tracking-[0.12em] text-white/80">
+            Tier {(profile.verification_tier || 1) > 3 ? 3 : profile.verification_tier || 1}
+          </span>
+        </div>
+
+        {/* Verified badge — top left after tier */}
+        {profile.is_verified && (
+          <div
+            className="absolute top-4 z-10 flex items-center gap-1 rounded-full bg-black/25 border border-white/10 px-2.5 py-1"
+            style={{ left: profile.verification_tier ? "86px" : "16px" }}
+          >
+            <BadgeCheck className="h-3 w-3 text-emerald-400" strokeWidth={2.5} />
+            <span className="text-[10px] font-medium text-white/80 tracking-wide">Verified</span>
+          </div>
+        )}
+
+        {/* Availability — top right */}
+        {showAvailability && (
+          <div className="absolute top-4 right-4 z-10 flex items-center gap-1.5 rounded-full bg-black/25 border border-white/10 px-2.5 py-1">
+            <span className="relative flex h-1.5 w-1.5">
+              <span
+                className={cn(
+                  "absolute inline-flex h-full w-full animate-ping rounded-full opacity-75",
+                  isAvailable ? "bg-emerald-400" : "bg-amber-400",
+                )}
+              />
+              <span
+                className={cn(
+                  "relative inline-flex h-1.5 w-1.5 rounded-full",
+                  isAvailable ? "bg-emerald-400" : "bg-amber-400",
+                )}
+              />
+            </span>
+            <span className="text-[10px] font-medium text-white/80 tracking-wide">
+              {isAvailable ? "Available" : "Busy"}
             </span>
           </div>
+        )}
+      </div>
 
-          {/* Verified badge — top left after tier */}
-          {profile.is_verified && (
-            <div
-              className="absolute top-4 z-10 flex items-center gap-1 rounded-full bg-black/25 backdrop-blur-md border border-white/10 px-2.5 py-1"
-              style={{ left: profile.verification_tier ? "86px" : "16px" }}
-            >
-              <BadgeCheck className="h-3 w-3 text-emerald-400" strokeWidth={2.5} />
-              <span className="text-[10px] font-medium text-white/80 tracking-wide">Verified</span>
-            </div>
-          )}
-
-          {/* Availability — top right */}
-          {showAvailability && (
-            <div className="absolute top-4 right-4 z-10 flex items-center gap-1.5 rounded-full bg-black/25 backdrop-blur-md border border-white/10 px-2.5 py-1">
-              <span className="relative flex h-1.5 w-1.5">
-                <span
-                  className={cn(
-                    "absolute inline-flex h-full w-full animate-ping rounded-full opacity-75",
-                    isAvailable ? "bg-emerald-400" : "bg-amber-400",
-                  )}
-                />
-                <span
-                  className={cn(
-                    "relative inline-flex h-1.5 w-1.5 rounded-full",
-                    isAvailable ? "bg-emerald-400" : "bg-amber-400",
-                  )}
-                />
-              </span>
-              <span className="text-[10px] font-medium text-white/80 tracking-wide">
-                {isAvailable ? "Available" : "Busy"}
-              </span>
-            </div>
-          )}
-
-          {/* Avatar + name cluster — centered */}
-          <div className="absolute inset-x-0 top-[42px] z-10 flex flex-col items-center">
+      {/* Unified identity + bio card */}
+      <div>
+        <div className="bg-card px-5 pt-4 pb-4">
+          {/* Avatar + name cluster */}
+          <div className="flex items-center gap-4">
             {/* Avatar */}
-            <div className="relative">
-              <div className="absolute -inset-1 rounded-full bg-white/10 blur-lg" />
-              <div className="relative h-[120px] w-[120px] rounded-full p-[3px] bg-gradient-to-b from-white/30 to-white/5">
-                <div className="h-full w-full rounded-full bg-white/10 backdrop-blur-sm overflow-hidden ring-1 ring-white/15">
-                  {profile.profile_photo ? (
-                    <img
-                      src={profile.profile_photo}
-                      alt={displayName}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <span className="h-full w-full grid place-items-center font-serif text-[52px] leading-none font-semibold text-white/30 select-none">
-                      {displayName.charAt(0).toUpperCase()}
-                    </span>
-                  )}
-                </div>
+            <div className="relative shrink-0">
+              <div className="relative h-[72px] w-[72px] rounded-full border-[2px] border-border overflow-hidden bg-muted">
+                {profile.profile_photo ? (
+                  <img
+                    src={profile.profile_photo}
+                    alt={displayName}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <span className="h-full w-full grid place-items-center font-serif text-[32px] leading-none font-semibold text-ink-muted select-none">
+                    {displayName.charAt(0).toUpperCase()}
+                  </span>
+                )}
               </div>
-              {/* Verified checkmark */}
               {profile.is_verified && (
-                <div className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full bg-emerald-500 grid place-items-center shadow-lg ring-[3px] ring-[#1a1c2a]">
-                  <BadgeCheck className="h-4 w-4 text-white" strokeWidth={2.4} />
+                <div className="absolute -bottom-0.5 -right-0.5 h-5 w-5 rounded-full bg-emerald-500 grid place-items-center shadow-sm ring-[2px] ring-card">
+                  <BadgeCheck className="h-3 w-3 text-white" strokeWidth={2.4} />
                 </div>
               )}
             </div>
 
-            {/* Name */}
-            <h1 className="mt-4 font-serif text-[26px] font-semibold text-white leading-tight tracking-tight">
-              {displayName}
-            </h1>
-
-            {/* Profession + Location */}
-            <div className="mt-1.5 flex items-center gap-2 text-[13px] text-white/70">
-              {professionStr && <span className="font-medium text-white/90">{professionStr}</span>}
-              {professionStr && loc && showLocation && (
-                <span className="w-1 h-1 rounded-full bg-white/30" />
-              )}
-              {showLocation && loc && (
-                <span className="flex items-center gap-1">
-                  <MapPin className="h-3 w-3 text-white/50" />
-                  {loc}
-                </span>
-              )}
+            {/* Name + details */}
+            <div className="min-w-0 flex-1">
+              <h1 className="font-serif text-[20px] font-semibold text-ink leading-tight tracking-tight truncate">
+                {displayName}
+              </h1>
+              <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] text-ink-soft">
+                {professionStr && <span className="font-medium text-ink truncate">{professionStr}</span>}
+                {professionStr && loc && showLocation && (
+                  <span className="w-1 h-1 rounded-full bg-border shrink-0" />
+                )}
+                {showLocation && loc && (
+                  <span className="flex items-center gap-1 truncate">
+                    <MapPin className="h-3 w-3 text-gold shrink-0" />
+                    {loc}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Identity card — overlapping */}
-        <div className="-mt-10 mx-3 mb-3 relative z-10">
-          <div className="rounded-2xl bg-card/95 backdrop-blur-xl border border-border/60 shadow-lg px-5 pt-4 pb-4">
-            <p
-              className={cn(
-                "text-[13.5px] leading-[1.65] text-ink-soft",
-                !aboutExpanded && "line-clamp-3",
-              )}
-            >
-              {aboutText || "No bio added yet."}
-            </p>
-            {aboutText && aboutText.length > 250 && (
-              <button
-                onClick={() => setAboutExpanded(!aboutExpanded)}
-                className="mt-1 text-[12px] font-medium text-gold hover:text-gold/80 transition-colors"
+          {/* About text */}
+          {aboutText && (
+            <div className="mt-3 pt-3 border-t border-border/60">
+              <p
+                className={cn(
+                  "text-[13.5px] leading-[1.65] text-ink-soft",
+                  !aboutExpanded && "line-clamp-3",
+                )}
               >
-                {aboutExpanded ? "Show less" : "Read more"}
-              </button>
-            )}
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Pill gold><Film className="h-3 w-3" /> Film</Pill>
-              <Pill gold><Tv className="h-3 w-3" /> OTT</Pill>
-              <Pill gold><Drama className="h-3 w-3" /> Stage</Pill>
-              <Pill><Megaphone className="h-3 w-3" /> Commercial</Pill>
+                {aboutText}
+              </p>
+              {aboutText.length > 250 && (
+                <button
+                  onClick={() => setAboutExpanded(!aboutExpanded)}
+                  className="mt-1 text-[12px] font-medium text-gold hover:text-gold/80 transition-colors"
+                >
+                  {aboutExpanded ? "Show less" : "Read more"}
+                </button>
+              )}
             </div>
-          </div>
+          )}
+
+          {/* Profession pills */}
+          {profile.professions && profile.professions.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {profile.professions.map((profession) => (
+                <Pill key={profession} gold>{profession}</Pill>
+              ))}
+            </div>
+          )}
         </div>
+      </div>
       </div>
     </section>
   );

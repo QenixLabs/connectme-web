@@ -6,6 +6,7 @@ import { EmptyChatState } from "./empty-chat-state";
 import { formatDate } from "./utils";
 import type { Message } from "@/lib/api/messages";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
 interface MessageThreadProps {
@@ -92,8 +93,9 @@ export function MessageThread({
 
   if (loading) {
     return (
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-msg-page">
-        <div className="flex justify-center">
+      <ScrollArea className="flex-1 bg-msg-page px-4 py-4">
+        <div className="space-y-3">
+          <div className="flex justify-center">
           <Skeleton className="h-5 w-24 rounded-full" />
         </div>
         {Array.from({ length: 5 }).map((_, i) => (
@@ -121,23 +123,21 @@ export function MessageThread({
             />
           </div>
         ))}
-      </div>
+        </div>
+      </ScrollArea>
     );
   }
 
   if (messages.length === 0) {
     return (
-      <div className="flex-1 overflow-y-auto px-4 bg-msg-page">
+      <ScrollArea className="flex-1 bg-msg-page px-4">
         <EmptyChatState />
-      </div>
+      </ScrollArea>
     );
   }
 
     return (
-      <div
-        ref={containerRef}
-        className="flex-1 overflow-y-auto bg-msg-page"
-      >
+      <ScrollArea ref={containerRef as React.Ref<HTMLDivElement>} className="flex-1 bg-msg-page">
         <div className="px-4 py-4">
           {threadMessages.map((msg, index) => {
             const showDate =
@@ -166,6 +166,6 @@ export function MessageThread({
           })}
           <div ref={bottomRef} className="h-1" />
         </div>
-      </div>
+      </ScrollArea>
     );
   }

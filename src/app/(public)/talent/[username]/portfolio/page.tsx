@@ -1,17 +1,14 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
   Share2,
-  MapPin,
-  Film,
-  Check,
   Download,
   QrCode,
-  Pencil,
+  Check,
+  MapPin,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -28,11 +25,11 @@ import { isFeatureForbidden } from "@/hooks/use-feature-guard";
 import { FeatureGateAlert } from "@/components/feature-gate-alert";
 import { useCreateCollaborationRequest } from "@/lib/api/hooks/useCreateCollaborationRequest";
 import { ShareProfileDialog } from "@/components/share-profile-dialog";
-import { PortfolioLightbox } from "@/components/portfolio/portfolio-lightbox";
 import { MediaKitHeader } from "@/components/portfolio/media-kit-header";
-import { MediaKitHero } from "@/components/public-profile/media-kit-hero";
+import { PortfolioHeroImmersive } from "@/components/public-profile/portfolio-hero-immersive";
 import { MediaKitStats } from "@/components/public-profile/media-kit-stats";
-import { MediaKitHighlights } from "@/components/public-profile/media-kit-highlights";
+import { PortfolioShowcase } from "@/components/public-profile/portfolio-showcase";
+import { PortfolioGallery } from "@/components/public-profile/portfolio-gallery";
 
 export default function PortfolioPage() {
   const router = useRouter();
@@ -53,8 +50,8 @@ export default function PortfolioPage() {
   const [previewUserId, setPreviewUserId] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [requestSent, setRequestSent] = useState(false);
-  const [lightboxItem, setLightboxItem] = useState<PortfolioItem | null>(null);
-  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [galleryIndex, setGalleryIndex] = useState(0);
   const [aboutExpanded, setAboutExpanded] = useState(false);
 
   const { guard } = useTierGuard(3);
@@ -67,10 +64,6 @@ export default function PortfolioPage() {
   const heroImages = items
     .filter((i) => i.type === "image" && i.url)
     .map((i) => i.url);
-
-  const portfolioImages = items.length > 0
-    ? items.map((i) => i.url).filter(Boolean)
-    : [];
 
   const shareUrl =
     typeof window !== "undefined"
@@ -156,10 +149,36 @@ export default function PortfolioPage() {
     }
   };
 
-  const handleLightboxOpen = useCallback((item: PortfolioItem) => {
-    setLightboxItem(item);
-    setLightboxOpen(true);
+  const handleGalleryOpen = useCallback((_item: PortfolioItem, index: number) => {
+    setGalleryIndex(index);
+    setGalleryOpen(true);
   }, []);
+
+  useEffect(() => {
+    if (!profile) return;
+
+    const hasInstagramLink = !!profile.social_links?.instagram?.url;
+    const hasYoutubeLink = !!profile.social_links?.youtube?.url;
+    if (!hasInstagramLink && !hasYoutubeLink) return;
+
+    const statsPresent =
+      (!hasInstagramLink || mediaKit?.instagramFollowers != null) &&
+      (!hasYoutubeLink || mediaKit?.youtubeSubscribers != null);
+    if (statsPresent) return;
+
+    const timer = setTimeout(async () => {
+      try {
+        const refreshed = await talentApi.getMediaKit(username);
+        if (refreshed && !(refreshed as { private?: boolean }).private) {
+          setMediaKit(refreshed as MediaKitData);
+        }
+      } catch {
+        // silently ignore poll failures
+      }
+    }, 8000);
+
+    return () => clearTimeout(timer);
+  }, [username, profile, mediaKit]);
 
   if (loading) {
     return (
@@ -253,89 +272,98 @@ export default function PortfolioPage() {
 
   if (!profile) return null;
 
-  const hasInstagramLink = !!profile.social_links?.instagram?.url;
-  const hasYoutubeLink = !!profile.social_links?.youtube?.url;
+  const instagramUrl = profile.social_links?.instagram?.url;
+  const youtubeUrl = profile.social_links?.youtube?.url;
+  const hasInstagramLink = !!instagramUrl;
+  const hasYoutubeLink = !!youtubeUrl;
 
   return (
     <div className="min-h-screen bg-background font-sans pb-12">
       <MediaKitHeader isOwner={isOwner} onShare={handleShareLink} />
 
-      <MediaKitHero
-        heroBackground={mediaKit?.hero_background ?? profile.hero_background}
-        portfolioImages={heroImages}
-      />
+      <section className="px-4 pt-5">
+        <div className="rounded-2xl border border-border overflow-hidden">
+          <PortfolioHeroImmersive
+            heroBackground={mediaKit?.hero_background ?? profile.hero_background}
+            portfolioImages={heroImages}
+          />
+          <div className="bg-card px-5 pt-4 pb-4">
+            <div className="flex gap-5">
+              {/* Left: profile info */}
+              <div className="flex-1 min-w-0 space-y-3">
+                <div className="flex items-center gap-2">
+                  <h1 className="font-serif text-2xl font-semibold text-ink tracking-tight">
+                    {displayName}
+                  </h1>
+                  {!!profile.is_verified && (
+                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gold shrink-0">
+                      <Check className="w-3 h-3 text-white" strokeWidth={2.5} />
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-ink-muted">@{profile.username || username}</p>
+                {(profile.professions || []).length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {(profile.professions || []).slice(0, 3).map((p) => (
+                      <span
+                        key={p}
+                        className="inline-flex text-[11px] px-2.5 py-1 rounded-full bg-ink/10 text-ink-soft"
+                      >
+                        {p}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {loc && (
+                  <p className="flex items-center gap-1 text-xs text-ink-muted">
+                    <MapPin className="w-3 h-3 text-gold" />
+                    {loc}
+                  </p>
+                )}
+              </div>
 
-      {/* Identity block */}
-      <div className="px-4 pt-5 text-center">
-        <div className="flex items-center justify-center gap-2">
-          <h1 className="font-serif text-[22px] font-semibold text-ink">
-            {displayName}
-          </h1>
-          {profile.is_verified && (
-            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gold shrink-0">
-              <Check className="w-3 h-3 text-white" strokeWidth={2.5} />
-            </span>
-          )}
-        </div>
-
-        <p className="text-[13px] text-ink-muted mt-0.5">@{profile.username || username}</p>
-
-        {(profile.professions?.length || loc) && (
-          <div className="flex flex-wrap items-center justify-center gap-2 mt-3">
-            {profile.professions?.map((p) => (
-              <span
-                key={p}
-                className="inline-flex items-center gap-1.5 text-[12px] px-3 py-1.5 rounded-full border bg-gold-soft border-gold/40 text-gold-ink"
-              >
-                <Film className="h-3 w-3" />
-                {p}
-              </span>
-            ))}
-            {loc && (
-              <span className="inline-flex items-center gap-1.5 text-[12px] px-3 py-1.5 rounded-full border bg-cream border-border text-ink-soft">
-                <MapPin className="h-3 w-3 text-gold" />
-                {loc}
-              </span>
-            )}
+              {/* Right: bio */}
+              {aboutText && (
+                <div className="flex-1 min-w-0 border-l border-border/60 pl-5">
+                  <p
+                  className={cn(
+                    "h-full text-[13.5px] leading-[1.65] text-ink-soft text-left",
+                    !aboutExpanded && "line-clamp-4",
+                  )}
+                  >
+                    {aboutText}
+                  </p>
+                  {aboutText.length > 280 && (
+                    <button
+                      onClick={() => setAboutExpanded(!aboutExpanded)}
+                      className="text-[12px] font-medium text-gold mt-1 hover:text-gold/80 transition-colors"
+                    >
+                      {aboutExpanded ? "Show less" : "Read more"}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
-        )}
-      </div>
-
-      {/* Bio */}
-      {aboutText && (
-        <div className="px-4 mt-4">
-          <p
-            className={cn(
-              "text-[13.5px] leading-[1.65] text-ink-soft text-left",
-              !aboutExpanded && "line-clamp-4",
-            )}
-          >
-            {aboutText}
-          </p>
-          {aboutText.length > 280 && (
-            <button
-              onClick={() => setAboutExpanded(!aboutExpanded)}
-              className="text-[12px] font-medium text-gold mt-1 hover:text-gold/80 transition-colors"
-            >
-              {aboutExpanded ? "Show less" : "Read more"}
-            </button>
-          )}
         </div>
-      )}
+      </section>
 
       {/* Stats */}
       <MediaKitStats
-        instagramFollowers={mediaKit?.instagramFollowers ?? 0}
-        youtubeSubscribers={mediaKit?.youtubeSubscribers ?? 0}
-        avgMonthlyViews={mediaKit?.avgMonthlyViews ?? profile?.analytics?.profile_views_30d ?? 0}
+        instagramFollowers={mediaKit?.instagramFollowers}
+        youtubeSubscribers={mediaKit?.youtubeSubscribers}
+        youtubeViews={mediaKit?.youtubeViews}
+        monthlyViews={profile?.analytics?.profile_views_30d ?? 0}
         hasInstagramLink={hasInstagramLink}
         hasYoutubeLink={hasYoutubeLink}
+        instagramUrl={instagramUrl}
+        youtubeUrl={youtubeUrl}
       />
 
-      {/* Portfolio Highlights */}
-      <MediaKitHighlights
+      {/* Portfolio Showcase */}
+      <PortfolioShowcase
         items={items}
-        onItemClick={handleLightboxOpen}
+        onItemClick={handleGalleryOpen}
       />
 
       {/* Footer: shareable caption + action bar */}
@@ -381,10 +409,11 @@ export default function PortfolioPage() {
         </div>
       </div>
 
-      <PortfolioLightbox
-        item={lightboxItem}
-        open={lightboxOpen}
-        onOpenChange={setLightboxOpen}
+      <PortfolioGallery
+        items={items}
+        initialIndex={galleryIndex}
+        open={galleryOpen}
+        onClose={() => setGalleryOpen(false)}
       />
     </div>
   );

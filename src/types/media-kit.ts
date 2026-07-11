@@ -10,9 +10,10 @@ export interface MediaKitData {
   professions?: string[];
   headline?: string;
   about?: string;
-  instagramFollowers: number;
-  youtubeSubscribers: number;
-  avgMonthlyViews: number;
+  instagramFollowers?: number;
+  youtubeSubscribers?: number;
+  youtubeViews?: number;
+  avgMonthlyViews?: number;
   portfolioHighlights: PortfolioItem[];
   publicSlug: string;
 }

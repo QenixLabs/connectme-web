@@ -10,6 +10,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import type { PortfolioItem } from "@/lib/validations/talent-profile.schema";
 
 interface PortfolioItemDetailSheetProps {
@@ -69,7 +70,7 @@ export function PortfolioItemDetailSheet({
             </div>
           </SheetHeader>
 
-          <div className="flex-1 overflow-y-auto">
+          <ScrollArea className="flex-1">
             <div className="relative w-full bg-black">
               {item.type === "image" ? (
                 <img
@@ -213,7 +214,7 @@ export function PortfolioItemDetailSheet({
                 </Button>
               </div>
             </div>
-          </div>
+          </ScrollArea>
         </div>
       </SheetContent>
     </Sheet>

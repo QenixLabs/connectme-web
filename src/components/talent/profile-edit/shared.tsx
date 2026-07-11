@@ -102,7 +102,7 @@ export function SectionCard({
   return (
     <Card className="relative rounded-2xl border-border/50 shadow-luxe overflow-hidden p-0 gap-0 group/card transition-shadow duration-300 hover:shadow-[0_12px_40px_-20px_oklch(0.30_0.05_60/0.30)]">
       <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-gold/40 via-gold/15 to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-500" />
-      <CardHeader className="px-5 pt-5 pb-3.5 flex-row items-start gap-3.5">
+      <CardHeader className="px-5 pt-5 pb-3.5 flex flex-row items-center gap-3.5">
         <div className="h-10 w-10 rounded-xl bg-gold-soft border border-gold/20 grid place-items-center shrink-0">
           <Icon className="h-[18px] w-[18px] text-gold-ink" strokeWidth={1.5} />
         </div>
@@ -192,6 +192,7 @@ export function SkillRow({
         {...register(`skills.${idx}.name`)}
         aria-invalid={!!errors.skills?.[idx]?.name}
         className="flex-1 min-w-0 bg-transparent text-[13px] font-medium outline-none placeholder:text-ink-muted/60 text-ink"
+        onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
       />
       <Controller
         control={control}
@@ -256,6 +257,7 @@ export function LanguageRow({
         {...register(`languages.${idx}.name`)}
         aria-invalid={!!errors.languages?.[idx]?.name}
         className="flex-1 min-w-0 bg-transparent text-[13px] font-medium outline-none placeholder:text-ink-muted/60 text-ink"
+        onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
       />
       <Controller
         control={control}

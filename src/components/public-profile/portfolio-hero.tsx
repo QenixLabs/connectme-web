@@ -23,6 +23,10 @@ export function PortfolioHero({ profile, items }: PortfolioHeroProps) {
     imgFailed ? undefined : profile.hero_background,
     profile.username ?? "default",
   );
+  const fallbackBg = resolveHeroBackground(
+    undefined,
+    profile.username ?? "default",
+  ).background;
   const showBgImage = hero.isImage && !imgFailed;
 
   const views = profile.analytics?.profile_views_30d ?? 0;
@@ -37,7 +41,7 @@ export function PortfolioHero({ profile, items }: PortfolioHeroProps) {
       <div
         className="relative h-[75vh] min-h-[480px] max-h-[620px] transition-colors duration-700"
         style={{
-          background: hero.background,
+          background: showBgImage ? hero.background : (imgFailed ? fallbackBg : hero.background),
         }}
       >
         {/* Hidden img for URL detection */}
@@ -50,8 +54,8 @@ export function PortfolioHero({ profile, items }: PortfolioHeroProps) {
           />
         )}
 
-        {/* Dark overlay gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/10 to-black/70" />
+        {/* Dark overlay gradient — lighter for better image visibility */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/15 via-transparent to-black/55" />
 
         {/* Grain texture */}
         <div
@@ -100,69 +104,66 @@ export function PortfolioHero({ profile, items }: PortfolioHeroProps) {
           </div>
         </div>
 
-        {/* Center content — avatar + name */}
-        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center pb-8">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-            className="relative"
-          >
-            <div className="absolute -inset-2 rounded-full bg-white/5 blur-2xl" />
-            <div className="relative h-[140px] w-[140px] sm:h-[160px] sm:w-[160px] rounded-full p-[3px] bg-gradient-to-b from-white/25 to-white/5">
-              <div className="h-full w-full rounded-full bg-white/10 backdrop-blur-sm overflow-hidden ring-1 ring-white/15">
-                {profile.profile_photo ? (
-                  <img
-                    src={profile.profile_photo}
-                    alt={displayName}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <span className="h-full w-full grid place-items-center font-serif text-[60px] leading-none font-semibold text-white/20 select-none">
-                    {displayName.charAt(0).toUpperCase()}
+        {/* Bottom identity card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+          className="absolute inset-x-4 bottom-16 z-10"
+        >
+          <div className="flex items-center gap-4 rounded-2xl bg-black/30 backdrop-blur-xl border border-white/10 p-4">
+            {/* Avatar */}
+            <div className="relative shrink-0">
+              <div className="relative h-[80px] w-[80px] sm:h-[88px] sm:w-[88px] rounded-full p-[2px] bg-gradient-to-b from-white/25 to-white/5">
+                <div className="h-full w-full rounded-full bg-white/10 backdrop-blur-sm overflow-hidden ring-1 ring-white/15">
+                  {profile.profile_photo ? (
+                    <img
+                      src={profile.profile_photo}
+                      alt={displayName}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <span className="h-full w-full grid place-items-center font-serif text-[36px] sm:text-[40px] leading-none font-semibold text-white/20 select-none">
+                      {displayName.charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                </div>
+              </div>
+              {profile.is_verified && (
+                <div className="absolute -bottom-0.5 -right-0.5 h-6 w-6 rounded-full bg-emerald-500 grid place-items-center shadow-lg ring-[2px] ring-black/40">
+                  <BadgeCheck className="h-3.5 w-3.5 text-white" strokeWidth={2.4} />
+                </div>
+              )}
+            </div>
+
+            {/* Name + details */}
+            <div className="min-w-0 flex-1">
+              <h1 className="font-serif text-[22px] sm:text-[26px] font-semibold text-white leading-tight tracking-tight truncate">
+                {displayName}
+              </h1>
+              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] sm:text-[14px] text-white/70">
+                {professionStr && (
+                  <span className="font-medium text-white/90 truncate">{professionStr}</span>
+                )}
+                {professionStr && loc && (
+                  <span className="w-1 h-1 rounded-full bg-white/30 shrink-0" />
+                )}
+                {loc && (
+                  <span className="flex items-center gap-1 truncate">
+                    <MapPin className="h-3 w-3 text-white/50 shrink-0" />
+                    {loc}
                   </span>
                 )}
               </div>
             </div>
-            {profile.is_verified && (
-              <div className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-emerald-500 grid place-items-center shadow-lg ring-[3px] ring-black/40">
-                <BadgeCheck className="h-[18px] w-[18px] text-white" strokeWidth={2.4} />
-              </div>
-            )}
-          </motion.div>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-            className="mt-5 font-serif text-[32px] sm:text-[40px] font-semibold text-white leading-tight tracking-tight text-center px-4"
-          >
-            {displayName}
-          </motion.h1>
-
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="mt-2 flex flex-col items-center gap-1"
-          >
-            {professionStr && (
-              <span className="text-[15px] font-medium text-white/80">{professionStr}</span>
-            )}
-            {loc && (
-              <span className="flex items-center gap-1 text-[13px] text-white/50">
-                <MapPin className="h-3 w-3" />
-                {loc}
-              </span>
-            )}
-          </motion.div>
-        </div>
+          </div>
+        </motion.div>
 
         {/* Bottom stats overlay */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.5, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
           className="absolute bottom-6 left-4 right-4 z-10"
         >
           <div className="flex items-center justify-center gap-4 sm:gap-6">

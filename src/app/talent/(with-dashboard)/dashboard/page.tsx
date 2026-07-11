@@ -45,6 +45,7 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 /* ------------------------------------------------------------------ */
 /*  PROFESSION GRADIENT MAP                                           */
@@ -228,19 +229,22 @@ function WelcomeBar({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: "easeOut" }}
       >
-        <Card className="overflow-hidden">
-          <div className="h-[180px] bg-muted/50">
-            <div className="flex items-end gap-4 px-5 pb-4 pt-20">
-              <Skeleton className="h-14 w-14 rounded-full shrink-0 ring-2 ring-white/20" />
-              <div className="space-y-2 flex-1">
-                <Skeleton className="h-3 w-20 rounded-full" />
-                <Skeleton className="h-5 w-40" />
-                <Skeleton className="h-3 w-28 rounded-full" />
+        <div className="rounded-3xl overflow-hidden border border-border">
+          <div className="h-[180px] bg-muted/50" />
+          <div className="-mt-4 relative z-10">
+<Card className="rounded-none border border-border shadow-lg">
+              <div className="flex items-center gap-4 px-4 pt-4 pb-4">
+                <Skeleton className="h-14 w-14 rounded-full shrink-0" />
+                <div className="space-y-2 flex-1">
+                  <Skeleton className="h-3 w-20 rounded-full" />
+                  <Skeleton className="h-5 w-40" />
+                  <Skeleton className="h-3 w-28 rounded-full" />
+                </div>
+                <Skeleton className="h-8 w-8 rounded-xl shrink-0" />
               </div>
-              <Skeleton className="h-8 w-8 rounded-xl shrink-0" />
-            </div>
+            </Card>
           </div>
-        </Card>
+        </div>
       </motion.div>
     );
   }
@@ -252,104 +256,87 @@ function WelcomeBar({
       transition={{ duration: 0.45, ease: "easeOut" }}
     >
       <Link href={`/talent/${username ?? ""}`} className="block group">
-        <Card className="overflow-hidden relative rounded-[20px] border-0 shadow-lg">
-          {/* Hero background banner */}
+        <div className="rounded-3xl overflow-hidden border border-border">
+        {/* Hero background banner */}
+        <div
+          className="relative h-[180px] overflow-hidden transition-colors duration-700"
+          style={{
+            background: showBgImage ? hero.background : (imgFailed ? fallbackBg : hero.background),
+          }}
+        >
+          {/* Grain texture */}
           <div
-            className="relative h-[200px] transition-colors duration-700"
-            style={{
-              background: showBgImage ? hero.background : (imgFailed ? fallbackBg : hero.background),
-            }}
-          >
-            {/* Depth overlays */}
-            <div
-              className="absolute inset-0 z-0"
-              style={{
-                background: `
-                  radial-gradient(ellipse 120% 60% at 50% 30%, rgba(255,255,255,0.04) 0%, transparent 65%),
-                  radial-gradient(ellipse 80% 40% at 50% 85%, rgba(0,0,0,0.15) 0%, transparent 60%)
-                `,
-              }}
+            className="absolute inset-0 z-0 opacity-[0.03] mix-blend-overlay"
+            style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E\")" }}
+          />
+
+          {/* Hidden img for image error detection */}
+          {hero.isImage && !imgFailed && (
+            <img
+              src={heroBackground!}
+              alt=""
+              className="hidden"
+              onError={() => setImgFailed(true)}
             />
-            {/* Grain texture */}
-            <div
-              className="absolute inset-0 z-[1] opacity-[0.03] mix-blend-overlay"
-              style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E\")" }}
-            />
+          )}
 
-            {/* Hidden img for image error detection */}
-            {hero.isImage && !imgFailed && (
-              <img
-                src={heroBackground!}
-                alt=""
-                className="hidden"
-                onError={() => setImgFailed(true)}
-              />
-            )}
+          {/* Bottom gradient fade */}
+          <div className="absolute inset-x-0 bottom-0 h-[50%] bg-gradient-to-t from-black/40 via-black/5 to-transparent z-[1] pointer-events-none" />
 
-            {/* Gold accent line */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2/3 h-0.5 rounded-b-full bg-gradient-to-r from-transparent via-white/40 to-transparent z-20" />
+          {/* Gold accent line */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2/3 h-0.5 rounded-b-full bg-gradient-to-r from-transparent via-white/40 to-transparent z-20" />
+        </div>
 
-            {/* Edit button — top right */}
-            <Link
-              href="/talent/profile?edit=1"
-              className="absolute top-3 right-3 z-20 h-8 w-8 rounded-xl bg-black/25 backdrop-blur-md border border-white/10 inline-flex items-center justify-center text-white/70 hover:text-white hover:bg-black/35 transition-all"
-              aria-label="Edit profile"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Pencil className="h-3.5 w-3.5" />
-            </Link>
-
-            {/* Content overlay at bottom */}
-            <div className="absolute inset-x-0 bottom-0 z-10 flex items-end gap-4 px-5 pb-4">
+        {/* Unified card — overlaps hero bottom */}
+        <div className="-mt-4 relative z-10">
+          <Card className="rounded-none border border-border shadow-lg py-0">
+            <div className="flex items-center gap-4 px-4 pt-4 pb-4 ">
               {/* Avatar */}
               <div className="relative shrink-0">
-                <div className="absolute -inset-0.5 rounded-full bg-white/10 blur-md" />
-                <div className="relative h-14 w-14 rounded-full p-[2px] bg-gradient-to-b from-white/25 to-white/5">
-                  <div className="h-full w-full rounded-full bg-white/10 backdrop-blur-sm overflow-hidden ring-1 ring-white/15 grid place-items-center">
-                    {profilePhoto ? (
-                      <img
-                        src={profilePhoto}
-                        alt={displayName}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <span className="font-serif font-semibold text-xl text-white/40">
-                        {displayName.charAt(0).toUpperCase()}
-                      </span>
-                    )}
-                  </div>
+                <div className="relative h-14 w-14 rounded-full border-[2px] border-border overflow-hidden bg-muted">
+                  {profilePhoto ? (
+                    <img
+                      src={profilePhoto}
+                      alt={displayName}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <span className="h-full w-full grid place-items-center font-serif font-semibold text-xl text-ink-muted">
+                      {displayName.charAt(0).toUpperCase()}
+                    </span>
+                  )}
                 </div>
               </div>
 
               {/* Name + info */}
-              <div className="flex-1 min-w-0 pb-0.5">
+              <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <GreetingIcon className="h-3 w-3 text-white/60" />
-                  <p className="text-2xs font-medium uppercase tracking-[0.15em] text-white/50">
+                  <GreetingIcon className="h-3 w-3 text-gold" />
+                  <p className="text-2xs font-medium uppercase tracking-[0.15em] text-ink-muted">
                     {greeting}
                   </p>
                 </div>
-                <h2 className="text-lg font-serif font-semibold text-white leading-tight truncate mt-0.5">
+                <h2 className="text-lg font-serif font-semibold text-ink leading-tight truncate mt-0.5">
                   {displayName}
                 </h2>
-                <p className="text-[10.5px] text-white/45 mt-0.5">
+                <p className="text-[10.5px] text-ink-muted mt-0.5">
                   {today}
                 </p>
                 <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                   {location && (
-                    <span className="inline-flex items-center gap-1 text-[10.5px] text-white/55">
+                    <span className="inline-flex items-center gap-1 text-[10.5px] text-ink-soft">
                       <MapPin className="h-3 w-3" />
                       {location}
                     </span>
                   )}
                   {isVerified ? (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-300 bg-emerald-500/20 backdrop-blur-sm rounded-full px-2.5 py-0.5 border border-emerald-400/20">
+                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-700 bg-emerald-100 rounded-full px-2.5 py-0.5 border border-emerald-200">
                       <BadgeCheck className="h-3 w-3" />
                       Verified
                     </span>
                   ) : (
                     <span
-                      className="inline-flex items-center gap-1 text-[10px] font-medium text-white/70 bg-white/10 backdrop-blur-sm rounded-full px-2.5 py-0.5 border border-white/10 hover:bg-white/15 transition-colors cursor-pointer"
+                      className="inline-flex items-center gap-1 text-[10px] font-medium text-ink-muted bg-muted rounded-full px-2.5 py-0.5 border border-border hover:bg-muted/80 transition-colors cursor-pointer"
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -362,9 +349,20 @@ function WelcomeBar({
                   )}
                 </div>
               </div>
+
+              {/* Edit button */}
+              <Link
+                href="/talent/profile?edit=1"
+                className="h-8 w-8 rounded-xl border border-border bg-muted inline-flex items-center justify-center text-ink-muted hover:text-ink hover:bg-muted/80 transition-all shrink-0"
+                aria-label="Edit profile"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </Link>
             </div>
-          </div>
-        </Card>
+          </Card>
+        </div>
+        </div>
       </Link>
     </motion.div>
   );
@@ -739,11 +737,13 @@ function OpportunityStrip({
           <Skeleton className="h-4 w-36 rounded-full" />
           <Skeleton className="h-3 w-14 rounded-full" />
         </div>
-        <div className="flex gap-3 overflow-x-auto no-scrollbar">
+        <ScrollArea className="w-full">
+          <div className="flex gap-3">
           {[0, 1, 2].map((i) => (
             <Skeleton key={i} className="h-40 w-64 shrink-0 rounded-xl" />
           ))}
-        </div>
+          </div>
+        </ScrollArea>
       </div>
     );
   }
@@ -779,11 +779,13 @@ function OpportunityStrip({
           </CardContent>
         </Card>
       ) : (
-        <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-1 px-1">
+        <ScrollArea className="w-full -mx-1 px-1">
+          <div className="flex gap-3">
           {campaigns.map((campaign, i) => (
             <OpportunityCard key={campaign._id} campaign={campaign} index={i} />
           ))}
-        </div>
+          </div>
+        </ScrollArea>
       )}
     </div>
   );
@@ -856,7 +858,8 @@ function QuickActions({ username }: { username: string | null }) {
   ];
 
   return (
-    <div className="flex gap-2 overflow-x-auto no-scrollbar">
+    <ScrollArea className="w-full">
+      <div className="flex gap-2">
       {actions.map((a) => {
         const Icon = a.icon;
         return (
@@ -875,6 +878,7 @@ function QuickActions({ username }: { username: string | null }) {
           </Link>
         );
       })}
-    </div>
+      </div>
+    </ScrollArea>
   );
 }

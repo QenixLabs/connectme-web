@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { usePopup } from "@/hooks/use-popup";
 import { useTierGuard } from "@/hooks/use-tier-guard";
 import { useFeatureGuard } from "@/hooks/use-feature-guard";
@@ -174,12 +175,14 @@ export function ShortlistOrInviteModal({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="text-lg">
             Shortlist or Invite {talentName}
           </DialogTitle>
         </DialogHeader>
+
+        <ScrollArea className="max-h-[calc(80vh-100px)]">
 
         {loading && campaigns.length === 0 ? (
           <div className="space-y-3 py-4">
@@ -295,6 +298,7 @@ export function ShortlistOrInviteModal({
             </div>
           </div>
         )}
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

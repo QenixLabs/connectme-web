@@ -2,6 +2,16 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { PortfolioUploader } from "@/components/portfolio/portfolio-uploader";
 import { PortfolioStats } from "@/components/portfolio/portfolio-stats";
@@ -42,6 +52,7 @@ export default function TalentPortfolioPage() {
   const [previewMode, setPreviewMode] = useState(false);
   const [lightboxItem, setLightboxItem] = useState<PortfolioItem | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const fetchPortfolio = useCallback(async () => {
     try {
@@ -102,6 +113,10 @@ export default function TalentPortfolioPage() {
     },
     [selectedItem]
   );
+
+  const confirmDelete = useCallback((id: string) => {
+    setPendingDeleteId(id);
+  }, []);
 
   const handleDelete = useCallback(
     async (id: string) => {
@@ -399,7 +414,7 @@ export default function TalentPortfolioPage() {
       <PortfolioGrid
         items={filteredItems}
         onUpdate={handleUpdate}
-        onDelete={handleDelete}
+        onDelete={confirmDelete}
         onReorder={handleReorder}
         onSelectItem={handleSelectItem}
         onPreview={handlePreview}
@@ -411,7 +426,7 @@ export default function TalentPortfolioPage() {
         open={detailSheetOpen}
         onOpenChange={setDetailSheetOpen}
         onUpdate={handleUpdate}
-        onDelete={handleDelete}
+        onDelete={confirmDelete}
       />
 
       <PortfolioLightbox
@@ -419,6 +434,30 @@ export default function TalentPortfolioPage() {
         open={lightboxOpen}
         onOpenChange={setLightboxOpen}
       />
+
+      <AlertDialog open={!!pendingDeleteId} onOpenChange={(open) => !open && setPendingDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Portfolio Item</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this item? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (pendingDeleteId) {
+                  handleDelete(pendingDeleteId);
+                  setPendingDeleteId(null);
+                }
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

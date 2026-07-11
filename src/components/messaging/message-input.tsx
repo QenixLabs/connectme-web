@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Send, Ban, Paperclip, Smile } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 interface MessageInputProps {
   value: string;
@@ -69,13 +70,17 @@ export function MessageInput({
               : "border-border shadow-sm",
           )}
         >
-          <button
-            type="button"
-            className="p-1.5 rounded-full text-ink-muted hover:text-ink-soft hover:bg-cream transition-colors flex-shrink-0 mb-0.5"
-            title="Attach file"
-          >
-            <Paperclip className="w-4 h-4" strokeWidth={1.5} />
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                className="p-1.5 rounded-full text-ink-muted hover:text-ink-soft hover:bg-cream transition-colors flex-shrink-0 mb-0.5"
+              >
+                <Paperclip className="w-4 h-4" strokeWidth={1.5} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Attach file</TooltipContent>
+          </Tooltip>
 
           <textarea
             ref={textareaRef}
@@ -89,13 +94,17 @@ export function MessageInput({
             className="flex-1 resize-none bg-transparent text-sm text-ink placeholder:text-ink-muted outline-none py-1.5 max-h-32"
           />
 
-          <button
-            type="button"
-            className="p-1.5 rounded-full text-ink-muted hover:text-ink-soft hover:bg-cream transition-colors flex-shrink-0 mb-0.5"
-            title="Add emoji"
-          >
-            <Smile className="w-4 h-4" strokeWidth={1.5} />
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                className="p-1.5 rounded-full text-ink-muted hover:text-ink-soft hover:bg-cream transition-colors flex-shrink-0 mb-0.5"
+              >
+                <Smile className="w-4 h-4" strokeWidth={1.5} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>Add emoji</TooltipContent>
+          </Tooltip>
 
           <button
             onClick={onSend}

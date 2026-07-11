@@ -226,7 +226,7 @@ export default function TalentOpportunitiesPage() {
   );
 
   return (
-    <div className="px-4 pt-5 pb-24 space-y-4 max-w-2xl mx-auto">
+    <div className="px-4 pt-5 pb-0 space-y-4 max-w-2xl mx-auto">
       <h1 className="text-xl font-serif font-semibold text-ink">Opportunities</h1>
 
       <TabBar activeTab={activeTab} onTabChange={handleTabChange} />
@@ -333,7 +333,7 @@ function SearchBar({
         )}
       </div>
 
-      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar flex-wrap">
+      <div className="flex items-center gap-2 flex-wrap">
         <Select value={profession} onValueChange={(v) => onParamChange("profession", v)}>
           <SelectTrigger
             className={cn(
