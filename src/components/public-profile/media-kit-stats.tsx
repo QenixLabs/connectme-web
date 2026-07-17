@@ -47,13 +47,13 @@ export function MediaKitStats({
 }: MediaKitStatsProps) {
   const stats: Stat[] = [];
 
-  if (hasInstagramLink && (instagramLoading || (instagramFollowers != null && instagramFollowers > 0))) {
+  if (hasInstagramLink) {
     stats.push({
       icon: <FaInstagram className="w-4 h-4 mx-auto" />,
       value: instagramLoading ? "" : formatCount(instagramFollowers ?? 0),
       label: "Followers",
       live: !instagramLoading && instagramFollowers != null,
-      loading: instagramLoading,
+      loading: instagramLoading || instagramFollowers == null,
       href: instagramUrl,
     });
   }
@@ -131,14 +131,14 @@ function StatCardInner({ stat }: { stat: Stat }) {
     <>
       <div className="relative inline-flex items-center justify-center text-gold mb-1.5">
         {stat.icon}
-        {stat.live && (
+        {(stat.live || stat.loading) && (
           <span className="absolute -top-1 -right-3 flex items-center gap-0.5">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
           </span>
         )}
       </div>
       {stat.loading ? (
-        <Skeleton className="h-6 w-14 mx-auto" />
+        <Skeleton className="h-6 w-14 mx-auto rounded-md" />
       ) : (
         <p className="text-xl font-bold text-text-primary">{stat.value}</p>
       )}

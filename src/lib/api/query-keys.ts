@@ -3,8 +3,8 @@ export const queryKeys = {
     all: (filters: Record<string, unknown>) =>
       ['campaigns', 'list', filters] as const,
     detail: (id: string) => ['campaigns', 'detail', id] as const,
-    applications: (campaignId: string) =>
-      ['campaigns', 'applications', campaignId] as const,
+    applications: (campaignId: string, filters?: Record<string, unknown> | { status?: string; shortlisted?: string; search?: string; sort?: string; limit?: number }) =>
+      ['campaigns', 'applications', campaignId, filters] as const,
     invites: (campaignId: string) =>
       ['campaigns', 'invites', campaignId] as const,
     analytics: (campaignId: string, range?: { from?: string; to?: string }) =>
@@ -15,6 +15,14 @@ export const queryKeys = {
       ['campaigns', 'talent-view', campaignId] as const,
     team: (campaignId: string) =>
       ['campaigns', 'team', campaignId] as const,
+    task: (campaignId: string) =>
+      ['campaigns', 'task', campaignId] as const,
+    taskSubmissions: (campaignId: string) =>
+      ['campaigns', 'task-submissions', campaignId] as const,
+    taskSubmission: (campaignId: string, submissionId: string) =>
+      ['campaigns', 'task-submission', campaignId, submissionId] as const,
+    talentTask: (campaignId: string) =>
+      ['campaigns', 'talent-task', campaignId] as const,
   },
   talent: {
     all: (filters: Record<string, unknown>) =>

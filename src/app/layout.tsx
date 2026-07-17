@@ -6,6 +6,7 @@ import { AuthStoreProvider } from "@/providers/auth-store-provider";
 import { QueryProvider } from "@/providers/query-provider";
 import { FeatureGateProvider } from "@/providers/feature-gate-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { CampaignRecommendationToast } from "@/components/notifications/campaign-recommendation-toast";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -47,6 +48,7 @@ export default function RootLayout({
               <QueryProvider>
                 {children}
                 <PopupProvider />
+                <CampaignRecommendationToast />
                 <FeatureGateProvider />
               </QueryProvider>
             </SocketProvider>

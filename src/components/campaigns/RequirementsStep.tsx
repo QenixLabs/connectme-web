@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { CampaignWizardInput } from '@/lib/validations/campaign-wizard.schema';
+import { TaskConfigSection } from './TaskConfigSection';
 import { cn } from '@/lib/utils';
 import { Plus, Trash2, GripVertical } from 'lucide-react';
 
@@ -287,6 +288,10 @@ export function RequirementsStep() {
           </FormItem>
         )}
       />
+
+      <SectionLabel>Assignment task</SectionLabel>
+
+      <TaskConfigSection />
 
       <SectionLabel>Custom application questions</SectionLabel>
 

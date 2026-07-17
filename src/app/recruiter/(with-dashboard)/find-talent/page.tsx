@@ -96,7 +96,7 @@ export default function FindTalentPage() {
       guard(() => {
         if (profile.privacy_mode === "private") {
           const name = profile.full_legal_name || profile.username || "Talent";
-          createRequest.mutate({ receiverId: talentId }, {
+          createRequest.mutate({ receiverId: talentId, reason: "collaboration" }, {
             onSuccess: () => {
               popup.show({
                 title: "Request sent",

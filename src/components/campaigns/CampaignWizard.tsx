@@ -52,6 +52,8 @@ function getStepFields(step: number): string[] {
         'dates.end',
         'deadline',
         'specialties',
+        'needs_influencer',
+        'influencer_speciality',
       ];
     case 2:
       return [
@@ -65,6 +67,10 @@ function getStepFields(step: number): string[] {
         'budget_range.currency',
         'requirements.attributes',
         'questions',
+        'task.title',
+        'task.description',
+        'task.task_type',
+        'task.deadline_days',
       ];
     case 3:
       return ['publishOption', 'scheduled_publish_at', 'auto_close_on_deadline'];
@@ -134,6 +140,16 @@ function mapCampaignToDefaults(campaign: Campaign): CampaignWizardInput {
       order: q.order,
     })),
     specialties: campaign.specialties ?? [],
+    needs_influencer: campaign.needs_influencer ?? false,
+    influencer_speciality: campaign.influencer_speciality ?? '',
+    task: campaign.task
+      ? {
+          title: campaign.task.title || '',
+          description: campaign.task.description || '',
+          task_type: campaign.task.task_type || 'file_upload',
+          deadline_days: campaign.task.deadline_days || 3,
+        }
+      : undefined,
     publishOption,
     scheduled_publish_at: toDatetimeInputValue(campaign.scheduled_publish_at),
     auto_close_on_deadline: campaign.auto_close_on_deadline ?? true,
@@ -191,6 +207,9 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
       is_unpaid: false,
       questions: [],
       specialties: [],
+      needs_influencer: false,
+      influencer_speciality: '',
+      task: undefined,
       publishOption: 'draft',
       scheduled_publish_at: '',
       auto_close_on_deadline: true,
@@ -295,6 +314,16 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
     auto_close_on_deadline: values.auto_close_on_deadline,
     specialties: values.specialties && values.specialties.length > 0
       ? values.specialties
+      : undefined,
+    needs_influencer: values.needs_influencer || undefined,
+    influencer_speciality: values.influencer_speciality || undefined,
+    task: values.task?.title
+      ? {
+          title: values.task.title,
+          description: values.task.description || '',
+          task_type: values.task.task_type || 'file_upload',
+          deadline_days: values.task.deadline_days || 3,
+        }
       : undefined,
   });
 

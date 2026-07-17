@@ -121,7 +121,7 @@ export default function TalentProfilePage() {
 
   if (mode === "edit" && !isEditing && profile) {
     return (
-      <div className="max-w-2xl mx-auto px-4 pt-5 pb-24 space-y-3">
+      <div className="max-w-2xl mx-auto px-4 pt-5  space-y-3">
         {/* TopBar */}
         <header className="flex items-center justify-between py-1">
           <button

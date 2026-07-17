@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { ChatHero } from "@/components/messaging/chat-hero";
 import { MessageThread } from "@/components/messaging/message-thread";
@@ -20,6 +20,7 @@ import { useSocket } from "@/hooks/use-socket";
 export default function RecruiterChatPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const { socket } = useSocket();
   const user = useAuthStore((state) => state.user);
@@ -31,7 +32,7 @@ export default function RecruiterChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(true);
   const [loadingConversation, setLoadingConversation] = useState(true);
-  const [inputValue, setInputValue] = useState("");
+  const [inputValue, setInputValue] = useState(searchParams.get("draft") || "");
   const [isBlocked, setIsBlocked] = useState(false);
   const [blockedByMe, setBlockedByMe] = useState(false);
 

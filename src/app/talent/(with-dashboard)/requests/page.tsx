@@ -208,7 +208,7 @@ export default function TalentRequestsPage() {
     <div className="relative min-h-screen bg-page">
       <GrainOverlay />
 
-      <div className="relative z-10 px-4 pt-5 pb-20 space-y-4">
+      <div className="relative z-10 px-4 pt-5 space-y-4">
         <h1 className="text-lg font-semibold text-text-primary">
           Connection Requests
         </h1>

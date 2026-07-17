@@ -1,9 +1,10 @@
 "use client";
 
 import type { ReactNode } from "react";
+import type { ComponentType } from "react";
 import { Controller } from "react-hook-form";
 import type { UseFormRegister, Control, FieldErrors } from "react-hook-form";
-import { Eye, EyeOff, Plus, Trash2 } from "lucide-react";
+import { Eye, EyeOff, Plus, Trash2, Globe, Link } from "lucide-react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -16,6 +17,21 @@ import {
 } from "@/components/ui/select";
 import type { CreateTalentProfileInput } from "@/lib/validations/talent-profile.schema";
 import { PROFICIENCY_OPTIONS, FLUENCIES } from "@/lib/talent-profile/options";
+import {
+  FaInstagram,
+  FaYoutube,
+  FaLinkedin,
+  FaTwitter,
+  FaFacebook,
+  FaTiktok,
+  FaGithub,
+  FaBehance,
+  FaDribbble,
+  FaVimeoV,
+  FaSpotify,
+  FaSnapchat,
+  FaThreads,
+} from "react-icons/fa6";
 
 export const T = {
   gold: "var(--color-gold)",
@@ -287,35 +303,59 @@ export function LanguageRow({
   );
 }
 
-export function SocialIcon({ platform }: { platform: "instagram" | "youtube" | "linkedin" }) {
-  if (platform === "instagram") {
-    return (
-      <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--color-pink-light)" }}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="var(--color-pink)" strokeWidth="2" className="w-[18px] h-[18px]">
-          <rect x="2" y="2" width="20" height="20" rx="5" />
-          <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-          <circle cx="17.5" cy="6.5" r="1" fill="var(--color-pink)" stroke="none" />
-        </svg>
-      </div>
-    );
-  }
-  if (platform === "youtube") {
-    return (
-      <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--color-red-light)" }}>
-        <svg viewBox="0 0 24 24" fill="var(--color-red)" className="w-[18px] h-[18px]">
-          <path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58A2.78 2.78 0 0 0 3.41 19.54C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z" />
-          <polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="white" />
-        </svg>
-      </div>
-    );
-  }
+const PLATFORM_ICON_MAP: Record<string, ComponentType<{ className?: string }>> = {
+  instagram: FaInstagram,
+  youtube: FaYoutube,
+  linkedin: FaLinkedin,
+  twitter: FaTwitter,
+  facebook: FaFacebook,
+  tiktok: FaTiktok,
+  github: FaGithub,
+  behance: FaBehance,
+  dribbble: FaDribbble,
+  vimeo: FaVimeoV,
+  spotify: FaSpotify,
+  snapchat: FaSnapchat,
+  threads: FaThreads,
+  website: Globe,
+};
+
+const PLATFORM_COLORS: Record<string, { bg: string; fg: string }> = {
+  instagram: { bg: "var(--color-pink-light)", fg: "var(--color-pink)" },
+  youtube: { bg: "var(--color-red-light)", fg: "var(--color-red)" },
+  linkedin: { bg: "var(--color-blue-light)", fg: "var(--color-blue)" },
+  twitter: { bg: "var(--color-sky-light, #e0f2fe)", fg: "var(--color-sky, #0ea5e9)" },
+  facebook: { bg: "var(--color-blue-light, #dbeafe)", fg: "var(--color-blue, #2563eb)" },
+  tiktok: { bg: "var(--color-slate-light, #f1f5f9)", fg: "var(--color-slate, #0f172a)" },
+  github: { bg: "var(--color-slate-light, #f1f5f9)", fg: "var(--color-slate, #0f172a)" },
+  behance: { bg: "var(--color-blue-light, #dbeafe)", fg: "var(--color-blue, #2563eb)" },
+  dribbble: { bg: "var(--color-pink-light)", fg: "var(--color-pink)" },
+  vimeo: { bg: "var(--color-sky-light, #e0f2fe)", fg: "var(--color-sky, #0ea5e9)" },
+  spotify: { bg: "var(--color-green-light, #dcfce7)", fg: "var(--color-green, #16a34a)" },
+  snapchat: { bg: "var(--color-yellow-light, #fef9c3)", fg: "var(--color-yellow, #ca8a04)" },
+  threads: { bg: "var(--color-slate-light, #f1f5f9)", fg: "var(--color-slate, #0f172a)" },
+  website: { bg: "var(--color-gold-soft, #fef3c7)", fg: "var(--color-gold, #b45309)" },
+};
+
+function platformLabel(platform: string): string {
+  const map: Record<string, string> = {
+    twitter: "Twitter / X",
+    website: "Website",
+  };
+  return map[platform] ?? platform.charAt(0).toUpperCase() + platform.slice(1);
+}
+
+export function SocialIcon({ platform }: { platform: string }) {
+  const Icon = PLATFORM_ICON_MAP[platform] ?? Link;
+  const colors = PLATFORM_COLORS[platform] ?? PLATFORM_COLORS.website;
   return (
-    <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--color-blue-light)" }}>
-      <svg viewBox="0 0 24 24" fill="var(--color-blue)" className="w-[18px] h-[18px]">
-        <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
-        <rect x="2" y="9" width="4" height="12" />
-        <circle cx="4" cy="4" r="2" />
-      </svg>
+    <div
+      className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+      style={{ background: colors.bg, color: colors.fg }}
+    >
+      <Icon className="w-[18px] h-[18px]" />
     </div>
   );
 }
+
+export { platformLabel };

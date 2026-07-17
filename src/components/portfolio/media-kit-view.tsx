@@ -35,11 +35,7 @@ interface MediaKitProfile {
     profile_views_30d?: number;
     shortlist_count?: number;
   };
-  social_links?: {
-    instagram?: { url?: string; visibility?: string };
-    youtube?: { url?: string; visibility?: string };
-    linkedin?: { url?: string; visibility?: string };
-  };
+  social_links?: Record<string, { url?: string; visibility?: string }>;
 }
 
 interface MediaKitViewProps {
@@ -219,11 +215,7 @@ function MediaKitStats({ profile }: { profile: MediaKitProfile }) {
     {
       icon: Share2,
       value: String(
-        [
-          profile.social_links?.instagram?.url,
-          profile.social_links?.youtube?.url,
-          profile.social_links?.linkedin?.url,
-        ].filter(Boolean).length
+        Object.values(profile.social_links ?? {}).filter((l) => l?.url).length,
       ),
       label: "Social Links",
     },

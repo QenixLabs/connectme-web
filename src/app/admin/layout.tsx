@@ -14,6 +14,7 @@ import {
   CreditCard,
   BarChart3,
   Image,
+  Clock,
   LogOut,
 } from "lucide-react";
 import { useAuthStore } from "@/providers/auth-store-provider";
@@ -68,6 +69,7 @@ const navigation = [
       { label: "Audit Logs", href: "/admin/audit-logs", icon: ScrollText },
       { label: "Plans", href: "/admin/plans", icon: CreditCard },
       { label: "Subscriptions", href: "/admin/subscriptions", icon: BarChart3 },
+      { label: "Cron Jobs", href: "/admin/cron-jobs", icon: Clock },
     ],
   },
 ];
@@ -82,6 +84,7 @@ const pageTitles: Record<string, string> = {
   "/admin/plans": "Plans",
   "/admin/subscriptions": "Subscriptions",
   "/admin/portfolio": "Portfolio",
+  "/admin/cron-jobs": "Cron Jobs",
 };
 
 function getPageTitle(pathname: string): string {

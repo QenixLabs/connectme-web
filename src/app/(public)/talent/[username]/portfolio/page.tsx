@@ -134,6 +134,7 @@ export default function PortfolioPage() {
     try {
       await createRequest.mutateAsync({
         receiverId: previewUserId,
+        reason: "collaboration",
         message: "I'd like to view your portfolio.",
       });
       setRequestSent(true);
@@ -166,18 +167,24 @@ export default function PortfolioPage() {
       (!hasYoutubeLink || mediaKit?.youtubeSubscribers != null);
     if (statsPresent) return;
 
+    const controller = new AbortController();
+
     const timer = setTimeout(async () => {
+      if (controller.signal.aborted) return;
       try {
         const refreshed = await talentApi.getMediaKit(username);
-        if (refreshed && !(refreshed as { private?: boolean }).private) {
+        if (!controller.signal.aborted && refreshed && !(refreshed as { private?: boolean }).private) {
           setMediaKit(refreshed as MediaKitData);
         }
       } catch {
         // silently ignore poll failures
       }
-    }, 8000);
+    }, 10000);
 
-    return () => clearTimeout(timer);
+    return () => {
+      controller.abort();
+      clearTimeout(timer);
+    };
   }, [username, profile, mediaKit]);
 
   if (loading) {
@@ -358,6 +365,8 @@ export default function PortfolioPage() {
         hasYoutubeLink={hasYoutubeLink}
         instagramUrl={instagramUrl}
         youtubeUrl={youtubeUrl}
+        instagramLoading={hasInstagramLink && mediaKit?.instagramFollowers == null}
+        youtubeLoading={hasYoutubeLink && mediaKit?.youtubeSubscribers == null}
       />
 
       {/* Portfolio Showcase */}

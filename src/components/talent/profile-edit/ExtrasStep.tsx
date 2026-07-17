@@ -1,6 +1,6 @@
 "use client";
 
-import { useFormContext } from "react-hook-form";
+import { useFormContext, useFieldArray } from "react-hook-form";
 import {
   Upload,
   Loader2,
@@ -8,6 +8,8 @@ import {
   Share2,
   Shield,
   ScanLine,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -34,9 +36,10 @@ import {
   EYE_COLORS,
   PRIVACY_MODE_OPTIONS,
   VISIBILITIES,
+  SOCIAL_PLATFORMS,
   dynamicOptions,
 } from "@/lib/talent-profile/options";
-import { SectionCard, Field, SocialIcon } from "./shared";
+import { SectionCard, Field, SocialIcon, platformLabel } from "./shared";
 
 export interface UploadSlot {
   inputRef: React.RefObject<HTMLInputElement | null>;
@@ -54,6 +57,16 @@ interface ExtrasStepProps {
 export function ExtrasStep({ resume }: ExtrasStepProps) {
   const { control, watch, setValue, getValues } =
     useFormContext<CreateTalentProfileInput>();
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "social_links",
+  });
+
+  const usedPlatforms = new Set(fields.map((f) => f.platform));
+  const availablePlatforms = SOCIAL_PLATFORMS.filter(
+    (p) => !usedPlatforms.has(p.value),
+  );
 
   return (
     <div className="space-y-6">
@@ -391,7 +404,7 @@ export function ExtrasStep({ resume }: ExtrasStepProps) {
       <SectionCard
         icon={Share2}
         label="Social links"
-        description="Instagram, YouTube, LinkedIn"
+        description="Add your social profiles and website"
         isPublic={watch("section_visibility.social_links") ?? true}
         onToggle={() => {
           const current =
@@ -401,27 +414,24 @@ export function ExtrasStep({ resume }: ExtrasStepProps) {
           });
         }}
       >
-        <div className="overflow-hidden rounded-2xl border border-border/60">
-          {(["instagram", "youtube", "linkedin"] as const).map(
-            (platform) => (
+        {fields.length > 0 && (
+          <div className="overflow-hidden rounded-2xl border border-border/60">
+            {fields.map((field, index) => (
               <div
-                key={platform}
+                key={field.id}
                 className="flex items-center gap-2.5 px-4 py-3 border-b border-border/60 last:border-b-0"
               >
-                <SocialIcon platform={platform} />
+                <SocialIcon platform={field.platform} />
                 <FormField
                   control={control}
-                  name={`social_links.${platform}.url`}
-                  render={({ field }) => (
+                  name={`social_links.${index}.url`}
+                  render={({ field: f }) => (
                     <FormItem className="flex-1 min-w-0 mb-0">
                       <FormControl>
                         <input
-                          {...field}
-                          value={field.value ?? ""}
-                          placeholder={`${
-                            platform.charAt(0).toUpperCase() +
-                            platform.slice(1)
-                          } URL`}
+                          {...f}
+                          value={f.value ?? ""}
+                          placeholder={`${platformLabel(field.platform)} URL`}
                           className="w-full bg-transparent text-[13px] outline-none placeholder:text-ink-muted text-ink"
                         />
                       </FormControl>
@@ -431,14 +441,14 @@ export function ExtrasStep({ resume }: ExtrasStepProps) {
                 />
                 <FormField
                   control={control}
-                  name={`social_links.${platform}.visibility`}
-                  render={({ field }) => (
+                  name={`social_links.${index}.visibility`}
+                  render={({ field: f }) => (
                     <FormItem className="shrink-0 mb-0">
                       <Select
                         onValueChange={(v) =>
-                          field.onChange(v || undefined)
+                          f.onChange(v || undefined)
                         }
-                        value={field.value || ""}
+                        value={f.value || ""}
                       >
                         <SelectTrigger className="h-7 w-[110px] text-[11px] rounded-md border-border shadow-none">
                           <SelectValue />
@@ -458,10 +468,43 @@ export function ExtrasStep({ resume }: ExtrasStepProps) {
                     </FormItem>
                   )}
                 />
+                <button
+                  type="button"
+                  onClick={() => remove(index)}
+                  className="w-7 h-7 flex items-center justify-center rounded-lg border border-border/60 bg-cream hover:bg-error-light hover:border-error/30 hover:text-destructive transition-all duration-200 text-ink-muted shrink-0"
+                  aria-label={`Remove ${platformLabel(field.platform)}`}
+                >
+                  <Trash2 className="w-3.5 h-3.5" strokeWidth={1.5} />
+                </button>
               </div>
-            ),
-          )}
-        </div>
+            ))}
+          </div>
+        )}
+
+        {availablePlatforms.length > 0 && (
+          <div className="mt-3">
+            <Select
+              value=""
+              onValueChange={(platform) => {
+                if (platform) {
+                  append({ platform, url: "", visibility: "public" });
+                }
+              }}
+            >
+              <SelectTrigger className="h-9 w-full text-[13px] rounded-xl border-dashed border-border/60 shadow-none">
+                <Plus className="w-4 h-4 mr-1.5 text-ink-muted" strokeWidth={1.5} />
+                <span className="text-ink-muted">Add platform</span>
+              </SelectTrigger>
+              <SelectContent>
+                {availablePlatforms.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </SectionCard>
 
       {/* ---------- PRIVACY ---------- */}

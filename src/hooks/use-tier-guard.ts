@@ -19,7 +19,7 @@ export function useTierGuard(requiredTier: number = 3) {
       }
       popup.show({
         title: "Verification required",
-        description: `Only Tier ${requiredTier} verified recruiters can access this feature. Complete your verification to unlock it.`,
+        description: `Only Tier ${requiredTier} verified users can access this feature. Complete your verification to unlock it.`,
         variant: "warning",
       });
     },

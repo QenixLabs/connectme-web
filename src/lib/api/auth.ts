@@ -20,6 +20,8 @@ export const authApi = {
     company_size?: string;
     specialties?: string[];
     creator_link?: string;
+    is_influencer?: boolean;
+    influencer_speciality?: string;
   }) => {
     const response = await apiClient.post('/auth/signup', data);
     return response.data;

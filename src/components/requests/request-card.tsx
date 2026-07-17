@@ -30,7 +30,9 @@ export interface RequestItem {
   reason?: "collaboration" | "mentorship" | "referral";
 }
 
-const CONNECTION_CONFIG = {
+export type CollaborationReason = "collaboration" | "mentorship" | "referral";
+
+export const CONNECTION_CONFIG = {
   collaboration: { icon: Handshake, label: "Collaboration" },
   mentorship: { icon: GraduationCap, label: "Mentorship" },
   referral: { icon: MessageCircle, label: "Referral" },

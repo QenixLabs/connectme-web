@@ -22,7 +22,7 @@ import { Upload, X, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 import { PROFESSIONS } from '@/lib/professions';
-import { getSpecialtiesForProfession } from '@/lib/profession-fields';
+import { getSpecialtiesForProfession, INFLUENCER_SPECIALTIES } from '@/lib/profession-fields';
 import { TagInput } from '@/components/ui/tag-input';
 
 function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
@@ -225,6 +225,52 @@ export function BasicInfoStep({ mediaFile, onMediaChange, existingCoverUrl }: Ba
             />
           </div>
         )}
+
+      <div className="flex flex-col gap-3">
+        <SectionLabel>Influencer</SectionLabel>
+        <FormField
+          name="needs_influencer"
+          render={({ field }) => (
+            <FormItem className="flex items-center gap-2 flex-row-reverse justify-end">
+              <FormControl>
+                <input
+                  type="checkbox"
+                  checked={field.value ?? false}
+                  onChange={(e) => field.onChange(e.target.checked)}
+                  className="h-4 w-4 rounded border-border/60 text-gold focus:ring-gold/30"
+                />
+              </FormControl>
+              <FieldLabel>Looking for an influencer?</FieldLabel>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        {watch('needs_influencer') && (
+          <FormField
+            name="influencer_speciality"
+            render={({ field }) => (
+              <FormItem>
+                <Select
+                  value={field.value ?? ''}
+                  onValueChange={field.onChange}
+                >
+                  <FormControl>
+                    <SelectTrigger className="text-sm h-11 rounded-xl border-border/60 bg-card">
+                      <SelectValue placeholder="Select influencer specialty" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent className="rounded-xl">
+                    {INFLUENCER_SPECIALTIES.map((s) => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+      </div>
 
       <SectionLabel>Location</SectionLabel>
 

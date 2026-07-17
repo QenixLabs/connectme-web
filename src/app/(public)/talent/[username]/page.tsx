@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Share2, User, Scan, Award, Link as LinkIcon } from "lucide-react";
 import { talentApi, messagesApi } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
 import type { TalentProfile } from "@/lib/validations/talent-profile.schema";
 import type { PortfolioItem } from "@/lib/validations/talent-profile.schema";
+import type { MediaKitData } from "@/types/media-kit";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthStore } from "@/providers/auth-store-provider";
@@ -21,6 +22,8 @@ import { ShareProfileDialog } from "@/components/share-profile-dialog";
 import { TalentGridCard } from "@/components/talent-grid-card";
 import { HeroCard } from "@/components/public-profile/hero-card";
 import { ActionBar } from "@/components/public-profile/action-bar";
+import { FirstMessageDialog } from "@/components/public-profile/first-message-dialog";
+import { ConnectDialog } from "@/components/public-profile/connect-dialog";
 import { SegmentedTabs, type TabId } from "@/components/public-profile/segmented-tabs";
 import { OverviewPane } from "@/components/public-profile/overview-pane";
 import { LooksPane } from "@/components/public-profile/looks-pane";
@@ -28,6 +31,7 @@ import { SkillsPane } from "@/components/public-profile/skills-pane";
 import { LinksPane } from "@/components/public-profile/links-pane";
 import { PortfolioSection } from "@/components/public-profile/portfolio-section";
 import { PortfolioLightbox } from "@/components/portfolio/portfolio-lightbox";
+import { MediaKitStats } from "@/components/public-profile/media-kit-stats";
 
 /* ------------------------------------------------------------------ */
 /*  Main Page                                                         */
@@ -38,10 +42,11 @@ export default function PublicTalentProfilePage() {
   const params = useParams();
   const rawUsername = params.username as string;
   const username = rawUsername.startsWith("@") ? rawUsername.slice(1) : rawUsername;
-  const { user } = useAuthStore();
+  const { user, fetchUser, hasHydrated } = useAuthStore();
   const isRecruiter = user?.role === "recruiter";
 
   const [profile, setProfile] = useState<TalentProfile | null>(null);
+  const [mediaKit, setMediaKit] = useState<MediaKitData | null>(null);
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -63,10 +68,22 @@ export default function PublicTalentProfilePage() {
     }>
   >([]);
   const [similarLoading, setSimilarLoading] = useState(false);
+  const [firstMessageOpen, setFirstMessageOpen] = useState(false);
+  const [isSendingFirstMessage, setIsSendingFirstMessage] = useState(false);
+  const [connectDialogOpen, setConnectDialogOpen] = useState(false);
+  const [isSendingConnectRequest, setIsSendingConnectRequest] = useState(false);
 
   const { guard } = useTierGuard(3);
   const createRequest = useCreateCollaborationRequest();
   const popup = usePopup();
+
+  const hasFetchedUser = useRef(false);
+  useEffect(() => {
+    if (hasHydrated && user && !hasFetchedUser.current) {
+      hasFetchedUser.current = true;
+      fetchUser();
+    }
+  }, [hasHydrated, user, fetchUser]);
 
   const handleConnect = useCallback(() => {
     if (!user) {
@@ -75,12 +92,12 @@ export default function PublicTalentProfilePage() {
     }
 
     const talentId = profile?.user_id;
-    if (!talentId || !isRecruiter) return;
+    if (!talentId) return;
 
     guard(() => {
       if (profile?.privacy_mode === "private") {
         const name = profile?.full_legal_name || profile?.username || "Talent";
-        createRequest.mutate({ receiverId: talentId }, {
+        createRequest.mutate({ receiverId: talentId, reason: "collaboration" }, {
           onSuccess: () => {
             popup.show({
               title: "Request sent",
@@ -94,7 +111,8 @@ export default function PublicTalentProfilePage() {
               messagesApi
                 .startDirectConversation(talentId)
                 .then(({ conversation }) => {
-                  router.push(`/recruiter/messages?conversationId=${conversation._id}`);
+                  const base = user.role === "recruiter" ? "/recruiter/messages" : "/talent/messages";
+                  router.push(`${base}/${conversation._id}`);
                 })
                 .catch((err2) => {
                   popup.show({
@@ -126,18 +144,108 @@ export default function PublicTalentProfilePage() {
         .startDirectConversation(talentId)
         .then(({ conversation }) => {
           const draft = "Hi, I came across your profile and would love to connect regarding a potential opportunity. Looking forward to hearing from you!";
-          router.push(`/recruiter/messages?conversationId=${conversation._id}&draft=${encodeURIComponent(draft)}`);
+          const base = user.role === "recruiter" ? "/recruiter/messages" : "/talent/messages";
+          router.push(`${base}/${conversation._id}?draft=${encodeURIComponent(draft)}`);
         })
-        .catch((err) => {
-          popup.show({
-            title: "Could not start conversation",
-            description: getApiErrorMessage(err, "Something went wrong"),
-            variant: "error",
-          });
+        .catch(() => {
+          setIsConnecting(false);
+          if (user.role === "talent") {
+            setConnectDialogOpen(true);
+          }
         })
-        .finally(() => setIsConnecting(false));
+        .finally(() => {
+          if (user.role !== "talent") setIsConnecting(false);
+        });
     });
   }, [profile, isRecruiter, guard, createRequest, popup, router, user]);
+
+  const handleSendMessage = useCallback(() => {
+    if (!user) {
+      router.push("/auth/login");
+      return;
+    }
+
+    const talentId = profile?.user_id;
+    if (!talentId) return;
+
+    setIsSendingFirstMessage(true);
+    messagesApi
+      .startDirectConversation(talentId)
+      .then(({ conversation }) => {
+        const base = user.role === "recruiter" ? "/recruiter/messages" : "/talent/messages";
+        router.push(`${base}/${conversation._id}`);
+      })
+      .catch(() => {
+        setIsSendingFirstMessage(false);
+        setFirstMessageOpen(true);
+      });
+  }, [user, router, profile]);
+
+  const handleSendFirstMessage = useCallback(
+    async (content: string) => {
+      const talentId = profile?.user_id;
+      if (!talentId) return;
+
+      setIsSendingFirstMessage(true);
+      try {
+        const clientMessageId = `first-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        await messagesApi.sendFirstMessage(talentId, content, clientMessageId);
+        setFirstMessageOpen(false);
+        popup.show({
+          title: "Message sent",
+          description: `Your message has been sent to ${profile?.full_legal_name || profile?.username || "this talent"}. They'll need to accept the connection before you can continue chatting.`,
+          variant: "success",
+        });
+      } catch (err) {
+        popup.show({
+          title: "Failed to send message",
+          description: getApiErrorMessage(err, "Something went wrong"),
+          variant: "error",
+        });
+      } finally {
+        setIsSendingFirstMessage(false);
+      }
+    },
+    [profile, popup],
+  );
+
+  const handleConnectRequest = useCallback(
+    async (reason: "collaboration" | "mentorship" | "referral") => {
+      const talentId = profile?.user_id;
+      if (!talentId) return;
+
+      setIsSendingConnectRequest(true);
+      createRequest.mutate(
+        { receiverId: talentId, reason },
+        {
+          onSuccess: (data) => {
+            setConnectDialogOpen(false);
+            if (data.wasAccepted && data.conversationId) {
+              const base = user?.role === "recruiter" ? "/recruiter/messages" : "/talent/messages";
+              router.push(`${base}/${data.conversationId}`);
+            } else {
+              popup.show({
+                title: "Request sent",
+                description: `Connection request sent to ${profile?.full_legal_name || profile?.username || "this talent"}.`,
+                variant: "success",
+              });
+            }
+          },
+          onError: (err: unknown) => {
+            popup.show({
+              title: "Failed to send request",
+              description: getApiErrorMessage(err, "Something went wrong"),
+              variant: "error",
+            });
+          },
+          onSettled: () => {
+            setIsSendingConnectRequest(false);
+          },
+        },
+      );
+    },
+    [profile, popup, createRequest, router, user],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -156,14 +264,18 @@ export default function PublicTalentProfilePage() {
 
         if (!cancelled) setIsPrivate(false);
 
-        const [portfolioRes] = await Promise.all([
+        const [portfolioRes, mediaKitRes] = await Promise.all([
           talentApi.getPublicPortfolio(username),
+          talentApi.getMediaKit(username).catch(() => null),
         ]);
 
         if (!cancelled) {
           setProfile(profileRes as TalentProfile);
           if (portfolioRes && !(portfolioRes as any).private) {
             setPortfolioItems((portfolioRes as any).items || []);
+          }
+          if (mediaKitRes && !(mediaKitRes as any).private) {
+            setMediaKit(mediaKitRes as MediaKitData);
           }
         }
       } catch (err) {
@@ -208,8 +320,45 @@ export default function PublicTalentProfilePage() {
     return () => { cancelled = true; };
   }, [profile, isPrivate, username]);
 
+  useEffect(() => {
+    if (!profile) return;
+
+    const hasInstagramLink = !!profile.social_links?.instagram?.url;
+    const hasYoutubeLink = !!profile.social_links?.youtube?.url;
+    if (!hasInstagramLink && !hasYoutubeLink) return;
+
+    const statsPresent =
+      (!hasInstagramLink || mediaKit?.instagramFollowers != null) &&
+      (!hasYoutubeLink || mediaKit?.youtubeSubscribers != null);
+    if (statsPresent) return;
+
+    const controller = new AbortController();
+
+    const timer = setTimeout(async () => {
+      if (controller.signal.aborted) return;
+      try {
+        const refreshed = await talentApi.getMediaKit(username);
+        if (!controller.signal.aborted && refreshed && !(refreshed as { private?: boolean }).private) {
+          setMediaKit(refreshed as MediaKitData);
+        }
+      } catch {
+        // silently ignore poll failures
+      }
+    }, 10000);
+
+    return () => {
+      controller.abort();
+      clearTimeout(timer);
+    };
+  }, [username, profile, mediaKit]);
+
   const activeProfile = profile;
   const { tabVisibility, cardVisibility, heroVisibility } = useSectionVisibility(activeProfile);
+
+  const instagramUrl = activeProfile?.social_links?.instagram?.url;
+  const youtubeUrl = activeProfile?.social_links?.youtube?.url;
+  const hasInstagramLink = !!instagramUrl;
+  const hasYoutubeLink = !!youtubeUrl;
 
   const visibleTabs = useMemo(
     () =>
@@ -313,10 +462,26 @@ export default function PublicTalentProfilePage() {
           <ActionBar
             username={username}
             onConnect={handleConnect}
+            onSendMessage={handleSendMessage}
             onBookmark={() => setShortlistModalOpen(true)}
             isConnecting={isConnecting}
-            connectDisabled={!!user && !isRecruiter}
+            connectDisabled={!!user && !profile}
+            sendMessageDisabled={!!user && !profile}
+            showBookmark={isRecruiter}
           />
+                {/* Stats */}
+      <MediaKitStats
+        instagramFollowers={mediaKit?.instagramFollowers}
+        youtubeSubscribers={mediaKit?.youtubeSubscribers}
+        youtubeViews={mediaKit?.youtubeViews}
+        monthlyViews={profile?.analytics?.profile_views_30d ?? 0}
+        hasInstagramLink={hasInstagramLink}
+        hasYoutubeLink={hasYoutubeLink}
+        instagramUrl={instagramUrl}
+        youtubeUrl={youtubeUrl}
+        instagramLoading={hasInstagramLink && mediaKit?.instagramFollowers == null}
+        youtubeLoading={hasYoutubeLink && mediaKit?.youtubeSubscribers == null}
+      />
           {!isPrivate && (
             <PortfolioSection
               items={portfolioItems.filter((i) => i.is_pinned)}
@@ -332,14 +497,11 @@ export default function PublicTalentProfilePage() {
             <div className="px-4 mt-6 text-center">
               <button
                 onClick={handleConnect}
-                disabled={isConnecting || (!!user && !isRecruiter)}
+                disabled={isConnecting || !!user}
                 className="inline-flex items-center justify-center rounded-xl bg-gold px-6 py-3 text-sm font-medium text-white shadow-sm hover:bg-gold/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isConnecting ? "Sending..." : "Send a connect request to view full profile"}
               </button>
-              {!!user && !isRecruiter && (
-                <p className="mt-2 text-xs text-ink-muted">Only recruiters can send connection requests.</p>
-              )}
             </div>
           ) : (
             <>
@@ -420,6 +582,20 @@ export default function PublicTalentProfilePage() {
         item={lightboxItem}
         open={lightboxOpen}
         onOpenChange={setLightboxOpen}
+      />
+      <FirstMessageDialog
+        open={firstMessageOpen}
+        onOpenChange={setFirstMessageOpen}
+        recipientName={profile?.full_legal_name || profile?.username || "this talent"}
+        onSend={handleSendFirstMessage}
+        isSending={isSendingFirstMessage}
+      />
+      <ConnectDialog
+        open={connectDialogOpen}
+        onOpenChange={setConnectDialogOpen}
+        recipientName={profile?.full_legal_name || profile?.username || "this talent"}
+        onConnect={handleConnectRequest}
+        isSending={isSendingConnectRequest}
       />
     </div>
   );

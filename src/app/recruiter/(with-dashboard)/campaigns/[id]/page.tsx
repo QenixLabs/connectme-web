@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { motion } from "motion/react";
 import {
   ArrowLeft,
@@ -39,6 +39,14 @@ import {
   AlertTriangle,
   Sparkles,
   Compass,
+  Search,
+  LayoutGrid,
+  List,
+  Filter,
+  X,
+  Loader2,
+  ClipboardList,
+  FileText,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -85,11 +93,20 @@ import {
 } from '@/lib/api/hooks/useCampaignTeam';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { useTierGuard } from '@/hooks/use-tier-guard';
 import { useFeatureGuard, isFeatureForbidden } from '@/hooks/use-feature-guard';
 import { usePopup } from '@/hooks/use-popup';
 import { TalentGridCard } from '@/components/talent-grid-card';
+import { CampaignApplicationCard } from '@/components/campaign-application-card';
+import { CampaignApplicationRow } from '@/components/campaign-application-row';
+import { ApplicationNoteSheet } from '@/components/application-note-sheet';
+import { TaskSubmissionsPanel } from '@/components/campaigns/TaskSubmissionsPanel';
+import { TaskSubmissionDetail } from '@/components/campaigns/TaskSubmissionDetail';
+import { type TaskSubmission } from '@/lib/api';
+import { useReviewTaskSubmission } from '@/lib/api/hooks/useCampaignTask';
+import { useSendAcceptanceMessage } from '@/lib/api/hooks/useCampaignTask';
 import { useTalentRecommendations } from '@/lib/api/hooks/useTalentRecommendations';
 import { FeatureGateAlert } from '@/components/feature-gate-alert';
 import {
@@ -218,8 +235,38 @@ export default function CampaignDetailPage() {
   const [teamInviteEmail, setTeamInviteEmail] = useState('');
   const [teamInviteRole, setTeamInviteRole] = useState('viewer');
   const [showShortlistedOnly, setShowShortlistedOnly] = useState(false);
+
+  // Applicants tab state
+  const [appSearch, setAppSearch] = useState('');
+  const [appDebouncedSearch, setAppDebouncedSearch] = useState('');
+  const [appStatus, setAppStatus] = useState('all');
+  const [appShortlisted, setAppShortlisted] = useState('all');
+  const [appSort, setAppSort] = useState('newest');
+  const [appViewMode, setAppViewMode] = useState<'grid' | 'list'>('grid');
+  const [appSelectMode, setAppSelectMode] = useState(false);
+  const [appSelectedIds, setAppSelectedIds] = useState<Set<string>>(new Set());
+  const [noteSheetOpen, setNoteSheetOpen] = useState(false);
+  const [noteApplication, setNoteApplication] = useState<Record<string, unknown> | null>(null);
+
+  // Task submission state
+  const [selectedSubmission, setSelectedSubmission] = useState<TaskSubmission | null>(null);
+  const reviewSubmission = useReviewTaskSubmission();
+  const sendAcceptanceMsg = useSendAcceptanceMessage();
+
   const { guard } = useTierGuard(3);
   const { handleFeatureError } = useFeatureGuard();
+
+  useEffect(() => {
+    const timer = setTimeout(() => setAppDebouncedSearch(appSearch), 300);
+    return () => clearTimeout(timer);
+  }, [appSearch]);
+
+  const appFilters = useMemo(() => ({
+    status: appStatus !== 'all' ? appStatus : undefined,
+    shortlisted: appShortlisted === 'true' ? 'true' : undefined,
+    search: appDebouncedSearch || undefined,
+    sort: appSort,
+  }), [appStatus, appShortlisted, appDebouncedSearch, appSort]);
 
   const {
     data: campaign,
@@ -228,10 +275,33 @@ export default function CampaignDetailPage() {
   } = useCampaign(campaignId);
 
   const {
-    data: applications,
+    data: appsResponse,
     isLoading: isLoadingApps,
     error: appsError,
-  } = useCampaignApplications(campaignId);
+  } = useCampaignApplications(campaignId, { sort: 'newest', limit: 5 });
+
+  const {
+    data: fullAppsResponse,
+    isLoading: isLoadingFullApps,
+  } = useCampaignApplications(campaignId, appFilters);
+
+  const applications = appsResponse?.data;
+  const appSummary = appsResponse ? {
+    total: appsResponse.total,
+    pending: appsResponse.pending,
+    accepted: appsResponse.accepted,
+    rejected: appsResponse.rejected,
+    shortlisted: appsResponse.shortlisted,
+  } : null;
+
+  const fullApplications = fullAppsResponse?.data;
+  const fullAppSummary = fullAppsResponse ? {
+    total: fullAppsResponse.total,
+    pending: fullAppsResponse.pending,
+    accepted: fullAppsResponse.accepted,
+    rejected: fullAppsResponse.rejected,
+    shortlisted: fullAppsResponse.shortlisted,
+  } : null;
 
   const {
     data: invites,
@@ -348,6 +418,134 @@ export default function CampaignDetailPage() {
       if (handleFeatureError(err)) return;
     }
   };
+
+  const handleViewSubmission = (submission: TaskSubmission) => {
+    setSelectedSubmission(submission);
+  };
+
+  const handleReviewSubmission = (notes: string, rating: number) => {
+    if (!selectedSubmission) return;
+    reviewSubmission.mutate(
+      {
+        campaignId,
+        submissionId: selectedSubmission._id,
+        payload: { recruiter_notes: notes || undefined, recruiter_rating: rating || undefined },
+      },
+      {
+        onSuccess: () => setSelectedSubmission(null),
+      },
+    );
+  };
+
+  const handleAcceptFromSubmission = async () => {
+    if (!selectedSubmission) return;
+    try {
+      await updateStatus.mutateAsync({
+        campaignId,
+        applicationId: selectedSubmission.application_id,
+        status: 'accepted',
+      });
+      if (selectedSubmission.talent_id) {
+        sendAcceptanceMsg.mutate({ campaignId, talentId: selectedSubmission.talent_id });
+      }
+      setSelectedSubmission(null);
+    } catch {}
+  };
+
+  const handleRejectFromSubmission = async () => {
+    if (!selectedSubmission) return;
+    try {
+      await updateStatus.mutateAsync({
+        campaignId,
+        applicationId: selectedSubmission.application_id,
+        status: 'rejected',
+      });
+      setSelectedSubmission(null);
+    } catch {}
+  };
+
+  // Applicant tab handlers
+  const handleAppStatusChange = async (appId: string, status: string) => {
+    setUpdatingId(appId);
+    try {
+      await updateStatus.mutateAsync({ campaignId, applicationId: appId, status });
+      if (status === 'accepted') {
+        const app = applications?.find((a) => a._id === appId);
+        const talentId = typeof app?.talent_id === 'object' && app.talent_id !== null
+          ? app.talent_id._id
+          : typeof app?.talent_id === 'string' ? app.talent_id : null;
+        if (talentId) {
+          sendAcceptanceMsg.mutate({ campaignId, talentId });
+        }
+      }
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const handleAppToggleShortlist = (appId: string, isShortlisted: boolean) => {
+    if (isShortlisted) {
+      removeFromShortlist.mutate({ campaignId, applicationId: appId });
+    } else {
+      addToShortlist.mutate({ campaignId, applicationId: appId });
+    }
+  };
+
+  const handleAppToggleSelect = (appId: string) => {
+    setAppSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(appId)) next.delete(appId);
+      else next.add(appId);
+      return next;
+    });
+  };
+
+  const handleAppBulkUpdate = async (status: string) => {
+    if (appSelectedIds.size === 0) return;
+    await bulkUpdateStatus.mutateAsync({
+      campaignId,
+      applicationIds: Array.from(appSelectedIds),
+      status,
+    });
+    setAppSelectedIds(new Set());
+  };
+
+  const handleOpenNote = (app: Record<string, unknown>) => {
+    setNoteApplication(app);
+    setNoteSheetOpen(true);
+  };
+
+  const handleSaveNote = (noteText: string, rating: number) => {
+    if (!noteApplication) return;
+    upsertNote.mutate(
+      {
+        campaignId,
+        applicationId: noteApplication._id as string,
+        payload: { note_text: noteText, rating: rating || undefined },
+      },
+      {
+        onSuccess: () => {
+          setNoteSheetOpen(false);
+          setNoteApplication(null);
+        },
+      },
+    );
+  };
+
+  const handleDeleteNote = () => {
+    if (!noteApplication) return;
+    deleteNote.mutate(
+      { campaignId, applicationId: noteApplication._id as string },
+      {
+        onSuccess: () => {
+          setNoteSheetOpen(false);
+          setNoteApplication(null);
+        },
+      },
+    );
+  };
+
+  const hasActiveAppFilters = appStatus !== 'all' || appShortlisted !== 'true' || !!appDebouncedSearch;
 
   const handleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -649,7 +847,7 @@ export default function CampaignDetailPage() {
         transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
       >
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-5 bg-muted-bg/50 border border-border/60 rounded-xl p-1">
+          <TabsList className="grid w-full grid-cols-6 bg-muted-bg/50 border border-border/60 rounded-xl p-1">
             <TabsTrigger
               value="applicants"
               className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-luxe data-[state=active]:text-ink text-ink-muted text-xs font-semibold py-2.5"
@@ -686,13 +884,19 @@ export default function CampaignDetailPage() {
             >
               Analytics
             </TabsTrigger>
+            <TabsTrigger
+              value="submissions"
+              className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-luxe data-[state=active]:text-ink text-ink-muted text-xs font-semibold py-2.5"
+            >
+              Submissions
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="applicants" className="space-y-4 mt-6">
             {isLoadingApps ? (
-              <div className="space-y-3">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <Skeleton key={i} className="h-24 rounded-2xl" />
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton key={i} className="aspect-[3/4] rounded-2xl" />
                 ))}
               </div>
             ) : appsError ? (
@@ -702,337 +906,105 @@ export default function CampaignDetailPage() {
                 </AlertDescription>
               </Alert>
             ) : applications && applications.length > 0 ? (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setShowShortlistedOnly(false)}
-                    className={cn(
-                      "px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200",
-                      !showShortlistedOnly
-                        ? "bg-ink text-white border-ink shadow-sm"
-                        : "bg-card text-ink-muted border-border/60 shadow-luxe hover:border-border hover:text-ink",
+              <div className="space-y-5">
+                {/* Header with stats + View All */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <h3 className="text-sm font-semibold text-ink">Applications</h3>
+                    {appSummary && (
+                      <div className="hidden sm:flex items-center gap-3">
+                        <div className="text-center">
+                          <p className="text-base font-semibold text-ink">{appSummary.total}</p>
+                          <p className="text-2xs uppercase tracking-wider text-ink-muted">Total</p>
+                        </div>
+                        <div className="w-px h-6 bg-border" />
+                        <div className="text-center">
+                          <p className="text-base font-semibold text-amber-600">{appSummary.pending}</p>
+                          <p className="text-2xs uppercase tracking-wider text-ink-muted">Pending</p>
+                        </div>
+                        <div className="w-px h-6 bg-border" />
+                        <div className="text-center">
+                          <p className="text-base font-semibold text-emerald-600">{appSummary.accepted}</p>
+                          <p className="text-2xs uppercase tracking-wider text-ink-muted">Accepted</p>
+                        </div>
+                      </div>
                     )}
-                  >
-                    All
-                  </button>
+                  </div>
                   <button
-                    onClick={() => setShowShortlistedOnly(true)}
-                    className={cn(
-                      "px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all duration-200 flex items-center gap-1",
-                      showShortlistedOnly
-                        ? "bg-ink text-white border-ink shadow-sm"
-                        : "bg-card text-ink-muted border-border/60 shadow-luxe hover:border-border hover:text-ink",
-                    )}
+                    onClick={() => router.push(`/recruiter/campaigns/${campaignId}/applications`)}
+                    className="text-[11px] font-medium text-gold flex items-center gap-0.5 hover:text-gold-hover transition-colors"
                   >
-                    <BookmarkCheck className="w-3 h-3" strokeWidth={1.5} />
-                    Shortlisted
+                    View all applications
+                    <ArrowUpRight className="h-3 w-3" />
                   </button>
                 </div>
 
-                {selectedApps.size > 0 && (
-                  <div className="flex items-center justify-between gap-3 bg-card border border-ink/10 rounded-2xl p-4 shadow-luxe">
-                    <span className="text-sm font-semibold text-ink">
-                      {selectedApps.size} selected
-                    </span>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-9 rounded-lg text-xs font-medium border-emerald-200 text-emerald-700 hover:bg-emerald-50"
-                        onClick={() => handleBulkUpdate('accepted')}
-                        disabled={bulkUpdateStatus.isPending}
-                      >
-                        <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.5} />
-                        Accept All
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-9 rounded-lg text-xs font-medium border-rose-200 text-rose-700 hover:bg-rose-50"
-                        onClick={() => handleBulkUpdate('rejected')}
-                        disabled={bulkUpdateStatus.isPending}
-                      >
-                        <XCircle className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.5} />
-                        Reject All
-                      </Button>
-                    </div>
-                  </div>
-                )}
+                {/* Grid of top 5 applications */}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                  {applications.map((app) => (
+                    <CampaignApplicationCard
+                      key={app._id}
+                      application={app}
+                      onViewProfile={() => {
+                        const talent = typeof app.talent_id === 'object' && app.talent_id !== null ? app.talent_id : null;
+                        if (talent?.username) router.push(`/talent/${talent.username}`);
+                      }}
+                      onStatusChange={(status) => handleAppStatusChange(app._id, status)}
+                      onToggleShortlist={() => handleAppToggleShortlist(app._id, app.is_shortlisted ?? false)}
+                      onAddNote={() => handleOpenNote(app as unknown as Record<string, unknown>)}
+                    />
+                  ))}
+                </div>
 
-                {applications
-                  .filter((app) => !showShortlistedOnly || app.is_shortlisted)
-                  .map((app, idx) => {
-                    const meta = APP_STATUS_META[app.status] ?? APP_STATUS_META.pending;
-                    const Icon = meta.icon;
-                    const talent =
-                      typeof app.talent_id === 'object' && app.talent_id !== null
-                        ? app.talent_id
-                        : null;
-                    const isSelected = selectedApps.has(app._id);
-                    const isEditingNote = noteAppId === app._id;
-                    const note = app.note;
-
-                    return (
-                      <motion.article
-                        key={app._id}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3, delay: idx * 0.03 }}
-                        className={cn(
-                          "bg-card border rounded-2xl p-5 sm:p-6 shadow-luxe transition-all",
-                          isSelected
-                            ? "border-ink ring-1 ring-ink/10 bg-ink/[0.01]"
-                            : "border-border/60 hover:shadow-luxe-lg hover:border-border",
-                        )}
-                      >
-                        <div className="flex flex-col lg:flex-row lg:items-start gap-4">
-                          <div className="flex-1 min-w-0 space-y-3">
-                            <div className="flex items-center gap-3">
-                              <input
-                                type="checkbox"
-                                checked={isSelected}
-                                onChange={() => toggleAppSelection(app._id)}
-                                className="w-4 h-4 rounded border-border/60 text-ink focus:ring-ink/20 accent-slate-700 shrink-0"
-                              />
-                              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center shrink-0">
-                                <User className="w-4 h-4 text-slate-500" strokeWidth={1.5} />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <p className="text-sm font-semibold text-ink">
-                                    {talent?.full_legal_name || talent?.email || 'Unknown'}
-                                  </p>
-                                  {app.is_shortlisted && (
-                                    <Badge className="rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border-amber-200 px-2 py-0">
-                                      <BookmarkCheck className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
-                                      Shortlisted
-                                    </Badge>
-                                  )}
-                                </div>
-                                <p className="text-xs text-ink-muted mt-0.5 font-medium">
-                                  Applied {new Date(app.created_at).toLocaleDateString('en-US', {
-                                    month: 'short', day: 'numeric', year: 'numeric',
-                                  })}
-                                </p>
-                              </div>
-                            </div>
-                            {app.message && (
-                              <div className="flex items-start gap-1.5 ml-[52px]">
-                                <Mail className="w-3.5 h-3.5 text-ink-muted/60 mt-0.5 shrink-0" strokeWidth={1.5} />
-                                <p className="text-sm text-ink-soft leading-relaxed line-clamp-2">
-                                  {app.message}
-                                </p>
-                              </div>
-                            )}
-                            {app.answers && app.answers.length > 0 && (
-                              <div className="space-y-1.5 ml-[52px] bg-muted-bg/50 rounded-xl p-3 border border-border/30">
-                                {app.answers.map(
-                                  (ans: {
-                                    question_id: string;
-                                    question_text: string;
-                                    answer: string;
-                                  }) => (
-                                    <div key={ans.question_id} className="text-sm text-ink-soft">
-                                      <span className="font-semibold text-ink">{ans.question_text}:</span>{' '}
-                                      {ans.answer}
-                                    </div>
-                                  ),
-                                )}
-                              </div>
-                            )}
-                            {note && !isEditingNote && (
-                              <div className="space-y-2 ml-[52px] bg-muted-bg/50 rounded-xl p-3 border border-border/30">
-                                {(() => {
-                                  const r = note.rating;
-                                  if (r == null || r <= 0) return null;
-                                  return (
-                                    <div className="flex items-center gap-0.5">
-                                      {Array.from({ length: 5 }).map((_, i) => (
-                                        <Star
-                                          key={i}
-                                          className={cn(
-                                            'w-4 h-4',
-                                            i < r
-                                              ? 'fill-amber-400 text-amber-400'
-                                              : 'text-slate-300',
-                                          )}
-                                          strokeWidth={1.5}
-                                        />
-                                      ))}
-                                    </div>
-                                  );
-                                })()}
-                                {note.note_text && (
-                                  <div className="flex items-start gap-1.5">
-                                    <MessageSquare
-                                      className="w-3.5 h-3.5 text-ink-muted/60 mt-0.5 shrink-0"
-                                      strokeWidth={1.5}
-                                    />
-                                    <p className="text-sm text-ink-soft leading-relaxed">{note.note_text}</p>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="flex items-center gap-2 shrink-0 flex-wrap lg:flex-col lg:items-end">
-                            <Badge className={cn(
-                              'rounded-full text-[10px] font-semibold px-2.5 py-0.5 border whitespace-nowrap',
-                              meta.classes,
-                            )}>
-                              <Icon className="w-3 h-3 mr-1" strokeWidth={1.5} />
-                              {meta.label}
-                            </Badge>
-                            <Select
-                              value={app.status}
-                              onValueChange={(val) => handleStatusChange(app._id, val)}
-                              disabled={updateStatus.isPending && updatingId === app._id}
-                            >
-                              <SelectTrigger className="w-[140px] h-9 text-sm rounded-xl border-border/60 bg-card">
-                                <SelectValue placeholder="Update" />
-                              </SelectTrigger>
-                              <SelectContent className="rounded-xl">
-                                <SelectItem value="pending">Pending</SelectItem>
-                                <SelectItem value="accepted">Accepted</SelectItem>
-                                <SelectItem value="rejected">Rejected</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
+                {/* "You Might Also Like" recommendations */}
+                {campaign?.status === 'active' && (() => {
+                  const talentRecs = recResponse?.data;
+                  if (!talentRecs || talentRecs.length === 0) return null;
+                  return (
+                    <div className="pt-5 border-t border-border/60">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="h-4 w-4 text-gold" strokeWidth={1.5} />
+                          <p className="text-[13px] font-semibold text-ink">
+                            You Might Also Like
+                          </p>
                         </div>
-
-                        <div className="flex items-center gap-2 pt-4 mt-4 border-t border-border/60">
-                          <button
-                            onClick={() => {
-                              if (app.is_shortlisted) {
-                                removeFromShortlist.mutate({ campaignId, applicationId: app._id });
-                              } else {
-                                addToShortlist.mutate({ campaignId, applicationId: app._id });
+                        <button
+                          onClick={() => setActiveTab('recommended')}
+                          className="text-[11px] font-medium text-gold flex items-center gap-0.5 hover:text-gold-hover transition-colors"
+                        >
+                          View all recommended
+                          <ArrowUpRight className="h-3 w-3" />
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {talentRecs.slice(0, 3).map((r) => {
+                          const talent = r.talent as Record<string, unknown>;
+                          return (
+                            <TalentGridCard
+                              key={r._id}
+                              profile={{
+                                _id: talent?._id as string,
+                                user_id: talent?.user_id as string,
+                                username: talent?.username as string,
+                                full_legal_name: talent?.full_legal_name as string,
+                                profile_photo: talent?.profile_photo as string,
+                                location: talent?.location as Record<string, string>,
+                                professions: talent?.professions as string[],
+                                is_verified: true,
+                              }}
+                              matchScore={r.total_score}
+                              onViewProfile={() =>
+                                router.push("/talent/" + (talent?.username as string))
                               }
-                            }}
-                            disabled={addToShortlist.isPending || removeFromShortlist.isPending}
-                            className={cn(
-                              "flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium transition-all duration-200 border",
-                              app.is_shortlisted
-                                ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
-                                : 'border-border/60 text-ink-muted hover:text-ink hover:bg-cream-soft',
-                            )}
-                          >
-                            {app.is_shortlisted ? (
-                              <BookmarkCheck className="w-3.5 h-3.5" strokeWidth={1.5} />
-                            ) : (
-                              <Bookmark className="w-3.5 h-3.5" strokeWidth={1.5} />
-                            )}
-                            {app.is_shortlisted ? 'Shortlisted' : 'Shortlist'}
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (isEditingNote) {
-                                setNoteAppId(null);
-                                setNoteText('');
-                                setNoteRating(0);
-                              } else {
-                                setNoteAppId(app._id);
-                                setNoteText(note?.note_text || '');
-                                setNoteRating(note?.rating || 0);
-                              }
-                            }}
-                            className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium transition-all duration-200 border border-border/60 text-ink-muted hover:text-ink hover:bg-cream-soft"
-                          >
-                            <MessageSquare className="w-3.5 h-3.5" strokeWidth={1.5} />
-                            {isEditingNote ? 'Cancel' : note ? 'Edit Note' : 'Add Note'}
-                          </button>
-                        </div>
-
-                        {isEditingNote && (
-                          <div className="space-y-3 bg-muted-bg/50 rounded-2xl p-5 mt-4 border border-border/40">
-                            <div className="flex items-center gap-1.5">
-                              {Array.from({ length: 5 }).map((_, i) => (
-                                <button
-                                  key={i}
-                                  onClick={() => setNoteRating(i + 1)}
-                                  className="p-0.5 transition-transform hover:scale-110"
-                                >
-                                  <Star
-                                    className={cn(
-                                      'w-5 h-5 transition-colors',
-                                      i < noteRating
-                                        ? 'fill-amber-400 text-amber-400'
-                                        : 'text-slate-300 hover:text-amber-300',
-                                    )}
-                                    strokeWidth={1.5}
-                                  />
-                                </button>
-                              ))}
-                            </div>
-                            <Textarea
-                              value={noteText}
-                              onChange={(e) => setNoteText(e.target.value)}
-                              placeholder="Write a note about this applicant..."
-                              rows={3}
-                              className="resize-none text-sm bg-card rounded-xl border-border/60 placeholder:text-ink-muted/50"
+                              onInvite={() => handleInvite(talent?.user_id as string)}
                             />
-                            <div className="flex items-center justify-end gap-2">
-                              {note && (
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-9 text-xs rounded-lg text-error-text hover:bg-error-light px-3"
-                                  onClick={() => {
-                                    deleteNote.mutate(
-                                      { campaignId, applicationId: app._id },
-                                      { onSuccess: () => setNoteAppId(null) },
-                                    );
-                                  }}
-                                  disabled={deleteNote.isPending}
-                                >
-                                  <Trash2 className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.5} />
-                                  Delete Note
-                                </Button>
-                              )}
-                              <Button
-                                size="sm"
-                                className="h-9 text-xs rounded-lg bg-ink text-white hover:bg-ink-soft px-4 font-medium"
-                                onClick={() => {
-                                  upsertNote.mutate(
-                                    {
-                                      campaignId,
-                                      applicationId: app._id,
-                                      payload: {
-                                        note_text: noteText,
-                                        rating: noteRating || undefined,
-                                      },
-                                    },
-                                    {
-                                      onSuccess: () => {
-                                        setNoteAppId(null);
-                                        setNoteText('');
-                                        setNoteRating(0);
-                                      },
-                                    },
-                                  );
-                                }}
-                                disabled={upsertNote.isPending}
-                              >
-                                <Check className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.5} />
-                                Save Note
-                              </Button>
-                            </div>
-                          </div>
-                        )}
-                      </motion.article>
-                    );
-                  })}
-                {applications.filter((app) => !showShortlistedOnly || app.is_shortlisted)
-                  .length === 0 && (
-                  <div className="text-center py-20 bg-card border border-border/60 rounded-2xl shadow-luxe">
-                    <BookmarkCheck className="w-12 h-12 text-ink-muted/40 mx-auto mb-4" strokeWidth={1.5} />
-                    <p className="text-sm font-semibold text-ink">
-                      {showShortlistedOnly
-                        ? 'No shortlisted applications yet.'
-                        : 'No matching applications.'}
-                    </p>
-                  </div>
-                )}
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             ) : (
               <div className="text-center py-24 bg-card border border-border/60 rounded-2xl shadow-luxe">
@@ -1048,54 +1020,16 @@ export default function CampaignDetailPage() {
               </div>
             )}
 
-            {campaign?.status === 'active' && applications && applications.length > 0 && (() => {
-              const talentRecs = recResponse?.data;
-              if (!talentRecs || talentRecs.length === 0) return null;
-              return (
-                <div className="mt-6 pt-6 border-t border-border/60">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="h-4 w-4 text-gold" strokeWidth={1.5} />
-                      <p className="text-[13px] font-semibold text-ink">
-                        You Might Also Like
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => setActiveTab('recommended')}
-                      className="text-[11px] font-medium text-gold flex items-center gap-0.5 hover:text-gold-hover transition-colors"
-                    >
-                      View all recommended
-                      <ArrowUpRight className="h-3 w-3" />
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {talentRecs.slice(0, 3).map((r) => {
-                      const talent = r.talent as Record<string, unknown>;
-                      return (
-                        <TalentGridCard
-                          key={r._id}
-                          profile={{
-                            _id: talent?._id as string,
-                            user_id: talent?.user_id as string,
-                            username: talent?.username as string,
-                            full_legal_name: talent?.full_legal_name as string,
-                            profile_photo: talent?.profile_photo as string,
-                            location: talent?.location as Record<string, string>,
-                            professions: talent?.professions as string[],
-                            is_verified: true,
-                          }}
-                          matchScore={r.total_score}
-                          onViewProfile={() =>
-                            router.push("/talent/" + (talent?.username as string))
-                          }
-                          onInvite={() => handleInvite(talent?.user_id as string)}
-                        />
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })()}
+            {/* Note Sheet */}
+            <ApplicationNoteSheet
+              open={noteSheetOpen}
+              onClose={() => { setNoteSheetOpen(false); setNoteApplication(null); }}
+              application={noteApplication as unknown as import('@/components/campaign-application-card').EnrichedApplication | null}
+              onSave={handleSaveNote}
+              onDelete={handleDeleteNote}
+              isSaving={upsertNote.isPending}
+              isDeleting={deleteNote.isPending}
+            />
           </TabsContent>
 
           <TabsContent value="invites" className="space-y-4 mt-6">
@@ -1581,6 +1515,56 @@ export default function CampaignDetailPage() {
                   </div>
                 )}
               </>
+            )}
+          </TabsContent>
+
+          <TabsContent value="submissions" className="space-y-4 mt-6">
+            {!campaign?.task ? (
+              <div className="text-center py-24 bg-card border border-border/60 rounded-2xl shadow-luxe">
+                <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-muted-bg mx-auto">
+                  <ClipboardList className="w-9 h-9 text-ink-muted/40" strokeWidth={1.5} />
+                </div>
+                <p className="text-base font-serif font-semibold text-ink">
+                  No task configured
+                </p>
+                <p className="mt-2 text-sm text-ink-muted max-w-sm mx-auto leading-relaxed">
+                  Add an assignment task in campaign settings to review talent submissions here.
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-4 h-9 rounded-xl border-border/60 bg-card hover:bg-cream-soft text-sm font-medium"
+                  onClick={() => router.push(`/recruiter/campaigns/${campaignId}/edit`)}
+                >
+                  <Pencil className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.5} />
+                  Edit Campaign
+                </Button>
+              </div>
+            ) : (
+              <TaskSubmissionsPanel
+                campaignId={campaignId}
+                onViewSubmission={handleViewSubmission}
+              />
+            )}
+
+            {selectedSubmission && (
+              <TaskSubmissionDetail
+                submission={selectedSubmission}
+                onClose={() => setSelectedSubmission(null)}
+                onReview={handleReviewSubmission}
+                onAccept={
+                  selectedSubmission.application_id
+                    ? handleAcceptFromSubmission
+                    : undefined
+                }
+                onReject={
+                  selectedSubmission.application_id
+                    ? handleRejectFromSubmission
+                    : undefined
+                }
+                isReviewing={reviewSubmission.isPending}
+                isUpdatingStatus={updateStatus.isPending}
+              />
             )}
           </TabsContent>
         </Tabs>

@@ -74,6 +74,8 @@ function getStepFields(step: number): (keyof CreateTalentProfileInput)[] {
       return [
         "professions",
         "specialties",
+        "is_influencer",
+        "influencer_speciality",
         "availability",
         "skills",
         "languages",
@@ -527,7 +529,7 @@ export function ProfileEditWizard({
             <form
               id="profile-form"
               onSubmit={onSubmit}
-              className="px-4 lg:px-8 space-y-6 max-w-5xl mx-auto pt-6 pb-24"
+              className="px-4 lg:px-8 space-y-6 max-w-5xl mx-auto pt-6 "
             >
               {/* TalentCard preview */}
               <div className="px-4 mb-6 lg:px-8 max-w-5xl mx-auto">

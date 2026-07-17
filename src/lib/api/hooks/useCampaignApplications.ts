@@ -4,10 +4,18 @@ import { queryKeys } from '@/lib/api/query-keys';
 import { usePopup } from '@/hooks/use-popup';
 import { useFeatureGuard } from '@/hooks/use-feature-guard';
 
-export function useCampaignApplications(campaignId: string) {
+export interface ApplicationFilters {
+  status?: string;
+  shortlisted?: string;
+  search?: string;
+  sort?: string;
+  limit?: number;
+}
+
+export function useCampaignApplications(campaignId: string, filters?: ApplicationFilters) {
   return useQuery({
-    queryKey: queryKeys.campaigns.applications(campaignId),
-    queryFn: () => campaignApi.getApplications(campaignId),
+    queryKey: queryKeys.campaigns.applications(campaignId, filters),
+    queryFn: () => campaignApi.getApplications(campaignId, filters),
     enabled: !!campaignId,
   });
 }

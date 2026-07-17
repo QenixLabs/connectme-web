@@ -26,7 +26,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { campaignApi, useCampaignTalentView, useRespondToInvite } from "@/lib/api";
 import { useBookmarkCampaign, useUnbookmarkCampaign } from "@/lib/api/hooks/useCampaigns";
 import { useWithdrawApplication } from "@/lib/api/hooks/useCampaignTalentView";
+import { useTalentTask, useSubmitTask } from "@/lib/api/hooks/useCampaignTask";
 import { getApiErrorMessage } from "@/lib/formatters";
+import { TalentTaskCard } from "@/components/talent/TalentTaskCard";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
@@ -113,6 +115,9 @@ export default function TalentCampaignDetailPage() {
   const bookmarkMutation = useBookmarkCampaign();
   const unbookmarkMutation = useUnbookmarkCampaign();
   const isBookmarkPending = bookmarkMutation.isPending || unbookmarkMutation.isPending;
+
+  const { data: taskData } = useTalentTask(campaignId);
+  const submitTask = useSubmitTask();
 
   const applyMutation = useMutation({
     mutationFn: () =>
@@ -221,6 +226,17 @@ export default function TalentCampaignDetailPage() {
         isPending={withdrawMutation.isPending}
         onWithdraw={() => setShowWithdrawConfirm(true)}
       />
+
+      {taskData?.task && taskData?.submission && (
+        <TalentTaskCard
+          task={taskData.task}
+          submission={taskData.submission}
+          onSubmit={(payload) =>
+            submitTask.mutate({ campaignId, payload })
+          }
+          isSubmitting={submitTask.isPending}
+        />
+      )}
 
       <CoverImage campaign={campaign} />
 

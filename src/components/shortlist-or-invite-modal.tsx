@@ -59,7 +59,7 @@ export function ShortlistOrInviteModal({
         initial.map(async ({ campaign }, idx) => {
           try {
             const apps = await campaignApi.getApplications(campaign._id);
-            const app = apps.find((a) => {
+            const app = apps.data.find((a) => {
               const tid =
                 typeof a.talent_id === "object" && a.talent_id !== null
                   ? a.talent_id._id

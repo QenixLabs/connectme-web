@@ -11,6 +11,7 @@ import {
   Clock,
   Users,
   Compass,
+  SlidersHorizontal,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
@@ -43,18 +44,9 @@ const TABS = [
   { key: "applied" as const, label: "Applied" },
 ];
 
-const PROFESSION_OPTIONS = [
-  { value: "all", label: "Profession" },
-  ...PROFESSIONS.map((p) => ({ value: p, label: p })),
-];
-
 const ROLE_TYPE_OPTIONS = [
   { value: "all", label: "Role type" },
-  { value: "Actor", label: "Actor" },
-  { value: "Model", label: "Model" },
-  { value: "Influencer", label: "Influencer" },
-  { value: "Dancer", label: "Dancer" },
-  { value: "Voice Over", label: "Voice Over" },
+  ...PROFESSIONS.map((p) => ({ value: p, label: p })),
 ];
 
 const GENDER_OPTIONS = [
@@ -62,6 +54,12 @@ const GENDER_OPTIONS = [
   { value: "male", label: "Male" },
   { value: "female", label: "Female" },
   { value: "other", label: "Other" },
+];
+
+const SORT_OPTIONS = [
+  { value: "relevance", label: "Recommended" },
+  { value: "newest", label: "Newest" },
+  { value: "oldest", label: "Oldest" },
 ];
 
 const PROFESSION_GRADIENT: Record<string, string> = {
@@ -119,10 +117,10 @@ export default function TalentOpportunitiesPage() {
     tabParam === "applied" || tabParam === "saved" ? tabParam : "available",
   );
 
-  const profession = searchParams.get("profession") || "all";
   const role_type = searchParams.get("role_type") || "all";
   const gender = searchParams.get("gender") || "all";
   const locationCity = searchParams.get("location_city") || "";
+  const sort = searchParams.get("sort") || "relevance";
 
   const updateParam = useCallback(
     (key: string, value: string) => {
@@ -143,7 +141,6 @@ export default function TalentOpportunitiesPage() {
   }, [pathname, router]);
 
   const hasActiveFilters =
-    profession !== "all" ||
     role_type !== "all" ||
     gender !== "all" ||
     !!locationCity ||
@@ -151,10 +148,10 @@ export default function TalentOpportunitiesPage() {
 
   const filters = useMemo(
     () => ({
-      profession: profession === "all" ? undefined : profession,
       role_type: role_type === "all" ? undefined : role_type,
       gender: gender === "all" ? undefined : gender,
       location_city: locationCity || undefined,
+      sort,
       applied:
         activeTab === "applied"
           ? "true"
@@ -162,7 +159,7 @@ export default function TalentOpportunitiesPage() {
             ? "false"
             : undefined,
     }),
-    [profession, role_type, gender, locationCity, activeTab],
+    [role_type, gender, locationCity, sort, activeTab],
   );
 
   const { ref: sentinelRef, inView } = useInView({ threshold: 0 });
@@ -226,23 +223,129 @@ export default function TalentOpportunitiesPage() {
   );
 
   return (
-    <div className="px-4 pt-5 pb-0 space-y-4 max-w-2xl mx-auto">
-      <h1 className="text-xl font-serif font-semibold text-ink">Opportunities</h1>
+    <div className="px-4 pt-6 pb-8 max-w-2xl mx-auto">
+      {/* Page Header */}
+      <div className="mb-5">
+        <h1 className="text-2xl font-serif font-semibold text-ink tracking-tight">
+          Opportunities
+        </h1>
+        <p className="text-sm text-ink-muted mt-1">
+          Discover roles that match your talent
+        </p>
+      </div>
 
-      <TabBar activeTab={activeTab} onTabChange={handleTabChange} />
+      {/* Segmented Tab Bar */}
+      <Card className="p-1 mb-5 shadow-luxe">
+        <div className="flex">
+          {TABS.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => handleTabChange(tab.key)}
+              className={cn(
+                "flex-1 py-2 rounded-lg text-[13px] font-medium transition-all duration-200",
+                activeTab === tab.key
+                  ? "bg-gold text-white shadow-sm"
+                  : "text-ink-soft hover:text-ink hover:bg-cream",
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </Card>
 
-      <SearchBar
-        search={search}
-        onSearchChange={setSearch}
-        profession={profession}
-        roleType={role_type}
-        gender={gender}
-        locationCity={locationCity}
-        onParamChange={updateParam}
-        hasActiveFilters={hasActiveFilters}
-        onClearFilters={clearFilters}
-      />
+      {/* Search */}
+      <div className="mb-3">
+        <div className="flex items-center gap-2.5 px-3.5 h-11 rounded-xl bg-cream border border-border-warm transition-colors focus-within:border-gold/40 focus-within:bg-white">
+          <Search className="h-4 w-4 text-ink-muted shrink-0" strokeWidth={1.5} />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            type="search"
+            placeholder="Search by name, role, or keyword..."
+            className="flex-1 bg-transparent text-sm text-ink placeholder:text-ink-muted/60 outline-none"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="shrink-0 p-0.5 rounded-full hover:bg-border-light transition-colors"
+            >
+              <X className="h-3.5 w-3.5 text-ink-muted hover:text-ink-soft" />
+            </button>
+          )}
+        </div>
+      </div>
 
+      {/* Filter Row + Results Count */}
+      <div className="flex items-center gap-3 mb-5">
+        <div className="flex items-center gap-2 flex-1 overflow-x-auto no-scrollbar">
+          <div className="flex items-center gap-1.5 shrink-0 text-ink-muted mr-1">
+            <SlidersHorizontal className="h-3.5 w-3.5" strokeWidth={1.5} />
+          </div>
+
+          <FilterPill
+            value={role_type}
+            label="Role type"
+            options={ROLE_TYPE_OPTIONS}
+            onChange={(v) => updateParam("role_type", v)}
+          />
+          <FilterPill
+            value={gender}
+            label="Gender"
+            options={GENDER_OPTIONS}
+            onChange={(v) => updateParam("gender", v)}
+          />
+
+          <div
+            className={cn(
+              "flex items-center h-8 rounded-full text-xs px-3 gap-1.5 shrink-0 border transition-colors",
+              locationCity
+                ? "bg-gold-soft border-gold/30 text-gold-ink"
+                : "bg-card border-border-warm text-ink-soft",
+            )}
+          >
+            <MapPin className="h-3 w-3 text-current" strokeWidth={1.5} />
+            <input
+              value={locationCity}
+              onChange={(e) => updateParam("location_city", e.target.value)}
+              placeholder="City..."
+              className="w-16 bg-transparent text-xs text-current placeholder:text-current/50 outline-none"
+            />
+            {locationCity && (
+              <button onClick={() => updateParam("location_city", "")}>
+                <X className="h-3 w-3 text-current" />
+              </button>
+            )}
+          </div>
+
+          {hasActiveFilters && (
+            <button
+              onClick={clearFilters}
+              className="h-8 px-2.5 rounded-full text-xs font-medium text-gold hover:bg-gold-soft transition-colors flex items-center gap-1 shrink-0"
+            >
+              <X className="h-3 w-3" />
+              Clear
+            </button>
+          )}
+        </div>
+
+        <div className="shrink-0">
+          <Select value={sort} onValueChange={(v) => updateParam("sort", v)}>
+            <SelectTrigger className="h-8 rounded-full text-xs px-3 gap-1 border-border-warm bg-card text-ink-soft">
+              <SelectValue placeholder="Sort" />
+            </SelectTrigger>
+            <SelectContent>
+              {SORT_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Results */}
       <ResultsList
         campaigns={filtered}
         activeTab={activeTab}
@@ -260,173 +363,43 @@ export default function TalentOpportunitiesPage() {
 }
 
 /* ------------------------------------------------------------------ */
-/*  TAB BAR                                                           */
+/*  FILTER PILL (reusable select trigger)                             */
 /* ------------------------------------------------------------------ */
 
-function TabBar({
-  activeTab,
-  onTabChange,
+function FilterPill({
+  value,
+  label,
+  options,
+  onChange,
 }: {
-  activeTab: "available" | "saved" | "applied";
-  onTabChange: (tab: "available" | "saved" | "applied") => void;
+  value: string;
+  label: string;
+  options?: { value: string; label: string }[];
+  onChange: (v: string) => void;
 }) {
+  const isActive = value !== "all";
+  const items = options || [{ value: "all", label }];
+
   return (
-    <div className="flex gap-2">
-      {TABS.map((tab) => (
-        <button
-          key={tab.key}
-          onClick={() => onTabChange(tab.key)}
-          className={cn(
-            "px-4 py-1.5 rounded-full text-[13px] font-medium border transition-colors",
-            activeTab === tab.key
-              ? "bg-gold border-gold text-white"
-              : "bg-card border-border text-ink-soft hover:bg-cream",
-          )}
-        >
-          {tab.label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  SEARCH BAR                                                        */
-/* ------------------------------------------------------------------ */
-
-function SearchBar({
-  search,
-  onSearchChange,
-  profession,
-  roleType,
-  gender,
-  locationCity,
-  onParamChange,
-  hasActiveFilters,
-  onClearFilters,
-}: {
-  search: string;
-  onSearchChange: (v: string) => void;
-  profession: string;
-  roleType: string;
-  gender: string;
-  locationCity: string;
-  onParamChange: (key: string, value: string) => void;
-  hasActiveFilters: boolean;
-  onClearFilters: () => void;
-}) {
-  return (
-    <div className="space-y-2.5">
-      <div className="flex items-center gap-2 px-3 h-10 rounded-xl bg-cream border border-border">
-        <Search className="h-4 w-4 text-ink-muted shrink-0" strokeWidth={1.5} />
-        <input
-          value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
-          type="search"
-          placeholder="Search opportunities..."
-          className="flex-1 bg-transparent text-[13px] text-ink placeholder:text-ink-muted/60 outline-none"
-        />
-        {search && (
-          <button onClick={() => onSearchChange("")} className="shrink-0">
-            <X className="h-3.5 w-3.5 text-ink-muted hover:text-ink-soft" />
-          </button>
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger
+        className={cn(
+          "h-8 rounded-full text-xs px-3 gap-1 shrink-0 border transition-colors",
+          isActive
+            ? "bg-gold-soft border-gold/30 text-gold-ink"
+            : "bg-card border-border-warm text-ink-soft",
         )}
-      </div>
-
-      <div className="flex items-center gap-2 flex-wrap">
-        <Select value={profession} onValueChange={(v) => onParamChange("profession", v)}>
-          <SelectTrigger
-            className={cn(
-              "h-7 rounded-full text-[11px] px-3 gap-1 shrink-0 border transition-colors",
-              profession !== "all"
-                ? "bg-gold-soft border-gold/30 text-gold-ink"
-                : "bg-card border-border text-ink-soft",
-            )}
-          >
-            <SelectValue placeholder="Profession" />
-          </SelectTrigger>
-          <SelectContent>
-            {PROFESSION_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={roleType} onValueChange={(v) => onParamChange("role_type", v)}>
-          <SelectTrigger
-            className={cn(
-              "h-7 rounded-full text-[11px] px-3 gap-1 shrink-0 border transition-colors",
-              roleType !== "all"
-                ? "bg-gold-soft border-gold/30 text-gold-ink"
-                : "bg-card border-border text-ink-soft",
-            )}
-          >
-            <SelectValue placeholder="Role type" />
-          </SelectTrigger>
-          <SelectContent>
-            {ROLE_TYPE_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={gender} onValueChange={(v) => onParamChange("gender", v)}>
-          <SelectTrigger
-            className={cn(
-              "h-7 rounded-full text-[11px] px-3 gap-1 shrink-0 border transition-colors",
-              gender !== "all"
-                ? "bg-gold-soft border-gold/30 text-gold-ink"
-                : "bg-card border-border text-ink-soft",
-            )}
-          >
-            <SelectValue placeholder="Gender" />
-          </SelectTrigger>
-          <SelectContent>
-            {GENDER_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <div
-          className={cn(
-            "flex items-center h-7 rounded-full text-[11px] px-3 gap-1.5 shrink-0 border transition-colors",
-            locationCity
-              ? "bg-gold-soft border-gold/30 text-gold-ink"
-              : "bg-card border-border text-ink-soft",
-          )}
-        >
-          <MapPin className="h-3 w-3 text-current" strokeWidth={1.5} />
-          <input
-            value={locationCity}
-            onChange={(e) => onParamChange("location_city", e.target.value)}
-            placeholder="City..."
-            className="w-16 bg-transparent text-[11px] text-current placeholder:text-current/50 outline-none"
-          />
-          {locationCity && (
-            <button onClick={() => onParamChange("location_city", "")}>
-              <X className="h-3 w-3 text-current" />
-            </button>
-          )}
-        </div>
-
-        {hasActiveFilters && (
-          <button
-            onClick={onClearFilters}
-            className="h-7 px-2.5 rounded-full text-[11px] font-medium text-gold hover:bg-gold-soft transition-colors flex items-center gap-1 shrink-0"
-          >
-            <X className="h-3 w-3" />
-            Clear
-          </button>
-        )}
-      </div>
-    </div>
+      >
+        <SelectValue placeholder={label} />
+      </SelectTrigger>
+      <SelectContent>
+        {items.map((opt) => (
+          <SelectItem key={opt.value} value={opt.value}>
+            {opt.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
 
@@ -459,9 +432,9 @@ function ResultsList({
 }) {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={i} className="h-48 rounded-xl" />
+          <Skeleton key={i} className="h-52 rounded-2xl" />
         ))}
       </div>
     );
@@ -469,7 +442,7 @@ function ResultsList({
 
   if (error) {
     return (
-      <Card className="p-4 border-error-muted bg-error-light text-sm text-error-text">
+      <Card className="p-5 border-error-muted bg-error-light text-sm text-error-text rounded-2xl">
         {getApiErrorMessage(error, "Failed to load opportunities")}
       </Card>
     );
@@ -477,26 +450,26 @@ function ResultsList({
 
   if (campaigns.length === 0) {
     return (
-      <Card className="p-8 flex flex-col items-center text-center">
-        <div className="h-12 w-12 rounded-2xl bg-cream grid place-items-center mb-3">
-          <Compass className="h-6 w-6 text-ink-muted" />
+      <Card className="p-10 flex flex-col items-center text-center rounded-2xl">
+        <div className="h-14 w-14 rounded-2xl bg-cream-deep grid place-items-center mb-4">
+          <Compass className="h-7 w-7 text-ink-muted" />
         </div>
-        <p className="text-[14px] font-medium text-ink">No opportunities found</p>
-        <p className="text-[12px] text-ink-muted mt-1 max-w-[260px]">
+        <p className="text-sm font-semibold text-ink">No opportunities found</p>
+        <p className="text-xs text-ink-muted mt-1.5 max-w-[280px] leading-relaxed">
           {hasActiveFilters
-            ? "Try adjusting your filters."
+            ? "Try adjusting your filters to see more results."
             : activeTab === "applied"
-              ? "You haven't applied to any campaigns yet."
+              ? "You haven\u2019t applied to any campaigns yet."
               : activeTab === "saved"
-                ? "No saved campaigns yet."
+                ? "No saved campaigns yet. Bookmark campaigns to find them here."
                 : "Complete your profile to get matched with casting calls."}
         </p>
         {hasActiveFilters && (
           <button
             onClick={onClearFilters}
-            className="mt-3 text-[12px] font-medium text-gold hover:text-gold-ink transition-colors"
+            className="mt-4 text-xs font-semibold text-gold hover:text-gold-ink transition-colors"
           >
-            Clear filters
+            Clear all filters
           </button>
         )}
       </Card>
@@ -504,7 +477,7 @@ function ResultsList({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
       {campaigns.map((campaign, i) => (
         <motion.div
           key={campaign._id}
@@ -517,11 +490,11 @@ function ResultsList({
       ))}
 
       {!isSavedTab && hasNextPage && (
-        <div ref={sentinelRef} className="col-span-full py-1">
+        <div ref={sentinelRef} className="col-span-full py-2">
           {isFetchingNextPage && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {Array.from({ length: 2 }).map((_, i) => (
-                <Skeleton key={i} className="h-48 rounded-xl" />
+                <Skeleton key={i} className="h-52 rounded-2xl" />
               ))}
             </div>
           )}
@@ -556,30 +529,38 @@ function OpportunityCard({
   return (
     <div
       onClick={() => router.push(`/talent/opportunities/${campaign._id}`)}
-      className="cursor-pointer"
+      className="cursor-pointer group"
     >
       <Card
         className={cn(
-          "overflow-hidden rounded-xl border-0 text-white",
+          "overflow-hidden rounded-2xl border-0 text-white",
           "bg-gradient-to-br",
           gradient,
+          "shadow-luxe group-hover:shadow-luxe-lg transition-shadow duration-300",
         )}
       >
-        <div className="p-4">
-          <div className="flex items-start justify-between gap-2">
+        <div className="p-5">
+          <div className="flex items-start justify-between gap-2.5">
             <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap gap-1.5 mb-2">
+              <div className="flex flex-wrap gap-1.5 mb-2.5">
                 {campaign.role_type && (
-                  <span className="text-[10.5px] bg-white/15 backdrop-blur-sm rounded-full px-2.5 py-1 font-medium">
+                  <span className="text-[11px] bg-white/15 backdrop-blur-sm rounded-full px-2.5 py-1 font-medium tracking-wide">
                     {campaign.role_type}
+                  </span>
+                )}
+                {campaign.match_score != null && campaign.match_score > 0 && (
+                  <span className="text-[11px] bg-gold/80 backdrop-blur-sm rounded-full px-2.5 py-1 font-semibold text-surface-dark">
+                    {campaign.match_score}% match
                   </span>
                 )}
               </div>
 
-              <h3 className="text-[14px] font-bold leading-snug line-clamp-2">{campaign.name}</h3>
+              <h3 className="text-[15px] font-bold leading-snug line-clamp-2 tracking-tight">
+                {campaign.name}
+              </h3>
 
               {campaign.description && (
-                <p className="text-[11px] text-white/60 mt-1 line-clamp-1">
+                <p className="text-[12px] text-white/55 mt-1.5 line-clamp-1 leading-relaxed">
                   {campaign.description}
                 </p>
               )}
@@ -595,20 +576,20 @@ function OpportunityCard({
                   bookmark.mutate(campaign._id);
                 }
               }}
-              className="shrink-0 p-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+              className="shrink-0 p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
               aria-label={isBookmarked ? "Remove bookmark" : "Bookmark"}
             >
               <Bookmark
-                className={cn("h-3.5 w-3.5", isBookmarked ? "fill-white text-white" : "text-white/70")}
+                className={cn("h-4 w-4", isBookmarked ? "fill-white text-white" : "text-white/70")}
                 strokeWidth={isBookmarked ? 2 : 1.5}
               />
             </button>
           </div>
 
-          <div className="flex items-center justify-between mt-4 pt-3 border-t border-white/10">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between mt-4 pt-3.5 border-t border-white/10">
+            <div className="flex items-center gap-3.5">
               {loc && (
-                <span className="text-[10.5px] text-white/70 flex items-center gap-1">
+                <span className="text-[11px] text-white/65 flex items-center gap-1">
                   <MapPin className="h-3 w-3" />
                   {loc}
                 </span>
@@ -616,8 +597,8 @@ function OpportunityCard({
               {deadline && (
                 <span
                   className={cn(
-                    "text-[10.5px] flex items-center gap-1",
-                    deadline.urgent ? "text-amber-300" : "text-white/70",
+                    "text-[11px] flex items-center gap-1",
+                    deadline.urgent ? "text-amber-300 font-medium" : "text-white/65",
                   )}
                 >
                   <Clock className="h-3 w-3" />
@@ -625,7 +606,7 @@ function OpportunityCard({
                 </span>
               )}
             </div>
-            <span className="text-[10.5px] text-white/70 flex items-center gap-1">
+            <span className="text-[11px] text-white/65 flex items-center gap-1">
               <Users className="h-3 w-3" />
               {campaign.applications_count ?? 0}
             </span>
@@ -635,7 +616,7 @@ function OpportunityCard({
             <div className="mt-3 pt-3 border-t border-white/10">
               <span
                 className={cn(
-                  "text-[10.5px] font-medium rounded-full px-2.5 py-1",
+                  "text-[11px] font-medium rounded-full px-2.5 py-1",
                   campaign.my_application.status === "accepted"
                     ? "bg-emerald-500/20 text-emerald-200"
                     : campaign.my_application.status === "rejected"

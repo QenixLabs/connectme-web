@@ -31,7 +31,7 @@ import {
 import { authApi, talentApi } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
 import { PROFESSIONS } from "@/lib/professions";
-import { getSpecialtiesForProfession } from "@/lib/profession-fields";
+import { getSpecialtiesForProfession, INFLUENCER_SPECIALTIES } from "@/lib/profession-fields";
 import { AuthLayout } from "@/components/layout/auth-layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -49,6 +49,7 @@ import { TagInput } from "@/components/ui/tag-input";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { PasswordStrength } from "@/components/ui/password-strength";
 import { PasswordRules } from "@/components/ui/password-rules";
+import { Switch } from "@/components/ui/switch";
 import { StepIndicator } from "@/components/ui/step-indicator";
 import {
   Form,
@@ -102,6 +103,8 @@ const schema = z
       .regex(/\d/, "Password must contain at least one number"),
     confirmPassword: z.string().min(1, "Please confirm your password"),
     specialties: z.array(z.string()).optional(),
+    is_influencer: z.boolean().optional(),
+    influencer_speciality: z.string().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -115,6 +118,16 @@ const schema = z
       return true;
     },
     { message: "Creator link is required for influencers", path: ["creatorLink"] },
+  )
+  .refine(
+    (data) => {
+      const needsSpeciality = data.is_influencer || data.profession === "Influencer";
+      if (needsSpeciality) {
+        return data.influencer_speciality && data.influencer_speciality.length > 0;
+      }
+      return true;
+    },
+    { message: "Influencer speciality is required", path: ["influencer_speciality"] },
   );
 
 type FormValues = z.input<typeof schema>;
@@ -152,6 +165,8 @@ export default function TalentSignupPage() {
       password: "",
       confirmPassword: "",
       specialties: [],
+      is_influencer: false,
+      influencer_speciality: "",
     },
     mode: "onChange",
   });
@@ -270,6 +285,8 @@ export default function TalentSignupPage() {
         creator_link: values.creatorLink || undefined,
         verification_method: verificationMethod,
         specialties: values.specialties?.length ? values.specialties : undefined,
+        is_influencer: values.is_influencer || undefined,
+        influencer_speciality: values.influencer_speciality || undefined,
       });
       router.push(
         `/auth/verify-email?email=${encodeURIComponent(values.email)}&method=${verificationMethod}`,
@@ -482,6 +499,70 @@ export default function TalentSignupPage() {
                               </div>
                             </motion.div>
                           )}
+
+                        {(selectedProfession === "Influencer" || form.watch("is_influencer")) && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                          >
+                            <div className="border-t border-border/40 pt-4 space-y-4">
+                              {selectedProfession !== "Influencer" && (
+                                <div className="flex items-center justify-between rounded-xl border border-border/60 bg-cream-pale/80 p-3">
+                                  <div className="flex items-center gap-3">
+                                    <Sparkles className="size-4 text-gold" />
+                                    <div>
+                                      <p className="text-sm font-medium">Influencer</p>
+                                      <p className="text-xs text-ink/50">
+                                        Mark as influencer even if it's not your main profession
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <FormField
+                                    control={form.control}
+                                    name="is_influencer"
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormControl>
+                                          <Switch
+                                            checked={field.value ?? false}
+                                            onCheckedChange={field.onChange}
+                                          />
+                                        </FormControl>
+                                      </FormItem>
+                                    )}
+                                  />
+                                </div>
+                              )}
+                              <FormField
+                                control={form.control}
+                                name="influencer_speciality"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel className="text-sm font-medium text-text-primary">
+                                      Influencer Speciality <span className="text-rose-500">*</span>
+                                    </FormLabel>
+                                    <Select
+                                      onValueChange={field.onChange}
+                                      value={field.value || ""}
+                                    >
+                                      <FormControl>
+                                        <SelectTrigger className="h-10 text-sm rounded-xl border-border bg-cream-pale/80">
+                                          <SelectValue placeholder="Choose speciality..." />
+                                        </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                        {INFLUENCER_SPECIALTIES.map((s) => (
+                                          <SelectItem key={s} value={s}>{s}</SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                          </motion.div>
+                        )}
 
                         <Button
                           type="button"

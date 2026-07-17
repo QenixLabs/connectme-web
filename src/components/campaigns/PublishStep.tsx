@@ -8,7 +8,7 @@ import {
 import { CampaignWizardInput } from '@/lib/validations/campaign-wizard.schema';
 import { cn } from '@/lib/utils';
 import { getSpecialtiesForProfession } from '@/lib/profession-fields';
-import { Lock, Globe, UserPlus, Calendar, Clock, Info, Tag } from 'lucide-react';
+import { Lock, Globe, UserPlus, Calendar, Clock, Info, Tag, ClipboardList } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 const OPTIONS = [
@@ -152,6 +152,19 @@ export function PublishStep() {
             ))}
           </RevCard>
         )}
+
+          {values.task?.title && (
+            <RevCard title="Assignment Task" icon={ClipboardList}>
+              <RevRow label="Title" value={values.task.title} />
+              <RevRow label="Type" value={values.task.task_type === 'file_upload' ? 'File Upload' : 'Text Response'} />
+              <RevRow label="Deadline" value={`${values.task.deadline_days || 3} days after shortlist`} />
+              {values.task.description && (
+                <div className="py-2 text-sm text-ink-muted leading-relaxed">
+                  {values.task.description}
+                </div>
+              )}
+            </RevCard>
+          )}
       </div>
 
       <SectionLabel>Visibility</SectionLabel>

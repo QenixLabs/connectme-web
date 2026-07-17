@@ -1,7 +1,8 @@
 "use client";
 
-import { Check, UserPlus } from "lucide-react";
+import { Check, HelpCircle, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 type ProfileWithAccess = Partial<{
   _id?: string;
@@ -33,38 +34,6 @@ function getInitials(name: string): string {
     .join("")
     .slice(0, 2)
     .toUpperCase();
-}
-
-function getProfileCompletion(profile: ProfileWithAccess): number {
-  const checks: unknown[] = [
-    profile.username,
-    profile.full_legal_name,
-    profile.profile_photo,
-    profile.headline,
-    profile.about,
-    profile.gender,
-    profile.date_of_birth,
-    profile.location?.city,
-    profile.location?.state,
-    profile.location?.country,
-    profile.professions?.length ? profile.professions : null,
-    profile.specialties?.length ? profile.specialties : null,
-    profile.languages?.length ? profile.languages : null,
-    profile.skills?.length ? profile.skills : null,
-    profile.availability,
-    profile.physical_attributes && Object.keys(profile.physical_attributes).length > 0
-      ? profile.physical_attributes
-      : null,
-    profile.social_links && Object.keys(profile.social_links).length > 0
-      ? profile.social_links
-      : null,
-    profile.documents && Object.keys(profile.documents).length > 0
-      ? profile.documents
-      : null,
-  ];
-  const filled = checks.filter((v) => v !== undefined && v !== null && v !== "" && v !== false).length;
-  const total = checks.length;
-  return Math.round((filled / total) * 100);
 }
 
 function getGradientSeed(name: string): number {
@@ -119,8 +88,6 @@ export function TalentGridCard({
   const displayName = profile.full_legal_name || profile.username || "Talent";
   const loc = profile.location?.city || profile.location?.state || "";
   const profession = profile.professions?.[0] ?? profile.specialties?.[0] ?? "";
-  const completion = getProfileCompletion(profile);
-
   return (
     <article
       className={cn(
@@ -158,17 +125,30 @@ export function TalentGridCard({
           </div>
         )}
 
-        {/* Score badge — match score when available, else profile completion */}
-        <span
-          className={cn(
-            "absolute top-2 right-2 text-[11px] font-semibold px-2 py-0.5 rounded-lg",
-            matchScore !== undefined
-              ? "bg-brand/90 text-white"
-              : "bg-campaign-soft text-campaign-dark",
-          )}
-        >
-          {matchScore !== undefined ? `${matchScore}%` : `${completion}%`}
-        </span>
+        {/* Score badge — match score when available, else create-campaign prompt */}
+        {matchScore !== undefined ? (
+          <span className="absolute top-2 right-2 text-[11px] font-semibold px-2 py-0.5 rounded-lg bg-brand/90 text-white">
+            {matchScore}%
+          </span>
+        ) : (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="absolute top-2 right-2 w-5 h-5 flex items-center justify-center text-[11px] font-semibold rounded-lg bg-muted-bg text-text-muted cursor-help">
+                <HelpCircle className="w-3.5 h-3.5" />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="max-w-[180px] text-center">
+              <p className="mb-1">Create a campaign to see match scores</p>
+              <a
+                href="/recruiter/campaigns/new"
+                onClick={(e) => e.stopPropagation()}
+                className="underline text-background/80 hover:text-background"
+              >
+                Create campaign
+              </a>
+            </TooltipContent>
+          </Tooltip>
+        )}
 
         {/* Select checkbox */}
         {selectable && (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -14,6 +14,8 @@ import {
   Loader2,
   CheckCheck,
   ArrowRightLeft,
+  ClipboardList,
+  Sparkles,
 } from "lucide-react";
 import {
   notificationsApi,
@@ -93,8 +95,18 @@ export function NotificationList() {
 
   const allNotifications = data?.pages.flatMap((page) => page.data) ?? [];
 
+  const dismissAutoMutateRef = useRef(dismissAuto.mutate);
+  dismissAutoMutateRef.current = dismissAuto.mutate;
+
   useEffect(() => {
-    dismissAuto.mutate();
+    const handleBeforeUnload = () => {
+      dismissAutoMutateRef.current();
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      dismissAutoMutateRef.current();
+    };
   }, []);
 
   useEffect(() => {
@@ -197,10 +209,13 @@ export function NotificationList() {
   const renderNotification = (notification: NotificationItem) => {
     const isVerificationStatus = notification.type === "verification_status";
     const isCampaignInvite = notification.type === "campaign_invite";
+    const isCampaignRecommendation = notification.type === "campaign_recommendation";
     const isPlanMigrationRequest = notification.type === "plan_migration_request";
     const isApplicationReceived = notification.type === "application_received";
     const isApplicationStatusChanged =
       notification.type === "application_status_changed";
+    const isTaskAssigned = notification.type === "task_assigned";
+    const isTaskSubmitted = notification.type === "task_submitted";
     const inviteId = notification.data?.invite_id;
     const migrationId = notification.data?.migration_id;
     const actorName = getActorName(notification.actor_id);
@@ -211,12 +226,25 @@ export function NotificationList() {
       }
       if (
         isCampaignInvite ||
+        isCampaignRecommendation ||
         isApplicationReceived ||
         isApplicationStatusChanged
       ) {
         const campaignId = notification.data?.campaign_id;
         if (campaignId) {
           router.push(`/talent/opportunities/${campaignId}`);
+        }
+      }
+      if (isTaskAssigned) {
+        const campaignId = notification.data?.campaign_id;
+        if (campaignId) {
+          router.push(`/talent/opportunities/${campaignId}`);
+        }
+      }
+      if (isTaskSubmitted) {
+        const campaignId = notification.data?.campaign_id;
+        if (campaignId) {
+          router.push(`/recruiter/campaigns/${campaignId}`);
         }
       }
     };
@@ -255,6 +283,12 @@ export function NotificationList() {
                     Campaign Invite
                   </Badge>
                 )}
+                {isCampaignRecommendation && (
+                  <Badge variant="secondary" className="text-2xs shrink-0">
+                    <Sparkles className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
+                    Campaign Match
+                  </Badge>
+                )}
                 {isPlanMigrationRequest && (
                   <Badge variant="secondary" className="text-2xs shrink-0">
                     <ArrowRightLeft className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
@@ -273,6 +307,18 @@ export function NotificationList() {
                     Status Update
                   </Badge>
                 )}
+                {isTaskAssigned && (
+                  <Badge variant="secondary" className="text-2xs shrink-0">
+                    <ClipboardList className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
+                    Task Assigned
+                  </Badge>
+                )}
+                {isTaskSubmitted && (
+                  <Badge variant="outline" className="text-2xs shrink-0">
+                    <ClipboardList className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
+                    Task Submitted
+                  </Badge>
+                )}
               </div>
               <span className="text-2xs text-text-muted shrink-0 flex items-center gap-1">
                 <Clock className="w-3 h-3" strokeWidth={1.5} />
@@ -282,6 +328,14 @@ export function NotificationList() {
 
             <p className="text-xs text-text-muted mt-0.5">{actorName}</p>
             <p className="text-sm text-text-secondary mt-2">{notification.body}</p>
+
+            {isCampaignRecommendation && notification.data?.match_score && (
+              <div className="mt-2">
+                <Badge variant="secondary" className="text-2xs">
+                  {notification.data.match_score}% match
+                </Badge>
+              </div>
+            )}
 
             {isCampaignInvite && notification.action_status === "pending" && inviteId && (
               <div className="mt-3 flex gap-2">

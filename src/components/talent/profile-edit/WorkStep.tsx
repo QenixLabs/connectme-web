@@ -2,7 +2,7 @@
 
 import { useFormContext, useFieldArray } from "react-hook-form";
 import { useMemo } from "react";
-import { Briefcase, Zap, Languages } from "lucide-react";
+import { Briefcase, Zap, Languages, Sparkles } from "lucide-react";
 import {
   FormField,
   FormItem,
@@ -17,11 +17,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { TagInput } from "@/components/ui/tag-input";
 import type { CreateTalentProfileInput } from "@/lib/validations/talent-profile.schema";
 import {
   AVAILABILITY_OPTIONS,
   PROFESSION_SUGGESTIONS,
+  INFLUENCER_SPECIALTY_OPTIONS,
 } from "@/lib/talent-profile/options";
 import { getSpecialtiesForProfession } from "@/lib/profession-fields";
 import { SectionCard, AddRow, SkillRow, LanguageRow } from "./shared";
@@ -106,6 +108,60 @@ export function WorkStep() {
               </FormItem>
             )}
           />
+          <div className="flex items-center justify-between rounded-xl border border-border/60 bg-cream-pale/80 p-3">
+            <div className="flex items-center gap-3">
+              <Sparkles className="size-4 text-gold" />
+              <div>
+                <p className="text-sm font-medium">Influencer</p>
+                <p className="text-xs text-ink/50">Enable if you work as an influencer</p>
+              </div>
+            </div>
+            <FormField
+              control={control}
+              name="is_influencer"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Switch
+                      checked={field.value ?? false}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+          </div>
+          {watch("is_influencer") && (
+            <FormField
+              control={control}
+              name="influencer_speciality"
+              render={({ field }) => (
+                <FormItem className="max-w-xs">
+                  <FormLabel className="text-[13px] font-medium">
+                    Influencer Speciality <span className="text-rose-500">*</span>
+                  </FormLabel>
+                  <Select
+                    onValueChange={(v) => field.onChange(v || undefined)}
+                    value={field.value || ""}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="h-10 text-sm rounded-xl border-border bg-cream-pale/80 shadow-none">
+                        <SelectValue placeholder="Choose speciality..." />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {INFLUENCER_SPECIALTY_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
           <FormField
             control={control}
             name="availability"

@@ -7,8 +7,24 @@ import {
   Ruler,
   Download,
   ChevronRight,
+  Globe,
+  Link,
 } from "lucide-react";
-import { FaInstagram, FaYoutube, FaLinkedin } from "react-icons/fa";
+import {
+  FaInstagram,
+  FaYoutube,
+  FaLinkedin,
+  FaTwitter,
+  FaFacebook,
+  FaTiktok,
+  FaGithub,
+  FaBehance,
+  FaDribbble,
+  FaVimeoV,
+  FaSpotify,
+  FaSnapchat,
+  FaThreads,
+} from "react-icons/fa6";
 import type { ComponentType } from "react";
 import type { TalentProfile } from "@/lib/validations/talent-profile.schema";
 
@@ -18,12 +34,35 @@ interface LinksPaneProps {
   showDocuments?: boolean;
 }
 
+const PLATFORM_ICON_MAP: Record<string, ComponentType<{ className?: string }>> = {
+  instagram: FaInstagram,
+  youtube: FaYoutube,
+  linkedin: FaLinkedin,
+  twitter: FaTwitter,
+  facebook: FaFacebook,
+  tiktok: FaTiktok,
+  github: FaGithub,
+  behance: FaBehance,
+  dribbble: FaDribbble,
+  vimeo: FaVimeoV,
+  spotify: FaSpotify,
+  snapchat: FaSnapchat,
+  threads: FaThreads,
+  website: Globe,
+};
+
+function platformLabel(platform: string): string {
+  const map: Record<string, string> = {
+    twitter: "Twitter / X",
+    website: "Website",
+  };
+  return map[platform] ?? platform.charAt(0).toUpperCase() + platform.slice(1);
+}
+
 export function LinksPane({ profile, showSocial = true, showDocuments = true }: LinksPaneProps) {
-  const socials: { icon: ComponentType<{ className?: string }>; key: keyof NonNullable<TalentProfile["social_links"]>; label: string }[] = [
-    { icon: FaInstagram, key: "instagram", label: "Instagram" },
-    { icon: FaYoutube, key: "youtube", label: "YouTube" },
-    { icon: FaLinkedin, key: "linkedin", label: "LinkedIn" },
-  ];
+  const socialEntries = Object.entries(profile.social_links ?? {}).filter(
+    ([, link]) => link?.url
+  );
 
   const docs = [
     { icon: FileText, title: "Résumé / CV", key: "resume_url" as const },
@@ -31,33 +70,33 @@ export function LinksPane({ profile, showSocial = true, showDocuments = true }: 
     { icon: Ruler, title: "Measurements Sheet", key: "measurements_sheet_url" as const },
   ];
 
-  const visibleSocials = socials.filter(
-    (s) => profile.social_links?.[s.key]?.url
-  );
+  const visibleSocials = socialEntries;
 
   return (
     <>
       {showSocial && visibleSocials.length > 0 && (
         <Card label="Social">
           <div className="grid grid-cols-2 gap-2.5">
-            {visibleSocials.map((s) => {
-              const link = profile.social_links![s.key];
+            {visibleSocials.map(([platform, link]) => {
+              const Icon = PLATFORM_ICON_MAP[platform] ?? Link;
+              const label = platformLabel(platform);
+              const url = link!.url ?? "";
               return (
                 <a
-                  key={s.key}
-                  href={link!.url!.startsWith("http") ? link!.url : `https://${link!.url}`}
+                  key={platform}
+                  href={url.startsWith("http") ? url : `https://${url}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-left rounded-xl bg-cream/70 border border-border/60 p-3 active:scale-[0.99] transition"
                 >
                   <div className="flex items-center justify-between">
                     <div className="h-8 w-8 rounded-lg bg-gold-soft grid place-items-center">
-                      <s.icon className="h-4 w-4 text-gold-ink" />
+                      <Icon className="h-4 w-4 text-gold-ink" />
                     </div>
                     <ExternalLink className="h-3.5 w-3.5 text-ink-muted" />
                   </div>
-                  <div className="mt-2 text-[10px] uppercase tracking-[0.12em] text-ink-muted">{s.label}</div>
-                  <div className="text-[13px] font-medium text-ink truncate">{link!.url!.replace(/^https?:\/\//, "").replace(/^www\./, "")}</div>
+                  <div className="mt-2 text-[10px] uppercase tracking-[0.12em] text-ink-muted">{label}</div>
+                  <div className="text-[13px] font-medium text-ink truncate">{url.replace(/^https?:\/\//, "").replace(/^www\./, "")}</div>
                 </a>
               );
             })}

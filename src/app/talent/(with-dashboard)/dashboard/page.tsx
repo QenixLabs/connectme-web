@@ -538,9 +538,6 @@ function fieldLabel(path: string): string {
     "documents.portfolio_pdf_url": "Portfolio PDF",
     "documents.measurements_sheet_url": "Measurements",
     social_links: "Social links",
-    "social_links.instagram": "Instagram",
-    "social_links.youtube": "YouTube",
-    "social_links.linkedin": "LinkedIn",
     privacy_mode: "Privacy mode",
   };
   return labels[path] ?? path;

@@ -1,22 +1,28 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Plug, FileDown, Bookmark } from "lucide-react";
+import { Plug, FileDown, Bookmark, MessageSquare } from "lucide-react";
 
 interface ActionBarProps {
   username: string;
   onConnect?: () => void;
+  onSendMessage?: () => void;
   onBookmark?: () => void;
   isConnecting?: boolean;
   connectDisabled?: boolean;
+  sendMessageDisabled?: boolean;
+  showBookmark?: boolean;
 }
 
 export function ActionBar({
   username,
   onConnect,
+  onSendMessage,
   onBookmark,
   isConnecting,
   connectDisabled,
+  sendMessageDisabled,
+  showBookmark = true,
 }: ActionBarProps) {
   const router = useRouter();
 
@@ -32,18 +38,28 @@ export function ActionBar({
           {isConnecting ? "Connecting..." : "Connect"}
         </button>
         <button
+          onClick={onSendMessage}
+          disabled={sendMessageDisabled}
+          className="h-12 px-4 rounded-xl bg-cream border border-border text-ink-soft text-[13px] font-medium flex items-center justify-center gap-2 active:scale-[0.99] transition disabled:opacity-50"
+        >
+          <MessageSquare className="h-4 w-4 text-gold" />
+          Message
+        </button>
+        <button
           onClick={() => router.push(`/talent/${username}/portfolio`)}
           className="h-12 px-4 rounded-xl bg-cream border border-border text-ink-soft text-[13px] font-medium flex items-center justify-center gap-2 active:scale-[0.99] transition"
         >
           <FileDown className="h-4 w-4 text-gold" />
           Media Kit
         </button>
-        <button
-          onClick={onBookmark}
-          className="h-12 w-12 rounded-xl bg-cream border border-border grid place-items-center active:scale-[0.99] transition"
-        >
-          <Bookmark className="h-4 w-4 text-gold" />
-        </button>
+        {showBookmark && (
+          <button
+            onClick={onBookmark}
+            className="h-12 w-12 rounded-xl bg-cream border border-border grid place-items-center active:scale-[0.99] transition"
+          >
+            <Bookmark className="h-4 w-4 text-gold" />
+          </button>
+        )}
       </div>
     </section>
   );

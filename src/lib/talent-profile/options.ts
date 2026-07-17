@@ -1,4 +1,5 @@
 import { PROFESSIONS } from '@/lib/professions';
+import { INFLUENCER_SPECIALTIES } from '@/lib/profession-fields';
 
 export type Option = { value: string; label: string };
 
@@ -84,8 +85,28 @@ export const PROFICIENCY_OPTIONS: Option[] = [
 
 export const PROFESSION_SUGGESTIONS: string[] = [...PROFESSIONS];
 
+export const SOCIAL_PLATFORMS: Option[] = [
+  opt('instagram', 'Instagram'),
+  opt('youtube', 'YouTube'),
+  opt('linkedin', 'LinkedIn'),
+  opt('twitter', 'Twitter / X'),
+  opt('facebook', 'Facebook'),
+  opt('tiktok', 'TikTok'),
+  opt('website', 'Website'),
+  opt('github', 'GitHub'),
+  opt('behance', 'Behance'),
+  opt('dribbble', 'Dribbble'),
+  opt('vimeo', 'Vimeo'),
+  opt('spotify', 'Spotify'),
+  opt('snapchat', 'Snapchat'),
+  opt('threads', 'Threads'),
+  opt('other', 'Other'),
+];
+
 export function dynamicOptions(currentValue: string | undefined, options: Option[]): Option[] {
   if (!currentValue) return options;
   if (options.some((o) => o.value === currentValue)) return options;
   return [...options, { value: currentValue, label: currentValue }];
 }
+
+export const INFLUENCER_SPECIALTY_OPTIONS: Option[] = INFLUENCER_SPECIALTIES.map((s) => opt(s, s));

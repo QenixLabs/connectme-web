@@ -1,4 +1,5 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { keepPreviousData } from '@tanstack/react-query';
 import { campaignApi } from '@/lib/api';
 import { queryKeys } from '@/lib/api/query-keys';
 import { usePopup } from '@/hooks/use-popup';
@@ -13,13 +14,23 @@ export function useCampaigns(filters: {
   skills?: string;
   languages?: string;
   applied?: string;
+  sort?: string;
   limit?: number;
 }) {
+  const isRelevance = filters.sort === 'relevance';
+
   return useInfiniteQuery({
     queryKey: queryKeys.campaigns.all(filters),
-    queryFn: ({ pageParam }) => campaignApi.getAll({ ...filters, cursor: pageParam }),
-    initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    queryFn: ({ pageParam }) =>
+      isRelevance
+        ? campaignApi.getAll({ ...filters, page: (pageParam as number) ?? 1 })
+        : campaignApi.getAll({ ...filters, cursor: pageParam as string | undefined }),
+    initialPageParam: isRelevance ? (1 as number) : (undefined as string | undefined),
+    getNextPageParam: (lastPage) =>
+      isRelevance
+        ? (lastPage.hasMore ? (lastPage.page ?? 1) + 1 : undefined)
+        : (lastPage.nextCursor ?? undefined),
+    placeholderData: keepPreviousData,
   });
 }
 

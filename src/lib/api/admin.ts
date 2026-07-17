@@ -404,6 +404,25 @@ export interface PortfolioTalent {
   profile_photo?: string;
 }
 
+export interface CronJobInfo {
+  name: string;
+  displayName: string;
+  description: string;
+  module: string;
+  cronExpression: string;
+  nextRun: string | null;
+  lastRun: string | null;
+  isRunning: boolean;
+  isActive: boolean;
+}
+
+export interface CronJobExecution {
+  triggeredAt: string;
+  duration_ms: number;
+  status: 'success' | 'error';
+  error?: string;
+}
+
 export const adminApi = {
   getDashboardStats: async (): Promise<DashboardStats> => {
     const response = await apiClient.get('/admin/dashboard-stats');
@@ -652,6 +671,21 @@ export const adminApi = {
 
   rejectPortfolioItem: async (userId: string, itemId: string, reason: string): Promise<unknown> => {
     const response = await apiClient.post(`/admin/portfolio/${userId}/items/${itemId}/reject`, { reason });
+    return response.data;
+  },
+
+  getCronJobs: async (): Promise<CronJobInfo[]> => {
+    const response = await apiClient.get('/admin/cron-jobs');
+    return response.data;
+  },
+
+  triggerCronJob: async (name: string): Promise<{ message: string; duration_ms: number }> => {
+    const response = await apiClient.post(`/admin/cron-jobs/${name}/trigger`);
+    return response.data;
+  },
+
+  getCronJobHistory: async (name: string): Promise<CronJobExecution[]> => {
+    const response = await apiClient.get(`/admin/cron-jobs/${name}/history`);
     return response.data;
   },
 };

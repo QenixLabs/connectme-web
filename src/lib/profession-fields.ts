@@ -24,14 +24,16 @@ export const PROFESSION_SPECIALTIES: Record<string, string[]> = {
     'Street', 'Architectural', 'Sports', 'Food', 'Travel',
   ],
   Influencer: [
-    'Fashion', 'Beauty', 'Travel', 'Food', 'Fitness', 'Tech',
-    'Gaming', 'Lifestyle', 'Comedy', 'Education', 'Music',
-    'Sports', 'Parenting',
+    'fashion', 'beauty', 'travel', 'food', 'fitness', 'tech',
+    'gaming', 'lifestyle', 'finance', 'education', 'music',
+    'sports', 'parenting', 'other',
   ],
   'Extra / Background': [
     'Crowd', 'Atmosphere', 'Stand-in', 'Photo Double',
   ],
 };
+
+export const INFLUENCER_SPECIALTIES = PROFESSION_SPECIALTIES.Influencer;
 
 export function getSpecialtiesForProfession(profession: string): string[] {
   return PROFESSION_SPECIALTIES[profession] || [];

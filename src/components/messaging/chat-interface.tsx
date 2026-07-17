@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { Send, MessageSquare, ArrowLeft, MoreVertical, Paperclip, Check, MessageCircle, Ban, UserX, X } from "lucide-react";
+import { Send, MessageSquare, ArrowLeft, MoreVertical, Paperclip, Check, MessageCircle, Ban, UserX, X, Clock } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { messagesApi, type Conversation, type Message, type ConversationParticipant } from "@/lib/api/messages";
 import { queryKeys } from "@/lib/api/query-keys";
@@ -805,12 +805,19 @@ export default function ChatInterface({ currentUserId, initialConversationId, in
               )}
             </div>
 
-            {/* Input / Blocked */}
+            {/* Input / Blocked / First Message Banner */}
             {isBlocked ? (
               <div className="px-3 py-3 border-t border-border bg-red-50/80 backdrop-blur-md flex items-center justify-center gap-2 z-10 shrink-0">
                 <Ban className="w-4 h-4 text-red-500" strokeWidth={1.5} />
                 <span className="text-xs text-red-600 font-medium">
                   {blockedByMe ? "You have blocked this user" : "You have been blocked by this user"}
+                </span>
+              </div>
+            ) : selectedConversation?.first_message ? (
+              <div className="px-3 py-3 border-t border-border bg-amber-50/80 backdrop-blur-md flex items-center justify-center gap-2 z-10 shrink-0">
+                <Clock className="w-4 h-4 text-amber-600" strokeWidth={1.5} />
+                <span className="text-xs text-amber-700 font-medium">
+                  Waiting for connection. They&apos;ll need to accept before you can continue messaging.
                 </span>
               </div>
             ) : (
