@@ -27,7 +27,6 @@ import { useCreateCollaborationRequest } from "@/lib/api/hooks/useCreateCollabor
 import { ShareProfileDialog } from "@/components/share-profile-dialog";
 import { MediaKitHeader } from "@/components/portfolio/media-kit-header";
 import { PortfolioHeroImmersive } from "@/components/public-profile/portfolio-hero-immersive";
-import { MediaKitStats } from "@/components/public-profile/media-kit-stats";
 import { PortfolioShowcase } from "@/components/public-profile/portfolio-showcase";
 import { PortfolioGallery } from "@/components/public-profile/portfolio-gallery";
 
@@ -155,37 +154,7 @@ export default function PortfolioPage() {
     setGalleryOpen(true);
   }, []);
 
-  useEffect(() => {
-    if (!profile) return;
 
-    const hasInstagramLink = !!profile.social_links?.instagram?.url;
-    const hasYoutubeLink = !!profile.social_links?.youtube?.url;
-    if (!hasInstagramLink && !hasYoutubeLink) return;
-
-    const statsPresent =
-      (!hasInstagramLink || mediaKit?.instagramFollowers != null) &&
-      (!hasYoutubeLink || mediaKit?.youtubeSubscribers != null);
-    if (statsPresent) return;
-
-    const controller = new AbortController();
-
-    const timer = setTimeout(async () => {
-      if (controller.signal.aborted) return;
-      try {
-        const refreshed = await talentApi.getMediaKit(username);
-        if (!controller.signal.aborted && refreshed && !(refreshed as { private?: boolean }).private) {
-          setMediaKit(refreshed as MediaKitData);
-        }
-      } catch {
-        // silently ignore poll failures
-      }
-    }, 10000);
-
-    return () => {
-      controller.abort();
-      clearTimeout(timer);
-    };
-  }, [username, profile, mediaKit]);
 
   if (loading) {
     return (
@@ -279,11 +248,6 @@ export default function PortfolioPage() {
 
   if (!profile) return null;
 
-  const instagramUrl = profile.social_links?.instagram?.url;
-  const youtubeUrl = profile.social_links?.youtube?.url;
-  const hasInstagramLink = !!instagramUrl;
-  const hasYoutubeLink = !!youtubeUrl;
-
   return (
     <div className="min-h-screen bg-background font-sans pb-12">
       <MediaKitHeader isOwner={isOwner} onShare={handleShareLink} />
@@ -354,20 +318,6 @@ export default function PortfolioPage() {
           </div>
         </div>
       </section>
-
-      {/* Stats */}
-      <MediaKitStats
-        instagramFollowers={mediaKit?.instagramFollowers}
-        youtubeSubscribers={mediaKit?.youtubeSubscribers}
-        youtubeViews={mediaKit?.youtubeViews}
-        monthlyViews={profile?.analytics?.profile_views_30d ?? 0}
-        hasInstagramLink={hasInstagramLink}
-        hasYoutubeLink={hasYoutubeLink}
-        instagramUrl={instagramUrl}
-        youtubeUrl={youtubeUrl}
-        instagramLoading={hasInstagramLink && mediaKit?.instagramFollowers == null}
-        youtubeLoading={hasYoutubeLink && mediaKit?.youtubeSubscribers == null}
-      />
 
       {/* Portfolio Showcase */}
       <PortfolioShowcase

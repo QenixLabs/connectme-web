@@ -48,20 +48,25 @@ export interface Campaign {
 }
 
 export interface CampaignTask {
-  _id?: string;
-  campaign_id?: string;
+  is_enabled: boolean;
   title: string;
   description: string;
   task_type: 'file_upload' | 'text_response';
   deadline_days: number;
-  created_at?: string;
-  updated_at?: string;
+  document?: TaskDocument;
+}
+
+export interface TaskDocument {
+  url: string;
+  name: string;
+  mime_type: string;
+  size: number;
+  uploaded_at: string;
 }
 
 export interface TaskSubmission {
   _id: string;
   campaign_id: string;
-  task_id: string;
   talent_id: string;
   application_id: string;
   talent_name?: string;
@@ -69,10 +74,13 @@ export interface TaskSubmission {
   talent_photo?: string;
   status: 'assigned' | 'submitted' | 'reviewed';
   response_text?: string;
-  file_urls?: string[];
+  files?: { url: string; name: string; mime_type: string; size: number }[];
   submitted_at?: string;
   recruiter_notes?: string;
   recruiter_rating?: number;
+  assigned_at: string;
+  deadline_at: string;
+  reminder_sent: boolean;
   created_at: string;
 }
 
@@ -173,6 +181,7 @@ export const campaignApi = {
       is_shortlisted?: boolean;
       note?: { _id: string; note_text?: string; rating?: number } | null;
       task_submission_status?: string;
+      task_submission?: TaskSubmission | null;
     }>;
     total: number;
     pending: number;
@@ -423,18 +432,31 @@ export const campaignApi = {
     await apiClient.delete(`/campaigns/${campaignId}/team/${memberId}`);
   },
 
-  getTask: async (campaignId: string): Promise<CampaignTask | null> => {
+  getTask: async (campaignId: string): Promise<{ task: CampaignTask | null }> => {
     const response = await apiClient.get(`/campaigns/${campaignId}/task`);
     return response.data;
   },
 
-  upsertTask: async (campaignId: string, payload: { title: string; description: string; task_type: string; deadline_days: number }): Promise<CampaignTask> => {
+  upsertTask: async (campaignId: string, payload: { is_enabled: boolean; title?: string; description?: string; task_type?: 'file_upload' | 'text_response'; deadline_days?: number }): Promise<Record<string, unknown>> => {
     const response = await apiClient.put(`/campaigns/${campaignId}/task`, payload);
     return response.data;
   },
 
   deleteTask: async (campaignId: string): Promise<void> => {
     await apiClient.delete(`/campaigns/${campaignId}/task`);
+  },
+
+  uploadTaskDocument: async (campaignId: string, file: File): Promise<TaskDocument> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await apiClient.post(`/campaigns/${campaignId}/task/document`, formData, {
+      headers: { 'Content-Type': undefined },
+    });
+    return response.data;
+  },
+
+  deleteTaskDocument: async (campaignId: string): Promise<void> => {
+    await apiClient.delete(`/campaigns/${campaignId}/task/document`);
   },
 
   getTaskSubmissions: async (campaignId: string): Promise<{ data: TaskSubmission[]; total: number }> => {
@@ -457,7 +479,12 @@ export const campaignApi = {
     return response.data;
   },
 
-  submitTask: async (campaignId: string, payload: { response_text?: string; file_urls?: string[] }): Promise<TaskSubmission> => {
+  getTaskDocument: async (campaignId: string): Promise<TaskDocument | null> => {
+    const response = await apiClient.get(`/talent/campaigns/${campaignId}/task/document`);
+    return response.data;
+  },
+
+  submitTask: async (campaignId: string, payload: { response_text?: string; files?: { url: string; name: string; mime_type: string; size?: number }[] }): Promise<TaskSubmission> => {
     const response = await apiClient.post(`/talent/campaigns/${campaignId}/task/submit`, payload);
     return response.data;
   },

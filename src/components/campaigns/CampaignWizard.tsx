@@ -169,6 +169,7 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
   const [pendingMediaFile, setPendingMediaFile] = useState<File | null>(null);
   const [draftCampaignId, setDraftCampaignId] = useState<string | null>(campaignId ?? null);
   const [previewCount, setPreviewCount] = useState<number | null>(null);
+  const [pendingTaskDoc, setPendingTaskDoc] = useState<File | null>(null);
 
   const createCampaign = useCreateCampaign();
   const uploadMedia = useUploadCampaignMedia();
@@ -319,6 +320,7 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
     influencer_speciality: values.influencer_speciality || undefined,
     task: values.task?.title
       ? {
+          is_enabled: true,
           title: values.task.title,
           description: values.task.description || '',
           task_type: values.task.task_type || 'file_upload',
@@ -349,6 +351,13 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
         await uploadMedia.mutateAsync({ campaignId: resultCampaignId, formData });
       }
 
+      if (pendingTaskDoc && resultCampaignId) {
+        try {
+          await campaignApi.uploadTaskDocument(resultCampaignId, pendingTaskDoc);
+          setPendingTaskDoc(null);
+        } catch {}
+      }
+
       router.push('/recruiter/campaigns');
     } catch (err: unknown) {
       setServerError(
@@ -373,17 +382,28 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
 
     setCheckingMatches(true);
     try {
+      let savedId: string | undefined;
       if (isEdit && campaignId) {
         const payload = buildPayload(form.getValues());
         await updateCampaign.mutateAsync({ id: campaignId, payload });
         setDraftCampaignId(campaignId);
+        savedId = campaignId;
       } else if (draftCampaignId) {
         const payload = buildPayload(form.getValues());
         await updateCampaign.mutateAsync({ id: draftCampaignId, payload });
+        savedId = draftCampaignId;
       } else {
         const payload = buildPayload({ ...form.getValues(), publishOption: 'draft' });
         const created = await createCampaign.mutateAsync(payload as Parameters<typeof campaignApi.create>[0]);
         setDraftCampaignId(created._id);
+        savedId = created._id;
+      }
+
+      if (savedId && pendingTaskDoc) {
+        try {
+          await campaignApi.uploadTaskDocument(savedId, pendingTaskDoc);
+          setPendingTaskDoc(null);
+        } catch {}
       }
     } catch {
       // silently fail — user can still continue
@@ -499,7 +519,7 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
             "transition-all duration-300",
             step === 2 ? 'block opacity-100' : 'hidden opacity-0',
           )}>
-            <RequirementsStep />
+            <RequirementsStep campaignId={draftCampaignId} onPendingDocChange={setPendingTaskDoc} />
           </div>
           <div className={cn(
             "transition-all duration-300",

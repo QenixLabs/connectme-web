@@ -46,7 +46,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function RequirementsStep() {
+export function RequirementsStep({ campaignId, onPendingDocChange }: { campaignId?: string | null; onPendingDocChange?: (file: File | null) => void }) {
   const { control, watch, setValue } = useFormContext<CampaignWizardInput>();
   const { fields, append, remove } = useFieldArray({
     control,
@@ -291,7 +291,7 @@ export function RequirementsStep() {
 
       <SectionLabel>Assignment task</SectionLabel>
 
-      <TaskConfigSection />
+      <TaskConfigSection campaignId={campaignId} onPendingDocChange={onPendingDocChange} />
 
       <SectionLabel>Custom application questions</SectionLabel>
 

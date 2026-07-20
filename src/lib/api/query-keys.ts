@@ -23,6 +23,8 @@ export const queryKeys = {
       ['campaigns', 'task-submission', campaignId, submissionId] as const,
     talentTask: (campaignId: string) =>
       ['campaigns', 'talent-task', campaignId] as const,
+    taskDocument: (campaignId: string) =>
+      ['campaigns', 'task-document', campaignId] as const,
   },
   talent: {
     all: (filters: Record<string, unknown>) =>

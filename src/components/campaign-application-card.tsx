@@ -2,6 +2,7 @@
 
 import { Check, MessageSquare, Star, Clock, CheckCircle2, XCircle, BookmarkCheck, Bookmark, ClipboardList } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { TaskSubmission } from "@/lib/api";
 
 type ApplicationTalent = {
   _id?: string;
@@ -44,6 +45,7 @@ export interface EnrichedApplication {
   is_shortlisted?: boolean;
   note?: ApplicationNote | null;
   task_submission_status?: string;
+  task_submission?: TaskSubmission | null;
 }
 
 function getInitials(name: string): string {
@@ -108,6 +110,7 @@ interface CampaignApplicationCardProps {
   onStatusChange: (status: string) => void;
   onToggleShortlist: () => void;
   onAddNote: () => void;
+  onViewSubmission?: () => void;
   selectable?: boolean;
   isSelected?: boolean;
   onToggleSelect?: () => void;
@@ -119,6 +122,7 @@ export function CampaignApplicationCard({
   onStatusChange,
   onToggleShortlist,
   onAddNote,
+  onViewSubmission,
   selectable,
   isSelected,
   onToggleSelect,
@@ -228,20 +232,26 @@ export function CampaignApplicationCard({
             </span>
           )}
           {application.task_submission_status && (
-            <span className={cn(
-              "px-1.5 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-0.5",
-              application.task_submission_status === "submitted"
-                ? "bg-blue-50 text-blue-600"
-                : application.task_submission_status === "reviewed"
-                  ? "bg-emerald-50 text-emerald-600"
-                  : "bg-slate-50 text-slate-600"
-            )}>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewSubmission?.();
+              }}
+              className={cn(
+                "px-1.5 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-0.5 cursor-pointer hover:scale-[1.04] transition-transform",
+                application.task_submission_status === "submitted"
+                  ? "bg-blue-50 text-blue-600 hover:bg-blue-100"
+                  : application.task_submission_status === "reviewed"
+                    ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
+                    : "bg-slate-50 text-slate-600 hover:bg-slate-100"
+              )}
+            >
               <ClipboardList className="w-2.5 h-2.5" strokeWidth={1.5} />
               {application.task_submission_status === "assigned" ? "Task Assigned" :
                application.task_submission_status === "submitted" ? "Task Submitted" :
                application.task_submission_status === "reviewed" ? "Task Reviewed" :
                application.task_submission_status}
-            </span>
+            </button>
           )}
         </div>
 

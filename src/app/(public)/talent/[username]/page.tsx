@@ -52,7 +52,6 @@ export default function PublicTalentProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [featureError, setFeatureError] = useState<{ feature: string; plan?: string } | null>(null);
   const [shortlistModalOpen, setShortlistModalOpen] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
   const [isPrivate, setIsPrivate] = useState(false);
   const [tab, setTab] = useState<TabId>("overview");
   const [lightboxItem, setLightboxItem] = useState<PortfolioItem | null>(null);
@@ -91,73 +90,12 @@ export default function PublicTalentProfilePage() {
       return;
     }
 
-    const talentId = profile?.user_id;
-    if (!talentId) return;
+    if (!profile?.user_id) return;
 
     guard(() => {
-      if (profile?.privacy_mode === "private") {
-        const name = profile?.full_legal_name || profile?.username || "Talent";
-        createRequest.mutate({ receiverId: talentId, reason: "collaboration" }, {
-          onSuccess: () => {
-            popup.show({
-              title: "Request sent",
-              description: `Collaboration request sent to ${name}. You can message once they accept.`,
-              variant: "success",
-            });
-          },
-          onError: (err: unknown) => {
-            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || "";
-            if (msg.toLowerCase().includes("already accepted")) {
-              messagesApi
-                .startDirectConversation(talentId)
-                .then(({ conversation }) => {
-                  const base = user.role === "recruiter" ? "/recruiter/messages" : "/talent/messages";
-                  router.push(`${base}/${conversation._id}`);
-                })
-                .catch((err2) => {
-                  popup.show({
-                    title: "Could not open messages",
-                    description: getApiErrorMessage(err2, "Something went wrong"),
-                    variant: "error",
-                  });
-                });
-            } else if (msg.toLowerCase().includes("already pending")) {
-              popup.show({
-                title: "Request pending",
-                description: "You already have a pending request with this talent.",
-                variant: "info",
-              });
-            } else {
-              popup.show({
-                title: "Failed to send request",
-                description: getApiErrorMessage(err, "Something went wrong"),
-                variant: "error",
-              });
-            }
-          },
-        });
-        return;
-      }
-
-      setIsConnecting(true);
-      messagesApi
-        .startDirectConversation(talentId)
-        .then(({ conversation }) => {
-          const draft = "Hi, I came across your profile and would love to connect regarding a potential opportunity. Looking forward to hearing from you!";
-          const base = user.role === "recruiter" ? "/recruiter/messages" : "/talent/messages";
-          router.push(`${base}/${conversation._id}?draft=${encodeURIComponent(draft)}`);
-        })
-        .catch(() => {
-          setIsConnecting(false);
-          if (user.role === "talent") {
-            setConnectDialogOpen(true);
-          }
-        })
-        .finally(() => {
-          if (user.role !== "talent") setIsConnecting(false);
-        });
+      setConnectDialogOpen(true);
     });
-  }, [profile, isRecruiter, guard, createRequest, popup, router, user]);
+  }, [user, router, profile?.user_id, guard]);
 
   const handleSendMessage = useCallback(() => {
     if (!user) {
@@ -165,21 +103,10 @@ export default function PublicTalentProfilePage() {
       return;
     }
 
-    const talentId = profile?.user_id;
-    if (!talentId) return;
+    if (!profile?.user_id) return;
 
-    setIsSendingFirstMessage(true);
-    messagesApi
-      .startDirectConversation(talentId)
-      .then(({ conversation }) => {
-        const base = user.role === "recruiter" ? "/recruiter/messages" : "/talent/messages";
-        router.push(`${base}/${conversation._id}`);
-      })
-      .catch(() => {
-        setIsSendingFirstMessage(false);
-        setFirstMessageOpen(true);
-      });
-  }, [user, router, profile]);
+    setFirstMessageOpen(true);
+  }, [user, router, profile?.user_id]);
 
   const handleSendFirstMessage = useCallback(
     async (content: string) => {
@@ -193,10 +120,21 @@ export default function PublicTalentProfilePage() {
         setFirstMessageOpen(false);
         popup.show({
           title: "Message sent",
-          description: `Your message has been sent to ${profile?.full_legal_name || profile?.username || "this talent"}. They'll need to accept the connection before you can continue chatting.`,
+          description: `Your message has been sent. They'll need to reply before you can send another.`,
           variant: "success",
         });
-      } catch (err) {
+      } catch (err: any) {
+        if (err?.response?.status === 409) {
+          try {
+            const { conversation } = await messagesApi.startDirectConversation(talentId);
+            setFirstMessageOpen(false);
+            const base = user?.role === "recruiter" ? "/recruiter/messages" : "/talent/messages";
+            router.push(`${base}/${conversation._id}`);
+            return;
+          } catch {
+            // fall through to error popup
+          }
+        }
         popup.show({
           title: "Failed to send message",
           description: getApiErrorMessage(err, "Something went wrong"),
@@ -206,7 +144,7 @@ export default function PublicTalentProfilePage() {
         setIsSendingFirstMessage(false);
       }
     },
-    [profile, popup],
+    [profile, popup, user, router],
   );
 
   const handleConnectRequest = useCallback(
@@ -464,7 +402,6 @@ export default function PublicTalentProfilePage() {
             onConnect={handleConnect}
             onSendMessage={handleSendMessage}
             onBookmark={() => setShortlistModalOpen(true)}
-            isConnecting={isConnecting}
             connectDisabled={!!user && !profile}
             sendMessageDisabled={!!user && !profile}
             showBookmark={isRecruiter}
@@ -497,10 +434,10 @@ export default function PublicTalentProfilePage() {
             <div className="px-4 mt-6 text-center">
               <button
                 onClick={handleConnect}
-                disabled={isConnecting || !!user}
+                disabled={isSendingConnectRequest}
                 className="inline-flex items-center justify-center rounded-xl bg-gold px-6 py-3 text-sm font-medium text-white shadow-sm hover:bg-gold/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isConnecting ? "Sending..." : "Send a connect request to view full profile"}
+                {isSendingConnectRequest ? "Sending..." : "Send a connect request to view full profile"}
               </button>
             </div>
           ) : (

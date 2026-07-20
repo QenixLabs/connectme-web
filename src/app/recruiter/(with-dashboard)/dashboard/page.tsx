@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 import {
   Briefcase,
   BookmarkCheck,
-  MessageSquare,
+  ClipboardList,
   Sparkles,
   Plus,
   Search,
@@ -128,11 +128,11 @@ const STAT_ITEMS = [
     iconColor: "text-amber-600",
   },
   {
-    key: "messages" as const,
-    label: "New Messages",
-    icon: MessageSquare,
-    bg: "bg-emerald-50",
-    iconColor: "text-emerald-600",
+    key: "pending_reviews" as const,
+    label: "Pending Reviews",
+    icon: ClipboardList,
+    bg: "bg-purple-50",
+    iconColor: "text-purple-600",
   },
 ] as const;
 
@@ -152,10 +152,7 @@ function StatsGrid({
             ))
           : STAT_ITEMS.map((item, idx) => {
               const Icon = item.icon;
-              const value =
-                item.key === "messages"
-                  ? 0
-                  : (stats?.[item.key] ?? 0);
+              const value = stats?.[item.key] ?? 0;
               return (
                 <motion.div
                   key={item.key}

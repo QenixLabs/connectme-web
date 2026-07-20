@@ -231,6 +231,7 @@ export default function TalentCampaignDetailPage() {
         <TalentTaskCard
           task={taskData.task}
           submission={taskData.submission}
+          campaignId={campaignId}
           onSubmit={(payload) =>
             submitTask.mutate({ campaignId, payload })
           }

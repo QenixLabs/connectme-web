@@ -1,6 +1,6 @@
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { motion } from "motion/react";
 import {
@@ -103,7 +103,7 @@ import { CampaignApplicationCard } from '@/components/campaign-application-card'
 import { CampaignApplicationRow } from '@/components/campaign-application-row';
 import { ApplicationNoteSheet } from '@/components/application-note-sheet';
 import { TaskSubmissionsPanel } from '@/components/campaigns/TaskSubmissionsPanel';
-import { TaskSubmissionDetail } from '@/components/campaigns/TaskSubmissionDetail';
+import { TaskConfigCard } from '@/components/campaigns/TaskConfigCard';
 import { type TaskSubmission } from '@/lib/api';
 import { useReviewTaskSubmission } from '@/lib/api/hooks/useCampaignTask';
 import { useSendAcceptanceMessage } from '@/lib/api/hooks/useCampaignTask';
@@ -224,9 +224,13 @@ function DetailStatCard({
 
 export default function CampaignDetailPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const campaignId = params.id as string;
-  const [activeTab, setActiveTab] = useState('applicants');
+  const [activeTab, setActiveTab] = useState(() => {
+    const tab = searchParams.get('tab');
+    return tab && ['applicants', 'invites', 'team', 'recommended', 'analytics', 'submissions'].includes(tab) ? tab : 'applicants';
+  });
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [selectedApps, setSelectedApps] = useState<Set<string>>(new Set());
   const [analyticsFrom, setAnalyticsFrom] = useState('');
@@ -249,7 +253,6 @@ export default function CampaignDetailPage() {
   const [noteApplication, setNoteApplication] = useState<Record<string, unknown> | null>(null);
 
   // Task submission state
-  const [selectedSubmission, setSelectedSubmission] = useState<TaskSubmission | null>(null);
   const reviewSubmission = useReviewTaskSubmission();
   const sendAcceptanceMsg = useSendAcceptanceMessage();
 
@@ -419,49 +422,25 @@ export default function CampaignDetailPage() {
     }
   };
 
-  const handleViewSubmission = (submission: TaskSubmission) => {
-    setSelectedSubmission(submission);
-  };
-
-  const handleReviewSubmission = (notes: string, rating: number) => {
-    if (!selectedSubmission) return;
+  const handleReviewSubmission = (submissionId: string, notes: string, rating: number) => {
     reviewSubmission.mutate(
       {
         campaignId,
-        submissionId: selectedSubmission._id,
+        submissionId,
         payload: { recruiter_notes: notes || undefined, recruiter_rating: rating || undefined },
-      },
-      {
-        onSuccess: () => setSelectedSubmission(null),
       },
     );
   };
 
-  const handleAcceptFromSubmission = async () => {
-    if (!selectedSubmission) return;
-    try {
-      await updateStatus.mutateAsync({
-        campaignId,
-        applicationId: selectedSubmission.application_id,
-        status: 'accepted',
-      });
-      if (selectedSubmission.talent_id) {
-        sendAcceptanceMsg.mutate({ campaignId, talentId: selectedSubmission.talent_id });
-      }
-      setSelectedSubmission(null);
-    } catch {}
+  const handleAcceptFromSubmission = (submission: TaskSubmission) => {
+    updateStatus.mutate({ campaignId, applicationId: submission.application_id, status: 'accepted' });
+    if (submission.talent_id) {
+      sendAcceptanceMsg.mutate({ campaignId, talentId: submission.talent_id });
+    }
   };
 
-  const handleRejectFromSubmission = async () => {
-    if (!selectedSubmission) return;
-    try {
-      await updateStatus.mutateAsync({
-        campaignId,
-        applicationId: selectedSubmission.application_id,
-        status: 'rejected',
-      });
-      setSelectedSubmission(null);
-    } catch {}
+  const handleRejectFromSubmission = (submission: TaskSubmission) => {
+    updateStatus.mutate({ campaignId, applicationId: submission.application_id, status: 'rejected' });
   };
 
   // Applicant tab handlers
@@ -847,50 +826,52 @@ export default function CampaignDetailPage() {
         transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
       >
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-6 bg-muted-bg/50 border border-border/60 rounded-xl p-1">
-            <TabsTrigger
-              value="applicants"
-              className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-luxe data-[state=active]:text-ink text-ink-muted text-xs font-semibold py-2.5"
-            >
-              Applicants
-              <span className="ml-1.5 px-1.5 py-0.5 rounded-md text-[10px] bg-muted-bg data-[state=active]:bg-muted-bg">
-                {totalApplicants}
-              </span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="invites"
-              className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-luxe data-[state=active]:text-ink text-ink-muted text-xs font-semibold py-2.5"
-            >
-              Invites
-              <span className="ml-1.5 px-1.5 py-0.5 rounded-md text-[10px] bg-muted-bg data-[state=active]:bg-muted-bg">
-                {invites?.length ?? 0}
-              </span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="team"
-              className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-luxe data-[state=active]:text-ink text-ink-muted text-xs font-semibold py-2.5"
-            >
-              Team
-            </TabsTrigger>
-            <TabsTrigger
-              value="recommended"
-              className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-luxe data-[state=active]:text-ink text-ink-muted text-xs font-semibold py-2.5"
-            >
-              Recommended
-            </TabsTrigger>
-            <TabsTrigger
-              value="analytics"
-              className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-luxe data-[state=active]:text-ink text-ink-muted text-xs font-semibold py-2.5"
-            >
-              Analytics
-            </TabsTrigger>
-            <TabsTrigger
-              value="submissions"
-              className="rounded-lg data-[state=active]:bg-card data-[state=active]:shadow-luxe data-[state=active]:text-ink text-ink-muted text-xs font-semibold py-2.5"
-            >
-              Submissions
-            </TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto no-scrollbar lg:overflow-visible rounded-xl border border-border/60">
+            <TabsList className="flex lg:grid w-max lg:w-full min-w-full lg:grid-cols-6 bg-muted-bg/50 p-1 rounded-xl">
+              <TabsTrigger
+                value="applicants"
+                className="rounded-lg flex-shrink-0 whitespace-nowrap data-[state=active]:bg-card data-[state=active]:shadow-luxe data-[state=active]:text-ink text-ink-muted text-xs font-semibold py-2.5 px-3"
+              >
+                Applicants
+                <span className="ml-1.5 px-1.5 py-0.5 rounded-md text-[10px] bg-muted-bg data-[state=active]:bg-muted-bg">
+                  {totalApplicants}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="invites"
+                className="rounded-lg flex-shrink-0 whitespace-nowrap data-[state=active]:bg-card data-[state=active]:shadow-luxe data-[state=active]:text-ink text-ink-muted text-xs font-semibold py-2.5 px-3"
+              >
+                Invites
+                <span className="ml-1.5 px-1.5 py-0.5 rounded-md text-[10px] bg-muted-bg data-[state=active]:bg-muted-bg">
+                  {invites?.length ?? 0}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="team"
+                className="rounded-lg flex-shrink-0 whitespace-nowrap data-[state=active]:bg-card data-[state=active]:shadow-luxe data-[state=active]:text-ink text-ink-muted text-xs font-semibold py-2.5 px-3"
+              >
+                Team
+              </TabsTrigger>
+              <TabsTrigger
+                value="recommended"
+                className="rounded-lg flex-shrink-0 whitespace-nowrap data-[state=active]:bg-card data-[state=active]:shadow-luxe data-[state=active]:text-ink text-ink-muted text-xs font-semibold py-2.5 px-3"
+              >
+                Recommended
+              </TabsTrigger>
+              <TabsTrigger
+                value="analytics"
+                className="rounded-lg flex-shrink-0 whitespace-nowrap data-[state=active]:bg-card data-[state=active]:shadow-luxe data-[state=active]:text-ink text-ink-muted text-xs font-semibold py-2.5 px-3"
+              >
+                Analytics
+              </TabsTrigger>
+              <TabsTrigger
+                value="submissions"
+                className="rounded-lg flex-shrink-0 whitespace-nowrap data-[state=active]:bg-card data-[state=active]:shadow-luxe data-[state=active]:text-ink text-ink-muted text-xs font-semibold py-2.5 px-3"
+              >
+                Submissions
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="applicants" className="space-y-4 mt-6">
             {isLoadingApps ? (
@@ -1519,8 +1500,10 @@ export default function CampaignDetailPage() {
           </TabsContent>
 
           <TabsContent value="submissions" className="space-y-4 mt-6">
+            <TaskConfigCard campaignId={campaignId} />
+
             {!campaign?.task ? (
-              <div className="text-center py-24 bg-card border border-border/60 rounded-2xl shadow-luxe">
+              <div className="text-center py-16 bg-card border border-border/60 rounded-2xl shadow-luxe">
                 <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-muted-bg mx-auto">
                   <ClipboardList className="w-9 h-9 text-ink-muted/40" strokeWidth={1.5} />
                 </div>
@@ -1528,40 +1511,15 @@ export default function CampaignDetailPage() {
                   No task configured
                 </p>
                 <p className="mt-2 text-sm text-ink-muted max-w-sm mx-auto leading-relaxed">
-                  Add an assignment task in campaign settings to review talent submissions here.
+                  Configure an assignment task above. Shortlisted talents will be asked to complete it.
                 </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-4 h-9 rounded-xl border-border/60 bg-card hover:bg-cream-soft text-sm font-medium"
-                  onClick={() => router.push(`/recruiter/campaigns/${campaignId}/edit`)}
-                >
-                  <Pencil className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.5} />
-                  Edit Campaign
-                </Button>
               </div>
             ) : (
               <TaskSubmissionsPanel
                 campaignId={campaignId}
-                onViewSubmission={handleViewSubmission}
-              />
-            )}
-
-            {selectedSubmission && (
-              <TaskSubmissionDetail
-                submission={selectedSubmission}
-                onClose={() => setSelectedSubmission(null)}
                 onReview={handleReviewSubmission}
-                onAccept={
-                  selectedSubmission.application_id
-                    ? handleAcceptFromSubmission
-                    : undefined
-                }
-                onReject={
-                  selectedSubmission.application_id
-                    ? handleRejectFromSubmission
-                    : undefined
-                }
+                onAccept={handleAcceptFromSubmission}
+                onReject={handleRejectFromSubmission}
                 isReviewing={reviewSubmission.isPending}
                 isUpdatingStatus={updateStatus.isPending}
               />

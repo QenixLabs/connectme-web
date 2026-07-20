@@ -23,7 +23,7 @@ import { cn } from '@/lib/utils';
 
 import { PROFESSIONS } from '@/lib/professions';
 import { getSpecialtiesForProfession, INFLUENCER_SPECIALTIES } from '@/lib/profession-fields';
-import { TagInput } from '@/components/ui/tag-input';
+
 
 function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return (
@@ -74,7 +74,14 @@ function DateBlock({
   return (
     <div
       className="relative bg-card border border-border/60 rounded-xl px-4 py-3 flex flex-col gap-0.5 cursor-pointer hover:border-gold/40 hover:shadow-sm transition-all"
-      onClick={() => inputRef.current?.showPicker?.() || inputRef.current?.click()}
+      onClick={() => {
+        const input = inputRef.current as HTMLInputElement;
+        if (input?.showPicker) {
+          input.showPicker();
+        } else {
+          input?.focus();
+        }
+      }}
     >
       <div className="text-[10px] text-ink-muted uppercase tracking-wider font-semibold">
         {label}
@@ -92,7 +99,7 @@ function DateBlock({
         type="date"
         value={value || ''}
         onChange={(e) => onChange(e.target.value)}
-        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full pointer-events-none"
       />
     </div>
   );
@@ -206,19 +213,26 @@ export function BasicInfoStep({ mediaFile, onMediaChange, existingCoverUrl }: Ba
 
       {getSpecialtiesForProfession(selectedRole).length > 0 && (
           <div className="flex flex-col gap-3">
-            <SectionLabel>Specialties</SectionLabel>
+            <SectionLabel>Specialty</SectionLabel>
             <FormField
               name="specialties"
               render={({ field }) => (
                 <FormItem>
-                  <FormControl>
-                    <TagInput
-                      value={field.value ?? []}
-                      onChange={field.onChange}
-                      suggestions={getSpecialtiesForProfession(selectedRole)}
-                      placeholder="Add specialties..."
-                    />
-                  </FormControl>
+                  <Select
+                    value={field.value?.[0] ?? ''}
+                    onValueChange={(v) => field.onChange([v])}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="text-sm h-11 rounded-xl border-border/60 bg-card">
+                        <SelectValue placeholder="Select specialty" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent className="rounded-xl">
+                      {getSpecialtiesForProfession(selectedRole).map((s) => (
+                        <SelectItem key={s} value={s}>{s}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { apiClient, useTaskDocument } from '@/lib/api';
 import { type CampaignTask, type TaskSubmission } from '@/lib/api';
 import {
   ClipboardList,
@@ -14,15 +15,17 @@ import {
   Upload,
   Send,
   X,
-  Download,
   ExternalLink,
+  Loader2,
+  Download,
+  BookOpen,
 } from 'lucide-react';
 
 function formatDeadline(task: CampaignTask, submission: TaskSubmission | null): string {
   if (submission?.status === 'submitted' || submission?.status === 'reviewed') {
     return 'Submitted';
   }
-  const assignedAt = submission?.created_at;
+  const assignedAt = submission?.assigned_at;
   if (!assignedAt) return '';
   const deadline = new Date(assignedAt);
   deadline.setDate(deadline.getDate() + (task.deadline_days || 3));
@@ -35,30 +38,65 @@ function formatDeadline(task: CampaignTask, submission: TaskSubmission | null): 
   return `${daysLeft} days left`;
 }
 
+interface UploadedFile {
+  url: string;
+  name: string;
+  mime_type: string;
+  size: number;
+}
+
 interface TalentTaskCardProps {
   task: CampaignTask;
   submission: TaskSubmission | null;
-  onSubmit: (payload: { response_text?: string; file_urls?: string[] }) => void;
+  onSubmit: (payload: { response_text?: string; files?: UploadedFile[] }) => void;
   isSubmitting: boolean;
+  campaignId: string;
 }
 
-export function TalentTaskCard({ task, submission, onSubmit, isSubmitting }: TalentTaskCardProps) {
+export function TalentTaskCard({ task, submission, onSubmit, isSubmitting, campaignId }: TalentTaskCardProps) {
   const [responseText, setResponseText] = useState(submission?.response_text || '');
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+
+  const { data: taskDocument } = useTaskDocument(campaignId);
 
   const status = submission?.status || 'assigned';
   const isSubmitted = status === 'submitted' || status === 'reviewed';
   const deadlineLabel = formatDeadline(task, submission);
 
-  const handleSubmit = () => {
-    const fileUrls: string[] = [];
-    if (pendingFiles.length > 0 && submission?.file_urls) {
-      fileUrls.push(...submission.file_urls);
+  const handleUploadFile = async (file: File): Promise<UploadedFile | null> => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await apiClient.post(
+      `/talent/campaigns/${campaignId}/task/submissions/upload`,
+      formData,
+      {
+        headers: { 'Content-Type': undefined },
+      },
+    );
+    return response.data as UploadedFile;
+  };
+
+  const handleSubmit = async () => {
+    setIsUploading(true);
+
+    let finalFiles: UploadedFile[] = [...uploadedFiles];
+
+    for (const file of pendingFiles) {
+      const uploaded = await handleUploadFile(file);
+      if (uploaded) {
+        finalFiles.push(uploaded);
+      }
     }
+
+    setIsUploading(false);
+
     onSubmit({
       response_text: responseText || undefined,
-      file_urls: fileUrls.length > 0 ? fileUrls : undefined,
+      files: finalFiles.length > 0 ? finalFiles : undefined,
     });
   };
 
@@ -72,6 +110,8 @@ export function TalentTaskCard({ task, submission, onSubmit, isSubmitting }: Tal
   const removeFile = (index: number) => {
     setPendingFiles((prev) => prev.filter((_, i) => i !== index));
   };
+
+  const isProcessing = isSubmitting || isUploading;
 
   return (
     <div className="bg-card border border-border/60 rounded-2xl shadow-luxe overflow-hidden">
@@ -112,6 +152,27 @@ export function TalentTaskCard({ task, submission, onSubmit, isSubmitting }: Tal
           </div>
         )}
 
+        {taskDocument && (
+          <a
+            href={taskDocument.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 p-3 rounded-xl border border-brand/20 bg-brand/5 hover:bg-brand/10 transition-colors group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center shrink-0">
+              <BookOpen className="w-4.5 h-4.5 text-brand" strokeWidth={1.5} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-ink">Reference Script</p>
+              <p className="text-xs text-ink-muted truncate flex items-center gap-1">
+                {taskDocument.name}
+                <span className="text-ink-muted/50">· {(taskDocument.size / 1024 / 1024).toFixed(1)} MB</span>
+              </p>
+            </div>
+            <Download className="w-4 h-4 text-brand group-hover:scale-110 transition-transform shrink-0" strokeWidth={1.5} />
+          </a>
+        )}
+
         {isSubmitted ? (
           <div className="space-y-3">
             {submission?.response_text && (
@@ -125,16 +186,16 @@ export function TalentTaskCard({ task, submission, onSubmit, isSubmitting }: Tal
               </div>
             )}
 
-            {submission?.file_urls && submission.file_urls.length > 0 && (
+            {submission?.files && submission.files.length > 0 && (
               <div>
                 <label className="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-muted mb-1.5 block">
                   Uploaded Files
                 </label>
                 <div className="space-y-2">
-                  {submission.file_urls.map((url, i) => (
+                  {submission.files.map((file, i) => (
                     <a
                       key={i}
-                      href={url}
+                      href={file.url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-3 p-2.5 rounded-xl border border-border/60 bg-card hover:bg-muted-bg/60 transition-colors group"
@@ -142,10 +203,15 @@ export function TalentTaskCard({ task, submission, onSubmit, isSubmitting }: Tal
                       <div className="w-8 h-8 rounded-lg bg-brand/10 flex items-center justify-center shrink-0">
                         <FileText className="w-3.5 h-3.5 text-brand" strokeWidth={1.5} />
                       </div>
-                      <span className="text-sm font-medium text-ink flex-1 truncate">
-                        File {i + 1}
-                      </span>
-                      <ExternalLink className="w-3.5 h-3.5 text-ink-muted/50 group-hover:text-ink-muted" strokeWidth={1.5} />
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm font-medium text-ink block truncate">
+                          {file.name}
+                        </span>
+                        <span className="text-[10px] text-ink-muted/60">
+                          {(file.size / 1024 / 1024).toFixed(1)} MB
+                        </span>
+                      </div>
+                      <ExternalLink className="w-3.5 h-3.5 text-ink-muted/50 group-hover:text-ink-muted shrink-0" strokeWidth={1.5} />
                     </a>
                   ))}
                 </div>
@@ -200,7 +266,7 @@ export function TalentTaskCard({ task, submission, onSubmit, isSubmitting }: Tal
                 >
                   <Upload className="w-8 h-8 text-ink-muted/50 mx-auto mb-2" strokeWidth={1.5} />
                   <p className="text-sm font-medium text-ink">Drop files here or click to browse</p>
-                  <p className="text-xs text-ink-muted mt-1">Video, audio, images, or documents</p>
+                  <p className="text-xs text-ink-muted mt-1">Video, audio, images, documents. Max 50MB each.</p>
                   <input
                     id="task-file-input"
                     type="file"
@@ -221,11 +287,16 @@ export function TalentTaskCard({ task, submission, onSubmit, isSubmitting }: Tal
                         <div className="w-8 h-8 rounded-lg bg-brand/10 flex items-center justify-center shrink-0">
                           <FileText className="w-3.5 h-3.5 text-brand" strokeWidth={1.5} />
                         </div>
-                        <span className="text-sm text-ink flex-1 truncate">{file.name}</span>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm text-ink block truncate">{file.name}</span>
+                          <span className="text-[10px] text-ink-muted/60">
+                            {(file.size / 1024 / 1024).toFixed(1)} MB
+                          </span>
+                        </div>
                         <button
                           type="button"
                           onClick={() => removeFile(i)}
-                          className="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-rose-50 text-ink-muted hover:text-rose-600 transition-colors"
+                          className="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-rose-50 text-ink-muted hover:text-rose-600 transition-colors shrink-0"
                         >
                           <X className="w-3.5 h-3.5" strokeWidth={1.5} />
                         </button>
@@ -238,11 +309,14 @@ export function TalentTaskCard({ task, submission, onSubmit, isSubmitting }: Tal
 
             <Button
               onClick={handleSubmit}
-              disabled={isSubmitting}
+              disabled={isProcessing}
               className="w-full h-10 rounded-xl text-sm font-semibold bg-gradient-to-br from-gold to-gold-hover text-white hover:from-gold-bright hover:to-gold shadow-[0_4px_14px_-4px_oklch(0.74_0.13_80/0.45)] transition-all"
             >
-              {isSubmitting ? (
-                'Submitting...'
+              {isProcessing ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" strokeWidth={1.5} />
+                  {isUploading ? 'Uploading...' : 'Submitting...'}
+                </>
               ) : (
                 <>
                   <Send className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.5} />

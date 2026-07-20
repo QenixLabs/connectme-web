@@ -1,7 +1,7 @@
 export { apiClient } from './client';
 export { authApi } from './auth';
 export { talentApi } from './talent';
-export { campaignApi, type Campaign, type CampaignQuestion, type CampaignTask, type TaskSubmission } from './campaign';
+export { campaignApi, type Campaign, type CampaignQuestion, type CampaignTask, type TaskSubmission, type TaskDocument } from './campaign';
 export { recruiterApi } from './recruiter';
 export { messagesApi, collaborationRequestsApi } from './messages';
 export { notificationsApi } from './notifications';
@@ -28,7 +28,7 @@ export { useCampaignTalentView } from './hooks/useCampaignTalentView';
 export { useCampaigns } from './hooks/useCampaigns';
 export { useCampaign } from './hooks/useCampaign';
 export { useCampaignApplications, useUpdateApplicationStatus } from './hooks/useCampaignApplications';
-export { useCampaignTask, useUpsertCampaignTask, useDeleteCampaignTask, useCampaignTaskSubmissions, useReviewTaskSubmission, useTalentTask, useSubmitTask, useSendAcceptanceMessage } from './hooks/useCampaignTask';
+export { useCampaignTask, useUpsertCampaignTask, useDeleteCampaignTask, useCampaignTaskSubmissions, useReviewTaskSubmission, useTalentTask, useSubmitTask, useSendAcceptanceMessage, useTaskDocument, useUploadTaskDocument, useDeleteTaskDocument } from './hooks/useCampaignTask';
 export { useNotifications, useRespondToAction } from './hooks/useNotifications';
 export { useUnreadCount } from './hooks/useUnreadCount';
 export { useUnreadMessageCount } from './hooks/use-unread-message-count';

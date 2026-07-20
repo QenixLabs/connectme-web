@@ -244,7 +244,7 @@ export function NotificationList() {
       if (isTaskSubmitted) {
         const campaignId = notification.data?.campaign_id;
         if (campaignId) {
-          router.push(`/recruiter/campaigns/${campaignId}`);
+          router.push(`/recruiter/campaigns/${campaignId}?tab=submissions`);
         }
       }
     };

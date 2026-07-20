@@ -43,6 +43,7 @@ interface CampaignApplicationRowProps {
   onStatusChange: (status: string) => void;
   onToggleShortlist: () => void;
   onAddNote: () => void;
+  onViewSubmission?: () => void;
   selectable?: boolean;
   isSelected?: boolean;
   onToggleSelect?: () => void;
@@ -54,6 +55,7 @@ export function CampaignApplicationRow({
   onStatusChange,
   onToggleShortlist,
   onAddNote,
+  onViewSubmission,
   selectable,
   isSelected,
   onToggleSelect,
@@ -157,20 +159,26 @@ export function CampaignApplicationRow({
             </span>
           )}
           {application.task_submission_status && (
-            <span className={cn(
-              "text-[10px] font-semibold px-1.5 py-0.5 rounded-full border flex items-center gap-0.5",
-              application.task_submission_status === "submitted"
-                ? "bg-blue-50 text-blue-600 border-blue-200"
-                : application.task_submission_status === "reviewed"
-                  ? "bg-emerald-50 text-emerald-600 border-emerald-200"
-                  : "bg-slate-50 text-slate-600 border-slate-200"
-            )}>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewSubmission?.();
+              }}
+              className={cn(
+                "text-[10px] font-semibold px-1.5 py-0.5 rounded-full border flex items-center gap-0.5 cursor-pointer hover:scale-[1.04] transition-transform",
+                application.task_submission_status === "submitted"
+                  ? "bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100"
+                  : application.task_submission_status === "reviewed"
+                    ? "bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100"
+                    : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+              )}
+            >
               <ClipboardList className="w-2.5 h-2.5" strokeWidth={1.5} />
               {application.task_submission_status === "assigned" ? "Task Assigned" :
                application.task_submission_status === "submitted" ? "Task Submitted" :
                application.task_submission_status === "reviewed" ? "Task Reviewed" :
                application.task_submission_status}
-            </span>
+            </button>
           )}
         </div>
 

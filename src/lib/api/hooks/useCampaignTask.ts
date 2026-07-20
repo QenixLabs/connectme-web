@@ -22,7 +22,7 @@ export function useUpsertCampaignTask() {
       payload,
     }: {
       campaignId: string;
-      payload: { title: string; description: string; task_type: string; deadline_days: number };
+      payload: { is_enabled: boolean; title?: string; description?: string; task_type?: 'file_upload' | 'text_response'; deadline_days?: number };
     }) => campaignApi.upsertTask(campaignId, payload),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.task(variables.campaignId) });
@@ -104,7 +104,7 @@ export function useSubmitTask() {
       payload,
     }: {
       campaignId: string;
-      payload: { response_text?: string; file_urls?: string[] };
+      payload: { response_text?: string; files?: { url: string; name: string; mime_type: string; size?: number }[] };
     }) => campaignApi.submitTask(campaignId, payload),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.talentTask(variables.campaignId) });
@@ -136,6 +136,54 @@ export function useSendAcceptanceMessage() {
       if (handleFeatureError(error)) return;
       const err = error as { response?: { data?: { message?: string } } };
       show({ title: 'Failed to send message', description: err.response?.data?.message, variant: 'error', position: 'bottom-center' });
+    },
+  });
+}
+
+export function useTaskDocument(campaignId: string) {
+  return useQuery({
+    queryKey: queryKeys.campaigns.taskDocument(campaignId),
+    queryFn: () => campaignApi.getTaskDocument(campaignId),
+    enabled: !!campaignId,
+  });
+}
+
+export function useUploadTaskDocument() {
+  const queryClient = useQueryClient();
+  const { show } = usePopup();
+
+  return useMutation({
+    mutationFn: ({
+      campaignId,
+      file,
+    }: {
+      campaignId: string;
+      file: File;
+    }) => campaignApi.uploadTaskDocument(campaignId, file),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.taskDocument(variables.campaignId) });
+      show({ title: 'Document uploaded', variant: 'success', position: 'bottom-center' });
+    },
+    onError: (error) => {
+      const err = error as { response?: { data?: { message?: string } } };
+      show({ title: 'Failed to upload document', description: err.response?.data?.message, variant: 'error', position: 'bottom-center' });
+    },
+  });
+}
+
+export function useDeleteTaskDocument() {
+  const queryClient = useQueryClient();
+  const { show } = usePopup();
+
+  return useMutation({
+    mutationFn: (campaignId: string) => campaignApi.deleteTaskDocument(campaignId),
+    onSuccess: (_data, campaignId) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.taskDocument(campaignId) });
+      show({ title: 'Document removed', variant: 'success', position: 'bottom-center' });
+    },
+    onError: (error) => {
+      const err = error as { response?: { data?: { message?: string } } };
+      show({ title: 'Failed to remove document', description: err.response?.data?.message, variant: 'error', position: 'bottom-center' });
     },
   });
 }

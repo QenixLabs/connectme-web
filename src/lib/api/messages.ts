@@ -58,6 +58,7 @@ export interface CollaborationRequest {
   receiver_id: string;
   status: 'pending' | 'messaging_only' | 'accepted' | 'rejected';
   message?: string;
+  reason?: 'collaboration' | 'mentorship' | 'referral';
   created_at: string;
 }
 
