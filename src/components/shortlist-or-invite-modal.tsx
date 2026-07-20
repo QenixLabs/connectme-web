@@ -12,8 +12,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { usePopup } from "@/hooks/use-popup";
 import { useTierGuard } from "@/hooks/use-tier-guard";
+import { useFeatureGuard } from "@/hooks/use-feature-guard";
 import Link from "next/link";
 
 interface CampaignWithApps {
@@ -43,6 +45,7 @@ export function ShortlistOrInviteModal({
   const showRef = useRef(show);
   showRef.current = show;
   const { guard } = useTierGuard(3);
+  const { handleFeatureError } = useFeatureGuard();
 
   const loadCampaigns = useCallback(async () => {
     if (!open) return;
@@ -56,7 +59,7 @@ export function ShortlistOrInviteModal({
         initial.map(async ({ campaign }, idx) => {
           try {
             const apps = await campaignApi.getApplications(campaign._id);
-            const app = apps.find((a) => {
+            const app = apps.data.find((a) => {
               const tid =
                 typeof a.talent_id === "object" && a.talent_id !== null
                   ? a.talent_id._id
@@ -124,10 +127,12 @@ export function ShortlistOrInviteModal({
               : c,
           ),
         );
-      } catch (err: any) {
+      } catch (err: unknown) {
+        if (handleFeatureError(err)) return;
+        const error = err as { response?: { data?: { message?: string } } };
         showRef.current({
           title:
-            err?.response?.data?.message || "Failed to shortlist",
+            error?.response?.data?.message || "Failed to shortlist",
           variant: "error",
           position: "bottom-center",
         });
@@ -150,10 +155,11 @@ export function ShortlistOrInviteModal({
           variant: "success",
           position: "bottom-center",
         });
-      } catch (err: any) {
+      } catch (err: unknown) {
+        const error = err as { response?: { data?: { message?: string } } };
         showRef.current({
           title:
-            err?.response?.data?.message || "Failed to send invite",
+            error?.response?.data?.message || "Failed to send invite",
           variant: "error",
           position: "bottom-center",
         });
@@ -169,12 +175,14 @@ export function ShortlistOrInviteModal({
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="text-lg">
             Shortlist or Invite {talentName}
           </DialogTitle>
         </DialogHeader>
+
+        <ScrollArea className="max-h-[calc(80vh-100px)]">
 
         {loading && campaigns.length === 0 ? (
           <div className="space-y-3 py-4">
@@ -290,6 +298,7 @@ export function ShortlistOrInviteModal({
             </div>
           </div>
         )}
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

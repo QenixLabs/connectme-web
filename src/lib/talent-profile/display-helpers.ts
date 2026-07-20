@@ -42,7 +42,6 @@ const COMPLETENESS_FIELDS = [
   "location.state",
   "location.city",
   "professions",
-  "industries",
   "availability",
   "headline",
   "about",
@@ -63,9 +62,6 @@ const COMPLETENESS_FIELDS = [
   "documents.portfolio_pdf_url",
   "documents.measurements_sheet_url",
   "social_links",
-  "social_links.instagram",
-  "social_links.youtube",
-  "social_links.linkedin",
   "privacy_mode",
 ] as const;
 

@@ -2,7 +2,8 @@ import { z } from 'zod';
 
 export const PROFICIENCY = ['beginner', 'intermediate', 'expert'] as const;
 export const AVAILABILITY = ['available', 'busy', 'not_available'] as const;
-export const PRIVACY_MODE = ['public', 'private'] as const;
+export const PRIVACY_MODE = ['public', 'recruiters_only', 'private'] as const;
+export type PrivacyMode = (typeof PRIVACY_MODE)[number];
 export const VISIBILITY = ['public', 'recruiters_only', 'private'] as const;
 
 const usernameSchema = z
@@ -51,15 +52,12 @@ const documentsSchema = z.object({
 });
 
 const socialLinkSchema = z.object({
+  platform: z.string().min(1, "Select a platform"),
   url: z.string().optional(),
   visibility: z.enum(VISIBILITY).optional(),
 });
 
-const socialLinksSchema = z.object({
-  instagram: socialLinkSchema.optional(),
-  youtube: socialLinkSchema.optional(),
-  linkedin: socialLinkSchema.optional(),
-});
+const socialLinksSchema = z.array(socialLinkSchema).optional();
 
 export const sectionVisibilitySchema = z.object({
   bio: z.boolean().optional(),
@@ -75,7 +73,8 @@ export const sectionVisibilitySchema = z.object({
   social_links: z.boolean().optional(),
 });
 
-export const updateTalentProfileSchema = z.object({
+const baseProfileSchema = z.object({
+  hero_background: z.string().optional(),
   username: z.string().optional(),
   full_legal_name: z.string().max(120).optional(),
   date_of_birth: z.string().optional(),
@@ -83,7 +82,9 @@ export const updateTalentProfileSchema = z.object({
   profile_photo: z.string().optional(),
   location: locationSchema.optional(),
   professions: z.array(z.string()).optional(),
-  industries: z.array(z.string()).optional(),
+  specialties: z.array(z.string()).optional(),
+  is_influencer: z.boolean().optional(),
+  influencer_speciality: z.string().optional(),
   availability: z.enum(AVAILABILITY).optional(),
   headline: z.string().max(120, 'Headline must be 120 characters or fewer').optional(),
   about: z.string().max(500, 'About must be 500 characters or fewer').optional(),
@@ -97,34 +98,67 @@ export const updateTalentProfileSchema = z.object({
   section_visibility: sectionVisibilitySchema.optional(),
 });
 
-export const createTalentProfileSchema = updateTalentProfileSchema.extend({
-  username: usernameSchema,
-  languages: z.array(strictLanguageSchema).optional(),
-});
+const influencerSpecialtyCheck = (data: Record<string, unknown>, ctx: z.RefinementCtx) => {
+  const professions = data.professions as string[] | undefined;
+  const is_influencer = data.is_influencer as boolean | undefined;
+  const influencer_speciality = data.influencer_speciality as string | undefined;
+  const needsSpeciality = is_influencer || professions?.includes("Influencer");
+  if (needsSpeciality && !influencer_speciality) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Influencer speciality is required when influencer is enabled",
+      path: ["influencer_speciality"],
+    });
+  }
+};
+
+export const updateTalentProfileSchema = baseProfileSchema.superRefine(influencerSpecialtyCheck);
+
+export const createTalentProfileSchema = baseProfileSchema
+  .extend({
+    username: usernameSchema,
+    languages: z.array(strictLanguageSchema).optional(),
+  })
+  .superRefine(influencerSpecialtyCheck);
 
 export type UpdateTalentProfileInput = z.infer<typeof updateTalentProfileSchema>;
 export type CreateTalentProfileInput = z.infer<typeof createTalentProfileSchema>;
 
+export function getProfileSchema(mode: "create" | "edit") {
+  return mode === "create" ? createTalentProfileSchema : updateTalentProfileSchema;
+}
+
 export const portfolioItemSchema = z.object({
   id: z.string(),
-  type: z.enum(['image', 'video']),
+  type: z.enum(['image', 'video', 'youtube', 'instagram']),
   category: z.enum(['work', 'personal', 'intro']),
   url: z.string(),
   thumbnail_url: z.string().optional(),
   caption: z.string().optional(),
+  title: z.string().optional(),
+  description: z.string().optional(),
   is_pinned: z.boolean(),
+  embed_url: z.string().optional(),
+  view_count: z.number().optional(),
   created_at: z.string(),
 });
 
 export type PortfolioItem = z.infer<typeof portfolioItemSchema>;
 
-export type TalentProfile = UpdateTalentProfileInput & {
+export type TalentProfile = Omit<UpdateTalentProfileInput, "social_links"> & {
+  social_links?: Record<string, { url?: string; visibility?: (typeof VISIBILITY)[number] }>;
+  specialties?: string[];
+  is_influencer?: boolean;
+  influencer_speciality?: string;
   _id?: string;
   user_id?: string;
+  hero_background?: string;
   username?: string;
   email?: string;
   phone?: string;
   is_verified?: boolean;
+  trust_score?: number;
+  verification_tier?: number;
   media_limits?: {
     images_used: number;
     videos_used: number;
@@ -139,5 +173,6 @@ export type TalentProfile = UpdateTalentProfileInput & {
   section_visibility?: z.infer<typeof sectionVisibilitySchema>;
   created_at?: string;
   updated_at?: string;
+  active_plan?: string | null;
   __v?: number;
 };

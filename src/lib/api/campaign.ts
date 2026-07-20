@@ -16,7 +16,6 @@ export interface Campaign {
   name: string;
   description?: string;
   role_type?: string;
-  industry?: string;
   location?: { city?: string; state?: string };
   dates?: { start?: string; end?: string };
   budget_range?: { min?: number; max?: number; currency?: string };
@@ -25,7 +24,10 @@ export interface Campaign {
     languages?: string[];
     gender?: string;
     age_range?: { min?: number; max?: number };
+    attributes?: string;
   };
+  is_budget_disclosed?: boolean;
+  is_unpaid?: boolean;
   visibility: string;
   deadline?: string;
   status: string;
@@ -33,28 +35,70 @@ export interface Campaign {
   scheduled_publish_at?: string;
   auto_close_on_deadline?: boolean;
   questions?: CampaignQuestion[];
+  specialties?: string[];
+  needs_influencer?: boolean;
+  influencer_speciality?: string;
   cover_image_url?: string;
-  media?: Array<{ url: string; type: string; caption?: string; order: number }>;
-  banner?: { type: 'image' | 'video'; url: string; thumbnail?: string };
+  task?: CampaignTask;
   created_at: string;
   my_application?: { _id: string; status: string; created_at?: string; answers?: Array<{ question_id: string; question_text: string; answer: string }> } | null;
   is_bookmarked?: boolean;
+  match_score?: number;
+  total_score?: number;
+}
+
+export interface CampaignTask {
+  is_enabled: boolean;
+  title: string;
+  description: string;
+  task_type: 'file_upload' | 'text_response';
+  deadline_days: number;
+  document?: TaskDocument;
+}
+
+export interface TaskDocument {
+  url: string;
+  name: string;
+  mime_type: string;
+  size: number;
+  uploaded_at: string;
+}
+
+export interface TaskSubmission {
+  _id: string;
+  campaign_id: string;
+  talent_id: string;
+  application_id: string;
+  talent_name?: string;
+  talent_email?: string;
+  talent_photo?: string;
+  status: 'assigned' | 'submitted' | 'reviewed';
+  response_text?: string;
+  files?: { url: string; name: string; mime_type: string; size: number }[];
+  submitted_at?: string;
+  recruiter_notes?: string;
+  recruiter_rating?: number;
+  assigned_at: string;
+  deadline_at: string;
+  reminder_sent: boolean;
+  created_at: string;
 }
 
 export const campaignApi = {
   getAll: async (params?: {
     status?: string;
     search?: string;
-    industry?: string;
     role_type?: string;
     gender?: string;
     location_city?: string;
     skills?: string;
     languages?: string;
     applied?: string;
+    sort?: string;
     cursor?: string;
+    page?: number;
     limit?: number;
-  }): Promise<{ data: Campaign[]; nextCursor: string | null }> => {
+  }): Promise<{ data: Campaign[]; nextCursor: string | null; page?: number; hasMore?: boolean; total?: number }> => {
     const response = await apiClient.get('/campaigns', { params });
     return response.data;
   },
@@ -71,7 +115,6 @@ export const campaignApi = {
     name: string;
     description?: string;
     role_type?: string;
-    industry?: string;
     location?: { city?: string; state?: string };
     dates?: { start?: string; end?: string };
     budget_range?: { min?: number; max?: number; currency?: string };
@@ -107,20 +150,46 @@ export const campaignApi = {
 
   getApplications: async (
     campaignId: string,
-  ): Promise<
-    Array<{
+    params?: {
+      status?: string;
+      shortlisted?: string;
+      search?: string;
+      sort?: string;
+      limit?: number;
+    },
+  ): Promise<{
+    data: Array<{
       _id: string;
       campaign_id: string;
       talent_id: { _id: string; email: string; full_legal_name?: string; username?: string } | string;
+      talent_profile?: {
+        profile_photo?: string;
+        professions?: string[];
+        location?: { country?: string; state?: string; city?: string };
+        availability?: string;
+  specialties?: string[];
+  needs_influencer?: boolean;
+  influencer_speciality?: string;
+        languages?: Array<{ name?: string; fluency?: string }>;
+        is_verified?: boolean;
+      } | null;
       message?: string;
       status: string;
       created_at: string;
+      match_score: number;
       answers?: Array<{ question_id: string; question_text: string; answer: string }>;
       is_shortlisted?: boolean;
       note?: { _id: string; note_text?: string; rating?: number } | null;
-    }>
-  > => {
-    const response = await apiClient.get(`/campaigns/${campaignId}/applications`);
+      task_submission_status?: string;
+      task_submission?: TaskSubmission | null;
+    }>;
+    total: number;
+    pending: number;
+    accepted: number;
+    rejected: number;
+    shortlisted: number;
+  }> => {
+    const response = await apiClient.get(`/campaigns/${campaignId}/applications`, { params });
     return response.data;
   },
 
@@ -210,6 +279,7 @@ export const campaignApi = {
     total_applications_this_week: number;
     response_rate: number;
     pending_reviews: number;
+    shortlisted_count: number;
   }> => {
     const response = await apiClient.get('/campaigns/dashboard/stats');
     return response.data;
@@ -323,15 +393,15 @@ export const campaignApi = {
   uploadMedia: async (
     campaignId: string,
     formData: FormData,
-  ): Promise<{ url: string; media: any[]; cover_image_url?: string; banner?: { type: 'image' | 'video'; url: string; thumbnail?: string } }> => {
+  ): Promise<{ cover_image_url: string }> => {
     const response = await apiClient.post(`/campaigns/${campaignId}/media`, formData, {
       headers: { 'Content-Type': undefined },
     });
     return response.data;
   },
 
-  deleteMedia: async (campaignId: string, url: string): Promise<void> => {
-    await apiClient.delete(`/campaigns/${campaignId}/media`, { data: { url } });
+  deleteMedia: async (campaignId: string): Promise<void> => {
+    await apiClient.delete(`/campaigns/${campaignId}/media`);
   },
 
   getTeam: async (campaignId: string): Promise<{
@@ -362,7 +432,69 @@ export const campaignApi = {
     await apiClient.delete(`/campaigns/${campaignId}/team/${memberId}`);
   },
 
-  getTemplates: async (): Promise<Array<{ _id: string; name: string; template_data: any; created_at: string }>> => {
+  getTask: async (campaignId: string): Promise<{ task: CampaignTask | null }> => {
+    const response = await apiClient.get(`/campaigns/${campaignId}/task`);
+    return response.data;
+  },
+
+  upsertTask: async (campaignId: string, payload: { is_enabled: boolean; title?: string; description?: string; task_type?: 'file_upload' | 'text_response'; deadline_days?: number }): Promise<Record<string, unknown>> => {
+    const response = await apiClient.put(`/campaigns/${campaignId}/task`, payload);
+    return response.data;
+  },
+
+  deleteTask: async (campaignId: string): Promise<void> => {
+    await apiClient.delete(`/campaigns/${campaignId}/task`);
+  },
+
+  uploadTaskDocument: async (campaignId: string, file: File): Promise<TaskDocument> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await apiClient.post(`/campaigns/${campaignId}/task/document`, formData, {
+      headers: { 'Content-Type': undefined },
+    });
+    return response.data;
+  },
+
+  deleteTaskDocument: async (campaignId: string): Promise<void> => {
+    await apiClient.delete(`/campaigns/${campaignId}/task/document`);
+  },
+
+  getTaskSubmissions: async (campaignId: string): Promise<{ data: TaskSubmission[]; total: number }> => {
+    const response = await apiClient.get(`/campaigns/${campaignId}/task/submissions`);
+    return response.data;
+  },
+
+  getTaskSubmissionDetail: async (campaignId: string, submissionId: string): Promise<TaskSubmission> => {
+    const response = await apiClient.get(`/campaigns/${campaignId}/task/submissions/${submissionId}`);
+    return response.data;
+  },
+
+  reviewTaskSubmission: async (campaignId: string, submissionId: string, payload: { recruiter_notes?: string; recruiter_rating?: number }): Promise<TaskSubmission> => {
+    const response = await apiClient.patch(`/campaigns/${campaignId}/task/submissions/${submissionId}`, payload);
+    return response.data;
+  },
+
+  getMyTask: async (campaignId: string): Promise<{ task: CampaignTask | null; submission: TaskSubmission | null }> => {
+    const response = await apiClient.get(`/talent/campaigns/${campaignId}/task`);
+    return response.data;
+  },
+
+  getTaskDocument: async (campaignId: string): Promise<TaskDocument | null> => {
+    const response = await apiClient.get(`/talent/campaigns/${campaignId}/task/document`);
+    return response.data;
+  },
+
+  submitTask: async (campaignId: string, payload: { response_text?: string; files?: { url: string; name: string; mime_type: string; size?: number }[] }): Promise<TaskSubmission> => {
+    const response = await apiClient.post(`/talent/campaigns/${campaignId}/task/submit`, payload);
+    return response.data;
+  },
+
+  sendAcceptanceMessage: async (campaignId: string, talentId: string): Promise<{ message: string }> => {
+    const response = await apiClient.post(`/campaigns/${campaignId}/accept-notify`, { talent_id: talentId });
+    return response.data;
+  },
+
+  getTemplates: async (): Promise<Array<{ _id: string; name: string; template_data: Record<string, unknown>; created_at: string }>> => {
     const response = await apiClient.get('/campaigns/templates');
     return response.data;
   },

@@ -16,6 +16,7 @@ import {
   Check,
   Download,
   Globe,
+  Link,
   Calendar,
   Ruler,
   Weight,
@@ -24,24 +25,66 @@ import {
   Scissors,
   Sparkles,
 } from "lucide-react";
+import {
+  FaInstagram,
+  FaYoutube,
+  FaLinkedin,
+  FaTwitter,
+  FaFacebook,
+  FaTiktok,
+  FaGithub,
+  FaBehance,
+  FaDribbble,
+  FaVimeoV,
+  FaSpotify,
+  FaSnapchat,
+  FaThreads,
+} from "react-icons/fa6";
+import type { ComponentType } from "react";
 import { talentApi } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
 import type { TalentProfile } from "@/lib/validations/talent-profile.schema";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
+const PLATFORM_ICON_MAP: Record<string, ComponentType<{ className?: string }>> = {
+  instagram: FaInstagram,
+  youtube: FaYoutube,
+  linkedin: FaLinkedin,
+  twitter: FaTwitter,
+  facebook: FaFacebook,
+  tiktok: FaTiktok,
+  github: FaGithub,
+  behance: FaBehance,
+  dribbble: FaDribbble,
+  vimeo: FaVimeoV,
+  spotify: FaSpotify,
+  snapchat: FaSnapchat,
+  threads: FaThreads,
+  website: Globe,
+};
+
+function platformLabel(platform: string): string {
+  const map: Record<string, string> = {
+    twitter: "Twitter / X",
+    website: "Website",
+  };
+  return map[platform] ?? platform.charAt(0).toUpperCase() + platform.slice(1);
+}
+
 const gold = {
-  primary: "#c8a040",
-  primaryHover: "#a8841e",
-  accent: "#fdf3dc",
-  accentBorder: "#e8c87a",
-  border: "#e0d9ce",
-  muted: "#ede9e0",
-  mutedFg: "#8a7d6b",
-  textSecondary: "#5c5145",
-  foreground: "#1e1a14",
-  background: "#f8f6f2",
-  card: "#ffffff",
+  primary: "var(--color-gold)",
+  primaryHover: "var(--color-gold-hover)",
+  accent: "var(--color-gold-soft)",
+  accentBorder: "var(--color-gold)",
+  border: "var(--color-border)",
+  muted: "var(--color-cream)",
+  mutedFg: "var(--color-ink-muted)",
+  textSecondary: "var(--color-ink-soft)",
+  foreground: "var(--color-ink)",
+  background: "var(--color-cream-pale)",
+  card: "var(--color-card)",
 };
 
 function SectionCard({ title, icon: Icon, children }: {
@@ -50,16 +93,18 @@ function SectionCard({ title, icon: Icon, children }: {
   children: React.ReactNode;
 }) {
   return (
-    <div
-      className="rounded-[14px] border p-4 flex flex-col gap-3"
+    <Card
+      className="rounded-[14px] p-4 gap-3"
       style={{ background: gold.card, borderColor: gold.border }}
     >
-      <div className="flex items-center gap-2">
+      <CardHeader className="p-0 flex flex-row items-center gap-2">
         {Icon && <Icon className="w-4 h-4" style={{ color: gold.primary }} strokeWidth={2} />}
-        <span className="text-[13px] font-semibold" style={{ color: gold.foreground }}>{title}</span>
-      </div>
-      {children}
-    </div>
+        <CardTitle className="text-[13px] font-semibold" style={{ color: gold.foreground }}>{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="p-0">
+        {children}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -67,7 +112,7 @@ function Tag({ children }: { children: React.ReactNode }) {
   return (
     <span
       className="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full border"
-      style={{ background: gold.accent, color: "#7a5c0a", borderColor: gold.accentBorder }}
+      style={{ background: gold.accent, color: "var(--color-campaign-dark)", borderColor: gold.accentBorder }}
     >
       {children}
     </span>
@@ -181,14 +226,14 @@ export default function ProfilePreviewPage() {
 
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-5">
         {/* Hero */}
-        <div
-          className="rounded-[14px] border p-5 flex flex-col sm:flex-row items-start gap-5"
+        <Card
+          className="rounded-[14px] p-5 flex flex-col sm:flex-row items-start gap-5"
           style={{ background: gold.card, borderColor: gold.border }}
         >
           <div
             className="w-[88px] h-[88px] rounded-full flex items-center justify-center text-[28px] font-bold text-white shrink-0 border-[3px]"
             style={{
-              background: profile?.profile_photo ? undefined : "linear-gradient(135deg,#c8a040,#8b6914)",
+              background: profile?.profile_photo ? undefined : "linear-gradient(135deg, var(--color-gold), var(--color-gold-dark))",
               borderColor: gold.accentBorder,
             }}
           >
@@ -221,9 +266,9 @@ export default function ProfilePreviewPage() {
                 <span
                   className="px-2.5 py-0.5 text-xs font-medium rounded-full border"
                   style={{
-                    background: profile.availability === "available" ? "#ecfdf5" : profile.availability === "busy" ? gold.accent : "#fef2f2",
-                    color: profile.availability === "available" ? "#047857" : profile.availability === "busy" ? "#7a5c0a" : "#b91c1c",
-                    borderColor: profile.availability === "available" ? "#a7f3d0" : profile.availability === "busy" ? gold.accentBorder : "#fecaca",
+                    background: profile.availability === "available" ? "var(--color-success-light)" : profile.availability === "busy" ? gold.accent : "var(--color-error-light)",
+                    color: profile.availability === "available" ? "var(--color-success-text)" : profile.availability === "busy" ? "var(--color-campaign-dark)" : "var(--color-error)",
+                    borderColor: profile.availability === "available" ? "var(--color-success-muted)" : profile.availability === "busy" ? gold.accentBorder : "var(--color-error-muted)",
                   }}
                 >
                   {profile.availability === "available" ? "Available" : profile.availability === "busy" ? "Busy" : "Not available"}
@@ -240,7 +285,7 @@ export default function ProfilePreviewPage() {
               </div>
             )}
           </div>
-        </div>
+        </Card>
 
         {/* About */}
         {profile?.about && (
@@ -267,11 +312,11 @@ export default function ProfilePreviewPage() {
           {/* Career */}
           <SectionCard title="Career" icon={Briefcase}>
             <div className="space-y-2">
-              {profile?.industries && profile.industries.length > 0 && (
+              {profile?.specialties && profile.specialties.length > 0 && (
                 <div>
-                  <p className="text-[11px] font-medium uppercase tracking-wide mb-1.5" style={{ color: gold.mutedFg }}>Industries</p>
+                  <p className="text-[11px] font-medium uppercase tracking-wide mb-1.5" style={{ color: gold.mutedFg }}>Specialties</p>
                   <div className="flex flex-wrap gap-1.5">
-                    {profile.industries.map((i) => <Tag key={i}>{i}</Tag>)}
+                    {profile.specialties.map((i) => <Tag key={i}>{i}</Tag>)}
                   </div>
                 </div>
               )}
@@ -291,7 +336,7 @@ export default function ProfilePreviewPage() {
                     <span className="text-[13px] font-medium" style={{ color: gold.foreground }}>{s.name}</span>
                     <span
                       className="text-[11px] px-2 py-0.5 rounded-md border"
-                      style={{ background: gold.accent, borderColor: gold.accentBorder, color: "#7a5c0a" }}
+                      style={{ background: gold.accent, borderColor: gold.accentBorder, color: "var(--color-campaign-dark)" }}
                     >
                       {s.proficiency ? s.proficiency.charAt(0).toUpperCase() + s.proficiency.slice(1) : "—"}
                     </span>
@@ -314,7 +359,7 @@ export default function ProfilePreviewPage() {
                     <span className="text-[13px] font-medium" style={{ color: gold.foreground }}>{l.name}</span>
                     <span
                       className="text-[11px] px-2 py-0.5 rounded-md border"
-                      style={{ background: gold.accent, borderColor: gold.accentBorder, color: "#7a5c0a" }}
+                      style={{ background: gold.accent, borderColor: gold.accentBorder, color: "var(--color-campaign-dark)" }}
                     >
                       {l.fluency ? l.fluency.charAt(0).toUpperCase() + l.fluency.slice(1) : "—"}
                     </span>
@@ -371,67 +416,37 @@ export default function ProfilePreviewPage() {
           )}
 
           {/* Social Links */}
-          {profile?.social_links && (
-            Object.values(profile.social_links).some((s) => s?.url) ? (
+          {(() => {
+            const entries = Object.entries(profile?.social_links ?? {}).filter(
+              ([, link]) => link?.url,
+            );
+            if (entries.length === 0) return null;
+            return (
               <SectionCard title="Social Links" icon={Share2}>
                 <div className="flex flex-col gap-2">
-                  {profile.social_links.instagram?.url && (
-                    <a
-                      href={profile.social_links.instagram.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-[13px]"
-                      style={{ color: gold.foreground }}
-                    >
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#fce7f3" }}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="#db2777" strokeWidth="2" className="w-4 h-4">
-                          <rect x="2" y="2" width="20" height="20" rx="5" />
-                          <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-                          <circle cx="17.5" cy="6.5" r="1" fill="#db2777" stroke="none" />
-                        </svg>
-                      </div>
-                      Instagram
-                    </a>
-                  )}
-                  {profile.social_links.youtube?.url && (
-                    <a
-                      href={profile.social_links.youtube.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-[13px]"
-                      style={{ color: gold.foreground }}
-                    >
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#fee2e2" }}>
-                        <svg viewBox="0 0 24 24" fill="#ef4444" className="w-4 h-4">
-                          <path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58A2.78 2.78 0 0 0 3.41 19.54C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z" />
-                          <polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="white" />
-                        </svg>
-                      </div>
-                      YouTube
-                    </a>
-                  )}
-                  {profile.social_links.linkedin?.url && (
-                    <a
-                      href={profile.social_links.linkedin.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-[13px]"
-                      style={{ color: gold.foreground }}
-                    >
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: "#dbeafe" }}>
-                        <svg viewBox="0 0 24 24" fill="#2563eb" className="w-4 h-4">
-                          <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
-                          <rect x="2" y="9" width="4" height="12" />
-                          <circle cx="4" cy="4" r="2" />
-                        </svg>
-                      </div>
-                      LinkedIn
-                    </a>
-                  )}
+                  {entries.map(([platform, link]) => {
+                    const Icon = PLATFORM_ICON_MAP[platform] ?? Link;
+                    const label = platformLabel(platform);
+                    return (
+                      <a
+                        key={platform}
+                        href={link!.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-[13px]"
+                        style={{ color: gold.foreground }}
+                      >
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-cream/70">
+                          <Icon className="w-4 h-4" />
+                        </div>
+                        {label}
+                      </a>
+                    );
+                  })}
                 </div>
               </SectionCard>
-            ) : null
-          )}
+            );
+          })()}
 
           {/* Privacy */}
           {profile?.privacy_mode && (

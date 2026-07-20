@@ -35,11 +35,7 @@ interface MediaKitProfile {
     profile_views_30d?: number;
     shortlist_count?: number;
   };
-  social_links?: {
-    instagram?: { url?: string; visibility?: string };
-    youtube?: { url?: string; visibility?: string };
-    linkedin?: { url?: string; visibility?: string };
-  };
+  social_links?: Record<string, { url?: string; visibility?: string }>;
 }
 
 interface MediaKitViewProps {
@@ -93,7 +89,7 @@ function Tag({ children }: { children: React.ReactNode }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Hero                                                               */
+/*  Hero + Identity (unified)                                          */
 /* ------------------------------------------------------------------ */
 
 function MediaKitHero({ profile }: { profile: MediaKitProfile }) {
@@ -105,9 +101,9 @@ function MediaKitHero({ profile }: { profile: MediaKitProfile }) {
   const displayName = profile.full_legal_name || profile.username || "Talent";
 
   return (
-    <div className="relative">
-      {/* Cover area */}
-      <div className="relative h-48 sm:h-64 bg-gradient-to-br from-brand/20 to-brand/5 rounded-t-xl overflow-hidden">
+    <div className="rounded-2xl border border-border overflow-hidden">
+      {/* Hero cover */}
+      <div className="relative h-48 sm:h-64 bg-gradient-to-br from-brand/20 to-brand/5">
         {profile.profile_photo ? (
           <img
             src={profile.profile_photo}
@@ -115,77 +111,84 @@ function MediaKitHero({ profile }: { profile: MediaKitProfile }) {
             className="absolute inset-0 w-full h-full object-cover opacity-40"
           />
         ) : null}
-        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-card/40 via-card/10 to-transparent" />
       </div>
 
-      {/* Profile info */}
-      <div className="px-5 sm:px-6 -mt-14 relative">
-        <div className="flex items-end gap-4">
-          <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-card bg-surface-secondary flex items-center justify-center overflow-hidden shrink-0">
-            {profile.profile_photo ? (
-              <img
-                src={profile.profile_photo}
-                alt=""
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <span className="text-2xl font-bold text-text-muted">
-                {displayName
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")
-                  .slice(0, 2)}
-              </span>
-            )}
-          </div>
-
-          <div className="pb-1">
-            <div className="flex items-center gap-2">
-              <h2 className="text-xl sm:text-2xl font-bold text-text-primary">
-                {displayName}
-              </h2>
-              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-success shrink-0">
-                <Check className="w-3 h-3 text-white" strokeWidth={2.5} />
-              </span>
+      {/* Unified card — overlaps hero bottom */}
+      <div className="-mt-4 mx-3 relative z-10">
+        <div className="bg-card px-5 pt-4 pb-4">
+          {/* Avatar + name cluster */}
+          <div className="flex items-center gap-4">
+            {/* Avatar */}
+            <div className="relative shrink-0">
+              <div className="relative h-[72px] w-[72px] sm:h-[80px] sm:w-[80px] rounded-full border-[2px] border-border overflow-hidden bg-muted">
+                {profile.profile_photo ? (
+                  <img
+                    src={profile.profile_photo}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="h-full w-full grid place-items-center font-serif text-[28px] sm:text-[32px] leading-none font-semibold text-text-muted select-none">
+                    {displayName
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                      .slice(0, 2)
+                      .toUpperCase()}
+                  </span>
+                )}
+              </div>
             </div>
-            {profile.username && (
-              <p className="text-sm text-text-tertiary">@{profile.username}</p>
-            )}
-          </div>
-        </div>
 
-        <div className="mt-4 space-y-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <span
-              className={cn(
-                "px-2.5 py-0.5 text-xs font-medium rounded-full border",
-                avail.classes
+            {/* Name + details */}
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl sm:text-2xl font-bold text-text-primary truncate">
+                  {displayName}
+                </h2>
+                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-success shrink-0">
+                  <Check className="w-3 h-3 text-white" strokeWidth={2.5} />
+                </span>
+              </div>
+              {profile.username && (
+                <p className="text-sm text-text-tertiary">@{profile.username}</p>
               )}
-            >
-              {avail.label}
-            </span>
+            </div>
+          </div>
+
+          {/* Availability + professions */}
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {profile.availability && (
+              <span
+                className={cn(
+                  "px-2.5 py-0.5 text-xs font-medium rounded-full border",
+                  avail.classes
+                )}
+              >
+                {avail.label}
+              </span>
+            )}
             {profile.professions?.map((p) => (
               <Tag key={p}>{p}</Tag>
             ))}
           </div>
 
+          {/* Location */}
           {loc && (
-            <div className="flex items-center gap-1.5 text-xs text-text-muted">
+            <div className="mt-2 flex items-center gap-1.5 text-xs text-text-muted">
               <MapPin className="w-3.5 h-3.5" strokeWidth={1.5} />
               {loc}
             </div>
           )}
 
-          {profile.about && (
-            <p className="text-sm text-text-secondary leading-relaxed">
-              {profile.about}
-            </p>
-          )}
-
-          {!profile.about && profile.headline && (
-            <p className="text-sm text-text-secondary leading-relaxed">
-              {profile.headline}
-            </p>
+          {/* About / Headline */}
+          {(profile.about || profile.headline) && (
+            <div className="mt-3 pt-3 border-t border-border/60">
+              <p className="text-sm text-text-secondary leading-relaxed">
+                {profile.about || profile.headline}
+              </p>
+            </div>
           )}
         </div>
       </div>
@@ -212,11 +215,7 @@ function MediaKitStats({ profile }: { profile: MediaKitProfile }) {
     {
       icon: Share2,
       value: String(
-        [
-          profile.social_links?.instagram?.url,
-          profile.social_links?.youtube?.url,
-          profile.social_links?.linkedin?.url,
-        ].filter(Boolean).length
+        Object.values(profile.social_links ?? {}).filter((l) => l?.url).length,
       ),
       label: "Social Links",
     },
@@ -367,7 +366,7 @@ export function MediaKitView({ profile, items, showBack = true }: MediaKitViewPr
         </div>
       )}
 
-      <Card className="overflow-hidden border-border-subtle">
+      <Card className="overflow-visible border-border-subtle">
         <MediaKitHero profile={profile} />
         <MediaKitStats profile={profile} />
         <MediaKitGrid items={items} />

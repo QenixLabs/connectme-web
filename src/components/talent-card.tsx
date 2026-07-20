@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Check,
   ChevronDown,
@@ -10,6 +11,7 @@ import {
   Images,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { resolveHeroBackground } from "@/lib/hero-color";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -24,6 +26,7 @@ interface TalentCardProps {
   onEdit?: () => void;
   isOwner?: boolean;
   onViewPortfolio?: () => void;
+  heroBackground?: string | null;
 }
 
 /* ------------------------------------------------------------------ */
@@ -94,6 +97,7 @@ export function TalentCard({
   onEdit,
   isOwner,
   onViewPortfolio,
+  heroBackground,
 }: TalentCardProps) {
   const data = sample ? (SAMPLE_PROFILE as TalentProfile) : profile;
 
@@ -106,8 +110,49 @@ export function TalentCard({
   const avail = availabilityMeta(data.availability);
   const displayName = showStr(data.full_legal_name) || data.username || "Talent";
 
+  const [heroImgFailed, setHeroImgFailed] = useState(false);
+  const hero = resolveHeroBackground(
+    heroImgFailed ? undefined : heroBackground,
+    data.username ?? "default",
+  );
+  const fallbackBg = resolveHeroBackground(
+    undefined,
+    data.username ?? "default",
+  ).background;
+  const showBgImage = hero.isImage && !heroImgFailed;
+
   return (
-    <Card className="relative hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">
+    <Card className="relative hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 overflow-hidden">
+      {/* Hero background banner */}
+      {heroBackground && (
+        <>
+          <div
+            className="relative h-28 transition-colors duration-700"
+            style={{
+              background: showBgImage ? undefined : (heroImgFailed ? fallbackBg : hero.background),
+              backgroundImage: showBgImage ? hero.background : undefined,
+            }}
+          >
+            <div
+              className="absolute inset-0 z-0"
+              style={{
+                background: `
+                  radial-gradient(ellipse 120% 60% at 50% 30%, rgba(255,255,255,0.04) 0%, transparent 65%),
+                  radial-gradient(ellipse 80% 40% at 50% 85%, rgba(0,0,0,0.15) 0%, transparent 60%)
+                `,
+              }}
+            />
+            {hero.isImage && !heroImgFailed && (
+              <img
+                src={heroBackground}
+                alt=""
+                className="hidden"
+                onError={() => setHeroImgFailed(true)}
+              />
+            )}
+          </div>
+        </>
+      )}
       <div className="p-5">
         {onEdit && (
           <Button

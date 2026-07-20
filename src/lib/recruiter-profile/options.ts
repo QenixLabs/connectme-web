@@ -13,22 +13,6 @@ export const COMPANY_SIZE_OPTIONS: Option[] = [
   opt('10001+', '10001+ employees'),
 ];
 
-export const INDUSTRY_OPTIONS: Option[] = [
-  opt('film', 'Film'),
-  opt('television', 'Television'),
-  opt('advertising', 'Advertising'),
-  opt('fashion', 'Fashion'),
-  opt('music', 'Music'),
-  opt('theatre', 'Theatre'),
-  opt('digital_content', 'Digital Content'),
-  opt('events', 'Events'),
-  opt('gaming', 'Gaming'),
-  opt('media_production', 'Media Production'),
-  opt('modeling', 'Modeling'),
-  opt('casting', 'Casting'),
-  opt('other', 'Other'),
-];
-
 export const POSITION_OPTIONS: Option[] = [
   opt('casting_director', 'Casting Director'),
   opt('talent_agent', 'Talent Agent'),

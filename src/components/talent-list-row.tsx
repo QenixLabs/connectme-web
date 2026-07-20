@@ -12,7 +12,7 @@ type ProfileWithAccess = Partial<{
   profile_photo?: string;
   location?: { country?: string; state?: string; city?: string };
   professions?: string[];
-  industries?: string[];
+  specialties?: string[];
   languages?: Array<{ name?: string; fluency?: string }>;
   skills?: Array<{ name?: string; proficiency?: string }>;
   availability?: string;
@@ -30,6 +30,8 @@ interface TalentListRowProps {
   selectable?: boolean;
   isSelected?: boolean;
   onToggleSelect?: () => void;
+  matchScore?: number;
+  campaignName?: string;
 }
 
 function availabilityColor(avail?: string): string {
@@ -53,12 +55,14 @@ export function TalentListRow({
   selectable,
   isSelected,
   onToggleSelect,
+  matchScore,
+  campaignName,
 }: TalentListRowProps) {
   const displayName = profile.full_legal_name || profile.username || "Talent";
   const loc = [profile.location?.city, profile.location?.state]
     .filter(Boolean)
     .join(", ");
-  const profession = profile.professions?.[0] ?? profile.industries?.[0] ?? "";
+  const profession = profile.professions?.[0] ?? profile.specialties?.[0] ?? "";
 
   return (
     <div
@@ -93,12 +97,26 @@ export function TalentListRow({
 
       {/* Info */}
       <div className="min-w-0 flex-1">
+        {/* Match badge */}
+        {matchScore !== undefined && (
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="px-1.5 py-0.5 rounded-full bg-brand/10 text-brand text-[10px] font-bold">
+              {matchScore}% match
+            </span>
+            {campaignName && (
+              <span className="text-[10px] text-text-muted truncate">
+                {campaignName}
+              </span>
+            )}
+          </div>
+        )}
+
         <div className="flex items-center gap-1.5 mb-0.5">
           <h3 className="text-sm font-semibold text-text-primary truncate">
             {displayName}
           </h3>
           {profile.is_verified && (
-            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-[#B85C00] shrink-0">
+            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-campaign shrink-0">
               <Check className="w-2.5 h-2.5 text-white" strokeWidth={2.5} />
             </span>
           )}
@@ -165,7 +183,7 @@ export function TalentListRow({
               e.stopPropagation();
               onInvite();
             }}
-            className="h-8 px-3 rounded-lg border border-[#B85C00] bg-[#FFF7F0] text-[#B85C00] text-xs font-medium transition-colors hover:bg-[#FAEEDA]"
+            className="h-8 px-3 rounded-lg border border-campaign bg-campaign-light text-campaign text-xs font-medium transition-colors hover:bg-campaign-soft"
           >
             Invite
           </button>

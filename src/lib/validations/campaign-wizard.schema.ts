@@ -11,7 +11,6 @@ export const campaignWizardSchema = z
       .max(2000, 'Must be 2000 characters or fewer')
       .optional(),
     role_type: z.string().optional(),
-    industry: z.string().optional(),
     location: z
       .object({
         city: z.string().optional(),
@@ -60,6 +59,17 @@ export const campaignWizardSchema = z
         }),
       )
       .max(20, 'Max 20 questions')
+      .optional(),
+    specialties: z.array(z.string()).optional(),
+    needs_influencer: z.boolean().optional(),
+    influencer_speciality: z.string().optional(),
+    task: z
+      .object({
+        title: z.string().max(200, 'Must be 200 characters or fewer').optional(),
+        description: z.string().max(2000, 'Must be 2000 characters or fewer').optional(),
+        task_type: z.enum(['file_upload', 'text_response']).optional(),
+        deadline_days: z.number().min(1, 'Must be at least 1 day').max(90, 'Max 90 days').optional(),
+      })
       .optional(),
     publishOption: z.enum(['draft', 'public', 'invite_only']),
     scheduled_publish_at: z.string().optional(),

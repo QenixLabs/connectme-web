@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { Home, Briefcase, MessageSquare, User, Bell, Search, LogOut, UserCheck } from "lucide-react";
 import {
@@ -20,6 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { usePopup } from "@/hooks/use-popup";
 import { useSwipeNavigation } from "@/hooks/use-swipe-navigation";
 import { queryKeys } from "@/lib/api/query-keys";
+import { redirectToSuspendedPage } from "@/lib/redirect";
 
 export interface NavItem {
   href: string;
@@ -37,6 +38,7 @@ const NAV_ITEMS_BY_ROLE: Record<"talent" | "recruiter", NavItem[]> = {
     { href: "/recruiter/dashboard", label: "Home", icon: Home },
     { href: "/recruiter/find-talent", label: "Search", icon: Search },
     { href: "/recruiter/campaigns", label: "Campaigns", icon: Briefcase },
+    { href: "/recruiter/requests", label: "Requests", icon: UserCheck },
     { href: "/recruiter/messages", label: "Messages", icon: MessageSquare },
   ],
 };
@@ -55,9 +57,9 @@ export function DashboardLayout({
   const navItems = NAV_ITEMS_BY_ROLE[role];
   const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const isMessagesPage = pathname.endsWith("/messages");
-  const hasActiveConversation = isMessagesPage && !!searchParams.get("conversationId");
+  const isMessagesPage = pathname.includes("/messages");
+  const isProfilePage = pathname.includes("/profile");
+  const isChatPage = /\/messages\/.+/.test(pathname);
   const queryClient = useQueryClient();
   const { user, isAuthenticated, isLoading, fetchUser, logout } =
     useAuthStore();
@@ -86,8 +88,11 @@ export function DashboardLayout({
   useEffect(() => {
     if (!socket) return;
 
-    const handleNotification = (notification: { title?: string; body?: string }) => {
+    const handleNotification = (notification: { title?: string; body?: string; type?: string }) => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      if (notification.type === "moderation_violation") {
+        return;
+      }
       show({
         title: notification.title || "New notification",
         description: notification.body,
@@ -105,19 +110,61 @@ export function DashboardLayout({
       });
     };
 
+    const handleCollaborationAccepted = (data: {
+      requestId?: string;
+      actorId?: string;
+      name?: string;
+      username?: string;
+      profilePhoto?: string;
+      conversationId?: string;
+    }) => {
+      queryClient.invalidateQueries({ queryKey: ["collaboration-requests"] });
+      const displayName = data.name || data.username || "Talent";
+      show({
+        title: `${displayName} accepted your connection request`,
+        variant: "success",
+        position: "top-right",
+      });
+    };
+
+    const handleCollaborationRejected = (data: {
+      requestId?: string;
+      actorId?: string;
+      name?: string;
+      username?: string;
+      profilePhoto?: string;
+    }) => {
+      queryClient.invalidateQueries({ queryKey: ["collaboration-requests"] });
+      const displayName = data.name || data.username || "Talent";
+      show({
+        title: `${displayName} declined your connection request`,
+        variant: "info",
+        position: "top-right",
+      });
+    };
+
     const handleNewMessage = (message: {
       content?: string;
-      sender_id?: { _id?: string; full_legal_name?: string; username?: string; company_name?: string };
+      sender_id?: {
+        _id?: string;
+        full_legal_name?: string;
+        username?: string;
+        company_name?: string;
+        email?: string;
+        role?: string;
+      };
     }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.messages.unreadCount() });
 
       if (isMessagesPage) return;
       if (message.sender_id?._id === user?._id) return;
 
-      const senderName =
-        message.sender_id?.full_legal_name ||
-        message.sender_id?.company_name ||
-        message.sender_id?.username;
+      const sender = message.sender_id;
+      const senderName = sender?.role === "recruiter"
+        ? sender?.company_name || sender?.full_legal_name || sender?.email
+        : sender?.role === "talent"
+          ? sender?.username || sender?.full_legal_name || sender?.email
+          : sender?.full_legal_name || sender?.username || sender?.company_name || sender?.email;
 
       show({
         title: senderName ? `New message from ${senderName}` : "New message",
@@ -126,14 +173,48 @@ export function DashboardLayout({
       });
     };
 
+    const handleModerationWarning = (data: { type?: string; reason?: string }) => {
+      show({
+        title: "Content Warning",
+        description: data.reason || "Your message contained inappropriate content and was not delivered.",
+        variant: "warning",
+        position: "top-center",
+        duration: 6000,
+      });
+    };
+
+    const handleModerationSuspension = (data: {
+      type?: string;
+      reason?: string;
+      duration_hours?: number;
+      suspended_until?: string;
+    }) => {
+      show({
+        title: "Account Suspended",
+        description: data.reason || "Your account has been suspended due to repeated violations.",
+        variant: "error",
+        position: "top-center",
+        duration: 8000,
+      });
+      redirectToSuspendedPage(data.suspended_until || "", data.reason || "");
+    };
+
     socket.on("notification:new", handleNotification);
     socket.on("collaboration-request:new", handleCollaborationRequest);
+    socket.on("collaboration-request:accepted", handleCollaborationAccepted);
+    socket.on("collaboration-request:rejected", handleCollaborationRejected);
     socket.on("message:new", handleNewMessage);
+    socket.on("moderation:warning", handleModerationWarning);
+    socket.on("moderation:suspension", handleModerationSuspension);
 
     return () => {
       socket.off("notification:new", handleNotification);
       socket.off("collaboration-request:new", handleCollaborationRequest);
+      socket.off("collaboration-request:accepted", handleCollaborationAccepted);
+      socket.off("collaboration-request:rejected", handleCollaborationRejected);
       socket.off("message:new", handleNewMessage);
+      socket.off("moderation:warning", handleModerationWarning);
+      socket.off("moderation:suspension", handleModerationSuspension);
     };
   }, [socket, queryClient, isMessagesPage, user, show]);
 
@@ -155,7 +236,7 @@ export function DashboardLayout({
     }
   }, [authChecked, isLoading, user, role, router]);
 
-  const hideNav = pathname.includes("/edit") || hasActiveConversation;
+  const hideNav = pathname.includes("/edit") || isChatPage;
 
   const roleMismatch = user ? user.role !== role : false;
 
@@ -184,7 +265,7 @@ export function DashboardLayout({
 
   return (
     <div className={cn("bg-page flex flex-col", isMessagesPage ? "h-screen overflow-hidden" : "min-h-screen")}>
-      <header className={cn("bg-card border-b border-border px-4 py-3 sticky top-0 z-40", isMessagesPage && "hidden")}>
+      <header className={cn("bg-card border-b border-border px-4 py-3 sticky top-0 z-40", (isMessagesPage || isProfilePage) && "hidden")}>
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <Link
             href={homeHref}
@@ -223,13 +304,11 @@ export function DashboardLayout({
                     Profile
                   </Link>
                 </DropdownMenuItem>
-                {role === "talent" && (
-                  <DropdownMenuItem asChild>
-                    <Link href="/talent/requests" className="cursor-pointer">
-                      Requests
-                    </Link>
-                  </DropdownMenuItem>
-                )}
+                <DropdownMenuItem asChild>
+                  <Link href={`/${role}/requests`} className="cursor-pointer">
+                    Requests
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={async () => {
                     await logout();
@@ -266,7 +345,7 @@ export function DashboardLayout({
       </main>
 
       {!hideNav && (
-        <nav className="fixed bottom-0 left-0 right-0 bg-card z-50 safe-area-pb rounded-t-2xl border-t border-border shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
+        <nav className="fixed bottom-0 left-0 right-0 bg-card z-50 safe-area-pb rounded-t-2xl border-t border-border shadow-nav">
           <div className="max-w-3xl mx-auto flex items-center justify-around h-16">
             {navItems.map((item) => {
               const isActive = pathname === item.href;

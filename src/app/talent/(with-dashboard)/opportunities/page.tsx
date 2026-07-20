@@ -7,23 +7,25 @@ import {
   MapPin,
   Search,
   X,
-  ArrowRight,
   Bookmark,
-  ChevronDown,
   Clock,
+  Users,
+  Compass,
+  SlidersHorizontal,
 } from "lucide-react";
+import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
-import { Campaign } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
+import { PROFESSIONS } from "@/lib/professions";
 import {
   useCampaigns,
   useBookmarkCampaign,
   useUnbookmarkCampaign,
   useBookmarkedCampaigns,
 } from "@/lib/api/hooks/useCampaigns";
+import { type Campaign } from "@/lib/api";
+import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -32,28 +34,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+/* ------------------------------------------------------------------ */
+/*  CONSTANTS                                                         */
+/* ------------------------------------------------------------------ */
+
 const TABS = [
   { key: "available" as const, label: "All" },
   { key: "saved" as const, label: "Saved" },
   { key: "applied" as const, label: "Applied" },
 ];
 
-const INDUSTRY_OPTIONS = [
-  { value: "all", label: "Industries" },
-  { value: "Film", label: "Film" },
-  { value: "Fashion", label: "Fashion" },
-  { value: "TV", label: "TV" },
-  { value: "Theater", label: "Theater" },
-  { value: "Commercial", label: "Commercial" },
-];
-
 const ROLE_TYPE_OPTIONS = [
   { value: "all", label: "Role type" },
-  { value: "Actor", label: "Actor" },
-  { value: "Model", label: "Model" },
-  { value: "Influencer", label: "Influencer" },
-  { value: "Dancer", label: "Dancer" },
-  { value: "Voice Over", label: "Voice Over" },
+  ...PROFESSIONS.map((p) => ({ value: p, label: p })),
 ];
 
 const GENDER_OPTIONS = [
@@ -63,13 +56,42 @@ const GENDER_OPTIONS = [
   { value: "other", label: "Other" },
 ];
 
+const SORT_OPTIONS = [
+  { value: "relevance", label: "Recommended" },
+  { value: "newest", label: "Newest" },
+  { value: "oldest", label: "Oldest" },
+];
+
+const PROFESSION_GRADIENT: Record<string, string> = {
+  Actor: "from-[var(--color-opportunity-theater-start)] to-[var(--color-opportunity-theater-end)]",
+  Model: "from-[var(--color-opportunity-fashion-start)] to-[var(--color-opportunity-fashion-end)]",
+  Dancer: "from-[var(--color-opportunity-theater-start)] to-[var(--color-opportunity-theater-end)]",
+  Musician: "from-[var(--color-opportunity-theater-start)] to-[var(--color-opportunity-theater-end)]",
+  "Voice Artist": "from-[var(--color-opportunity-film-start)] to-[var(--color-opportunity-film-end)]",
+  Photographer: "from-[var(--color-opportunity-film-start)] to-[var(--color-opportunity-film-end)]",
+  Influencer: "from-[var(--color-opportunity-tv-start)] to-[var(--color-opportunity-tv-end)]",
+  "Extra / Background": "from-[var(--color-opportunity-default-start)] to-[var(--color-opportunity-default-end)]",
+};
+
+/* ------------------------------------------------------------------ */
+/*  HELPERS                                                           */
+/* ------------------------------------------------------------------ */
+
+function resolveGradient(roleType?: string) {
+  if (!roleType) return "from-[var(--color-opportunity-default-start)] to-[var(--color-opportunity-default-end)]";
+  const key = roleType.toLowerCase();
+  for (const [k, v] of Object.entries(PROFESSION_GRADIENT)) {
+    if (key.includes(k.toLowerCase())) return v;
+  }
+  return "from-[var(--color-opportunity-default-start)] to-[var(--color-opportunity-default-end)]";
+}
+
 function formatDeadline(deadline?: string) {
   if (!deadline) return null;
   const date = new Date(deadline);
   const now = new Date();
   const diff = date.getTime() - now.getTime();
   const daysLeft = Math.ceil(diff / (1000 * 60 * 60 * 24));
-
   if (daysLeft < 0) return { label: "Expired", urgent: false };
   if (daysLeft === 0) return { label: "Due today", urgent: true };
   if (daysLeft <= 3) return { label: `${daysLeft}d left`, urgent: true };
@@ -80,31 +102,9 @@ function formatDeadline(deadline?: string) {
   };
 }
 
-function badgeColor(industry?: string, roleType?: string): string {
-  const key = (industry || roleType || "").toLowerCase();
-  if (key.includes("digital") || key.includes("influencer"))
-    return "bg-emerald-600";
-  if (key.includes("film")) return "bg-indigo-600";
-  if (key.includes("fashion")) return "bg-rose-500";
-  if (key.includes("tv")) return "bg-violet-600";
-  if (key.includes("theater")) return "bg-pink-600";
-  return "bg-amber-600";
-}
-
-function gradientForCampaign(c: Campaign): string {
-  const key = (c.industry || c.role_type || "").toLowerCase();
-  if (key.includes("digital") || key.includes("influencer"))
-    return "linear-gradient(135deg,#0a2a1f 0%,#0f4a35 100%)";
-  if (key.includes("film"))
-    return "linear-gradient(135deg,#1e1b4b 0%,#312e81 100%)";
-  if (key.includes("fashion"))
-    return "linear-gradient(135deg,#4a044e 0%,#86198f 100%)";
-  if (key.includes("tv"))
-    return "linear-gradient(135deg,#1e3a5f 0%,#1e40af 100%)";
-  if (key.includes("theater"))
-    return "linear-gradient(135deg,#500724 0%,#9f1239 100%)";
-  return "linear-gradient(135deg,#1e1e2e 0%,#2d2b55 100%)";
-}
+/* ------------------------------------------------------------------ */
+/*  PAGE                                                              */
+/* ------------------------------------------------------------------ */
 
 export default function TalentOpportunitiesPage() {
   const router = useRouter();
@@ -114,15 +114,13 @@ export default function TalentOpportunitiesPage() {
   const [search, setSearch] = useState("");
   const tabParam = searchParams.get("tab");
   const [activeTab, setActiveTab] = useState<"available" | "applied" | "saved">(
-    tabParam === "applied" || tabParam === "saved" ? tabParam : "available"
+    tabParam === "applied" || tabParam === "saved" ? tabParam : "available",
   );
 
-  const industry = searchParams.get("industry") || "all";
   const role_type = searchParams.get("role_type") || "all";
   const gender = searchParams.get("gender") || "all";
   const locationCity = searchParams.get("location_city") || "";
-  const skills = searchParams.get("skills") || "";
-  const languages = searchParams.get("languages") || "";
+  const sort = searchParams.get("sort") || "relevance";
 
   const updateParam = useCallback(
     (key: string, value: string) => {
@@ -134,7 +132,7 @@ export default function TalentOpportunitiesPage() {
       }
       router.push(`${pathname}?${params.toString()}`);
     },
-    [searchParams, pathname, router]
+    [searchParams, pathname, router],
   );
 
   const clearFilters = useCallback(() => {
@@ -143,22 +141,17 @@ export default function TalentOpportunitiesPage() {
   }, [pathname, router]);
 
   const hasActiveFilters =
-    industry !== "all" ||
     role_type !== "all" ||
     gender !== "all" ||
     !!locationCity ||
-    !!skills ||
-    !!languages ||
     !!search;
 
   const filters = useMemo(
     () => ({
-      industry: industry === "all" ? undefined : industry,
       role_type: role_type === "all" ? undefined : role_type,
       gender: gender === "all" ? undefined : gender,
       location_city: locationCity || undefined,
-      skills: skills || undefined,
-      languages: languages || undefined,
+      sort,
       applied:
         activeTab === "applied"
           ? "true"
@@ -166,7 +159,7 @@ export default function TalentOpportunitiesPage() {
             ? "false"
             : undefined,
     }),
-    [industry, role_type, gender, locationCity, skills, languages, activeTab]
+    [role_type, gender, locationCity, sort, activeTab],
   );
 
   const { ref: sentinelRef, inView } = useInView({ threshold: 0 });
@@ -175,9 +168,7 @@ export default function TalentOpportunitiesPage() {
   const bookmarksQuery = useBookmarkedCampaigns();
 
   const isSavedTab = activeTab === "saved";
-  const isLoading = isSavedTab
-    ? bookmarksQuery.isLoading
-    : campaignsQuery.isLoading;
+  const isLoading = isSavedTab ? bookmarksQuery.isLoading : campaignsQuery.isLoading;
   const error = isSavedTab ? bookmarksQuery.error : campaignsQuery.error;
 
   useEffect(() => {
@@ -213,7 +204,7 @@ export default function TalentOpportunitiesPage() {
       (c) =>
         (c.name?.toLowerCase().includes(q) ?? false) ||
         (c.description?.toLowerCase().includes(q) ?? false) ||
-        (c.industry?.toLowerCase().includes(q) ?? false)
+        (c.role_type?.toLowerCase().includes(q) ?? false),
     );
   }, [allCampaigns, search]);
 
@@ -228,422 +219,421 @@ export default function TalentOpportunitiesPage() {
       }
       router.push(`${pathname}?${params.toString()}`);
     },
-    [searchParams, pathname, router]
+    [searchParams, pathname, router],
   );
 
+  return (
+    <div className="px-4 pt-6 pb-8 max-w-2xl mx-auto">
+      {/* Page Header */}
+      <div className="mb-5">
+        <h1 className="text-2xl font-serif font-semibold text-ink tracking-tight">
+          Opportunities
+        </h1>
+        <p className="text-sm text-ink-muted mt-1">
+          Discover roles that match your talent
+        </p>
+      </div>
+
+      {/* Segmented Tab Bar */}
+      <Card className="p-1 mb-5 shadow-luxe">
+        <div className="flex">
+          {TABS.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => handleTabChange(tab.key)}
+              className={cn(
+                "flex-1 py-2 rounded-lg text-[13px] font-medium transition-all duration-200",
+                activeTab === tab.key
+                  ? "bg-gold text-white shadow-sm"
+                  : "text-ink-soft hover:text-ink hover:bg-cream",
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </Card>
+
+      {/* Search */}
+      <div className="mb-3">
+        <div className="flex items-center gap-2.5 px-3.5 h-11 rounded-xl bg-cream border border-border-warm transition-colors focus-within:border-gold/40 focus-within:bg-white">
+          <Search className="h-4 w-4 text-ink-muted shrink-0" strokeWidth={1.5} />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            type="search"
+            placeholder="Search by name, role, or keyword..."
+            className="flex-1 bg-transparent text-sm text-ink placeholder:text-ink-muted/60 outline-none"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="shrink-0 p-0.5 rounded-full hover:bg-border-light transition-colors"
+            >
+              <X className="h-3.5 w-3.5 text-ink-muted hover:text-ink-soft" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Filter Row + Results Count */}
+      <div className="flex items-center gap-3 mb-5">
+        <div className="flex items-center gap-2 flex-1 overflow-x-auto no-scrollbar">
+          <div className="flex items-center gap-1.5 shrink-0 text-ink-muted mr-1">
+            <SlidersHorizontal className="h-3.5 w-3.5" strokeWidth={1.5} />
+          </div>
+
+          <FilterPill
+            value={role_type}
+            label="Role type"
+            options={ROLE_TYPE_OPTIONS}
+            onChange={(v) => updateParam("role_type", v)}
+          />
+          <FilterPill
+            value={gender}
+            label="Gender"
+            options={GENDER_OPTIONS}
+            onChange={(v) => updateParam("gender", v)}
+          />
+
+          <div
+            className={cn(
+              "flex items-center h-8 rounded-full text-xs px-3 gap-1.5 shrink-0 border transition-colors",
+              locationCity
+                ? "bg-gold-soft border-gold/30 text-gold-ink"
+                : "bg-card border-border-warm text-ink-soft",
+            )}
+          >
+            <MapPin className="h-3 w-3 text-current" strokeWidth={1.5} />
+            <input
+              value={locationCity}
+              onChange={(e) => updateParam("location_city", e.target.value)}
+              placeholder="City..."
+              className="w-16 bg-transparent text-xs text-current placeholder:text-current/50 outline-none"
+            />
+            {locationCity && (
+              <button onClick={() => updateParam("location_city", "")}>
+                <X className="h-3 w-3 text-current" />
+              </button>
+            )}
+          </div>
+
+          {hasActiveFilters && (
+            <button
+              onClick={clearFilters}
+              className="h-8 px-2.5 rounded-full text-xs font-medium text-gold hover:bg-gold-soft transition-colors flex items-center gap-1 shrink-0"
+            >
+              <X className="h-3 w-3" />
+              Clear
+            </button>
+          )}
+        </div>
+
+        <div className="shrink-0">
+          <Select value={sort} onValueChange={(v) => updateParam("sort", v)}>
+            <SelectTrigger className="h-8 rounded-full text-xs px-3 gap-1 border-border-warm bg-card text-ink-soft">
+              <SelectValue placeholder="Sort" />
+            </SelectTrigger>
+            <SelectContent>
+              {SORT_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Results */}
+      <ResultsList
+        campaigns={filtered}
+        activeTab={activeTab}
+        isLoading={isLoading}
+        error={error}
+        hasActiveFilters={hasActiveFilters}
+        onClearFilters={clearFilters}
+        isSavedTab={isSavedTab}
+        hasNextPage={!isSavedTab && campaignsQuery.hasNextPage}
+        isFetchingNextPage={!isSavedTab && campaignsQuery.isFetchingNextPage}
+        sentinelRef={sentinelRef}
+      />
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  FILTER PILL (reusable select trigger)                             */
+/* ------------------------------------------------------------------ */
+
+function FilterPill({
+  value,
+  label,
+  options,
+  onChange,
+}: {
+  value: string;
+  label: string;
+  options?: { value: string; label: string }[];
+  onChange: (v: string) => void;
+}) {
+  const isActive = value !== "all";
+  const items = options || [{ value: "all", label }];
+
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger
+        className={cn(
+          "h-8 rounded-full text-xs px-3 gap-1 shrink-0 border transition-colors",
+          isActive
+            ? "bg-gold-soft border-gold/30 text-gold-ink"
+            : "bg-card border-border-warm text-ink-soft",
+        )}
+      >
+        <SelectValue placeholder={label} />
+      </SelectTrigger>
+      <SelectContent>
+        {items.map((opt) => (
+          <SelectItem key={opt.value} value={opt.value}>
+            {opt.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  RESULTS LIST                                                      */
+/* ------------------------------------------------------------------ */
+
+function ResultsList({
+  campaigns,
+  activeTab,
+  isLoading,
+  error,
+  hasActiveFilters,
+  onClearFilters,
+  isSavedTab,
+  hasNextPage,
+  isFetchingNextPage,
+  sentinelRef,
+}: {
+  campaigns: Campaign[];
+  activeTab: string;
+  isLoading: boolean;
+  error: unknown;
+  hasActiveFilters: boolean;
+  onClearFilters: () => void;
+  isSavedTab: boolean;
+  hasNextPage: boolean;
+  isFetchingNextPage: boolean;
+  sentinelRef: (node?: Element | null) => void;
+}) {
   if (isLoading) {
     return (
-      <div className="px-4 pt-5 pb-24 space-y-4">
-        <Skeleton className="h-7 w-36" />
-        <div className="flex gap-2">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-8 w-20 rounded-full" />
-          ))}
-        </div>
-        <Skeleton className="h-10 w-full rounded-lg" />
-        <div className="flex gap-2">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-7 w-24 rounded-full" />
-          ))}
-        </div>
-        <div className="space-y-3 pt-2">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-72 rounded-2xl" />
-          ))}
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} className="h-52 rounded-2xl" />
+        ))}
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="px-4 pt-5">
-        <Alert variant="destructive">
-          <AlertDescription>
-            {getApiErrorMessage(error, "Failed to load opportunities")}
-          </AlertDescription>
-        </Alert>
-      </div>
+      <Card className="p-5 border-error-muted bg-error-light text-sm text-error-text rounded-2xl">
+        {getApiErrorMessage(error, "Failed to load opportunities")}
+      </Card>
+    );
+  }
+
+  if (campaigns.length === 0) {
+    return (
+      <Card className="p-10 flex flex-col items-center text-center rounded-2xl">
+        <div className="h-14 w-14 rounded-2xl bg-cream-deep grid place-items-center mb-4">
+          <Compass className="h-7 w-7 text-ink-muted" />
+        </div>
+        <p className="text-sm font-semibold text-ink">No opportunities found</p>
+        <p className="text-xs text-ink-muted mt-1.5 max-w-[280px] leading-relaxed">
+          {hasActiveFilters
+            ? "Try adjusting your filters to see more results."
+            : activeTab === "applied"
+              ? "You haven\u2019t applied to any campaigns yet."
+              : activeTab === "saved"
+                ? "No saved campaigns yet. Bookmark campaigns to find them here."
+                : "Complete your profile to get matched with casting calls."}
+        </p>
+        {hasActiveFilters && (
+          <button
+            onClick={onClearFilters}
+            className="mt-4 text-xs font-semibold text-gold hover:text-gold-ink transition-colors"
+          >
+            Clear all filters
+          </button>
+        )}
+      </Card>
     );
   }
 
   return (
-    <div className="px-4 pt-5 pb-24 space-y-3">
-      {/* Page title */}
-      <h1 className="text-xl font-semibold text-text-primary">
-        Opportunities
-      </h1>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      {campaigns.map((campaign, i) => (
+        <motion.div
+          key={campaign._id}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: i * 0.04 }}
+        >
+          <OpportunityCard campaign={campaign} activeTab={activeTab} />
+        </motion.div>
+      ))}
 
-      {/* Tab pills */}
-      <div className="flex gap-2">
-        {TABS.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => handleTabChange(tab.key)}
-            className={cn(
-              "px-4 py-1.5 rounded-full text-[13px] font-medium border transition-colors",
-              activeTab === tab.key
-                ? "bg-brand border-brand text-white"
-                : "bg-card border-border text-text-secondary hover:bg-muted-bg"
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Search */}
-      <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-muted-bg">
-        <Search className="w-4 h-4 text-text-tertiary shrink-0" strokeWidth={1.5} />
-        <input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          type="search"
-          placeholder="Search opportunities..."
-          aria-label="Search opportunities"
-          className="flex-1 bg-transparent text-sm text-text-primary placeholder:text-text-tertiary outline-none"
-        />
-        {search && (
-          <button onClick={() => setSearch("")}>
-            <X className="w-3.5 h-3.5 text-text-muted hover:text-text-secondary" />
-          </button>
-        )}
-      </div>
-
-      {/* Filter chips */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:pb-0 sm:flex-wrap sm:overflow-visible"
-        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-      >
-        <Select value={industry} onValueChange={(v) => updateParam("industry", v)}>
-          <SelectTrigger className="h-7 rounded-full text-xs bg-card border-border px-3 gap-1 shrink-0">
-            <SelectValue placeholder="Industries" />
-          </SelectTrigger>
-          <SelectContent>
-            {INDUSTRY_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={role_type} onValueChange={(v) => updateParam("role_type", v)}>
-          <SelectTrigger className="h-7 rounded-full text-xs bg-card border-border px-3 gap-1 shrink-0">
-            <SelectValue placeholder="Role type" />
-          </SelectTrigger>
-          <SelectContent>
-            {ROLE_TYPE_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select value={gender} onValueChange={(v) => updateParam("gender", v)}>
-          <SelectTrigger className="h-7 rounded-full text-xs bg-card border-border px-3 gap-1 shrink-0">
-            <SelectValue placeholder="Gender" />
-          </SelectTrigger>
-          <SelectContent>
-            {GENDER_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <div className="relative shrink-0">
-          <div className="flex items-center h-7 rounded-full text-xs bg-card border border-border px-3 gap-1">
-            <MapPin className="w-3 h-3 text-text-muted" strokeWidth={1.5} />
-            <input
-              value={locationCity}
-              onChange={(e) => updateParam("location_city", e.target.value)}
-              placeholder="City..."
-              className="w-20 bg-transparent text-xs text-text-primary placeholder:text-text-muted outline-none"
-            />
-            {locationCity && (
-              <button onClick={() => updateParam("location_city", "")}>
-                <X className="w-3 h-3 text-text-muted hover:text-text-secondary" />
-              </button>
-            )}
-          </div>
+      {!isSavedTab && hasNextPage && (
+        <div ref={sentinelRef} className="col-span-full py-2">
+          {isFetchingNextPage && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {Array.from({ length: 2 }).map((_, i) => (
+                <Skeleton key={i} className="h-52 rounded-2xl" />
+              ))}
+            </div>
+          )}
         </div>
-
-        {hasActiveFilters && (
-          <button
-            onClick={clearFilters}
-            className="h-7 px-2.5 rounded-full text-xs font-medium text-brand hover:text-brand-hover hover:bg-brand-light transition-colors flex items-center gap-1 shrink-0 border border-transparent"
-          >
-            <X className="w-3 h-3" />
-            Clear
-          </button>
-        )}
-      </div>
-
-      {/* Results */}
-      <div className="pt-1 space-y-3">
-        {filtered.length === 0 ? (
-          <div className="text-center py-16 bg-card border border-border rounded-2xl">
-            <Clock
-              className="w-10 h-10 text-text-muted mx-auto mb-3"
-              strokeWidth={1.5}
-            />
-            <p className="text-sm text-text-muted mb-1">No opportunities yet</p>
-            <p className="text-xs text-text-muted">
-              {hasActiveFilters
-                ? "Try adjusting your filters."
-                : activeTab === "applied"
-                  ? "You haven't applied to any campaigns yet."
-                  : activeTab === "saved"
-                    ? "No saved campaigns yet."
-                    : "Complete your profile to get matched with casting calls."}
-            </p>
-            {hasActiveFilters && (
-              <button
-                onClick={clearFilters}
-                className="mt-3 inline-flex items-center text-xs font-medium text-brand hover:text-brand-hover transition-colors"
-              >
-                Clear filters
-              </button>
-            )}
-          </div>
-        ) : (
-          <>
-            {filtered.map((campaign) => (
-              <OpportunityCard
-                key={campaign._id}
-                campaign={campaign}
-                activeTab={activeTab}
-                onView={() =>
-                  router.push(`/talent/opportunities/${campaign._id}`)
-                }
-              />
-            ))}
-
-            {!isSavedTab && campaignsQuery.hasNextPage && (
-              <div ref={sentinelRef} className="py-3">
-                {campaignsQuery.isFetchingNextPage ? (
-                  <div className="space-y-3">
-                    {Array.from({ length: 2 }).map((_, i) => (
-                      <Skeleton key={i} className="h-72 rounded-2xl" />
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-            )}
-          </>
-        )}
-      </div>
+      )}
     </div>
   );
 }
 
+/* ------------------------------------------------------------------ */
+/*  OPPORTUNITY CARD                                                  */
+/* ------------------------------------------------------------------ */
+
 function OpportunityCard({
   campaign,
   activeTab,
-  onView,
 }: {
   campaign: Campaign;
   activeTab: string;
-  onView: () => void;
 }) {
+  const router = useRouter();
+  const gradient = resolveGradient(campaign.role_type);
   const loc = [campaign.location?.city, campaign.location?.state]
     .filter((s): s is string => !!s && s.trim() !== "")
     .join(", ");
-
   const deadline = formatDeadline(campaign.deadline);
   const bookmark = useBookmarkCampaign();
   const unbookmark = useUnbookmarkCampaign();
   const isBookmarked = campaign.is_bookmarked;
   const isPending = bookmark.isPending || unbookmark.isPending;
 
-  const imageUrl =
-    campaign.cover_image_url ||
-    campaign.banner?.url ||
-    campaign.media?.find((m) => m.type === "image")?.url;
-
-  const badgeLabel = campaign.role_type || campaign.industry || "Campaign";
-  const badgeBg = badgeColor(campaign.industry, campaign.role_type);
-
-  const amberTags: string[] = [];
-  const slateTags: string[] = [];
-
-  if (campaign.role_type) amberTags.push(campaign.role_type);
-  if (campaign.requirements?.skills) {
-    campaign.requirements.skills.slice(0, 2).forEach((s) => amberTags.push(s));
-  }
-  if (campaign.requirements?.gender) slateTags.push(campaign.requirements.gender);
-  if (campaign.requirements?.age_range) {
-    const { min, max } = campaign.requirements.age_range;
-    if (min != null && max != null) slateTags.push(`${min}-${max}`);
-    else if (min != null) slateTags.push(`${min}+`);
-    else if (max != null) slateTags.push(`<${max}`);
-  }
-  if (deadline && !deadline.urgent) slateTags.push(deadline.label);
-
   return (
-    <article className="bg-card rounded-2xl border border-border overflow-hidden">
-      {/* Thumbnail */}
-      <div className="relative w-full h-[140px]">
-        {imageUrl ? (
-          <img
-            src={imageUrl}
-            alt={campaign.name}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div
-            className="w-full h-full flex items-center justify-center"
-            style={{ background: gradientForCampaign(campaign) }}
-          >
-            <span className="text-[11px] text-white/40 tracking-wider uppercase">
-              Campaign preview
+    <div
+      onClick={() => router.push(`/talent/opportunities/${campaign._id}`)}
+      className="cursor-pointer group"
+    >
+      <Card
+        className={cn(
+          "overflow-hidden rounded-2xl border-0 text-white",
+          "bg-gradient-to-br",
+          gradient,
+          "shadow-luxe group-hover:shadow-luxe-lg transition-shadow duration-300",
+        )}
+      >
+        <div className="p-5">
+          <div className="flex items-start justify-between gap-2.5">
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap gap-1.5 mb-2.5">
+                {campaign.role_type && (
+                  <span className="text-[11px] bg-white/15 backdrop-blur-sm rounded-full px-2.5 py-1 font-medium tracking-wide">
+                    {campaign.role_type}
+                  </span>
+                )}
+                {campaign.match_score != null && campaign.match_score > 0 && (
+                  <span className="text-[11px] bg-gold/80 backdrop-blur-sm rounded-full px-2.5 py-1 font-semibold text-surface-dark">
+                    {campaign.match_score}% match
+                  </span>
+                )}
+              </div>
+
+              <h3 className="text-[15px] font-bold leading-snug line-clamp-2 tracking-tight">
+                {campaign.name}
+              </h3>
+
+              {campaign.description && (
+                <p className="text-[12px] text-white/55 mt-1.5 line-clamp-1 leading-relaxed">
+                  {campaign.description}
+                </p>
+              )}
+            </div>
+
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (isPending) return;
+                if (isBookmarked) {
+                  unbookmark.mutate(campaign._id);
+                } else {
+                  bookmark.mutate(campaign._id);
+                }
+              }}
+              className="shrink-0 p-2 rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
+              aria-label={isBookmarked ? "Remove bookmark" : "Bookmark"}
+            >
+              <Bookmark
+                className={cn("h-4 w-4", isBookmarked ? "fill-white text-white" : "text-white/70")}
+                strokeWidth={isBookmarked ? 2 : 1.5}
+              />
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between mt-4 pt-3.5 border-t border-white/10">
+            <div className="flex items-center gap-3.5">
+              {loc && (
+                <span className="text-[11px] text-white/65 flex items-center gap-1">
+                  <MapPin className="h-3 w-3" />
+                  {loc}
+                </span>
+              )}
+              {deadline && (
+                <span
+                  className={cn(
+                    "text-[11px] flex items-center gap-1",
+                    deadline.urgent ? "text-amber-300 font-medium" : "text-white/65",
+                  )}
+                >
+                  <Clock className="h-3 w-3" />
+                  {deadline.label}
+                </span>
+              )}
+            </div>
+            <span className="text-[11px] text-white/65 flex items-center gap-1">
+              <Users className="h-3 w-3" />
+              {campaign.applications_count ?? 0}
             </span>
           </div>
-        )}
-        <div
-          className={cn(
-            "absolute top-2.5 right-2.5 text-white text-[10px] font-medium px-2 py-[3px] rounded-full",
-            badgeBg
-          )}
-        >
-          {badgeLabel}
-        </div>
 
-        {/* Bookmark */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            if (isPending) return;
-            if (isBookmarked) {
-              unbookmark.mutate(campaign._id);
-            } else {
-              bookmark.mutate(campaign._id);
-            }
-          }}
-          disabled={isPending}
-          className="absolute top-2.5 left-2.5 p-1.5 rounded-full bg-black/30 hover:bg-black/50 transition-colors backdrop-blur-sm"
-          aria-label={isBookmarked ? "Remove bookmark" : "Bookmark"}
-        >
-          <Bookmark
-            className={cn(
-              "w-3.5 h-3.5",
-              isBookmarked ? "fill-white text-white" : "text-white/80"
-            )}
-            strokeWidth={1.5}
-          />
-        </button>
-      </div>
-
-      {/* Body */}
-      <div className="px-3.5 pt-3 pb-3.5">
-        {/* Meta */}
-        <p className="text-[11px] font-medium text-brand mb-1 tracking-wide">
-          {campaign.industry}
-          {campaign.industry && campaign.role_type ? " · " : ""}
-          {campaign.role_type}
-        </p>
-
-        {/* Title */}
-        <h3 className="text-[15px] font-medium text-text-primary leading-snug mb-1.5">
-          {campaign.name}
-        </h3>
-
-        {/* Description */}
-        {campaign.description && (
-          <p className="text-xs text-text-secondary leading-relaxed mb-2.5 line-clamp-2">
-            {campaign.description}
-          </p>
-        )}
-
-        {/* Location row */}
-        <div className="flex items-center gap-4 mb-2.5">
-          {loc && (
-            <div className="flex items-center gap-1 text-xs text-text-secondary">
-              <MapPin className="w-3.5 h-3.5" strokeWidth={1.5} />
-              <span>{loc}</span>
-            </div>
-          )}
-          {deadline && (
-            <div
-              className={cn(
-                "flex items-center gap-1 text-xs",
-                deadline.urgent
-                  ? "text-amber-700 font-medium"
-                  : "text-text-secondary"
-              )}
-            >
-              <Clock className="w-3.5 h-3.5" strokeWidth={1.5} />
-              <span>{deadline.label}</span>
+          {activeTab === "applied" && campaign.my_application && (
+            <div className="mt-3 pt-3 border-t border-white/10">
+              <span
+                className={cn(
+                  "text-[11px] font-medium rounded-full px-2.5 py-1",
+                  campaign.my_application.status === "accepted"
+                    ? "bg-emerald-500/20 text-emerald-200"
+                    : campaign.my_application.status === "rejected"
+                      ? "bg-red-500/20 text-red-200"
+                      : "bg-amber-500/20 text-amber-200",
+                )}
+              >
+                {campaign.my_application.status === "pending"
+                  ? "Pending"
+                  : campaign.my_application.status === "accepted"
+                    ? "Accepted"
+                    : "Rejected"}
+              </span>
             </div>
           )}
         </div>
-
-        {/* Tags */}
-        <div className="flex flex-wrap gap-1.5 mb-3">
-          {amberTags.slice(0, 3).map((tag, i) => (
-            <span
-              key={`a-${i}`}
-              className="px-2.5 py-[3px] rounded-full text-[11px] font-medium bg-amber-50 text-amber-800 border border-amber-200"
-            >
-              {tag}
-            </span>
-          ))}
-          {slateTags.slice(0, 2).map((tag, i) => (
-            <span
-              key={`s-${i}`}
-              className="px-2.5 py-[3px] rounded-full text-[11px] font-medium bg-muted-bg text-text-secondary border border-border"
-            >
-              {tag}
-            </span>
-          ))}
-          {campaign.my_application && activeTab === "applied" && (
-            <span
-              className={cn(
-                "px-2.5 py-[3px] rounded-full text-[11px] font-medium border",
-                campaign.my_application.status === "accepted"
-                  ? "bg-green-50 text-green-700 border-green-200"
-                  : campaign.my_application.status === "rejected"
-                    ? "bg-red-50 text-red-700 border-red-200"
-                    : "bg-amber-50 text-amber-700 border-amber-200"
-              )}
-            >
-              {campaign.my_application.status === "pending"
-                ? "Pending"
-                : campaign.my_application.status === "accepted"
-                  ? "Accepted"
-                  : "Rejected"}
-            </span>
-          )}
-        </div>
-
-        {/* Budget + CTA */}
-        <div className="flex items-center justify-between pt-2.5 border-t border-border-subtle">
-          <div>
-            <p className="text-[11px] text-text-tertiary mb-0.5">Budget</p>
-            <p className="text-sm font-medium text-text-primary">
-              {campaign.budget_range?.currency ?? "₹"}
-              {campaign.budget_range?.min?.toLocaleString() ?? ""}
-              {campaign.budget_range?.max
-                ? ` – ${campaign.budget_range.max.toLocaleString()}`
-                : campaign.budget_range?.min
-                  ? "+"
-                  : "Not disclosed"}
-            </p>
-          </div>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onView();
-            }}
-            className="flex items-center gap-1 px-3.5 py-2 rounded-lg bg-brand text-white text-[13px] font-medium hover:bg-brand-hover active:scale-[0.98] transition-all"
-          >
-            View details
-            <ArrowRight className="w-3.5 h-3.5" strokeWidth={2} />
-          </button>
-        </div>
-      </div>
-    </article>
+      </Card>
+    </div>
   );
 }

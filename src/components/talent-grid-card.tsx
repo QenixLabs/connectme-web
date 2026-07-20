@@ -1,7 +1,8 @@
 "use client";
 
-import { Check, UserPlus } from "lucide-react";
+import { Check, HelpCircle, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 type ProfileWithAccess = Partial<{
   _id?: string;
@@ -12,7 +13,7 @@ type ProfileWithAccess = Partial<{
   profile_photo?: string;
   location?: { country?: string; state?: string; city?: string };
   professions?: string[];
-  industries?: string[];
+  specialties?: string[];
   languages?: Array<{ name?: string; fluency?: string }>;
   skills?: Array<{ name?: string; proficiency?: string }>;
   availability?: string;
@@ -33,38 +34,6 @@ function getInitials(name: string): string {
     .join("")
     .slice(0, 2)
     .toUpperCase();
-}
-
-function getProfileCompletion(profile: ProfileWithAccess): number {
-  const checks: unknown[] = [
-    profile.username,
-    profile.full_legal_name,
-    profile.profile_photo,
-    profile.headline,
-    profile.about,
-    profile.gender,
-    profile.date_of_birth,
-    profile.location?.city,
-    profile.location?.state,
-    profile.location?.country,
-    profile.professions?.length ? profile.professions : null,
-    profile.industries?.length ? profile.industries : null,
-    profile.languages?.length ? profile.languages : null,
-    profile.skills?.length ? profile.skills : null,
-    profile.availability,
-    profile.physical_attributes && Object.keys(profile.physical_attributes).length > 0
-      ? profile.physical_attributes
-      : null,
-    profile.social_links && Object.keys(profile.social_links).length > 0
-      ? profile.social_links
-      : null,
-    profile.documents && Object.keys(profile.documents).length > 0
-      ? profile.documents
-      : null,
-  ];
-  const filled = checks.filter((v) => v !== undefined && v !== null && v !== "" && v !== false).length;
-  const total = checks.length;
-  return Math.round((filled / total) * 100);
 }
 
 function getGradientSeed(name: string): number {
@@ -101,6 +70,8 @@ interface TalentGridCardProps {
   selectable?: boolean;
   isSelected?: boolean;
   onToggleSelect?: () => void;
+  matchScore?: number;
+  campaignName?: string;
 }
 
 export function TalentGridCard({
@@ -111,12 +82,12 @@ export function TalentGridCard({
   selectable,
   isSelected,
   onToggleSelect,
+  matchScore,
+  campaignName,
 }: TalentGridCardProps) {
   const displayName = profile.full_legal_name || profile.username || "Talent";
   const loc = profile.location?.city || profile.location?.state || "";
-  const profession = profile.professions?.[0] ?? profile.industries?.[0] ?? "";
-  const completion = getProfileCompletion(profile);
-
+  const profession = profile.professions?.[0] ?? profile.specialties?.[0] ?? "";
   return (
     <article
       className={cn(
@@ -154,10 +125,30 @@ export function TalentGridCard({
           </div>
         )}
 
-        {/* Completion badge */}
-        <span className="absolute top-2 right-2 bg-[#FAEEDA] text-[#633806] text-[11px] font-semibold px-2 py-0.5 rounded-lg">
-          {completion}%
-        </span>
+        {/* Score badge — match score when available, else create-campaign prompt */}
+        {matchScore !== undefined ? (
+          <span className="absolute top-2 right-2 text-[11px] font-semibold px-2 py-0.5 rounded-lg bg-brand/90 text-white">
+            {matchScore}%
+          </span>
+        ) : (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="absolute top-2 right-2 w-5 h-5 flex items-center justify-center text-[11px] font-semibold rounded-lg bg-muted-bg text-text-muted cursor-help">
+                <HelpCircle className="w-3.5 h-3.5" />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="max-w-[180px] text-center">
+              <p className="mb-1">Create a campaign to see match scores</p>
+              <a
+                href="/recruiter/campaigns/new"
+                onClick={(e) => e.stopPropagation()}
+                className="underline text-background/80 hover:text-background"
+              >
+                Create campaign
+              </a>
+            </TooltipContent>
+          </Tooltip>
+        )}
 
         {/* Select checkbox */}
         {selectable && (
@@ -175,15 +166,29 @@ export function TalentGridCard({
         )}
       </div>
 
-      {/* Body */}
+        {/* Body */}
       <div className="p-2.5">
+        {/* Match badge */}
+        {matchScore !== undefined && (
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="px-1.5 py-0.5 rounded-full bg-brand/10 text-brand text-[10px] font-bold">
+              {matchScore}% match
+            </span>
+            {campaignName && (
+              <span className="text-[10px] text-text-muted truncate">
+                {campaignName}
+              </span>
+            )}
+          </div>
+        )}
+
         {/* Name + verified */}
         <div className="flex items-center gap-1 mb-0.5">
           <h3 className="text-sm font-semibold text-text-primary truncate">
             {displayName}
           </h3>
           {profile.is_verified && (
-            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-[#B85C00] shrink-0">
+            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-campaign shrink-0">
               <Check className="w-2.5 h-2.5 text-white" strokeWidth={2.5} />
             </span>
           )}
@@ -239,7 +244,7 @@ export function TalentGridCard({
                   e.stopPropagation();
                   onInvite();
                 }}
-                className="flex-1 py-1.5 rounded-full border border-[#B85C00] bg-[#FFF7F0] text-[#B85C00] text-[11px] font-medium transition-colors hover:bg-[#FAEEDA]"
+                className="flex-1 py-1.5 rounded-full border border-campaign bg-campaign-light text-campaign text-[11px] font-medium transition-colors hover:bg-campaign-soft"
               >
                 Invite
               </button>

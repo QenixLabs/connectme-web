@@ -13,6 +13,7 @@ export const numberOrUndefined = (v: unknown): number | undefined => {
 };
 
 export const DEFAULT_VALUES: CreateTalentProfileInput = {
+  hero_background: "",
   username: "",
   full_legal_name: "",
   date_of_birth: "",
@@ -20,7 +21,9 @@ export const DEFAULT_VALUES: CreateTalentProfileInput = {
   profile_photo: "",
   location: { country: "", state: "", city: "" },
   professions: [],
-  industries: [],
+  specialties: [],
+  is_influencer: false,
+  influencer_speciality: "",
   availability: undefined,
   headline: "",
   about: "",
@@ -38,11 +41,7 @@ export const DEFAULT_VALUES: CreateTalentProfileInput = {
   accents: [],
   skills: [],
   documents: { resume_url: "" },
-  social_links: {
-    instagram: { url: "", visibility: "public" },
-    youtube: { url: "", visibility: "public" },
-    linkedin: { url: "", visibility: "public" },
-  },
+  social_links: [],
   privacy_mode: undefined,
   section_visibility: {
     bio: true,
@@ -67,6 +66,7 @@ export function hydrateFromServer(profile: TalentProfile): CreateTalentProfileIn
     : "";
 
   return {
+    hero_background: profile.hero_background ?? "",
     username: profile.username ?? "",
     full_legal_name: profile.full_legal_name ?? "",
     date_of_birth: dob,
@@ -78,7 +78,9 @@ export function hydrateFromServer(profile: TalentProfile): CreateTalentProfileIn
       city: profile.location?.city ?? "",
     },
     professions: profile.professions ?? [],
-    industries: profile.industries ?? [],
+    specialties: profile.specialties ?? [],
+    is_influencer: profile.is_influencer ?? false,
+    influencer_speciality: profile.influencer_speciality ?? "",
     availability: profile.availability,
     headline: profile.headline ?? "",
     about: profile.about ?? "",
@@ -105,26 +107,13 @@ export function hydrateFromServer(profile: TalentProfile): CreateTalentProfileIn
     documents: {
       resume_url: profile.documents?.resume_url ?? "",
     },
-    social_links: {
-      instagram: {
-        url: profile.social_links?.instagram?.url ?? "",
-        visibility:
-          (profile.social_links?.instagram?.visibility as "public" | "recruiters_only" | "private") ??
-          "public",
-      },
-      youtube: {
-        url: profile.social_links?.youtube?.url ?? "",
-        visibility:
-          (profile.social_links?.youtube?.visibility as "public" | "recruiters_only" | "private") ??
-          "public",
-      },
-      linkedin: {
-        url: profile.social_links?.linkedin?.url ?? "",
-        visibility:
-          (profile.social_links?.linkedin?.visibility as "public" | "recruiters_only" | "private") ??
-          "public",
-      },
-    },
+    social_links: Object.entries(profile.social_links ?? {}).map(([platform, link]) => ({
+      platform,
+      url: (link as { url?: string; visibility?: string }).url ?? "",
+      visibility:
+        ((link as { url?: string; visibility?: string }).visibility as "public" | "recruiters_only" | "private") ??
+        "public",
+    })),
     privacy_mode: profile.privacy_mode,
     section_visibility: {
       bio: profile.section_visibility?.bio ?? true,
@@ -171,6 +160,20 @@ export function buildPayload(values: CreateTalentProfileInput): Record<string, u
     if (val === undefined || val === null) continue;
     if (typeof val === "string") {
       if (val !== "") out[key] = val;
+      continue;
+    }
+    if (key === "social_links" && Array.isArray(val)) {
+      const record: Record<string, { url?: string; visibility?: string }> = {};
+      for (const item of val as { platform?: string; url?: string; visibility?: string }[]) {
+        if (!item.platform) continue;
+        const link: { url?: string; visibility?: string } = {};
+        if (item.url && item.url !== "") link.url = item.url;
+        if (item.visibility && item.visibility !== "public") link.visibility = item.visibility;
+        if (Object.keys(link).length > 0) {
+          record[item.platform] = link;
+        }
+      }
+      if (Object.keys(record).length > 0) out[key] = record;
       continue;
     }
     if (Array.isArray(val)) {

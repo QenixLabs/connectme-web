@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -13,6 +13,9 @@ import {
   Mail,
   Loader2,
   CheckCheck,
+  ArrowRightLeft,
+  ClipboardList,
+  Sparkles,
 } from "lucide-react";
 import {
   notificationsApi,
@@ -21,6 +24,7 @@ import {
   useMarkAsRead,
   useMarkAllAsRead,
   useDismissAuto,
+  useRespondToAction,
 } from "@/lib/api";
 import { useSocket } from "@/hooks/use-socket";
 import { getApiErrorMessage } from "@/lib/formatters";
@@ -91,8 +95,18 @@ export function NotificationList() {
 
   const allNotifications = data?.pages.flatMap((page) => page.data) ?? [];
 
+  const dismissAutoMutateRef = useRef(dismissAuto.mutate);
+  dismissAutoMutateRef.current = dismissAuto.mutate;
+
   useEffect(() => {
-    dismissAuto.mutate();
+    const handleBeforeUnload = () => {
+      dismissAutoMutateRef.current();
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      dismissAutoMutateRef.current();
+    };
   }, []);
 
   useEffect(() => {
@@ -101,7 +115,7 @@ export function NotificationList() {
     const handleNotification = (notification: NotificationItem) => {
       queryClient.setQueryData(
         ["notifications", "list", false],
-        (old: any) => {
+        (old: { pages: Array<{ data: NotificationItem[]; total: number }> } | undefined) => {
           if (!old) return old;
           const firstPage = old.pages[0];
           if (firstPage?.data?.some((n: NotificationItem) => n._id === notification._id)) {
@@ -127,6 +141,7 @@ export function NotificationList() {
   }, [socket, queryClient]);
 
   const respondToInvite = useRespondToInvite();
+  const respondToAction = useRespondToAction();
 
   const handleAcceptInvite = async (notificationId: string, inviteId: string) => {
     if (respondingId) return;
@@ -154,6 +169,32 @@ export function NotificationList() {
     }
   };
 
+  const handleAcceptMigration = async (notificationId: string) => {
+    if (respondingId) return;
+    setRespondingId(notificationId);
+    try {
+      await respondToAction.mutateAsync({ notificationId, action: "accepted" });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    } catch (err) {
+      // handled by component if needed
+    } finally {
+      setRespondingId(null);
+    }
+  };
+
+  const handleDeclineMigration = async (notificationId: string) => {
+    if (respondingId) return;
+    setRespondingId(notificationId);
+    try {
+      await respondToAction.mutateAsync({ notificationId, action: "declined" });
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    } catch (err) {
+      // handled by component if needed
+    } finally {
+      setRespondingId(null);
+    }
+  };
+
   const handleMarkRead = useCallback(
     (id: string) => {
       markAsRead.mutate(id);
@@ -168,10 +209,15 @@ export function NotificationList() {
   const renderNotification = (notification: NotificationItem) => {
     const isVerificationStatus = notification.type === "verification_status";
     const isCampaignInvite = notification.type === "campaign_invite";
+    const isCampaignRecommendation = notification.type === "campaign_recommendation";
+    const isPlanMigrationRequest = notification.type === "plan_migration_request";
     const isApplicationReceived = notification.type === "application_received";
     const isApplicationStatusChanged =
       notification.type === "application_status_changed";
+    const isTaskAssigned = notification.type === "task_assigned";
+    const isTaskSubmitted = notification.type === "task_submitted";
     const inviteId = notification.data?.invite_id;
+    const migrationId = notification.data?.migration_id;
     const actorName = getActorName(notification.actor_id);
 
     const handleCardClick = () => {
@@ -180,12 +226,25 @@ export function NotificationList() {
       }
       if (
         isCampaignInvite ||
+        isCampaignRecommendation ||
         isApplicationReceived ||
         isApplicationStatusChanged
       ) {
         const campaignId = notification.data?.campaign_id;
         if (campaignId) {
           router.push(`/talent/opportunities/${campaignId}`);
+        }
+      }
+      if (isTaskAssigned) {
+        const campaignId = notification.data?.campaign_id;
+        if (campaignId) {
+          router.push(`/talent/opportunities/${campaignId}`);
+        }
+      }
+      if (isTaskSubmitted) {
+        const campaignId = notification.data?.campaign_id;
+        if (campaignId) {
+          router.push(`/recruiter/campaigns/${campaignId}?tab=submissions`);
         }
       }
     };
@@ -224,6 +283,18 @@ export function NotificationList() {
                     Campaign Invite
                   </Badge>
                 )}
+                {isCampaignRecommendation && (
+                  <Badge variant="secondary" className="text-2xs shrink-0">
+                    <Sparkles className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
+                    Campaign Match
+                  </Badge>
+                )}
+                {isPlanMigrationRequest && (
+                  <Badge variant="secondary" className="text-2xs shrink-0">
+                    <ArrowRightLeft className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
+                    Plan Migration
+                  </Badge>
+                )}
                 {isApplicationReceived && (
                   <Badge variant="outline" className="text-2xs shrink-0">
                     <User className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
@@ -236,6 +307,18 @@ export function NotificationList() {
                     Status Update
                   </Badge>
                 )}
+                {isTaskAssigned && (
+                  <Badge variant="secondary" className="text-2xs shrink-0">
+                    <ClipboardList className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
+                    Task Assigned
+                  </Badge>
+                )}
+                {isTaskSubmitted && (
+                  <Badge variant="outline" className="text-2xs shrink-0">
+                    <ClipboardList className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
+                    Task Submitted
+                  </Badge>
+                )}
               </div>
               <span className="text-2xs text-text-muted shrink-0 flex items-center gap-1">
                 <Clock className="w-3 h-3" strokeWidth={1.5} />
@@ -245,6 +328,14 @@ export function NotificationList() {
 
             <p className="text-xs text-text-muted mt-0.5">{actorName}</p>
             <p className="text-sm text-text-secondary mt-2">{notification.body}</p>
+
+            {isCampaignRecommendation && notification.data?.match_score && (
+              <div className="mt-2">
+                <Badge variant="secondary" className="text-2xs">
+                  {notification.data.match_score}% match
+                </Badge>
+              </div>
+            )}
 
             {isCampaignInvite && notification.action_status === "pending" && inviteId && (
               <div className="mt-3 flex gap-2">
@@ -281,6 +372,55 @@ export function NotificationList() {
                   className="text-2xs capitalize"
                 >
                   {notification.action_status === "allowed" ? (
+                    <>
+                      <Check className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
+                      Accepted
+                    </>
+                  ) : (
+                    <>
+                      <X className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
+                      Declined
+                    </>
+                  )}
+                </Badge>
+              </div>
+            )}
+
+            {isPlanMigrationRequest && notification.action_status === "pending" && migrationId && (
+              <div className="mt-3 flex gap-2">
+                <Button
+                  size="sm"
+                  disabled={respondingId === notification._id}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAcceptMigration(notification._id);
+                  }}
+                >
+                  <Check className="w-4 h-4 mr-1" />
+                  Accept
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={respondingId === notification._id}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeclineMigration(notification._id);
+                  }}
+                >
+                  <X className="w-4 h-4 mr-1" />
+                  Decline
+                </Button>
+              </div>
+            )}
+
+            {isPlanMigrationRequest && notification.action_status !== "pending" && (
+              <div className="mt-3">
+                <Badge
+                  variant={notification.action_status === "accepted" ? "default" : "destructive"}
+                  className="text-2xs capitalize"
+                >
+                  {notification.action_status === "accepted" ? (
                     <>
                       <Check className="w-3 h-3 mr-0.5" strokeWidth={1.5} />
                       Accepted

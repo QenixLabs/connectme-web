@@ -5,6 +5,7 @@ import type {
   UpdateTalentProfileInput,
   PortfolioItem,
 } from '@/lib/validations/talent-profile.schema';
+import type { MediaKitData } from '@/types/media-kit';
 import { AxiosError } from 'axios';
 
 export const talentApi = {
@@ -58,8 +59,10 @@ export const talentApi = {
     availability?: string;
     gender?: string;
     search?: string;
+    sort?: string;
     cursor?: string;
     limit?: number;
+    page?: number;
   }): Promise<{
     data: Array<{
       _id?: string;
@@ -70,12 +73,16 @@ export const talentApi = {
       profile_photo?: string;
       location?: { country?: string; state?: string; city?: string };
       professions?: string[];
-      industries?: string[];
       availability?: string;
       privacy_mode?: string;
       is_verified?: boolean;
+      match_score?: number;
+      matched_campaign?: string;
     }>;
     nextCursor: string | null;
+    total: number;
+    page?: number;
+    hasMore?: boolean;
   }> => {
     const response = await apiClient.get('/talent/all', { params });
     return response.data;
@@ -106,6 +113,62 @@ export const talentApi = {
     return response.data;
   },
 
+  getDashboardRecommendations: async (limit?: number): Promise<{
+    has_active_campaigns: boolean;
+    campaigns: Array<{ id: string; name: string }>;
+    data: Array<{
+      _id: string;
+      user_id: string;
+      username: string;
+      full_legal_name?: string;
+      profile_photo?: string;
+      professions?: string[];
+      location?: { city?: string; state?: string; country?: string };
+      match_score: number;
+      matched_campaign: string;
+    }>;
+  }> => {
+    const response = await apiClient.get('/recommendations/talents/dashboard', {
+      params: limit ? { limit } : undefined,
+    });
+    return response.data;
+  },
+
+  getTalentRecommendations: async (
+    campaignId: string,
+    limit = 10,
+    excludeIds?: string,
+  ): Promise<{
+    data: Array<{
+      _id: string;
+      talent: Record<string, unknown>;
+      match_score: number;
+      total_score: number;
+    }>;
+  }> => {
+    const response = await apiClient.get('/recommendations/talents', {
+      params: { campaign_id: campaignId, limit, exclude_ids: excludeIds },
+    });
+    return { data: response.data };
+  },
+
+  getCampaignRecommendations: async (
+    limit = 10,
+    minScore = 0,
+  ): Promise<{
+    data: Array<{
+      _id: string;
+      campaign: Record<string, unknown>;
+      match_score: number;
+      total_score: number;
+    }>;
+  }> => {
+    const response = await apiClient.get('/recommendations/campaigns', {
+      params: { limit, min_score: minScore },
+    });
+    return { data: response.data };
+  },
+
   uploadProfilePhoto: async (file: File): Promise<{ relativePath: string; signedUrl: string }> => {
     const formData = new FormData();
     formData.append('file', file);
@@ -124,6 +187,18 @@ export const talentApi = {
     return response.data;
   },
 
+  getPortfolioStats: async (): Promise<{
+    total_items: number;
+    items_by_type: { images: number; videos: number };
+    items_by_category: Record<string, number>;
+    total_views: number;
+    profile_views_7d: number;
+    profile_views_30d: number;
+  }> => {
+    const response = await apiClient.get('/talent/portfolio/stats');
+    return response.data;
+  },
+
   getPortfolio: async (): Promise<{ items: PortfolioItem[] }> => {
     const response = await apiClient.get('/talent/portfolio');
     return response.data;
@@ -131,11 +206,13 @@ export const talentApi = {
 
   uploadPortfolioImage: async (
     file: File,
-    dto: { caption?: string; category?: 'work' | 'personal' | 'intro'; is_pinned?: boolean },
+    dto: { caption?: string; title?: string; description?: string; category?: 'work' | 'personal' | 'intro'; is_pinned?: boolean },
   ): Promise<{ item: PortfolioItem }> => {
     const formData = new FormData();
     formData.append('file', file);
     if (dto.caption) formData.append('caption', dto.caption);
+    if (dto.title) formData.append('title', dto.title);
+    if (dto.description) formData.append('description', dto.description);
     if (dto.category) formData.append('category', dto.category);
     if (dto.is_pinned !== undefined) formData.append('is_pinned', String(dto.is_pinned));
     const response = await apiClient.post('/talent/portfolio/upload/image', formData, {
@@ -146,11 +223,13 @@ export const talentApi = {
 
   uploadPortfolioVideo: async (
     file: File,
-    dto: { caption?: string; category?: 'work' | 'personal' | 'intro'; is_pinned?: boolean },
+    dto: { caption?: string; title?: string; description?: string; category?: 'work' | 'personal' | 'intro'; is_pinned?: boolean },
   ): Promise<{ item: PortfolioItem }> => {
     const formData = new FormData();
     formData.append('file', file);
     if (dto.caption) formData.append('caption', dto.caption);
+    if (dto.title) formData.append('title', dto.title);
+    if (dto.description) formData.append('description', dto.description);
     if (dto.category) formData.append('category', dto.category);
     if (dto.is_pinned !== undefined) formData.append('is_pinned', String(dto.is_pinned));
     const response = await apiClient.post('/talent/portfolio/upload/video', formData, {
@@ -161,7 +240,7 @@ export const talentApi = {
 
   updatePortfolioItem: async (
     itemId: string,
-    dto: { caption?: string; category?: 'work' | 'personal' | 'intro'; is_pinned?: boolean },
+    dto: { caption?: string; title?: string; description?: string; category?: 'work' | 'personal' | 'intro'; is_pinned?: boolean },
   ): Promise<{ item: PortfolioItem }> => {
     const response = await apiClient.patch(`/talent/portfolio/items/${itemId}`, dto);
     return response.data;
@@ -174,6 +253,19 @@ export const talentApi = {
 
   reorderPortfolioItems: async (itemIds: string[]): Promise<{ items: PortfolioItem[] }> => {
     const response = await apiClient.patch('/talent/portfolio/reorder', { item_ids: itemIds });
+    return response.data;
+  },
+
+  addPortfolioLink: async (
+    url: string,
+    dto: { caption?: string; title?: string; description?: string; category?: 'work' | 'personal' | 'intro'; is_pinned?: boolean },
+  ): Promise<{ item: PortfolioItem }> => {
+    const response = await apiClient.post('/talent/portfolio/link', { url, ...dto });
+    return response.data;
+  },
+
+  getMediaKit: async (username: string): Promise<MediaKitData | { private: true; preview?: unknown }> => {
+    const response = await apiClient.get(`/talent/media-kit/${username}`);
     return response.data;
   },
 };

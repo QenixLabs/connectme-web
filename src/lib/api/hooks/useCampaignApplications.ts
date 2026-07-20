@@ -1,12 +1,21 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { campaignApi } from '@/lib/api';
 import { queryKeys } from '@/lib/api/query-keys';
 import { usePopup } from '@/hooks/use-popup';
+import { useFeatureGuard } from '@/hooks/use-feature-guard';
 
-export function useCampaignApplications(campaignId: string) {
+export interface ApplicationFilters {
+  status?: string;
+  shortlisted?: string;
+  search?: string;
+  sort?: string;
+  limit?: number;
+}
+
+export function useCampaignApplications(campaignId: string, filters?: ApplicationFilters) {
   return useQuery({
-    queryKey: queryKeys.campaigns.applications(campaignId),
-    queryFn: () => campaignApi.getApplications(campaignId),
+    queryKey: queryKeys.campaigns.applications(campaignId, filters),
+    queryFn: () => campaignApi.getApplications(campaignId, filters),
     enabled: !!campaignId,
   });
 }
@@ -32,10 +41,11 @@ export function useUpdateApplicationStatus() {
       });
       show({ title: 'Application status updated', variant: 'success', position: 'bottom-center' });
     },
-    onError: (error: any) => {
+    onError: (error) => {
+      const err = error as { response?: { data?: { message?: string } } };
       show({
         title: 'Failed to update application status',
-        description: error?.response?.data?.message,
+        description: err.response?.data?.message,
         variant: 'error',
         position: 'bottom-center',
       });
@@ -63,10 +73,11 @@ export function useBulkUpdateApplicationStatus() {
       });
       show({ title: 'Applications updated', variant: 'success', position: 'bottom-center' });
     },
-    onError: (error: any) => {
+    onError: (error) => {
+      const err = error as { response?: { data?: { message?: string } } };
       show({
         title: 'Failed to update applications',
-        description: error?.response?.data?.message,
+        description: err.response?.data?.message,
         variant: 'error',
         position: 'bottom-center',
       });
@@ -77,6 +88,7 @@ export function useBulkUpdateApplicationStatus() {
 export function useAddToShortlist() {
   const queryClient = useQueryClient();
   const { show } = usePopup();
+  const { handleFeatureError } = useFeatureGuard();
 
   return useMutation({
     mutationFn: ({ campaignId, applicationId }: { campaignId: string; applicationId: string }) =>
@@ -87,8 +99,10 @@ export function useAddToShortlist() {
       });
       show({ title: 'Added to shortlist', variant: 'success', position: 'bottom-center' });
     },
-    onError: (error: any) => {
-      show({ title: 'Failed to add to shortlist', description: error?.response?.data?.message, variant: 'error', position: 'bottom-center' });
+    onError: (error) => {
+      if (handleFeatureError(error)) return;
+      const err = error as { response?: { data?: { message?: string } } };
+      show({ title: 'Failed to add to shortlist', description: err.response?.data?.message, variant: 'error', position: 'bottom-center' });
     },
   });
 }
@@ -96,6 +110,7 @@ export function useAddToShortlist() {
 export function useRemoveFromShortlist() {
   const queryClient = useQueryClient();
   const { show } = usePopup();
+  const { handleFeatureError } = useFeatureGuard();
 
   return useMutation({
     mutationFn: ({ campaignId, applicationId }: { campaignId: string; applicationId: string }) =>
@@ -106,8 +121,10 @@ export function useRemoveFromShortlist() {
       });
       show({ title: 'Removed from shortlist', variant: 'success', position: 'bottom-center' });
     },
-    onError: (error: any) => {
-      show({ title: 'Failed to remove from shortlist', description: error?.response?.data?.message, variant: 'error', position: 'bottom-center' });
+    onError: (error) => {
+      if (handleFeatureError(error)) return;
+      const err = error as { response?: { data?: { message?: string } } };
+      show({ title: 'Failed to remove from shortlist', description: err.response?.data?.message, variant: 'error', position: 'bottom-center' });
     },
   });
 }
@@ -132,8 +149,9 @@ export function useUpsertApplicantNote() {
       });
       show({ title: 'Note saved', variant: 'success', position: 'bottom-center' });
     },
-    onError: (error: any) => {
-      show({ title: 'Failed to save note', description: error?.response?.data?.message, variant: 'error', position: 'bottom-center' });
+    onError: (error) => {
+      const err = error as { response?: { data?: { message?: string } } };
+      show({ title: 'Failed to save note', description: err.response?.data?.message, variant: 'error', position: 'bottom-center' });
     },
   });
 }
@@ -151,8 +169,9 @@ export function useDeleteApplicantNote() {
       });
       show({ title: 'Note deleted', variant: 'success', position: 'bottom-center' });
     },
-    onError: (error: any) => {
-      show({ title: 'Failed to delete note', description: error?.response?.data?.message, variant: 'error', position: 'bottom-center' });
+    onError: (error) => {
+      const err = error as { response?: { data?: { message?: string } } };
+      show({ title: 'Failed to delete note', description: err.response?.data?.message, variant: 'error', position: 'bottom-center' });
     },
   });
 }

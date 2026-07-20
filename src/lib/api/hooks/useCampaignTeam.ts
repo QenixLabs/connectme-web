@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { campaignApi } from '@/lib/api';
 import { queryKeys } from '@/lib/api/query-keys';
 import { usePopup } from '@/hooks/use-popup';
+import { useFeatureGuard } from '@/hooks/use-feature-guard';
 
 export function useCampaignTeam(campaignId: string) {
   return useQuery({
@@ -14,6 +15,7 @@ export function useCampaignTeam(campaignId: string) {
 export function useInviteTeamMember() {
   const queryClient = useQueryClient();
   const { show } = usePopup();
+  const { handleFeatureError } = useFeatureGuard();
 
   return useMutation({
     mutationFn: ({
@@ -29,8 +31,10 @@ export function useInviteTeamMember() {
       queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.team(vars.campaignId) });
       show({ title: 'Team member invited', variant: 'success', position: 'bottom-center' });
     },
-    onError: (error: any) => {
-      show({ title: 'Failed to invite', description: error?.response?.data?.message, variant: 'error', position: 'bottom-center' });
+    onError: (error) => {
+      if (handleFeatureError(error)) return;
+      const err = error as { response?: { data?: { message?: string } } };
+      show({ title: 'Failed to invite', description: err.response?.data?.message, variant: 'error', position: 'bottom-center' });
     },
   });
 }
@@ -38,6 +42,7 @@ export function useInviteTeamMember() {
 export function useUpdateTeamMemberRole() {
   const queryClient = useQueryClient();
   const { show } = usePopup();
+  const { handleFeatureError } = useFeatureGuard();
 
   return useMutation({
     mutationFn: ({
@@ -53,8 +58,10 @@ export function useUpdateTeamMemberRole() {
       queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.team(vars.campaignId) });
       show({ title: 'Role updated', variant: 'success', position: 'bottom-center' });
     },
-    onError: (error: any) => {
-      show({ title: 'Failed to update role', description: error?.response?.data?.message, variant: 'error', position: 'bottom-center' });
+    onError: (error) => {
+      if (handleFeatureError(error)) return;
+      const err = error as { response?: { data?: { message?: string } } };
+      show({ title: 'Failed to update role', description: err.response?.data?.message, variant: 'error', position: 'bottom-center' });
     },
   });
 }
@@ -62,6 +69,7 @@ export function useUpdateTeamMemberRole() {
 export function useRemoveTeamMember() {
   const queryClient = useQueryClient();
   const { show } = usePopup();
+  const { handleFeatureError } = useFeatureGuard();
 
   return useMutation({
     mutationFn: ({ campaignId, memberId }: { campaignId: string; memberId: string }) =>
@@ -70,8 +78,10 @@ export function useRemoveTeamMember() {
       queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.team(vars.campaignId) });
       show({ title: 'Team member removed', variant: 'success', position: 'bottom-center' });
     },
-    onError: (error: any) => {
-      show({ title: 'Failed to remove', description: error?.response?.data?.message, variant: 'error', position: 'bottom-center' });
+    onError: (error) => {
+      if (handleFeatureError(error)) return;
+      const err = error as { response?: { data?: { message?: string } } };
+      show({ title: 'Failed to remove', description: err.response?.data?.message, variant: 'error', position: 'bottom-center' });
     },
   });
 }

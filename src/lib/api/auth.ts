@@ -18,7 +18,10 @@ export const authApi = {
     profession?: string;
     company_website?: string;
     company_size?: string;
-    industry?: string;
+    specialties?: string[];
+    creator_link?: string;
+    is_influencer?: boolean;
+    influencer_speciality?: string;
   }) => {
     const response = await apiClient.post('/auth/signup', data);
     return response.data;
@@ -36,6 +39,11 @@ export const authApi = {
 
   getCurrentUser: async () => {
     const response = await apiClient.get('/auth/me');
+    return response.data;
+  },
+
+  checkAuth: async () => {
+    const response = await apiClient.get('/auth/check');
     return response.data;
   },
 
@@ -61,6 +69,26 @@ export const authApi = {
 
   verifyPhoneOtp: async (phone: string, otp: string) => {
     const response = await apiClient.post('/auth/verify-phone-otp', { phone, otp });
+    return response.data;
+  },
+
+  sendEmailOtp: async () => {
+    const response = await apiClient.post('/auth/send-email-otp');
+    return response.data;
+  },
+
+  verifyEmailOtp: async (email: string, otp: string) => {
+    const response = await apiClient.post('/auth/verify-email-otp', { email, otp });
+    return response.data;
+  },
+
+  refreshToken: async () => {
+    const response = await apiClient.post('/auth/refresh');
+    return response.data as { access_token: string };
+  },
+
+  changePassword: async (current_password: string, new_password: string) => {
+    const response = await apiClient.post('/auth/change-password', { current_password, new_password });
     return response.data;
   },
 };

@@ -6,14 +6,14 @@ import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff } from "lucide-react";
+import { motion } from "motion/react";
+import { Mail, LockKeyhole, Eye, EyeOff, ArrowRight } from "lucide-react";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { AuthLayout } from "@/components/layout/auth-layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { DividerLabel } from "@/components/ui/divider-label";
 import {
   Form,
   FormField,
@@ -55,119 +55,153 @@ export default function LoginPage() {
   };
 
   return (
-    <AuthLayout subtitle="Welcome back! Sign in to continue">
-      <Card>
-        <CardContent className="px-8 py-8">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-              {error && (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
+    <AuthLayout showGlow>
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15, duration: 0.45, ease: [0.25, 0.4, 0.25, 1] }}
+      >
+        <div className="mb-8 text-center">
+          <h1 className="text-2xl font-serif font-bold text-text-primary tracking-tight">
+            Welcome back
+          </h1>
+          <p className="mt-1.5 text-sm text-text-tertiary font-light">
+            Sign in to continue your journey
+          </p>
+        </div>
 
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="email"
-                        placeholder="you@example.com"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+        <Card>
+          <CardContent className="px-8 py-8">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
                 )}
-              />
 
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Input
-                          type={showPassword ? "text" : "password"}
-                          placeholder="Enter your password"
-                          className="pr-10"
-                          {...field}
-                        />
-                        <button
-                          type="button"
-                          tabIndex={-1}
-                          onClick={() => setShowPassword((v) => !v)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary transition-colors"
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-xs font-medium uppercase tracking-widest text-text-muted">
+                        Email
+                      </FormLabel>
+                      <FormControl>
+                        <div className="relative group">
+                          <div className="absolute left-0 top-0 bottom-0 w-10 flex items-center justify-center text-text-muted group-focus-within:text-brand transition-colors duration-200">
+                            <Mail className="w-4 h-4" strokeWidth={1.5} />
+                          </div>
+                          <Input
+                            type="email"
+                            placeholder="you@example.com"
+                            autoComplete="email"
+                            className="pl-10 h-11 rounded-xl border-border/60 bg-card focus-visible:ring-brand/30 focus-visible:border-brand/40 transition-all duration-200"
+                            {...field}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex items-center justify-between">
+                        <FormLabel className="text-xs font-medium uppercase tracking-widest text-text-muted">
+                          Password
+                        </FormLabel>
+                        <Link
+                          href="/auth/forgot-password"
+                          className="text-[11px] text-brand-hover hover:text-brand font-medium transition-colors"
                         >
-                          {showPassword ? (
-                            <Eye className="w-4 h-4" strokeWidth={1.3} />
-                          ) : (
-                            <EyeOff className="w-4 h-4" strokeWidth={1.3} />
-                          )}
-                        </button>
+                          Forgot?
+                        </Link>
                       </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <FormControl>
+                        <div className="relative group">
+                          <div className="absolute left-0 top-0 bottom-0 w-10 flex items-center justify-center text-text-muted group-focus-within:text-brand transition-colors duration-200">
+                            <LockKeyhole className="w-4 h-4" strokeWidth={1.5} />
+                          </div>
+                          <Input
+                            type={showPassword ? "text" : "password"}
+                            placeholder="Enter your password"
+                            autoComplete="current-password"
+                            className="pl-10 pr-10 h-11 rounded-xl border-border/60 bg-card focus-visible:ring-brand/30 focus-visible:border-brand/40 transition-all duration-200"
+                            {...field}
+                          />
+                          <button
+                            type="button"
+                            tabIndex={-1}
+                            onClick={() => setShowPassword((v) => !v)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md text-text-muted hover:text-text-secondary hover:bg-muted-bg transition-colors"
+                          >
+                            {showPassword ? (
+                              <EyeOff className="w-4 h-4" strokeWidth={1.3} />
+                            ) : (
+                              <Eye className="w-4 h-4" strokeWidth={1.3} />
+                            )}
+                          </button>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <div className="text-right">
-                <Link
-                  href="/auth/forgot-password"
-                  className="text-sm text-brand-hover hover:text-brand-active font-medium"
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="lg"
+                  className="w-full h-11 rounded-xl text-sm font-semibold tracking-wide"
+                  disabled={storeLoading}
+                  isLoading={storeLoading}
+                  loadingLabel="Signing in..."
                 >
-                  Forgot password?
+                  Sign in
+                  <ArrowRight className="w-4 h-4" strokeWidth={1.5} />
+                </Button>
+              </form>
+            </Form>
+
+            <div className="mt-8 pt-6 border-t border-border/40">
+              <p className="text-center text-xs text-text-muted font-light mb-4">
+                New to ConnectMe?
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                <Link
+                  href="/auth/talent/signup"
+                  className="h-11 rounded-xl border border-border/60 bg-card text-text-secondary text-sm font-medium hover:border-brand/30 hover:text-text-primary hover:bg-brand-light/30 active:scale-[0.98] transition-all duration-200 flex items-center justify-center"
+                >
+                  Join as Talent
+                </Link>
+                <Link
+                  href="/auth/recruiter/signup"
+                  className="h-11 rounded-xl border border-border/60 bg-card text-text-secondary text-sm font-medium hover:border-brand/30 hover:text-text-primary hover:bg-brand-light/30 active:scale-[0.98] transition-all duration-200 flex items-center justify-center"
+                >
+                  Join as Recruiter
                 </Link>
               </div>
+            </div>
+          </CardContent>
+        </Card>
 
-              <Button
-                type="submit"
-                variant="primary"
-                className="w-full"
-                disabled={storeLoading}
-                isLoading={storeLoading}
-                loadingLabel="Signing in..."
-              >
-                Sign in
-              </Button>
-            </form>
-          </Form>
-
-          <DividerLabel label="New to ConnectMe?" />
-
-          <div className="grid grid-cols-2 gap-3">
-            <Link
-              href="/auth/talent/signup"
-              className="h-11 rounded-lg border border-border text-text-secondary text-sm font-medium hover:bg-card-hover active:scale-[0.98] transition-all flex items-center justify-center"
-            >
-              Join as Talent
-            </Link>
-            <Link
-              href="/auth/recruiter/signup"
-              className="h-11 rounded-lg border border-border text-text-secondary text-sm font-medium hover:bg-card-hover active:scale-[0.98] transition-all flex items-center justify-center"
-            >
-              Join as Recruiter
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
-
-      <p className="text-center text-xs text-text-muted mt-6">
-        By signing in you agree to our{" "}
-        <Link href="/terms" className="text-text-tertiary hover:text-text-secondary underline underline-offset-2">
-          Terms
-        </Link>{" "}
-        and{" "}
-        <Link href="/privacy" className="text-text-tertiary hover:text-text-secondary underline underline-offset-2">
-          Privacy Policy
-        </Link>
-      </p>
+        <p className="text-center text-xs text-text-muted mt-6 font-light">
+          By signing in you agree to our{" "}
+          <Link href="/terms" className="text-text-tertiary hover:text-text-primary underline underline-offset-2 transition-colors">
+            Terms
+          </Link>{" "}
+          and{" "}
+          <Link href="/privacy" className="text-text-tertiary hover:text-text-primary underline underline-offset-2 transition-colors">
+            Privacy Policy
+          </Link>
+        </p>
+      </motion.div>
     </AuthLayout>
   );
 }

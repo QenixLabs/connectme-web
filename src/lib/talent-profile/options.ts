@@ -1,3 +1,6 @@
+import { PROFESSIONS } from '@/lib/professions';
+import { INFLUENCER_SPECIALTIES } from '@/lib/profession-fields';
+
 export type Option = { value: string; label: string };
 
 const opt = (value: string, label?: string): Option => ({ value, label: label ?? value });
@@ -60,7 +63,6 @@ export const FLUENCIES: Option[] = [
 
 export const VISIBILITIES: Option[] = [
   opt('public', 'Public'),
-  opt('recruiters_only', 'Recruiters only'),
   opt('private', 'Private'),
 ];
 
@@ -81,29 +83,24 @@ export const PROFICIENCY_OPTIONS: Option[] = [
   opt('expert', 'Expert'),
 ];
 
-export const PROFESSION_SUGGESTIONS: string[] = [
-  'Actor',
-  'Model',
-  'Dancer',
-  'Singer',
-  'Voice artist',
-  'Stunt performer',
-  'Director',
-  'Choreographer',
-  'Writer',
-  'Producer',
-];
+export const PROFESSION_SUGGESTIONS: string[] = [...PROFESSIONS];
 
-export const INDUSTRY_SUGGESTIONS: string[] = [
-  'Film',
-  'Television',
-  'Theatre',
-  'Advertising',
-  'Music video',
-  'Digital content',
-  'Fashion',
-  'Web series',
-  'Documentary',
+export const SOCIAL_PLATFORMS: Option[] = [
+  opt('instagram', 'Instagram'),
+  opt('youtube', 'YouTube'),
+  opt('linkedin', 'LinkedIn'),
+  opt('twitter', 'Twitter / X'),
+  opt('facebook', 'Facebook'),
+  opt('tiktok', 'TikTok'),
+  opt('website', 'Website'),
+  opt('github', 'GitHub'),
+  opt('behance', 'Behance'),
+  opt('dribbble', 'Dribbble'),
+  opt('vimeo', 'Vimeo'),
+  opt('spotify', 'Spotify'),
+  opt('snapchat', 'Snapchat'),
+  opt('threads', 'Threads'),
+  opt('other', 'Other'),
 ];
 
 export function dynamicOptions(currentValue: string | undefined, options: Option[]): Option[] {
@@ -111,3 +108,5 @@ export function dynamicOptions(currentValue: string | undefined, options: Option
   if (options.some((o) => o.value === currentValue)) return options;
   return [...options, { value: currentValue, label: currentValue }];
 }
+
+export const INFLUENCER_SPECIALTY_OPTIONS: Option[] = INFLUENCER_SPECIALTIES.map((s) => opt(s, s));

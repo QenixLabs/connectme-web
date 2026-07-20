@@ -2,453 +2,389 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
-import { talentApi, collaborationRequestsApi } from "@/lib/api";
+import {
+  ArrowLeft,
+  Share2,
+  Download,
+  QrCode,
+  Check,
+  MapPin,
+} from "lucide-react";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { talentApi } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
-import type { TalentProfile } from "@/lib/validations/talent-profile.schema";
-import type { PortfolioItem } from "@/lib/validations/talent-profile.schema";
-import { MediaKitView } from "@/components/portfolio/media-kit-view";
-import { PortfolioUploader } from "@/components/portfolio/portfolio-uploader";
-import { PortfolioGrid } from "@/components/portfolio/portfolio-grid";
-import { Button } from "@/components/ui/button";
+import type { TalentProfile, PortfolioItem } from "@/lib/validations/talent-profile.schema";
+import type { MediaKitData } from "@/types/media-kit";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent } from "@/components/ui/card";
 import { useAuthStore } from "@/providers/auth-store-provider";
+import { useTierGuard } from "@/hooks/use-tier-guard";
 import { usePopup } from "@/hooks/use-popup";
+import { isFeatureForbidden } from "@/hooks/use-feature-guard";
+import { FeatureGateAlert } from "@/components/feature-gate-alert";
+import { useCreateCollaborationRequest } from "@/lib/api/hooks/useCreateCollaborationRequest";
+import { ShareProfileDialog } from "@/components/share-profile-dialog";
+import { MediaKitHeader } from "@/components/portfolio/media-kit-header";
+import { PortfolioHeroImmersive } from "@/components/public-profile/portfolio-hero-immersive";
+import { PortfolioShowcase } from "@/components/public-profile/portfolio-showcase";
+import { PortfolioGallery } from "@/components/public-profile/portfolio-gallery";
 
-interface PortfolioData {
-  profile: Partial<TalentProfile>;
-  items: PortfolioItem[];
-}
-
-interface MediaLimits {
-  images_used: number;
-  videos_used: number;
-  plan_max_images: number;
-  plan_max_videos: number;
-}
-
-/* ------------------------------------------------------------------ */
-/*  Owner-managed portfolio view                                       */
-/* ------------------------------------------------------------------ */
-
-function PortfolioManager({ username }: { username: string }) {
-  const router = useRouter();
-  const [items, setItems] = useState<PortfolioItem[]>([]);
-  const [mediaLimits, setMediaLimits] = useState<MediaLimits>({
-    images_used: 0,
-    videos_used: 0,
-    plan_max_images: 5,
-    plan_max_videos: 1,
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchPortfolio = useCallback(async () => {
-    try {
-      setError(null);
-      const [portfolioRes, profileRes] = await Promise.all([
-        talentApi.getPortfolio(),
-        talentApi.getMyProfile(),
-      ]);
-      setItems(portfolioRes.items || []);
-      if (profileRes?.media_limits) {
-        setMediaLimits(profileRes.media_limits);
-      }
-    } catch (err) {
-      setError(getApiErrorMessage(err, "Failed to load portfolio"));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchPortfolio();
-  }, [fetchPortfolio]);
-
-  const handleUpdate = useCallback(
-    async (
-      id: string,
-      dto: {
-        caption?: string;
-        category?: "work" | "personal" | "intro";
-        is_pinned?: boolean;
-      }
-    ) => {
-      try {
-        const { item } = await talentApi.updatePortfolioItem(id, dto);
-        setItems((prev) =>
-          prev.map((i) =>
-            i.id === id
-              ? {
-                  ...i,
-                  caption: item.caption,
-                  category: item.category,
-                  is_pinned: item.is_pinned,
-                }
-              : i
-          )
-        );
-        if (dto.is_pinned && dto.category === "intro") {
-          setItems((prev) =>
-            prev.map((i) =>
-              i.id !== id && i.category === "intro"
-                ? { ...i, is_pinned: false }
-                : i
-            )
-          );
-        }
-      } catch (err) {
-        setError(getApiErrorMessage(err, "Failed to update item"));
-      }
-    },
-    []
-  );
-
-  const handleDelete = useCallback(
-    async (id: string) => {
-      try {
-        await talentApi.deletePortfolioItem(id);
-        setItems((prev) => prev.filter((i) => i.id !== id));
-        const profile = await talentApi.getMyProfile();
-        if (profile?.media_limits) {
-          setMediaLimits(profile.media_limits);
-        }
-      } catch (err) {
-        setError(getApiErrorMessage(err, "Failed to delete item"));
-      }
-    },
-    []
-  );
-
-  const handleReorder = useCallback(
-    async (itemIds: string[]) => {
-      const itemMap = new Map(items.map((i) => [i.id, i]));
-      const reordered = itemIds
-        .map((id) => itemMap.get(id))
-        .filter(Boolean) as PortfolioItem[];
-      const remaining = items.filter((i) => !itemIds.includes(i.id));
-      setItems([...reordered, ...remaining]);
-
-      try {
-        const { items: serverItems } = await talentApi.reorderPortfolioItems(itemIds);
-        setItems(serverItems);
-      } catch (err) {
-        setError(getApiErrorMessage(err, "Failed to reorder items"));
-        fetchPortfolio();
-      }
-    },
-    [items, fetchPortfolio]
-  );
-
-  const imagesPct = Math.round(
-    (mediaLimits.images_used / mediaLimits.plan_max_images) * 100
-  );
-  const videosPct = Math.round(
-    (mediaLimits.videos_used / mediaLimits.plan_max_videos) * 100
-  );
-
-  if (loading) {
-    return (
-      <div className="max-w-3xl mx-auto space-y-6 py-4 px-4">
-        <div className="flex items-end justify-between border-b border-border pb-4">
-          <Skeleton className="h-10 w-48" />
-          <Skeleton className="h-4 w-20" />
-        </div>
-        <div className="grid grid-cols-3 gap-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-20 w-full rounded-xl" />
-          ))}
-        </div>
-        <Skeleton className="h-36 w-full rounded-xl" />
-        <div className="grid grid-cols-3 gap-3">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="aspect-square rounded-xl" />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="max-w-3xl mx-auto py-4 px-4 pb-20 space-y-6">
-      {/* Back */}
-      <button
-        onClick={() => router.back()}
-        className="flex items-center gap-2 text-sm text-text-muted hover:text-text-primary transition-colors"
-      >
-        <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
-        Back
-      </button>
-
-      {/* Header */}
-      <div className="flex items-end justify-between border-b border-border pb-4">
-        <h1 className="text-3xl sm:text-4xl font-bold text-text-primary tracking-tight">
-          My <em className="text-text-muted font-serif">Portfolio</em>
-        </h1>
-        <span className="text-xs tracking-widest uppercase text-text-muted">
-          {items.length} item{items.length !== 1 ? "s" : ""}
-        </span>
-      </div>
-
-      {error && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {/* Quota cards */}
-      <div className="grid grid-cols-3 gap-3">
-        <Card className="border-border-subtle bg-muted-bg/50">
-          <CardContent className="p-4 space-y-2">
-            <p className="text-xs tracking-wider uppercase text-text-muted">
-              Images
-            </p>
-            <div className="rounded-full overflow-hidden h-2 bg-border">
-              <div
-                className={
-                  "h-full rounded-full transition-all duration-500 " +
-                  (imagesPct >= 80 ? "bg-destructive" : "bg-primary")
-                }
-                style={{ width: `${imagesPct}%` }}
-              />
-            </div>
-            <p className="text-sm text-text-muted">
-              <strong className="text-text-primary font-medium">
-                {mediaLimits.images_used}
-              </strong>{" "}
-              / {mediaLimits.plan_max_images} used
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border-subtle bg-muted-bg/50">
-          <CardContent className="p-4 space-y-2">
-            <p className="text-xs tracking-wider uppercase text-text-muted">
-              Videos
-            </p>
-            <div className="rounded-full overflow-hidden h-2 bg-border">
-              <div
-                className={
-                  "h-full rounded-full transition-all duration-500 " +
-                  (videosPct >= 80 ? "bg-destructive" : "bg-primary")
-                }
-                style={{ width: `${videosPct}%` }}
-              />
-            </div>
-            <p className="text-sm text-text-muted">
-              <strong className="text-text-primary font-medium">
-                {mediaLimits.videos_used}
-              </strong>{" "}
-              / {mediaLimits.plan_max_videos} used
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-border-subtle bg-muted-bg/50">
-          <CardContent className="p-4 flex flex-col justify-between gap-2 h-full">
-            <p className="text-sm text-text-muted">
-              Unlock{" "}
-              <strong className="text-text-primary font-medium">20 images</strong>{" "}
-              &amp;{" "}
-              <strong className="text-text-primary font-medium">5 videos</strong>
-            </p>
-            <button className="self-start text-xs border border-border rounded-lg px-3 py-1.5 bg-transparent hover:bg-muted-bg transition-colors">
-              Upgrade plan →
-            </button>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Uploader */}
-      <PortfolioUploader
-        imagesUsed={mediaLimits.images_used}
-        videosUsed={mediaLimits.videos_used}
-        maxImages={mediaLimits.plan_max_images}
-        maxVideos={mediaLimits.plan_max_videos}
-        onUpload={fetchPortfolio}
-      />
-
-      {/* Section label */}
-      <div className="flex items-center gap-2">
-        <span className="text-xs tracking-widest uppercase text-text-muted">
-          Portfolio items
-        </span>
-        <span className="flex-1 h-px bg-border" />
-      </div>
-
-      {/* Grid */}
-      <PortfolioGrid
-        items={items}
-        onUpdate={handleUpdate}
-        onDelete={handleDelete}
-        onReorder={handleReorder}
-      />
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/*  Public page                                                        */
-/* ------------------------------------------------------------------ */
-
-export default function PublicPortfolioPage() {
+export default function PortfolioPage() {
   const router = useRouter();
   const params = useParams();
   const rawUsername = params.username as string;
-  const username = rawUsername.startsWith("@")
-    ? rawUsername.slice(1)
-    : rawUsername;
+  const username = rawUsername.startsWith("@") ? rawUsername.slice(1) : rawUsername;
+  const { user } = useAuthStore();
+  const isRecruiter = user?.role === "recruiter";
+  const isOwner = user?.username === username;
 
-  const [isOwner, setIsOwner] = useState(false);
-  const [ownerChecked, setOwnerChecked] = useState(false);
-
-  const [data, setData] = useState<PortfolioData | null>(null);
+  const [profile, setProfile] = useState<Partial<TalentProfile> | null>(null);
+  const [mediaKit, setMediaKit] = useState<MediaKitData | null>(null);
+  const [items, setItems] = useState<PortfolioItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [featureError, setFeatureError] = useState<{ feature: string; plan?: string } | null>(null);
   const [isPrivate, setIsPrivate] = useState(false);
-  const [hasConnection, setHasConnection] = useState(true);
-  const [previewProfile, setPreviewProfile] = useState<Partial<TalentProfile> | null>(null);
+  const [previewUserId, setPreviewUserId] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
-  const { user } = useAuthStore();
-  const { show } = usePopup();
+  const [requestSent, setRequestSent] = useState(false);
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [galleryIndex, setGalleryIndex] = useState(0);
+  const [aboutExpanded, setAboutExpanded] = useState(false);
 
-  /* ---- Owner detection ---- */
+  const { guard } = useTierGuard(3);
+  const createRequest = useCreateCollaborationRequest();
+  const popup = usePopup();
+
+  const displayName = profile?.full_legal_name || profile?.username || username || "Talent";
+  const loc = [profile?.location?.city, profile?.location?.state].filter(Boolean).join(", ");
+  const aboutText = profile?.about || "";
+  const heroImages = items
+    .filter((i) => i.type === "image" && i.url)
+    .map((i) => i.url);
+
+  const shareUrl =
+    typeof window !== "undefined"
+      ? `${window.location.origin}/talent/${username}/portfolio`
+      : "";
+
+  const handleShareLink = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success("Link copied to clipboard");
+    } catch {
+      toast.error("Failed to copy link");
+    }
+  }, [shareUrl]);
+
   useEffect(() => {
-    talentApi
-      .getMyProfile()
-      .then((profile) => {
-        if (profile?.username === username) {
-          setIsOwner(true);
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const [portfolioRes, mediaKitRes] = await Promise.all([
+          talentApi.getPublicPortfolio(username),
+          talentApi.getMediaKit(username).catch(() => null),
+        ]);
+
+        if ((portfolioRes as { private: true }).private) {
+          if (!cancelled) {
+            setIsPrivate(true);
+            setPreviewUserId(
+              ((portfolioRes as { private: true; preview?: { user_id?: string } }).preview?.user_id as string) ||
+                null,
+            );
+            setError("This portfolio is private");
+            setLoading(false);
+          }
+          return;
         }
-      })
-      .catch(() => {})
-      .finally(() => setOwnerChecked(true));
+
+        const data = portfolioRes as { profile: Partial<TalentProfile>; items: PortfolioItem[] };
+        if (!cancelled) {
+          setProfile(data.profile);
+          setItems(data.items || []);
+          if (mediaKitRes && !(mediaKitRes as { private: true }).private) {
+            setMediaKit(mediaKitRes as MediaKitData);
+          }
+        }
+      } catch (err) {
+        const denied = isFeatureForbidden(err);
+        if (denied) {
+          if (!cancelled) setFeatureError(denied);
+        } else if (!cancelled) {
+          setError(getApiErrorMessage(err));
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
   }, [username]);
 
-  /* ---- Public fetch (only if not owner) ---- */
-  useEffect(() => {
-    if (!ownerChecked || isOwner) return;
-
-    talentApi
-      .getPublicPortfolio(username)
-      .then((res) => {
-        if ((res as any).private) {
-          setIsPrivate(true);
-          setHasConnection((res as any).hasConnection !== false);
-          setPreviewProfile((res as any).preview ?? null);
-          setError("This portfolio is private");
-        } else {
-          setData(res as PortfolioData);
-        }
-      })
-      .catch((err) => setError(getApiErrorMessage(err)))
-      .finally(() => setLoading(false));
-  }, [ownerChecked, isOwner, username]);
-
-  if (!ownerChecked) {
-    return (
-      <div className="max-w-2xl mx-auto py-6 px-4 pb-20">
-        <div className="flex items-center gap-3 mb-6">
-          <Skeleton className="h-9 w-9 rounded-lg" />
-          <Skeleton className="h-5 w-32" />
-        </div>
-        <div className="space-y-4">
-          <Skeleton className="h-48 w-full rounded-xl" />
-          <Skeleton className="h-20 w-full rounded-xl" />
-          <Skeleton className="h-48 w-full rounded-xl" />
-        </div>
-      </div>
-    );
-  }
-
-  if (isOwner) {
-    return <PortfolioManager username={username} />;
-  }
-
-  if (loading) {
-    return (
-      <div className="max-w-2xl mx-auto py-6 px-4 pb-20">
-        <div className="flex items-center gap-3 mb-6">
-          <Skeleton className="h-9 w-9 rounded-lg" />
-          <Skeleton className="h-5 w-32" />
-        </div>
-        <div className="space-y-4">
-          <Skeleton className="h-48 w-full rounded-xl" />
-          <Skeleton className="h-20 w-full rounded-xl" />
-          <Skeleton className="h-48 w-full rounded-xl" />
-        </div>
-      </div>
-    );
-  }
-
-  const [requestSent, setRequestSent] = useState(false);
-
-  const handleConnect = async () => {
-    const talentId = previewProfile?.user_id;
-    if (!talentId) return;
-    if (!user) {
-      router.push("/auth/login");
-      return;
-    }
+  const handleSendRequest = async () => {
+    if (!previewUserId) return;
     setIsConnecting(true);
     try {
-      await collaborationRequestsApi.createRequest(talentId, "I'd like to view your full portfolio and profile.");
+      await createRequest.mutateAsync({
+        receiverId: previewUserId,
+        reason: "collaboration",
+        message: "I'd like to view your portfolio.",
+      });
       setRequestSent(true);
-      show({ title: "Request sent! The talent will be notified.", variant: "success", position: "top-center" });
-    } catch (err: any) {
+      popup.show({
+        title: "Request sent! The talent will be notified.",
+        variant: "success",
+      });
+    } catch (err: unknown) {
       const msg = getApiErrorMessage(err, "Could not send request");
-      show({ title: msg, variant: "error", position: "bottom-center" });
+      popup.show({ title: msg, variant: "error" });
     } finally {
       setIsConnecting(false);
     }
   };
 
-  if (error) {
+  const handleGalleryOpen = useCallback((_item: PortfolioItem, index: number) => {
+    setGalleryIndex(index);
+    setGalleryOpen(true);
+  }, []);
+
+
+
+  if (loading) {
     return (
-      <div className="max-w-2xl mx-auto py-6 px-4 pb-20">
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-2 text-sm text-text-muted hover:text-text-primary transition-colors mb-6"
-        >
-          <ArrowLeft className="w-4 h-4" strokeWidth={1.5} />
-          Back
-        </button>
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-        {isPrivate && !hasConnection && previewProfile?.user_id && (
-          <div className="mt-6 text-center space-y-3">
-            {requestSent ? (
-              <p className="text-sm text-success-text">
-                Request sent. You will be able to view the portfolio once the talent accepts your request.
-              </p>
-            ) : (
-              <>
-                <p className="text-sm text-text-secondary">
-                  Send a connection request to view the full profile and portfolio.
-                </p>
-                <Button
-                  onClick={handleConnect}
-                  disabled={isConnecting}
-                  className="shrink-0"
-                >
-                  {isConnecting ? "Sending..." : "Send Connection Request"}
-                </Button>
-              </>
-            )}
+      <div className="min-h-screen bg-background font-sans">
+        <HeaderSkeleton />
+        <div className="px-4 pt-5 space-y-4">
+          <Skeleton className="aspect-video rounded-[32px]" />
+          <Skeleton className="h-16 rounded-2xl" />
+          <Skeleton className="h-32 rounded-2xl" />
+          <div className="flex gap-3 overflow-hidden">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="w-[200px] shrink-0 aspect-[3/4] rounded-xl" />
+            ))}
           </div>
-        )}
+        </div>
       </div>
     );
   }
 
-  if (!data) return null;
+  if (featureError) {
+    return (
+      <div className="min-h-screen bg-background font-sans pb-12">
+        <header className="sticky top-0 z-30 backdrop-blur-xl bg-background/75 border-b border-border/60">
+          <div className="flex items-center justify-between px-5 py-3.5">
+            <button onClick={() => router.back()} className="flex items-center gap-2 text-ink">
+              <ArrowLeft className="h-4 w-4 text-gold" />
+              <span className="font-serif text-[15px] font-semibold tracking-tight">
+                Connect<span className="text-gold">Me</span>
+              </span>
+            </button>
+            <div className="w-9" />
+          </div>
+        </header>
+        <div className="px-4 pt-5">
+          <FeatureGateAlert {...featureError} />
+        </div>
+      </div>
+    );
+  }
+
+  if (error || isPrivate) {
+    return (
+      <div className="min-h-screen bg-background font-sans pb-12">
+        <header className="sticky top-0 z-30 backdrop-blur-xl bg-background/75 border-b border-border/60">
+          <div className="flex items-center justify-between px-5 py-3.5">
+            <button onClick={() => router.back()} className="flex items-center gap-2 text-ink">
+              <ArrowLeft className="h-4 w-4 text-gold" />
+              <span className="font-serif text-[15px] font-semibold tracking-tight">
+                Connect<span className="text-gold">Me</span>
+              </span>
+            </button>
+            <div className="w-9" />
+          </div>
+        </header>
+        <div className="px-4 pt-5">
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+          {isPrivate && (
+            <div className="mt-6 text-center space-y-3">
+              {requestSent ? (
+                <p className="text-sm text-success-text">
+                  Request sent. You will be able to view the portfolio once the talent accepts your
+                  request.
+                </p>
+              ) : (
+                <>
+                  <p className="text-sm text-text-secondary">
+                    Send a connection request to view this portfolio.
+                  </p>
+                  <button
+                    onClick={handleSendRequest}
+                    disabled={isConnecting}
+                    className="inline-flex items-center justify-center rounded-xl bg-gradient-to-b from-[oklch(0.78_0.13_80)] to-[oklch(0.68_0.13_78)] text-white px-6 py-3 text-sm font-medium shadow-[0_8px_24px_-10px_oklch(0.74_0.13_80/0.7)] active:scale-[0.99] transition disabled:opacity-50"
+                  >
+                    {isConnecting ? "Sending..." : "Send Connection Request"}
+                  </button>
+                  {!!user && !isRecruiter && (
+                    <p className="mt-2 text-xs text-ink-muted">
+                      Only recruiters can send connection requests.
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (!profile) return null;
 
   return (
-    <div className="py-6 px-4 pb-20">
-      <MediaKitView profile={data.profile} items={data.items} />
+    <div className="min-h-screen bg-background font-sans pb-12">
+      <MediaKitHeader isOwner={isOwner} onShare={handleShareLink} />
+
+      <section className="px-4 pt-5">
+        <div className="rounded-2xl border border-border overflow-hidden">
+          <PortfolioHeroImmersive
+            heroBackground={mediaKit?.hero_background ?? profile.hero_background}
+            portfolioImages={heroImages}
+          />
+          <div className="bg-card px-5 pt-4 pb-4">
+            <div className="flex gap-5">
+              {/* Left: profile info */}
+              <div className="flex-1 min-w-0 space-y-3">
+                <div className="flex items-center gap-2">
+                  <h1 className="font-serif text-2xl font-semibold text-ink tracking-tight">
+                    {displayName}
+                  </h1>
+                  {!!profile.is_verified && (
+                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gold shrink-0">
+                      <Check className="w-3 h-3 text-white" strokeWidth={2.5} />
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-ink-muted">@{profile.username || username}</p>
+                {(profile.professions || []).length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {(profile.professions || []).slice(0, 3).map((p) => (
+                      <span
+                        key={p}
+                        className="inline-flex text-[11px] px-2.5 py-1 rounded-full bg-ink/10 text-ink-soft"
+                      >
+                        {p}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {loc && (
+                  <p className="flex items-center gap-1 text-xs text-ink-muted">
+                    <MapPin className="w-3 h-3 text-gold" />
+                    {loc}
+                  </p>
+                )}
+              </div>
+
+              {/* Right: bio */}
+              {aboutText && (
+                <div className="flex-1 min-w-0 border-l border-border/60 pl-5">
+                  <p
+                  className={cn(
+                    "h-full text-[13.5px] leading-[1.65] text-ink-soft text-left",
+                    !aboutExpanded && "line-clamp-4",
+                  )}
+                  >
+                    {aboutText}
+                  </p>
+                  {aboutText.length > 280 && (
+                    <button
+                      onClick={() => setAboutExpanded(!aboutExpanded)}
+                      className="text-[12px] font-medium text-gold mt-1 hover:text-gold/80 transition-colors"
+                    >
+                      {aboutExpanded ? "Show less" : "Read more"}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Portfolio Showcase */}
+      <PortfolioShowcase
+        items={items}
+        onItemClick={handleGalleryOpen}
+      />
+
+      {/* Footer: shareable caption + action bar */}
+      <div className="px-4 mt-5">
+        <p className="text-center text-[12px] text-ink-muted mb-4">
+          This portfolio is shareable with verified brands.
+        </p>
+
+        <div className="rounded-2xl bg-card border border-border shadow-luxe flex items-stretch overflow-hidden">
+          <button
+            onClick={() => {
+              toast.info("PDF export coming soon");
+            }}
+            className="flex-1 flex flex-col items-center justify-center gap-1 py-3 text-ink-soft hover:bg-cream/50 transition-colors active:scale-[0.99]"
+          >
+            <Download className="h-5 w-5 text-gold" strokeWidth={1.5} />
+            <span className="text-[11px] font-medium">Download PDF</span>
+          </button>
+
+          <div className="w-px bg-border/60 my-2" />
+
+          <button
+            onClick={handleShareLink}
+            className="flex-1 flex flex-col items-center justify-center gap-1 py-3 text-ink-soft hover:bg-cream/50 transition-colors active:scale-[0.99]"
+          >
+            <Share2 className="h-5 w-5 text-gold" strokeWidth={1.5} />
+            <span className="text-[11px] font-medium">Share Link</span>
+          </button>
+
+          <div className="w-px bg-border/60 my-2" />
+
+          <ShareProfileDialog
+            username={username}
+            profilePhoto={profile.profile_photo}
+            name={displayName}
+            url={shareUrl}
+          >
+            <button className="flex-1 flex flex-col items-center justify-center gap-1 py-3 text-ink-soft hover:bg-cream/50 transition-colors active:scale-[0.99]">
+              <QrCode className="h-5 w-5 text-gold" strokeWidth={1.5} />
+              <span className="text-[11px] font-medium">Show QR Code</span>
+            </button>
+          </ShareProfileDialog>
+        </div>
+      </div>
+
+      <PortfolioGallery
+        items={items}
+        initialIndex={galleryIndex}
+        open={galleryOpen}
+        onClose={() => setGalleryOpen(false)}
+      />
     </div>
+  );
+}
+
+function HeaderSkeleton() {
+  return (
+    <header className="sticky top-0 z-30 backdrop-blur-xl bg-background/75 border-b border-border/60">
+      <div className="flex items-center justify-between px-5 py-3.5">
+        <Skeleton className="h-5 w-32" />
+        <Skeleton className="h-9 w-9 rounded-full" />
+      </div>
+    </header>
   );
 }

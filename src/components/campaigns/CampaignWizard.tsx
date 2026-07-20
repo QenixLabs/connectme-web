@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
+import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form } from '@/components/ui/form';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -20,12 +20,23 @@ import { useUpdateCampaign } from '@/lib/api/hooks/useUpdateCampaign';
 import { useCampaign } from '@/lib/api/hooks/useCampaign';
 import { useUploadCampaignMedia } from '@/lib/api/hooks/useCampaigns';
 import { getApiErrorMessage } from '@/lib/formatters';
-import { Check } from 'lucide-react';
+import { campaignApi, type Campaign, type CampaignQuestion } from '@/lib/api';
+import { useTalentRecommendations } from '@/lib/api/hooks/useTalentRecommendations';
+import {
+  Check,
+  FileText,
+  ListChecks,
+  Eye,
+  Save,
+  Send,
+  Loader2,
+  Users,
+} from 'lucide-react';
 
 const STEPS = [
-  { label: 'Basic info', number: 1 },
-  { label: 'Requirements', number: 2 },
-  { label: 'Review & publish', number: 3 },
+  { label: 'Basic info', number: 1, icon: FileText },
+  { label: 'Requirements', number: 2, icon: ListChecks },
+  { label: 'Review & publish', number: 3, icon: Eye },
 ];
 
 function getStepFields(step: number): string[] {
@@ -35,12 +46,14 @@ function getStepFields(step: number): string[] {
         'name',
         'description',
         'role_type',
-        'industry',
         'location.city',
         'location.state',
         'dates.start',
         'dates.end',
         'deadline',
+        'specialties',
+        'needs_influencer',
+        'influencer_speciality',
       ];
     case 2:
       return [
@@ -54,6 +67,10 @@ function getStepFields(step: number): string[] {
         'budget_range.currency',
         'requirements.attributes',
         'questions',
+        'task.title',
+        'task.description',
+        'task.task_type',
+        'task.deadline_days',
       ];
     case 3:
       return ['publishOption', 'scheduled_publish_at', 'auto_close_on_deadline'];
@@ -62,21 +79,21 @@ function getStepFields(step: number): string[] {
   }
 }
 
-function toDateInputValue(val: any): string {
+function toDateInputValue(val: unknown): string {
   if (!val) return '';
   if (typeof val === 'string') return val.slice(0, 10);
   if (val instanceof Date) return val.toISOString().slice(0, 10);
   return '';
 }
 
-function toDatetimeInputValue(val: any): string {
+function toDatetimeInputValue(val: unknown): string {
   if (!val) return '';
   if (typeof val === 'string') return val.slice(0, 16);
   if (val instanceof Date) return val.toISOString().slice(0, 16);
   return '';
 }
 
-function mapCampaignToDefaults(campaign: any): CampaignWizardInput {
+function mapCampaignToDefaults(campaign: Campaign): CampaignWizardInput {
   const publishOption: CampaignWizardInput['publishOption'] =
     campaign.status === 'draft'
       ? 'draft'
@@ -88,7 +105,6 @@ function mapCampaignToDefaults(campaign: any): CampaignWizardInput {
     name: campaign.name ?? '',
     description: campaign.description ?? '',
     role_type: campaign.role_type ?? '',
-    industry: campaign.industry ?? '',
     location: {
       city: campaign.location?.city ?? '',
       state: campaign.location?.state ?? '',
@@ -115,14 +131,25 @@ function mapCampaignToDefaults(campaign: any): CampaignWizardInput {
     },
     is_budget_disclosed: campaign.is_budget_disclosed ?? false,
     is_unpaid: campaign.is_unpaid ?? false,
-    questions: (campaign.questions || []).map((q: any) => ({
-      _id: q._id?.toString?.() ?? q._id,
-      question_text: q.question_text ?? '',
-      question_type: q.question_type ?? 'text',
+    questions: (campaign.questions || []).map((q) => ({
+      _id: q._id,
+      question_text: q.question_text,
+      question_type: q.question_type,
       options: q.options || [],
-      is_required: q.is_required ?? false,
-      order: q.order ?? 0,
+      is_required: q.is_required,
+      order: q.order,
     })),
+    specialties: campaign.specialties ?? [],
+    needs_influencer: campaign.needs_influencer ?? false,
+    influencer_speciality: campaign.influencer_speciality ?? '',
+    task: campaign.task
+      ? {
+          title: campaign.task.title || '',
+          description: campaign.task.description || '',
+          task_type: campaign.task.task_type || 'file_upload',
+          deadline_days: campaign.task.deadline_days || 3,
+        }
+      : undefined,
     publishOption,
     scheduled_publish_at: toDatetimeInputValue(campaign.scheduled_publish_at),
     auto_close_on_deadline: campaign.auto_close_on_deadline ?? true,
@@ -140,22 +167,32 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
   const [serverError, setServerError] = useState<string | null>(null);
   const [isNavigating, setIsNavigating] = useState(false);
   const [pendingMediaFile, setPendingMediaFile] = useState<File | null>(null);
+  const [draftCampaignId, setDraftCampaignId] = useState<string | null>(campaignId ?? null);
+  const [previewCount, setPreviewCount] = useState<number | null>(null);
+  const [pendingTaskDoc, setPendingTaskDoc] = useState<File | null>(null);
 
   const createCampaign = useCreateCampaign();
   const uploadMedia = useUploadCampaignMedia();
+  const { data: recData } = useTalentRecommendations(
+    draftCampaignId ?? '',
+    1,
+    !!draftCampaignId,
+  );
+
+  const matchCount = recData?.data?.length ?? null;
+
   const updateCampaign = useUpdateCampaign();
   const { data: existingCampaign, isLoading: isLoadingCampaign } = useCampaign(
     campaignId ?? '',
   );
 
   const form = useForm<CampaignWizardInput>({
-    resolver: zodResolver(campaignWizardSchema) as any,
+    resolver: zodResolver(campaignWizardSchema) as unknown as Resolver<CampaignWizardInput>,
     mode: 'onChange',
     defaultValues: {
       name: '',
       description: '',
       role_type: '',
-      industry: '',
       location: { city: '', state: '' },
       dates: { start: '', end: '' },
       deadline: '',
@@ -170,6 +207,10 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
       is_budget_disclosed: false,
       is_unpaid: false,
       questions: [],
+      specialties: [],
+      needs_influencer: false,
+      influencer_speciality: '',
+      task: undefined,
       publishOption: 'draft',
       scheduled_publish_at: '',
       auto_close_on_deadline: true,
@@ -178,14 +219,17 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
 
   useEffect(() => {
     if (existingCampaign) {
-      form.reset(mapCampaignToDefaults(existingCampaign));
+      const timer = setTimeout(() => {
+        form.reset(mapCampaignToDefaults(existingCampaign));
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [existingCampaign, form]);
 
   const onNext = async () => {
     setServerError(null);
     const fields = getStepFields(step);
-    const valid = await form.trigger(fields as any);
+    const valid = await form.trigger(fields as unknown as Parameters<typeof form.trigger>[0]);
     if (valid) {
       setIsNavigating(true);
       setStep((s) => Math.min(s + 1, 3));
@@ -204,11 +248,12 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
     setStep(n);
   };
 
-  const buildPayload = (values: CampaignWizardInput) => ({
+  const buildPayload = (values: CampaignWizardInput): Partial<
+    Omit<Campaign, '_id' | 'recruiter_id' | 'applications_count' | 'created_at'>
+  > => ({
     name: values.name,
     description: values.description || undefined,
     role_type: values.role_type || undefined,
-    industry: values.industry || undefined,
     location: values.location?.city || values.location?.state
       ? {
           city: values.location.city || undefined,
@@ -253,23 +298,35 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
         : undefined,
     questions: values.questions?.length
       ? values.questions.map((q, i) => {
-          const base: any = {
+          const base = {
             question_text: q.question_text,
             question_type: q.question_type,
             is_required: q.is_required,
             order: i,
+            ...(q._id ? { _id: q._id } : {}),
+            ...((q.question_type === 'select' || q.question_type === 'multiselect') ? { options: q.options } : {}),
           };
-          if (q._id) base._id = q._id;
-          if (q.question_type === 'select' || q.question_type === 'multiselect') {
-            base.options = q.options;
-          }
-          return base;
+          return base as unknown as CampaignQuestion;
         })
       : undefined,
     status: values.publishOption === 'draft' || values.scheduled_publish_at ? 'draft' : 'active',
     visibility: values.publishOption === 'invite_only' ? 'invite_only' : 'public',
     scheduled_publish_at: values.scheduled_publish_at || undefined,
     auto_close_on_deadline: values.auto_close_on_deadline,
+    specialties: values.specialties && values.specialties.length > 0
+      ? values.specialties
+      : undefined,
+    needs_influencer: values.needs_influencer || undefined,
+    influencer_speciality: values.influencer_speciality || undefined,
+    task: values.task?.title
+      ? {
+          is_enabled: true,
+          title: values.task.title,
+          description: values.task.description || '',
+          task_type: values.task.task_type || 'file_upload',
+          deadline_days: values.task.deadline_days || 3,
+        }
+      : undefined,
   });
 
   const onSubmit = async (values: CampaignWizardInput) => {
@@ -279,22 +336,30 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
     try {
       let resultCampaignId = campaignId;
       if (isEdit && campaignId) {
-        await updateCampaign.mutateAsync({ id: campaignId, payload: payload as any });
+        await updateCampaign.mutateAsync({ id: campaignId, payload });
       } else {
-        const created = await createCampaign.mutateAsync(payload);
+        const created = await createCampaign.mutateAsync(payload as Parameters<typeof campaignApi.create>[0]);
         resultCampaignId = created._id;
+        if (!draftCampaignId) {
+          setDraftCampaignId(created._id);
+        }
       }
 
       if (pendingMediaFile && resultCampaignId) {
         const formData = new FormData();
         formData.append('file', pendingMediaFile);
-        formData.append('is_banner', 'true');
-        formData.append('type', 'image');
         await uploadMedia.mutateAsync({ campaignId: resultCampaignId, formData });
       }
 
+      if (pendingTaskDoc && resultCampaignId) {
+        try {
+          await campaignApi.uploadTaskDocument(resultCampaignId, pendingTaskDoc);
+          setPendingTaskDoc(null);
+        } catch {}
+      }
+
       router.push('/recruiter/campaigns');
-    } catch (err: any) {
+    } catch (err: unknown) {
       setServerError(
         getApiErrorMessage(
           err,
@@ -309,182 +374,259 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
     form.handleSubmit(onSubmit)();
   };
 
+  const [checkingMatches, setCheckingMatches] = useState(false);
+  const checkMatches = async () => {
+    const fields = getStepFields(2);
+    const valid = await form.trigger(fields as unknown as Parameters<typeof form.trigger>[0]);
+    if (!valid) return;
+
+    setCheckingMatches(true);
+    try {
+      let savedId: string | undefined;
+      if (isEdit && campaignId) {
+        const payload = buildPayload(form.getValues());
+        await updateCampaign.mutateAsync({ id: campaignId, payload });
+        setDraftCampaignId(campaignId);
+        savedId = campaignId;
+      } else if (draftCampaignId) {
+        const payload = buildPayload(form.getValues());
+        await updateCampaign.mutateAsync({ id: draftCampaignId, payload });
+        savedId = draftCampaignId;
+      } else {
+        const payload = buildPayload({ ...form.getValues(), publishOption: 'draft' });
+        const created = await createCampaign.mutateAsync(payload as Parameters<typeof campaignApi.create>[0]);
+        setDraftCampaignId(created._id);
+        savedId = created._id;
+      }
+
+      if (savedId && pendingTaskDoc) {
+        try {
+          await campaignApi.uploadTaskDocument(savedId, pendingTaskDoc);
+          setPendingTaskDoc(null);
+        } catch {}
+      }
+    } catch {
+      // silently fail — user can still continue
+    } finally {
+      setCheckingMatches(false);
+    }
+  };
+
   if (isEdit && isLoadingCampaign) {
     return (
-      <div className="max-w-[640px] mx-auto p-6 bg-card border border-border rounded-xl space-y-6">
-        <Skeleton className="h-6 w-48" />
-        <Skeleton className="h-4 w-64" />
-        <Skeleton className="h-8 w-full" />
+      <div className="max-w-[680px] mx-auto bg-card border border-border/60 rounded-2xl shadow-luxe p-8 space-y-6">
+        <Skeleton className="h-6 w-48 rounded-md" />
+        <Skeleton className="h-4 w-64 rounded-md" />
+        <Skeleton className="h-10 w-full rounded-xl" />
         <Skeleton className="h-72 rounded-xl" />
         <div className="flex justify-between">
-          <Skeleton className="h-10 w-20" />
-          <Skeleton className="h-10 w-24" />
+          <Skeleton className="h-10 w-20 rounded-xl" />
+          <Skeleton className="h-10 w-28 rounded-xl" />
         </div>
       </div>
     );
   }
 
   const isPending = createCampaign.isPending || updateCampaign.isPending || uploadMedia.isPending;
+  const isLastStep = step === 3;
 
   return (
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="max-w-[640px] mx-auto px-4 py-5 sm:p-6 bg-card border border-border rounded-xl"
+        className="max-w-[680px] mx-auto bg-card border border-border/60 rounded-2xl shadow-luxe overflow-hidden"
       >
-        {/* Header */}
-        <div className="mb-6">
-          <div className="text-lg font-medium text-text-primary">
+        <div className="px-6 sm:px-8 pt-6 sm:pt-8">
+          <h2 className="text-xl font-serif font-semibold text-ink tracking-tight">
             {isEdit ? 'Edit campaign' : 'New campaign'}
+          </h2>
+          <p className="mt-1 text-sm text-ink-muted leading-relaxed">
+            {isEdit ? 'Update your casting call details' : 'Create a casting call and start receiving applications'}
+          </p>
+        </div>
+
+        <div className="px-6 sm:px-8 pt-8 pb-4">
+          <div className="flex items-center gap-1 mb-5">
+            {STEPS.map((s, idx) => {
+              const isActive = step === s.number;
+              const isDone = step > s.number;
+              const StepIcon = s.icon;
+              return (
+                <div key={s.number} className="flex items-center flex-1 last:flex-none">
+                  <button
+                    type="button"
+                    onClick={() => goToStep(s.number)}
+                    className={cn(
+                      "flex items-center gap-2 px-3 py-2 rounded-xl transition-all duration-200",
+                      isActive
+                        ? "bg-ink text-white shadow-sm"
+                        : isDone
+                          ? "bg-emerald-50 text-emerald-700"
+                          : "text-ink-muted hover:bg-muted-bg",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 transition-all",
+                        isActive
+                          ? "bg-white/20"
+                          : isDone
+                            ? "bg-emerald-100"
+                            : "bg-muted-bg",
+                      )}
+                    >
+                      {isDone ? (
+                        <Check className="w-3 h-3" strokeWidth={2.5} />
+                      ) : (
+                        <StepIcon className="w-3 h-3" strokeWidth={isActive ? 2 : 1.5} />
+                      )}
+                    </span>
+                    <span className={cn(
+                      "text-xs font-semibold hidden sm:inline",
+                      isDone && "text-emerald-700",
+                    )}>
+                      {s.label}
+                    </span>
+                  </button>
+                  {idx < STEPS.length - 1 && (
+                    <div className="flex-1 h-px bg-border mx-1" />
+                  )}
+                </div>
+              );
+            })}
           </div>
-          <div className="text-sm text-text-secondary mt-0.5">
-            {isEdit ? 'Update your casting call details' : 'Create a casting call or project'}
+
+          <div className="h-1 bg-muted-bg rounded-full overflow-hidden mb-2">
+            <div
+              className="h-full bg-gradient-to-r from-gold to-gold-hover rounded-full transition-all duration-500 ease-out"
+              style={{ width: `${(step / 3) * 100}%` }}
+            />
           </div>
         </div>
 
-        {/* Stepper */}
-        <div className="flex items-start mb-6">
-          {STEPS.map((s, idx) => {
-            const isActive = step === s.number;
-            const isDone = step > s.number;
-            return (
-              <div key={s.number} className="flex items-center flex-1">
-                <button
-                  type="button"
-                  onClick={() => goToStep(s.number)}
-                  className="flex flex-col items-center gap-1 cursor-pointer min-w-0 flex-1"
-                >
-                  <span
-                    className={cn(
-                      'w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium border-[1.5px] shrink-0 transition-all',
-                      isActive
-                        ? 'bg-[#B85C00] border-[#B85C00] text-white'
-                        : isDone
-                          ? 'bg-success-light border-success text-success-text'
-                          : 'border-border text-text-muted'
-                    )}
-                  >
-                    {isDone ? (
-                      <Check className="w-3.5 h-3.5" strokeWidth={2.5} />
-                    ) : (
-                      s.number
-                    )}
-                  </span>
-                  <span
-                    className={cn(
-                      'text-[10px] leading-tight text-center mt-0.5',
-                      isActive
-                        ? 'text-text-primary font-medium'
-                        : isDone
-                          ? 'text-success-text'
-                          : 'text-text-muted'
-                    )}
-                  >
-                    {s.label === 'Basic info' && (
-                      <>
-                        Basic
-                        <br />
-                        info
-                      </>
-                    )}
-                    {s.label === 'Requirements' && (
-                      <>
-                        Require
-                        <br />
-                        ments
-                      </>
-                    )}
-                    {s.label === 'Review & publish' && (
-                      <>
-                        Review &amp;
-                        <br />
-                        publish
-                      </>
-                    )}
-                  </span>
-                </button>
-                {idx < STEPS.length - 1 && (
-                  <div className="flex-1 h-px bg-border mx-1 mt-3.5" />
+        <div className="px-6 sm:px-8 py-6 space-y-6">
+          <div className={cn(
+            "transition-all duration-300",
+            step === 1 ? 'block opacity-100' : 'hidden opacity-0',
+          )}>
+            <BasicInfoStep
+              mediaFile={pendingMediaFile}
+              onMediaChange={setPendingMediaFile}
+              existingCoverUrl={existingCampaign?.cover_image_url ?? null}
+            />
+          </div>
+          <div className={cn(
+            "transition-all duration-300",
+            step === 2 ? 'block opacity-100' : 'hidden opacity-0',
+          )}>
+            <RequirementsStep campaignId={draftCampaignId} onPendingDocChange={setPendingTaskDoc} />
+          </div>
+          <div className={cn(
+            "transition-all duration-300",
+            step === 3 ? 'block opacity-100' : 'hidden opacity-0',
+          )}>
+            <PublishStep />
+
+            {draftCampaignId && (
+              <div className="mt-6 rounded-2xl bg-gradient-to-br from-brand/5 to-brand/10 border border-brand/20 p-5">
+                <div className="flex items-center gap-2 mb-2">
+                  <Users className="h-4 w-4 text-brand" strokeWidth={1.5} />
+                  <p className="text-sm font-semibold text-ink">Match Preview</p>
+                </div>
+                {matchCount !== null ? (
+                  <p className="text-[13px] text-ink-soft leading-relaxed">
+                    Based on your requirements, we found{' '}
+                    <span className="font-bold text-brand">{matchCount}</span>
+                    {matchCount === 1 ? ' matching talent' : ' matching talents'}{' '}
+                    who meet your criteria.
+                  </p>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-ink-muted" />
+                    <p className="text-[13px] text-ink-muted">Checking matches...</p>
+                  </div>
                 )}
+              </div>
+            )}
           </div>
-            );
-          })}
+
+          {serverError && (
+            <Alert variant="destructive" className="rounded-xl border-error-muted animate-in fade-in slide-in-from-top-2">
+              <AlertDescription>{serverError}</AlertDescription>
+            </Alert>
+          )}
         </div>
 
-        {/* Progress bar */}
-        <div className="h-0.5 bg-border rounded-full overflow-hidden mb-6">
-          <div
-            className="h-full bg-[#B85C00] rounded-full transition-all duration-300"
-            style={{ width: `${(step / 3) * 100}%` }}
-          />
-        </div>
-
-        {/* Step Content */}
-        <div className={cn(step === 1 ? 'block' : 'hidden')}>
-          <BasicInfoStep
-            mediaFile={pendingMediaFile}
-            onMediaChange={setPendingMediaFile}
-            existingBanner={existingCampaign?.banner}
-          />
-        </div>
-        <div className={cn(step === 2 ? 'block' : 'hidden')}>
-          <RequirementsStep />
-        </div>
-        <div className={cn(step === 3 ? 'block' : 'hidden')}>
-          <PublishStep />
-        </div>
-
-        {/* Server Error */}
-        {serverError && (
-          <Alert variant="destructive" className="mt-6">
-            <AlertDescription>{serverError}</AlertDescription>
-          </Alert>
-        )}
-
-        {/* Actions */}
-        <div className="flex items-center gap-2 mt-6 pt-4 border-t border-border">
+        <div className="flex items-center gap-3 px-6 sm:px-8 py-4 bg-muted-bg/30 border-t border-border/60">
           {step > 1 && (
             <button
               type="button"
               onClick={onBack}
-              className="px-3 py-2.5 rounded-lg text-sm font-medium border border-border text-text-secondary hover:bg-muted-bg transition-colors shrink-0"
+              className="px-4 py-2.5 rounded-xl text-sm font-medium border border-border/60 bg-card text-ink-soft hover:text-ink hover:bg-cream-soft transition-all shrink-0"
             >
-              ← Back
+              Back
             </button>
           )}
           <button
             type="button"
             onClick={saveDraft}
             disabled={isPending}
-            className="px-3 py-2.5 rounded-lg text-sm font-medium border border-border text-text-secondary bg-transparent hover:bg-muted-bg transition-colors disabled:opacity-50 flex-1"
+            className="px-4 py-2.5 rounded-xl text-sm font-medium border border-border/60 bg-card text-ink-soft hover:text-ink hover:bg-cream-soft transition-all disabled:opacity-50 flex items-center gap-1.5"
           >
+            <Save className="w-3.5 h-3.5" strokeWidth={1.5} />
             Save draft
           </button>
-          {step < 3 ? (
+          {step === 2 && (
+            <button
+              type="button"
+              onClick={checkMatches}
+              disabled={checkingMatches}
+              className="px-4 py-2.5 rounded-xl text-sm font-medium border border-brand/30 bg-brand/5 text-brand hover:bg-brand/10 transition-all disabled:opacity-50 flex items-center gap-1.5"
+            >
+              {checkingMatches ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" strokeWidth={2} />
+              ) : (
+                <Users className="w-3.5 h-3.5" strokeWidth={1.5} />
+              )}
+              Check Matches
+            </button>
+          )}
+          {!isLastStep ? (
             <button
               type="button"
               onClick={onNext}
               disabled={isNavigating}
-              className="px-3 py-2.5 rounded-lg text-sm font-medium bg-[#B85C00] text-white hover:bg-[#9A4D00] transition-colors disabled:opacity-50 flex-[2] flex items-center justify-center gap-1.5"
+              className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-br from-gold to-gold-hover text-white hover:from-gold-bright hover:to-gold shadow-[0_4px_14px_-4px_oklch(0.74_0.13_80/0.45)] transition-all active:scale-[0.98] disabled:opacity-50 ml-auto flex items-center gap-1.5"
             >
-              Next →
+              Next
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
             </button>
           ) : (
             <button
               type="submit"
               disabled={isNavigating || isPending}
               className={cn(
-                'px-3 py-2.5 rounded-lg text-sm font-medium text-white transition-colors disabled:opacity-50 flex-[2] flex items-center justify-center gap-1.5',
+                "px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all active:scale-[0.98] disabled:opacity-50 ml-auto flex items-center gap-1.5 shadow-md",
                 form.watch('publishOption') === 'draft'
-                  ? 'bg-[#B85C00] hover:bg-[#9A4D00]'
-                  : 'bg-[#1a8a4a] hover:bg-[#157a3f]'
+                  ? 'bg-gradient-to-br from-slate-700 to-slate-800 hover:from-slate-800 hover:to-slate-900 shadow-slate-500/20'
+                  : 'bg-gradient-to-br from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 shadow-emerald-500/20',
               )}
             >
-              {isPending
-                ? (form.watch('publishOption') === 'draft' ? 'Saving...' : 'Publishing...')
-                : (form.watch('publishOption') === 'draft'
+              {isPending ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" strokeWidth={2} />
+                  {form.watch('publishOption') === 'draft' ? 'Saving...' : 'Publishing...'}
+                </>
+              ) : (
+                <>
+                  <Send className="w-3.5 h-3.5" strokeWidth={1.5} />
+                  {form.watch('publishOption') === 'draft'
                     ? (isEdit ? 'Save draft' : 'Save draft')
-                    : (isEdit ? 'Update campaign' : 'Publish'))}
+                    : (isEdit ? 'Update & publish' : 'Publish campaign')}
+                </>
+              )}
             </button>
           )}
         </div>

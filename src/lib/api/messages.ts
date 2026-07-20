@@ -17,6 +17,7 @@ export interface Conversation {
   last_message_sender_id?: string;
   last_message_at?: string;
   unread_counts: Record<string, number>;
+  first_message: boolean;
   created_at: string;
 }
 
@@ -48,17 +49,36 @@ export interface CollaborationRequest {
     full_legal_name?: string;
     username?: string;
     company_name?: string;
+    company_website?: string;
+    company_size?: string;
+    position?: string;
     profile_photo?: string;
+    verification_status?: string;
   };
   receiver_id: string;
-  status: 'pending' | 'accepted' | 'rejected';
+  status: 'pending' | 'messaging_only' | 'accepted' | 'rejected';
   message?: string;
+  reason?: 'collaboration' | 'mentorship' | 'referral';
   created_at: string;
 }
 
+export interface CreateRequestResponse {
+  request: CollaborationRequest;
+  wasAccepted: boolean;
+  conversationId?: string;
+}
+
+export interface PaginatedConversations {
+  data: Conversation[];
+  nextCursor: string | null;
+}
+
 export const messagesApi = {
-  getConversations: async (): Promise<Conversation[]> => {
-    const response = await apiClient.get('/conversations');
+  getConversations: async (cursor?: string, limit = 20): Promise<PaginatedConversations> => {
+    const params = new URLSearchParams();
+    if (cursor) params.append('cursor', cursor);
+    params.append('limit', String(limit));
+    const response = await apiClient.get(`/conversations?${params}`);
     return response.data;
   },
 
@@ -111,6 +131,19 @@ export const messagesApi = {
     return response.data;
   },
 
+  sendFirstMessage: async (
+    receiverId: string,
+    content: string,
+    clientMessageId: string,
+  ): Promise<Message> => {
+    const response = await apiClient.post('/messages/first', {
+      receiver_id: receiverId,
+      content,
+      client_message_id: clientMessageId,
+    });
+    return response.data;
+  },
+
   blockUser: async (blockedId: string): Promise<void> => {
     await apiClient.post('/blocks', { blocked_id: blockedId });
   },
@@ -140,8 +173,8 @@ export const messagesApi = {
 };
 
 export const collaborationRequestsApi = {
-  createRequest: async (receiverId: string, message?: string): Promise<CollaborationRequest> => {
-    const response = await apiClient.post('/collaboration-requests', { receiver_id: receiverId, message });
+  createRequest: async (receiverId: string, reason: string, message?: string): Promise<CreateRequestResponse> => {
+    const response = await apiClient.post('/collaboration-requests', { receiver_id: receiverId, reason, message });
     return response.data;
   },
 

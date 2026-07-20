@@ -6,6 +6,19 @@ interface NavItem {
   label: string;
 }
 
+function isInsideHorizontalScrollable(target: EventTarget): boolean {
+  let el = target as HTMLElement | null;
+  while (el && el !== document.body) {
+    const style = window.getComputedStyle(el);
+    const ox = style.overflowX;
+    if ((ox === "auto" || ox === "scroll" || ox === "overlay") && el.scrollWidth > el.clientWidth) {
+      return true;
+    }
+    el = el.parentElement;
+  }
+  return false;
+}
+
 export function useSwipeNavigation(navItems: NavItem[], currentPath: string) {
   const router = useRouter();
   const touchStart = useRef<{ x: number; y: number } | null>(null);
@@ -32,6 +45,9 @@ export function useSwipeNavigation(navItems: NavItem[], currentPath: string) {
 
       const threshold = 60;
       if (Math.abs(deltaX) < threshold) return;
+
+      // Don't navigate if touch started inside a horizontally scrollable element
+      if (isInsideHorizontalScrollable(e.target)) return;
 
       // Find current nav index (exact match or sub-path)
       const currentIndex = navItems.findIndex(

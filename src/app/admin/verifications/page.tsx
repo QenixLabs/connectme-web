@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import {
   Dialog,
   DialogContent,
@@ -168,16 +169,20 @@ export default function AdminVerificationsPage() {
                   <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-2">
                       {item.username && (
-                        <a
-                          href={`/talent/${item.username}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center h-7 px-2 text-xs font-medium rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground gap-1"
-                          title="View public profile"
-                        >
-                          <User className="w-3 h-3" strokeWidth={1.5} />
-                          Profile
-                        </a>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <a
+                              href={`/talent/${item.username}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center justify-center h-7 px-2 text-xs font-medium rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground gap-1"
+                            >
+                              <User className="w-3 h-3" strokeWidth={1.5} />
+                              Profile
+                            </a>
+                          </TooltipTrigger>
+                          <TooltipContent>View public profile</TooltipContent>
+                        </Tooltip>
                       )}
                       <Button
                         size="sm"

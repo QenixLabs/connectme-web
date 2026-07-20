@@ -22,8 +22,9 @@ export function useWithdrawApplication() {
       queryClient.invalidateQueries({ queryKey: ['campaigns', 'list'] });
       show({ title: 'Application withdrawn', variant: 'success', position: 'bottom-center' });
     },
-    onError: (error: any) => {
-      show({ title: 'Failed to withdraw application', description: error?.response?.data?.message, variant: 'error', position: 'bottom-center' });
+    onError: (error) => {
+      const err = error as { response?: { data?: { message?: string } } };
+      show({ title: 'Failed to withdraw application', description: err.response?.data?.message, variant: 'error', position: 'bottom-center' });
     },
   });
 }

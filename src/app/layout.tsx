@@ -4,6 +4,9 @@ import { PopupProvider } from "@/providers/popup-provider";
 import { SocketProvider } from "@/providers/socket-provider";
 import { AuthStoreProvider } from "@/providers/auth-store-provider";
 import { QueryProvider } from "@/providers/query-provider";
+import { FeatureGateProvider } from "@/providers/feature-gate-provider";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { CampaignRecommendationToast } from "@/components/notifications/campaign-recommendation-toast";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -38,15 +41,19 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
-        <AuthStoreProvider>
-          <SocketProvider>
-            <QueryProvider>
-              {children}
-              <PopupProvider />
-            </QueryProvider>
-          </SocketProvider>
-        </AuthStoreProvider>
+      <body className="min-h-full flex flex-col overflow-x-hidden">
+        <TooltipProvider>
+          <AuthStoreProvider>
+            <SocketProvider>
+              <QueryProvider>
+                {children}
+                <PopupProvider />
+                <CampaignRecommendationToast />
+                <FeatureGateProvider />
+              </QueryProvider>
+            </SocketProvider>
+          </AuthStoreProvider>
+        </TooltipProvider>
       </body>
     </html>
   );
