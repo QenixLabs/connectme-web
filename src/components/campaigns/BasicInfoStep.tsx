@@ -53,6 +53,7 @@ function DateBlock({
   onChange,
   placeholder = 'Select',
   hint,
+  error,
 }: {
   label: string;
   value: string;
@@ -60,6 +61,7 @@ function DateBlock({
   onChange: (val: string) => void;
   placeholder?: string;
   hint?: string;
+  error?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -101,6 +103,9 @@ function DateBlock({
         onChange={(e) => onChange(e.target.value)}
         className="absolute inset-0 opacity-0 cursor-pointer w-full h-full pointer-events-none"
       />
+      {error && (
+        <p className="text-xs text-rose-500 mt-1">{error}</p>
+      )}
     </div>
   );
 }
@@ -112,7 +117,7 @@ interface BasicInfoStepProps {
 }
 
 export function BasicInfoStep({ mediaFile, onMediaChange, existingCoverUrl }: BasicInfoStepProps) {
-  const { watch, setValue } = useFormContext();
+  const { watch, setValue, formState: { errors } } = useFormContext();
   const selectedRole = watch('role_type');
   const selectedState = watch('location.state');
   const [dragOver, setDragOver] = useState(false);
@@ -378,24 +383,21 @@ export function BasicInfoStep({ mediaFile, onMediaChange, existingCoverUrl }: Ba
           <DateBlock
             label="Start date"
             value={watch('dates.start') || ''}
+            error={(errors.dates as Record<string, any>)?.start?.message}
             onChange={(val) => {
               setValue('dates.start', val, { shouldValidate: true });
               if (val && !watch('deadline')) {
                 const start = new Date(val + 'T00:00:00');
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
                 const deadline = new Date(start);
                 deadline.setDate(deadline.getDate() - 3);
-                if (deadline < today) {
-                  deadline.setTime(today.getTime());
-                }
-                setValue('deadline', deadline.toISOString().slice(0, 10), { shouldValidate: false });
+                setValue('deadline', deadline.toISOString().slice(0, 10), { shouldValidate: true });
               }
             }}
           />
           <DateBlock
             label="End date"
             value={watch('dates.end') || ''}
+            error={(errors.dates as Record<string, any>)?.end?.message}
             onChange={(val) => setValue('dates.end', val, { shouldValidate: true })}
           />
         </div>
@@ -403,6 +405,7 @@ export function BasicInfoStep({ mediaFile, onMediaChange, existingCoverUrl }: Ba
           label="Application deadline"
           value={watch('deadline') || ''}
           required
+          error={(errors.deadline?.message as string) ?? undefined}
           onChange={(val) => setValue('deadline', val, { shouldValidate: true })}
           hint="auto-fills 3 days before start"
         />

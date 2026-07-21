@@ -27,6 +27,12 @@
   --border: #e2e8f0;
   --input: #e2e8f0;
   --ring: #fbbf24;
+  --amber-soft: oklch(0.95 0.045 85);
+  --amber-foreground: oklch(0.28 0.025 55);
+  --success-soft: #d1fae5;
+  --success-foreground: #ffffff;
+  --rootin-shadow-card: 0 1px 2px 0 oklch(0.129 0.042 264.695 / 0.04), 0 1px 3px 0 oklch(0.129 0.042 264.695 / 0.06);
+  --rootin-shadow-elevated: 0 4px 12px -2px oklch(0.129 0.042 264.695 / 0.08), 0 2px 4px -2px oklch(0.129 0.042 264.695 / 0.04);
   --sidebar: hsl(0 0% 98%);
   --sidebar-foreground: hsl(240 5.3% 26.1%);
   --sidebar-primary: hsl(240 5.9% 10%);
@@ -144,6 +150,14 @@
   --color-ink-muted: oklch(0.62 0.020 80);
   --shadow-luxe: 0 1px 0 0 oklch(0.92 0.02 80 / 0.6) inset, 0 12px 32px -18px oklch(0.30 0.05 60 / 0.25);
   --shadow-luxe-lg: 0 24px 60px -28px oklch(0.30 0.05 60 / 0.35);
+
+  /* Canvas-colors / RootIn tokens — overridden in .rootin-theme scope */
+  --color-amber-soft: var(--amber-soft);
+  --color-amber-foreground: var(--amber-foreground);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-soft: var(--success-soft);
+  --shadow-card: var(--rootin-shadow-card);
+  --shadow-elevated: var(--rootin-shadow-elevated);
 
   /* Messaging redesign palette */
   --color-msg-page: #faf9f7;
@@ -332,4 +346,46 @@ html::-webkit-scrollbar {
   --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
   --sidebar-border: hsl(240 3.7% 15.9%);
   --sidebar-ring: hsl(217.2 91.2% 59.8%);
+}
+
+/* ── RootIn / Canvas-Colors scoped theme ── */
+.rootin-theme {
+  --background: oklch(0.984 0.014 254);
+  --foreground: oklch(0.208 0.042 265.755);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.208 0.042 265.755);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.208 0.042 265.755);
+  --primary: oklch(0.208 0.042 265.755);
+  --primary-foreground: oklch(0.984 0.003 247.858);
+  --secondary: oklch(0.968 0.007 247.896);
+  --secondary-foreground: oklch(0.208 0.042 265.755);
+  --muted: oklch(0.968 0.007 247.896);
+  --muted-foreground: oklch(0.554 0.046 257.417);
+  --accent: oklch(0.968 0.007 247.896);
+  --accent-foreground: oklch(0.208 0.042 265.755);
+  --destructive: oklch(0.637 0.237 25.331);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.929 0.013 255.508);
+  --input: oklch(0.929 0.013 255.508);
+  --ring: oklch(0.208 0.042 265.755);
+  --radius: 0.75rem;
+  --amber: oklch(0.769 0.169 70.5);
+  --amber-foreground: oklch(0.208 0.042 265.755);
+  --amber-soft: oklch(0.97 0.04 85);
+  --success: oklch(0.696 0.17 162.48);
+  --success-foreground: oklch(1 0 0);
+  --success-soft: oklch(0.96 0.05 160);
+  --color-amber: oklch(0.769 0.169 70.5);
+  --color-success: oklch(0.696 0.17 162.48);
+  --rootin-shadow-card: 0 1px 2px 0 oklch(0.129 0.042 264.695 / 0.04), 0 1px 3px 0 oklch(0.129 0.042 264.695 / 0.06);
+  --rootin-shadow-elevated: 0 4px 12px -2px oklch(0.129 0.042 264.695 / 0.08), 0 2px 4px -2px oklch(0.129 0.042 264.695 / 0.04);
+  --sidebar: oklch(1 0 0);
+  --sidebar-foreground: oklch(0.208 0.042 265.755);
+  --sidebar-primary: oklch(0.208 0.042 265.755);
+  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-accent: oklch(0.97 0.007 247.896);
+  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
+  --sidebar-border: oklch(0.929 0.013 255.508);
+  --sidebar-ring: oklch(0.208 0.042 265.755);
 }

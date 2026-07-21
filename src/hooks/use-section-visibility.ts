@@ -2,9 +2,11 @@ import type { TalentProfile } from "@/lib/validations/talent-profile.schema";
 
 export interface TabVisibility {
   overview: boolean;
-  looks: boolean;
+  portfolio: boolean;
+  experience: boolean;
   skills: boolean;
-  links: boolean;
+  "media-kit": boolean;
+  reviews: boolean;
 }
 
 export interface CardVisibility {
@@ -28,9 +30,11 @@ export function useSectionVisibility(profile: TalentProfile | null | undefined) 
 
   const tabVisibility: TabVisibility = {
     overview: true,
-    looks: get("physical_attributes") || get("languages") || get("accents"),
+    portfolio: get("portfolio"),
+    experience: true,
     skills: get("skills"),
-    links: get("social_links") || get("documents"),
+    "media-kit": get("social_links") || get("documents"),
+    reviews: true,
   };
 
   const cardVisibility: CardVisibility = {
