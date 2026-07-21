@@ -2,11 +2,18 @@
 
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Share2, User, Scan, Award, Link as LinkIcon } from "lucide-react";
+import {
+  ArrowLeft,
+  Share2,
+  Heart,
+  Plug,
+  MessageSquare,
+  Bookmark,
+  MonitorPlay,
+} from "lucide-react";
 import { talentApi, messagesApi } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
-import type { TalentProfile } from "@/lib/validations/talent-profile.schema";
-import type { PortfolioItem } from "@/lib/validations/talent-profile.schema";
+import type { TalentProfile, PortfolioItem } from "@/lib/validations/talent-profile.schema";
 import type { MediaKitData } from "@/types/media-kit";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,21 +28,26 @@ import { ShortlistOrInviteModal } from "@/components/shortlist-or-invite-modal";
 import { ShareProfileDialog } from "@/components/share-profile-dialog";
 import { TalentGridCard } from "@/components/talent-grid-card";
 import { HeroCard } from "@/components/public-profile/hero-card";
-import { ActionBar } from "@/components/public-profile/action-bar";
 import { FirstMessageDialog } from "@/components/public-profile/first-message-dialog";
 import { ConnectDialog } from "@/components/public-profile/connect-dialog";
-import { SegmentedTabs, type TabId } from "@/components/public-profile/segmented-tabs";
+import { TabNavigation, type TabId } from "@/components/public-profile/tab-navigation";
 import { OverviewPane } from "@/components/public-profile/overview-pane";
-import { LooksPane } from "@/components/public-profile/looks-pane";
 import { SkillsPane } from "@/components/public-profile/skills-pane";
-import { LinksPane } from "@/components/public-profile/links-pane";
 import { PortfolioSection } from "@/components/public-profile/portfolio-section";
 import { PortfolioLightbox } from "@/components/portfolio/portfolio-lightbox";
 import { MediaKitStats } from "@/components/public-profile/media-kit-stats";
-
-/* ------------------------------------------------------------------ */
-/*  Main Page                                                         */
-/* ------------------------------------------------------------------ */
+import { ExperienceSection } from "@/components/public-profile/experience-section";
+import { ReviewsSection } from "@/components/public-profile/reviews-section";
+import { AwardsSection } from "@/components/public-profile/awards-section";
+import { StatsBand } from "@/components/public-profile/stats-band";
+import { MediaKitPane } from "@/components/public-profile/media-kit-pane";
+import { AboutPane } from "@/components/public-profile/about-pane";
+import {
+  MOCK_CREDITS,
+  MOCK_AWARDS,
+  MOCK_REVIEWS,
+  getMockStats,
+} from "@/lib/mocks/public-profile";
 
 export default function PublicTalentProfilePage() {
   const router = useRouter();
@@ -89,22 +101,26 @@ export default function PublicTalentProfilePage() {
       router.push("/auth/login");
       return;
     }
-
     if (!profile?.user_id) return;
-
     guard(() => {
       setConnectDialogOpen(true);
     });
   }, [user, router, profile?.user_id, guard]);
+
+  const handleLike = useCallback(() => {
+    popup.show({
+      title: "Coming Soon",
+      description: "Like feature coming soon",
+      variant: "info",
+    });
+  }, [popup]);
 
   const handleSendMessage = useCallback(() => {
     if (!user) {
       router.push("/auth/login");
       return;
     }
-
     if (!profile?.user_id) return;
-
     setFirstMessageOpen(true);
   }, [user, router, profile?.user_id]);
 
@@ -112,7 +128,6 @@ export default function PublicTalentProfilePage() {
     async (content: string) => {
       const talentId = profile?.user_id;
       if (!talentId) return;
-
       setIsSendingFirstMessage(true);
       try {
         const clientMessageId = `first-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -120,11 +135,11 @@ export default function PublicTalentProfilePage() {
         setFirstMessageOpen(false);
         popup.show({
           title: "Message sent",
-          description: `Your message has been sent. They'll need to reply before you can send another.`,
+          description: "Your message has been sent. They'll need to reply before you can send another.",
           variant: "success",
         });
-      } catch (err: any) {
-        if (err?.response?.status === 409) {
+      } catch (err: unknown) {
+        if ((err as { response?: { status?: number } })?.response?.status === 409) {
           try {
             const { conversation } = await messagesApi.startDirectConversation(talentId);
             setFirstMessageOpen(false);
@@ -132,7 +147,7 @@ export default function PublicTalentProfilePage() {
             router.push(`${base}/${conversation._id}`);
             return;
           } catch {
-            // fall through to error popup
+            /* fall through */
           }
         }
         popup.show({
@@ -151,7 +166,6 @@ export default function PublicTalentProfilePage() {
     async (reason: "collaboration" | "mentorship" | "referral") => {
       const talentId = profile?.user_id;
       if (!talentId) return;
-
       setIsSendingConnectRequest(true);
       createRequest.mutate(
         { receiverId: talentId, reason },
@@ -159,7 +173,8 @@ export default function PublicTalentProfilePage() {
           onSuccess: (data) => {
             setConnectDialogOpen(false);
             if (data.wasAccepted && data.conversationId) {
-              const base = user?.role === "recruiter" ? "/recruiter/messages" : "/talent/messages";
+              const base =
+                user?.role === "recruiter" ? "/recruiter/messages" : "/talent/messages";
               router.push(`${base}/${data.conversationId}`);
             } else {
               popup.show({
@@ -185,21 +200,21 @@ export default function PublicTalentProfilePage() {
     [profile, popup, createRequest, router, user],
   );
 
+  /* ── Data loading ── */
+
   useEffect(() => {
     let cancelled = false;
-
     async function load() {
       try {
         const profileRes = await talentApi.getPublicProfile(username);
-        if ((profileRes as any).private) {
+        if ((profileRes as Record<string, unknown>).private) {
           if (!cancelled) {
-            setProfile((profileRes as any).preview ?? null);
+            setProfile((profileRes as { preview?: TalentProfile }).preview ?? null);
             setIsPrivate(true);
             setLoading(false);
           }
           return;
         }
-
         if (!cancelled) setIsPrivate(false);
 
         const [portfolioRes, mediaKitRes] = await Promise.all([
@@ -209,10 +224,10 @@ export default function PublicTalentProfilePage() {
 
         if (!cancelled) {
           setProfile(profileRes as TalentProfile);
-          if (portfolioRes && !(portfolioRes as any).private) {
-            setPortfolioItems((portfolioRes as any).items || []);
+          if (portfolioRes && !(portfolioRes as Record<string, unknown>).private) {
+            setPortfolioItems((portfolioRes as { items: PortfolioItem[] }).items || []);
           }
-          if (mediaKitRes && !(mediaKitRes as any).private) {
+          if (mediaKitRes && !(mediaKitRes as { private?: boolean }).private) {
             setMediaKit(mediaKitRes as MediaKitData);
           }
         }
@@ -227,51 +242,45 @@ export default function PublicTalentProfilePage() {
         if (!cancelled) setLoading(false);
       }
     }
-
     load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [username]);
 
   useEffect(() => {
     if (!profile || isPrivate) return;
-
     const profession = profile.professions?.[0];
     if (!profession) return;
-
     let cancelled = false;
     setSimilarLoading(true);
-
     talentApi
       .getAllTalent({ profession, limit: 4 })
       .then((res) => {
         if (!cancelled) {
-          setSimilarTalents(
-            (res.data ?? []).filter((t) => t.username !== username),
-          );
+          setSimilarTalents((res.data ?? []).filter((t) => t.username !== username));
         }
       })
       .catch(() => {})
       .finally(() => {
         if (!cancelled) setSimilarLoading(false);
       });
-
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [profile, isPrivate, username]);
 
   useEffect(() => {
     if (!profile) return;
-
     const hasInstagramLink = !!profile.social_links?.instagram?.url;
     const hasYoutubeLink = !!profile.social_links?.youtube?.url;
     if (!hasInstagramLink && !hasYoutubeLink) return;
-
     const statsPresent =
       (!hasInstagramLink || mediaKit?.instagramFollowers != null) &&
       (!hasYoutubeLink || mediaKit?.youtubeSubscribers != null);
     if (statsPresent) return;
 
     const controller = new AbortController();
-
     const timer = setTimeout(async () => {
       if (controller.signal.aborted) return;
       try {
@@ -280,34 +289,46 @@ export default function PublicTalentProfilePage() {
           setMediaKit(refreshed as MediaKitData);
         }
       } catch {
-        // silently ignore poll failures
+        /* silently ignore poll failures */
       }
     }, 10000);
-
     return () => {
       controller.abort();
       clearTimeout(timer);
     };
   }, [username, profile, mediaKit]);
 
+  /* ── Derived data ── */
+
   const activeProfile = profile;
-  const { tabVisibility, cardVisibility, heroVisibility } = useSectionVisibility(activeProfile);
+  const { tabVisibility } = useSectionVisibility(activeProfile);
+
+  const trustScore = activeProfile?.trust_score ?? 0;
+  const responseRate = 95;
+
+  const mockStats = useMemo(
+    () => getMockStats(activeProfile?.analytics),
+    [activeProfile?.analytics],
+  );
 
   const instagramUrl = activeProfile?.social_links?.instagram?.url;
   const youtubeUrl = activeProfile?.social_links?.youtube?.url;
   const hasInstagramLink = !!instagramUrl;
   const hasYoutubeLink = !!youtubeUrl;
 
-  const visibleTabs = useMemo(
-    () =>
-      [
-        { id: "overview" as TabId, label: "Overview", icon: User },
-        { id: "looks" as TabId, label: "Looks", icon: Scan },
-        { id: "skills" as TabId, label: "Skills", icon: Award },
-        { id: "links" as TabId, label: "Links", icon: LinkIcon },
-      ].filter((t) => tabVisibility[t.id]),
-    [tabVisibility]
-  );
+  const visibleTabs = useMemo(() => {
+    const tabs: { id: TabId; label: string }[] = [];
+    tabs.push({ id: "overview", label: "Overview" });
+    if (tabVisibility.portfolio && portfolioItems.length > 0)
+      tabs.push({ id: "portfolio", label: "Portfolio" });
+    tabs.push({ id: "experience", label: "Experience" });
+    if (tabVisibility.skills) tabs.push({ id: "skills", label: "Skills" });
+    if (tabVisibility["media-kit"])
+      tabs.push({ id: "media-kit", label: "Media Kit" });
+    tabs.push({ id: "reviews", label: "Reviews" });
+    tabs.push({ id: "about", label: "About" });
+    return tabs;
+  }, [tabVisibility, portfolioItems.length]);
 
   useEffect(() => {
     if (visibleTabs.length > 0 && !visibleTabs.some((t) => t.id === tab)) {
@@ -315,39 +336,39 @@ export default function PublicTalentProfilePage() {
     }
   }, [visibleTabs, tab]);
 
+  /* ── Loading state ── */
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-background font-sans pb-10">
-        {/* Top bar skeleton */}
-        <header className="sticky top-0 z-30 backdrop-blur-xl bg-background/75 border-b border-border/60">
+      <div className="rootin-theme min-h-screen bg-background pb-10">
+        <header className="sticky top-0 z-30 bg-background/75 backdrop-blur-xl">
           <div className="flex items-center justify-between px-5 py-3.5">
             <Skeleton className="h-5 w-32" />
             <Skeleton className="h-9 w-9 rounded-full" />
           </div>
         </header>
-        <div className="px-4 pt-5">
-          <Skeleton className="h-[300px] rounded-[28px]" />
+        <div className="px-4 pt-5 md:px-6 md:pt-6">
+          <Skeleton className="h-[300px] rounded-xl" />
         </div>
-        <div className="px-4 mt-2">
-          <Skeleton className="h-12 rounded-2xl" />
-        </div>
-        <div className="px-4 mt-4 space-y-4">
-          <Skeleton className="h-32 rounded-2xl" />
-          <Skeleton className="h-48 rounded-2xl" />
+        <div className="mt-4 space-y-4 px-4">
+          <Skeleton className="h-32 rounded-xl" />
+          <Skeleton className="h-48 rounded-xl" />
         </div>
       </div>
     );
   }
 
+  /* ── Error state ── */
+
   if (error || featureError) {
     return (
-      <div className="min-h-screen bg-background font-sans pb-10">
-        <header className="sticky top-0 z-30 backdrop-blur-xl bg-background/75 border-b border-border/60">
+      <div className="rootin-theme min-h-screen bg-background pb-10">
+        <header className="sticky top-0 z-30 bg-background/75 backdrop-blur-xl">
           <div className="flex items-center justify-between px-5 py-3.5">
-            <button onClick={() => router.back()} className="flex items-center gap-2 text-ink">
-              <ArrowLeft className="h-4 w-4 text-gold" />
-              <span className="font-serif text-[15px] font-semibold tracking-tight">
-                Connect<span className="text-gold">Me</span>
+            <button onClick={() => router.back()} className="flex items-center gap-2 text-foreground">
+              <ArrowLeft className="h-4 w-4 text-amber" />
+              <span className="text-[15px] font-semibold tracking-tight">
+                Connect<span className="text-amber">Me</span>
               </span>
             </button>
             <div className="w-9" />
@@ -366,26 +387,36 @@ export default function PublicTalentProfilePage() {
     );
   }
 
+  /* ── Main render ── */
+
   return (
-    <div className="min-h-screen bg-background font-sans pb-10">
+    <div className="rootin-theme min-h-screen bg-background pb-28 md:pb-10">
       {/* Top bar */}
-      <header className="sticky top-0 z-30 backdrop-blur-xl bg-background/75 border-b border-border/60">
+      <header className="fixed inset-x-0 top-0 z-30 md:hidden">
         <div className="flex items-center justify-between px-5 py-3.5">
-          <button onClick={() => router.back()} className="flex items-center gap-2 text-ink">
-            <ArrowLeft className="h-4 w-4 text-gold" />
-            <span className="font-serif text-[15px] font-semibold tracking-tight">
-              Connect<span className="text-gold">Me</span>
-            </span>
-          </button>
-          <ShareProfileDialog
-            username={username}
-            profilePhoto={profile?.profile_photo}
-            name={profile?.full_legal_name}
+          <button
+            onClick={() => router.back()}
+            className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card shadow-sm"
           >
-            <button className="h-9 w-9 rounded-full border border-border bg-card grid place-items-center shadow-sm">
-              <Share2 className="h-4 w-4 text-gold" />
+            <ArrowLeft className="h-5 w-5 text-amber" />
+          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleLike}
+              className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card shadow-sm"
+            >
+              <Heart className="h-5 w-5 text-amber" />
             </button>
-          </ShareProfileDialog>
+            <ShareProfileDialog
+              username={username}
+              profilePhoto={profile?.profile_photo}
+              name={profile?.full_legal_name}
+            >
+              <button className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card shadow-sm">
+                <Share2 className="h-5 w-5 text-amber" />
+              </button>
+            </ShareProfileDialog>
+          </div>
         </div>
       </header>
 
@@ -393,87 +424,97 @@ export default function PublicTalentProfilePage() {
         <>
           <HeroCard
             profile={activeProfile}
-            showLocation={heroVisibility.location}
-            showAvailability={heroVisibility.availability}
-            about={activeProfile.about}
-          />
-          <ActionBar
             username={username}
-            onConnect={handleConnect}
-            onSendMessage={handleSendMessage}
-            onBookmark={() => setShortlistModalOpen(true)}
-            connectDisabled={!!user && !profile}
-            sendMessageDisabled={!!user && !profile}
-            showBookmark={isRecruiter}
+            trustScore={trustScore}
+            responseRate={responseRate}
+            onMessage={handleSendMessage}
+            onShortlist={() => setShortlistModalOpen(true)}
+            onLike={handleLike}
           />
-                {/* Stats */}
-      <MediaKitStats
-        instagramFollowers={mediaKit?.instagramFollowers}
-        youtubeSubscribers={mediaKit?.youtubeSubscribers}
-        youtubeViews={mediaKit?.youtubeViews}
-        monthlyViews={profile?.analytics?.profile_views_30d ?? 0}
-        hasInstagramLink={hasInstagramLink}
-        hasYoutubeLink={hasYoutubeLink}
-        instagramUrl={instagramUrl}
-        youtubeUrl={youtubeUrl}
-        instagramLoading={hasInstagramLink && mediaKit?.instagramFollowers == null}
-        youtubeLoading={hasYoutubeLink && mediaKit?.youtubeSubscribers == null}
-      />
+
           {!isPrivate && (
-            <PortfolioSection
-              items={portfolioItems.filter((i) => i.is_pinned)}
-              showStats={false}
-              showCategoryFilter={false}
-              onItemClick={(item) => {
-                setLightboxItem(item);
-                setLightboxOpen(true);
-              }}
-            />
-          )}
-          {isPrivate ? (
-            <div className="px-4 mt-6 text-center">
-              <button
-                onClick={handleConnect}
-                disabled={isSendingConnectRequest}
-                className="inline-flex items-center justify-center rounded-xl bg-gold px-6 py-3 text-sm font-medium text-white shadow-sm hover:bg-gold/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSendingConnectRequest ? "Sending..." : "Send a connect request to view full profile"}
-              </button>
-            </div>
-          ) : (
             <>
-              {visibleTabs.length > 0 && (
-                <SegmentedTabs tabs={visibleTabs} value={tab} onChange={setTab} />
+              {/* Media Kit Stats */}
+              <MediaKitStats
+                instagramFollowers={mediaKit?.instagramFollowers}
+                youtubeSubscribers={mediaKit?.youtubeSubscribers}
+                youtubeViews={mediaKit?.youtubeViews}
+                monthlyViews={activeProfile.analytics?.profile_views_30d ?? 0}
+                hasInstagramLink={hasInstagramLink}
+                hasYoutubeLink={hasYoutubeLink}
+                instagramUrl={instagramUrl}
+                youtubeUrl={youtubeUrl}
+                instagramLoading={hasInstagramLink && mediaKit?.instagramFollowers == null}
+                youtubeLoading={hasYoutubeLink && mediaKit?.youtubeSubscribers == null}
+              />
+
+              {/* Tabs */}
+              {visibleTabs.length > 1 && (
+                <TabNavigation
+                  value={tab}
+                  onChange={setTab}
+                />
               )}
 
-              <main className="px-4 mt-4 space-y-4">
+              {/* Tab content */}
+              <main className="px-4 mt-4 md:px-6 md:mt-6">
                 {tab === "overview" && (
-                  <OverviewPane profile={activeProfile} showAbout={false} />
-                )}
-                {tab === "looks" && (
-                  <LooksPane
+                  <OverviewPane
                     profile={activeProfile}
-                    showPhysical={cardVisibility.physical_attributes}
-                    showLanguages={cardVisibility.languages}
+                    portfolioItems={portfolioItems.filter((i) => i.is_pinned)}
+                    credits={MOCK_CREDITS}
+                    awards={MOCK_AWARDS}
+                    reviews={MOCK_REVIEWS}
+                    stats={mockStats}
+                    onPortfolioItemClick={(item) => {
+                      setLightboxItem(item);
+                      setLightboxOpen(true);
+                    }}
                   />
                 )}
+
+                {tab === "portfolio" && (
+                  <PortfolioSection
+                    items={portfolioItems}
+                    showStats
+                    showCategoryFilter
+                    onItemClick={(item) => {
+                      setLightboxItem(item);
+                      setLightboxOpen(true);
+                    }}
+                  />
+                )}
+
+                {tab === "experience" && (
+                  <ExperienceSection credits={MOCK_CREDITS} />
+                )}
+
                 {tab === "skills" && (
-                  <SkillsPane profile={activeProfile} showSkills={cardVisibility.skills} />
+                  <div className="space-y-4">
+                    <SkillsPane profile={activeProfile} showSkills />
+                    <AwardsSection awards={MOCK_AWARDS} />
+                  </div>
                 )}
-                {tab === "links" && (
-                  <LinksPane
-                    profile={activeProfile}
-                    showSocial={cardVisibility.social_links}
-                    showDocuments={cardVisibility.documents}
-                  />
+
+                {tab === "media-kit" && (
+                  <MediaKitPane profile={activeProfile} mediaKit={mediaKit} />
+                )}
+
+                {tab === "reviews" && (
+                  <ReviewsSection reviews={MOCK_REVIEWS} />
+                )}
+
+                {tab === "about" && (
+                  <AboutPane about={activeProfile?.about} />
                 )}
               </main>
 
-              {!isPrivate && (() => {
+              {/* Similar Talents */}
+              {(() => {
                 if (similarLoading) {
                   return (
                     <section className="px-4 mt-6">
-                      <Skeleton className="h-4 w-28 rounded-full mb-3" />
+                      <Skeleton className="mb-3 h-4 w-28 rounded-full" />
                       <div className="grid grid-cols-2 gap-3">
                         {[0, 1, 2, 3].map((i) => (
                           <Skeleton key={i} className="aspect-[3/4] rounded-2xl" />
@@ -484,8 +525,8 @@ export default function PublicTalentProfilePage() {
                 }
                 if (similarTalents.length > 0) {
                   return (
-                    <section className="px-4 mt-6">
-                      <p className="text-[13px] font-semibold text-ink mb-3">
+                    <section className="px-4 mt-6 md:px-6">
+                      <p className="mb-3 text-[13px] font-semibold text-foreground">
                         Similar Talent
                       </p>
                       <div className="grid grid-cols-2 gap-3">
@@ -506,9 +547,60 @@ export default function PublicTalentProfilePage() {
               })()}
             </>
           )}
+
+          {isPrivate && (
+            <div className="mt-6 px-4 text-center">
+              <button
+                onClick={handleConnect}
+                disabled={isSendingConnectRequest}
+                className="inline-flex items-center justify-center rounded-xl bg-amber px-6 py-3 text-sm font-medium text-amber-foreground shadow-sm transition hover:bg-amber/90 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isSendingConnectRequest
+                  ? "Sending..."
+                  : "Send a connect request to view full profile"}
+              </button>
+            </div>
+          )}
         </>
       )}
 
+      {/* Mobile action bar */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur md:hidden">
+        <div className="mx-auto flex max-w-md items-center justify-around px-2 py-2">
+          <button
+            onClick={handleConnect}
+            className="flex flex-1 flex-col items-center gap-1.5 rounded-lg px-3 py-3 text-sm font-medium text-muted-foreground hover:text-foreground"
+          >
+            <Plug className="h-6 w-6" />
+            Connect
+          </button>
+          <button
+            onClick={handleSendMessage}
+            className="flex flex-1 flex-col items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-3 text-sm font-medium text-primary"
+          >
+            <MessageSquare className="h-6 w-6 text-primary" />
+            Message
+          </button>
+          <button
+            onClick={() => router.push(`/talent/${username}/portfolio`)}
+            className="flex flex-1 flex-col items-center gap-1.5 rounded-lg px-3 py-3 text-sm font-medium text-muted-foreground hover:text-foreground"
+          >
+            <MonitorPlay className="h-6 w-6" />
+            Media Kit
+          </button>
+          {isRecruiter && (
+            <button
+              onClick={() => setShortlistModalOpen(true)}
+              className="flex flex-1 flex-col items-center gap-1.5 rounded-lg px-3 py-3 text-sm font-medium text-muted-foreground hover:text-foreground"
+            >
+              <Bookmark className="h-6 w-6" />
+              Shortlist
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Modals */}
       <ShortlistOrInviteModal
         open={shortlistModalOpen}
         onClose={() => setShortlistModalOpen(false)}

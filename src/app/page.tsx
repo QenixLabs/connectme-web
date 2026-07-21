@@ -6,7 +6,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-page">
       {/* Header */}
-      <header className="flex items-center justify-between px-6 py-4 bg-card border-b border-border">
+      <header className="flex items-center justify-between px-4 sm:px-6 py-4 bg-card border-b border-border">
         <Link href="/" className="text-2xl font-bold text-text-primary">
           Connect<span className="text-brand">Me</span>
         </Link>
@@ -21,12 +21,12 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <main className="max-w-4xl mx-auto px-6 py-20 text-center">
-        <h1 className="text-4xl md:text-5xl font-bold text-text-primary mb-6">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-20 text-center">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-text-primary mb-4 sm:mb-6">
           Verified Talent.
           <span className="text-brand"> Trusted Hiring.</span>
         </h1>
-        <p className="text-lg text-text-secondary mb-10 max-w-2xl mx-auto">
+        <p className="text-base sm:text-lg text-text-secondary mb-8 sm:mb-10 max-w-2xl mx-auto">
           ConnectMe replaces broken trust in casting with verified, professional records.
           Hire with confidence. Get hired with credibility.
         </p>
@@ -49,7 +49,7 @@ export default function LandingPage() {
         </div>
 
         {/* Stats / Trust indicators */}
-        <div className="mt-16 grid grid-cols-3 gap-8 max-w-lg mx-auto">
+        <div className="mt-10 sm:mt-16 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-8 max-w-sm sm:max-w-lg mx-auto">
           <StatCard label="Talent Pool" value="Verified" align="center" />
           <StatCard label="Hiring Only" value="Safe" align="center" />
           <StatCard label="By Brands" value="Trusted" align="center" />
