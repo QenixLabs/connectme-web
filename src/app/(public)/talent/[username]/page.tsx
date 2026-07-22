@@ -10,6 +10,7 @@ import {
   MessageSquare,
   Bookmark,
   MonitorPlay,
+  Ellipsis,
 } from "lucide-react";
 import { talentApi, messagesApi } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
@@ -83,6 +84,7 @@ export default function PublicTalentProfilePage() {
   const [isSendingFirstMessage, setIsSendingFirstMessage] = useState(false);
   const [connectDialogOpen, setConnectDialogOpen] = useState(false);
   const [isSendingConnectRequest, setIsSendingConnectRequest] = useState(false);
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
 
   const { guard } = useTierGuard(3);
   const createRequest = useCreateCollaborationRequest();
@@ -453,6 +455,7 @@ export default function PublicTalentProfilePage() {
                 <TabNavigation
                   value={tab}
                   onChange={setTab}
+                  tabs={visibleTabs}
                 />
               )}
 
@@ -490,7 +493,7 @@ export default function PublicTalentProfilePage() {
                 )}
 
                 {tab === "skills" && (
-                  <div className="space-y-4">
+                  <div className="grid gap-6 lg:grid-cols-2">
                     <SkillsPane profile={activeProfile} showSkills />
                     <AwardsSection awards={MOCK_AWARDS} />
                   </div>
@@ -566,37 +569,66 @@ export default function PublicTalentProfilePage() {
 
       {/* Mobile action bar */}
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur md:hidden">
-        <div className="mx-auto flex max-w-md items-center justify-around px-2 py-2">
-          <button
-            onClick={handleConnect}
-            className="flex flex-1 flex-col items-center gap-1.5 rounded-lg px-3 py-3 text-sm font-medium text-muted-foreground hover:text-foreground"
-          >
-            <Plug className="h-6 w-6" />
-            Connect
-          </button>
+        <div className="flex items-center gap-2 px-3 py-2">
           <button
             onClick={handleSendMessage}
-            className="flex flex-1 flex-col items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-3 text-sm font-medium text-primary"
+            className="flex flex-[2] items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground"
           >
-            <MessageSquare className="h-6 w-6 text-primary" />
+            <MessageSquare className="h-5 w-5" />
             Message
           </button>
-          <button
-            onClick={() => router.push(`/talent/${username}/portfolio`)}
-            className="flex flex-1 flex-col items-center gap-1.5 rounded-lg px-3 py-3 text-sm font-medium text-muted-foreground hover:text-foreground"
-          >
-            <MonitorPlay className="h-6 w-6" />
-            Media Kit
-          </button>
-          {isRecruiter && (
+
+          <div className="relative flex-1">
             <button
-              onClick={() => setShortlistModalOpen(true)}
-              className="flex flex-1 flex-col items-center gap-1.5 rounded-lg px-3 py-3 text-sm font-medium text-muted-foreground hover:text-foreground"
+              onClick={() => setMoreMenuOpen(!moreMenuOpen)}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card px-3 py-3 text-sm font-medium text-muted-foreground"
             >
-              <Bookmark className="h-6 w-6" />
-              Shortlist
+              <Ellipsis className="h-5 w-5" />
+              More
             </button>
-          )}
+            {moreMenuOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setMoreMenuOpen(false)}
+                />
+                <div className="absolute bottom-full left-0 right-0 z-20 mb-2 rounded-xl border border-border bg-card p-1.5 shadow-lg">
+                  <button
+                    onClick={() => {
+                      setMoreMenuOpen(false);
+                      handleConnect();
+                    }}
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-muted"
+                  >
+                    <Plug className="h-5 w-5" />
+                    Connect
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMoreMenuOpen(false);
+                      router.push(`/talent/${username}/portfolio`);
+                    }}
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-muted"
+                  >
+                    <MonitorPlay className="h-5 w-5" />
+                    Media Kit
+                  </button>
+                  {isRecruiter && (
+                    <button
+                      onClick={() => {
+                        setMoreMenuOpen(false);
+                        setShortlistModalOpen(true);
+                      }}
+                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-muted"
+                    >
+                      <Bookmark className="h-5 w-5" />
+                      Shortlist
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 

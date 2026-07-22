@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Share2,
   Heart,
@@ -87,7 +87,9 @@ export function HeroCard({
   const [imgFailed, setImgFailed] = useState(false);
   const displayName = profile.full_legal_name || profile.username || "Talent";
   const professionStr =
-    profile.professions?.slice(0, 3).join(" \u2022 ") || "Talent";
+    profile.professions?.slice(0, 3).flatMap((p, i) =>
+      i > 0 ? [<span key={`sep-${i}`} className="mx-1">&bull;</span>, <span key={i}>{p}</span>] : [<span key={i}>{p}</span>],
+    ) ?? "Talent";
   const loc = [profile.location?.city, profile.location?.state, profile.location?.country]
     .filter(Boolean)
     .join(", ");
@@ -98,9 +100,9 @@ export function HeroCard({
   return (
     <section className="px-0 pt-0 md:px-0 md:pt-0">
       <Card className="overflow-hidden border-border p-0 shadow-card">
-        <div className="flex flex-col">
+        <div className="grid gap-0 md:grid-cols-[340px_1fr]">
           {/* Photo */}
-          <div className="relative aspect-[4/5] md:max-h-[480px]">
+          <div className="relative aspect-[4/5] md:aspect-auto md:min-h-[380px]">
             {profile.profile_photo && !imgFailed ? (
               <img
                 src={profile.profile_photo}
@@ -114,15 +116,15 @@ export function HeroCard({
               </div>
             )}
             {profile.is_verified && (
-              <div className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-full bg-primary/90 px-3 py-1.5 text-sm font-semibold text-primary-foreground backdrop-blur">
-                <BadgeCheck className="h-4 w-4 text-amber" />
-                <span className="text-amber">Root</span> Verified
+              <div className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-foreground shadow-sm">
+                <BadgeCheck className="h-3.5 w-3.5 text-amber" />
+                Root<span className="text-amber">Verified</span>
               </div>
             )}
           </div>
 
           {/* Info */}
-          <div className="p-5 md:p-7">
+          <div className="flex flex-1 flex-col p-5 md:p-7 md:justify-between">
             <div className="hidden justify-end gap-2 md:flex">
               <ShareProfileDialog
                 username={username}
@@ -146,13 +148,15 @@ export function HeroCard({
             </div>
 
             <div className="mt-2">
-              <h1 className="flex items-center gap-2 text-4xl font-bold tracking-tight md:text-5xl">
+              <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight md:text-4xl">
                 {displayName}
                 {profile.is_verified && (
                   <BadgeCheck className="h-6 w-6 fill-primary text-primary-foreground" />
                 )}
               </h1>
-              <p className="mt-1 text-muted-foreground">{professionStr}</p>
+              <p className="mt-1 text-muted-foreground">
+                {professionStr}
+              </p>
               {loc && (
                 <p className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground">
                   <MapPin className="h-4 w-4 text-amber" />

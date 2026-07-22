@@ -99,6 +99,8 @@ export function TalentCard({
   onViewPortfolio,
   heroBackground,
 }: TalentCardProps) {
+  const [heroImgFailed, setHeroImgFailed] = useState(false);
+
   const data = sample ? (SAMPLE_PROFILE as TalentProfile) : profile;
 
   if (!data) return null;
@@ -109,8 +111,6 @@ export function TalentCard({
 
   const avail = availabilityMeta(data.availability);
   const displayName = showStr(data.full_legal_name) || data.username || "Talent";
-
-  const [heroImgFailed, setHeroImgFailed] = useState(false);
   const hero = resolveHeroBackground(
     heroImgFailed ? undefined : heroBackground,
     data.username ?? "default",
