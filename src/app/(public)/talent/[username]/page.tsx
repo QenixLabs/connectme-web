@@ -10,8 +10,11 @@ import {
   MessageSquare,
   Bookmark,
   MonitorPlay,
+  Ellipsis,
+  UserCheck,
+  Loader2,
 } from "lucide-react";
-import { talentApi, messagesApi } from "@/lib/api";
+import { talentApi, messagesApi, collaborationRequestsApi } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
 import type { TalentProfile, PortfolioItem } from "@/lib/validations/talent-profile.schema";
 import type { MediaKitData } from "@/types/media-kit";
@@ -24,6 +27,7 @@ import { isFeatureForbidden } from "@/hooks/use-feature-guard";
 import { FeatureGateAlert } from "@/components/feature-gate-alert";
 import { useSectionVisibility } from "@/hooks/use-section-visibility";
 import { useCreateCollaborationRequest } from "@/lib/api/hooks/useCreateCollaborationRequest";
+import { useAcceptCollaborationRequest } from "@/lib/api/hooks/useAcceptCollaborationRequest";
 import { ShortlistOrInviteModal } from "@/components/shortlist-or-invite-modal";
 import { ShareProfileDialog } from "@/components/share-profile-dialog";
 import { TalentGridCard } from "@/components/talent-grid-card";
@@ -83,9 +87,12 @@ export default function PublicTalentProfilePage() {
   const [isSendingFirstMessage, setIsSendingFirstMessage] = useState(false);
   const [connectDialogOpen, setConnectDialogOpen] = useState(false);
   const [isSendingConnectRequest, setIsSendingConnectRequest] = useState(false);
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+  const [pendingReceivedRequestId, setPendingReceivedRequestId] = useState<string | null>(null);
 
   const { guard } = useTierGuard(3);
   const createRequest = useCreateCollaborationRequest();
+  const acceptRequestMutation = useAcceptCollaborationRequest();
   const popup = usePopup();
 
   const hasFetchedUser = useRef(false);
@@ -163,12 +170,12 @@ export default function PublicTalentProfilePage() {
   );
 
   const handleConnectRequest = useCallback(
-    async (reason: "collaboration" | "mentorship" | "referral") => {
+    async (reason: "collaboration" | "mentorship" | "referral", message?: string) => {
       const talentId = profile?.user_id;
       if (!talentId) return;
       setIsSendingConnectRequest(true);
       createRequest.mutate(
-        { receiverId: talentId, reason },
+        { receiverId: talentId, reason, message },
         {
           onSuccess: (data) => {
             setConnectDialogOpen(false);
@@ -198,6 +205,29 @@ export default function PublicTalentProfilePage() {
       );
     },
     [profile, popup, createRequest, router, user],
+  );
+
+  const handleAcceptRequest = useCallback(
+    async (requestId: string) => {
+      acceptRequestMutation.mutate(requestId, {
+        onSuccess: () => {
+          setPendingReceivedRequestId(null);
+          popup.show({
+            title: "Request accepted",
+            description: `You are now connected with ${profile?.full_legal_name || profile?.username || "this talent"}.`,
+            variant: "success",
+          });
+        },
+        onError: (err: unknown) => {
+          popup.show({
+            title: "Failed to accept",
+            description: getApiErrorMessage(err, "Something went wrong"),
+            variant: "error",
+          });
+        },
+      });
+    },
+    [acceptRequestMutation, popup, profile],
   );
 
   /* ── Data loading ── */
@@ -247,6 +277,26 @@ export default function PublicTalentProfilePage() {
       cancelled = true;
     };
   }, [username]);
+
+  useEffect(() => {
+    if (!profile?.user_id || !user?._id) {
+      setPendingReceivedRequestId(null);
+      return;
+    }
+    let cancelled = false;
+    collaborationRequestsApi.getMyRequests().then((data) => {
+      if (cancelled) return;
+      const pendingFromProfile = data.received.find(
+        (r) =>
+          r.status === "pending" &&
+          r.requester_id._id === profile.user_id,
+      );
+      setPendingReceivedRequestId(pendingFromProfile?._id ?? null);
+    }).catch(() => {
+      if (!cancelled) setPendingReceivedRequestId(null);
+    });
+    return () => { cancelled = true; };
+  }, [profile?.user_id, user?._id]);
 
   useEffect(() => {
     if (!profile || isPrivate) return;
@@ -430,6 +480,14 @@ export default function PublicTalentProfilePage() {
             onMessage={handleSendMessage}
             onShortlist={() => setShortlistModalOpen(true)}
             onLike={handleLike}
+            onConnect={handleConnect}
+            onAcceptRequest={
+              pendingReceivedRequestId
+                ? () => handleAcceptRequest(pendingReceivedRequestId)
+                : undefined
+            }
+            isAcceptingRequest={acceptRequestMutation.isPending}
+            isRecruiter={isRecruiter}
           />
 
           {!isPrivate && (
@@ -453,6 +511,7 @@ export default function PublicTalentProfilePage() {
                 <TabNavigation
                   value={tab}
                   onChange={setTab}
+                  tabs={visibleTabs}
                 />
               )}
 
@@ -490,7 +549,7 @@ export default function PublicTalentProfilePage() {
                 )}
 
                 {tab === "skills" && (
-                  <div className="space-y-4">
+                  <div className="grid gap-6 lg:grid-cols-2">
                     <SkillsPane profile={activeProfile} showSkills />
                     <AwardsSection awards={MOCK_AWARDS} />
                   </div>
@@ -566,37 +625,81 @@ export default function PublicTalentProfilePage() {
 
       {/* Mobile action bar */}
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur md:hidden">
-        <div className="mx-auto flex max-w-md items-center justify-around px-2 py-2">
-          <button
-            onClick={handleConnect}
-            className="flex flex-1 flex-col items-center gap-1.5 rounded-lg px-3 py-3 text-sm font-medium text-muted-foreground hover:text-foreground"
-          >
-            <Plug className="h-6 w-6" />
-            Connect
-          </button>
-          <button
-            onClick={handleSendMessage}
-            className="flex flex-1 flex-col items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-3 text-sm font-medium text-primary"
-          >
-            <MessageSquare className="h-6 w-6 text-primary" />
-            Message
-          </button>
-          <button
-            onClick={() => router.push(`/talent/${username}/portfolio`)}
-            className="flex flex-1 flex-col items-center gap-1.5 rounded-lg px-3 py-3 text-sm font-medium text-muted-foreground hover:text-foreground"
-          >
-            <MonitorPlay className="h-6 w-6" />
-            Media Kit
-          </button>
-          {isRecruiter && (
+        <div className="flex items-center gap-2 px-3 py-2">
+          {pendingReceivedRequestId ? (
             <button
-              onClick={() => setShortlistModalOpen(true)}
-              className="flex flex-1 flex-col items-center gap-1.5 rounded-lg px-3 py-3 text-sm font-medium text-muted-foreground hover:text-foreground"
+              onClick={() => handleAcceptRequest(pendingReceivedRequestId)}
+              disabled={acceptRequestMutation.isPending}
+              className="flex flex-[2] items-center justify-center gap-2 rounded-xl bg-amber px-4 py-3 text-sm font-semibold text-amber-foreground disabled:opacity-50"
             >
-              <Bookmark className="h-6 w-6" />
-              Shortlist
+              {acceptRequestMutation.isPending ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <UserCheck className="h-5 w-5" />
+              )}
+              {acceptRequestMutation.isPending ? "Accepting..." : "Accept Request"}
+            </button>
+          ) : (
+            <button
+              onClick={handleSendMessage}
+              className="flex flex-[2] items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground"
+            >
+              <MessageSquare className="h-5 w-5" />
+              Message
             </button>
           )}
+
+          <div className="relative flex-1">
+            <button
+              onClick={() => setMoreMenuOpen(!moreMenuOpen)}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card px-3 py-3 text-sm font-medium text-muted-foreground"
+            >
+              <Ellipsis className="h-5 w-5" />
+              More
+            </button>
+            {moreMenuOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setMoreMenuOpen(false)}
+                />
+                <div className="absolute bottom-full left-0 right-0 z-20 mb-2 rounded-xl border border-border bg-card p-1.5 shadow-lg">
+                  <button
+                    onClick={() => {
+                      setMoreMenuOpen(false);
+                      handleConnect();
+                    }}
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-muted"
+                  >
+                    <Plug className="h-5 w-5" />
+                    Connect
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMoreMenuOpen(false);
+                      router.push(`/talent/${username}/portfolio`);
+                    }}
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-muted"
+                  >
+                    <MonitorPlay className="h-5 w-5" />
+                    Media Kit
+                  </button>
+                  {isRecruiter && (
+                    <button
+                      onClick={() => {
+                        setMoreMenuOpen(false);
+                        setShortlistModalOpen(true);
+                      }}
+                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-muted"
+                    >
+                      <Bookmark className="h-5 w-5" />
+                      Shortlist
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 

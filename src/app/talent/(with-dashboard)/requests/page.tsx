@@ -26,6 +26,7 @@ interface RequesterProfile {
   role?: string;
   full_legal_name?: string;
   username?: string;
+  slug?: string;
   company_name?: string;
   company_website?: string;
   company_size?: string;
@@ -148,6 +149,14 @@ export default function TalentRequestsPage() {
   const handleViewProfile = (requester: RequesterProfile) => {
     setSelectedRequester(requester);
     setProfileSheetOpen(true);
+  };
+
+  const handleProfileClick = (requester: RequesterProfile) => {
+    if (requester.role === "recruiter" && requester.slug) {
+      router.push(`/recruiter/${requester.slug}`);
+    } else if (requester.role === "talent" && requester.username) {
+      router.push(`/talent/${requester.username}`);
+    }
   };
 
   const emptyStateIcon = (
@@ -284,6 +293,7 @@ export default function TalentRequestsPage() {
                     onAccept={handleAccept}
                     onReject={handleReject}
                     onViewProfile={handleViewProfile}
+                    onProfileClick={handleProfileClick}
                     mode="received"
                   />
                 ))}
@@ -310,6 +320,7 @@ export default function TalentRequestsPage() {
                     onAccept={() => {}}
                     onReject={() => {}}
                     onViewProfile={handleViewProfile}
+                    onProfileClick={handleProfileClick}
                     mode="sent"
                   />
                 ))}
@@ -336,6 +347,7 @@ export default function TalentRequestsPage() {
                     onAccept={handleAccept}
                     onReject={handleReject}
                     onViewProfile={handleViewProfile}
+                    onProfileClick={handleProfileClick}
                     mode="history"
                   />
                 ))}

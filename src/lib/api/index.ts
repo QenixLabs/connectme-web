@@ -2,7 +2,7 @@ export { apiClient } from './client';
 export { authApi } from './auth';
 export { talentApi } from './talent';
 export { campaignApi, type Campaign, type CampaignQuestion, type CampaignTask, type TaskSubmission, type TaskDocument } from './campaign';
-export { recruiterApi } from './recruiter';
+export { recruiterApi, type RecruiterPublicProfile, type PublicCampaign } from './recruiter';
 export { messagesApi, collaborationRequestsApi } from './messages';
 export { notificationsApi } from './notifications';
 export { verificationApi, type VerificationRecord, type VerificationDocResponse, type VerificationStatusResponse } from './verification';

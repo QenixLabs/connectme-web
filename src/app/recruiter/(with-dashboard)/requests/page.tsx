@@ -24,6 +24,7 @@ interface RequesterProfile {
   role?: string;
   full_legal_name?: string;
   username?: string;
+  slug?: string;
   company_name?: string;
   company_website?: string;
   company_size?: string;
@@ -143,6 +144,14 @@ export default function RecruiterRequestsPage() {
     setProfileSheetOpen(true);
   };
 
+  const handleProfileClick = (requester: RequesterProfile) => {
+    if (requester.role === "talent" && requester.username) {
+      router.push(`/talent/${requester.username}`);
+    } else if (requester.role === "recruiter" && requester.slug) {
+      router.push(`/recruiter/${requester.slug}`);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="px-4 pt-6 space-y-4 pb-20">
@@ -244,6 +253,7 @@ export default function RecruiterRequestsPage() {
                   onAccept={() => {}}
                   onReject={() => {}}
                   onViewProfile={handleViewProfile}
+                  onProfileClick={handleProfileClick}
                   mode="sent"
                 />
               ))}
@@ -273,6 +283,7 @@ export default function RecruiterRequestsPage() {
                   onAccept={handleAccept}
                   onReject={handleReject}
                   onViewProfile={handleViewProfile}
+                  onProfileClick={handleProfileClick}
                   mode="received"
                 />
               ))}
@@ -302,6 +313,7 @@ export default function RecruiterRequestsPage() {
                   onAccept={handleAccept}
                   onReject={handleReject}
                   onViewProfile={handleViewProfile}
+                  onProfileClick={handleProfileClick}
                   mode="history"
                 />
               ))}

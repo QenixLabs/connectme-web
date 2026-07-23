@@ -10,11 +10,22 @@ import {
   MoreHorizontal,
   BadgeCheck,
   Bookmark,
+  Loader2,
+  UserCheck,
+  Plug,
+  MonitorPlay,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import type { TalentProfile } from "@/lib/validations/talent-profile.schema";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ShareProfileDialog } from "@/components/share-profile-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface HeroCardProps {
   profile: TalentProfile;
@@ -24,6 +35,10 @@ interface HeroCardProps {
   onMessage?: () => void;
   onShortlist?: () => void;
   onLike?: () => void;
+  onConnect?: () => void;
+  onAcceptRequest?: () => void;
+  isAcceptingRequest?: boolean;
+  isRecruiter?: boolean;
 }
 
 function StatCard({
@@ -83,11 +98,18 @@ export function HeroCard({
   onMessage,
   onShortlist,
   onLike,
+  onConnect,
+  onAcceptRequest,
+  isAcceptingRequest = false,
+  isRecruiter = false,
 }: HeroCardProps) {
+  const router = useRouter();
   const [imgFailed, setImgFailed] = useState(false);
   const displayName = profile.full_legal_name || profile.username || "Talent";
   const professionStr =
-    profile.professions?.slice(0, 3).join(" \u2022 ") || "Talent";
+    profile.professions?.slice(0, 3).flatMap((p, i) =>
+      i > 0 ? [<span key={`sep-${i}`} className="mx-1">&bull;</span>, <span key={i}>{p}</span>] : [<span key={i}>{p}</span>],
+    ) ?? "Talent";
   const loc = [profile.location?.city, profile.location?.state, profile.location?.country]
     .filter(Boolean)
     .join(", ");
@@ -98,9 +120,9 @@ export function HeroCard({
   return (
     <section className="px-0 pt-0 md:px-0 md:pt-0">
       <Card className="overflow-hidden border-border p-0 shadow-card">
-        <div className="flex flex-col">
+        <div className="grid gap-0 md:grid-cols-[340px_1fr]">
           {/* Photo */}
-          <div className="relative aspect-[4/5] md:max-h-[480px]">
+          <div className="relative aspect-[4/5] md:aspect-auto md:min-h-[380px]">
             {profile.profile_photo && !imgFailed ? (
               <img
                 src={profile.profile_photo}
@@ -114,15 +136,15 @@ export function HeroCard({
               </div>
             )}
             {profile.is_verified && (
-              <div className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-full bg-primary/90 px-3 py-1.5 text-sm font-semibold text-primary-foreground backdrop-blur">
-                <BadgeCheck className="h-4 w-4 text-amber" />
-                <span className="text-amber">Root</span> Verified
+              <div className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-foreground shadow-sm">
+                <BadgeCheck className="h-3.5 w-3.5 text-amber" />
+                Root<span className="text-amber">Verified</span>
               </div>
             )}
           </div>
 
           {/* Info */}
-          <div className="p-5 md:p-7">
+          <div className="flex flex-1 flex-col p-5 md:p-7 md:justify-between">
             <div className="hidden justify-end gap-2 md:flex">
               <ShareProfileDialog
                 username={username}
@@ -146,13 +168,15 @@ export function HeroCard({
             </div>
 
             <div className="mt-2">
-              <h1 className="flex items-center gap-2 text-4xl font-bold tracking-tight md:text-5xl">
+              <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight md:text-4xl">
                 {displayName}
                 {profile.is_verified && (
                   <BadgeCheck className="h-6 w-6 fill-primary text-primary-foreground" />
                 )}
               </h1>
-              <p className="mt-1 text-muted-foreground">{professionStr}</p>
+              <p className="mt-1 text-muted-foreground">
+                {professionStr}
+              </p>
               {loc && (
                 <p className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground">
                   <MapPin className="h-4 w-4 text-amber" />
@@ -191,29 +215,84 @@ export function HeroCard({
             </div>
 
             {/* CTA row */}
-            <div className="mt-5 flex flex-wrap items-center gap-2">
+            <div className="mt-5 space-y-2">
+              {/* Row 1: Connect */}
               <Button
-                className="h-11 flex-1 rounded-lg md:flex-none md:px-8"
-                onClick={onMessage}
+                className="h-11 w-full rounded-lg"
+                onClick={onConnect}
               >
-                <MessageSquare className="mr-2 h-4 w-4" />
-                Message
+                <Plug className="mr-2 h-4 w-4" />
+                Connect
               </Button>
-              <Button
-                variant="outline"
-                className="h-11 flex-1 rounded-lg md:flex-none md:px-8"
-                onClick={onShortlist}
-              >
-                <Bookmark className="mr-2 h-4 w-4" />
-                Shortlist
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-11 w-11 rounded-lg"
-              >
-                <MoreHorizontal className="h-5 w-5" />
-              </Button>
+
+              {/* Row 2: Primary action + More */}
+              <div className="flex items-center gap-2">
+                {onAcceptRequest ? (
+                  <Button
+                    className="h-11 flex-[2] rounded-lg"
+                    onClick={onAcceptRequest}
+                    disabled={isAcceptingRequest}
+                  >
+                    {isAcceptingRequest ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <UserCheck className="mr-2 h-4 w-4" />
+                    )}
+                    {isAcceptingRequest ? "Accepting..." : "Accept Request"}
+                  </Button>
+                ) : isRecruiter ? (
+                  <Button
+                    className="h-11 flex-[2] rounded-lg"
+                    onClick={onShortlist}
+                  >
+                    <Bookmark className="mr-2 h-4 w-4" />
+                    Shortlist
+                  </Button>
+                ) : (
+                  <Button
+                    className="h-11 flex-[2] rounded-lg"
+                    onClick={onMessage}
+                  >
+                    <MessageSquare className="mr-2 h-4 w-4" />
+                    Message
+                  </Button>
+                )}
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="h-11 flex-1 rounded-lg"
+                    >
+                      <MoreHorizontal className="h-5 w-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-44">
+                    {onAcceptRequest ? (
+                      <DropdownMenuItem onClick={onShortlist}>
+                        <Bookmark className="mr-2 h-4 w-4" />
+                        Shortlist
+                      </DropdownMenuItem>
+                    ) : isRecruiter ? (
+                      <DropdownMenuItem onClick={onMessage}>
+                        <MessageSquare className="mr-2 h-4 w-4" />
+                        Message
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuItem onClick={onShortlist}>
+                        <Bookmark className="mr-2 h-4 w-4" />
+                        Shortlist
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem
+                      onClick={() => router.push(`/talent/${username}/portfolio`)}
+                    >
+                      <MonitorPlay className="mr-2 h-4 w-4" />
+                      Media Kit
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
           </div>
         </div>

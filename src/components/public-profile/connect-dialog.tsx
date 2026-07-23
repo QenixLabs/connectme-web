@@ -18,7 +18,7 @@ interface ConnectDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   recipientName: string;
-  onConnect: (reason: CollaborationReason) => void;
+  onConnect: (reason: CollaborationReason, message?: string) => void;
   isSending?: boolean;
 }
 
@@ -32,11 +32,13 @@ export function ConnectDialog({
   isSending,
 }: ConnectDialogProps) {
   const [reason, setReason] = useState<CollaborationReason | null>(null);
+  const [message, setMessage] = useState("");
 
   const handleConnect = () => {
     if (!reason) return;
-    onConnect(reason);
+    onConnect(reason, message.trim() || undefined);
     setReason(null);
+    setMessage("");
   };
 
   return (
@@ -71,12 +73,25 @@ export function ConnectDialog({
             );
           })}
         </div>
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground">
+            Message (optional)
+          </label>
+          <textarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder={`Introduce yourself to ${recipientName}...`}
+            rows={3}
+            className="w-full resize-none rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/20"
+          />
+        </div>
         <DialogFooter>
           <Button
             variant="outline"
             onClick={() => {
               onOpenChange(false);
               setReason(null);
+              setMessage("");
             }}
             disabled={isSending}
           >

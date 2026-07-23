@@ -1,10 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { Home, Briefcase, MessageSquare, User, Bell, Search, LogOut, UserCheck } from "lucide-react";
+import {
+  Home,
+  Briefcase,
+  MessageSquare,
+  User,
+  Bell,
+  Search,
+  LogOut,
+  UserCheck,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,7 +37,7 @@ export interface NavItem {
   icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
 }
 
-const NAV_ITEMS_BY_ROLE: Record<"talent" | "recruiter", NavItem[]> = {
+const BOTTOM_NAV_ITEMS: Record<"talent" | "recruiter", NavItem[]> = {
   talent: [
     { href: "/talent/dashboard", label: "Home", icon: Home },
     { href: "/talent/opportunities", label: "Jobs", icon: Briefcase },
@@ -43,6 +52,7 @@ const NAV_ITEMS_BY_ROLE: Record<"talent" | "recruiter", NavItem[]> = {
   ],
 };
 
+
 interface DashboardLayoutProps {
   children: React.ReactNode;
   role: "talent" | "recruiter";
@@ -54,7 +64,7 @@ export function DashboardLayout({
   role,
   homeHref,
 }: DashboardLayoutProps) {
-  const navItems = NAV_ITEMS_BY_ROLE[role];
+  const navItems = BOTTOM_NAV_ITEMS[role];
   const router = useRouter();
   const pathname = usePathname();
   const isMessagesPage = pathname.includes("/messages");
@@ -240,6 +250,11 @@ export function DashboardLayout({
 
   const roleMismatch = user ? user.role !== role : false;
 
+  const handleLogout = useCallback(async () => {
+    await logout();
+    router.push("/auth/login");
+  }, [logout, router]);
+
   if (!authChecked || isLoading || !user || roleMismatch) {
     return (
       <div className="min-h-screen bg-page flex flex-col">
@@ -264,64 +279,59 @@ export function DashboardLayout({
   }
 
   return (
-    <div className={cn("bg-page flex flex-col", isMessagesPage ? "h-screen overflow-hidden" : "min-h-screen")}>
-      <header className={cn("bg-card border-b border-border px-4 py-3 sticky top-0 z-40", (isMessagesPage || isProfilePage) && "hidden")}>
-        <div className="max-w-3xl mx-auto flex items-center justify-between">
+    <div className="min-h-screen bg-page flex flex-col">
+      <header className={cn("bg-card border-b border-border px-4 py-3 sticky top-0 z-40 flex items-center gap-3", (isMessagesPage || isProfilePage) && "hidden")}>
+        <Link
+          href={homeHref}
+          className="text-lg font-bold text-text-primary"
+        >
+          Connect<span className="text-brand">Me</span>
+        </Link>
+        <div className="flex items-center gap-1 ml-auto">
           <Link
-            href={homeHref}
-            className="text-lg font-bold text-text-primary"
+            href={`/${role}/notifications`}
+            className="relative p-2 text-text-muted hover:text-text-secondary transition-colors"
           >
-            Connect<span className="text-brand">Me</span>
+            <Bell className="w-5 h-5" strokeWidth={1.5} />
+            {unreadCount > 0 && (
+              <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-destructive text-white text-[10px] font-bold rounded-full px-1">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
           </Link>
-          <div className="flex items-center gap-1">
-            <Link
-              href={`/${role}/notifications`}
-              className="relative p-2 text-text-muted hover:text-text-secondary transition-colors"
-            >
-              <Bell className="w-5 h-5" strokeWidth={1.5} />
-              {unreadCount > 0 && (
-                <span className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-destructive text-white text-[10px] font-bold rounded-full px-1">
-                  {unreadCount > 9 ? "9+" : unreadCount}
-                </span>
-              )}
-            </Link>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  className={cn(
-                    "p-2 transition-colors",
-                    pathname === `/${role}/profile`
-                      ? "text-brand"
-                      : "text-text-muted hover:text-text-secondary"
-                  )}
-                >
-                  <User className="w-5 h-5" strokeWidth={1.5} />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40">
-                <DropdownMenuItem asChild>
-                  <Link href={`/${role}/profile`} className="cursor-pointer">
-                    Profile
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href={`/${role}/requests`} className="cursor-pointer">
-                    Requests
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={async () => {
-                    await logout();
-                    router.push("/auth/login");
-                  }}
-                  className="cursor-pointer text-destructive focus:text-destructive"
-                >
-                  <LogOut className="w-4 h-4 mr-2" strokeWidth={1.5} />
-                  Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className={cn(
+                  "p-2 transition-colors",
+                  pathname === `/${role}/profile`
+                    ? "text-brand"
+                    : "text-text-muted hover:text-text-secondary"
+                )}
+              >
+                <User className="w-5 h-5" strokeWidth={1.5} />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem asChild>
+                <Link href={`/${role}/profile`} className="cursor-pointer">
+                  Profile
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href={`/${role}/requests`} className="cursor-pointer">
+                  Requests
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={handleLogout}
+                className="cursor-pointer text-destructive focus:text-destructive"
+              >
+                <LogOut className="w-4 h-4 mr-2" strokeWidth={1.5} />
+                Logout
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 
