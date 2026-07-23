@@ -48,6 +48,7 @@ export interface CollaborationRequest {
     role?: string;
     full_legal_name?: string;
     username?: string;
+    slug?: string;
     company_name?: string;
     company_website?: string;
     company_size?: string;

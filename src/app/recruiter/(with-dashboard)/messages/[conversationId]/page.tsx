@@ -228,7 +228,7 @@ export default function RecruiterChatPage() {
   const otherName = getDisplayName(otherParticipant, otherId);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col flex-1 min-h-0">
       <ChatHero
         otherUser={otherParticipant}
         otherName={otherName}

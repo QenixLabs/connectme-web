@@ -4,6 +4,7 @@ import type {
 } from '@/lib/validations/recruiter-profile.schema';
 
 export const DEFAULT_VALUES: UpdateRecruiterProfileInput = {
+  slug: '',
   company_name: '',
   company_website: '',
   linkedin_company_url: '',
@@ -15,6 +16,7 @@ export const DEFAULT_VALUES: UpdateRecruiterProfileInput = {
 
 export function hydrateFromServer(profile: RecruiterProfile): UpdateRecruiterProfileInput {
   return {
+    slug: (profile as Record<string, unknown>).slug as string ?? '',
     company_name: profile.company_name ?? '',
     company_website: profile.company_website ?? '',
     linkedin_company_url: profile.linkedin_company_url ?? '',

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import {
   Share2,
   Heart,
@@ -10,11 +10,22 @@ import {
   MoreHorizontal,
   BadgeCheck,
   Bookmark,
+  Loader2,
+  UserCheck,
+  Plug,
+  MonitorPlay,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import type { TalentProfile } from "@/lib/validations/talent-profile.schema";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ShareProfileDialog } from "@/components/share-profile-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface HeroCardProps {
   profile: TalentProfile;
@@ -24,6 +35,10 @@ interface HeroCardProps {
   onMessage?: () => void;
   onShortlist?: () => void;
   onLike?: () => void;
+  onConnect?: () => void;
+  onAcceptRequest?: () => void;
+  isAcceptingRequest?: boolean;
+  isRecruiter?: boolean;
 }
 
 function StatCard({
@@ -83,7 +98,12 @@ export function HeroCard({
   onMessage,
   onShortlist,
   onLike,
+  onConnect,
+  onAcceptRequest,
+  isAcceptingRequest = false,
+  isRecruiter = false,
 }: HeroCardProps) {
+  const router = useRouter();
   const [imgFailed, setImgFailed] = useState(false);
   const displayName = profile.full_legal_name || profile.username || "Talent";
   const professionStr =
@@ -195,29 +215,84 @@ export function HeroCard({
             </div>
 
             {/* CTA row */}
-            <div className="mt-5 flex flex-wrap items-center gap-2">
+            <div className="mt-5 space-y-2">
+              {/* Row 1: Connect */}
               <Button
-                className="h-11 flex-1 rounded-lg md:flex-none md:px-8"
-                onClick={onMessage}
+                className="h-11 w-full rounded-lg"
+                onClick={onConnect}
               >
-                <MessageSquare className="mr-2 h-4 w-4" />
-                Message
+                <Plug className="mr-2 h-4 w-4" />
+                Connect
               </Button>
-              <Button
-                variant="outline"
-                className="h-11 flex-1 rounded-lg md:flex-none md:px-8"
-                onClick={onShortlist}
-              >
-                <Bookmark className="mr-2 h-4 w-4" />
-                Shortlist
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-11 w-11 rounded-lg"
-              >
-                <MoreHorizontal className="h-5 w-5" />
-              </Button>
+
+              {/* Row 2: Primary action + More */}
+              <div className="flex items-center gap-2">
+                {onAcceptRequest ? (
+                  <Button
+                    className="h-11 flex-[2] rounded-lg"
+                    onClick={onAcceptRequest}
+                    disabled={isAcceptingRequest}
+                  >
+                    {isAcceptingRequest ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <UserCheck className="mr-2 h-4 w-4" />
+                    )}
+                    {isAcceptingRequest ? "Accepting..." : "Accept Request"}
+                  </Button>
+                ) : isRecruiter ? (
+                  <Button
+                    className="h-11 flex-[2] rounded-lg"
+                    onClick={onShortlist}
+                  >
+                    <Bookmark className="mr-2 h-4 w-4" />
+                    Shortlist
+                  </Button>
+                ) : (
+                  <Button
+                    className="h-11 flex-[2] rounded-lg"
+                    onClick={onMessage}
+                  >
+                    <MessageSquare className="mr-2 h-4 w-4" />
+                    Message
+                  </Button>
+                )}
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="h-11 flex-1 rounded-lg"
+                    >
+                      <MoreHorizontal className="h-5 w-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-44">
+                    {onAcceptRequest ? (
+                      <DropdownMenuItem onClick={onShortlist}>
+                        <Bookmark className="mr-2 h-4 w-4" />
+                        Shortlist
+                      </DropdownMenuItem>
+                    ) : isRecruiter ? (
+                      <DropdownMenuItem onClick={onMessage}>
+                        <MessageSquare className="mr-2 h-4 w-4" />
+                        Message
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuItem onClick={onShortlist}>
+                        <Bookmark className="mr-2 h-4 w-4" />
+                        Shortlist
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem
+                      onClick={() => router.push(`/talent/${username}/portfolio`)}
+                    >
+                      <MonitorPlay className="mr-2 h-4 w-4" />
+                      Media Kit
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
           </div>
         </div>

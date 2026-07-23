@@ -14,6 +14,8 @@ import {
   PieChart,
   Briefcase,
   Camera,
+  Globe,
+  Loader2,
 } from "lucide-react";
 import { usePopup } from "@/hooks/use-popup";
 
@@ -72,7 +74,7 @@ interface EditFormProps {
   onCancel: () => void;
 }
 
-const SECTION_IDS = ["company", "details", "role"];
+const SECTION_IDS = ["company", "details", "role", "profile"];
 
 const SECTION_CONFIG = [
   {
@@ -95,6 +97,13 @@ const SECTION_CONFIG = [
     title: "Your role",
     subtitle: "Position at this company",
     icon: Briefcase,
+  },
+  {
+    id: "profile",
+    label: "Profile",
+    title: "Public profile",
+    subtitle: "Your public URL",
+    icon: Globe,
   },
 ];
 
@@ -404,17 +413,49 @@ export function EditForm({ profile, onSaved, onCancel }: EditFormProps) {
   });
 
   const watched = watch();
+  const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
+  const [checkingSlug, setCheckingSlug] = useState(false);
+  const slugDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const currentSlug = profile ? ((profile as Record<string, unknown>).slug as string) : undefined;
+
+  const handleSlugChange = useCallback(
+    (value: string) => {
+      if (slugDebounceRef.current) clearTimeout(slugDebounceRef.current);
+      const normalized = value.toLowerCase().trim();
+      if (!normalized || normalized === currentSlug) {
+        setSlugAvailable(null);
+        return;
+      }
+      setCheckingSlug(true);
+      setSlugAvailable(null);
+      slugDebounceRef.current = setTimeout(async () => {
+        try {
+          const { available } = await recruiterApi.checkSlugAvailability(normalized);
+          setSlugAvailable(available);
+        } catch {
+          setSlugAvailable(null);
+        } finally {
+          setCheckingSlug(false);
+        }
+      }, 500);
+    },
+    [currentSlug],
+  );
+
   const companyDone = !!watched.company_name;
   const detailsDone = !!watched.company_size && !!watched.specialties?.length;
   const roleDone = !!watched.position;
+  const profileDone = !!watched.slug;
 
   const checks = {
     company: companyDone,
     details: detailsDone,
     role: roleDone,
+    profile: profileDone,
   };
 
-  const totalFields = 7;
+  const totalFields = 8;
   let filledFields = 0;
   if (watched.company_name) filledFields++;
   if (watched.company_website) filledFields++;
@@ -422,6 +463,7 @@ export function EditForm({ profile, onSaved, onCancel }: EditFormProps) {
   if (watched.company_size) filledFields++;
   if (watched.specialties?.length) filledFields++;
   if (watched.position) filledFields++;
+  if (watched.slug) filledFields++;
   if (watched.profile_photo) filledFields++;
   const completeness = Math.round((filledFields / totalFields) * 100);
 
@@ -702,6 +744,74 @@ export function EditForm({ profile, onSaved, onCancel }: EditFormProps) {
                           )}
                         </SelectContent>
                       </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </FormSection>
+
+              {/* PUBLIC PROFILE */}
+              <FormSection
+                id="profile"
+                title="Public profile"
+                subtitle="Your public URL"
+                icon={Globe}
+              >
+                <FormField
+                  control={control}
+                  name="slug"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Profile URL</FormLabel>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-1 rounded-lg border border-border bg-muted px-3 py-2">
+                          <span className="text-sm text-muted-foreground shrink-0">
+                            connectme.in/recruiter/
+                          </span>
+                          <FormControl>
+                            <input
+                              {...field}
+                              value={field.value ?? ""}
+                              onChange={(e) => {
+                                const val = e.target.value
+                                  .toLowerCase()
+                                  .replace(/[^a-z0-9-]/g, "")
+                                  .replace(/--+/g, "-");
+                                field.onChange(val);
+                                handleSlugChange(val);
+                              }}
+                              placeholder="your-company"
+                              className="flex-1 min-w-0 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/50"
+                            />
+                          </FormControl>
+                        </div>
+                        {field.value && checkingSlug && (
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                            Checking availability…
+                          </p>
+                        )}
+                        {!checkingSlug && slugAvailable === true && (
+                          <p className="text-xs text-success flex items-center gap-1">
+                            <Check className="h-3 w-3" />
+                            This URL is available
+                          </p>
+                        )}
+                        {!checkingSlug && slugAvailable === false && (
+                          <p className="text-xs text-destructive flex items-center gap-1">
+                            <X className="h-3 w-3" />
+                            This URL is already taken
+                          </p>
+                        )}
+                        {!checkingSlug && slugAvailable === null && field.value && field.value === currentSlug && (
+                          <p className="text-xs text-muted-foreground">
+                            This is your current URL
+                          </p>
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                          Only lowercase letters, numbers, and hyphens. Can be changed later.
+                        </p>
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}

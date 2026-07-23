@@ -12,6 +12,7 @@ interface RequesterProfile {
   role?: string;
   full_legal_name?: string;
   username?: string;
+  slug?: string;
   company_name?: string;
   company_website?: string;
   company_size?: string;
@@ -57,6 +58,7 @@ interface RequestCardProps {
   onAccept: (id: string) => void;
   onReject: (id: string) => void;
   onViewProfile: (requester: RequesterProfile) => void;
+  onProfileClick?: (requester: RequesterProfile) => void;
   mode?: "received" | "sent" | "history";
 }
 
@@ -66,6 +68,7 @@ export function RequestCard({
   onAccept,
   onReject,
   onViewProfile,
+  onProfileClick,
   mode = "received",
 }: RequestCardProps) {
   const [isLeaving, setIsLeaving] = useState(false);
@@ -118,7 +121,11 @@ export function RequestCard({
           <div className={cn("px-4 py-4", isLeaving && "opacity-0")}>
             <div className="flex items-start gap-4">
               {/* Avatar */}
-              <div className="relative flex-shrink-0">
+              <button
+                type="button"
+                onClick={() => onProfileClick?.(requester)}
+                className="relative flex-shrink-0 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded-xl"
+              >
                 <div
                   className={cn(
                     "w-[56px] h-[56px] rounded-xl overflow-hidden bg-surface-light",
@@ -144,14 +151,18 @@ export function RequestCard({
                     <ShieldCheck className="w-2.5 h-2.5 text-white" strokeWidth={3} />
                   </div>
                 )}
-              </div>
+              </button>
 
               {/* Content */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[15px] font-semibold text-text-primary truncate">
+                    <button
+                      type="button"
+                      onClick={() => onProfileClick?.(requester)}
+                      className="flex items-center gap-1.5 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 rounded"
+                    >
+                      <span className="text-[15px] font-semibold text-text-primary truncate hover:text-brand transition-colors">
                         {name}
                       </span>
                       {isVerified && (
@@ -160,7 +171,7 @@ export function RequestCard({
                           strokeWidth={2.5}
                         />
                       )}
-                    </div>
+                    </button>
                     {displaySubtitle && (
                       <p className="text-xs text-text-secondary mt-0.5 truncate">
                         {displaySubtitle}
