@@ -62,13 +62,15 @@ export const campaignWizardSchema = z
       .optional(),
     specialties: z.array(z.string()).optional(),
     needs_influencer: z.boolean().optional(),
-    influencer_speciality: z.string().optional(),
+    influencer_speciality: z.array(z.string()).max(4, 'At most 4 specialities').optional(),
     task: z
       .object({
         title: z.string().max(200, 'Must be 200 characters or fewer').optional(),
         description: z.string().max(2000, 'Must be 2000 characters or fewer').optional(),
         task_type: z.enum(['file_upload', 'text_response']).optional(),
         deadline_days: z.number().min(1, 'Must be at least 1 day').max(90, 'Max 90 days').optional(),
+        nda_enabled: z.boolean().optional(),
+        nda_text: z.string().max(8000, 'Must be 8000 characters or fewer').optional(),
       })
       .optional(),
     publishOption: z.enum(['draft', 'public', 'invite_only']),

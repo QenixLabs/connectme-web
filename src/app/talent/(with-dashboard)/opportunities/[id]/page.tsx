@@ -26,9 +26,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { campaignApi, useCampaignTalentView, useRespondToInvite } from "@/lib/api";
 import { useBookmarkCampaign, useUnbookmarkCampaign } from "@/lib/api/hooks/useCampaigns";
 import { useWithdrawApplication } from "@/lib/api/hooks/useCampaignTalentView";
-import { useTalentTask, useSubmitTask } from "@/lib/api/hooks/useCampaignTask";
+import { useTalentTask, useSubmitTask, useAcceptTaskNda, useDeclineTaskNda } from "@/lib/api/hooks/useCampaignTask";
 import { getApiErrorMessage } from "@/lib/formatters";
 import { TalentTaskCard } from "@/components/talent/TalentTaskCard";
+import { TaskNDAModal } from "@/components/talent/TaskNDAModal";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
@@ -118,6 +119,10 @@ export default function TalentCampaignDetailPage() {
 
   const { data: taskData } = useTalentTask(campaignId);
   const submitTask = useSubmitTask();
+  const acceptNda = useAcceptTaskNda();
+  const declineNda = useDeclineTaskNda();
+
+  const isNdaLocked = !!taskData?.task?.nda_enabled && !!taskData?.submission && !taskData.submission.nda_accepted;
 
   const applyMutation = useMutation({
     mutationFn: () =>
@@ -227,7 +232,20 @@ export default function TalentCampaignDetailPage() {
         onWithdraw={() => setShowWithdrawConfirm(true)}
       />
 
-      {taskData?.task && taskData?.submission && (
+      {isNdaLocked && taskData?.task ? (
+        <TaskNDAModal
+          campaignName={campaign?.name ?? ""}
+          ndaText={taskData.task.nda_text ?? ""}
+          isAccepting={acceptNda.isPending}
+          isDeclining={declineNda.isPending}
+          onAccept={() => acceptNda.mutate(campaignId)}
+          onDecline={() =>
+            declineNda.mutate(campaignId, {
+              onSuccess: () => router.push("/talent/opportunities"),
+            })
+          }
+        />
+      ) : taskData?.task && taskData?.submission ? (
         <TalentTaskCard
           task={taskData.task}
           submission={taskData.submission}
@@ -237,7 +255,7 @@ export default function TalentCampaignDetailPage() {
           }
           isSubmitting={submitTask.isPending}
         />
-      )}
+      ) : null}
 
       <CoverImage campaign={campaign} />
 

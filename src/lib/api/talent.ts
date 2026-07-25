@@ -268,4 +268,19 @@ export const talentApi = {
     const response = await apiClient.get(`/talent/media-kit/${username}`);
     return response.data;
   },
+
+  likeTalent: async (username: string): Promise<{ liked: boolean }> => {
+    const response = await apiClient.post(`/talent/like/${username}`);
+    return response.data;
+  },
+
+  unlikeTalent: async (username: string): Promise<{ liked: boolean }> => {
+    const response = await apiClient.delete(`/talent/like/${username}`);
+    return response.data;
+  },
+
+  getLikeStatus: async (username: string): Promise<{ is_liked: boolean }> => {
+    const response = await apiClient.get(`/talent/like/${username}/status`);
+    return response.data;
+  },
 };

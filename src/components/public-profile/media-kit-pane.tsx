@@ -65,7 +65,7 @@ export function MediaKitPane({ profile, mediaKit }: MediaKitPaneProps) {
   const [imgFailed, setImgFailed] = useState(false);
 
   const socialEntries = Object.entries(profile.social_links ?? {}).filter(
-    ([, link]) => link?.url,
+    ([, link]) => link?.url && link?.show_on_profile === true,
   );
 
   const docs = [

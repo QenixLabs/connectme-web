@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { motion } from 'motion/react';
-import { ClipboardList, Eye, EyeOff, Upload, FileText, X, Download, ExternalLink, Loader2 } from 'lucide-react';
+import { ClipboardList, Eye, EyeOff, Upload, FileText, X, Download, ExternalLink, Loader2, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -26,12 +26,30 @@ import {
 import { useCampaignTask, useUpsertCampaignTask, useDeleteCampaignTask, useTaskDocument, useUploadTaskDocument, useDeleteTaskDocument } from '@/lib/api/hooks/useCampaignTask';
 import { type CampaignTask } from '@/lib/api';
 
+const DEFAULT_NDA_TEMPLATE = `NON-DISCLOSURE AGREEMENT
+
+This Non-Disclosure Agreement ("Agreement") is entered into between the Talent ("Recipient") and the Recruiter/Production Company ("Disclosing Party").
+
+1. CONFIDENTIAL INFORMATION: The Recipient acknowledges that they may receive confidential and proprietary information related to the project, including but not limited to scripts, storylines, character details, production plans, and casting decisions ("Confidential Information").
+
+2. OBLIGATIONS: The Recipient agrees to hold all Confidential Information in strict confidence and shall not disclose, copy, distribute, or use any Confidential Information for any purpose other than the specific project requirements.
+
+3. NON-DISCLOSURE: The Recipient shall not discuss, post, share, or otherwise disseminate any Confidential Information on social media, with third parties, or through any other channel without prior written consent.
+
+4. DURATION: This Agreement shall remain in effect indefinitely from the date of acceptance.
+
+5. BREACH: Any breach of this Agreement may result in legal action and the Recipient may be held liable for damages.
+
+By accepting this task, you acknowledge that you have read and agree to the terms of this NDA.`;
+
 const taskFormSchema = z.object({
   is_enabled: z.boolean(),
   title: z.string().max(200).optional(),
   description: z.string().max(2000).optional(),
   task_type: z.enum(['file_upload', 'text_response']).optional(),
   deadline_days: z.number().min(1).max(90).optional(),
+  nda_enabled: z.boolean().optional(),
+  nda_text: z.string().max(8000).optional(),
 });
 
 type TaskFormValues = z.infer<typeof taskFormSchema>;
@@ -69,12 +87,18 @@ export function TaskConfigCard({ campaignId }: TaskConfigCardProps) {
       description: existingTask?.description ?? '',
       task_type: existingTask?.task_type ?? 'file_upload',
       deadline_days: existingTask?.deadline_days ?? 3,
+      nda_enabled: existingTask?.nda_enabled ?? false,
+      nda_text: existingTask?.nda_text ?? '',
     },
   });
 
   const handleSave = async (values: TaskFormValues) => {
+    const payload = {
+      ...values,
+      nda_text: values.nda_enabled ? (values.nda_text || DEFAULT_NDA_TEMPLATE) : undefined,
+    };
     await upsertTask.mutateAsync(
-      { campaignId, payload: values },
+      { campaignId, payload },
     );
 
     if (pendingDoc) {
@@ -103,6 +127,8 @@ export function TaskConfigCard({ campaignId }: TaskConfigCardProps) {
           description: '',
           task_type: 'file_upload',
           deadline_days: 3,
+          nda_enabled: false,
+          nda_text: '',
         });
       },
     });
@@ -168,6 +194,8 @@ export function TaskConfigCard({ campaignId }: TaskConfigCardProps) {
                   description: existingTask.description,
                   task_type: existingTask.task_type,
                   deadline_days: existingTask.deadline_days,
+                  nda_enabled: existingTask.nda_enabled ?? false,
+                  nda_text: existingTask.nda_text ?? '',
                 });
                 setIsEditing(true);
               }}
@@ -196,6 +224,13 @@ export function TaskConfigCard({ campaignId }: TaskConfigCardProps) {
           <div className="mt-2">
             <span className="text-[11px] font-medium text-ink-muted uppercase tracking-wide">Instructions</span>
             <p className="text-sm text-ink-soft mt-0.5 line-clamp-2">{existingTask.description}</p>
+          </div>
+        )}
+
+        {existingTask.nda_enabled && (
+          <div className="mt-2 flex items-center gap-1.5">
+            <Shield className="h-3.5 w-3.5 text-amber-foreground" strokeWidth={1.5} />
+            <span className="text-xs font-medium text-amber-foreground">NDA Required</span>
           </div>
         )}
 
@@ -415,6 +450,58 @@ export function TaskConfigCard({ campaignId }: TaskConfigCardProps) {
                     if (file) setPendingDoc(file);
                   }}
                 />
+              </div>
+
+              <div className="border-t border-border/60 pt-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-4 w-4 text-ink-muted" strokeWidth={1.5} />
+                    <span className="text-sm font-semibold text-ink">Require NDA</span>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={!!form.watch('nda_enabled')}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          form.setValue('nda_enabled', true, { shouldValidate: false });
+                          form.setValue('nda_text', DEFAULT_NDA_TEMPLATE, { shouldValidate: false });
+                        } else {
+                          form.setValue('nda_enabled', false, { shouldValidate: false });
+                          form.setValue('nda_text', undefined, { shouldValidate: false });
+                        }
+                      }}
+                    />
+                    <div className="w-9 h-5 bg-border/60 peer-checked:bg-brand rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-4 after:w-4 after:transition-all" />
+                  </label>
+                </div>
+                <p className="text-[13px] text-ink-muted mt-1">
+                  Shortlisted talents must agree to the NDA before viewing the task details.
+                </p>
+
+                {form.watch('nda_enabled') && (
+                  <div className="mt-3">
+                    <FormField
+                      control={form.control}
+                      name="nda_text"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col gap-1.5">
+                          <FieldLabel>NDA Text</FieldLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Enter NDA terms..."
+                              className="min-h-[200px] text-sm rounded-xl border-border/60 bg-card resize-y focus-visible:ring-gold/30 placeholder:text-ink-muted/50 font-mono text-xs leading-relaxed"
+                              {...field}
+                              value={field.value ?? ''}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                )}
               </div>
             </>
           )}

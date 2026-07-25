@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils';
 
 import { PROFESSIONS } from '@/lib/professions';
 import { getSpecialtiesForProfession, INFLUENCER_SPECIALTIES } from '@/lib/profession-fields';
+import { TagInput } from '@/components/ui/tag-input';
 
 
 function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
@@ -269,21 +270,15 @@ export function BasicInfoStep({ mediaFile, onMediaChange, existingCoverUrl }: Ba
             name="influencer_speciality"
             render={({ field }) => (
               <FormItem>
-                <Select
-                  value={field.value ?? ''}
-                  onValueChange={field.onChange}
-                >
-                  <FormControl>
-                    <SelectTrigger className="text-sm h-11 rounded-xl border-border/60 bg-card">
-                      <SelectValue placeholder="Select influencer specialty" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent className="rounded-xl">
-                    {INFLUENCER_SPECIALTIES.map((s) => (
-                      <SelectItem key={s} value={s}>{s}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <TagInput
+                  value={field.value ?? []}
+                  onChange={field.onChange}
+                  suggestions={INFLUENCER_SPECIALTIES}
+                  normalizeFromSuggestions
+                  placeholder="Select influencer specialty..."
+                  maxTags={4}
+                  containerClassName="[&>div]:rounded-xl [&>div]:border-border/60 [&>div]:bg-card"
+                />
                 <FormMessage />
               </FormItem>
             )}

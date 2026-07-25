@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 import {
   FormField,
   FormItem,
@@ -67,6 +68,9 @@ export function ExtrasStep({ resume }: ExtrasStepProps) {
   const availablePlatforms = SOCIAL_PLATFORMS.filter(
     (p) => !usedPlatforms.has(p.value),
   );
+
+  const watchedLinks = watch("social_links") ?? [];
+  const selectedCount = watchedLinks.filter((l) => l.show_on_profile === true).length;
 
   return (
     <div className="space-y-6">
@@ -403,7 +407,22 @@ export function ExtrasStep({ resume }: ExtrasStepProps) {
       {/* ---------- SOCIAL ---------- */}
       <SectionCard
         icon={Share2}
-        label="Social links"
+        label={
+          <span className="flex items-center gap-2">
+            Social links
+            {fields.length > 0 && (
+              <span
+                className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
+                  selectedCount > 4
+                    ? "bg-destructive/10 text-destructive"
+                    : "bg-gold-soft text-gold-ink"
+                }`}
+              >
+                {selectedCount}/4 shown
+              </span>
+            )}
+          </span>
+        }
         description="Add your social profiles and website"
         isPublic={watch("section_visibility.social_links") ?? true}
         onToggle={() => {
@@ -468,6 +487,40 @@ export function ExtrasStep({ resume }: ExtrasStepProps) {
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={control}
+                  name={`social_links.${index}.show_on_profile`}
+                  render={({ field: f }) => {
+                    const isAtMax =
+                      !f.value && selectedCount >= 4;
+                    return (
+                      <FormItem className="shrink-0 mb-0 flex items-center">
+                        <FormControl>
+                          <Switch
+                            checked={f.value ?? false}
+                             onCheckedChange={(checked) => {
+                               if (checked) {
+                                 const currentShown =
+                                   getValues("social_links")?.filter(
+                                     (l) => l.show_on_profile === true,
+                                   ).length ?? 0;
+                                 if (currentShown >= 4) return;
+                               }
+                               f.onChange(checked);
+                            }}
+                            disabled={isAtMax}
+                            className="data-[state=checked]:bg-gold"
+                          />
+                        </FormControl>
+                        {isAtMax && (
+                          <span className="ml-1 text-[10px] text-ink-muted">
+                            Max 4
+                          </span>
+                        )}
+                      </FormItem>
+                    );
+                  }}
+                />
                 <button
                   type="button"
                   onClick={() => remove(index)}
@@ -487,7 +540,7 @@ export function ExtrasStep({ resume }: ExtrasStepProps) {
               value=""
               onValueChange={(platform) => {
                 if (platform) {
-                  append({ platform, url: "", visibility: "public" });
+                  append({ platform, url: "", visibility: "public", show_on_profile: false });
                 }
               }}
             >

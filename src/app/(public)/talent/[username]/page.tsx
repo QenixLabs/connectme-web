@@ -89,6 +89,10 @@ export default function PublicTalentProfilePage() {
   const [isSendingConnectRequest, setIsSendingConnectRequest] = useState(false);
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
   const [pendingReceivedRequestId, setPendingReceivedRequestId] = useState<string | null>(null);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [isTogglingLike, setIsTogglingLike] = useState(false);
+  const [likeAnimationKey, setLikeAnimationKey] = useState(0);
 
   const { guard } = useTierGuard(3);
   const createRequest = useCreateCollaborationRequest();
@@ -114,13 +118,35 @@ export default function PublicTalentProfilePage() {
     });
   }, [user, router, profile?.user_id, guard]);
 
-  const handleLike = useCallback(() => {
-    popup.show({
-      title: "Coming Soon",
-      description: "Like feature coming soon",
-      variant: "info",
-    });
-  }, [popup]);
+  const handleLike = useCallback(async () => {
+    if (!user) {
+      router.push("/auth/login");
+      return;
+    }
+    if (isTogglingLike) return;
+    setIsTogglingLike(true);
+    try {
+      if (isLiked) {
+        await talentApi.unlikeTalent(username);
+        setIsLiked(false);
+        setLikeCount((prev) => Math.max(0, prev - 1));
+        setLikeAnimationKey((k) => k + 1);
+      } else {
+        await talentApi.likeTalent(username);
+        setIsLiked(true);
+        setLikeCount((prev) => prev + 1);
+        setLikeAnimationKey((k) => k + 1);
+      }
+    } catch (err: unknown) {
+      popup.show({
+        title: "Something went wrong",
+        description: getApiErrorMessage(err, "Failed to update like"),
+        variant: "error",
+      });
+    } finally {
+      setIsTogglingLike(false);
+    }
+  }, [user, isLiked, isTogglingLike, username, router, popup]);
 
   const handleSendMessage = useCallback(() => {
     if (!user) {
@@ -254,6 +280,7 @@ export default function PublicTalentProfilePage() {
 
         if (!cancelled) {
           setProfile(profileRes as TalentProfile);
+          setLikeCount((profileRes as TalentProfile).analytics?.like_count ?? 0);
           if (portfolioRes && !(portfolioRes as Record<string, unknown>).private) {
             setPortfolioItems((portfolioRes as { items: PortfolioItem[] }).items || []);
           }
@@ -277,6 +304,18 @@ export default function PublicTalentProfilePage() {
       cancelled = true;
     };
   }, [username]);
+
+  useEffect(() => {
+    if (!profile?.user_id || !user?._id || isPrivate) return;
+    let cancelled = false;
+    talentApi.getLikeStatus(username).then((data) => {
+      if (cancelled) return;
+      setIsLiked(data.is_liked);
+    }).catch(() => {
+      if (!cancelled) setIsLiked(false);
+    });
+    return () => { cancelled = true; };
+  }, [username, profile?.user_id, user?._id, isPrivate]);
 
   useEffect(() => {
     if (!profile?.user_id || !user?._id) {
@@ -360,11 +399,6 @@ export default function PublicTalentProfilePage() {
     () => getMockStats(activeProfile?.analytics),
     [activeProfile?.analytics],
   );
-
-  const instagramUrl = activeProfile?.social_links?.instagram?.url;
-  const youtubeUrl = activeProfile?.social_links?.youtube?.url;
-  const hasInstagramLink = !!instagramUrl;
-  const hasYoutubeLink = !!youtubeUrl;
 
   const visibleTabs = useMemo(() => {
     const tabs: { id: TabId; label: string }[] = [];
@@ -453,9 +487,22 @@ export default function PublicTalentProfilePage() {
           <div className="flex items-center gap-2">
             <button
               onClick={handleLike}
-              className="grid h-10 w-10 place-items-center rounded-full border border-border bg-card shadow-sm"
+              disabled={isTogglingLike}
+              className="relative grid h-10 w-10 place-items-center rounded-full border border-border bg-card shadow-sm"
             >
-              <Heart className="h-5 w-5 text-amber" />
+              {isTogglingLike ? (
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              ) : (
+                <Heart
+                  key={`heart-${likeAnimationKey}`}
+                  className={`h-5 w-5 ${isLiked ? "fill-red-500 text-red-500" : "text-amber"} ${likeAnimationKey > 0 ? "animate-heart-pop" : ""}`}
+                />
+              )}
+              {likeCount > 0 && (
+                <span className="absolute -end-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                  {likeCount}
+                </span>
+              )}
             </button>
             <ShareProfileDialog
               username={username}
@@ -488,6 +535,8 @@ export default function PublicTalentProfilePage() {
             }
             isAcceptingRequest={acceptRequestMutation.isPending}
             isRecruiter={isRecruiter}
+            isLiked={isLiked}
+            likeCount={likeCount}
           />
 
           {!isPrivate && (
@@ -498,12 +547,17 @@ export default function PublicTalentProfilePage() {
                 youtubeSubscribers={mediaKit?.youtubeSubscribers}
                 youtubeViews={mediaKit?.youtubeViews}
                 monthlyViews={activeProfile.analytics?.profile_views_30d ?? 0}
-                hasInstagramLink={hasInstagramLink}
-                hasYoutubeLink={hasYoutubeLink}
-                instagramUrl={instagramUrl}
-                youtubeUrl={youtubeUrl}
-                instagramLoading={hasInstagramLink && mediaKit?.instagramFollowers == null}
-                youtubeLoading={hasYoutubeLink && mediaKit?.youtubeSubscribers == null}
+                socialLinks={activeProfile?.social_links}
+                instagramLoading={
+                  !!activeProfile?.social_links?.instagram?.url &&
+                  !!activeProfile?.social_links?.instagram?.show_on_profile &&
+                  mediaKit?.instagramFollowers == null
+                }
+                youtubeLoading={
+                  !!activeProfile?.social_links?.youtube?.url &&
+                  !!activeProfile?.social_links?.youtube?.show_on_profile &&
+                  mediaKit?.youtubeSubscribers == null
+                }
               />
 
               {/* Tabs */}

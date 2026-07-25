@@ -23,7 +23,7 @@ export const DEFAULT_VALUES: CreateTalentProfileInput = {
   professions: [],
   specialties: [],
   is_influencer: false,
-  influencer_speciality: "",
+  influencer_speciality: [],
   availability: undefined,
   headline: "",
   about: "",
@@ -80,7 +80,7 @@ export function hydrateFromServer(profile: TalentProfile): CreateTalentProfileIn
     professions: profile.professions ?? [],
     specialties: profile.specialties ?? [],
     is_influencer: profile.is_influencer ?? false,
-    influencer_speciality: profile.influencer_speciality ?? "",
+    influencer_speciality: profile.influencer_speciality ?? [],
     availability: profile.availability,
     headline: profile.headline ?? "",
     about: profile.about ?? "",
@@ -107,13 +107,21 @@ export function hydrateFromServer(profile: TalentProfile): CreateTalentProfileIn
     documents: {
       resume_url: profile.documents?.resume_url ?? "",
     },
-    social_links: Object.entries(profile.social_links ?? {}).map(([platform, link]) => ({
-      platform,
-      url: (link as { url?: string; visibility?: string }).url ?? "",
-      visibility:
-        ((link as { url?: string; visibility?: string }).visibility as "public" | "recruiters_only" | "private") ??
-        "public",
-    })),
+    social_links: Object.entries(profile.social_links ?? {}).map(([platform, link]) => {
+      const linkData = link as { url?: string; visibility?: string; show_on_profile?: boolean };
+      const isExistingIGorYT = platform === "instagram" || platform === "youtube";
+      return {
+        platform,
+        url: linkData.url ?? "",
+        visibility:
+          (linkData.visibility as "public" | "recruiters_only" | "private") ??
+          "public",
+        show_on_profile:
+          linkData.show_on_profile !== undefined
+            ? linkData.show_on_profile
+            : isExistingIGorYT,
+      };
+    }),
     privacy_mode: profile.privacy_mode,
     section_visibility: {
       bio: profile.section_visibility?.bio ?? true,
@@ -163,12 +171,13 @@ export function buildPayload(values: CreateTalentProfileInput): Record<string, u
       continue;
     }
     if (key === "social_links" && Array.isArray(val)) {
-      const record: Record<string, { url?: string; visibility?: string }> = {};
-      for (const item of val as { platform?: string; url?: string; visibility?: string }[]) {
+      const record: Record<string, { url?: string; visibility?: string; show_on_profile?: boolean }> = {};
+      for (const item of val as { platform?: string; url?: string; visibility?: string; show_on_profile?: boolean }[]) {
         if (!item.platform) continue;
-        const link: { url?: string; visibility?: string } = {};
+        const link: { url?: string; visibility?: string; show_on_profile?: boolean } = {};
         if (item.url && item.url !== "") link.url = item.url;
         if (item.visibility && item.visibility !== "public") link.visibility = item.visibility;
+        if (item.show_on_profile !== undefined) link.show_on_profile = item.show_on_profile;
         if (Object.keys(link).length > 0) {
           record[item.platform] = link;
         }

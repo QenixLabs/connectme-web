@@ -22,7 +22,7 @@ export function useUpsertCampaignTask() {
       payload,
     }: {
       campaignId: string;
-      payload: { is_enabled: boolean; title?: string; description?: string; task_type?: 'file_upload' | 'text_response'; deadline_days?: number };
+      payload: { is_enabled: boolean; title?: string; description?: string; task_type?: 'file_upload' | 'text_response'; deadline_days?: number; nda_enabled?: boolean; nda_text?: string };
     }) => campaignApi.upsertTask(campaignId, payload),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.task(variables.campaignId) });
@@ -113,6 +113,40 @@ export function useSubmitTask() {
     onError: (error) => {
       const err = error as { response?: { data?: { message?: string } } };
       show({ title: 'Failed to submit task', description: err.response?.data?.message, variant: 'error', position: 'bottom-center' });
+    },
+  });
+}
+
+export function useAcceptTaskNda() {
+  const queryClient = useQueryClient();
+  const { show } = usePopup();
+
+  return useMutation({
+    mutationFn: (campaignId: string) => campaignApi.acceptTaskNda(campaignId),
+    onSuccess: (_data, campaignId) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.talentTask(campaignId) });
+    },
+    onError: (error) => {
+      const err = error as { response?: { data?: { message?: string } } };
+      show({ title: 'Failed to accept NDA', description: err.response?.data?.message, variant: 'error', position: 'bottom-center' });
+    },
+  });
+}
+
+export function useDeclineTaskNda() {
+  const queryClient = useQueryClient();
+  const { show } = usePopup();
+
+  return useMutation({
+    mutationFn: (campaignId: string) => campaignApi.declineTaskNda(campaignId),
+    onSuccess: (_data, campaignId) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.talentTask(campaignId) });
+      queryClient.invalidateQueries({ queryKey: ['campaigns', 'talent-view', campaignId] });
+      show({ title: 'NDA declined and application withdrawn', variant: 'info', position: 'bottom-center' });
+    },
+    onError: (error) => {
+      const err = error as { response?: { data?: { message?: string } } };
+      show({ title: 'Failed to decline NDA', description: err.response?.data?.message, variant: 'error', position: 'bottom-center' });
     },
   });
 }

@@ -108,7 +108,7 @@ export function SectionCard({
   children,
 }: {
   icon: React.ComponentType<{ className?: string; strokeWidth?: number | string }>;
-  label: string;
+  label: ReactNode;
   description: string;
   isPublic?: boolean;
   onToggle?: () => void;

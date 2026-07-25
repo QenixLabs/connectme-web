@@ -349,6 +349,16 @@ html::-webkit-scrollbar {
 }
 
 /* ── RootIn / Canvas-Colors scoped theme ── */
+@keyframes heart-pop {
+  0% { transform: scale(0.3); opacity: 0.5; }
+  50% { transform: scale(1.25); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@utility animate-heart-pop {
+  animation: heart-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
 .rootin-theme {
   --background: oklch(0.984 0.014 254);
   --foreground: oklch(0.208 0.042 265.755);

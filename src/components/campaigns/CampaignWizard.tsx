@@ -141,13 +141,15 @@ function mapCampaignToDefaults(campaign: Campaign): CampaignWizardInput {
     })),
     specialties: campaign.specialties ?? [],
     needs_influencer: campaign.needs_influencer ?? false,
-    influencer_speciality: campaign.influencer_speciality ?? '',
+    influencer_speciality: campaign.influencer_speciality ?? [],
     task: campaign.task
       ? {
           title: campaign.task.title || '',
           description: campaign.task.description || '',
           task_type: campaign.task.task_type || 'file_upload',
           deadline_days: campaign.task.deadline_days || 3,
+          nda_enabled: campaign.task.nda_enabled ?? false,
+          nda_text: campaign.task.nda_text ?? '',
         }
       : undefined,
     publishOption,
@@ -209,7 +211,7 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
       questions: [],
       specialties: [],
       needs_influencer: false,
-      influencer_speciality: '',
+      influencer_speciality: [],
       task: undefined,
       publishOption: 'draft',
       scheduled_publish_at: '',
@@ -317,7 +319,7 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
       ? values.specialties
       : undefined,
     needs_influencer: values.needs_influencer || undefined,
-    influencer_speciality: values.influencer_speciality || undefined,
+    influencer_speciality: values.influencer_speciality?.length ? values.influencer_speciality : undefined,
     task: values.task?.title
       ? {
           is_enabled: true,
@@ -325,6 +327,8 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
           description: values.task.description || '',
           task_type: values.task.task_type || 'file_upload',
           deadline_days: values.task.deadline_days || 3,
+          nda_enabled: values.task.nda_enabled ?? false,
+          nda_text: values.task.nda_enabled ? values.task.nda_text || '' : undefined,
         }
       : undefined,
   });

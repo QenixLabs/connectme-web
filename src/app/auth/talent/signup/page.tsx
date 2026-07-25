@@ -104,7 +104,7 @@ const schema = z
     confirmPassword: z.string().min(1, "Please confirm your password"),
     specialties: z.array(z.string()).optional(),
     is_influencer: z.boolean().optional(),
-    influencer_speciality: z.string().optional(),
+    influencer_speciality: z.array(z.string()).max(4, 'At most 4 specialities').optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -166,7 +166,7 @@ export default function TalentSignupPage() {
       confirmPassword: "",
       specialties: [],
       is_influencer: false,
-      influencer_speciality: "",
+      influencer_speciality: [],
     },
     mode: "onChange",
   });
@@ -286,7 +286,7 @@ export default function TalentSignupPage() {
         verification_method: verificationMethod,
         specialties: values.specialties?.length ? values.specialties : undefined,
         is_influencer: values.is_influencer || undefined,
-        influencer_speciality: values.influencer_speciality || undefined,
+        influencer_speciality: values.influencer_speciality?.length ? values.influencer_speciality : undefined,
       });
       router.push(
         `/auth/verify-email?email=${encodeURIComponent(values.email)}&method=${verificationMethod}`,
@@ -540,22 +540,16 @@ export default function TalentSignupPage() {
                                   <FormItem>
                                     <FormLabel className="text-sm font-medium text-text-primary">
                                       Influencer Speciality <span className="text-rose-500">*</span>
+                                      <span className="text-ink/40 font-normal ml-1">(max 4)</span>
                                     </FormLabel>
-                                    <Select
-                                      onValueChange={field.onChange}
-                                      value={field.value || ""}
-                                    >
-                                      <FormControl>
-                                        <SelectTrigger className="h-10 text-sm rounded-xl border-border bg-cream-pale/80">
-                                          <SelectValue placeholder="Choose speciality..." />
-                                        </SelectTrigger>
-                                      </FormControl>
-                                      <SelectContent>
-                                        {INFLUENCER_SPECIALTIES.map((s) => (
-                                          <SelectItem key={s} value={s}>{s}</SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
+                                    <TagInput
+                                      value={field.value ?? []}
+                                      onChange={field.onChange}
+                                      suggestions={INFLUENCER_SPECIALTIES}
+                                      normalizeFromSuggestions
+                                      placeholder="Select specialities..."
+                                      maxTags={4}
+                                    />
                                     <FormMessage />
                                   </FormItem>
                                 )}

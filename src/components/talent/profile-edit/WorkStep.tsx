@@ -23,9 +23,8 @@ import type { CreateTalentProfileInput } from "@/lib/validations/talent-profile.
 import {
   AVAILABILITY_OPTIONS,
   PROFESSION_SUGGESTIONS,
-  INFLUENCER_SPECIALTY_OPTIONS,
 } from "@/lib/talent-profile/options";
-import { getSpecialtiesForProfession } from "@/lib/profession-fields";
+import { getSpecialtiesForProfession, INFLUENCER_SPECIALTIES } from "@/lib/profession-fields";
 import { SectionCard, AddRow, SkillRow, LanguageRow } from "./shared";
 
 export function WorkStep() {
@@ -136,27 +135,22 @@ export function WorkStep() {
               control={control}
               name="influencer_speciality"
               render={({ field }) => (
-                <FormItem className="max-w-xs">
+                <FormItem>
                   <FormLabel className="text-[13px] font-medium">
                     Influencer Speciality <span className="text-rose-500">*</span>
+                    <span className="text-ink/40 font-normal ml-1">
+                      (max 4)
+                    </span>
                   </FormLabel>
-                  <Select
-                    onValueChange={(v) => field.onChange(v || undefined)}
-                    value={field.value || ""}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="h-10 text-sm rounded-xl border-border bg-cream-pale/80 shadow-none">
-                        <SelectValue placeholder="Choose speciality..." />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {INFLUENCER_SPECIALTY_OPTIONS.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <TagInput
+                    value={field.value ?? []}
+                    onChange={field.onChange}
+                    suggestions={INFLUENCER_SPECIALTIES}
+                    normalizeFromSuggestions
+                    placeholder="Select specialities..."
+                    maxTags={4}
+                    containerClassName="[&>div]:rounded-xl [&>div]:border-border [&>div]:focus-within:border-gold/50 [&>div]:focus-within:ring-2 [&>div]:focus-within:ring-gold/25 [&>div]:bg-cream-pale/80"
+                  />
                   <FormMessage />
                 </FormItem>
               )}

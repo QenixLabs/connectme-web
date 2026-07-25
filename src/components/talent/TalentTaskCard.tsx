@@ -113,6 +113,10 @@ export function TalentTaskCard({ task, submission, onSubmit, isSubmitting, campa
 
   const isProcessing = isSubmitting || isUploading;
 
+  const hasNothingToSubmit =
+    (task.task_type === 'file_upload' && pendingFiles.length === 0 && uploadedFiles.length === 0) ||
+    (task.task_type === 'text_response' && !responseText.trim());
+
   return (
     <div className="bg-card border border-border/60 rounded-2xl shadow-luxe overflow-hidden">
       <div className="bg-gradient-to-r from-brand/5 to-brand/10 border-b border-border/60 px-5 py-3.5 flex items-center gap-3">
@@ -309,7 +313,7 @@ export function TalentTaskCard({ task, submission, onSubmit, isSubmitting, campa
 
             <Button
               onClick={handleSubmit}
-              disabled={isProcessing}
+              disabled={isProcessing || hasNothingToSubmit}
               className="w-full h-10 rounded-xl text-sm font-semibold bg-gradient-to-br from-gold to-gold-hover text-white hover:from-gold-bright hover:to-gold shadow-[0_4px_14px_-4px_oklch(0.74_0.13_80/0.45)] transition-all"
             >
               {isProcessing ? (

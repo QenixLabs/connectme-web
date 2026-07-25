@@ -37,7 +37,7 @@ export interface Campaign {
   questions?: CampaignQuestion[];
   specialties?: string[];
   needs_influencer?: boolean;
-  influencer_speciality?: string;
+  influencer_speciality?: string[];
   cover_image_url?: string;
   task?: CampaignTask;
   created_at: string;
@@ -54,6 +54,8 @@ export interface CampaignTask {
   task_type: 'file_upload' | 'text_response';
   deadline_days: number;
   document?: TaskDocument;
+  nda_enabled?: boolean;
+  nda_text?: string;
 }
 
 export interface TaskDocument {
@@ -81,6 +83,8 @@ export interface TaskSubmission {
   assigned_at: string;
   deadline_at: string;
   reminder_sent: boolean;
+  nda_accepted?: boolean;
+  nda_accepted_at?: string;
   created_at: string;
 }
 
@@ -169,7 +173,7 @@ export const campaignApi = {
         availability?: string;
   specialties?: string[];
   needs_influencer?: boolean;
-  influencer_speciality?: string;
+  influencer_speciality?: string[];
         languages?: Array<{ name?: string; fluency?: string }>;
         is_verified?: boolean;
       } | null;
@@ -437,7 +441,7 @@ export const campaignApi = {
     return response.data;
   },
 
-  upsertTask: async (campaignId: string, payload: { is_enabled: boolean; title?: string; description?: string; task_type?: 'file_upload' | 'text_response'; deadline_days?: number }): Promise<Record<string, unknown>> => {
+  upsertTask: async (campaignId: string, payload: { is_enabled: boolean; title?: string; description?: string; task_type?: 'file_upload' | 'text_response'; deadline_days?: number; nda_enabled?: boolean; nda_text?: string }): Promise<Record<string, unknown>> => {
     const response = await apiClient.put(`/campaigns/${campaignId}/task`, payload);
     return response.data;
   },
@@ -491,6 +495,16 @@ export const campaignApi = {
 
   sendAcceptanceMessage: async (campaignId: string, talentId: string): Promise<{ message: string }> => {
     const response = await apiClient.post(`/campaigns/${campaignId}/accept-notify`, { talent_id: talentId });
+    return response.data;
+  },
+
+  acceptTaskNda: async (campaignId: string): Promise<TaskSubmission> => {
+    const response = await apiClient.post(`/talent/campaigns/${campaignId}/task/accept-nda`);
+    return response.data;
+  },
+
+  declineTaskNda: async (campaignId: string): Promise<{ message: string }> => {
+    const response = await apiClient.post(`/talent/campaigns/${campaignId}/task/decline-nda`);
     return response.data;
   },
 

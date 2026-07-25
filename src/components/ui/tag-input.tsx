@@ -11,6 +11,7 @@ interface TagInputProps {
   placeholder?: string;
   suggestions?: string[];
   normalizeFromSuggestions?: boolean;
+  maxTags?: number;
   error?: boolean;
   containerClassName?: string;
   disabled?: boolean;
@@ -23,6 +24,7 @@ export function TagInput({
   placeholder = "Type and press Enter",
   suggestions,
   normalizeFromSuggestions = false,
+  maxTags,
   error,
   containerClassName,
   disabled,
@@ -53,6 +55,7 @@ export function TagInput({
     (raw: string) => {
       const trimmed = raw.trim();
       if (!trimmed) return;
+      if (maxTags !== undefined && value.length >= maxTags) return;
       const canonical = findCanonical(trimmed) ?? trimmed;
       if (value.some((v) => v.toLowerCase() === canonical.toLowerCase())) {
         setDraft("");
@@ -65,7 +68,7 @@ export function TagInput({
       setShowDropdown(false);
       setHighlightedIdx(-1);
     },
-    [value, onChange, findCanonical],
+    [value, onChange, findCanonical, maxTags],
   );
 
   const removeTag = (idx: number) => {

@@ -61,7 +61,7 @@ function platformLabel(platform: string): string {
 
 export function LinksPane({ profile, showSocial = true, showDocuments = true }: LinksPaneProps) {
   const socialEntries = Object.entries(profile.social_links ?? {}).filter(
-    ([, link]) => link?.url
+    ([, link]) => link?.url && link?.show_on_profile === true
   );
 
   const docs = [

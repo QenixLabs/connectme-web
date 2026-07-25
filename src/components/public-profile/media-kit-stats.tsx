@@ -1,13 +1,53 @@
 "use client";
 
-import { Eye } from "lucide-react";
-import { FaInstagram, FaYoutube } from "react-icons/fa";
+import { Eye, Globe } from "lucide-react";
+import {
+  FaInstagram,
+  FaYoutube,
+  FaLinkedin,
+  FaTwitter,
+  FaFacebook,
+  FaTiktok,
+  FaGithub,
+  FaBehance,
+  FaDribbble,
+  FaVimeoV,
+  FaSpotify,
+  FaSnapchat,
+  FaThreads,
+} from "react-icons/fa6";
+import type { ComponentType } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 function formatCount(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
   return String(n);
+}
+
+const PLATFORM_ICON_MAP: Record<string, ComponentType<{ className?: string }>> = {
+  instagram: FaInstagram,
+  youtube: FaYoutube,
+  linkedin: FaLinkedin,
+  twitter: FaTwitter,
+  facebook: FaFacebook,
+  tiktok: FaTiktok,
+  github: FaGithub,
+  behance: FaBehance,
+  dribbble: FaDribbble,
+  vimeo: FaVimeoV,
+  spotify: FaSpotify,
+  snapchat: FaSnapchat,
+  threads: FaThreads,
+  website: Globe,
+};
+
+function platformLabel(platform: string): string {
+  const map: Record<string, string> = {
+    twitter: "Twitter / X",
+    website: "Website",
+  };
+  return map[platform] ?? platform.charAt(0).toUpperCase() + platform.slice(1);
 }
 
 interface Stat {
@@ -18,6 +58,13 @@ interface Stat {
   live?: boolean;
   loading?: boolean;
   href?: string;
+  compact?: boolean;
+}
+
+interface SocialLinkData {
+  url?: string;
+  visibility?: string;
+  show_on_profile?: boolean;
 }
 
 interface MediaKitStatsProps {
@@ -25,12 +72,9 @@ interface MediaKitStatsProps {
   youtubeSubscribers?: number;
   youtubeViews?: number;
   monthlyViews: number;
-  hasInstagramLink: boolean;
-  hasYoutubeLink: boolean;
-  instagramUrl?: string;
-  youtubeUrl?: string;
   instagramLoading?: boolean;
   youtubeLoading?: boolean;
+  socialLinks?: Record<string, SocialLinkData>;
 }
 
 export function MediaKitStats({
@@ -38,91 +82,81 @@ export function MediaKitStats({
   youtubeSubscribers,
   youtubeViews,
   monthlyViews,
-  hasInstagramLink,
-  hasYoutubeLink,
-  instagramUrl,
-  youtubeUrl,
   instagramLoading = false,
   youtubeLoading = false,
+  socialLinks,
 }: MediaKitStatsProps) {
   const stats: Stat[] = [];
 
-  if (hasInstagramLink) {
-    stats.push({
-      icon: <FaInstagram className="w-4 h-4 mx-auto" />,
-      value: instagramLoading ? "" : formatCount(instagramFollowers ?? 0),
-      label: "Followers",
-      live: !instagramLoading && instagramFollowers != null,
-      loading: instagramLoading || instagramFollowers == null,
-      href: instagramUrl,
-    });
+  const links = Object.entries(socialLinks ?? {}).filter(
+    ([, link]) => link?.url && link?.show_on_profile === true,
+  );
+
+  for (const [platform, link] of links) {
+    const url = link.url!;
+    if (platform === "instagram") {
+      stats.push({
+        icon: <FaInstagram className="w-4 h-4 mx-auto" />,
+        value: instagramLoading ? "" : formatCount(instagramFollowers ?? 0),
+        label: "Followers",
+        live: !instagramLoading && instagramFollowers != null,
+        loading: instagramLoading || instagramFollowers == null,
+        href: url,
+      });
+    } else if (platform === "youtube") {
+      stats.push({
+        icon: <FaYoutube className="w-4 h-4 mx-auto" />,
+        value: youtubeLoading ? "" : formatCount(youtubeSubscribers ?? 0),
+        label: "Subscribers",
+        sublabel:
+          youtubeViews != null && !youtubeLoading
+            ? `${formatCount(youtubeViews)} views`
+            : undefined,
+        live: !youtubeLoading && youtubeSubscribers != null,
+        loading: youtubeLoading,
+        href: url,
+      });
+    } else {
+      const IconComponent = PLATFORM_ICON_MAP[platform] ?? Globe;
+      stats.push({
+        icon: <IconComponent className="w-4 h-4 mx-auto" />,
+        value: platformLabel(platform),
+        label: "Profile",
+        href: url,
+        compact: true,
+      });
+    }
   }
 
-  if (hasYoutubeLink) {
-    stats.push({
-      icon: <FaYoutube className="w-4 h-4 mx-auto" />,
-      value: youtubeLoading ? "" : formatCount(youtubeSubscribers ?? 0),
-      label: "Subscribers",
-      sublabel: youtubeViews != null && !youtubeLoading
-        ? `${formatCount(youtubeViews)} views`
-        : undefined,
-      live: !youtubeLoading && youtubeSubscribers != null,
-      loading: youtubeLoading,
-      href: youtubeUrl,
-    });
-  }
-
-  if (monthlyViews > 0 || !hasInstagramLink && !hasYoutubeLink) {
-    stats.push({
-      icon: <Eye className="w-4 h-4 mx-auto" strokeWidth={1.5} />,
-      value: formatCount(monthlyViews),
-      label: "Monthly Views",
-    });
-  }
+  stats.push({
+    icon: <Eye className="w-4 h-4 mx-auto" strokeWidth={1.5} />,
+    value: formatCount(monthlyViews),
+    label: "Monthly Views",
+  });
 
   if (stats.length === 0) return null;
 
-  const isScrollable = stats.length > 3;
-
   return (
     <section className="px-4 mt-5">
-      {isScrollable ? (
-        <div className="overflow-x-auto no-scrollbar -mx-1 px-1">
-          <div className="flex gap-3 min-w-max">
-            {stats.map((s) => (
-              <StatCard key={s.label} stat={s} />
-            ))}
+      <div
+        className="grid gap-0 bg-card border border-border rounded-2xl overflow-hidden"
+        style={{ gridTemplateColumns: `repeat(${stats.length}, 1fr)` }}
+      >
+        {stats.map((s, i) => (
+          <div
+            key={s.label}
+            className="p-4 text-center"
+            style={
+              i < stats.length - 1
+                ? { borderRight: "2px solid var(--border, oklch(0.87 0.01 80))" }
+                : undefined
+            }
+          >
+            <StatCardInner stat={s} />
           </div>
-        </div>
-      ) : (
-        <div
-          className="grid gap-0 bg-card border border-border rounded-2xl overflow-hidden"
-          style={{ gridTemplateColumns: `repeat(${stats.length}, 1fr)` }}
-        >
-          {stats.map((s, i) => (
-            <div
-              key={s.label}
-              className="p-4 text-center"
-              style={
-                i < stats.length - 1
-                  ? { borderRight: "2px solid var(--border, oklch(0.87 0.01 80))" }
-                  : undefined
-              }
-            >
-              <StatCardInner stat={s} />
-            </div>
-          ))}
-        </div>
-      )}
+        ))}
+      </div>
     </section>
-  );
-}
-
-function StatCard({ stat }: { stat: Stat }) {
-  return (
-    <div className="w-[140px] shrink-0 bg-card border border-border rounded-2xl p-4 text-center">
-      <StatCardInner stat={stat} />
-    </div>
   );
 }
 
@@ -139,6 +173,10 @@ function StatCardInner({ stat }: { stat: Stat }) {
       </div>
       {stat.loading ? (
         <Skeleton className="h-6 w-14 mx-auto rounded-md" />
+      ) : stat.compact ? (
+        <p className="text-sm font-semibold text-text-primary leading-tight">
+          {stat.value}
+        </p>
       ) : (
         <p className="text-xl font-bold text-text-primary">{stat.value}</p>
       )}

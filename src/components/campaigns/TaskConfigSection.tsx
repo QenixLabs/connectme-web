@@ -19,7 +19,25 @@ import {
 } from '@/components/ui/select';
 import { CampaignWizardInput } from '@/lib/validations/campaign-wizard.schema';
 import { useTaskDocument, useUploadTaskDocument, useDeleteTaskDocument } from '@/lib/api/hooks/useCampaignTask';
-import { ClipboardList, Upload, FileText, X, Loader2 } from 'lucide-react';
+import { ClipboardList, Upload, FileText, X, Loader2, Shield } from 'lucide-react';
+
+const DEFAULT_NDA_TEMPLATE = `NON-DISCLOSURE AGREEMENT
+
+This Non-Disclosure Agreement ("Agreement") is between the Talent ("Recipient") and the Campaign Organizer ("Disclosing Party").
+
+1. CONFIDENTIAL INFORMATION: All task details, project briefs, creative assets, scripts, budgets, timelines, and any other information shared through this campaign constitute Confidential Information.
+
+2. NON-DISCLOSURE: The Recipient agrees not to disclose, share, distribute, or use any Confidential Information for any purpose other than completing the assigned task.
+
+3. NON-COMPETE: The Recipient agrees not to use Confidential Information to compete with or circumvent the Disclosing Party for a period of 1 year.
+
+4. DURATION: This Agreement remains in effect for 2 years from the date of acceptance.
+
+5. BREACH: Unauthorized disclosure or use of Confidential Information may result in legal action, platform suspension, and forfeiture of compensation.
+
+6. RETURN OF MATERIALS: Upon completion or termination, the Recipient agrees to delete or return all Confidential Information upon request.
+
+By accepting, you acknowledge that you have read, understood, and agree to be bound by this Agreement.`;
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -235,6 +253,58 @@ export function TaskConfigSection({ campaignId, onPendingDocChange }: { campaign
               Save campaign to enable file uploads.
             </p>
           )}
+
+          <div className="border-t border-border/60 pt-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Shield className="h-4 w-4 text-ink-muted" strokeWidth={1.5} />
+                <span className="text-sm font-semibold text-ink">Require NDA</span>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  className="sr-only peer"
+                  checked={!!watch('task.nda_enabled')}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setValue('task.nda_enabled', true, { shouldValidate: false });
+                      setValue('task.nda_text', DEFAULT_NDA_TEMPLATE, { shouldValidate: false });
+                    } else {
+                      setValue('task.nda_enabled', false, { shouldValidate: false });
+                      setValue('task.nda_text', undefined, { shouldValidate: false });
+                    }
+                  }}
+                />
+                <div className="w-9 h-5 bg-border/60 peer-checked:bg-brand rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-4 after:w-4 after:transition-all" />
+              </label>
+            </div>
+            <p className="text-[13px] text-ink-muted mt-1">
+              Shortlisted talents must agree to the NDA before viewing the task details.
+            </p>
+
+            {watch('task.nda_enabled') && (
+              <div className="mt-3">
+                <FormField
+                  control={control}
+                  name="task.nda_text"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col gap-1.5">
+                      <FieldLabel>NDA Text</FieldLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Enter NDA terms..."
+                          className="min-h-[200px] text-sm rounded-xl border-border/60 bg-card resize-y focus-visible:ring-gold/30 placeholder:text-ink-muted/50 font-mono text-xs leading-relaxed"
+                          {...field}
+                          value={field.value ?? ''}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

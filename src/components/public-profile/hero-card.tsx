@@ -39,6 +39,8 @@ interface HeroCardProps {
   onAcceptRequest?: () => void;
   isAcceptingRequest?: boolean;
   isRecruiter?: boolean;
+  isLiked?: boolean;
+  likeCount?: number;
 }
 
 function StatCard({
@@ -102,6 +104,8 @@ export function HeroCard({
   onAcceptRequest,
   isAcceptingRequest = false,
   isRecruiter = false,
+  isLiked = false,
+  likeCount = 0,
 }: HeroCardProps) {
   const router = useRouter();
   const [imgFailed, setImgFailed] = useState(false);
@@ -162,8 +166,15 @@ export function HeroCard({
                 className="rounded-full"
                 onClick={onLike}
               >
-                <Heart className="mr-2 h-4 w-4" />
-                Like
+                <Heart
+                  className={`mr-2 h-4 w-4 ${isLiked ? "fill-red-500 text-red-500" : ""}`}
+                />
+                {isLiked ? "Liked" : "Like"}
+                {likeCount > 0 && (
+                  <span className="ml-1.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-muted px-1.5 text-xs font-medium text-muted-foreground">
+                    {likeCount}
+                  </span>
+                )}
               </Button>
             </div>
 

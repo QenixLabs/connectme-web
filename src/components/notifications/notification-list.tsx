@@ -27,6 +27,7 @@ import {
   useRespondToAction,
 } from "@/lib/api";
 import { useSocket } from "@/hooks/use-socket";
+import { useAuthStore } from "@/providers/auth-store-provider";
 import { getApiErrorMessage } from "@/lib/formatters";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -76,6 +77,7 @@ export function NotificationList() {
   const [activeTab, setActiveTab] = useState("active");
   const [respondingId, setRespondingId] = useState<string | null>(null);
   const { socket } = useSocket();
+  const role = useAuthStore((state) => state.user?.role);
 
   const isHistory = activeTab === "history";
 
@@ -224,15 +226,33 @@ export function NotificationList() {
       if (notification.status === "unread") {
         handleMarkRead(notification._id);
       }
+      if (isApplicationReceived) {
+        const campaignId = notification.data?.campaign_id;
+        if (campaignId) {
+          if (role === "recruiter") {
+            router.push(`/recruiter/campaigns/${campaignId}?tab=applicants`);
+          } else {
+            router.push(`/talent/opportunities/${campaignId}`);
+          }
+        }
+      }
       if (
         isCampaignInvite ||
-        isCampaignRecommendation ||
-        isApplicationReceived ||
-        isApplicationStatusChanged
+        isCampaignRecommendation
       ) {
         const campaignId = notification.data?.campaign_id;
         if (campaignId) {
           router.push(`/talent/opportunities/${campaignId}`);
+        }
+      }
+      if (isApplicationStatusChanged) {
+        const campaignId = notification.data?.campaign_id;
+        if (campaignId) {
+          if (role === "recruiter") {
+            router.push(`/recruiter/campaigns/${campaignId}?tab=applicants`);
+          } else {
+            router.push(`/talent/opportunities/${campaignId}`);
+          }
         }
       }
       if (isTaskAssigned) {

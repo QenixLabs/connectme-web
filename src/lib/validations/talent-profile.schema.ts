@@ -55,9 +55,20 @@ const socialLinkSchema = z.object({
   platform: z.string().min(1, "Select a platform"),
   url: z.string().optional(),
   visibility: z.enum(VISIBILITY).optional(),
+  show_on_profile: z.boolean().optional(),
 });
 
-const socialLinksSchema = z.array(socialLinkSchema).optional();
+const socialLinksSchema = z
+  .array(socialLinkSchema)
+  .optional()
+  .refine(
+    (links) => {
+      if (!links) return true;
+      const shown = links.filter((l) => l.show_on_profile === true).length;
+      return shown <= 4;
+    },
+    { message: "At most 4 social links can be shown on your profile" },
+  );
 
 export const sectionVisibilitySchema = z.object({
   bio: z.boolean().optional(),
@@ -84,7 +95,7 @@ const baseProfileSchema = z.object({
   professions: z.array(z.string()).optional(),
   specialties: z.array(z.string()).optional(),
   is_influencer: z.boolean().optional(),
-  influencer_speciality: z.string().optional(),
+  influencer_speciality: z.array(z.string()).max(4, 'At most 4 influencer specialities').optional(),
   availability: z.enum(AVAILABILITY).optional(),
   headline: z.string().max(120, 'Headline must be 120 characters or fewer').optional(),
   about: z.string().max(500, 'About must be 500 characters or fewer').optional(),
@@ -101,9 +112,9 @@ const baseProfileSchema = z.object({
 const influencerSpecialtyCheck = (data: Record<string, unknown>, ctx: z.RefinementCtx) => {
   const professions = data.professions as string[] | undefined;
   const is_influencer = data.is_influencer as boolean | undefined;
-  const influencer_speciality = data.influencer_speciality as string | undefined;
+  const influencer_speciality = data.influencer_speciality as string[] | undefined;
   const needsSpeciality = is_influencer || professions?.includes("Influencer");
-  if (needsSpeciality && !influencer_speciality) {
+  if (needsSpeciality && (!influencer_speciality || influencer_speciality.length === 0)) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: "Influencer speciality is required when influencer is enabled",
@@ -146,10 +157,10 @@ export const portfolioItemSchema = z.object({
 export type PortfolioItem = z.infer<typeof portfolioItemSchema>;
 
 export type TalentProfile = Omit<UpdateTalentProfileInput, "social_links"> & {
-  social_links?: Record<string, { url?: string; visibility?: (typeof VISIBILITY)[number] }>;
+  social_links?: Record<string, { url?: string; visibility?: (typeof VISIBILITY)[number]; show_on_profile?: boolean }>;
   specialties?: string[];
   is_influencer?: boolean;
-  influencer_speciality?: string;
+  influencer_speciality?: string[];
   _id?: string;
   user_id?: string;
   hero_background?: string;
@@ -169,6 +180,7 @@ export type TalentProfile = Omit<UpdateTalentProfileInput, "social_links"> & {
     profile_views_7d?: number;
     profile_views_30d?: number;
     shortlist_count?: number;
+    like_count?: number;
   };
   section_visibility?: z.infer<typeof sectionVisibilitySchema>;
   created_at?: string;

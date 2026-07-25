@@ -28,7 +28,7 @@ export { useCampaignTalentView } from './hooks/useCampaignTalentView';
 export { useCampaigns } from './hooks/useCampaigns';
 export { useCampaign } from './hooks/useCampaign';
 export { useCampaignApplications, useUpdateApplicationStatus } from './hooks/useCampaignApplications';
-export { useCampaignTask, useUpsertCampaignTask, useDeleteCampaignTask, useCampaignTaskSubmissions, useReviewTaskSubmission, useTalentTask, useSubmitTask, useSendAcceptanceMessage, useTaskDocument, useUploadTaskDocument, useDeleteTaskDocument } from './hooks/useCampaignTask';
+export { useCampaignTask, useUpsertCampaignTask, useDeleteCampaignTask, useCampaignTaskSubmissions, useReviewTaskSubmission, useTalentTask, useSubmitTask, useSendAcceptanceMessage, useTaskDocument, useUploadTaskDocument, useDeleteTaskDocument, useAcceptTaskNda } from './hooks/useCampaignTask';
 export { useNotifications, useRespondToAction } from './hooks/useNotifications';
 export { useUnreadCount } from './hooks/useUnreadCount';
 export { useUnreadMessageCount } from './hooks/use-unread-message-count';
