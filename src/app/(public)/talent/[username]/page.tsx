@@ -6,13 +6,10 @@ import {
   ArrowLeft,
   Share2,
   Heart,
-  Plug,
   MessageSquare,
-  Bookmark,
-  MonitorPlay,
-  Ellipsis,
-  UserCheck,
   Loader2,
+  Bookmark,
+  Phone,
 } from "lucide-react";
 import { talentApi, messagesApi, collaborationRequestsApi } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/formatters";
@@ -87,7 +84,6 @@ export default function PublicTalentProfilePage() {
   const [isSendingFirstMessage, setIsSendingFirstMessage] = useState(false);
   const [connectDialogOpen, setConnectDialogOpen] = useState(false);
   const [isSendingConnectRequest, setIsSendingConnectRequest] = useState(false);
-  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
   const [pendingReceivedRequestId, setPendingReceivedRequestId] = useState<string | null>(null);
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
@@ -124,20 +120,38 @@ export default function PublicTalentProfilePage() {
       return;
     }
     if (isTogglingLike) return;
+
+    const prevLiked = isLiked;
+    const prevCount = likeCount;
+
     setIsTogglingLike(true);
+
+    if (prevLiked) {
+      setIsLiked(false);
+      setLikeCount((p) => Math.max(0, p - 1));
+    } else {
+      setIsLiked(true);
+      setLikeCount((p) => p + 1);
+    }
+    setLikeAnimationKey((k) => k + 1);
+
     try {
-      if (isLiked) {
+      if (prevLiked) {
         await talentApi.unlikeTalent(username);
-        setIsLiked(false);
-        setLikeCount((prev) => Math.max(0, prev - 1));
-        setLikeAnimationKey((k) => k + 1);
       } else {
         await talentApi.likeTalent(username);
-        setIsLiked(true);
-        setLikeCount((prev) => prev + 1);
-        setLikeAnimationKey((k) => k + 1);
+      }
+      try {
+        const fresh = await talentApi.getPublicProfile(username);
+        if (!(fresh as Record<string, unknown>).private) {
+          setLikeCount((fresh as TalentProfile).analytics?.like_count ?? prevCount);
+        }
+      } catch {
+        /* keep optimistic value if refetch fails */
       }
     } catch (err: unknown) {
+      setIsLiked(prevLiked);
+      setLikeCount(prevCount);
       popup.show({
         title: "Something went wrong",
         description: getApiErrorMessage(err, "Failed to update like"),
@@ -146,7 +160,7 @@ export default function PublicTalentProfilePage() {
     } finally {
       setIsTogglingLike(false);
     }
-  }, [user, isLiked, isTogglingLike, username, router, popup]);
+  }, [user, isLiked, isTogglingLike, likeCount, username, router, popup]);
 
   const handleSendMessage = useCallback(() => {
     if (!user) {
@@ -154,8 +168,10 @@ export default function PublicTalentProfilePage() {
       return;
     }
     if (!profile?.user_id) return;
-    setFirstMessageOpen(true);
-  }, [user, router, profile?.user_id]);
+    guard(() => {
+      setFirstMessageOpen(true);
+    });
+  }, [user, router, profile?.user_id, guard]);
 
   const handleSendFirstMessage = useCallback(
     async (content: string) => {
@@ -387,6 +403,25 @@ export default function PublicTalentProfilePage() {
     };
   }, [username, profile, mediaKit]);
 
+  useEffect(() => {
+    if (!profile?.user_id || isPrivate) return;
+    const onVisibilityChange = () => {
+      if (document.visibilityState !== "visible") return;
+      talentApi.getPublicProfile(username).then((fresh) => {
+        if (!(fresh as Record<string, unknown>).private) {
+          const count = (fresh as TalentProfile).analytics?.like_count;
+          if (count !== undefined) setLikeCount(count);
+        }
+      }).catch(() => {});
+      talentApi.getLikeStatus(username).then((data) => {
+        setIsLiked(data.is_liked);
+      }).catch(() => {});
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
+  }, [username, profile?.user_id, isPrivate]);
+
+
   /* ── Derived data ── */
 
   const activeProfile = profile;
@@ -474,7 +509,7 @@ export default function PublicTalentProfilePage() {
   /* ── Main render ── */
 
   return (
-    <div className="rootin-theme min-h-screen bg-background pb-28 md:pb-10">
+    <div className="rootin-theme min-h-screen bg-background pb-10 md:pb-10">
       {/* Top bar */}
       <header className="fixed inset-x-0 top-0 z-30 md:hidden">
         <div className="flex items-center justify-between px-5 py-3.5">
@@ -677,83 +712,55 @@ export default function PublicTalentProfilePage() {
         </>
       )}
 
-      {/* Mobile action bar */}
+      {/* Bottom action bar (mobile only) */}
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur md:hidden">
-        <div className="flex items-center gap-2 px-3 py-2">
-          {pendingReceivedRequestId ? (
-            <button
-              onClick={() => handleAcceptRequest(pendingReceivedRequestId)}
-              disabled={acceptRequestMutation.isPending}
-              className="flex flex-[2] items-center justify-center gap-2 rounded-xl bg-amber px-4 py-3 text-sm font-semibold text-amber-foreground disabled:opacity-50"
-            >
-              {acceptRequestMutation.isPending ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
-              ) : (
-                <UserCheck className="h-5 w-5" />
-              )}
-              {acceptRequestMutation.isPending ? "Accepting..." : "Accept Request"}
-            </button>
-          ) : (
-            <button
-              onClick={handleSendMessage}
-              className="flex flex-[2] items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground"
-            >
-              <MessageSquare className="h-5 w-5" />
-              Message
-            </button>
-          )}
-
-          <div className="relative flex-1">
-            <button
-              onClick={() => setMoreMenuOpen(!moreMenuOpen)}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card px-3 py-3 text-sm font-medium text-muted-foreground"
-            >
-              <Ellipsis className="h-5 w-5" />
-              More
-            </button>
-            {moreMenuOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-10"
-                  onClick={() => setMoreMenuOpen(false)}
-                />
-                <div className="absolute bottom-full left-0 right-0 z-20 mb-2 rounded-xl border border-border bg-card p-1.5 shadow-lg">
-                  <button
-                    onClick={() => {
-                      setMoreMenuOpen(false);
-                      handleConnect();
-                    }}
-                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-muted"
-                  >
-                    <Plug className="h-5 w-5" />
-                    Connect
-                  </button>
-                  <button
-                    onClick={() => {
-                      setMoreMenuOpen(false);
-                      router.push(`/talent/${username}/portfolio`);
-                    }}
-                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-muted"
-                  >
-                    <MonitorPlay className="h-5 w-5" />
-                    Media Kit
-                  </button>
-                  {isRecruiter && (
-                    <button
-                      onClick={() => {
-                        setMoreMenuOpen(false);
-                        setShortlistModalOpen(true);
-                      }}
-                      className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-muted"
-                    >
-                      <Bookmark className="h-5 w-5" />
-                      Shortlist
-                    </button>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
+        <div className="flex items-center justify-around px-2 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
+          <button
+            onClick={() => setShortlistModalOpen(true)}
+            className="flex flex-1 flex-col items-center gap-1 text-muted-foreground transition hover:text-amber"
+          >
+            <Bookmark className="h-5 w-5" />
+            <span className="text-[10px] font-medium">Shortlist</span>
+          </button>
+          <button
+            onClick={() =>
+              popup.show({
+                title: "Coming Soon",
+                description: "Save profile feature is coming soon.",
+                variant: "info",
+              })
+            }
+            className="flex flex-1 flex-col items-center gap-1 text-muted-foreground transition hover:text-amber"
+          >
+            <Heart
+              className={`h-5 w-5 ${isLiked ? "fill-red-500 text-red-500" : ""}`}
+            />
+            <span className="text-[10px] font-medium">Save</span>
+          </button>
+          <button
+            onClick={handleSendMessage}
+            className="flex flex-1 flex-col items-center gap-1 text-muted-foreground transition hover:text-amber"
+          >
+            <MessageSquare className="h-5 w-5" />
+            <span className="text-[10px] font-medium">Message</span>
+          </button>
+          <button
+            onClick={() => {
+              if (profile?.phone) {
+                window.open(`tel:${profile.phone}`);
+              } else {
+                popup.show({
+                  title: "No phone number",
+                  description: "This talent has not added a phone number.",
+                  variant: "info",
+                });
+              }
+            }}
+            className="flex flex-1 flex-col items-center gap-1 text-muted-foreground transition hover:text-amber"
+          >
+            <Phone className="h-5 w-5" />
+            <span className="text-[10px] font-medium">Call</span>
+          </button>
         </div>
       </div>
 

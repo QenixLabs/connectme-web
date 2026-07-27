@@ -320,10 +320,10 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
       : undefined,
     needs_influencer: values.needs_influencer || undefined,
     influencer_speciality: values.influencer_speciality?.length ? values.influencer_speciality : undefined,
-    task: values.task?.title
+    task: values.task?.title || values.task?.description || values.task?.nda_enabled
       ? {
           is_enabled: true,
-          title: values.task.title,
+          title: values.task.title || '',
           description: values.task.description || '',
           task_type: values.task.task_type || 'file_upload',
           deadline_days: values.task.deadline_days || 3,

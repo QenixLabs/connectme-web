@@ -26,6 +26,8 @@ export function useUpsertCampaignTask() {
     }) => campaignApi.upsertTask(campaignId, payload),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.task(variables.campaignId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.detail(variables.campaignId) });
+      queryClient.invalidateQueries({ queryKey: ['campaigns', 'list'] });
       show({ title: 'Task saved', variant: 'success', position: 'bottom-center' });
     },
     onError: (error) => {
@@ -43,6 +45,8 @@ export function useDeleteCampaignTask() {
     mutationFn: (campaignId: string) => campaignApi.deleteTask(campaignId),
     onSuccess: (_data, campaignId) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.task(campaignId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.campaigns.detail(campaignId) });
+      queryClient.invalidateQueries({ queryKey: ['campaigns', 'list'] });
       show({ title: 'Task removed', variant: 'success', position: 'bottom-center' });
     },
     onError: (error) => {

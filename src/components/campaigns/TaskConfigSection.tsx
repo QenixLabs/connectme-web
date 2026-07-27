@@ -83,6 +83,8 @@ export function TaskConfigSection({ campaignId, onPendingDocChange }: { campaign
                   description: '',
                   task_type: 'file_upload',
                   deadline_days: 3,
+                  nda_enabled: false,
+                  nda_text: undefined,
                 }, { shouldValidate: false });
               } else {
                 setValue('task', undefined, { shouldValidate: false });
