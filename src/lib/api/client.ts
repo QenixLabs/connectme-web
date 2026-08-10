@@ -1,14 +1,14 @@
-import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
-import { redirectToSuspendedPage, redirectToBannedPage } from '@/lib/redirect';
-import { tokenStorage } from '@/lib/token-storage';
+import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
+import { redirectToSuspendedPage, redirectToBannedPage } from "@/lib/redirect";
+import { tokenStorage } from "@/lib/token-storage";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1";
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
   paramsSerializer: {
     indexes: null,
@@ -29,7 +29,6 @@ apiClient.interceptors.request.use(
 
 // Response interceptor: unwrap envelope + handle 401 refresh
 let isRefreshing = false;
-let refreshPromise: Promise<string> | null = null;
 let failedQueue: Array<{ resolve: (value: unknown) => void; reject: (reason?: unknown) => void }> = [];
 
 const processQueue = (error: Error | null, token: string | null = null) => {
@@ -45,14 +44,15 @@ const processQueue = (error: Error | null, token: string | null = null) => {
 
 const isPublicEndpoint = (url: string): boolean => {
   const publicPaths = [
-    '/talent/profile/',
-    '/auth/login',
-    '/auth/signup',
-    '/auth/verify-otp',
-    '/auth/forgot-password',
-    '/auth/reset-password',
-    '/auth/refresh',
-    '/auth/check',
+    "/talent/profile/",
+    "/recruiters/public/",
+    "/auth/login",
+    "/auth/signup",
+    "/auth/verify-otp",
+    "/auth/forgot-password",
+    "/auth/reset-password",
+    "/auth/refresh",
+    "/auth/check",
   ];
   return publicPaths.some((path) => url.includes(path));
 };
@@ -60,7 +60,7 @@ const isPublicEndpoint = (url: string): boolean => {
 apiClient.interceptors.response.use(
   (response) => {
     const data = response.data;
-    if (data && typeof data === 'object' && data.success === true) {
+    if (data && typeof data === "object" && data.success === true) {
       response.data = data.data;
     }
     return response;
@@ -92,40 +92,37 @@ apiClient.interceptors.response.use(
 
     if (error.response?.status === 429) {
       const data = error.response.data as Record<string, unknown>;
-      const message = data?.message || 'Too many requests. Please slow down.';
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('api-error', { detail: { status: 429, message } }));
+      const message = data?.message || "Too many requests. Please slow down.";
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("api-error", { detail: { status: 429, message } }));
       }
     }
 
     // 401 with refresh logic
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
-      const requestUrl = originalRequest.url || '';
+      const requestUrl = originalRequest.url || "";
       if (isPublicEndpoint(requestUrl)) {
         return Promise.reject(error);
       }
 
       if (!isRefreshing) {
         isRefreshing = true;
-        refreshPromise = apiClient
-          .post('/auth/refresh')
+        apiClient
+          .post("/auth/refresh")
           .then((res) => {
             const { access_token } = res.data as { access_token: string };
             tokenStorage.setToken(access_token);
             processQueue(null, access_token);
-            return access_token;
           })
           .catch((err) => {
             processQueue(err as Error, null);
             tokenStorage.setToken(null);
-            if (typeof window !== 'undefined') {
-              window.location.href = '/auth/login';
+            if (typeof window !== "undefined") {
+              window.location.href = "/auth/login";
             }
-            throw err;
           })
           .finally(() => {
             isRefreshing = false;
-            refreshPromise = null;
           });
       }
 
@@ -144,11 +141,11 @@ apiClient.interceptors.response.use(
 
     // Fallback 401 handler
     if (error.response?.status === 401) {
-      const requestUrl = error.config?.url || '';
-      if (!isPublicEndpoint(requestUrl) && typeof window !== 'undefined') {
+      const requestUrl = error.config?.url || "";
+      if (!isPublicEndpoint(requestUrl) && typeof window !== "undefined") {
         const currentPath = window.location.pathname;
-        if (currentPath !== '/suspended' && currentPath !== '/banned') {
-          window.location.href = '/auth/login';
+        if (currentPath !== "/suspended" && currentPath !== "/banned") {
+          window.location.href = "/auth/login";
         }
       }
     }

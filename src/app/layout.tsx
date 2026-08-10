@@ -1,34 +1,35 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
-import { PopupProvider } from "@/providers/popup-provider";
-import { SocketProvider } from "@/providers/socket-provider";
+import { Playfair_Display, DM_Sans } from "next/font/google";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthStoreProvider } from "@/providers/auth-store-provider";
 import { QueryProvider } from "@/providers/query-provider";
-import { FeatureGateProvider } from "@/providers/feature-gate-provider";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { CampaignRecommendationToast } from "@/components/notifications/campaign-recommendation-toast";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
   subsets: ["latin"],
-  weight: ["600", "700"],
+  weight: ["500", "600", "700"],
+});
+
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
 });
 
 export const metadata: Metadata = {
-  title: "ConnectMe - Verified Talent Platform",
+  title: "RootIn – Talent Platform",
   description:
-    "ConnectMe is a verification-first talent operating system for casting and influencer ecosystems",
+    "RootIn connects verified talent with recruiters: portfolios, campaigns, messaging and opportunities in one platform.",
+  openGraph: {
+    title: "RootIn – Talent Platform",
+    description:
+      "RootIn connects verified talent with recruiters: portfolios, campaigns, messaging and opportunities in one platform.",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
 };
 
 export default function RootLayout({
@@ -37,23 +38,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col overflow-x-hidden">
-        <TooltipProvider>
-          <AuthStoreProvider>
-            <SocketProvider>
-              <QueryProvider>
-                {children}
-                <PopupProvider />
-                <CampaignRecommendationToast />
-                <FeatureGateProvider />
-              </QueryProvider>
-            </SocketProvider>
-          </AuthStoreProvider>
-        </TooltipProvider>
+    <html lang="en" className={`${playfair.variable} ${dmSans.variable}`}>
+      <body className="min-h-screen antialiased">
+        <AuthStoreProvider>
+          <QueryProvider>
+            <TooltipProvider>{children}</TooltipProvider>
+          </QueryProvider>
+        </AuthStoreProvider>
       </body>
     </html>
   );

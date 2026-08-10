@@ -16,7 +16,7 @@ export function PasswordRules({ rules }: PasswordRulesProps) {
         <li
           key={r.text}
           className={`flex items-center gap-1.5 text-xs transition-colors ${
-            r.ok ? "text-success-text" : "text-text-muted"
+            r.ok ? "text-green-600" : "text-muted-foreground"
           }`}
         >
           {r.ok ? (

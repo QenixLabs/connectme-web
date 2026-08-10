@@ -1,38 +1,93 @@
-export { apiClient } from './client';
-export { authApi } from './auth';
-export { talentApi } from './talent';
-export { campaignApi, type Campaign, type CampaignQuestion, type CampaignTask, type TaskSubmission, type TaskDocument } from './campaign';
-export { recruiterApi, type RecruiterPublicProfile, type PublicCampaign } from './recruiter';
-export { messagesApi, collaborationRequestsApi } from './messages';
-export { notificationsApi } from './notifications';
-export { verificationApi, type VerificationRecord, type VerificationDocResponse, type VerificationStatusResponse } from './verification';
-export { adminApi, type DashboardStats, type DashboardActivity, type TimeSeriesPoint, type PendingVerificationItem, type ReportItem, type PaginatedReports, type ReportDetail, type MessageContextItem, type UserHistory, type AdminUser, type PaginatedUsers, type UserDetail, type AdminNote, type UserActivity, type PaginatedModerationActions, type AppealItem, type PaginatedAppeals, type AuditLogItem, type PaginatedAuditLogs, type SubscriptionAnalytics, type AdminUserSubscriptionDetail, type PaginatedAdminUserInvoices, type PendingPortfolioItem, type PortfolioTalent, type PortfolioItem, type CronJobInfo, type CronJobExecution } from './admin';
-export { plansApi, type PlanConfig } from './plans';
-export { appealsApi, type Appeal } from './appeals';
-export { subscriptionsApi, type Subscription, type SubscriptionWithPlan, type SubscriptionUsage } from './subscriptions';
-export { invoicesApi, type Invoice, type PaginatedInvoices } from './invoices';
-export { useInvoices } from './hooks/useInvoices';
-export { useSubscriptionUsage } from './hooks/useSubscriptionUsage';
-export { useCampaignAnalytics, useCampaignDemographics } from './hooks/useCampaignAnalytics';
-export { useCampaignInvites } from './hooks/useCampaignInvites';
-export { useRecruiterProfile } from './hooks/useRecruiterProfile';
-export { useDashboardRecommendations } from './hooks/useDashboardRecommendations';
-export { useTalentRecommendations } from './hooks/useTalentRecommendations';
-export { useTalentCampaignRecommendations } from './hooks/useTalentCampaignRecommendations';
-export { useCampaignTopMatches } from './hooks/useCampaignTopMatches';
-export { useTalentProfile } from './hooks/useTalentProfile';
-export { useTalentCompleteness } from './hooks/useTalentCompleteness';
-export { useInviteTalent, useBulkInviteTalent, useRespondToInvite } from './hooks/useInviteTalent';
-export { useRecruiterDashboardStats } from './hooks/useRecruiterDashboardStats';
-export { useCampaignTalentView } from './hooks/useCampaignTalentView';
-export { useCampaigns } from './hooks/useCampaigns';
-export { useCampaign } from './hooks/useCampaign';
-export { useCampaignApplications, useUpdateApplicationStatus } from './hooks/useCampaignApplications';
-export { useCampaignTask, useUpsertCampaignTask, useDeleteCampaignTask, useCampaignTaskSubmissions, useReviewTaskSubmission, useTalentTask, useSubmitTask, useSendAcceptanceMessage, useTaskDocument, useUploadTaskDocument, useDeleteTaskDocument, useAcceptTaskNda } from './hooks/useCampaignTask';
-export { useNotifications, useRespondToAction } from './hooks/useNotifications';
-export { useUnreadCount } from './hooks/useUnreadCount';
-export { useUnreadMessageCount } from './hooks/use-unread-message-count';
-export { useMarkAsRead } from './hooks/useMarkAsRead';
-export { useMarkAllAsRead } from './hooks/useMarkAllAsRead';
-export { useDismissAuto } from './hooks/useDismissAuto';
-export { useNotificationSettings, useUpdateNotificationSettings } from './hooks/useNotificationSettings';
+export { apiClient } from "./client";
+export { authApi } from "./auth";
+export { recruiterApi } from "./recruiter";
+export type {
+  RecruiterProfile,
+  UpdateRecruiterProfilePayload,
+  PublicRecruiterProfile,
+  PublicCampaignSummary,
+  PublicCampaignsResponse,
+} from "./recruiter";
+export { talentApi } from "./talent";
+export type {
+  TalentProfile,
+  PortfolioApiResponse,
+  Credit,
+  Testimonial,
+  Award,
+  SearchTalentsParams,
+  SearchTalentsResponse,
+} from "./talent";
+export { subscriptionsApi } from "./subscriptions";
+export type {
+  Subscription,
+  PlanConfig,
+  SubscriptionResponse,
+  UsageResponse,
+  Invoice,
+  InvoicesResponse,
+  UpgradePayload,
+  UpgradeResponse,
+  UpdatePaymentMethodPayload,
+  PaymentMethodResponse,
+} from "./subscriptions";
+export { plansApi } from "./plans";
+export type { Plan } from "./plans";
+export { campaignsApi } from "./campaigns";
+export type {
+  Campaign,
+  CampaignRecommendation,
+  CampaignQuestion,
+  QueryCampaignsParams,
+  ApplyCampaignPayload,
+  EnrichedApplication,
+  CampaignApplicationsResponse,
+  QueryApplicationParams,
+  TaskSubmission,
+  TaskSubmissionStatus,
+  CampaignApplicantNote,
+  CampaignAnalytics,
+  CampaignAnalyticsParams,
+  CampaignDemographics,
+  CampaignInvite,
+  CampaignTeamMember,
+  CampaignTeamResponse,
+  CampaignSubmission,
+  CampaignSubmissionsResponse,
+  QuerySubmissionsParams,
+  RecruiterDashboardStats,
+} from "./campaigns";
+export { conversationsApi } from "./conversations";
+export type {
+  Conversation,
+  ConversationParticipant,
+  Message,
+  Attachment,
+  SendMessagePayload,
+  SendFirstMessagePayload,
+} from "./types";
+export { verificationApi } from "./verification";
+export type { Verification, VerificationDoc } from "./verification";
+export { notificationsApi } from "./notifications";
+export type {
+  Notification,
+  NotificationType,
+  NotificationStatus,
+  NotificationActionStatus,
+  NotificationActor,
+  PaginatedNotifications,
+  NotificationSettings,
+  QueryNotificationsParams,
+  UpdateNotificationSettingsDto,
+} from "./notifications";
+export { recommendationsApi } from "./recommendations";
+export type {
+  DashboardTalentRecommendation,
+  DashboardTalentRecommendationsResponse,
+} from "./recommendations";
+export { requestsApi } from "./requests";
+export type {
+  CollaborationRequest,
+  EnrichedUserProfile,
+  MyRequestsResponse,
+} from "./requests";

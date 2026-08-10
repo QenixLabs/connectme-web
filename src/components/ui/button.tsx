@@ -1,7 +1,6 @@
 import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { Slot } from "radix-ui"
-import { Loader2 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
@@ -20,8 +19,6 @@ const buttonVariants = cva(
         ghost:
           "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
-        primary: "bg-brand text-on-brand hover:bg-brand-hover",
-        dark: "bg-surface-dark text-on-surface-dark hover:bg-surface-darker",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
@@ -46,15 +43,10 @@ function Button({
   variant = "default",
   size = "default",
   asChild = false,
-  isLoading,
-  loadingLabel,
-  children,
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean
-    isLoading?: boolean
-    loadingLabel?: string
   }) {
   const Comp = asChild ? Slot.Root : "button"
 
@@ -64,16 +56,8 @@ function Button({
       data-variant={variant}
       data-size={size}
       className={cn(buttonVariants({ variant, size, className }))}
-      disabled={props.disabled || isLoading}
       {...props}
-    >
-      {asChild ? children : (
-        <>
-          {isLoading && <Loader2 className="size-4 animate-spin" />}
-          {isLoading && loadingLabel ? loadingLabel : children}
-        </>
-      )}
-    </Comp>
+    />
   )
 }
 
