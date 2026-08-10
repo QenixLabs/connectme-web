@@ -24,10 +24,13 @@ export function DashboardContent() {
             <div className="lg:col-span-2">
               <PlanBanner />
             </div>
-            <Upcoming />
             <Opportunities />
-            <RecentActivity />
-            <Recommended />
+            <Upcoming />
+            
+{/*         RECENTLY DONE ACTIVITIES by talent soon comming
+            <RecentActivity /> */}
+{/*             REcommended talent to connect soon coming
+            <Recommended /> */}
           </div>
         </main>
       </div>
