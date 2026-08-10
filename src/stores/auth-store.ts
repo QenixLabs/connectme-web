@@ -1,14 +1,14 @@
-import { createStore } from 'zustand/vanilla';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import { authApi } from '@/lib/api';
-import { tokenStorage } from '@/lib/token-storage';
+import { createStore } from "zustand/vanilla";
+import { persist, createJSONStorage } from "zustand/middleware";
+import { authApi } from "@/lib/api";
+import { tokenStorage } from "@/lib/token-storage";
 
 export interface User {
   _id: string;
   username?: string;
   email: string;
   phone: string;
-  role: 'talent' | 'recruiter' | 'admin';
+  role: "talent" | "recruiter" | "admin";
   is_email_verified: boolean;
   is_phone_verified: boolean;
   verification_tier: number;
@@ -36,14 +36,14 @@ export interface AuthState {
 }
 
 function setCookie(name: string, value: string, days: number) {
-  if (typeof document === 'undefined') return;
+  if (typeof document === "undefined") return;
   const expires = new Date(Date.now() + days * 86400000).toUTCString();
-  const secure = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'Secure;' : '';
+  const secure = typeof window !== "undefined" && window.location.protocol === "https:" ? "Secure;" : "";
   document.cookie = `${name}=${value};expires=${expires};path=/;SameSite=Strict;${secure}`;
 }
 
 function deleteCookie(name: string) {
-  if (typeof document === 'undefined') return;
+  if (typeof document === "undefined") return;
   document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
 }
 
@@ -64,12 +64,12 @@ export const authStore = createStore<AuthState>()(
           tokenStorage.setToken(access_token);
           set({ accessToken: access_token });
           const { user } = await authApi.getCurrentUser();
-          setCookie('auth_session', '1', 7);
-          setCookie('user_role', user.role, 7);
+          setCookie("auth_session", "1", 7);
+          setCookie("user_role", user.role, 7);
           set({ user, accessToken: access_token, isAuthenticated: true, isLoading: false });
         } catch (error: unknown) {
           const err = error as { response?: { data?: { message?: string } } };
-          const message = err.response?.data?.message || 'Login failed';
+          const message = err.response?.data?.message || "Login failed";
           set({ error: message, isLoading: false });
           throw new Error(message);
         }
@@ -79,8 +79,8 @@ export const authStore = createStore<AuthState>()(
         try {
           await authApi.logout();
         } catch {}
-        deleteCookie('auth_session');
-        deleteCookie('user_role');
+        deleteCookie("auth_session");
+        deleteCookie("user_role");
         tokenStorage.setToken(null);
         set({ user: null, accessToken: null, isAuthenticated: false, isLoading: false });
       },
@@ -89,12 +89,12 @@ export const authStore = createStore<AuthState>()(
         set({ isLoading: true });
         try {
           const { user } = await authApi.getCurrentUser();
-          setCookie('auth_session', '1', 7);
-          setCookie('user_role', user.role, 7);
+          setCookie("auth_session", "1", 7);
+          setCookie("user_role", user.role, 7);
           set({ user, isAuthenticated: true, isLoading: false });
-        } catch (error) {
-          deleteCookie('auth_session');
-          deleteCookie('user_role');
+        } catch {
+          deleteCookie("auth_session");
+          deleteCookie("user_role");
           tokenStorage.setToken(null);
           set({ user: null, accessToken: null, isAuthenticated: false, isLoading: false });
         }
@@ -108,7 +108,7 @@ export const authStore = createStore<AuthState>()(
       setHasHydrated: (v: boolean) => set({ hasHydrated: v }),
     }),
     {
-      name: 'auth-storage',
+      name: "auth-storage",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         user: state.user,

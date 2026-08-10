@@ -1,61 +1,61 @@
-import { apiClient } from './client';
-import type { AxiosError } from 'axios';
+import { apiClient } from "./client";
 
-export interface VerificationRecord {
+export interface VerificationDoc {
+  type: string;
+  url: string;
+  download_url?: string;
+  expires?: number;
+}
+
+export interface Verification {
   _id: string;
   user_id: string;
-  type: string;
-  status: string;
-  submitted_docs: { type: string; url: string }[];
+  type: "talent_id" | "recruiter_company";
+  status: "pending" | "auto_approved" | "manual_review" | "approved" | "rejected";
+  submitted_docs: VerificationDoc[];
+  ocr_data?: Record<string, unknown>;
+  face_match_score?: number;
+  liveness_score?: number;
+  reviewed_by?: string;
   review_notes?: string;
   created_at: string;
   updated_at: string;
 }
 
-export interface VerificationDocResponse {
-  type: string;
-  download_url: string;
-  expires: number;
-}
-
-export interface VerificationStatusResponse {
-  verification: VerificationRecord | null;
-  docs: VerificationDocResponse[];
-}
-
 export const verificationApi = {
-  createVerification: async (type: 'talent_id' | 'recruiter_company'): Promise<VerificationRecord> => {
-    const response = await apiClient.post('/verifications', { type });
-    return response.data;
+  getForUser: async (userId: string) => {
+    const response = await apiClient.get(`/verifications/user/${userId}`);
+    return response.data as Verification | null;
   },
 
-  addVerificationDoc: async (
+  create: async (type: "talent_id" | "recruiter_company" = "talent_id") => {
+    const response = await apiClient.post("/verifications", { type });
+    return response.data as Verification;
+  },
+
+  uploadDoc: async (
     verificationId: string,
     file: File,
     docType: string,
-  ): Promise<VerificationRecord> => {
+  ) => {
     const formData = new FormData();
-    formData.append('file', file);
-    formData.append('doc_type', docType);
-    const response = await apiClient.post(`/verifications/${verificationId}/docs`, formData, {
-      headers: { 'Content-Type': undefined },
-    });
-    return response.data;
+    formData.append("file", file);
+    formData.append("doc_type", docType);
+    const response = await apiClient.post(
+      `/verifications/${verificationId}/docs`,
+      formData,
+      {
+        headers: { "Content-Type": undefined },
+        params: { doc_type: docType },
+      },
+    );
+    return response.data as { type: string; download_url: string; expires: number };
   },
 
-  getVerificationStatus: async (userId: string): Promise<VerificationStatusResponse | null> => {
-    try {
-      const response = await apiClient.get(`/verifications/user/${userId}`);
-      return response.data as VerificationStatusResponse;
-    } catch (err) {
-      const axiosErr = err as AxiosError;
-      if (axiosErr.response?.status === 404) return null;
-      throw err;
-    }
-  },
-
-  removeVerificationDoc: async (verificationId: string, docIndex: number): Promise<VerificationRecord> => {
-    const response = await apiClient.delete(`/verifications/${verificationId}/docs/${docIndex}`);
-    return response.data;
+  removeDoc: async (verificationId: string, docIndex: number) => {
+    const response = await apiClient.delete(
+      `/verifications/${verificationId}/docs/${docIndex}`,
+    );
+    return response.data as { message: string };
   },
 };

@@ -2,26 +2,16 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-function Card({ className, progress, ...props }: React.ComponentProps<"div"> & { progress?: number }) {
+function Card({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card"
       className={cn(
-        "flex flex-col gap-6 rounded-xl border-0 bg-card py-6 text-card-foreground shadow-sm",
+        "flex flex-col gap-6 rounded-xl border bg-card py-6 text-card-foreground shadow-sm",
         className
       )}
       {...props}
-    >
-      {progress !== undefined && (
-        <div className="h-1 w-full bg-muted-bg">
-          <div
-            className="h-full bg-gradient-to-r from-brand to-brand-light transition-all duration-500"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      )}
-      {props.children}
-    </div>
+    />
   )
 }
 

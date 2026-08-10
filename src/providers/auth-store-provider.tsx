@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { createContext, useContext, useRef, ReactNode } from 'react';
-import { useStore } from 'zustand/react';
-import { authStore, AuthState } from '@/stores/auth-store';
+import { createContext, useContext, useRef, ReactNode } from "react";
+import { useStore } from "zustand/react";
+import { authStore, AuthState } from "@/stores/auth-store";
 
 const AuthStoreContext = createContext<typeof authStore | null>(null);
 
@@ -20,7 +20,7 @@ export function useAuthStore<T = AuthState>(
 ): T {
   const store = useContext(AuthStoreContext);
   if (!store) {
-    throw new Error('Missing AuthStoreProvider in tree');
+    throw new Error("Missing AuthStoreProvider in tree");
   }
   return useStore(store, selector || ((state) => state as T));
 }

@@ -1,14 +1,14 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 export const campaignWizardSchema = z
   .object({
     name: z
       .string()
-      .min(1, 'Campaign name is required')
-      .max(100, 'Must be 100 characters or fewer'),
+      .min(1, "Campaign name is required")
+      .max(100, "Must be 100 characters or fewer"),
     description: z
       .string()
-      .max(2000, 'Must be 2000 characters or fewer')
+      .max(2000, "Must be 2000 characters or fewer")
       .optional(),
     role_type: z.string().optional(),
     location: z
@@ -26,22 +26,28 @@ export const campaignWizardSchema = z
     deadline: z.string().optional(),
     requirements: z
       .object({
-        skills: z.array(z.string().max(50, 'Too long')).max(20, 'Max 20 skills').optional(),
-        languages: z.array(z.string().max(50, 'Too long')).max(20, 'Max 20 languages').optional(),
+        skills: z
+          .array(z.string().max(50, "Too long"))
+          .max(20, "Max 20 skills")
+          .optional(),
+        languages: z
+          .array(z.string().max(50, "Too long"))
+          .max(20, "Max 20 languages")
+          .optional(),
         gender: z.string().optional(),
         age_range: z
           .object({
-            min: z.number().min(0, 'Must be 0 or more').optional(),
-            max: z.number().min(0, 'Must be 0 or more').optional(),
+            min: z.number().min(0, "Must be 0 or more").optional(),
+            max: z.number().min(0, "Must be 0 or more").optional(),
           })
           .optional(),
-        attributes: z.string().max(1000, 'Too long').optional(),
+        attributes: z.string().max(1000, "Too long").optional(),
       })
       .optional(),
     budget_range: z
       .object({
-        min: z.number().min(0, 'Must be 0 or more').optional(),
-        max: z.number().min(0, 'Must be 0 or more').optional(),
+        min: z.number().min(0, "Must be 0 or more").optional(),
+        max: z.number().min(0, "Must be 0 or more").optional(),
         currency: z.string().optional(),
       })
       .optional(),
@@ -51,27 +57,50 @@ export const campaignWizardSchema = z
       .array(
         z.object({
           _id: z.string().optional(),
-          question_text: z.string().min(1, 'Question text is required').max(500, 'Too long'),
-          question_type: z.enum(['text', 'number', 'select', 'multiselect', 'boolean']).default('text'),
+          question_text: z
+            .string()
+            .min(1, "Question text is required")
+            .max(500, "Too long"),
+          question_type: z
+            .enum(["text", "number", "select", "multiselect", "boolean"])
+            .default("text"),
           options: z.array(z.string().max(100)).max(20).optional(),
           is_required: z.boolean().default(false),
           order: z.number().default(0),
         }),
       )
-      .max(20, 'Max 20 questions')
+      .max(20, "Max 20 questions")
       .optional(),
     specialties: z.array(z.string()).optional(),
     needs_influencer: z.boolean().optional(),
-    influencer_speciality: z.string().optional(),
+    influencer_speciality: z
+      .array(z.string())
+      .max(4, "At most 4 specialities")
+      .optional(),
     task: z
       .object({
-        title: z.string().max(200, 'Must be 200 characters or fewer').optional(),
-        description: z.string().max(2000, 'Must be 2000 characters or fewer').optional(),
-        task_type: z.enum(['file_upload', 'text_response']).optional(),
-        deadline_days: z.number().min(1, 'Must be at least 1 day').max(90, 'Max 90 days').optional(),
+        title: z
+          .string()
+          .max(200, "Must be 200 characters or fewer")
+          .optional(),
+        description: z
+          .string()
+          .max(2000, "Must be 2000 characters or fewer")
+          .optional(),
+        task_type: z.enum(["file_upload", "text_response"]).optional(),
+        deadline_days: z
+          .number()
+          .min(1, "Must be at least 1 day")
+          .max(90, "Max 90 days")
+          .optional(),
+        nda_enabled: z.boolean().optional(),
+        nda_text: z
+          .string()
+          .max(8000, "Must be 8000 characters or fewer")
+          .optional(),
       })
       .optional(),
-    publishOption: z.enum(['draft', 'public', 'invite_only']),
+    publishOption: z.enum(["draft", "public", "invite_only"]),
     scheduled_publish_at: z.string().optional(),
     auto_close_on_deadline: z.boolean().default(true),
   })
@@ -80,8 +109,8 @@ export const campaignWizardSchema = z
       if (new Date(data.dates.end) < new Date(data.dates.start)) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'End date must be after start date',
-          path: ['dates', 'end'],
+          message: "End date must be after start date",
+          path: ["dates", "end"],
         });
       }
     }
@@ -92,32 +121,29 @@ export const campaignWizardSchema = z
       if (data.requirements.age_range.max < data.requirements.age_range.min) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'Max age must be greater than or equal to min age',
-          path: ['requirements', 'age_range', 'max'],
+          message: "Max age must be greater than or equal to min age",
+          path: ["requirements", "age_range", "max"],
         });
       }
     }
-    if (
-      data.budget_range?.min != null &&
-      data.budget_range?.max != null
-    ) {
+    if (data.budget_range?.min != null && data.budget_range?.max != null) {
       if (data.budget_range.max < data.budget_range.min) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'Max budget must be greater than or equal to min budget',
-          path: ['budget_range', 'max'],
+          message: "Max budget must be greater than or equal to min budget",
+          path: ["budget_range", "max"],
         });
       }
     }
 
     if (data.deadline && data.dates?.start) {
-      const deadline = new Date(data.deadline + 'T00:00:00');
-      const start = new Date(data.dates.start + 'T00:00:00');
+      const deadline = new Date(data.deadline + "T00:00:00");
+      const start = new Date(data.dates.start + "T00:00:00");
       if (deadline > start) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'Application deadline must be on or before the start date.',
-          path: ['deadline'],
+          message: "Application deadline must be on or before the start date.",
+          path: ["deadline"],
         });
       }
     }

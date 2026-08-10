@@ -1,13 +1,24 @@
-import { usePasswordStrength } from "@/hooks/use-password-strength";
-
 interface PasswordStrengthProps {
   password: string;
 }
 
-export function PasswordStrength({ password }: PasswordStrengthProps) {
-  const strength = usePasswordStrength(password);
+function getStrength(password: string): { score: number; label: string; color: string } {
+  let score = 0;
+  if (password.length >= 8) score++;
+  if (/[A-Z]/.test(password)) score++;
+  if (/\d/.test(password)) score++;
+  if (/[^A-Za-z0-9]/.test(password)) score++;
 
+  if (score <= 1) return { score, label: "Weak", color: "bg-destructive" };
+  if (score === 2) return { score, label: "Fair", color: "bg-orange-500" };
+  if (score === 3) return { score, label: "Good", color: "bg-primary" };
+  return { score, label: "Strong", color: "bg-green-500" };
+}
+
+export function PasswordStrength({ password }: PasswordStrengthProps) {
   if (password.length === 0) return null;
+
+  const strength = getStrength(password);
 
   return (
     <div className="mt-2">
@@ -16,19 +27,17 @@ export function PasswordStrength({ password }: PasswordStrengthProps) {
           <div
             key={i}
             className={`h-1 flex-1 rounded-full transition-all ${
-              i < strength.score ? strength.color : "bg-surface-secondary"
+              i < strength.score ? strength.color : "bg-secondary"
             }`}
           />
         ))}
       </div>
-      {strength.label && (
-        <p className="text-xs text-text-muted">
-          Strength:{" "}
-          <span className="font-medium text-text-secondary">
-            {strength.label}
-          </span>
-        </p>
-      )}
+      <p className="text-xs text-muted-foreground">
+        Strength:{" "}
+        <span className="font-medium text-foreground">
+          {strength.label}
+        </span>
+      </p>
     </div>
   );
 }

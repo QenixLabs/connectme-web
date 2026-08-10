@@ -1,6 +1,47 @@
-import { apiClient } from './client';
+import { apiClient } from "./client";
 
-export interface RecruiterPublicProfile {
+export interface RecruiterProfile {
+  _id: string;
+  user_id: string;
+  slug: string;
+  company_name: string;
+  company_website?: string;
+  company_email_domain?: string;
+  linkedin_company_url?: string;
+  company_size?: string;
+  industry?: string;
+  headline?: string;
+  about?: string;
+  founded_year?: number;
+  location?: { country?: string; state?: string; city?: string };
+  specialties?: string[];
+  position?: string;
+  profile_photo?: string;
+  verification_status: "pending" | "basic" | "enterprise" | "trusted_partner";
+  verification_docs?: string[];
+  message_quota: { used: number; limit: number };
+  campaign_quota: { used: number; limit: number };
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UpdateRecruiterProfilePayload {
+  slug?: string;
+  company_name?: string;
+  company_website?: string;
+  linkedin_company_url?: string;
+  company_size?: string;
+  industry?: string;
+  headline?: string;
+  about?: string;
+  founded_year?: number;
+  location?: { country?: string; state?: string; city?: string };
+  specialties?: string[];
+  position?: string;
+  profile_photo?: string;
+}
+
+export interface PublicRecruiterProfile {
   user_id: string;
   slug: string;
   company_name: string;
@@ -15,96 +56,65 @@ export interface RecruiterPublicProfile {
   location?: { country?: string; state?: string; city?: string };
   specialties?: string[];
   position?: string;
-  verification_status: string;
+  verification_status: "pending" | "basic" | "enterprise" | "trusted_partner";
   trust_score: number;
   verification_tier: number;
-  active_plan: string | null;
-  member_since: string | null;
+  active_plan?: string | null;
+  member_since?: string | null;
   active_campaigns_count: number;
 }
 
-export interface PublicCampaign {
+export interface PublicCampaignSummary {
   _id: string;
   name: string;
   description?: string;
   role_type?: string;
-  location?: { city: string; state?: string };
-  budget_range?: { min: number; max: number; currency: string };
+  location?: { city?: string; state?: string };
+  budget_range?: { min?: number; max?: number; currency?: string };
   deadline?: string;
   applications_count: number;
   created_at: string;
 }
 
+export interface PublicCampaignsResponse {
+  data: PublicCampaignSummary[];
+  total: number;
+}
+
 export const recruiterApi = {
-  getMyProfile: async (): Promise<{
-    _id: string;
-    user_id: string;
-    company_name: string;
-    company_website?: string;
-    company_email_domain: string;
-    linkedin_company_url?: string;
-    company_size?: string;
-    specialties?: string[];
-    position?: string;
-    profile_photo?: string;
-    verification_status: string;
-    active_plan: string | null;
-    created_at: string;
-    updated_at: string;
-  }> => {
-    const response = await apiClient.get('/recruiters/me');
-    return response.data;
+  getMyProfile: async () => {
+    const response = await apiClient.get("/recruiters/me");
+    return response.data as RecruiterProfile;
   },
 
-  checkSlugAvailability: async (slug: string): Promise<{ available: boolean }> => {
-    const response = await apiClient.get(`/recruiters/slug/${slug}/available`);
-    return response.data;
+  updateProfile: async (payload: UpdateRecruiterProfilePayload) => {
+    const response = await apiClient.patch("/recruiters/me", payload);
+    return response.data as RecruiterProfile;
   },
 
-  updateProfile: async (payload: {
-    slug?: string;
-    company_name?: string;
-    company_website?: string;
-    linkedin_company_url?: string;
-    company_size?: string;
-    specialties?: string[];
-    position?: string;
-    profile_photo?: string;
-  }): Promise<{
-    _id: string;
-    company_name: string;
-    company_website?: string;
-    linkedin_company_url?: string;
-    company_size?: string;
-    specialties?: string[];
-    position?: string;
-    profile_photo?: string;
-  }> => {
-    const response = await apiClient.patch('/recruiters/me', payload);
-    return response.data;
-  },
-
-  uploadProfilePhoto: async (file: File): Promise<{ relativePath: string; signedUrl: string }> => {
+  uploadProfilePhoto: async (file: File) => {
     const formData = new FormData();
-    formData.append('file', file);
-    const response = await apiClient.post('/recruiters/upload/profile-photo', formData, {
-      headers: { 'Content-Type': undefined },
+    formData.append("file", file);
+    const response = await apiClient.post("/recruiters/upload/profile-photo", formData, {
+      headers: { "Content-Type": undefined },
     });
-    return response.data;
+    return response.data as { relativePath: string; signedUrl: string };
   },
 
-  getPublicProfile: async (slug: string): Promise<RecruiterPublicProfile> => {
+  checkSlugAvailability: async (slug: string): Promise<boolean> => {
+    const response = await apiClient.get(`/recruiters/slug/${slug}/available`);
+    const body = response.data as { available: boolean };
+    return body.available;
+  },
+
+  getPublicProfile: async (slug: string) => {
     const response = await apiClient.get(`/recruiters/public/${slug}`);
-    return response.data;
+    return response.data as PublicRecruiterProfile;
   },
 
-  getPublicCampaigns: async (
-    slug: string,
-    limit?: number,
-  ): Promise<{ data: PublicCampaign[]; total: number }> => {
-    const response = await apiClient.get(`/recruiters/public/${slug}/campaigns`, {
-      params: { limit },
-    });
-    return response.data;
+  getPublicCampaigns: async (slug: string, limit?: number) => {
+    const params = limit ? { limit } : undefined;
+    const response = await apiClient.get(`/recruiters/public/${slug}/campaigns`, { params });
+    return response.data as PublicCampaignsResponse;
   },
 };
