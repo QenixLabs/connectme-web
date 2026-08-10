@@ -40,15 +40,9 @@ import { MediaKitStats } from "@/components/public-profile/media-kit-stats";
 import { ExperienceSection } from "@/components/public-profile/experience-section";
 import { ReviewsSection } from "@/components/public-profile/reviews-section";
 import { AwardsSection } from "@/components/public-profile/awards-section";
-import { StatsBand } from "@/components/public-profile/stats-band";
 import { MediaKitPane } from "@/components/public-profile/media-kit-pane";
 import { AboutPane } from "@/components/public-profile/about-pane";
-import {
-  MOCK_CREDITS,
-  MOCK_AWARDS,
-  MOCK_REVIEWS,
-  getMockStats,
-} from "@/lib/mocks/public-profile";
+import type { Credit, Award, Testimonial } from "@/lib/validations/credit-testimonial.schema";
 
 export default function PublicTalentProfilePage() {
   const router = useRouter();
@@ -61,6 +55,9 @@ export default function PublicTalentProfilePage() {
   const [profile, setProfile] = useState<TalentProfile | null>(null);
   const [mediaKit, setMediaKit] = useState<MediaKitData | null>(null);
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([]);
+  const [credits, setCredits] = useState<Credit[]>([]);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [awards, setAwards] = useState<Award[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [featureError, setFeatureError] = useState<{ feature: string; plan?: string } | null>(null);
@@ -103,12 +100,29 @@ export default function PublicTalentProfilePage() {
     }
   }, [hasHydrated, user, fetchUser]);
 
-  const handleConnect = useCallback(() => {
+  const handleConnect = useCallback(async () => {
     if (!user) {
       router.push("/auth/login");
       return;
     }
     if (!profile?.user_id) return;
+
+    try {
+      const status = await messagesApi.checkConnection(profile.user_id);
+      const base = user.role === "recruiter" ? "/recruiter/messages" : "/talent/messages";
+      if (status.conversationId) {
+        router.push(`${base}/${status.conversationId}`);
+        return;
+      }
+      if (status.hasActiveConnection) {
+        const { conversation } = await messagesApi.startDirectConversation(profile.user_id);
+        router.push(`${base}/${conversation._id}`);
+        return;
+      }
+    } catch {
+      /* fall through to dialog */
+    }
+
     guard(() => {
       setConnectDialogOpen(true);
     });
@@ -162,12 +176,24 @@ export default function PublicTalentProfilePage() {
     }
   }, [user, isLiked, isTogglingLike, likeCount, username, router, popup]);
 
-  const handleSendMessage = useCallback(() => {
+  const handleSendMessage = useCallback(async () => {
     if (!user) {
       router.push("/auth/login");
       return;
     }
     if (!profile?.user_id) return;
+
+    try {
+      const status = await messagesApi.checkConnection(profile.user_id);
+      const base = user.role === "recruiter" ? "/recruiter/messages" : "/talent/messages";
+      if (status.conversationId) {
+        router.push(`${base}/${status.conversationId}`);
+        return;
+      }
+    } catch {
+      /* fall through to dialog */
+    }
+
     guard(() => {
       setFirstMessageOpen(true);
     });
@@ -188,12 +214,30 @@ export default function PublicTalentProfilePage() {
           variant: "success",
         });
       } catch (err: unknown) {
-        if ((err as { response?: { status?: number } })?.response?.status === 409) {
+        const statusCode = (err as { response?: { status?: number } })?.response?.status;
+        if (statusCode === 409) {
           try {
             const { conversation } = await messagesApi.startDirectConversation(talentId);
             setFirstMessageOpen(false);
             const base = user?.role === "recruiter" ? "/recruiter/messages" : "/talent/messages";
             router.push(`${base}/${conversation._id}`);
+            return;
+          } catch {
+            /* fall through */
+          }
+        }
+        if (statusCode === 403) {
+          try {
+            const status = await messagesApi.checkConnection(talentId);
+            setFirstMessageOpen(false);
+            if (status.conversationId) {
+              const base = user?.role === "recruiter" ? "/recruiter/messages" : "/talent/messages";
+              router.push(`${base}/${status.conversationId}`);
+            } else {
+              const { conversation } = await messagesApi.startDirectConversation(talentId);
+              const base = user?.role === "recruiter" ? "/recruiter/messages" : "/talent/messages";
+              router.push(`${base}/${conversation._id}`);
+            }
             return;
           } catch {
             /* fall through */
@@ -289,9 +333,12 @@ export default function PublicTalentProfilePage() {
         }
         if (!cancelled) setIsPrivate(false);
 
-        const [portfolioRes, mediaKitRes] = await Promise.all([
+        const [portfolioRes, mediaKitRes, creditsRes, testimonialsRes, awardsRes] = await Promise.all([
           talentApi.getPublicPortfolio(username),
           talentApi.getMediaKit(username).catch(() => null),
+          talentApi.getPublicCredits(username).catch(() => []),
+          talentApi.getPublicTestimonials(username).catch(() => []),
+          talentApi.getPublicAwards(username).catch(() => []),
         ]);
 
         if (!cancelled) {
@@ -303,6 +350,9 @@ export default function PublicTalentProfilePage() {
           if (mediaKitRes && !(mediaKitRes as { private?: boolean }).private) {
             setMediaKit(mediaKitRes as MediaKitData);
           }
+          setCredits(creditsRes as Credit[]);
+          setTestimonials(testimonialsRes as Testimonial[]);
+          setAwards(awardsRes as Award[]);
         }
       } catch (err) {
         const denied = isFeatureForbidden(err);
@@ -429,11 +479,6 @@ export default function PublicTalentProfilePage() {
 
   const trustScore = activeProfile?.trust_score ?? 0;
   const responseRate = 95;
-
-  const mockStats = useMemo(
-    () => getMockStats(activeProfile?.analytics),
-    [activeProfile?.analytics],
-  );
 
   const visibleTabs = useMemo(() => {
     const tabs: { id: TabId; label: string }[] = [];
@@ -610,10 +655,9 @@ export default function PublicTalentProfilePage() {
                   <OverviewPane
                     profile={activeProfile}
                     portfolioItems={portfolioItems.filter((i) => i.is_pinned)}
-                    credits={MOCK_CREDITS}
-                    awards={MOCK_AWARDS}
-                    reviews={MOCK_REVIEWS}
-                    stats={mockStats}
+                    credits={credits}
+                    awards={awards}
+                    reviews={testimonials}
                     onPortfolioItemClick={(item) => {
                       setLightboxItem(item);
                       setLightboxOpen(true);
@@ -634,13 +678,13 @@ export default function PublicTalentProfilePage() {
                 )}
 
                 {tab === "experience" && (
-                  <ExperienceSection credits={MOCK_CREDITS} />
+                  <ExperienceSection credits={credits} />
                 )}
 
                 {tab === "skills" && (
                   <div className="grid gap-6 lg:grid-cols-2">
                     <SkillsPane profile={activeProfile} showSkills />
-                    <AwardsSection awards={MOCK_AWARDS} />
+                    <AwardsSection awards={awards} />
                   </div>
                 )}
 
@@ -649,7 +693,7 @@ export default function PublicTalentProfilePage() {
                 )}
 
                 {tab === "reviews" && (
-                  <ReviewsSection reviews={MOCK_REVIEWS} />
+                  <ReviewsSection reviews={testimonials} />
                 )}
 
                 {tab === "about" && (

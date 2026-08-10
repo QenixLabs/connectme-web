@@ -3,10 +3,26 @@
 import { Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import type { MockReview } from "@/lib/mocks/public-profile";
+import type { Testimonial } from "@/lib/validations/credit-testimonial.schema";
+
+function getInitials(name?: string): string {
+  if (!name) return "?";
+  return name
+    .split(" ")
+    .map((s) => s[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+function formatDate(dateStr?: string): string {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
 
 interface ReviewsSectionProps {
-  reviews: MockReview[];
+  reviews: Testimonial[];
   aggregateRating?: number;
   totalCount?: number;
   showWriteReview?: boolean;
@@ -54,20 +70,25 @@ export function ReviewsSection({
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        {reviews.map((r) => (
+        {reviews.length === 0 ? (
+          <p className="col-span-full py-8 text-center text-sm text-muted-foreground">
+            No reviews yet
+          </p>
+        ) : (
+        reviews.map((r) => (
           <div
-            key={r.id}
+            key={r._id}
             className="rounded-xl border border-border bg-background/60 p-4"
           >
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
-                {r.initials}
+                {getInitials(r.author_name)}
               </div>
               <div>
                 <div className="text-sm font-semibold text-foreground">
-                  {r.name}
+                  {r.author_name}
                 </div>
-                <div className="text-xs text-muted-foreground">{r.role}</div>
+                <div className="text-xs text-muted-foreground">{r.author_role}</div>
               </div>
             </div>
             <div className="mt-3 flex text-amber">
@@ -78,9 +99,10 @@ export function ReviewsSection({
             <p className="mt-2 text-sm text-foreground/90">
               &ldquo;{r.content}&rdquo;
             </p>
-            <div className="mt-3 text-xs text-muted-foreground">{r.date}</div>
+            <div className="mt-3 text-xs text-muted-foreground">{formatDate(r.created_at)}</div>
           </div>
-        ))}
+        ))
+        )}
       </div>
     </Card>
   );

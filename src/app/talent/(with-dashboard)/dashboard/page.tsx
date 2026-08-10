@@ -54,12 +54,24 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 const PROFESSION_GRADIENT: Record<string, string> = {
   Actor: "from-[var(--color-opportunity-theater-start)] to-[var(--color-opportunity-theater-end)]",
   Model: "from-[var(--color-opportunity-fashion-start)] to-[var(--color-opportunity-fashion-end)]",
-  Dancer: "from-[var(--color-opportunity-theater-start)] to-[var(--color-opportunity-theater-end)]",
+  Singer: "from-[var(--color-opportunity-theater-start)] to-[var(--color-opportunity-theater-end)]",
   Musician: "from-[var(--color-opportunity-theater-start)] to-[var(--color-opportunity-theater-end)]",
+  Dancer: "from-[var(--color-opportunity-theater-start)] to-[var(--color-opportunity-theater-end)]",
   "Voice Artist": "from-[var(--color-opportunity-film-start)] to-[var(--color-opportunity-film-end)]",
-  Photographer: "from-[var(--color-opportunity-film-start)] to-[var(--color-opportunity-film-end)]",
+  Anchor: "from-[var(--color-opportunity-tv-start)] to-[var(--color-opportunity-tv-end)]",
   Influencer: "from-[var(--color-opportunity-tv-start)] to-[var(--color-opportunity-tv-end)]",
-  "Extra / Background": "from-[var(--color-opportunity-default-start)] to-[var(--color-opportunity-default-end)]",
+  Director: "from-[var(--color-opportunity-film-start)] to-[var(--color-opportunity-film-end)]",
+  Writer: "from-[var(--color-opportunity-film-start)] to-[var(--color-opportunity-film-end)]",
+  Photographer: "from-[var(--color-opportunity-film-start)] to-[var(--color-opportunity-film-end)]",
+  Cinematographer: "from-[var(--color-opportunity-film-start)] to-[var(--color-opportunity-film-end)]",
+  Editor: "from-[var(--color-opportunity-film-start)] to-[var(--color-opportunity-film-end)]",
+  Choreographer: "from-[var(--color-opportunity-theater-start)] to-[var(--color-opportunity-theater-end)]",
+  "Makeup Artist": "from-[var(--color-opportunity-fashion-start)] to-[var(--color-opportunity-fashion-end)]",
+  Stylist: "from-[var(--color-opportunity-fashion-start)] to-[var(--color-opportunity-fashion-end)]",
+  Producer: "from-[var(--color-opportunity-film-start)] to-[var(--color-opportunity-film-end)]",
+  Comedian: "from-[var(--color-opportunity-theater-start)] to-[var(--color-opportunity-theater-end)]",
+  "Child Artist": "from-[var(--color-opportunity-theater-start)] to-[var(--color-opportunity-theater-end)]",
+  "Other Creative Roles": "from-[var(--color-opportunity-default-start)] to-[var(--color-opportunity-default-end)]",
 };
 
 function resolveGradient(roleType?: string) {

@@ -303,11 +303,7 @@ export default function CampaignApplicationsPage() {
 
   const handleViewProfile = useCallback(
     (app: EnrichedApplication) => {
-      const talent =
-        typeof app.talent_id === "object" && app.talent_id !== null
-          ? app.talent_id
-          : null;
-      const username = talent?.username;
+      const username = app.talent_profile?.username;
       if (!username) return;
       router.push(`/talent/${username}`);
     },

@@ -181,6 +181,9 @@ export type TalentProfile = Omit<UpdateTalentProfileInput, "social_links"> & {
     profile_views_30d?: number;
     shortlist_count?: number;
     like_count?: number;
+    projects_completed?: number;
+    happy_clients?: number;
+    years_of_experience?: number;
   };
   section_visibility?: z.infer<typeof sectionVisibilitySchema>;
   created_at?: string;

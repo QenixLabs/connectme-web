@@ -11,7 +11,7 @@ interface AuthLayoutProps {
 
 export function AuthLayout({ children, subtitle, showGlow }: AuthLayoutProps) {
   return (
-    <div className="min-h-screen bg-page flex items-center justify-center px-4 py-12 relative overflow-hidden">
+    <div className="min-h-screen bg-page flex items-start justify-center px-4 py-12 relative">
       {showGlow && (
         <div
           className="fixed inset-0 pointer-events-none"
@@ -26,7 +26,7 @@ export function AuthLayout({ children, subtitle, showGlow }: AuthLayoutProps) {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: [0.25, 0.4, 0.25, 1] }}
-        className={cn("w-full max-w-md", showGlow && "relative z-10")}
+        className={cn("w-full max-w-md my-auto", showGlow && "relative z-10")}
       >
         <div className="text-center mb-10">
           <Link href="/" className="inline-flex items-center gap-2 group">

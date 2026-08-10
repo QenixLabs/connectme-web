@@ -103,13 +103,13 @@ export function TalentPreviewPanel({
       : null;
 
   const profile = application.talent_profile;
-  const displayName = talent?.full_legal_name || talent?.email || "Unknown";
+  const displayName = profile?.full_legal_name || talent?.full_legal_name || talent?.email || "Unknown";
   const profilePhoto = profile?.profile_photo;
   const professions = profile?.professions || [];
   const primaryProfession = professions[0] ?? "";
   const location = profile?.location;
   const loc = [location?.city, location?.state].filter(Boolean).join(", ");
-  const username = talent?.username;
+  const username = profile?.username;
   const isVerified = profile?.is_verified ?? false;
   const note = application.note;
   const hasNote = note && (note.note_text || (note.rating && note.rating > 0));

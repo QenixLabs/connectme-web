@@ -24,8 +24,16 @@ import {
   Camera,
   Music4,
   Mic2,
+  MicVocal,
   Video,
+  Monitor,
   PenTool,
+  Film,
+  Palette,
+  Scissors,
+  Briefcase,
+  Smile,
+  Baby,
   Sparkles,
 } from "lucide-react";
 import { authApi, talentApi } from "@/lib/api";
@@ -65,12 +73,24 @@ type Step = 1 | 2 | 3;
 const PROFESSION_ICONS: Record<string, React.ReactNode> = {
   Actor: <Clapperboard className="w-5 h-5" strokeWidth={1.5} />,
   Model: <Camera className="w-5 h-5" strokeWidth={1.5} />,
-  Dancer: <Music4 className="w-5 h-5" strokeWidth={1.5} />,
+  Singer: <MicVocal className="w-5 h-5" strokeWidth={1.5} />,
   Musician: <Music4 className="w-5 h-5" strokeWidth={1.5} />,
+  Dancer: <Music4 className="w-5 h-5" strokeWidth={1.5} />,
   "Voice Artist": <Mic2 className="w-5 h-5" strokeWidth={1.5} />,
-  Photographer: <Camera className="w-5 h-5" strokeWidth={1.5} />,
+  Anchor: <Monitor className="w-5 h-5" strokeWidth={1.5} />,
   Influencer: <Video className="w-5 h-5" strokeWidth={1.5} />,
-  "Extra / Background": <PenTool className="w-5 h-5" strokeWidth={1.5} />,
+  Director: <Clapperboard className="w-5 h-5" strokeWidth={1.5} />,
+  Writer: <PenTool className="w-5 h-5" strokeWidth={1.5} />,
+  Photographer: <Camera className="w-5 h-5" strokeWidth={1.5} />,
+  Cinematographer: <Camera className="w-5 h-5" strokeWidth={1.5} />,
+  Editor: <Film className="w-5 h-5" strokeWidth={1.5} />,
+  Choreographer: <Music4 className="w-5 h-5" strokeWidth={1.5} />,
+  "Makeup Artist": <Palette className="w-5 h-5" strokeWidth={1.5} />,
+  Stylist: <Scissors className="w-5 h-5" strokeWidth={1.5} />,
+  Producer: <Briefcase className="w-5 h-5" strokeWidth={1.5} />,
+  Comedian: <Smile className="w-5 h-5" strokeWidth={1.5} />,
+  "Child Artist": <Baby className="w-5 h-5" strokeWidth={1.5} />,
+  "Other Creative Roles": <Sparkles className="w-5 h-5" strokeWidth={1.5} />,
   Other: <Sparkles className="w-5 h-5" strokeWidth={1.5} />,
 };
 
@@ -427,45 +447,38 @@ export default function TalentSignupPage() {
                           </motion.div>
                         )}
 
-                        {selectedProfession && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                          >
-                            <FormField
-                              control={form.control}
-                              name="creatorLink"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>
-                                    Creator link
-                                    {selectedProfession === "Influencer" ? (
-                                      <span className="text-rose-500"> *</span>
-                                    ) : (
-                                      <span className="text-text-muted font-normal">
-                                        {" "}
-                                        (optional)
-                                      </span>
-                                    )}
-                                  </FormLabel>
-                                  <FormControl>
-                                    <div className="relative group">
-                                      <div className="absolute left-0 top-0 bottom-0 w-10 flex items-center justify-center text-text-muted group-focus-within:text-brand transition-colors duration-200">
-                                        <Globe className="w-4 h-4" strokeWidth={1.5} />
-                                      </div>
-                                      <Input
-                                        placeholder="https://instagram.com/yourhandle"
-                                        className="pl-10 h-11 rounded-xl"
-                                        {...field}
-                                      />
-                                    </div>
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </motion.div>
-                        )}
+                        <FormField
+                          control={form.control}
+                          name="creatorLink"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                Creator link
+                                {selectedProfession === "Influencer" ? (
+                                  <span className="text-rose-500"> *</span>
+                                ) : (
+                                  <span className="text-text-muted font-normal">
+                                    {" "}
+                                    (optional)
+                                  </span>
+                                )}
+                              </FormLabel>
+                              <FormControl>
+                                <div className="relative group">
+                                  <div className="absolute left-0 top-0 bottom-0 w-10 flex items-center justify-center text-text-muted group-focus-within:text-brand transition-colors duration-200">
+                                    <Globe className="w-4 h-4" strokeWidth={1.5} />
+                                  </div>
+                                  <Input
+                                    placeholder="https://instagram.com/yourhandle"
+                                    className="pl-10 h-11 rounded-xl"
+                                    {...field}
+                                  />
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
 
                         {selectedProfession &&
                           selectedProfession !== "Other" &&

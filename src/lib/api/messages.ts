@@ -74,7 +74,17 @@ export interface PaginatedConversations {
   nextCursor: string | null;
 }
 
+export interface ConnectionCheckResult {
+  hasActiveConnection: boolean;
+  conversationId: string | null;
+  collaborationRequestStatus: string | null;
+}
+
 export const messagesApi = {
+  checkConnection: async (userId: string): Promise<ConnectionCheckResult> => {
+    const response = await apiClient.get(`/connections/check/${userId}`);
+    return response.data;
+  },
   getConversations: async (cursor?: string, limit = 20): Promise<PaginatedConversations> => {
     const params = new URLSearchParams();
     if (cursor) params.append('cursor', cursor);

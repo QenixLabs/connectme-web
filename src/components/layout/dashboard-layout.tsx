@@ -13,6 +13,7 @@ import {
   Search,
   LogOut,
   UserCheck,
+  Award,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -41,6 +42,7 @@ const BOTTOM_NAV_ITEMS: Record<"talent" | "recruiter", NavItem[]> = {
   talent: [
     { href: "/talent/dashboard", label: "Home", icon: Home },
     { href: "/talent/opportunities", label: "Jobs", icon: Briefcase },
+    { href: "/talent/experience", label: "Experience", icon: Award },
     { href: "/talent/messages", label: "Messages", icon: MessageSquare },
   ],
   recruiter: [

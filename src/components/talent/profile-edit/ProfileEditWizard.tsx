@@ -16,6 +16,7 @@ import {
   User,
   Briefcase,
   SlidersHorizontal,
+  Award,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { AxiosError } from "axios";
@@ -54,6 +55,7 @@ const STEPS = [
   { label: "Identity", number: 1, icon: User },
   { label: "Work", number: 2, icon: Briefcase },
   { label: "Extras", number: 3, icon: SlidersHorizontal },
+  { label: "Recognition", number: 4, icon: Award },
 ];
 
 function getStepFields(step: number): (keyof CreateTalentProfileInput)[] {
@@ -341,7 +343,7 @@ export function ProfileEditWizard({
     const valid = await form.trigger(fields as Parameters<typeof form.trigger>[0]);
     if (valid) {
       setIsNavigating(true);
-      setStep((s) => Math.min(s + 1, 3));
+      setStep((s) => Math.min(s + 1, 4));
       window.scrollTo({ top: 0, behavior: "smooth" });
       setTimeout(() => setIsNavigating(false), 100);
     }
@@ -451,7 +453,7 @@ export function ProfileEditWizard({
   };
 
   const displayUsername = form.watch("username") || profile?.username;
-  const isLastStep = step === 3;
+  const isLastStep = step === 4;
 
   return (
     <div
@@ -614,7 +616,7 @@ export function ProfileEditWizard({
                 <div className="h-1 bg-muted-bg rounded-full overflow-hidden mb-2">
                   <div
                     className="h-full bg-gradient-to-r from-gold to-gold-hover rounded-full transition-all duration-500 ease-out"
-                    style={{ width: `${(step / 3) * 100}%` }}
+                    style={{ width: `${(step / 4) * 100}%` }}
                   />
                 </div>
               </div>
@@ -680,6 +682,47 @@ export function ProfileEditWizard({
                 </div>
                 <div className="mx-auto max-w-3xl">
                   <ExtrasStep resume={resumeSlot} />
+                </div>
+              </div>
+
+              <div
+                className={cn(
+                  "transition-all duration-300",
+                  step === 4 ? "block opacity-100" : "hidden opacity-0",
+                )}
+              >
+                <div className="mx-auto max-w-3xl">
+                  <h2 className="text-lg font-serif font-semibold text-ink mb-1">
+                    Experience & Recognition
+                  </h2>
+                  <p className="text-sm text-ink-muted mb-6">
+                    Add your credits, awards, and testimonials to build
+                    credibility.
+                  </p>
+                </div>
+                <div className="mx-auto max-w-3xl">
+                  <div className="rounded-2xl border border-dashed border-border/60 bg-card p-6 text-center">
+                    <Award className="mx-auto h-10 w-10 text-amber/60" />
+                    <h3 className="mt-3 text-sm font-semibold text-foreground">
+                      Credits, Testimonials & Awards
+                    </h3>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Manage your work experience, awards, and testimonials on
+                      a dedicated page where you can add, edit, and reorder
+                      items.
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="mt-4 rounded-xl"
+                      onClick={() =>
+                        router.push("/talent/experience")
+                      }
+                    >
+                      <Award className="mr-2 h-4 w-4" />
+                      Manage Experience
+                    </Button>
+                  </div>
                 </div>
               </div>
 

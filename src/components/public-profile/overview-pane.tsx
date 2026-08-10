@@ -17,11 +17,10 @@ import type {
   PortfolioItem,
 } from "@/lib/validations/talent-profile.schema";
 import type {
-  MockCredit,
-  MockAward,
-  MockReview,
-  MockStats,
-} from "@/lib/mocks/public-profile";
+  Credit,
+  Award,
+  Testimonial,
+} from "@/lib/validations/credit-testimonial.schema";
 import { ExperienceSection } from "./experience-section";
 import { AwardsSection } from "./awards-section";
 import { ReviewsSection } from "./reviews-section";
@@ -30,10 +29,9 @@ import { StatsBand } from "./stats-band";
 interface OverviewPaneProps {
   profile: TalentProfile;
   portfolioItems: PortfolioItem[];
-  credits: MockCredit[];
-  awards: MockAward[];
-  reviews: MockReview[];
-  stats: MockStats;
+  credits: Credit[];
+  awards: Award[];
+  reviews: Testimonial[];
   onPortfolioItemClick?: (item: PortfolioItem) => void;
 }
 
@@ -82,7 +80,6 @@ export function OverviewPane({
   credits,
   awards,
   reviews,
-  stats,
   onPortfolioItemClick,
 }: OverviewPaneProps) {
   const [aboutExpanded, setAboutExpanded] = useState(false);
@@ -287,7 +284,13 @@ export function OverviewPane({
       {reviews.length > 0 && <ReviewsSection reviews={reviews} />}
 
       {/* Stats band */}
-      <StatsBand stats={stats} />
+      <StatsBand
+        projectsCompleted={profile.analytics?.projects_completed ?? 0}
+        happyClients={profile.analytics?.happy_clients ?? 0}
+        yearsExperience={profile.analytics?.years_of_experience ?? 0}
+        profileViews30d={profile.analytics?.profile_views_30d ?? 0}
+        shortlistCount={profile.analytics?.shortlist_count ?? 0}
+      />
     </div>
   );
 }

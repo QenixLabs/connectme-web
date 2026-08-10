@@ -283,4 +283,87 @@ export const talentApi = {
     const response = await apiClient.get(`/talent/like/${username}/status`);
     return response.data;
   },
+
+  getPublicCredits: async (username: string): Promise<Record<string, unknown>[]> => {
+    const response = await apiClient.get(`/talent/profile/${username}/credits`);
+    return response.data;
+  },
+
+  getPublicTestimonials: async (username: string): Promise<Record<string, unknown>[]> => {
+    const response = await apiClient.get(`/talent/profile/${username}/testimonials`);
+    return response.data;
+  },
+
+  getPublicAwards: async (username: string): Promise<Record<string, unknown>[]> => {
+    const response = await apiClient.get(`/talent/profile/${username}/awards`);
+    return response.data;
+  },
+
+  // ── My Credits (talent CRUD) ──
+
+  listMyCredits: async (params?: { page?: number; limit?: number }): Promise<{ data: Record<string, unknown>[]; total: number }> => {
+    const response = await apiClient.get('/talent/credits', { params });
+    return response.data;
+  },
+
+  createCredit: async (dto: { type: string; project_name: string; role_played: string; platform?: string; year?: number; director?: string; credit_url?: string; verification_status?: string; order?: number }): Promise<Record<string, unknown>> => {
+    const response = await apiClient.post('/talent/credits', dto);
+    return response.data;
+  },
+
+  updateCredit: async (id: string, dto: Record<string, unknown>): Promise<Record<string, unknown>> => {
+    const response = await apiClient.patch(`/talent/credits/${id}`, dto);
+    return response.data;
+  },
+
+  deleteCredit: async (id: string): Promise<void> => {
+    await apiClient.delete(`/talent/credits/${id}`);
+  },
+
+  // ── My Testimonials (talent CRUD) ──
+
+  listMyTestimonials: async (params?: { page?: number; limit?: number }): Promise<{ data: Record<string, unknown>[]; total: number }> => {
+    const response = await apiClient.get('/talent/testimonials', { params });
+    return response.data;
+  },
+
+  createTestimonial: async (dto: { type: string; author_name: string; author_role?: string; author_company?: string; content: string; rating?: number; is_video?: boolean; video_url?: string; order?: number }): Promise<Record<string, unknown>> => {
+    const response = await apiClient.post('/talent/testimonials', dto);
+    return response.data;
+  },
+
+  updateTestimonial: async (id: string, dto: Record<string, unknown>): Promise<Record<string, unknown>> => {
+    const response = await apiClient.patch(`/talent/testimonials/${id}`, dto);
+    return response.data;
+  },
+
+  approveTestimonial: async (id: string): Promise<Record<string, unknown>> => {
+    const response = await apiClient.patch(`/talent/testimonials/${id}/approve`);
+    return response.data;
+  },
+
+  deleteTestimonial: async (id: string): Promise<void> => {
+    await apiClient.delete(`/talent/testimonials/${id}`);
+  },
+
+  // ── My Awards (talent CRUD) ──
+
+  listMyAwards: async (params?: { page?: number; limit?: number }): Promise<{ data: Record<string, unknown>[]; total: number }> => {
+    const response = await apiClient.get('/talent/awards', { params });
+    return response.data;
+  },
+
+  createAward: async (dto: { type: string; title: string; awarding_body: string; year?: number; description?: string; media_url?: string; order?: number }): Promise<Record<string, unknown>> => {
+    const response = await apiClient.post('/talent/awards', dto);
+    return response.data;
+  },
+
+  updateAward: async (id: string, dto: Record<string, unknown>): Promise<Record<string, unknown>> => {
+    const response = await apiClient.patch(`/talent/awards/${id}`, dto);
+    return response.data;
+  },
+
+  deleteAward: async (id: string): Promise<void> => {
+    await apiClient.delete(`/talent/awards/${id}`);
+  },
 };

@@ -29,6 +29,8 @@ export interface EnrichedApplication {
   campaign_id: string;
   talent_id: ApplicationTalent | string;
   talent_profile?: {
+    full_legal_name?: string;
+    username?: string;
     profile_photo?: string;
     professions?: string[];
     location?: { country?: string; state?: string; city?: string };
@@ -133,7 +135,7 @@ export function CampaignApplicationCard({
       : null;
 
   const profile = application.talent_profile;
-  const displayName = talent?.full_legal_name || talent?.email || "Unknown";
+  const displayName = profile?.full_legal_name || talent?.full_legal_name || talent?.email || "Unknown";
   const profilePhoto = profile?.profile_photo;
   const professions = profile?.professions || [];
   const location = profile?.location;

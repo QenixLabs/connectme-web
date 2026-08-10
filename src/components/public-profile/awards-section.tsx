@@ -3,7 +3,7 @@
 import { Trophy, Star, Award } from "lucide-react";
 import type { ComponentType } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import type { MockAward } from "@/lib/mocks/public-profile";
+import type { Award as AwardType } from "@/lib/validations/credit-testimonial.schema";
 
 const ICON_MAP: Record<string, ComponentType<{ className?: string }>> = {
   trophy: Trophy,
@@ -12,7 +12,7 @@ const ICON_MAP: Record<string, ComponentType<{ className?: string }>> = {
 };
 
 interface AwardsSectionProps {
-  awards: MockAward[];
+  awards: AwardType[];
 }
 
 export function AwardsSection({ awards }: AwardsSectionProps) {
@@ -34,9 +34,9 @@ export function AwardsSection({ awards }: AwardsSectionProps) {
 
         <ul className="space-y-3">
           {awards.map((award) => {
-            const Icon = ICON_MAP[award.icon] ?? Award;
+            const Icon = Award;
             return (
-              <li key={award.title} className="flex items-start gap-3">
+              <li key={award._id} className="flex items-start gap-3">
                 <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber/15">
                   <Icon className="h-4 w-4 text-amber" />
                 </div>
@@ -45,7 +45,7 @@ export function AwardsSection({ awards }: AwardsSectionProps) {
                     {award.title}
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    {award.sub}
+                    {award.awarding_body}
                   </div>
                 </div>
               </li>

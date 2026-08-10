@@ -102,9 +102,11 @@ import { TalentGridCard } from '@/components/talent-grid-card';
 import { CampaignApplicationCard } from '@/components/campaign-application-card';
 import { CampaignApplicationRow } from '@/components/campaign-application-row';
 import { ApplicationNoteSheet } from '@/components/application-note-sheet';
+import { TalentPreviewPanel } from '@/components/campaigns/TalentPreviewPanel';
 import { TaskSubmissionsPanel } from '@/components/campaigns/TaskSubmissionsPanel';
 import { TaskConfigCard } from '@/components/campaigns/TaskConfigCard';
 import { type TaskSubmission } from '@/lib/api';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { useReviewTaskSubmission } from '@/lib/api/hooks/useCampaignTask';
 import { useSendAcceptanceMessage } from '@/lib/api/hooks/useCampaignTask';
 import { useTalentRecommendations } from '@/lib/api/hooks/useTalentRecommendations';
@@ -172,12 +174,24 @@ const BAR_COLOR = '#6366f1';
 const PROFESSION_GRADIENTS: Record<string, string> = {
   Actor: "from-fuchsia-600 via-purple-700 to-violet-800",
   Model: "from-teal-600 via-emerald-700 to-green-800",
-  Dancer: "from-indigo-600 via-violet-700 to-purple-800",
+  Singer: "from-indigo-600 via-violet-700 to-purple-800",
   Musician: "from-indigo-600 via-violet-700 to-purple-800",
+  Dancer: "from-indigo-600 via-violet-700 to-purple-800",
   "Voice Artist": "from-rose-600 via-pink-700 to-fuchsia-800",
-  Photographer: "from-violet-600 via-purple-700 to-indigo-800",
+  Anchor: "from-rose-600 via-pink-700 to-fuchsia-800",
   Influencer: "from-sky-600 via-blue-700 to-indigo-800",
-  "Extra / Background": "from-slate-600 to-slate-800",
+  Director: "from-violet-600 via-purple-700 to-indigo-800",
+  Writer: "from-amber-600 via-orange-700 to-red-800",
+  Photographer: "from-violet-600 via-purple-700 to-indigo-800",
+  Cinematographer: "from-violet-600 via-purple-700 to-indigo-800",
+  Editor: "from-violet-600 via-purple-700 to-indigo-800",
+  Choreographer: "from-indigo-600 via-violet-700 to-purple-800",
+  "Makeup Artist": "from-teal-600 via-emerald-700 to-green-800",
+  Stylist: "from-teal-600 via-emerald-700 to-green-800",
+  Producer: "from-amber-600 via-orange-700 to-red-800",
+  Comedian: "from-fuchsia-600 via-purple-700 to-violet-800",
+  "Child Artist": "from-fuchsia-600 via-purple-700 to-violet-800",
+  "Other Creative Roles": "from-slate-600 to-slate-800",
 };
 
 function getProfessionGradient(roleType?: string): string {
@@ -251,6 +265,7 @@ export default function CampaignDetailPage() {
   const [appSelectedIds, setAppSelectedIds] = useState<Set<string>>(new Set());
   const [noteSheetOpen, setNoteSheetOpen] = useState(false);
   const [noteApplication, setNoteApplication] = useState<Record<string, unknown> | null>(null);
+  const [previewApp, setPreviewApp] = useState<import('@/components/campaign-application-card').EnrichedApplication | null>(null);
 
   // Task submission state
   const reviewSubmission = useReviewTaskSubmission();
@@ -522,6 +537,61 @@ export default function CampaignDetailPage() {
         },
       },
     );
+  };
+
+  const handlePreviewNoteSave = (noteText: string, rating: number) => {
+    if (!previewApp) return;
+    upsertNote.mutate(
+      {
+        campaignId,
+        applicationId: previewApp._id,
+        payload: { note_text: noteText, rating: rating || undefined },
+      },
+    );
+  };
+
+  const handlePreviewNoteDelete = () => {
+    if (!previewApp) return;
+    deleteNote.mutate({ campaignId, applicationId: previewApp._id });
+  };
+
+  const handlePreviewReviewSubmission = (notes: string, rating: number) => {
+    const sub = previewApp?.task_submission;
+    if (!sub) return;
+    reviewSubmission.mutate({
+      campaignId,
+      submissionId: sub._id,
+      payload: { recruiter_notes: notes, recruiter_rating: rating },
+    });
+  };
+
+  const handlePreviewAcceptFromSubmission = async () => {
+    const sub = previewApp?.task_submission;
+    if (!sub?.application_id || !previewApp) return;
+    const talentId =
+      typeof previewApp.talent_id === 'object' && previewApp.talent_id !== null
+        ? (previewApp.talent_id as { _id: string })._id
+        : typeof previewApp.talent_id === 'string'
+          ? previewApp.talent_id
+          : null;
+    await updateStatus.mutateAsync({
+      campaignId,
+      applicationId: sub.application_id,
+      status: 'accepted',
+    });
+    if (talentId) {
+      sendAcceptanceMsg.mutate({ campaignId, talentId });
+    }
+  };
+
+  const handlePreviewRejectFromSubmission = async () => {
+    const sub = previewApp?.task_submission;
+    if (!sub?.application_id) return;
+    await updateStatus.mutateAsync({
+      campaignId,
+      applicationId: sub.application_id,
+      status: 'rejected',
+    });
   };
 
   const hasActiveAppFilters = appStatus !== 'all' || appShortlisted !== 'true' || !!appDebouncedSearch;
@@ -927,8 +997,7 @@ export default function CampaignDetailPage() {
                       key={app._id}
                       application={app}
                       onViewProfile={() => {
-                        const talent = typeof app.talent_id === 'object' && app.talent_id !== null ? app.talent_id : null;
-                        if (talent?.username) router.push(`/talent/${talent.username}`);
+                        setPreviewApp(app as unknown as import('@/components/campaign-application-card').EnrichedApplication);
                       }}
                       onStatusChange={(status) => handleAppStatusChange(app._id, status)}
                       onToggleShortlist={() => handleAppToggleShortlist(app._id, app.is_shortlisted ?? false)}
@@ -1011,6 +1080,37 @@ export default function CampaignDetailPage() {
               isSaving={upsertNote.isPending}
               isDeleting={deleteNote.isPending}
             />
+
+            {/* Talent Preview Sheet */}
+            <Sheet
+              open={!!previewApp}
+              onOpenChange={(open) => { if (!open) setPreviewApp(null); }}
+            >
+              <SheetContent
+                side="right"
+                className="w-full sm:max-w-xl p-0 border-l-border/60"
+              >
+                <TalentPreviewPanel
+                  application={previewApp}
+                  onClose={() => setPreviewApp(null)}
+                  onStatusChange={(status) => {
+                    if (previewApp) handleAppStatusChange(previewApp._id, status);
+                  }}
+                  onToggleShortlist={() => {
+                    if (previewApp) handleAppToggleShortlist(previewApp._id, previewApp.is_shortlisted ?? false);
+                  }}
+                  onNoteSave={handlePreviewNoteSave}
+                  onNoteDelete={handlePreviewNoteDelete}
+                  onReviewSubmission={handlePreviewReviewSubmission}
+                  onAcceptFromSubmission={handlePreviewAcceptFromSubmission}
+                  onRejectFromSubmission={handlePreviewRejectFromSubmission}
+                  isSavingNote={upsertNote.isPending}
+                  isDeletingNote={deleteNote.isPending}
+                  isReviewing={reviewSubmission.isPending}
+                  isUpdatingStatus={updateStatus.isPending}
+                />
+              </SheetContent>
+            </Sheet>
           </TabsContent>
 
           <TabsContent value="invites" className="space-y-4 mt-6">

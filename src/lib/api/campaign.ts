@@ -167,6 +167,8 @@ export const campaignApi = {
       campaign_id: string;
       talent_id: { _id: string; email: string; full_legal_name?: string; username?: string } | string;
       talent_profile?: {
+        full_legal_name?: string;
+        username?: string;
         profile_photo?: string;
         professions?: string[];
         location?: { country?: string; state?: string; city?: string };
