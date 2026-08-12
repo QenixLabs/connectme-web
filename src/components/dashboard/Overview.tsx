@@ -1,9 +1,7 @@
-import { Eye, Calendar, MessageSquare, Star, ArrowUp } from "lucide-react";
+import { Eye, Calendar, MessageSquare, Star } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
 import { useDashboard } from "./DashboardProvider";
-
-import { Sparkline } from "./Sparkline";
 
 export function Overview() {
   const { profile, unreadCount } = useDashboard();
@@ -16,28 +14,28 @@ export function Overview() {
     {
       label: "7D VIEWS",
       Icon: Eye,
-      value: views7d.toLocaleString(),
+      value: Math.max(0, views7d).toLocaleString(),
     },
     {
       label: "30D VIEWS",
       Icon: Calendar,
-      value: views30d.toLocaleString(),
+      value: Math.max(0, views30d).toLocaleString(),
     },
     {
       label: "MESSAGES",
       Icon: MessageSquare,
-      value: unreadCount.toLocaleString(),
+      value: Math.max(0, unreadCount).toLocaleString(),
     },
     {
       label: "SHORTLISTS",
       Icon: Star,
-      value: shortlists.toLocaleString(),
+      value: Math.max(0, shortlists).toLocaleString(),
     },
   ];
 
   return (
     <section className="mt-6 lg:mt-0">
-      <h3 className="px-5 text-[22px] font-bold lg:px-0">
+      <h3 className="px-5 font-sans text-[22px] font-bold lg:px-0">
         Overview <span className="text-base font-normal text-muted-foreground">(This Week)</span>
       </h3>
       <div className="mt-3 grid grid-cols-2 gap-3 px-4 sm:grid-cols-4 lg:grid-cols-2 lg:px-0 xl:grid-cols-4">

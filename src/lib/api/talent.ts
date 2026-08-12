@@ -86,7 +86,7 @@ export interface TalentProfile {
 
 export interface PortfolioApiResponse {
   id: string;
-  type: "image" | "video" | "link";
+  type: "image" | "video" | "youtube" | "instagram";
   category: "work" | "personal" | "intro";
   url: string;
   thumbnail_url?: string;
@@ -97,7 +97,10 @@ export interface PortfolioApiResponse {
   embed_url?: string;
   ai_moderation_status?: "pending" | "approved" | "flagged";
   view_count?: number;
+  likes_count?: number;
+  is_liked_by_me?: boolean;
   created_at?: string;
+  updated_at?: string;
 }
 
 export interface PortfolioStatsResponse {
@@ -181,6 +184,15 @@ export const talentApi = {
   updateMyProfile: async (data: UpdateTalentProfilePayload) => {
     const response = await apiClient.patch("/talent", data);
     return response.data as TalentProfile;
+  },
+
+  uploadProfilePhoto: async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await apiClient.post("/talent/upload/profile-photo", formData, {
+      headers: { "Content-Type": undefined },
+    });
+    return response.data as { relativePath: string; signedUrl: string };
   },
 
   getCompleteness: async () => {
@@ -268,6 +280,14 @@ export const talentApi = {
     return response.data;
   },
 
+  togglePortfolioFeatured: async (itemId: string, isPinned: boolean) => {
+    const response = await apiClient.patch(
+      `/talent/portfolio/items/${itemId}`,
+      { is_pinned: isPinned },
+    );
+    return response.data as PortfolioApiResponse;
+  },
+
   uploadPortfolioImage: async (
     file: File,
     data?: {
@@ -288,7 +308,7 @@ export const talentApi = {
       });
     }
     const response = await apiClient.post("/talent/portfolio/upload/image", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
+      headers: { "Content-Type": undefined },
     });
     return response.data as PortfolioApiResponse;
   },
@@ -313,7 +333,7 @@ export const talentApi = {
       });
     }
     const response = await apiClient.post("/talent/portfolio/upload/video", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
+      headers: { "Content-Type": undefined },
     });
     return response.data as PortfolioApiResponse;
   },
@@ -462,6 +482,21 @@ export const talentApi = {
   getLikeStatus: async (username: string) => {
     const response = await apiClient.get(`/talent/like/${username}/status`);
     return response.data as { is_liked: boolean };
+  },
+
+  likePortfolioItem: async (itemId: string) => {
+    const response = await apiClient.post(`/talent/portfolio/items/${itemId}/like`);
+    return response.data as { liked: boolean; likes_count: number };
+  },
+
+  unlikePortfolioItem: async (itemId: string) => {
+    const response = await apiClient.delete(`/talent/portfolio/items/${itemId}/like`);
+    return response.data as { liked: boolean; likes_count: number };
+  },
+
+  getPortfolioItemLikeStatus: async (itemId: string) => {
+    const response = await apiClient.get(`/talent/portfolio/items/${itemId}/like/status`);
+    return response.data as { liked: boolean; likes_count: number };
   },
 
   // ── Media Kit ───────────────────────────────────────────

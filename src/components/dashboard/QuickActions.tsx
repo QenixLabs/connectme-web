@@ -17,14 +17,14 @@ export function QuickActions() {
 
   return (
     <section className="mt-6 lg:mt-0">
-      <h3 className="px-5 text-[22px] font-bold lg:px-0">Quick Actions</h3>
+      <h3 className="px-5 font-sans text-[22px] font-bold lg:px-0">Quick Actions</h3>
       <div className="mt-3 flex gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] lg:grid lg:grid-cols-5 lg:px-0 [&::-webkit-scrollbar]:hidden">
         {ACTIONS.map(({ label, Icon, href, badge }) => (
           <Button
             key={label}
             asChild
             variant="outline"
-            className="relative h-[120px] w-[110px] shrink-0 flex-col gap-3 rounded-2xl bg-card whitespace-normal shadow-none hover:bg-card lg:w-auto"
+            className="relative h-[100px] w-[100px] shrink-0 flex-col gap-2 rounded-2xl bg-card whitespace-normal shadow-none hover:bg-card lg:h-auto lg:w-auto lg:min-h-0 lg:flex-row lg:items-center lg:gap-3 lg:px-4 lg:py-3"
           >
             <Link href={href}>
               <Icon className="size-8 stroke-[1.5] text-primary" />

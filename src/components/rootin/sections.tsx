@@ -23,6 +23,7 @@ import type { TalentProfile } from "@/lib/api/talent";
 export { Card, SectionHead, Pill, Stars, EmptyState } from "./primitives";
 export {
   AboutSection,
+  DetailsSection,
   PortfolioSection,
   ExperienceSection,
   SkillsSection,
@@ -33,6 +34,7 @@ export {
 } from "./sections/index";
 export type {
   AboutSectionProps,
+  DetailsSectionProps,
   PortfolioSectionProps,
   ExperienceSectionProps,
   SkillsSectionProps,

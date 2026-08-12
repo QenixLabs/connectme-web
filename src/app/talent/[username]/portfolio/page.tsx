@@ -1,186 +1,367 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useParams } from "next/navigation";
+import { useStore } from "zustand/react";
+import { authStore } from "@/stores/auth-store";
+import { toast } from "sonner";
 import {
-  Upload,
-  ChevronLeft,
-  ChevronRight,
-  HelpCircle,
-} from "lucide-react";
-import { PortfolioCard } from "@/components/portfolio/PortfolioCard";
-import { PortfolioFilters, type ViewMode, type TabLabel } from "@/components/portfolio/PortfolioFilters";
-import { PremiumBanner } from "@/components/portfolio/PremiumBanner";
-import { PortfolioViewer } from "@/components/portfolio/PortfolioViewer";
-import { useTalentPortfolio } from "@/hooks/use-talent-profile";
-import type { PortfolioApiResponse } from "@/lib/api/talent";
-
-function mapApiItem(item: PortfolioApiResponse, index: number, total: number) {
-  return {
-    title: item.title || item.caption || `Item ${index + 1}`,
-    description: item.description || "",
-    type: (item.type === "video" ? "video" : "image") as "image" | "video",
-    src: item.thumbnail_url || item.url,
-    index: index + 1,
-    total,
-  };
-}
-
-function PortfolioSkeleton() {
-  return (
-    <div className="bg-background">
-      <main className="mx-auto min-w-0 max-w-7xl px-4 pb-28 pt-6 md:px-8 md:py-8 lg:pb-8">
-        <div className="h-10 w-48 animate-pulse rounded-xl bg-muted" />
-        <div className="mt-2 h-5 w-72 animate-pulse rounded-lg bg-muted" />
-        <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-64 animate-pulse rounded-xl bg-muted" />
-          ))}
-        </div>
-      </main>
-    </div>
-  );
-}
+  usePublicPortfolio,
+  useUploadPortfolioImage,
+  useUploadPortfolioVideo,
+  useUploadPortfolioYouTube,
+  useUpdatePortfolioItem,
+  useDeletePortfolioItem,
+  useTogglePortfolioFeatured,
+  useReorderPortfolio,
+  filterPortfolioItems,
+} from "@/hooks/use-portfolio";
+import type {
+  PortfolioItem,
+  PortfolioItemType,
+  PortfolioTab,
+} from "@/lib/types/portfolio";
+import { PortfolioHeader } from "@/components/portfolio/PortfolioHeader";
+import { PortfolioTabs } from "@/components/portfolio/PortfolioTabs";
+import { FeaturedPortfolio } from "@/components/portfolio/FeaturedPortfolio";
+import { PortfolioGrid } from "@/components/portfolio/PortfolioGrid";
+import { PortfolioReelOverlay } from "@/components/portfolio/PortfolioReelOverlay";
+import { AddPortfolioModal } from "@/components/portfolio/AddPortfolioModal";
+import { EditPortfolioModal } from "@/components/portfolio/EditPortfolioModal";
+import { ReorderSheet } from "@/components/portfolio/ReorderSheet";
+import { ShareSheet } from "@/components/portfolio/ShareSheet";
+import { EmptyPortfolioState } from "@/components/portfolio/EmptyPortfolioState";
+import { PortfolioSkeleton } from "@/components/portfolio/PortfolioSkeleton";
 
 export default function PortfolioPage() {
   const params = useParams();
   const username = (params?.username as string) || "";
-  const { data: apiItems = [], isLoading } = useTalentPortfolio(username);
+  const user = useStore(authStore, (s) => s.user);
+  const isOwner =
+    !!user?.username &&
+    user.username.toLowerCase() === username.toLowerCase();
 
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabLabel>("All");
-  const [view, setView] = useState<ViewMode>("grid");
-  const [viewerOpen, setViewerOpen] = useState(false);
-  const [viewerIndex, setViewerIndex] = useState(0);
+  const { data: items = [], isLoading, error } = usePublicPortfolio(username);
 
-  const { imageCount, videoCount, filtered } = useMemo(() => {
-    const total = apiItems.length;
-    const images = apiItems.filter((i) => i.type !== "video");
-    const videos = apiItems.filter((i) => i.type === "video");
+  const sortedItems = useMemo(
+    () =>
+      [...items].sort(
+        (a, b) => Number(b.isFeatured) - Number(a.isFeatured),
+      ),
+    [items],
+  );
 
-    const filteredApi =
-      activeTab === "Images"
-        ? images
-        : activeTab === "Videos"
-          ? videos
-          : apiItems;
+  const [activeTab, setActiveTab] = useState<PortfolioTab>("All");
+  const [reelOpen, setReelOpen] = useState(false);
+  const [reelInitialItemId, setReelInitialItemId] = useState<string | null>(
+    null,
+  );
+  const [addOpen, setAddOpen] = useState(false);
+  const [editItem, setEditItem] = useState<PortfolioItem | null>(null);
+  const [reorderOpen, setReorderOpen] = useState(false);
+  const [shareItem, setShareItem] = useState<PortfolioItem | null>(null);
 
-    const filtered = filteredApi.map((item, idx) =>
-      mapApiItem(item, idx, total),
-    );
+  const uploadImage = useUploadPortfolioImage();
+  const uploadVideo = useUploadPortfolioVideo();
+  const uploadYouTube = useUploadPortfolioYouTube();
+  const updateItem = useUpdatePortfolioItem();
+  const deleteItem = useDeletePortfolioItem();
+  const toggleFeatured = useTogglePortfolioFeatured();
+  const reorder = useReorderPortfolio();
 
-    return { imageCount: images.length, videoCount: videos.length, filtered };
-  }, [activeTab, apiItems]);
+  const isSubmitting =
+    uploadImage.isPending ||
+    uploadVideo.isPending ||
+    uploadYouTube.isPending ||
+    updateItem.isPending ||
+    deleteItem.isPending ||
+    toggleFeatured.isPending ||
+    reorder.isPending;
+
+  const counts = useMemo(
+    () => ({
+      All: items.length,
+      Images: items.filter((i) => i.type === "image").length,
+      Videos: items.filter((i) => i.type === "video").length,
+      YouTube: items.filter((i) => i.type === "youtube").length,
+    }),
+    [items],
+  );
+
+  const featuredItem = useMemo(
+    () => sortedItems.find((i) => i.isFeatured) || null,
+    [sortedItems],
+  );
+
+  const filteredItems = useMemo(() => {
+    const withoutFeatured = featuredItem
+      ? sortedItems.filter((i) => i.id !== featuredItem.id)
+      : sortedItems;
+    return filterPortfolioItems(withoutFeatured, activeTab);
+  }, [sortedItems, featuredItem, activeTab]);
+
+  const handleTabChange = useCallback((tab: PortfolioTab) => {
+    setActiveTab(tab);
+  }, []);
+
+  const handleItemClick = useCallback((item: PortfolioItem) => {
+    setReelInitialItemId(item.id);
+    setReelOpen(true);
+  }, []);
+
+  const handleCloseReel = useCallback(() => {
+    setReelOpen(false);
+    setReelInitialItemId(null);
+  }, []);
+
+  const handleAddWork = useCallback(
+    async (data: {
+      type: PortfolioItemType;
+      title: string;
+      description?: string;
+      file?: File;
+      url?: string;
+      isFeatured: boolean;
+    }) => {
+      const basePayload = {
+        title: data.title,
+        caption: data.title,
+        description: data.description,
+        is_pinned: data.isFeatured,
+        category: "work" as const,
+      };
+
+      try {
+        if (data.type === "image" && data.file) {
+          await uploadImage.mutateAsync({ file: data.file, data: basePayload });
+        } else if (data.type === "video" && data.file) {
+          await uploadVideo.mutateAsync({ file: data.file, data: basePayload });
+        } else if (data.type === "youtube" && data.url) {
+          await uploadYouTube.mutateAsync({
+            url: data.url,
+            data: basePayload,
+          });
+        }
+        toast.success("Work published successfully");
+        setAddOpen(false);
+      } catch {
+        toast.error("Failed to publish work. Please try again.");
+      }
+    },
+    [uploadImage, uploadVideo, uploadYouTube],
+  );
+
+  const handleEdit = useCallback(
+    async (
+      itemId: string,
+      data: {
+        title: string;
+        description?: string;
+        isFeatured: boolean;
+        visibility: PortfolioItem["visibility"];
+        skills: string[];
+      },
+    ) => {
+      try {
+        await updateItem.mutateAsync({
+          itemId,
+          data: {
+            title: data.title,
+            caption: data.title,
+            description: data.description,
+            is_pinned: data.isFeatured,
+            category: "work",
+          },
+        });
+        toast.success("Changes saved");
+        setEditItem(null);
+      } catch {
+        toast.error("Failed to save changes");
+      }
+    },
+    [updateItem],
+  );
+
+  const handleToggleFeatured = useCallback(
+    async (item: PortfolioItem) => {
+      try {
+        await toggleFeatured.mutateAsync({
+          itemId: item.id,
+          isPinned: !item.isFeatured,
+        });
+        toast.success(
+          item.isFeatured ? "Removed from featured" : "Set as featured",
+        );
+      } catch {
+        toast.error("Failed to update featured status");
+      }
+    },
+    [toggleFeatured],
+  );
+
+  const handleDelete = useCallback(
+    async (item: PortfolioItem) => {
+      if (!confirm("Delete this work? This cannot be undone.")) return;
+      try {
+        await deleteItem.mutateAsync(item.id);
+        toast.success("Work deleted");
+      } catch {
+        toast.error("Failed to delete work");
+      }
+    },
+    [deleteItem],
+  );
+
+  const handleReorder = useCallback(
+    async (orderedIds: string[]) => {
+      try {
+        await reorder.mutateAsync(orderedIds);
+        toast.success("Order saved");
+        setReorderOpen(false);
+      } catch {
+        toast.error("Failed to save order");
+      }
+    },
+    [reorder],
+  );
+
+  const handleShare = useCallback((item: PortfolioItem) => {
+    setShareItem(item);
+  }, []);
 
   if (isLoading) {
     return <PortfolioSkeleton />;
   }
 
-  return (
-    <div className="bg-background">
-      <main className="mx-auto min-w-0 max-w-7xl px-4 pb-28 pt-6 md:px-8 md:py-8 lg:pb-8">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
-          <div className="min-w-0">
-            <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-              Portfolio
-            </h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Explore the talent&apos;s complete body of work.
-            </p>
-          </div>
-          <button className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-primary/60 bg-card px-4 py-2.5 text-sm font-medium text-primary transition-colors hover:bg-primary/10">
-            <Upload className="size-4" />
-            <span className="sm:hidden">Export</span>
-            <span className="hidden sm:inline">Export Portfolio</span>
-          </button>
-        </div>
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <main className="container-page py-12 text-center">
+          <p className="text-destructive">Failed to load portfolio.</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {error.message}
+          </p>
+        </main>
+      </div>
+    );
+  }
 
-        <PortfolioFilters
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          filtersOpen={filtersOpen}
-          onToggleFilters={() => setFiltersOpen((o) => !o)}
-          view={view}
-          onViewChange={setView}
-          imageCount={imageCount}
-          videoCount={videoCount}
+  return (
+    <div className="min-h-screen bg-background">
+      <main className="container-page pb-28 pt-6 md:py-8 lg:pb-8">
+        <PortfolioHeader
+          username={username}
+          isOwner={isOwner}
+          onAddWork={() => setAddOpen(true)}
         />
 
-        <section
-          className={`mt-5 gap-4 sm:gap-5 ${
-            view === "grid"
-              ? "grid sm:grid-cols-2 xl:grid-cols-3"
-              : "flex flex-col"
-          }`}
-        >
-          {filtered.map((item, idx) => (
-            <PortfolioCard
-              key={`${item.title}-${idx}`}
-              item={item}
-              onClick={() => {
-                setViewerIndex(idx);
-                setViewerOpen(true);
-              }}
+        <div className="mt-6">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+            Portfolio
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground sm:text-base">
+            Showcase your work and experience.
+          </p>
+        </div>
+
+        <PortfolioTabs
+          activeTab={activeTab}
+          onChange={handleTabChange}
+          counts={counts}
+        />
+
+        {items.length === 0 ? (
+          <EmptyPortfolioState
+            isOwner={isOwner}
+            onAddWork={() => setAddOpen(true)}
+          />
+        ) : (
+          <>
+            {featuredItem && activeTab === "All" && (
+              <FeaturedPortfolio
+                item={featuredItem}
+                isOwner={isOwner}
+                onClick={() => handleItemClick(featuredItem)}
+                onEdit={isOwner ? setEditItem : undefined}
+              />
+            )}
+
+            {isOwner && items.length > 1 && (
+              <div className="mt-4 flex justify-end">
+                <button
+                  onClick={() => setReorderOpen(true)}
+                  className="text-sm font-medium text-primary hover:underline"
+                >
+                  Reorder work
+                </button>
+              </div>
+            )}
+
+            <PortfolioGrid
+              items={filteredItems}
+              isOwner={isOwner}
+              onItemClick={handleItemClick}
+              onEdit={isOwner ? setEditItem : undefined}
             />
-          ))}
-        </section>
 
-        {filtered.length === 0 && (
-          <div className="mt-12 text-center">
-            <p className="text-muted-foreground">No portfolio items found.</p>
-          </div>
+            {filteredItems.length === 0 && (
+              <div className="mt-12 text-center">
+                <p className="text-muted-foreground">
+                  No {activeTab.toLowerCase()} items yet.
+                </p>
+              </div>
+            )}
+          </>
         )}
-
-        <nav className="mt-8 flex items-center justify-center gap-2" aria-label="Pagination">
-          <button
-            aria-label="Previous page"
-            className="grid size-10 place-items-center rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground"
-          >
-            <ChevronLeft className="size-4" />
-          </button>
-          {[1, 2, 3].map((page) => (
-            <button
-              key={page}
-              className={`size-10 rounded-lg border text-sm ${
-                page === 1
-                  ? "border-primary/70 bg-primary/10 text-primary"
-                  : "border-border bg-card text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {page}
-            </button>
-          ))}
-          <button
-            aria-label="Next page"
-            className="grid size-10 place-items-center rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground"
-          >
-            <ChevronRight className="size-4" />
-          </button>
-        </nav>
-
-        <section className="mt-8 grid gap-4 rounded-2xl border border-border bg-surface p-4 sm:p-6 lg:flex lg:flex-wrap lg:items-center lg:justify-between">
-          <div className="min-w-0">
-            <h2 className="text-base font-semibold text-foreground">
-              Need help viewing portfolio?
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Some media files may require specific software or plugins to view.
-            </p>
-          </div>
-          <button className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/60 bg-card px-4 py-2.5 text-sm font-medium text-primary transition-colors hover:bg-primary/10">
-            <HelpCircle className="size-4" />
-            View Support Guide
-          </button>
-        </section>
-
-        <PremiumBanner />
       </main>
 
-      <PortfolioViewer
-        items={filtered}
-        initialIndex={viewerIndex}
-        open={viewerOpen}
-        onClose={() => setViewerOpen(false)}
+      <PortfolioReelOverlay
+        items={sortedItems}
+        username={username}
+        initialItemId={reelInitialItemId ?? undefined}
+        isOwner={isOwner}
+        open={reelOpen}
+        onClose={handleCloseReel}
+        onEdit={isOwner ? setEditItem : undefined}
+        onToggleFeatured={isOwner ? handleToggleFeatured : undefined}
+        onDelete={isOwner ? handleDelete : undefined}
+        onShare={handleShare}
+      />
+
+      {isOwner && (
+        <>
+          <AddPortfolioModal
+            open={addOpen}
+            onClose={() => setAddOpen(false)}
+            onSubmit={handleAddWork}
+            isSubmitting={isSubmitting}
+          />
+          <EditPortfolioModal
+            item={editItem}
+            open={!!editItem}
+            onClose={() => setEditItem(null)}
+            onSubmit={handleEdit}
+            isSubmitting={updateItem.isPending}
+          />
+          <ReorderSheet
+            items={items}
+            open={reorderOpen}
+            onClose={() => setReorderOpen(false)}
+            onReorder={handleReorder}
+            isSubmitting={reorder.isPending}
+          />
+        </>
+      )}
+
+      <ShareSheet
+        url={
+          shareItem
+            ? `${typeof window !== "undefined" ? window.location.origin : ""}/talent/${username}/portfolio?item=${shareItem.id}`
+            : ""
+        }
+        title={shareItem?.title || ""}
+        open={!!shareItem}
+        onClose={() => setShareItem(null)}
       />
     </div>
   );

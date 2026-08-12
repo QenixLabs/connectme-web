@@ -14,7 +14,7 @@ export function BottomBar({ navItems, iconOnly }: BottomBarProps) {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 z-40 w-full border-t border-border bg-background md:hidden">
+    <nav className="fixed bottom-0 left-0 z-40 w-full border-t border-border bg-background/95 backdrop-blur-md md:hidden">
       <div className="grid grid-cols-5">
         {navItems.map((item) => {
           const active = pathname.startsWith(item.href);

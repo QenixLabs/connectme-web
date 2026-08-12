@@ -272,7 +272,7 @@ export default function RecruiterProfileEditPage() {
       }
       uploadPhoto.mutate(file, {
         onSuccess: (data) => {
-          handleFieldUpdate("profile_photo", data.signedUrl);
+          handleFieldUpdate("profile_photo", data.relativePath);
           toast.success("Photo uploaded");
         },
         onError: () => toast.error("Upload failed"),

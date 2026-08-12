@@ -1,7 +1,7 @@
 "use client";
 
 import { Bookmark, ImageIcon, Play, Share2 } from "lucide-react";
-import type { PortfolioItem } from "./PortfolioCard";
+import type { PortfolioItem } from "@/lib/types/portfolio";
 
 export function ViewerBottomBar({
   item,

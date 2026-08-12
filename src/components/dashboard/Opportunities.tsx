@@ -1,4 +1,4 @@
-import { MapPin, Users } from "lucide-react";
+import { MapPin, Users, Briefcase } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -13,9 +13,12 @@ export function Opportunities() {
     return (
       <section className="mt-6">
         <SectionHeading title="Opportunities for you" action="View all" href="/talent/opportunities" />
-        <div className="mt-3 px-4 text-sm text-muted-foreground lg:px-0">
-          No opportunities available right now. Check back later!
-        </div>
+        <Card className="mx-4 mt-3 flex flex-col items-center gap-3 rounded-2xl border-border/50 py-10 text-center lg:mx-0">
+          <Briefcase className="size-10 text-muted-foreground/40" />
+          <p className="text-sm text-muted-foreground">
+            No opportunities available right now. Check back later!
+          </p>
+        </Card>
       </section>
     );
   }
@@ -27,7 +30,7 @@ export function Opportunities() {
         {campaignRecommendations.map((item) => (
           <Card
             key={item._id}
-            className="relative h-[150px] w-[230px] shrink-0 justify-between overflow-hidden rounded-2xl border-destructive/40 bg-gradient-to-br from-destructive/30 via-destructive/10 to-card p-3.5 shadow-none"
+            className="relative h-[150px] w-[230px] shrink-0 justify-between overflow-hidden rounded-2xl border-border/50 p-3.5 shadow-none"
           >
             <Badge
               variant="outline"

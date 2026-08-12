@@ -55,7 +55,7 @@ export function ProfileStrength() {
           </div>
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="text-[22px] leading-tight font-bold">Profile Strength</h3>
+          <h3 className="font-sans text-[22px] leading-tight font-bold">Profile Strength</h3>
           <p className="text-sm text-muted-foreground">
             {missing.length > 0
               ? `${missing.length} field${missing.length === 1 ? "" : "s"} remaining`

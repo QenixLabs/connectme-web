@@ -56,7 +56,7 @@ import {
 } from "@/components/ui/dialog";
 import { TagInput } from "@/components/ui/tag-input";
 import { cn } from "@/lib/utils";
-import { useMyProfile, useUpdateMyProfile } from "@/hooks/use-talent-profile";
+import { useMyProfile, useUpdateMyProfile, useUploadTalentPhoto } from "@/hooks/use-talent-profile";
 import type { TalentProfile, UpdateTalentProfilePayload } from "@/lib/api/talent";
 
 // ── Constants ──────────────────────────────────────────────
@@ -225,11 +225,298 @@ function EditSection({
   );
 }
 
+// ── Profile Preview (view mode) ─────────────────────────
+
+const AVAILABILITY_LABEL: Record<string, string> = {
+  available: "Available",
+  busy: "Busy",
+  not_available: "Not Available",
+};
+
+const AVAILABILITY_COLOR: Record<string, string> = {
+  available: "bg-emerald-100 text-emerald-700",
+  busy: "bg-amber-100 text-amber-700",
+  not_available: "bg-red-100 text-red-700",
+};
+
+const PRIVACY_LABEL: Record<string, string> = {
+  public: "Public",
+  recruiters_only: "Recruiters Only",
+  private: "Private",
+};
+
+function ProfilePreview({ profile }: { profile: TalentProfile }) {
+  const location = profile.location ?? {};
+  const locationString = [location.city, location.state, location.country]
+    .filter(Boolean)
+    .join(", ");
+
+  const socialLinks = profile.social_links ?? {};
+  const socialPlatforms = ["instagram", "youtube", "linkedin", "twitter", "tiktok", "website"];
+
+  return (
+    <div className="mx-auto w-full max-w-[520px] lg:max-w-2xl">
+      <div className="space-y-4 px-4 pb-10 pt-5 lg:px-6">
+        {/* Header */}
+        <div>
+          <h1 className="font-display text-2xl font-bold text-foreground">My Profile</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Preview how recruiters see your profile
+          </p>
+        </div>
+
+        {/* ── Avatar & Identity ────────────────────────── */}
+        <Card className="rounded-2xl p-5 shadow-card">
+          <div className="flex items-center gap-4">
+            <Avatar className="size-20 border-2 border-teal/30">
+              <AvatarImage src={profile.profile_photo} alt="Profile" />
+              <AvatarFallback className="text-lg">
+                {(profile.full_legal_name || profile.username || "?")[0]?.toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 flex-1">
+              <p className="text-lg font-semibold">{profile.full_legal_name || "Add your name"}</p>
+              <p className="text-sm text-muted-foreground">@{profile.username}</p>
+              {profile.headline && (
+                <p className="mt-1 text-sm text-muted-foreground">{profile.headline}</p>
+              )}
+            </div>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {profile.availability && (
+              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${AVAILABILITY_COLOR[profile.availability] ?? "bg-muted text-muted-foreground"}`}>
+                {AVAILABILITY_LABEL[profile.availability] ?? profile.availability}
+              </span>
+            )}
+            {profile.privacy_mode && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                <Shield className="size-3" /> {PRIVACY_LABEL[profile.privacy_mode] ?? profile.privacy_mode}
+              </span>
+            )}
+          </div>
+        </Card>
+
+        {/* ── About ────────────────────────────────────── */}
+        <Card className="rounded-2xl p-5 shadow-card">
+          <div className="flex items-center gap-2">
+            <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-teal/15 text-teal">
+              <FileText className="size-4" />
+            </div>
+            <h3 className="font-display text-sm font-bold">About</h3>
+          </div>
+          <div className="mt-3 space-y-3 border-t border-border/60 pt-3">
+            <p className="text-sm leading-relaxed text-foreground/80">
+              {profile.about || "No bio added yet."}
+            </p>
+            {profile.years_of_experience != null && (
+              <p className="text-xs text-muted-foreground">
+                <span className="font-medium text-foreground/70">Experience:</span> {profile.years_of_experience} years
+              </p>
+            )}
+          </div>
+        </Card>
+
+        {/* ── Professions & Specialties ────────────────── */}
+        <Card className="rounded-2xl p-5 shadow-card">
+          <div className="flex items-center gap-2">
+            <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-teal/15 text-teal">
+              <Star className="size-4" />
+            </div>
+            <h3 className="font-display text-sm font-bold">Professions & Specialties</h3>
+          </div>
+          <div className="mt-3 space-y-3 border-t border-border/60 pt-3">
+            {profile.professions && profile.professions.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5">
+                {profile.professions.map((p) => (
+                  <Badge key={p} variant="secondary" className="rounded-full">{p}</Badge>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No professions added</p>
+            )}
+            {profile.specialties && profile.specialties.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {profile.specialties.map((s) => (
+                  <Badge key={s} variant="outline" className="rounded-full">{s}</Badge>
+                ))}
+              </div>
+            )}
+          </div>
+        </Card>
+
+        {/* ── Location ─────────────────────────────────── */}
+        {locationString && (
+          <Card className="rounded-2xl p-5 shadow-card">
+            <div className="flex items-center gap-2">
+              <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-teal/15 text-teal">
+                <MapPin className="size-4" />
+              </div>
+              <h3 className="font-display text-sm font-bold">Location</h3>
+            </div>
+            <div className="mt-3 border-t border-border/60 pt-3">
+              <p className="text-sm text-foreground/80">{locationString}</p>
+            </div>
+          </Card>
+        )}
+
+        {/* ── Physical Attributes ──────────────────────── */}
+        <Card className="rounded-2xl p-5 shadow-card">
+          <div className="flex items-center gap-2">
+            <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-teal/15 text-teal">
+              <Eye className="size-4" />
+            </div>
+            <h3 className="font-display text-sm font-bold">Physical Attributes</h3>
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-2 border-t border-border/60 pt-3">
+            {([
+              profile.physical_attributes?.height_cm ? ["Height", `${profile.physical_attributes.height_cm} cm`] : null,
+              profile.physical_attributes?.weight_kg ? ["Weight", `${profile.physical_attributes.weight_kg} kg`] : null,
+              profile.physical_attributes?.body_type ? ["Body Type", profile.physical_attributes.body_type] : null,
+              profile.physical_attributes?.complexion ? ["Complexion", profile.physical_attributes.complexion] : null,
+              profile.physical_attributes?.hair_color ? ["Hair Color", profile.physical_attributes.hair_color] : null,
+              profile.physical_attributes?.hair_length ? ["Hair Length", profile.physical_attributes.hair_length] : null,
+              profile.physical_attributes?.eye_color ? ["Eye Color", profile.physical_attributes.eye_color] : null,
+              profile.physical_attributes?.distinctive_features ? ["Distinctive Features", profile.physical_attributes.distinctive_features] : null,
+            ] as [string, string][])
+              .filter((attr): attr is [string, string] => attr !== null)
+              .map(([label, value]) => (
+                <div key={label} className="rounded-xl border border-border/60 bg-muted/30 px-3 py-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/60">{label}</p>
+                  <p className="text-sm font-medium text-foreground/80">{value}</p>
+                </div>
+              ))}
+            {(!profile.physical_attributes ||
+              Object.values(profile.physical_attributes).every((v) => v == null)) && (
+              <p className="col-span-2 text-sm text-muted-foreground">No physical attributes added</p>
+            )}
+          </div>
+        </Card>
+
+        {/* ── Languages & Accents ──────────────────────── */}
+        <Card className="rounded-2xl p-5 shadow-card">
+          <div className="flex items-center gap-2">
+            <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-teal/15 text-teal">
+              <Languages className="size-4" />
+            </div>
+            <h3 className="font-display text-sm font-bold">Languages & Accents</h3>
+          </div>
+          <div className="mt-3 space-y-3 border-t border-border/60 pt-3">
+            {profile.languages && profile.languages.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5">
+                {profile.languages.map((l, i) => (
+                  <Badge key={i} variant="secondary" className="rounded-full">
+                    {l.name} <span className="ml-1 text-muted-foreground">({l.fluency})</span>
+                  </Badge>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No languages added</p>
+            )}
+            {profile.accents && profile.accents.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {profile.accents.map((a) => (
+                  <Badge key={a} variant="outline" className="rounded-full">{a}</Badge>
+                ))}
+              </div>
+            )}
+          </div>
+        </Card>
+
+        {/* ── Skills ───────────────────────────────────── */}
+        <Card className="rounded-2xl p-5 shadow-card">
+          <div className="flex items-center gap-2">
+            <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-teal/15 text-teal">
+              <Paperclip className="size-4" />
+            </div>
+            <h3 className="font-display text-sm font-bold">Skills</h3>
+          </div>
+          <div className="mt-3 space-y-3 border-t border-border/60 pt-3">
+            {profile.skills && profile.skills.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5">
+                {profile.skills.map((skill, i) => (
+                  <Badge key={i} variant="secondary" className="rounded-full">
+                    {skill.name}
+                    <span className="ml-1 text-muted-foreground capitalize">({skill.proficiency})</span>
+                  </Badge>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No skills added</p>
+            )}
+          </div>
+        </Card>
+
+        {/* ── Social Links ─────────────────────────────── */}
+        <Card className="rounded-2xl p-5 shadow-card">
+          <div className="flex items-center gap-2">
+            <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-teal/15 text-teal">
+              <Link2 className="size-4" />
+            </div>
+            <h3 className="font-display text-sm font-bold">Social Links</h3>
+          </div>
+          <div className="mt-3 space-y-2 border-t border-border/60 pt-3">
+            {socialPlatforms.map((platform) => {
+              const link = socialLinks[platform];
+              if (!link?.url) return null;
+              return (
+                <a
+                  key={platform}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-sm text-teal hover:underline"
+                >
+                  <Globe className="size-3.5" />
+                  <span className="capitalize">{platform}</span>
+                </a>
+              );
+            })}
+            {socialPlatforms.every((p) => !socialLinks[p]?.url) && (
+              <p className="text-sm text-muted-foreground">No social links added</p>
+            )}
+          </div>
+        </Card>
+
+        {/* ── Documents ────────────────────────────────── */}
+        {(profile.documents?.resume_url || profile.documents?.portfolio_pdf_url || profile.documents?.measurements_sheet_url) && (
+          <Card className="rounded-2xl p-5 shadow-card">
+            <div className="flex items-center gap-2">
+              <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-teal/15 text-teal">
+                <FileText className="size-4" />
+              </div>
+              <h3 className="font-display text-sm font-bold">Documents</h3>
+            </div>
+            <div className="mt-3 space-y-2 border-t border-border/60 pt-3">
+              {profile.documents?.resume_url && (
+                <a href={profile.documents.resume_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-teal hover:underline">
+                  <FileText className="size-3.5" /> Resume
+                </a>
+              )}
+              {profile.documents?.portfolio_pdf_url && (
+                <a href={profile.documents.portfolio_pdf_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-teal hover:underline">
+                  <FileText className="size-3.5" /> Portfolio PDF
+                </a>
+              )}
+              {profile.documents?.measurements_sheet_url && (
+                <a href={profile.documents.measurements_sheet_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-teal hover:underline">
+                  <FileText className="size-3.5" /> Measurements Sheet
+                </a>
+              )}
+            </div>
+          </Card>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Main Component ─────────────────────────────────────────
 
 export function ProfilePage() {
   const profileQuery = useMyProfile();
   const updateProfile = useUpdateMyProfile();
+  const uploadPhoto = useUploadTalentPhoto();
+  const [isEditing, setIsEditing] = useState(false);
 
   const [sheet, setSheet] = useState<
     null | "professions" | "specialties" | "languages" | "accents" | "skills" | "physical"
@@ -263,13 +550,16 @@ export function ProfilePage() {
         toast.error("Photo must be under 5MB");
         return;
       }
-      // For now, create a local preview URL. In production, upload to storage first.
-      const url = URL.createObjectURL(file);
-      handleFieldUpdate("profile_photo", url);
-      toast.success("Photo uploaded");
+      uploadPhoto.mutate(file, {
+        onSuccess: (data) => {
+          handleFieldUpdate("profile_photo", data.relativePath);
+          toast.success("Photo uploaded");
+        },
+        onError: () => toast.error("Upload failed"),
+      });
       e.target.value = "";
     },
-    [handleFieldUpdate],
+    [uploadPhoto, handleFieldUpdate],
   );
 
   // ── Loading state ──────────────────────────────────────
@@ -300,17 +590,43 @@ export function ProfilePage() {
   const socialLinks = profile.social_links ?? {};
   const socialPlatforms = ["instagram", "youtube", "linkedin", "twitter", "tiktok", "website"];
 
+  if (!isEditing) {
+    return (
+      <>
+        <ProfilePreview profile={profile} />
+        <button
+          onClick={() => setIsEditing(true)}
+          className="fixed bottom-6 right-6 z-50 grid size-14 place-items-center rounded-full bg-teal text-white shadow-lg transition-all hover:bg-teal/90 hover:shadow-xl lg:bottom-8 lg:right-8"
+          aria-label="Edit profile"
+        >
+          <Pencil className="size-5" />
+        </button>
+      </>
+    );
+  }
+
   return (
+    <>
     <div className="mx-auto w-full max-w-[520px] lg:max-w-2xl">
       <div className="space-y-4 px-4 pb-28 pt-5 lg:px-6">
         {/* Header */}
-        <div>
-          <h1 className="font-display text-2xl font-bold text-foreground">
-            Edit Profile
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Update your profile information visible to recruiters
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="font-display text-2xl font-bold text-foreground">
+              Edit Profile
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Update your profile information visible to recruiters
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsEditing(false)}
+            className="gap-1.5"
+          >
+            <Eye className="size-4" /> Preview
+          </Button>
         </div>
 
         {/* ── Identity ──────────────────────────────────── */}
@@ -970,5 +1286,6 @@ export function ProfilePage() {
         </SheetContent>
       </Sheet>
     </div>
+    </>
   );
 }

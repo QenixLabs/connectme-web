@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/navigation/Sidebar";
 import { Topbar } from "@/components/navigation/Topbar";
 import {
   AboutSection,
+  DetailsSection,
   AwardsSection,
   ExperienceSection,
   PortfolioSection,
@@ -18,7 +19,7 @@ import { TalentProfileHeader } from "./TalentProfileHeader";
 import type { TalentProfile, PortfolioApiResponse, Credit, Testimonial, Award } from "@/lib/api/talent";
 import type { TalentData, Fact, PortfolioItem, ExperienceItem, AwardItem, ReviewItem } from "./sections/types";
 
-const desktopTabs = ["Overview", "Portfolio", "Experience", "Skills", "Media Kit", "Reviews", "Analytics"];
+const desktopTabs = ["Overview", "Details", "Portfolio", "Experience", "Skills", "Media Kit", "Reviews", "Analytics"];
 
 function mapProfileToTalentData(profile: TalentProfile): TalentData {
   return {
@@ -169,7 +170,7 @@ export function DesktopView({
           <div className="mt-5">
             {tab === "Overview" && (
               <div className="grid grid-cols-3 gap-6">
-                <AboutSection talent={talentData} facts={facts} stacked className="col-span-2" />
+                <AboutSection talent={talentData} className="col-span-2" />
                 <div className="row-span-2 flex flex-col gap-6">
                   <ExperienceSection data={experience} />
                   <AwardsSection data={awardsData} />
@@ -178,6 +179,9 @@ export function DesktopView({
                 <SkillsSection data={skills} className="col-span-3" />
                 <ReviewsSection data={reviews} columns={1} className="col-span-3" />
               </div>
+            )}
+            {tab === "Details" && (
+              <DetailsSection facts={facts} />
             )}
             {tab === "Portfolio" && (
               <PortfolioSection videos={portfolioVideos} photos={portfolioPhotos} />

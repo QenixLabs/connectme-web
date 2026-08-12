@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable @next/next/no-img-element */
+
 import {
   Image as ImageIcon,
   ChevronDown,
@@ -14,18 +16,14 @@ import {
   ChevronUp,
   Play,
   ExternalLink,
-  Tag as TagIcon,
   Trash2,
   SlidersHorizontal,
-  GripVertical,
   Star,
-  LayoutGrid,
   Crown,
   Pencil,
-  Check,
   Loader2,
 } from "lucide-react";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -34,8 +32,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -72,27 +68,23 @@ import {
 import { cn } from "@/lib/utils";
 import {
   useMyPortfolio,
-  usePortfolioStats,
   useUploadPortfolioImage,
   useUploadPortfolioVideo,
   useAddPortfolioLink,
   useUpdatePortfolioItem,
   useDeletePortfolioItem,
+  getYouTubeVideoId,
 } from "@/hooks/use-portfolio";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "@/components/ui/tabs";
 import { useMyProfile } from "@/hooks/use-talent-profile";
 import type { PortfolioApiResponse } from "@/lib/api/talent";
 
 // ── Schemas ────────────────────────────────────────────────
-
-const linkSchema = z.object({
-  url: z.string().url("Must be a valid URL"),
-  title: z.string().max(100).optional(),
-  caption: z.string().max(200).optional(),
-  description: z.string().max(500).optional(),
-  category: z.enum(["work", "personal", "intro"]).optional(),
-});
-
-type LinkForm = z.infer<typeof linkSchema>;
 
 const editSchema = z.object({
   title: z.string().max(100).optional(),
@@ -109,7 +101,8 @@ function mapApiToItem(api: PortfolioApiResponse) {
   const kindMap: Record<string, "image" | "video" | "link"> = {
     image: "image",
     video: "video",
-    link: "link",
+    youtube: "link",
+    instagram: "link",
   };
   const created = api.created_at
     ? new Date(api.created_at).toLocaleDateString("en-US", {
@@ -128,7 +121,7 @@ function mapApiToItem(api: PortfolioApiResponse) {
     kind: kindMap[api.type] || "image",
     tag: (api.category?.toUpperCase() as "WORK" | "PERSONAL") || "WORK",
     pinned: api.is_pinned,
-    linkLabel: api.type === "link" ? (() => { try { return new URL(api.url).hostname.replace("www.", ""); } catch { return ""; } })() : undefined,
+    linkLabel: api.type === "youtube" || api.type === "instagram" ? (() => { try { return new URL(api.url).hostname.replace("www.", ""); } catch { return ""; } })() : undefined,
     selected: false,
   };
 }
@@ -254,28 +247,36 @@ function ItemCard({
   onEdit,
   onDelete,
   onTogglePin,
+  onOpen,
 }: {
   item: ReturnType<typeof mapApiToItem>;
   onToggleSelect: () => void;
   onEdit: () => void;
   onDelete: () => void;
   onTogglePin: () => void;
+  onOpen: () => void;
 }) {
   return (
     <article className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
-      <div className="relative aspect-[16/10] w-full overflow-hidden">
+      <button
+        onClick={onOpen}
+        className="relative block aspect-[16/10] w-full overflow-hidden text-left"
+      >
         <img
           src={item.image}
           alt={item.title}
           width={800}
           height={600}
           loading="lazy"
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background/70 to-transparent" />
 
         <button
-          onClick={onToggleSelect}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleSelect();
+          }}
           className={cn(
             "absolute left-3 top-3 grid h-6 w-6 place-items-center rounded-md border-2 transition-colors",
             item.selected
@@ -324,7 +325,7 @@ function ItemCard({
             <ImageIcon className="h-4 w-4" />
           </span>
         )}
-      </div>
+      </button>
 
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-4 py-3">
         <div className="min-w-0">
@@ -372,6 +373,15 @@ function ItemCard({
 
 // ── Upload Dialog ──────────────────────────────────────────
 
+const uploadSchema = z.object({
+  title: z.string().max(100).optional(),
+  caption: z.string().max(200).optional(),
+  description: z.string().max(500).optional(),
+  category: z.enum(["work", "personal", "intro"]).optional(),
+});
+
+type UploadForm = z.infer<typeof uploadSchema>;
+
 function UploadDialog({
   open,
   onOpenChange,
@@ -387,16 +397,8 @@ function UploadDialog({
   const uploadImage = useUploadPortfolioImage();
   const uploadVideo = useUploadPortfolioVideo();
 
-  const form = useForm<LinkForm>({
-    resolver: zodResolver(
-      z.object({
-        url: z.string(),
-        title: z.string().max(100).optional(),
-        caption: z.string().max(200).optional(),
-        description: z.string().max(500).optional(),
-        category: z.enum(["work", "personal", "intro"]).optional(),
-      }),
-    ),
+  const form = useForm<UploadForm>({
+    resolver: zodResolver(uploadSchema),
     defaultValues: { title: "", caption: "", description: "", category: "work" },
   });
 
@@ -414,22 +416,22 @@ function UploadDialog({
     setPreview(URL.createObjectURL(f));
   };
 
-  const onSubmit = async () => {
+  const onSubmit = async (data: UploadForm) => {
     if (!file) {
       toast.error("Please select a file");
       return;
     }
     try {
-      const data = {
-        title: form.getValues("title") || undefined,
-        caption: form.getValues("caption") || undefined,
-        description: form.getValues("description") || undefined,
-        category: form.getValues("category") || undefined,
+      const payload = {
+        title: data.title || undefined,
+        caption: data.caption || undefined,
+        description: data.description || undefined,
+        category: data.category || undefined,
       };
       if (type === "image") {
-        await uploadImage.mutateAsync({ file, data });
+        await uploadImage.mutateAsync({ file, data: payload });
       } else {
-        await uploadVideo.mutateAsync({ file, data });
+        await uploadVideo.mutateAsync({ file, data: payload });
       }
       toast.success(`${type === "image" ? "Image" : "Video"} uploaded`);
       handleClose();
@@ -446,7 +448,7 @@ function UploadDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Upload {type === "image" ? "Image" : "Video"}</DialogTitle>
@@ -457,166 +459,42 @@ function UploadDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          {/* File picker */}
-          <div
-            onClick={() => fileInputRef.current?.click()}
-            className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-border p-8 text-center transition-colors hover:border-teal/50 hover:bg-teal/5"
-          >
-            {preview ? (
-              <div className="relative w-full">
-                {type === "image" ? (
-                  <img src={preview} alt="Preview" className="max-h-48 w-full rounded-lg object-cover" />
-                ) : (
-                  <div className="flex h-32 items-center justify-center rounded-lg bg-muted">
-                    <Video className="h-8 w-8 text-muted-foreground" />
-                  </div>
-                )}
-                <p className="mt-2 text-sm text-muted-foreground">{file?.name}</p>
-              </div>
-            ) : (
-              <>
-                <Upload className="h-10 w-10 text-muted-foreground/50" />
-                <p className="mt-2 text-sm font-medium">Click to select file</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {type === "image" ? "JPG, PNG, WebP" : "MP4, MOV, WebM"}
-                </p>
-              </>
-            )}
-          </div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept={type === "image" ? "image/*" : "video/*"}
-            className="hidden"
-            onChange={handleFileChange}
-          />
-
-          <FormField
-            control={form.control}
-            name="title"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Title</FormLabel>
-                <FormControl>
-                  <Input placeholder="Give your work a title" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="caption"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Caption</FormLabel>
-                <FormControl>
-                  <Input placeholder="Short caption" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="category"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Category</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="work">Work</SelectItem>
-                    <SelectItem value="personal">Personal</SelectItem>
-                    <SelectItem value="intro">Intro</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={handleClose} disabled={isPending}>
-            Cancel
-          </Button>
-          <Button onClick={onSubmit} disabled={isPending || !file}>
-            {isPending ? (
-              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Uploading...</>
-            ) : (
-              "Upload"
-            )}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-// ── Add Link Dialog ────────────────────────────────────────
-
-function AddLinkDialog({
-  open,
-  onOpenChange,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}) {
-  const addLink = useAddPortfolioLink();
-
-  const form = useForm<LinkForm>({
-    resolver: zodResolver(linkSchema),
-    defaultValues: { url: "", title: "", caption: "", description: "", category: "work" },
-  });
-
-  const onSubmit = async (data: LinkForm) => {
-    try {
-      await addLink.mutateAsync({
-        url: data.url,
-        title: data.title || undefined,
-        caption: data.caption || undefined,
-        description: data.description || undefined,
-        category: data.category || undefined,
-      });
-      toast.success("Link added");
-      form.reset();
-      onOpenChange(false);
-    } catch {
-      toast.error("Failed to add link");
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Add Link</DialogTitle>
-          <DialogDescription>
-            Add a YouTube or Instagram link to your portfolio.
-          </DialogDescription>
-        </DialogHeader>
-
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="url"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>URL *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="https://youtube.com/watch?v=..." {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+            {/* File picker */}
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-border p-8 text-center transition-colors hover:border-teal/50 hover:bg-teal/5"
+            >
+              {preview ? (
+                <div className="relative w-full">
+                  {type === "image" ? (
+                    <img src={preview} alt="Preview" className="max-h-48 w-full rounded-lg object-cover" />
+                  ) : (
+                    <div className="flex h-32 items-center justify-center rounded-lg bg-muted">
+                      <Video className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                  )}
+                  <p className="mt-2 text-sm text-muted-foreground">{file?.name}</p>
+                </div>
+              ) : (
+                <>
+                  <Upload className="h-10 w-10 text-muted-foreground/50" />
+                  <p className="mt-2 text-sm font-medium">Click to select file</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {type === "image" ? "JPG, PNG, WebP" : "MP4, MOV, WebM"}
+                  </p>
+                </>
               )}
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept={type === "image" ? "image/*" : "video/*"}
+              className="hidden"
+              onChange={handleFileChange}
             />
+
             <FormField
               control={form.control}
               name="title"
@@ -624,7 +502,7 @@ function AddLinkDialog({
                 <FormItem>
                   <FormLabel>Title</FormLabel>
                   <FormControl>
-                    <Input placeholder="Give your link a title" {...field} />
+                    <Input placeholder="Give your work a title" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -638,6 +516,19 @@ function AddLinkDialog({
                   <FormLabel>Caption</FormLabel>
                   <FormControl>
                     <Input placeholder="Short caption" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Short description" className="resize-none" rows={3} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -665,16 +556,247 @@ function AddLinkDialog({
                 </FormItem>
               )}
             />
+
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={addLink.isPending}>
+              <Button type="button" variant="outline" onClick={handleClose} disabled={isPending}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={addLink.isPending}>
-                {addLink.isPending ? "Adding..." : "Add Link"}
+              <Button type="submit" disabled={isPending || !file}>
+                {isPending ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Uploading...</>
+                ) : (
+                  "Upload"
+                )}
               </Button>
             </DialogFooter>
           </form>
         </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ── Add Video Dialog ───────────────────────────────────────
+
+const videoSchema = z.object({
+  url: z.string().optional(),
+  title: z.string().max(100).optional(),
+  caption: z.string().max(200).optional(),
+  description: z.string().max(500).optional(),
+  category: z.enum(["work", "personal", "intro"]).optional(),
+});
+
+type VideoForm = z.infer<typeof videoSchema>;
+
+function AddVideoDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const [activeTab, setActiveTab] = useState<"file" | "youtube">("file");
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadVideo = useUploadPortfolioVideo();
+  const addLink = useAddPortfolioLink();
+
+  const form = useForm<VideoForm>({
+    resolver: zodResolver(videoSchema),
+    defaultValues: { url: "", title: "", caption: "", description: "", category: "work" },
+  });
+
+  const isPending = uploadVideo.isPending || addLink.isPending;
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const maxSize = 50 * 1024 * 1024;
+    if (f.size > maxSize) {
+      toast.error("Video must be under 50MB");
+      return;
+    }
+    setFile(f);
+    setPreview(URL.createObjectURL(f));
+  };
+
+  const handleClose = () => {
+    setFile(null);
+    setPreview(null);
+    setActiveTab("file");
+    form.reset();
+    onOpenChange(false);
+  };
+
+  const onSubmit = async (data: VideoForm) => {
+    const basePayload = {
+      title: data.title || undefined,
+      caption: data.caption || undefined,
+      description: data.description || undefined,
+      category: data.category || undefined,
+    };
+
+    try {
+      if (activeTab === "file") {
+        if (!file) {
+          toast.error("Please select a video file");
+          return;
+        }
+        await uploadVideo.mutateAsync({ file, data: basePayload });
+      } else {
+        const url = data.url?.trim();
+        if (!url || !getYouTubeVideoId(url)) {
+          toast.error("Enter a valid YouTube URL");
+          return;
+        }
+        await addLink.mutateAsync({ url, ...basePayload });
+      }
+      toast.success("Video added");
+      handleClose();
+    } catch {
+      toast.error("Failed to add video");
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Add Video</DialogTitle>
+          <DialogDescription>
+            Upload a video from your device or paste a YouTube link.
+          </DialogDescription>
+        </DialogHeader>
+
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "file" | "youtube")} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="file">Upload File</TabsTrigger>
+            <TabsTrigger value="youtube">YouTube Link</TabsTrigger>
+          </TabsList>
+
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="mt-4 space-y-4">
+              <TabsContent value="file" className="space-y-4">
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-border p-8 text-center transition-colors hover:border-teal/50 hover:bg-teal/5"
+                >
+                  {preview ? (
+                    <div className="relative w-full">
+                      <video src={preview} className="max-h-48 w-full rounded-lg" controls />
+                      <p className="mt-2 text-sm text-muted-foreground">{file?.name}</p>
+                    </div>
+                  ) : (
+                    <>
+                      <Upload className="h-10 w-10 text-muted-foreground/50" />
+                      <p className="mt-2 text-sm font-medium">Click to select video</p>
+                      <p className="mt-1 text-xs text-muted-foreground">MP4, MOV, WebM up to 50MB</p>
+                    </>
+                  )}
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="video/*"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+              </TabsContent>
+
+              <TabsContent value="youtube" className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="url"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>YouTube URL *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="https://youtube.com/watch?v=..." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </TabsContent>
+
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Title</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Give your video a title" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="caption"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Caption</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Short caption" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Short description" className="resize-none" rows={3} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="work">Work</SelectItem>
+                        <SelectItem value="personal">Personal</SelectItem>
+                        <SelectItem value="intro">Intro</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={handleClose} disabled={isPending}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={isPending || (activeTab === "file" && !file)}>
+                  {isPending ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Adding...</>
+                  ) : (
+                    "Add Video"
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
@@ -857,30 +979,220 @@ function DeleteConfirmDialog({
   );
 }
 
-// ── Filters ────────────────────────────────────────────────
+// ── Lightbox ───────────────────────────────────────────────
 
-const filters = [
-  { label: "All", icon: LayoutGrid },
-  { label: "Images", icon: ImageIcon },
-  { label: "Videos", icon: Video },
-  { label: "Links", icon: Link2 },
-];
+function PortfolioLightbox({
+  items,
+  initialIndex,
+  open,
+  onOpenChange,
+}: {
+  items: ReturnType<typeof mapApiToItem>[];
+  initialIndex: number;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const [index, setIndex] = useState(initialIndex);
+  const [direction, setDirection] = useState<"next" | "prev" | null>(null);
+  const touchStartY = useRef<number | null>(null);
+
+  const goNext = useCallback(() => {
+    if (items.length <= 1) return;
+    setDirection("next");
+    setIndex((i) => (i + 1) % items.length);
+  }, [items.length]);
+
+  const goPrev = useCallback(() => {
+    if (items.length <= 1) return;
+    setDirection("prev");
+    setIndex((i) => (i - 1 + items.length) % items.length);
+  }, [items.length]);
+
+  // Keyboard + wheel navigation
+  useEffect(() => {
+    if (!open) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onOpenChange(false);
+      if (e.key === "ArrowDown" || e.key === "ArrowRight") goNext();
+      if (e.key === "ArrowUp" || e.key === "ArrowLeft") goPrev();
+    };
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      if (e.deltaY > 30) goNext();
+      else if (e.deltaY < -30) goPrev();
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("wheel", onWheel, { passive: false });
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("wheel", onWheel);
+    };
+  }, [open, goNext, goPrev, onOpenChange]);
+
+  // Touch swipe navigation
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0]?.clientY ?? null;
+  };
+
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const startY = touchStartY.current;
+    if (startY == null) return;
+    const endY = e.changedTouches[0]?.clientY ?? startY;
+    const diff = startY - endY;
+    if (diff > 50) goNext();
+    else if (diff < -50) goPrev();
+    touchStartY.current = null;
+  };
+
+  if (!open || items.length === 0) return null;
+
+  const item = items[index];
+  const youtubeId = item.kind === "link" ? getYouTubeVideoId(item.url) : null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm"
+      onClick={() => onOpenChange(false)}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+    >
+      {/* Close button */}
+      <button
+        onClick={() => onOpenChange(false)}
+        className="absolute right-4 top-4 z-50 grid h-10 w-10 place-items-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+        aria-label="Close"
+      >
+        <X className="h-5 w-5" />
+      </button>
+
+      {/* Prev button */}
+      {items.length > 1 && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            goPrev();
+          }}
+          className="absolute left-1/2 top-4 z-50 -translate-x-1/2 grid h-10 w-10 place-items-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+          aria-label="Previous"
+        >
+          <ChevronUp className="h-5 w-5" />
+        </button>
+      )}
+
+      {/* Next button */}
+      {items.length > 1 && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            goNext();
+          }}
+          className="absolute bottom-4 left-1/2 z-50 -translate-x-1/2 grid h-10 w-10 place-items-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+          aria-label="Next"
+        >
+          <ChevronDown className="h-5 w-5" />
+        </button>
+      )}
+
+      {/* Media */}
+      <div
+        className="relative flex h-full w-full items-center justify-center p-4 md:p-16"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div
+          key={item.id}
+          className={cn(
+            "relative max-h-full w-full max-w-5xl transition-all duration-300 ease-out",
+            direction === "next" && "animate-in slide-in-from-bottom-8 fade-in",
+            direction === "prev" && "animate-in slide-in-from-top-8 fade-in",
+          )}
+          onAnimationEnd={() => setDirection(null)}
+        >
+          {item.kind === "image" && (
+            <img
+              src={item.url || item.image}
+              alt={item.title}
+              className="max-h-[80vh] w-full rounded-lg object-contain"
+            />
+          )}
+
+          {item.kind === "video" && (
+            <video
+              src={item.url}
+              controls
+              autoPlay
+              muted
+              playsInline
+              className="max-h-[80vh] w-full rounded-lg"
+            />
+          )}
+
+          {item.kind === "link" && youtubeId && (
+            <div className="aspect-video w-full overflow-hidden rounded-lg bg-black">
+              <iframe
+                src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&mute=1&rel=0`}
+                title={item.title}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="h-full w-full"
+              />
+            </div>
+          )}
+
+          {item.kind === "link" && !youtubeId && (
+            <div className="flex flex-col items-center justify-center gap-4 rounded-2xl bg-card p-10 text-center">
+              <ExternalLink className="h-12 w-12 text-muted-foreground" />
+              <p className="text-lg font-semibold">External link</p>
+              <a
+                href={item.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 rounded-xl bg-gradient-teal px-5 py-2.5 text-sm font-semibold text-accent-foreground hover:opacity-90"
+              >
+                Open link <ExternalLink className="h-4 w-4" />
+              </a>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Info footer */}
+      <div className="absolute bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black/80 to-transparent p-6 pt-12 text-white">
+        <div className="mx-auto max-w-5xl">
+          <h3 className="text-lg font-semibold">{item.title}</h3>
+          {item.caption && (
+            <p className="mt-1 text-sm text-white/70">{item.caption}</p>
+          )}
+          <p className="mt-2 text-xs text-white/50">
+            {index + 1} / {items.length}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ── Main PortfolioPage ─────────────────────────────────────
 
 export function PortfolioPage() {
-  const [filter, setFilter] = useState("All");
   const [showBanner, setShowBanner] = useState(true);
 
   // Dialog states
   const [uploadType, setUploadType] = useState<"image" | "video" | null>(null);
-  const [addLinkOpen, setAddLinkOpen] = useState(false);
+  const [addVideoOpen, setAddVideoOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<PortfolioApiResponse | null>(null);
   const [deletingItem, setDeletingItem] = useState<PortfolioApiResponse | null>(null);
   const [bulkDeleting, setBulkDeleting] = useState(false);
 
   // Selection state
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // Lightbox state
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxItems, setLightboxItems] = useState<ReturnType<typeof mapApiToItem>[]>([]);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   // Queries
   const portfolioQuery = useMyPortfolio();
@@ -901,8 +1213,8 @@ export function PortfolioPage() {
   const totalViews = items.reduce((sum, i) => sum + i.views, 0);
   const pinnedCount = items.filter((i) => i.pinned).length;
 
-  const filteredItems =
-    filter === "All" ? items : items.filter((i) => i.kind === filter.toLowerCase());
+  const videoItems = items.filter((i) => i.kind === "video" || i.kind === "link");
+  const pictureItems = items.filter((i) => i.kind === "image");
 
   const selectedItems = items.filter((i) => selectedIds.has(i.id));
 
@@ -924,6 +1236,15 @@ export function PortfolioPage() {
   const handleTogglePin = useCallback(
     async (item: ReturnType<typeof mapApiToItem>) => {
       try {
+        if (!item.pinned) {
+          const currentlyPinned = items.find((i) => i.pinned && i.id !== item.id);
+          if (currentlyPinned) {
+            await updateItem.mutateAsync({
+              itemId: currentlyPinned.id,
+              data: { is_pinned: false },
+            });
+          }
+        }
         await updateItem.mutateAsync({
           itemId: item.id,
           data: { is_pinned: !item.pinned },
@@ -933,7 +1254,7 @@ export function PortfolioPage() {
         toast.error("Failed to update pin");
       }
     },
-    [updateItem],
+    [updateItem, items],
   );
 
   const handleDelete = useCallback(async () => {
@@ -968,18 +1289,39 @@ export function PortfolioPage() {
       toast.info("Selected items already pinned");
       return;
     }
+    if (toPin.length > 1) {
+      toast.error("Only 1 item can be pinned");
+      return;
+    }
     try {
-      await Promise.all(
-        toPin.map((item) =>
-          updateItem.mutateAsync({ itemId: item.id, data: { is_pinned: true } }),
-        ),
-      );
-      toast.success(`${toPin.length} items pinned`);
+      await updateItem.mutateAsync({
+        itemId: toPin[0].id,
+        data: { is_pinned: true },
+      });
+      toast.success("Item pinned");
       clearSelection();
     } catch {
-      toast.error("Failed to pin some items");
+      toast.error("Failed to pin item");
     }
   }, [selectedItems, updateItem, clearSelection]);
+
+  const openLightboxFromPictures = useCallback((itemId: string) => {
+    const ordered = [...pictureItems, ...videoItems];
+    setLightboxItems(ordered);
+    setLightboxIndex(Math.max(0, ordered.findIndex((i) => i.id === itemId)));
+    setLightboxOpen(true);
+  }, [pictureItems, videoItems]);
+
+  const openLightboxFromVideos = useCallback((itemId: string) => {
+    const ordered = [...videoItems, ...pictureItems];
+    setLightboxItems(ordered);
+    setLightboxIndex(Math.max(0, ordered.findIndex((i) => i.id === itemId)));
+    setLightboxOpen(true);
+  }, [videoItems, pictureItems]);
+
+  const closeLightbox = useCallback(() => {
+    setLightboxOpen(false);
+  }, []);
 
   return (
     <div className="mx-auto w-full max-w-7xl">
@@ -1002,7 +1344,7 @@ export function PortfolioPage() {
             </button>
             <button className="flex items-center gap-2 rounded-xl border border-teal/50 bg-card px-4 py-2.5 text-sm font-medium text-teal hover:bg-teal/10">
               <Pin className="h-4 w-4" /> Pinned{" "}
-              <span className="text-foreground">{pinnedCount}/3</span>
+              <span className="text-foreground">{pinnedCount}/1</span>
             </button>
             <button className="hidden items-center gap-2 rounded-xl bg-gradient-teal px-5 py-2.5 text-sm font-semibold text-accent-foreground hover:opacity-90 lg:flex">
               <Crown className="h-4 w-4" /> Upgrade
@@ -1077,39 +1419,19 @@ export function PortfolioPage() {
               <Upload className="h-4 w-4" /> Upload
             </button>
             <button
-              onClick={() => setAddLinkOpen(true)}
+              onClick={() => setAddVideoOpen(true)}
               className="flex flex-col items-center justify-center rounded-xl border border-border bg-card px-6 py-2.5 hover:bg-accent"
             >
               <span className="flex items-center gap-2 text-sm font-semibold">
-                <Link2 className="h-4 w-4" /> Add Link
+                <Video className="h-4 w-4" /> Add Video
               </span>
               <span className="text-[11px] text-muted-foreground sm:hidden">
-                YouTube, Vimeo, etc.
+                Upload or YouTube link
               </span>
             </button>
           </div>
 
           <div className="no-scrollbar flex items-center gap-2 overflow-x-auto xl:justify-end">
-            <span className="hidden shrink-0 text-sm text-muted-foreground xl:block">
-              Filter:
-            </span>
-            {filters.map((f) => (
-              <button
-                key={f.label}
-                onClick={() => setFilter(f.label)}
-                className={cn(
-                  "flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors xl:rounded-lg",
-                  filter === f.label
-                    ? "border-transparent bg-gradient-teal text-accent-foreground"
-                    : "border-border bg-card text-foreground hover:bg-accent",
-                )}
-              >
-                <f.icon className="h-4 w-4" /> {f.label}
-              </button>
-            ))}
-            <span className="ml-2 hidden shrink-0 text-sm text-muted-foreground xl:block">
-              Sort by:
-            </span>
             <button className="ml-auto flex shrink-0 items-center gap-2 rounded-xl border border-border bg-card px-4 py-2 text-sm xl:ml-0">
               <SlidersHorizontal className="h-4 w-4 xl:hidden" />
               Newest <ChevronDown className="h-4 w-4 text-muted-foreground" />
@@ -1120,34 +1442,86 @@ export function PortfolioPage() {
           </div>
         </div>
 
-        {/* Grid */}
+        {/* Videos section */}
         {portfolioQuery.isLoading ? (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="h-72 animate-pulse rounded-2xl border border-border bg-card" />
             ))}
           </div>
-        ) : filteredItems.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-16 text-center">
-            <Layers className="mb-3 h-10 w-10 text-muted-foreground/50" />
-            <p className="text-sm font-semibold">No portfolio items yet</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Upload images, videos, or add links to build your portfolio.
-            </p>
-          </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {filteredItems.map((item) => (
-              <ItemCard
-                key={item.id}
-                item={item}
-                onToggleSelect={() => toggleSelect(item.id)}
-                onEdit={() => setEditingItem(item)}
-                onDelete={() => setDeletingItem(item)}
-                onTogglePin={() => handleTogglePin(item)}
-              />
-            ))}
-          </div>
+          <section className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="grid h-8 w-8 place-items-center rounded-full bg-purple/15">
+                <Video className="h-4 w-4 text-purple" />
+              </div>
+              <h2 className="text-lg font-semibold">Videos</h2>
+              <span className="rounded-full bg-card px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                {videoItems.length}
+              </span>
+            </div>
+            {videoItems.length === 0 ? (
+              <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-12 text-center">
+                <Video className="mb-3 h-10 w-10 text-muted-foreground/50" />
+                <p className="text-sm font-semibold">No videos yet</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Upload videos or add YouTube links to showcase your work.
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                {videoItems.map((item) => (
+                  <ItemCard
+                    key={item.id}
+                    item={item}
+                    onToggleSelect={() => toggleSelect(item.id)}
+                    onEdit={() => setEditingItem(item)}
+                    onDelete={() => setDeletingItem(item)}
+                    onTogglePin={() => handleTogglePin(item)}
+                    onOpen={() => openLightboxFromVideos(item.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* Pictures section */}
+        {!portfolioQuery.isLoading && (
+          <section className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="grid h-8 w-8 place-items-center rounded-full bg-green/15">
+                <ImageIcon className="h-4 w-4 text-green" />
+              </div>
+              <h2 className="text-lg font-semibold">Pictures</h2>
+              <span className="rounded-full bg-card px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                {pictureItems.length}
+              </span>
+            </div>
+            {pictureItems.length === 0 ? (
+              <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-12 text-center">
+                <ImageIcon className="mb-3 h-10 w-10 text-muted-foreground/50" />
+                <p className="text-sm font-semibold">No pictures yet</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Upload images to build your portfolio.
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                {pictureItems.map((item) => (
+                  <ItemCard
+                    key={item.id}
+                    item={item}
+                    onToggleSelect={() => toggleSelect(item.id)}
+                    onEdit={() => setEditingItem(item)}
+                    onDelete={() => setDeletingItem(item)}
+                    onTogglePin={() => handleTogglePin(item)}
+                    onOpen={() => openLightboxFromPictures(item.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
         )}
       </div>
 
@@ -1186,13 +1560,22 @@ export function PortfolioPage() {
         </div>
       )}
 
+      {/* Lightbox */}
+      <PortfolioLightbox
+        key={lightboxOpen ? `open-${lightboxIndex}` : `closed-${lightboxIndex}`}
+        items={lightboxItems}
+        initialIndex={lightboxIndex}
+        open={lightboxOpen}
+        onOpenChange={closeLightbox}
+      />
+
       {/* ── Dialogs ──────────────────────────────────── */}
       <UploadDialog
         open={uploadType !== null}
         onOpenChange={(o) => { if (!o) setUploadType(null); }}
         type={uploadType ?? "image"}
       />
-      <AddLinkDialog open={addLinkOpen} onOpenChange={setAddLinkOpen} />
+      <AddVideoDialog open={addVideoOpen} onOpenChange={setAddVideoOpen} />
       <EditItemDialog
         open={editingItem !== null}
         onOpenChange={(o) => { if (!o) setEditingItem(null); }}

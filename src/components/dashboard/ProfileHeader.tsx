@@ -66,7 +66,7 @@ export function ProfileHeader() {
           <Sun className="size-4 text-warning" />
           {getGreeting()}
         </div>
-        <h2 className="mt-1 truncate text-[26px] leading-tight font-bold lg:text-[32px]">
+        <h2 className="mt-1 break-words font-sans text-[26px] leading-tight font-bold lg:text-[32px]">
           {name}
         </h2>
         <p className="text-sm text-muted-foreground">{formatDate()}</p>

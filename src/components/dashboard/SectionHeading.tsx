@@ -21,6 +21,7 @@ export function SectionHeading({
         <span className="size-2.5 rotate-45 bg-primary" />
         <h3
           className={cn(
+            "font-sans",
             small
               ? "text-[13px] font-semibold tracking-[0.14em]"
               : "text-[20px] font-bold tracking-tight"

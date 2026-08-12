@@ -1,5 +1,7 @@
 export { AboutSection } from "./AboutSection";
 export type { AboutSectionProps } from "./AboutSection";
+export { DetailsSection } from "./DetailsSection";
+export type { DetailsSectionProps } from "./DetailsSection";
 export { PortfolioSection } from "./PortfolioSection";
 export type { PortfolioSectionProps } from "./PortfolioSection";
 export { ExperienceSection } from "./ExperienceSection";

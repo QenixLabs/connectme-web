@@ -1,0 +1,34 @@
+"use client";
+
+export function PortfolioSkeleton() {
+  return (
+    <div className="min-h-screen bg-background">
+      <main className="container-page pb-28 pt-6 md:py-8 lg:pb-8">
+        <div className="h-4 w-32 animate-pulse rounded-lg bg-muted" />
+        <div className="mt-6 h-9 w-48 animate-pulse rounded-xl bg-muted" />
+        <div className="mt-2 h-5 w-64 animate-pulse rounded-lg bg-muted" />
+        <div className="mt-5 flex gap-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-9 w-20 animate-pulse rounded-lg bg-muted"
+            />
+          ))}
+        </div>
+        <div className="mt-6 h-5 w-28 animate-pulse rounded-lg bg-muted" />
+        <div className="mt-4 aspect-[21/9] w-full animate-pulse rounded-[20px] bg-muted" />
+        <div className="mt-4 h-6 w-48 animate-pulse rounded-lg bg-muted" />
+        <div className="mt-2 h-4 w-32 animate-pulse rounded-md bg-muted" />
+        <div className="mt-6 h-5 w-24 animate-pulse rounded-lg bg-muted" />
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div
+              key={i}
+              className="aspect-[4/3] animate-pulse rounded-[18px] bg-muted"
+            />
+          ))}
+        </div>
+      </main>
+    </div>
+  );
+}
