@@ -36,7 +36,7 @@ function MiniBadge({
 
 export function MobileHeader() {
   return (
-    <header className="sticky top-0 z-30 -mx-4 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-border bg-background/95 px-4 py-3 backdrop-blur lg:hidden">
+    <header className="sticky top-0 z-30 -mx-4 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-b border-border bg-bg-surface/95 px-4 py-3 backdrop-blur lg:hidden">
       <button aria-label="Open menu" className="grid size-9 place-items-center text-foreground">
         <Menu className="size-5" />
       </button>

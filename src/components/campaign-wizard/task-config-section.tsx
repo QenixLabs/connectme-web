@@ -42,7 +42,7 @@ By accepting, you acknowledge that you have read, understood, and agree to be bo
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <label className="text-sm font-medium text-zinc-300">{children}</label>
+    <label className="text-sm font-medium text-foreground/80">{children}</label>
   );
 }
 
@@ -70,14 +70,14 @@ export function TaskConfigSection({
   };
 
   return (
-    <div className="flex flex-col gap-4 border border-zinc-700/50 rounded-2xl p-5 bg-zinc-900/50">
+    <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <ClipboardList
-            className="h-4 w-4 text-zinc-500"
+            className="h-4 w-4 text-muted-foreground"
             strokeWidth={1.5}
           />
-          <span className="text-sm font-semibold text-zinc-100">
+          <span className="text-sm font-semibold text-foreground">
             Assignment Task
           </span>
         </div>
@@ -105,10 +105,10 @@ export function TaskConfigSection({
               }
             }}
           />
-          <div className="w-9 h-5 bg-zinc-700 peer-checked:bg-teal-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-zinc-700 after:border after:rounded-full after:h-4 after:w-4 after:transition-all" />
+          <div className="peer relative h-5 w-9 rounded-full bg-input after:absolute after:start-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-border after:bg-background after:content-[''] after:transition-all peer-checked:bg-accent-teal peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full" />
         </label>
       </div>
-      <p className="text-[13px] text-zinc-500 -mt-3">
+      <p className="-mt-3 text-[13px] text-muted-foreground">
         Optionally assign a task to all shortlisted talents. They must complete
         it for you to review.
       </p>
@@ -126,7 +126,7 @@ export function TaskConfigSection({
                     placeholder="e.g., Submit a 2-minute monologue video"
                     {...field}
                     value={field.value ?? ""}
-                    className="text-sm h-11 rounded-xl border-zinc-700/50 bg-zinc-900/50 focus-visible:ring-teal-500/30"
+                    className="h-11 rounded-xl border-border bg-bg-surface-inset text-sm focus-visible:ring-accent-teal/30"
                   />
                 </FormControl>
                 <FormMessage />
@@ -143,7 +143,7 @@ export function TaskConfigSection({
                 <FormControl>
                   <Textarea
                     placeholder="Describe what the talent needs to do..."
-                    className="min-h-[100px] text-sm rounded-xl border-zinc-700/50 bg-zinc-900/50 resize-y focus-visible:ring-teal-500/30 placeholder:text-zinc-500/50"
+                    className="min-h-[100px] resize-y rounded-xl border-border bg-bg-surface-inset text-sm placeholder:text-muted-foreground/60 focus-visible:ring-accent-teal/30"
                     {...field}
                     value={field.value ?? ""}
                   />
@@ -165,11 +165,11 @@ export function TaskConfigSection({
                     onValueChange={field.onChange}
                   >
                     <FormControl>
-                      <SelectTrigger className="text-sm h-10 rounded-xl border-zinc-700/50 bg-zinc-900/50">
+                      <SelectTrigger className="h-10 rounded-xl border-border bg-bg-surface-inset text-sm">
                         <SelectValue />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent className="rounded-xl bg-zinc-900 border-zinc-700/50">
+                    <SelectContent className="rounded-xl border-border bg-card">
                       <SelectItem value="file_upload">
                         File Upload
                       </SelectItem>
@@ -203,7 +203,7 @@ export function TaskConfigSection({
                         )
                       }
                       value={field.value ?? ""}
-                      className="text-sm h-11 rounded-xl border-zinc-700/50 bg-zinc-900/50 text-center focus-visible:ring-teal-500/30"
+                      className="h-11 rounded-xl border-border bg-bg-surface-inset text-center text-sm focus-visible:ring-accent-teal/30"
                     />
                   </FormControl>
                   <FormMessage />
@@ -216,18 +216,18 @@ export function TaskConfigSection({
             <div className="space-y-2">
               <FieldLabel>Reference Script (PDF)</FieldLabel>
               {taskDocument ? (
-                <div className="flex items-center gap-3 p-3 rounded-xl border border-zinc-700/50 bg-zinc-800/30">
-                  <div className="w-9 h-9 rounded-lg bg-teal-500/10 flex items-center justify-center shrink-0">
+                <div className="flex items-center gap-3 rounded-xl border border-border bg-bg-surface-inset p-3">
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent-teal-bg">
                     <FileText
-                      className="w-4 h-4 text-teal-400"
+                      className="size-4 text-accent-teal"
                       strokeWidth={1.5}
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-zinc-200 truncate">
+                    <p className="truncate text-xs font-medium text-foreground">
                       {taskDocument.name}
                     </p>
-                    <p className="text-[10px] text-zinc-500">
+                    <p className="text-[10px] text-muted-foreground">
                       {(taskDocument.size / 1024 / 1024).toFixed(1)} MB
                     </p>
                   </div>
@@ -239,24 +239,24 @@ export function TaskConfigSection({
                       }
                     }}
                     disabled={deleteDoc.isPending}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-500/10 text-zinc-500 hover:text-red-400 transition-colors shrink-0"
+                    className="flex size-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                   >
                     <X className="w-3.5 h-3.5" strokeWidth={1.5} />
                   </button>
                 </div>
               ) : pendingDoc ? (
-                <div className="flex items-center gap-3 p-3 rounded-xl border border-teal-500/30 bg-teal-500/5">
-                  <div className="w-9 h-9 rounded-lg bg-teal-500/10 flex items-center justify-center shrink-0">
+                <div className="flex items-center gap-3 rounded-xl border border-accent-teal/30 bg-accent-teal/5 p-3">
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent-teal-bg">
                     <Upload
-                      className="w-4 h-4 text-teal-400"
+                    className="size-4 text-accent-teal"
                       strokeWidth={1.5}
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-zinc-200 truncate">
+                  <p className="truncate text-xs font-medium text-foreground">
                       {pendingDoc.name}
                     </p>
-                    <p className="text-[10px] text-zinc-500">
+                  <p className="text-[10px] text-muted-foreground">
                       {(pendingDoc.size / 1024 / 1024).toFixed(1)} MB — will
                       upload on save
                     </p>
@@ -267,7 +267,7 @@ export function TaskConfigSection({
                       setPending(null);
                       if (fileInputRef.current) fileInputRef.current.value = "";
                     }}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-red-500/10 text-zinc-500 hover:text-red-400 transition-colors shrink-0"
+                    className="flex size-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                   >
                     <X className="w-3.5 h-3.5" strokeWidth={1.5} />
                   </button>
@@ -276,7 +276,7 @@ export function TaskConfigSection({
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-2 w-full p-3 rounded-xl border-2 border-dashed border-zinc-700/50 bg-zinc-800/30 hover:border-teal-500/50 hover:bg-teal-500/5 transition-colors text-sm text-zinc-500"
+                  className="flex w-full items-center gap-2 rounded-xl border-2 border-dashed border-border bg-bg-surface-inset p-3 text-sm text-muted-foreground transition-colors hover:border-accent-teal/50 hover:bg-accent-teal/5"
                 >
                   <Upload className="w-4 h-4" strokeWidth={1.5} />
                   Attach a PDF script or reference material
@@ -294,19 +294,19 @@ export function TaskConfigSection({
               />
             </div>
           ) : (
-            <p className="text-xs text-zinc-500/70">
+              <p className="text-xs text-muted-foreground/70">
               Save campaign to enable file uploads.
             </p>
           )}
 
-          <div className="border-t border-zinc-700/50 pt-4">
+          <div className="border-t border-border pt-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Shield
-                  className="h-4 w-4 text-zinc-500"
+                  className="h-4 w-4 text-muted-foreground"
                   strokeWidth={1.5}
                 />
-                <span className="text-sm font-semibold text-zinc-100">
+                <span className="text-sm font-semibold text-foreground">
                   Require NDA
                 </span>
               </div>
@@ -333,10 +333,10 @@ export function TaskConfigSection({
                     }
                   }}
                 />
-                <div className="w-9 h-5 bg-zinc-700 peer-checked:bg-teal-500 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-zinc-700 after:border after:rounded-full after:h-4 after:w-4 after:transition-all" />
+                <div className="peer relative h-5 w-9 rounded-full bg-input after:absolute after:start-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-border after:bg-background after:content-[''] after:transition-all peer-checked:bg-accent-teal peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full" />
               </label>
             </div>
-            <p className="text-[13px] text-zinc-500 mt-1">
+            <p className="mt-1 text-[13px] text-muted-foreground">
               Shortlisted talents must agree to the NDA before viewing the task
               details.
             </p>
@@ -352,7 +352,7 @@ export function TaskConfigSection({
                       <FormControl>
                         <Textarea
                           placeholder="Enter NDA terms..."
-                          className="min-h-[200px] text-sm rounded-xl border-zinc-700/50 bg-zinc-900/50 resize-y focus-visible:ring-teal-500/30 placeholder:text-zinc-500/50 font-mono text-xs leading-relaxed"
+                          className="min-h-[200px] resize-y rounded-xl border-border bg-bg-surface-inset font-mono text-xs leading-relaxed text-foreground placeholder:text-muted-foreground/60 focus-visible:ring-accent-teal/30"
                           {...field}
                           value={field.value ?? ""}
                         />

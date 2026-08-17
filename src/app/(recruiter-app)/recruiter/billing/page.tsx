@@ -61,7 +61,7 @@ function daysUntil(dateString?: string | null): number | null {
 
 function SkeletonBlock({ className }: { className?: string }) {
   return (
-    <div className={`animate-pulse rounded-lg bg-slate-800 ${className ?? ""}`} />
+    <div className={`animate-pulse rounded-lg bg-muted ${className ?? ""}`} />
   );
 }
 
@@ -72,7 +72,7 @@ function BillingSkeleton() {
         <SkeletonBlock className="h-8 w-32" />
         <SkeletonBlock className="mt-2 h-4 w-64" />
       </div>
-      <div className="mt-6 rounded-2xl border border-slate-800 bg-[#0a1420] p-6">
+      <div className="card-surface mt-6 rounded-2xl p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-3">
             <SkeletonBlock className="h-4 w-24" />
@@ -86,12 +86,12 @@ function BillingSkeleton() {
           <SkeletonBlock className="h-10 flex-1 rounded-xl" />
         </div>
       </div>
-      <div className="mt-6 rounded-2xl border border-slate-800 bg-[#0a1420] p-6">
+      <div className="card-surface mt-6 rounded-2xl p-6">
         <SkeletonBlock className="mb-6 h-6 w-20" />
         <SkeletonBlock className="mb-4 h-16 rounded-xl" />
         <SkeletonBlock className="h-16 rounded-xl" />
       </div>
-      <div className="mt-6 rounded-2xl border border-slate-800 bg-[#0a1420] p-6">
+      <div className="card-surface mt-6 rounded-2xl p-6">
         <SkeletonBlock className="mb-6 h-6 w-20" />
         <SkeletonBlock className="mb-3 h-10 w-full" />
         <SkeletonBlock className="mb-3 h-10 w-full" />
@@ -144,9 +144,9 @@ export default function RecruiterBillingPage() {
   if (errorSub) {
     return (
       <div className="mx-auto max-w-xl px-5 pb-8 pt-7">
-        <Card className="rounded-2xl border-slate-800 bg-[#0a1420] p-6 text-center">
-          <p className="font-semibold text-white">Something went wrong</p>
-          <p className="mt-1 text-sm text-slate-500">
+         <Card className="card-surface rounded-2xl p-6 text-center">
+           <p className="font-semibold text-foreground">Something went wrong</p>
+           <p className="mt-1 text-sm text-muted-foreground">
             Failed to load billing data. Please try again.
           </p>
         </Card>
@@ -175,16 +175,16 @@ export default function RecruiterBillingPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="font-display text-3xl font-bold tracking-tight text-white">
+           <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">
             Billing
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
+           <p className="mt-1 text-sm text-muted-foreground">
             Manage your plan and payments
           </p>
         </div>
         <Button
           variant="outline"
-          className="border-teal-700 text-teal-400 hover:bg-teal-950/40"
+         className="border-accent-teal/50 text-accent-teal hover:bg-accent-teal-bg"
           onClick={() => {
             // Scroll to plan section or trigger upgrade flow
             const el = document.getElementById("subscription-card");
@@ -199,28 +199,28 @@ export default function RecruiterBillingPage() {
       {/* Subscription */}
       <section
         id="subscription-card"
-        className="mt-6 rounded-2xl border border-slate-800 bg-[#0a1420] p-6"
+         className="card-surface mt-6 rounded-2xl p-6"
       >
         <div className="flex items-center justify-between gap-3">
-          <h2 className="font-display text-2xl font-bold tracking-tight text-white">
+           <h2 className="font-display text-2xl font-bold tracking-tight text-foreground">
             Subscription
           </h2>
-          <span className="rounded-full border border-teal-700 px-4 py-1.5 text-sm font-semibold text-teal-400">
+           <span className="rounded-full border border-accent-teal/50 px-4 py-1.5 text-sm font-semibold text-accent-teal">
             {isPaid
               ? (plan?.display_name ?? formatPlanName(subscription?.plan_key))
               : "Free"}
           </span>
         </div>
 
-        <span className="mt-5 inline-flex items-center gap-2 rounded-full bg-teal-950/60 px-4 py-2 text-sm font-semibold text-teal-400">
-          <span className="size-2 rounded-full bg-teal-400" />
+         <span className="mt-5 inline-flex items-center gap-2 rounded-full bg-accent-green-bg px-4 py-2 text-sm font-semibold text-accent-green">
+           <span className="size-2 rounded-full bg-accent-green" />
           {isActive ? "Active" : formatPlanName(status)}
         </span>
 
         {resetDate && isActive && (
-          <p className="mt-5 text-sm text-slate-500">
+           <p className="mt-5 text-sm text-muted-foreground">
             Renews on{" "}
-            <span className="font-semibold text-teal-400">
+             <span className="font-semibold text-accent-teal">
               {formatDate(resetDate)}
               {daysLeft !== null && daysLeft > 0 && ` (${daysLeft} days)`}
             </span>
@@ -230,7 +230,7 @@ export default function RecruiterBillingPage() {
         <div className="mt-5 flex flex-wrap gap-3">
           <Button
             variant="outline"
-            className="flex-1 border-teal-700 text-teal-400 hover:bg-teal-950/40"
+             className="flex-1 border-accent-teal/50 text-accent-teal hover:bg-accent-teal-bg"
             onClick={() => {
               // TODO: open plan selector or redirect to plans page
               toast.info("Plan selection coming soon.");
@@ -241,7 +241,7 @@ export default function RecruiterBillingPage() {
           </Button>
           <Button
             variant="outline"
-            className="flex-1 border-slate-700 text-slate-400 hover:bg-slate-800/40"
+             className="flex-1 border-border text-muted-foreground hover:bg-muted"
             onClick={() => {
               toast.info("Plan cancellation coming soon.");
             }}
@@ -253,12 +253,12 @@ export default function RecruiterBillingPage() {
       </section>
 
       {/* Usage */}
-      <section className="mt-6 rounded-2xl border border-slate-800 bg-[#0a1420] p-6">
+       <section className="card-surface mt-6 rounded-2xl p-6">
         <div className="flex items-center gap-4">
-          <span className="grid size-12 place-items-center rounded-xl bg-teal-950/60 text-teal-400">
+           <span className="grid size-12 place-items-center rounded-xl bg-accent-teal-bg text-accent-teal">
             <BarChart3 className="size-5" />
           </span>
-          <h2 className="font-display text-xl font-bold tracking-tight text-white">
+           <h2 className="font-display text-xl font-bold tracking-tight text-foreground">
             Usage
           </h2>
         </div>
@@ -267,9 +267,9 @@ export default function RecruiterBillingPage() {
           {/* Messages */}
           <div>
             <div className="flex items-baseline justify-between">
-              <span className="text-base text-white">Messages</span>
-              <span className="text-base text-slate-500">
-                <span className="font-bold text-teal-400">{messagesUsed}</span>{" "}
+               <span className="text-base text-foreground">Messages</span>
+               <span className="text-base text-muted-foreground">
+                 <span className="font-bold text-accent-teal">{messagesUsed}</span>{" "}
                 / {messagesLimit}
               </span>
             </div>
@@ -284,9 +284,9 @@ export default function RecruiterBillingPage() {
           {/* Campaigns */}
           <div>
             <div className="flex items-baseline justify-between">
-              <span className="text-base text-white">Campaigns</span>
-              <span className="text-base text-slate-500">
-                <span className="font-bold text-teal-400">{campaignsUsed}</span>{" "}
+               <span className="text-base text-foreground">Campaigns</span>
+               <span className="text-base text-muted-foreground">
+                 <span className="font-bold text-accent-teal">{campaignsUsed}</span>{" "}
                 / {campaignsLimit}
               </span>
             </div>
@@ -299,25 +299,25 @@ export default function RecruiterBillingPage() {
           </div>
         </div>
 
-        <div className="mt-6 flex items-center justify-between border-t border-slate-800 pt-5 text-sm font-semibold text-teal-400">
+         <div className="mt-6 flex items-center justify-between border-t border-border pt-5 text-sm font-semibold text-accent-teal">
           <span>View all usage details</span>
           <ChevronRight className="size-5" />
         </div>
       </section>
 
       {/* Invoices */}
-      <section className="mt-6 rounded-2xl border border-slate-800 bg-[#0a1420] p-6">
+       <section className="card-surface mt-6 rounded-2xl p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <span className="grid size-12 place-items-center rounded-xl bg-teal-950/60 text-teal-400">
+             <span className="grid size-12 place-items-center rounded-xl bg-accent-teal-bg text-accent-teal">
               <ReceiptText className="size-5" />
             </span>
-            <h2 className="font-display text-xl font-bold tracking-tight text-white">
+             <h2 className="font-display text-xl font-bold tracking-tight text-foreground">
               Invoices
             </h2>
           </div>
           {invoices.length > 0 && (
-            <button className="inline-flex items-center gap-1 text-sm font-semibold text-teal-400">
+             <button className="inline-flex items-center gap-1 text-sm font-semibold text-accent-teal">
               View all
               <ChevronRight className="size-4" />
             </button>
@@ -325,13 +325,13 @@ export default function RecruiterBillingPage() {
         </div>
 
         {invoices.length === 0 ? (
-          <div className="mt-6 rounded-xl border border-slate-800 bg-[#0a1420] p-4 text-center text-sm text-slate-500">
+           <div className="profile-inset mt-6 rounded-xl p-4 text-center text-sm text-muted-foreground">
             No invoices yet. They will appear after your first payment.
           </div>
         ) : (
           <table className="mt-6 w-full text-left text-sm">
             <thead>
-              <tr className="text-slate-500">
+               <tr className="text-muted-foreground">
                 <th className="pb-3 font-normal">Date</th>
                 <th className="pb-3 font-normal">Period</th>
                 <th className="pb-3 font-normal">Amount</th>
@@ -340,14 +340,14 @@ export default function RecruiterBillingPage() {
             </thead>
             <tbody>
               {invoices.map((inv) => (
-                <tr key={inv._id} className="border-t border-slate-800">
-                  <td className="py-4 text-slate-500">
+                 <tr key={inv._id} className="border-t border-border">
+                   <td className="py-4 text-muted-foreground">
                     {formatDate(inv.created_at)}
                   </td>
-                  <td className="py-4 text-slate-500">
+                   <td className="py-4 text-muted-foreground">
                     {formatPeriod(inv.period_start, inv.period_end)}
                   </td>
-                  <td className="py-4 text-white">
+                   <td className="py-4 text-foreground">
                     {formatCurrency(inv.amount)}
                   </td>
                   <td className="py-4">

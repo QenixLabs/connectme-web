@@ -1,70 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
+import { useTheme } from "next-themes";
 import {
   ChevronRight,
-  Eye,
-  EyeOff,
   Headphones,
   KeyRound,
   Mail,
+  Moon,
   Phone,
+  Sun,
   Trash2,
 } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import { useAuthStore } from "@/providers/auth-store-provider";
-import { authApi } from "@/lib/api";
-import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-
-const passwordSchema = z
-  .object({
-    current_password: z.string().min(1, "Current password is required"),
-    new_password: z
-      .string()
-      .min(8, "Must be at least 8 characters")
-      .regex(/[A-Z]/, "Must contain an uppercase letter")
-      .regex(/[a-z]/, "Must contain a lowercase letter")
-      .regex(/[0-9]/, "Must contain a number"),
-    confirm_password: z.string().min(1, "Please confirm your password"),
-  })
-  .refine((data) => data.new_password === data.confirm_password, {
-    message: "Passwords do not match",
-    path: ["confirm_password"],
-  });
-
-type PasswordForm = z.infer<typeof passwordSchema>;
-
-const otpSchema = z.object({
-  otp: z
-    .string()
-    .length(6, "OTP must be 6 digits")
-    .regex(/^\d+$/, "OTP must be numbers only"),
-});
-
-type OtpForm = z.infer<typeof otpSchema>;
+import { ChangePasswordDialog } from "./settings/change-password-dialog";
+import { VerifyPhoneDialog } from "./settings/verify-phone-dialog";
 
 const iconToneMap = {
   teal: "icon-teal",
@@ -72,6 +28,8 @@ const iconToneMap = {
   amber: "icon-amber",
   red: "icon-red",
 } as const;
+
+const subscribeToHydration = () => () => {};
 
 function SettingIcon({
   tone,
@@ -138,298 +96,16 @@ function SettingRow({
   );
 }
 
-function PasswordDialog({
-  open,
-  onOpenChange,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}) {
-  const [showCurrent, setShowCurrent] = useState(false);
-  const [showNew, setShowNew] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const form = useForm<PasswordForm>({
-    resolver: zodResolver(passwordSchema),
-    mode: "onChange",
-    defaultValues: {
-      current_password: "",
-      new_password: "",
-      confirm_password: "",
-    },
-  });
-
-  async function onSubmit(data: PasswordForm) {
-    setIsSubmitting(true);
-    try {
-      await authApi.changePassword(data.current_password, data.new_password);
-      toast.success("Password updated successfully");
-      form.reset();
-      onOpenChange(false);
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Failed to update password";
-      toast.error(message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="font-display">Change Password</DialogTitle>
-          <DialogDescription>
-            Must be at least 8 characters with uppercase, lowercase, and number.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="mx-auto grid size-14 place-items-center rounded-full bg-primary/10 text-primary">
-          <KeyRound className="size-6" />
-        </div>
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="current_password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Current password</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <KeyRound className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        {...field}
-                        type={showCurrent ? "text" : "password"}
-                        placeholder="Enter current password"
-                        className="pl-10 pr-10"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowCurrent(!showCurrent)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      >
-                        {showCurrent ? (
-                          <Eye className="size-4" />
-                        ) : (
-                          <EyeOff className="size-4" />
-                        )}
-                      </button>
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="new_password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>New password</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <KeyRound className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        {...field}
-                        type={showNew ? "text" : "password"}
-                        placeholder="Enter new password"
-                        className="pl-10 pr-10"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowNew(!showNew)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      >
-                        {showNew ? (
-                          <Eye className="size-4" />
-                        ) : (
-                          <EyeOff className="size-4" />
-                        )}
-                      </button>
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="confirm_password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Confirm new password</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <KeyRound className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        {...field}
-                        type={showConfirm ? "text" : "password"}
-                        placeholder="Confirm new password"
-                        className="pl-10 pr-10"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirm(!showConfirm)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      >
-                        {showConfirm ? (
-                          <Eye className="size-4" />
-                        ) : (
-                          <EyeOff className="size-4" />
-                        )}
-                      </button>
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isSubmitting || !form.formState.isValid}
-            >
-              {isSubmitting ? "Updating..." : "Update Password"}
-            </Button>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function PhoneVerificationDialog({
-  open,
-  onOpenChange,
-  phone,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  phone: string;
-}) {
-  const [step, setStep] = useState<"send" | "verify">("send");
-  const [isSending, setIsSending] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(false);
-
-  const form = useForm<OtpForm>({
-    resolver: zodResolver(otpSchema),
-    mode: "onChange",
-    defaultValues: { otp: "" },
-  });
-
-  async function handleSendOtp() {
-    setIsSending(true);
-    try {
-      await authApi.sendPhoneOtp();
-      toast.success("OTP sent to your phone");
-      setStep("verify");
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Failed to send OTP";
-      toast.error(message);
-    } finally {
-      setIsSending(false);
-    }
-  }
-
-  async function handleVerifyOtp(data: OtpForm) {
-    setIsVerifying(true);
-    try {
-      await authApi.verifyPhoneOtp(phone, data.otp);
-      toast.success("Phone number verified");
-      form.reset();
-      setStep("send");
-      onOpenChange(false);
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Failed to verify OTP";
-      toast.error(message);
-    } finally {
-      setIsVerifying(false);
-    }
-  }
-
-  function handleOpenChange(value: boolean) {
-    if (!value) {
-      setStep("send");
-      form.reset();
-    }
-    onOpenChange(value);
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="font-display">Verify Phone Number</DialogTitle>
-          <DialogDescription>
-            {step === "send"
-              ? `We'll send a verification code to ${phone}`
-              : `Enter the 6-digit code sent to ${phone}`}
-          </DialogDescription>
-        </DialogHeader>
-
-        {step === "send" ? (
-          <Button onClick={handleSendOtp} disabled={isSending} className="w-full">
-            {isSending ? "Sending..." : "Send OTP"}
-          </Button>
-        ) : (
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleVerifyOtp)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="otp"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Verification code</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="000000"
-                        maxLength={6}
-                        className="text-center text-lg tracking-[0.3em]"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setStep("send")}
-                  className="flex-1"
-                >
-                  Back
-                </Button>
-                <Button
-                  type="submit"
-                  className="flex-1"
-                  disabled={isVerifying || !form.formState.isValid}
-                >
-                  {isVerifying ? "Verifying..." : "Verify"}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        )}
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 export function SettingsPage() {
   const user = useAuthStore((s) => s.user);
+  const { theme, setTheme } = useTheme();
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [phoneVerifyOpen, setPhoneVerifyOpen] = useState(false);
+  const mounted = useSyncExternalStore(
+    subscribeToHydration,
+    () => true,
+    () => false,
+  );
 
   if (!user) {
     return (
@@ -464,6 +140,28 @@ export function SettingsPage() {
       </div>
 
       <div className="space-y-2.5">
+        <SettingRow
+          icon={
+            <SettingIcon tone="teal">
+              {mounted && theme === "dark" ? (
+                <Moon className="size-5" />
+              ) : (
+                <Sun className="size-5" />
+              )}
+            </SettingIcon>
+          }
+          title="Light Theme"
+          description="Use a bright surface with softer contrast"
+          action={
+            <Switch
+              checked={mounted ? theme === "light" : true}
+              disabled={!mounted}
+              onCheckedChange={(checked) => setTheme(checked ? "light" : "dark")}
+              aria-label="Toggle light theme"
+            />
+          }
+        />
+
         <SettingRow
           icon={
             <SettingIcon tone="teal">
@@ -550,8 +248,8 @@ export function SettingsPage() {
         </Button>
       </Card>
 
-      <PasswordDialog open={passwordOpen} onOpenChange={setPasswordOpen} />
-      <PhoneVerificationDialog
+      <ChangePasswordDialog open={passwordOpen} onOpenChange={setPasswordOpen} />
+      <VerifyPhoneDialog
         open={phoneVerifyOpen}
         onOpenChange={setPhoneVerifyOpen}
         phone={user.phone ?? ""}

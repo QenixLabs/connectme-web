@@ -23,6 +23,7 @@ import {
   Pencil,
   Loader2,
 } from "lucide-react";
+import { extractVideoThumbnail } from "@/lib/video-thumbnail";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -393,6 +394,8 @@ function UploadDialog({
 }) {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [thumbnail, setThumbnail] = useState<File | null>(null);
+  const [thumbnailLoading, setThumbnailLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadImage = useUploadPortfolioImage();
   const uploadVideo = useUploadPortfolioVideo();
@@ -404,7 +407,7 @@ function UploadDialog({
 
   const isPending = uploadImage.isPending || uploadVideo.isPending;
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
     const maxSize = type === "video" ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
@@ -414,6 +417,17 @@ function UploadDialog({
     }
     setFile(f);
     setPreview(URL.createObjectURL(f));
+    if (type === "video") {
+      setThumbnailLoading(true);
+      try {
+        const thumb = await extractVideoThumbnail(f);
+        setThumbnail(thumb);
+      } catch {
+        setThumbnail(null);
+      } finally {
+        setThumbnailLoading(false);
+      }
+    }
   };
 
   const onSubmit = async (data: UploadForm) => {
@@ -431,7 +445,11 @@ function UploadDialog({
       if (type === "image") {
         await uploadImage.mutateAsync({ file, data: payload });
       } else {
-        await uploadVideo.mutateAsync({ file, data: payload });
+        await uploadVideo.mutateAsync({
+          file,
+          thumbnail: thumbnail ?? undefined,
+          data: payload,
+        });
       }
       toast.success(`${type === "image" ? "Image" : "Video"} uploaded`);
       handleClose();
@@ -443,6 +461,8 @@ function UploadDialog({
   const handleClose = () => {
     setFile(null);
     setPreview(null);
+    setThumbnail(null);
+    setThumbnailLoading(false);
     form.reset();
     onOpenChange(false);
   };
@@ -561,9 +581,11 @@ function UploadDialog({
               <Button type="button" variant="outline" onClick={handleClose} disabled={isPending}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isPending || !file}>
+              <Button type="submit" disabled={isPending || !file || thumbnailLoading}>
                 {isPending ? (
                   <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Uploading...</>
+                ) : thumbnailLoading ? (
+                  "Generating thumbnail..."
                 ) : (
                   "Upload"
                 )}
@@ -598,6 +620,8 @@ function AddVideoDialog({
   const [activeTab, setActiveTab] = useState<"file" | "youtube">("file");
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [thumbnail, setThumbnail] = useState<File | null>(null);
+  const [thumbnailLoading, setThumbnailLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadVideo = useUploadPortfolioVideo();
   const addLink = useAddPortfolioLink();
@@ -609,7 +633,7 @@ function AddVideoDialog({
 
   const isPending = uploadVideo.isPending || addLink.isPending;
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
     const maxSize = 50 * 1024 * 1024;
@@ -619,11 +643,22 @@ function AddVideoDialog({
     }
     setFile(f);
     setPreview(URL.createObjectURL(f));
+    setThumbnailLoading(true);
+    try {
+      const thumb = await extractVideoThumbnail(f);
+      setThumbnail(thumb);
+    } catch {
+      setThumbnail(null);
+    } finally {
+      setThumbnailLoading(false);
+    }
   };
 
   const handleClose = () => {
     setFile(null);
     setPreview(null);
+    setThumbnail(null);
+    setThumbnailLoading(false);
     setActiveTab("file");
     form.reset();
     onOpenChange(false);
@@ -643,7 +678,11 @@ function AddVideoDialog({
           toast.error("Please select a video file");
           return;
         }
-        await uploadVideo.mutateAsync({ file, data: basePayload });
+        await uploadVideo.mutateAsync({
+          file,
+          thumbnail: thumbnail ?? undefined,
+          data: basePayload,
+        });
       } else {
         const url = data.url?.trim();
         if (!url || !getYouTubeVideoId(url)) {
@@ -786,9 +825,14 @@ function AddVideoDialog({
                 <Button type="button" variant="outline" onClick={handleClose} disabled={isPending}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isPending || (activeTab === "file" && !file)}>
+                <Button
+                  type="submit"
+                  disabled={isPending || (activeTab === "file" && (!file || thumbnailLoading))}
+                >
                   {isPending ? (
                     <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Adding...</>
+                  ) : thumbnailLoading ? (
+                    "Generating thumbnail..."
                   ) : (
                     "Add Video"
                   )}

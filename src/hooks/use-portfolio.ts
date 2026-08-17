@@ -221,9 +221,11 @@ export function useUploadPortfolioVideo() {
   return useMutation({
     mutationFn: ({
       file,
+      thumbnail,
       data,
     }: {
       file: File;
+      thumbnail?: File;
       data?: {
         title?: string;
         caption?: string;
@@ -231,7 +233,7 @@ export function useUploadPortfolioVideo() {
         category?: string;
         is_pinned?: boolean;
       };
-    }) => talentApi.uploadPortfolioVideo(file, data),
+    }) => talentApi.uploadPortfolioVideo(file, thumbnail, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: portfolioKeys.my() });
     },

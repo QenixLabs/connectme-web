@@ -44,14 +44,14 @@ export function ShareSheet({ url, title, open, onClose }: ShareSheetProps) {
 
   return (
     <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
-      <SheetContent side="bottom" className="h-auto rounded-t-3xl border-border bg-card">
+      <SheetContent side="bottom" className="profile-card h-auto rounded-t-3xl">
         <SheetHeader className="pb-2">
-          <SheetTitle>Share Work</SheetTitle>
+          <SheetTitle className="text-foreground">Share Work</SheetTitle>
         </SheetHeader>
         <div className="space-y-4 py-4">
           <div className="flex gap-2">
-            <Input value={url} readOnly className="flex-1" />
-            <Button variant="outline" onClick={copy}>
+            <Input value={url} readOnly className="profile-inset flex-1" />
+            <Button variant="outline" onClick={copy} className="profile-inset">
               {copied ? (
                 <Check className="size-4 text-success" />
               ) : (
@@ -63,7 +63,7 @@ export function ShareSheet({ url, title, open, onClose }: ShareSheetProps) {
           <div className="grid grid-cols-3 gap-3">
             <Button
               variant="outline"
-              className="flex-col gap-1 h-auto py-3"
+              className="profile-inset h-auto flex-col gap-1 py-3"
               onClick={shareNative}
             >
               <Share2 className="size-5" />
@@ -71,7 +71,7 @@ export function ShareSheet({ url, title, open, onClose }: ShareSheetProps) {
             </Button>
             <Button
               variant="outline"
-              className="flex-col gap-1 h-auto py-3"
+              className="profile-inset h-auto flex-col gap-1 py-3"
               asChild
             >
               <a href={whatsappUrl} target="_blank" rel="noreferrer">
@@ -80,7 +80,7 @@ export function ShareSheet({ url, title, open, onClose }: ShareSheetProps) {
             </Button>
             <Button
               variant="outline"
-              className="flex-col gap-1 h-auto py-3"
+              className="profile-inset h-auto flex-col gap-1 py-3"
               asChild
             >
               <a href={linkedinUrl} target="_blank" rel="noreferrer">

@@ -22,7 +22,7 @@ export function PortfolioTypeBadge({ type, className }: PortfolioTypeBadgeProps)
   const { icon, label } = config[type] ?? config.image;
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-md bg-black/40 px-2 py-1 text-[11px] font-medium text-white backdrop-blur-sm ${className}`}
+      className={`inline-flex items-center gap-1 rounded-md bg-black/50 px-2 py-1 text-[11px] font-medium text-white backdrop-blur-sm ${className}`}
     >
       {icon}
       {label}

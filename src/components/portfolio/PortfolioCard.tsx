@@ -2,11 +2,11 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import { Play, Youtube, Star } from "lucide-react";
+import { Play, Youtube, Star, Heart, Eye } from "lucide-react";
 import type { PortfolioItem } from "@/lib/types/portfolio";
 import { PortfolioTypeBadge } from "./PortfolioTypeBadge";
-import { LikeButton } from "./LikeButton";
 import { PortfolioActions } from "./PortfolioActions";
+import { formatCount } from "@/hooks/use-portfolio";
 
 interface PortfolioCardProps {
   item: PortfolioItem;
@@ -26,7 +26,7 @@ export function PortfolioCard({
   return (
     <article
       onClick={onClick}
-      className={`group relative flex flex-col overflow-hidden rounded-[18px] border border-border bg-card transition-all hover:border-primary/40 hover:shadow-card-hover ${
+      className={`portfolio-card group relative flex flex-col overflow-hidden rounded-2xl transition-all hover:-translate-y-0.5 hover:border-border-hover hover:shadow-card-hover ${
         onClick ? "cursor-pointer" : ""
       }`}
     >
@@ -48,7 +48,7 @@ export function PortfolioCard({
           />
         )}
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
 
         <div className="absolute left-3 top-3">
           <PortfolioTypeBadge type={item.type} />
@@ -56,7 +56,7 @@ export function PortfolioCard({
 
         {item.isFeatured && (
           <div className="absolute right-3 top-3">
-            <span className="inline-flex items-center gap-1 rounded-md bg-primary px-2 py-1 text-[11px] font-medium text-white">
+            <span className="inline-flex items-center gap-1 rounded-md bg-gold/90 px-2 py-1 text-[11px] font-medium text-black">
               <Star className="size-3 fill-current" />
               Featured
             </span>
@@ -108,15 +108,18 @@ export function PortfolioCard({
         )}
 
         <div className="mt-auto flex items-center justify-between pt-3">
-          <LikeButton
-            itemId={item.id}
-            initialLikes={item.likesCount}
-            initialLiked={item.isLiked}
-            size="sm"
-          />
-          {isOwner && (
-            <span className="text-xs capitalize text-muted-foreground">
-              {item.visibility}
+          <span
+            className={`inline-flex items-center gap-1.5 text-xs ${
+              item.isLiked ? "text-destructive" : "text-muted-foreground"
+            }`}
+          >
+            <Heart className={`size-3.5 ${item.isLiked ? "fill-current" : ""}`} />
+            {formatCount(item.likesCount)}
+          </span>
+          {item.viewsCount > 0 && (
+            <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Eye className="size-3.5" />
+              {formatCount(item.viewsCount)}
             </span>
           )}
         </div>

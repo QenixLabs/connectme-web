@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import {
   FormField,
@@ -35,9 +35,9 @@ function FieldLabel({
   required?: boolean;
 }) {
   return (
-    <label className="text-sm font-medium text-zinc-300">
+    <label className="text-sm font-medium text-foreground/80">
       {children}
-      {required && <span className="text-red-400 ml-0.5">*</span>}
+      {required && <span className="ml-0.5 text-destructive">*</span>}
     </label>
   );
 }
@@ -45,11 +45,11 @@ function FieldLabel({
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-2 pt-2 first:pt-0">
-      <div className="h-px flex-1 bg-zinc-700/40" />
-      <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-zinc-500 shrink-0">
+      <div className="h-px flex-1 bg-border" />
+      <span className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
         {children}
       </span>
-      <div className="h-px flex-1 bg-zinc-700/40" />
+      <div className="h-px flex-1 bg-border" />
     </div>
   );
 }
@@ -83,7 +83,7 @@ function DateBlock({
 
   return (
     <div
-      className="relative bg-zinc-900/50 border border-zinc-700/50 rounded-xl px-4 py-3 flex flex-col gap-0.5 cursor-pointer hover:border-teal-500/40 hover:shadow-sm transition-all"
+      className="relative flex cursor-pointer flex-col gap-0.5 rounded-xl border border-border bg-bg-surface-inset px-4 py-3 transition-all hover:border-accent-teal/40 hover:shadow-sm"
       onClick={() => {
         const input = inputRef.current as HTMLInputElement;
         if (input?.showPicker) {
@@ -93,19 +93,19 @@ function DateBlock({
         }
       }}
     >
-      <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">
+      <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
         {label}
-        {required && <span className="text-red-400 ml-0.5">*</span>}
+        {required && <span className="ml-0.5 text-destructive">*</span>}
       </div>
-      <div className="text-sm text-zinc-100 flex items-center gap-1.5 font-medium">
+      <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
         <Calendar
-          className="w-3.5 h-3.5 text-zinc-500/60 shrink-0"
+          className="size-3.5 shrink-0 text-muted-foreground/60"
           strokeWidth={1.5}
         />
-        <span className={value ? "text-zinc-100" : "text-zinc-500/60"}>
+        <span className={value ? "text-foreground" : "text-muted-foreground/60"}>
           {display}
           {hint && !value && (
-            <span className="text-zinc-500/40"> &middot; {hint}</span>
+            <span className="text-muted-foreground/40"> &middot; {hint}</span>
           )}
         </span>
       </div>
@@ -116,7 +116,7 @@ function DateBlock({
         onChange={(e) => onChange(e.target.value)}
         className="absolute inset-0 opacity-0 cursor-pointer w-full h-full pointer-events-none"
       />
-      {error && <p className="text-xs text-red-400 mt-1">{error}</p>}
+      {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
     </div>
   );
 }
@@ -144,41 +144,32 @@ export function BasicInfoStep({
 
   const cityOptions = selectedState ? getCitiesForState(selectedState) : [];
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent<HTMLLabelElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setDragOver(false);
-      const file = e.dataTransfer.files?.[0];
-      if (file && file.type.startsWith("image/")) {
-        onMediaChange?.(file);
-      }
-    },
-    [onMediaChange],
-  );
-
-  const handleDragOver = useCallback((e: React.DragEvent<HTMLLabelElement>) => {
+  const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
-  }, []);
+    setDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith("image/")) {
+      onMediaChange?.(file);
+    }
+  };
 
-  const handleDragEnter = useCallback(
-    (e: React.DragEvent<HTMLLabelElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setDragOver(true);
-    },
-    [],
-  );
+  const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
 
-  const handleDragLeave = useCallback(
-    (e: React.DragEvent<HTMLLabelElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setDragOver(false);
-    },
-    [],
-  );
+  const handleDragEnter = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(false);
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -191,7 +182,7 @@ export function BasicInfoStep({
               <Input
                 placeholder="e.g., Summer commercial casting"
                 {...field}
-                className="text-sm h-11 rounded-xl border-zinc-700/50 bg-zinc-900/50 focus-visible:ring-teal-500/30 placeholder:text-zinc-500/50"
+                className="h-11 rounded-xl border-border bg-bg-surface-inset text-sm placeholder:text-muted-foreground/60 focus-visible:ring-accent-teal/30"
               />
             </FormControl>
             <FormMessage />
@@ -207,7 +198,7 @@ export function BasicInfoStep({
             <FormControl>
               <Textarea
                 placeholder="Describe the project, role, and what you're looking for..."
-                className="min-h-[80px] text-sm rounded-xl border-zinc-700/50 bg-zinc-900/50 resize-y focus-visible:ring-teal-500/30 placeholder:text-zinc-500/50"
+                className="min-h-[80px] resize-y rounded-xl border-border bg-bg-surface-inset text-sm placeholder:text-muted-foreground/60 focus-visible:ring-accent-teal/30"
                 {...field}
               />
             </FormControl>
@@ -224,11 +215,11 @@ export function BasicInfoStep({
               <FieldLabel required>Role type</FieldLabel>
               <Select value={field.value ?? ""} onValueChange={field.onChange}>
                 <FormControl>
-                  <SelectTrigger className="text-sm h-11 rounded-xl border-zinc-700/50 bg-zinc-900/50">
+                  <SelectTrigger className="h-11 rounded-xl border-border bg-bg-surface-inset text-sm">
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent className="rounded-xl bg-zinc-900 border-zinc-700/50">
+                <SelectContent className="rounded-xl border-border bg-card">
                   {PROFESSIONS.map((r) => (
                     <SelectItem key={r} value={r}>
                       {r}
@@ -254,11 +245,11 @@ export function BasicInfoStep({
                   onValueChange={(v) => field.onChange([v])}
                 >
                   <FormControl>
-                    <SelectTrigger className="text-sm h-11 rounded-xl border-zinc-700/50 bg-zinc-900/50">
+                    <SelectTrigger className="h-11 rounded-xl border-border bg-bg-surface-inset text-sm">
                       <SelectValue placeholder="Select specialty" />
                     </SelectTrigger>
                   </FormControl>
-                  <SelectContent className="rounded-xl bg-zinc-900 border-zinc-700/50">
+                  <SelectContent className="rounded-xl border-border bg-card">
                     {getSpecialtiesForProfession(selectedRole).map((s) => (
                       <SelectItem key={s} value={s}>
                         {s}
@@ -284,7 +275,7 @@ export function BasicInfoStep({
                   type="checkbox"
                   checked={field.value ?? false}
                   onChange={(e) => field.onChange(e.target.checked)}
-                  className="h-4 w-4 rounded border-zinc-700 text-teal-500 focus:ring-teal-500/30"
+                  className="h-4 w-4 rounded border-border accent-accent-teal focus:ring-accent-teal/30"
                 />
               </FormControl>
               <FieldLabel>Looking for an influencer?</FieldLabel>
@@ -334,11 +325,11 @@ export function BasicInfoStep({
                 }}
               >
                 <FormControl>
-                  <SelectTrigger className="text-sm h-11 rounded-xl border-zinc-700/50 bg-zinc-900/50">
+                    <SelectTrigger className="h-11 rounded-xl border-border bg-bg-surface-inset text-sm">
                     <SelectValue placeholder="Select state" />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent className="rounded-xl bg-zinc-900 border-zinc-700/50">
+                  <SelectContent className="rounded-xl border-border bg-card">
                   {INDIAN_STATES.map((s) => (
                     <SelectItem key={s} value={s}>
                       {s}
@@ -362,13 +353,13 @@ export function BasicInfoStep({
                 disabled={!selectedState}
               >
                 <FormControl>
-                  <SelectTrigger className="text-sm h-11 rounded-xl border-zinc-700/50 bg-zinc-900/50">
+                    <SelectTrigger className="h-11 rounded-xl border-border bg-bg-surface-inset text-sm">
                     <SelectValue
                       placeholder={selectedState ? "Select city" : "State first"}
                     />
                   </SelectTrigger>
                 </FormControl>
-                <SelectContent className="rounded-xl bg-zinc-900 border-zinc-700/50">
+                  <SelectContent className="rounded-xl border-border bg-card">
                   {cityOptions.map((c) => (
                     <SelectItem key={c} value={c}>
                       {c}
@@ -458,7 +449,7 @@ export function BasicInfoStep({
 
       <div className="space-y-3">
         {existingCoverUrl && !mediaFile && (
-          <div className="relative rounded-xl overflow-hidden aspect-video border border-zinc-700/50 w-full max-w-[320px]">
+          <div className="relative aspect-video w-full max-w-[320px] overflow-hidden rounded-xl border border-border">
             <img
               src={existingCoverUrl}
               alt=""
@@ -468,7 +459,7 @@ export function BasicInfoStep({
         )}
 
         {mediaFile ? (
-          <div className="relative rounded-xl overflow-hidden aspect-video border border-zinc-700/50 w-full max-w-[320px]">
+          <div className="relative aspect-video w-full max-w-[320px] overflow-hidden rounded-xl border border-border">
             <img
               src={URL.createObjectURL(mediaFile)}
               alt="Preview"
@@ -477,7 +468,7 @@ export function BasicInfoStep({
             <button
               type="button"
               onClick={() => onMediaChange?.(null)}
-              className="absolute top-2 right-2 p-2 rounded-lg bg-black/50 text-white hover:bg-black/70 backdrop-blur-sm transition-colors"
+               className="absolute right-2 top-2 rounded-lg bg-black/50 p-2 text-white backdrop-blur-sm transition-colors hover:bg-black/70"
             >
               <X className="w-4 h-4" strokeWidth={1.5} />
             </button>
@@ -505,20 +496,20 @@ export function BasicInfoStep({
               className={cn(
                 "flex flex-col items-center justify-center gap-3 w-full max-w-[320px] aspect-video rounded-xl border-2 border-dashed cursor-pointer transition-all duration-200",
                 dragOver
-                  ? "border-teal-500 bg-teal-500/10"
-                  : "border-zinc-700/50 bg-zinc-900/30 hover:border-teal-500/40 hover:bg-zinc-900/50",
+                   ? "border-accent-teal bg-accent-teal-bg"
+                   : "border-border bg-bg-surface-inset hover:border-accent-teal/40 hover:bg-card",
               )}
             >
               <div
                 className={cn(
                   "rounded-full p-2.5 transition-colors",
-                  dragOver ? "bg-teal-500/10" : "bg-zinc-800/50",
+                   dragOver ? "bg-accent-teal-bg" : "bg-muted",
                 )}
               >
                 <Upload
                   className={cn(
                     "w-5 h-5",
-                    dragOver ? "text-teal-400" : "text-zinc-500",
+                     dragOver ? "text-accent-teal" : "text-muted-foreground",
                   )}
                   strokeWidth={1.5}
                 />
@@ -526,12 +517,12 @@ export function BasicInfoStep({
               <span
                 className={cn(
                   "text-sm font-medium",
-                  dragOver ? "text-teal-400" : "text-zinc-400",
+                   dragOver ? "text-accent-teal" : "text-muted-foreground",
                 )}
               >
                 {dragOver ? "Drop image here" : "Upload cover image"}
               </span>
-              <span className="text-xs text-zinc-500/60">
+               <span className="text-xs text-muted-foreground/60">
                 PNG, JPG or WebP
               </span>
             </label>

@@ -2,11 +2,11 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import { Play, Youtube, Star } from "lucide-react";
+import { Play, Youtube, Star, Heart, Eye } from "lucide-react";
 import type { PortfolioItem } from "@/lib/types/portfolio";
 import { PortfolioTypeBadge } from "./PortfolioTypeBadge";
-import { PortfolioStats } from "./PortfolioStats";
 import { PortfolioActions } from "./PortfolioActions";
+import { formatCount } from "@/hooks/use-portfolio";
 
 interface FeaturedPortfolioProps {
   item: PortfolioItem;
@@ -24,13 +24,13 @@ export function FeaturedPortfolio({
   const isVideo = item.type === "video" || item.type === "youtube";
 
   return (
-    <section className="mt-6 sm:mt-8">
-      <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+    <section>
+      <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/50">
         Featured Work
       </h2>
       <article
         onClick={onClick}
-        className={`group mt-4 overflow-hidden rounded-[20px] border border-border bg-card transition-all hover:border-primary/40 hover:shadow-card-hover ${
+        className={`portfolio-card group mt-4 overflow-hidden rounded-2xl transition-all hover:-translate-y-0.5 hover:border-border-hover hover:shadow-card-hover ${
           onClick ? "cursor-pointer" : ""
         }`}
       >
@@ -44,13 +44,13 @@ export function FeaturedPortfolio({
               playsInline
             />
           ) : (
-          <img
-            src={item.thumbnailUrl || item.url}
-            alt={item.title}
-            className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
-          />
+            <img
+              src={item.thumbnailUrl || item.url}
+              alt={item.title}
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+            />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
 
           <div className="absolute left-4 top-4 sm:left-5 sm:top-5">
             <PortfolioTypeBadge type={item.type} />
@@ -87,7 +87,7 @@ export function FeaturedPortfolio({
         <div className="p-4 sm:p-6">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-gold">
                 <Star className="size-3 fill-current" />
                 Featured
               </span>
@@ -107,12 +107,17 @@ export function FeaturedPortfolio({
             </div>
           </div>
 
-          <div className="mt-4">
-            <PortfolioStats
-              likesCount={item.likesCount}
-              viewsCount={item.viewsCount}
-              liked={item.isLiked}
-            />
+          <div className="mt-4 flex items-center gap-4 text-sm text-muted-foreground">
+            <span className={`inline-flex items-center gap-1.5 ${item.isLiked ? "text-destructive" : ""}`}>
+              <Heart className={`size-4 ${item.isLiked ? "fill-current" : ""}`} />
+              {formatCount(item.likesCount)}
+            </span>
+            {item.viewsCount > 0 && (
+              <span className="inline-flex items-center gap-1.5">
+                <Eye className="size-4" />
+                {formatCount(item.viewsCount)}
+              </span>
+            )}
           </div>
         </div>
       </article>

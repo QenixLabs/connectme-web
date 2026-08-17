@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { campaignsApi } from "@/lib/api/campaigns";
 import type {
   QueryCampaignsParams,
@@ -109,8 +110,10 @@ export function useBookmarkCampaign() {
       bookmarked
         ? campaignsApi.unbookmarkCampaign(id)
         : campaignsApi.bookmarkCampaign(id),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: campaignKeys.bookmarks() });
+      queryClient.invalidateQueries({ queryKey: campaignKeys.detail(variables.id) });
+      queryClient.invalidateQueries({ queryKey: campaignKeys.lists() });
     },
   });
 }
@@ -131,6 +134,11 @@ export function useApplyToCampaign() {
         queryKey: campaignKeys.detail(variables.id),
       });
       queryClient.invalidateQueries({ queryKey: campaignKeys.lists() });
+    },
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { message?: string } } };
+      const message = err.response?.data?.message || "Failed to apply. Please try again.";
+      toast.error(message);
     },
   });
 }

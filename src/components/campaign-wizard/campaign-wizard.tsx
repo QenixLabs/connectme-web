@@ -409,14 +409,14 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
 
   if (isEdit && isLoadingCampaign) {
     return (
-      <div className="max-w-[680px] mx-auto bg-zinc-900/50 border border-zinc-700/50 rounded-2xl p-8 space-y-6">
-        <Skeleton className="h-6 w-48 rounded-md bg-zinc-800" />
-        <Skeleton className="h-4 w-64 rounded-md bg-zinc-800" />
-        <Skeleton className="h-10 w-full rounded-xl bg-zinc-800" />
-        <Skeleton className="h-72 rounded-xl bg-zinc-800" />
+      <div className="mx-auto max-w-[680px] space-y-6 rounded-2xl border border-border bg-card p-8 shadow-[var(--surface-shadow)]">
+        <Skeleton className="h-6 w-48 rounded-md bg-muted" />
+        <Skeleton className="h-4 w-64 rounded-md bg-muted" />
+        <Skeleton className="h-10 w-full rounded-xl bg-muted" />
+        <Skeleton className="h-72 rounded-xl bg-muted" />
         <div className="flex justify-between">
-          <Skeleton className="h-10 w-20 rounded-xl bg-zinc-800" />
-          <Skeleton className="h-10 w-28 rounded-xl bg-zinc-800" />
+          <Skeleton className="h-10 w-20 rounded-xl bg-muted" />
+          <Skeleton className="h-10 w-28 rounded-xl bg-muted" />
         </div>
       </div>
     );
@@ -432,13 +432,13 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="max-w-[680px] mx-auto bg-zinc-900/50 border border-zinc-700/50 rounded-2xl overflow-hidden"
+        className="mx-auto max-w-[680px] overflow-hidden rounded-2xl border border-border bg-card shadow-[var(--surface-shadow)]"
       >
         <div className="px-6 sm:px-8 pt-6 sm:pt-8">
-          <h2 className="text-xl font-semibold text-zinc-100 tracking-tight">
+          <h2 className="text-xl font-semibold tracking-tight text-foreground">
             {isEdit ? "Edit campaign" : "New campaign"}
           </h2>
-          <p className="mt-1 text-sm text-zinc-400 leading-relaxed">
+          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
             {isEdit
               ? "Update your casting call details"
               : "Create a casting call and start receiving applications"}
@@ -462,20 +462,20 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
                     className={cn(
                       "flex items-center gap-2 px-3 py-2 rounded-xl transition-all duration-200",
                       isActive
-                        ? "bg-zinc-100 text-zinc-900 shadow-sm"
-                        : isDone
-                          ? "bg-emerald-500/10 text-emerald-400"
-                          : "text-zinc-500 hover:bg-zinc-800/50",
+                         ? "bg-primary text-primary-foreground shadow-sm"
+                         : isDone
+                           ? "bg-accent-green-bg text-accent-green"
+                           : "text-muted-foreground hover:bg-muted",
                     )}
                   >
                     <span
                       className={cn(
                         "w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 transition-all",
                         isActive
-                          ? "bg-zinc-900/20"
-                          : isDone
-                            ? "bg-emerald-500/20"
-                            : "bg-zinc-800/50",
+                           ? "bg-primary/20"
+                           : isDone
+                             ? "bg-accent-green/20"
+                             : "bg-muted",
                       )}
                     >
                       {isDone ? (
@@ -490,23 +490,23 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
                     <span
                       className={cn(
                         "text-xs font-semibold hidden sm:inline",
-                        isDone && "text-emerald-400",
+                         isDone && "text-accent-green",
                       )}
                     >
                       {s.label}
                     </span>
                   </button>
                   {idx < STEPS.length - 1 && (
-                    <div className="flex-1 h-px bg-zinc-700/40 mx-1" />
+                     <div className="mx-1 h-px flex-1 bg-border" />
                   )}
                 </div>
               );
             })}
           </div>
 
-          <div className="h-1 bg-zinc-800 rounded-full overflow-hidden mb-2">
+          <div className="mb-2 h-1 overflow-hidden rounded-full bg-muted">
             <div
-              className="h-full bg-gradient-to-r from-teal-500 to-teal-400 rounded-full transition-all duration-500 ease-out"
+              className="h-full rounded-full bg-accent-teal transition-all duration-500 ease-out"
               style={{ width: `${(step / 3) * 100}%` }}
             />
           </div>
@@ -555,12 +555,12 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
           )}
         </div>
 
-        <div className="flex items-center gap-3 px-6 sm:px-8 py-4 bg-zinc-800/30 border-t border-zinc-700/50">
+        <div className="flex items-center gap-3 border-t border-border bg-muted/60 px-6 py-4 sm:px-8">
           {step > 1 && (
             <button
               type="button"
               onClick={onBack}
-              className="px-4 py-2.5 rounded-xl text-sm font-medium border border-zinc-700/50 bg-zinc-900/50 text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800/50 transition-all shrink-0 flex items-center gap-1.5"
+              className="flex shrink-0 items-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-medium text-muted-foreground transition-all hover:bg-muted hover:text-foreground"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               Back
@@ -570,7 +570,7 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
             type="button"
             onClick={saveDraft}
             disabled={isPending}
-            className="px-4 py-2.5 rounded-xl text-sm font-medium border border-zinc-700/50 bg-zinc-900/50 text-zinc-300 hover:text-zinc-100 hover:bg-zinc-800/50 transition-all disabled:opacity-50 flex items-center gap-1.5"
+            className="flex items-center gap-1.5 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-medium text-muted-foreground transition-all hover:bg-muted hover:text-foreground disabled:opacity-50"
           >
             <Save className="w-3.5 h-3.5" strokeWidth={1.5} />
             Save draft
@@ -580,7 +580,7 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
               type="button"
               onClick={onNext}
               disabled={isNavigating}
-              className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-teal-500 text-white hover:bg-teal-400 transition-all active:scale-[0.98] disabled:opacity-50 ml-auto flex items-center gap-1.5"
+              className="ml-auto flex items-center gap-1.5 rounded-xl bg-accent-teal px-5 py-2.5 text-sm font-semibold text-accent-foreground transition-all hover:bg-accent-teal/90 active:scale-[0.98] disabled:opacity-50"
             >
               Next
               <ArrowRight className="w-3.5 h-3.5" />
@@ -590,10 +590,10 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
               type="submit"
               disabled={isNavigating || isPending}
               className={cn(
-                "px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all active:scale-[0.98] disabled:opacity-50 ml-auto flex items-center gap-1.5 shadow-md",
-                form.watch("publishOption") === "draft"
-                  ? "bg-zinc-700 hover:bg-zinc-600"
-                  : "bg-emerald-600 hover:bg-emerald-500",
+                 "ml-auto flex items-center gap-1.5 rounded-xl px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50",
+                 form.watch("publishOption") === "draft"
+                   ? "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                   : "bg-accent-green hover:bg-accent-green/90",
               )}
             >
               {isPending ? (

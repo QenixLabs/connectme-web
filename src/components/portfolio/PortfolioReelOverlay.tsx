@@ -47,15 +47,19 @@ export function PortfolioReelOverlay({
       >
         <DialogTitle className="sr-only">Portfolio reel</DialogTitle>
 
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          onClick={onClose}
-          className="fixed left-4 top-4 z-50 rounded-full bg-black/40 text-white hover:bg-black/60 hover:text-white"
-          aria-label="Close reel"
-        >
-          <ArrowLeft className="size-5" />
-        </Button>
+        <div className="absolute left-0 right-0 top-0 z-50 flex items-center justify-between p-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            className="rounded-full bg-black/40 text-white hover:bg-black/60 hover:text-white"
+            aria-label="Close reel"
+          >
+            <ArrowLeft className="size-5" />
+          </Button>
+          <p className="text-sm font-medium text-white/80">@{username}</p>
+          <div className="w-10" />
+        </div>
 
         <PortfolioReel
           items={items}

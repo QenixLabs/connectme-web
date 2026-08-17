@@ -106,8 +106,8 @@ function getVerificationDisplay(
 
 function SectionIcon({ icon: Icon }: { icon: typeof Tag }) {
   return (
-    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-teal-500/25 bg-teal-500/10">
-      <Icon className="size-4.5 text-teal-400" />
+    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-accent-teal/30 bg-accent-teal-bg">
+      <Icon className="size-4.5 text-accent-teal" />
     </div>
   );
 }
@@ -134,10 +134,6 @@ function InlineField({
   const ref = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    if (!editing) setDraft(value);
-  }, [value, editing]);
-
-  useEffect(() => {
     if (editing) ref.current?.focus();
   }, [editing]);
 
@@ -148,11 +144,11 @@ function InlineField({
 
   if (editing) {
     const shared =
-      "w-full rounded-lg border border-teal-500/50 bg-slate-900/60 px-3 py-2 text-sm text-white outline-none placeholder:text-slate-500";
+      "w-full rounded-lg border border-accent-teal/50 bg-bg-surface-inset px-3 py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground";
     return (
       <div className="w-full">
         {label && (
-          <p className="mb-1 text-sm text-slate-500">{label}</p>
+          <p className="mb-1 text-sm text-muted-foreground">{label}</p>
         )}
         {multiline ? (
           <textarea
@@ -182,13 +178,13 @@ function InlineField({
         <div className="mt-2 flex gap-2">
           <button
             onClick={commit}
-            className="flex h-9 items-center gap-1.5 rounded-lg bg-teal-500 px-3 text-sm font-medium text-[#050b14]"
+            className="flex h-9 items-center gap-1.5 rounded-lg bg-accent-teal px-3 text-sm font-medium text-accent-foreground"
           >
             <Check className="size-4" /> Save
           </button>
           <button
             onClick={() => setEditing(false)}
-            className="flex h-9 items-center gap-1.5 rounded-lg border border-slate-700 px-3 text-sm text-slate-300"
+            className="flex h-9 items-center gap-1.5 rounded-lg border border-border px-3 text-sm text-muted-foreground"
           >
             <X className="size-4" /> Cancel
           </button>
@@ -199,20 +195,23 @@ function InlineField({
 
   return (
     <button
-      onClick={() => setEditing(true)}
+      onClick={() => {
+        setDraft(value);
+        setEditing(true);
+      }}
       className={`group w-full text-left ${className}`}
       aria-label={`Edit ${label ?? "field"}`}
     >
-      {label && <p className="text-sm text-slate-500">{label}</p>}
+      {label && <p className="text-sm text-muted-foreground">{label}</p>}
       <span className="flex items-start gap-2">
         <span
           className={`min-w-0 flex-1 whitespace-pre-line ${
-            value ? "text-white" : "text-slate-500"
+            value ? "text-foreground" : "text-muted-foreground"
           }`}
         >
           {value || placeholder || "Add"}
         </span>
-        <Pencil className="mt-0.5 size-4 shrink-0 text-slate-600 opacity-70 group-hover:text-teal-400" />
+        <Pencil className="mt-0.5 size-4 shrink-0 text-muted-foreground opacity-70 group-hover:text-accent-teal" />
       </span>
     </button>
   );
@@ -228,7 +227,7 @@ function CopyButton({ label, value }: { label: string; value: string }) {
     }
   };
   return (
-    <button aria-label={`Copy ${label}`} onClick={copy} className="p-1 text-slate-500 hover:text-teal-400">
+    <button aria-label={`Copy ${label}`} onClick={copy} className="p-1 text-muted-foreground hover:text-accent-teal">
       <Copy className="size-5" />
     </button>
   );
@@ -236,7 +235,7 @@ function CopyButton({ label, value }: { label: string; value: string }) {
 
 function SkeletonBlock({ className }: { className?: string }) {
   return (
-    <div className={`animate-pulse rounded-lg bg-slate-800 ${className ?? ""}`} />
+    <div className={`animate-pulse rounded-lg bg-muted ${className ?? ""}`} />
   );
 }
 
@@ -322,7 +321,7 @@ export default function RecruiterProfileEditPage() {
   if (!profile) {
     return (
       <div className="mx-auto w-full max-w-2xl px-4 py-6">
-        <p className="text-slate-500">Profile not found.</p>
+        <p className="text-muted-foreground">Profile not found.</p>
       </div>
     );
   }
@@ -336,28 +335,28 @@ export default function RecruiterProfileEditPage() {
     .join(", ");
 
   return (
-    <main className="min-h-screen bg-[#050b14] pb-12">
-      <div className="mx-auto max-w-2xl border-x border-slate-800/60 bg-[#0a1420] px-4 pt-5">
+    <main className="min-h-screen bg-bg-page pb-12">
+      <div className="mx-auto max-w-2xl border-x border-border bg-bg-surface px-4 pt-5">
         {/* Header */}
         <div className="flex items-center gap-3">
           <button
             aria-label="Back"
             onClick={() => window.history.back()}
-            className="flex size-11 items-center justify-center rounded-xl border border-slate-800 bg-[#0a1420]"
+            className="profile-inset flex size-11 items-center justify-center rounded-xl"
           >
-            <ArrowLeft className="size-5 text-white" />
+            <ArrowLeft className="size-5 text-foreground" />
           </button>
-          <h1 className="flex-1 text-2xl font-semibold text-white">Edit Profile</h1>
+          <h1 className="flex-1 text-2xl font-semibold text-foreground">Edit Profile</h1>
         </div>
 
         {/* Identity card */}
-        <section className="mt-5 rounded-2xl border border-slate-800 bg-[#0a1420] p-4">
+        <section className="profile-card mt-5 rounded-2xl p-4">
           <div className="flex gap-4">
             {/* Avatar */}
             <button
               onClick={() => fileInputRef.current?.click()}
               aria-label="Upload profile photo"
-              className="relative flex size-20 shrink-0 items-center justify-center rounded-2xl border border-teal-500/40 bg-teal-950/40 text-2xl font-bold text-teal-300 shadow-[0_0_20px_rgba(20,184,166,0.15)]"
+              className="relative flex size-20 shrink-0 items-center justify-center rounded-2xl border border-accent-teal/40 bg-accent-teal-bg text-2xl font-bold text-accent-teal shadow-[var(--shadow-glow)]"
             >
               {profile.profile_photo ? (
                 <img
@@ -368,8 +367,8 @@ export default function RecruiterProfileEditPage() {
               ) : (
                 getInitials(profile.company_name)
               )}
-              <span className="absolute -bottom-1 -right-1 flex size-6 items-center justify-center rounded-full border-2 border-[#0a1420] bg-slate-700">
-                <Camera className="size-3 text-white" />
+              <span className="absolute -bottom-1 -right-1 flex size-6 items-center justify-center rounded-full border-2 border-bg-surface bg-muted">
+                <Camera className="size-3 text-foreground" />
               </span>
             </button>
             <input
@@ -386,11 +385,11 @@ export default function RecruiterProfileEditPage() {
                   <InlineField
                     value={profile.company_name}
                     onSave={(v) => handleFieldUpdate("company_name", v)}
-                    className="text-2xl font-bold leading-tight text-white"
+                    className="text-2xl font-bold leading-tight text-foreground"
                   />
                 </div>
                 {verification.verified && (
-                  <span className="mt-1 inline-flex shrink-0 items-center gap-1 rounded-full bg-teal-500/15 px-2.5 py-1 text-xs font-medium text-teal-400">
+                  <span className="mt-1 inline-flex shrink-0 items-center gap-1 rounded-full bg-accent-amber-bg px-2.5 py-1 text-xs font-medium text-accent-amber">
                     <ShieldCheck className="size-3.5" /> Verified
                   </span>
                 )}
@@ -402,11 +401,11 @@ export default function RecruiterProfileEditPage() {
                   value={profile.slug}
                   onSave={handleSlugUpdate}
                   placeholder="your-slug"
-                  className="text-sm text-slate-500"
+                  className="text-sm text-muted-foreground"
                 />
               </div>
 
-              <div className="mt-2 flex items-start gap-2 text-sm text-slate-400">
+              <div className="mt-2 flex items-start gap-2 text-sm text-muted-foreground">
                 <Briefcase className="mt-1 size-4 shrink-0" />
                 <div className="flex min-w-0 flex-1 flex-col gap-1">
                   <InlineField
@@ -429,56 +428,56 @@ export default function RecruiterProfileEditPage() {
               </div>
 
               <p className="mt-2 flex items-center gap-3 text-sm">
-                <span className="rounded-md border border-teal-500/40 px-2 py-0.5 text-teal-400">
+                <span className="rounded-md border border-accent-teal/40 px-2 py-0.5 text-accent-teal">
                   Tier {verificationTier}
                 </span>
-                <span className="flex items-center gap-1.5 text-slate-500">
-                  <Star className="size-4 text-amber-400" /> Trust Score{" "}
-                  <span className="font-semibold text-teal-400">{trustScore}%</span>
+                <span className="flex items-center gap-1.5 text-muted-foreground">
+                  <Star className="size-4 text-accent-amber" /> Trust Score{" "}
+                  <span className="font-semibold text-accent-teal">{trustScore}%</span>
                 </span>
               </p>
             </div>
           </div>
 
           {/* Headline */}
-          <div className="mt-4 border-t border-slate-800 pt-3">
+          <div className="mt-4 border-t border-border pt-3">
             <InlineField
               label="Headline"
               value={profile.headline ?? ""}
               onSave={(v) => handleFieldUpdate("headline", v)}
               placeholder="What does your company do?"
-              className="font-semibold text-white"
+              className="font-semibold text-foreground"
             />
           </div>
 
           {/* Position */}
-          <div className="mt-3 border-t border-slate-800 pt-3">
+          <div className="mt-3 border-t border-border pt-3">
             <InlineField
               label="Your Position"
               value={profile.position ?? ""}
               onSave={(v) => handleFieldUpdate("position", v)}
               placeholder="e.g. Founder, CEO"
-              className="text-white"
+              className="text-foreground"
             />
           </div>
         </section>
 
         {/* Verification status */}
-        <button className="mt-4 flex w-full items-center gap-4 rounded-2xl border border-slate-800 bg-[#0a1420] p-4 text-left">
+        <button className="profile-card mt-4 flex w-full items-center gap-4 rounded-2xl p-4 text-left">
           <div
             className={`flex size-12 items-center justify-center rounded-xl ${
-              verification.verified ? "bg-teal-950/60" : "bg-slate-800"
+              verification.verified ? "bg-accent-teal-bg" : "bg-muted"
             }`}
           >
             <ShieldCheck
-              className={`size-6 ${verification.verified ? "text-teal-400" : "text-slate-500"}`}
+              className={`size-6 ${verification.verified ? "text-accent-teal" : "text-muted-foreground"}`}
             />
           </div>
           <div className="flex-1">
-            <p className="font-semibold text-white">{verification.label}</p>
+            <p className="font-semibold text-foreground">{verification.label}</p>
             <p
               className={`text-sm ${
-                verification.verified ? "text-teal-400" : "text-slate-500"
+                verification.verified ? "text-accent-teal" : "text-muted-foreground"
               }`}
             >
               {verification.sublabel}
@@ -487,12 +486,12 @@ export default function RecruiterProfileEditPage() {
         </button>
 
         {/* Contact info */}
-        <section className="mt-4 rounded-2xl border border-slate-800 bg-[#0a1420] p-4">
+        <section className="profile-card mt-4 rounded-2xl p-4">
           <div className="flex items-center gap-3">
             <SectionIcon icon={Contact} />
             <div>
-              <p className="font-semibold text-white">Contact Info</p>
-              <p className="text-sm text-slate-500">How clients can reach you</p>
+              <p className="font-semibold text-foreground">Contact Info</p>
+              <p className="text-sm text-muted-foreground">How clients can reach you</p>
             </div>
           </div>
           {(
@@ -503,25 +502,25 @@ export default function RecruiterProfileEditPage() {
           ).map((f) => (
             <div
               key={f.label}
-              className="mt-3 flex items-start gap-3 border-t border-slate-800 pt-3"
+              className="mt-3 flex items-start gap-3 border-t border-border pt-3"
             >
               <div className="min-w-0 flex-1">
-                <p className="text-sm text-slate-500">{f.label}</p>
-                <p className="font-medium text-white">{f.value || "Not set"}</p>
+                <p className="text-sm text-muted-foreground">{f.label}</p>
+                <p className="font-medium text-foreground">{f.value || "Not set"}</p>
               </div>
               {f.value && <CopyButton label={f.label} value={f.value} />}
             </div>
           ))}
-          <p className="mt-3 text-xs text-slate-600">
+          <p className="mt-3 text-xs text-muted-foreground/70">
             Contact details are managed in account settings
           </p>
         </section>
 
         {/* Links & socials */}
-        <section className="mt-4 rounded-2xl border border-slate-800 bg-[#0a1420] p-4">
+        <section className="profile-card mt-4 rounded-2xl p-4">
           <div className="flex items-center gap-3">
             <SectionIcon icon={Link2} />
-            <p className="flex-1 font-semibold text-white">Links & Socials</p>
+            <p className="flex-1 font-semibold text-foreground">Links & Socials</p>
           </div>
           <div className="mt-4 flex gap-3">
             {[
@@ -542,8 +541,8 @@ export default function RecruiterProfileEditPage() {
                 key={key}
                 className={`flex size-11 items-center justify-center rounded-xl border ${
                   active
-                    ? "border-teal-500/50 bg-teal-500/10 text-teal-400"
-                    : "border-slate-800 bg-slate-900/40 text-slate-600"
+                     ? "border-accent-teal/50 bg-accent-teal-bg text-accent-teal"
+                     : "border-border bg-muted text-muted-foreground"
                 }`}
               >
                 <Icon className="size-5" />
@@ -558,32 +557,32 @@ export default function RecruiterProfileEditPage() {
                 inputType="url"
                 placeholder="https://example.com"
                 onSave={(v) => handleFieldUpdate("company_website", v)}
-                className="text-teal-400"
+                className="text-accent-teal"
               />
             </div>
             {profile.company_website && (
               <CopyButton label="Website" value={profile.company_website} />
             )}
           </div>
-          <div className="mt-3 border-t border-slate-800 pt-3">
+          <div className="mt-3 border-t border-border pt-3">
             <InlineField
               label="LinkedIn"
               value={profile.linkedin_company_url ?? ""}
               inputType="url"
               placeholder="https://linkedin.com/company/..."
               onSave={(v) => handleFieldUpdate("linkedin_company_url", v)}
-              className="text-teal-400"
+              className="text-accent-teal"
             />
           </div>
         </section>
 
         {/* Location */}
-        <section className="mt-4 rounded-2xl border border-slate-800 bg-[#0a1420] p-4">
+        <section className="profile-card mt-4 rounded-2xl p-4">
           <div className="flex items-center gap-3">
             <SectionIcon icon={MapPin} />
             <div>
-              <p className="font-semibold text-white">Company Location</p>
-              <p className="text-sm text-slate-500">Where your company is based</p>
+              <p className="font-semibold text-foreground">Company Location</p>
+              <p className="text-sm text-muted-foreground">Where your company is based</p>
             </div>
           </div>
           <div className="mt-4">
@@ -600,54 +599,54 @@ export default function RecruiterProfileEditPage() {
                 if (!parts[2]) delete newLocation.country;
                 handleFieldUpdate("location", newLocation);
               }}
-              className="font-medium text-white"
+              className="font-medium text-foreground"
             />
           </div>
         </section>
 
         {/* Company Size */}
-        <section className="mt-4 rounded-2xl border border-slate-800 bg-[#0a1420] p-4">
+        <section className="profile-card mt-4 rounded-2xl p-4">
           <div className="flex items-center gap-3">
             <SectionIcon icon={Users} />
             <div>
-              <p className="font-semibold text-white">Company Size</p>
-              <p className="text-sm text-slate-500">Number of employees</p>
+              <p className="font-semibold text-foreground">Company Size</p>
+              <p className="text-sm text-muted-foreground">Number of employees</p>
             </div>
           </div>
           <button
             onClick={() => setSheet("size")}
             className="mt-4 flex w-full items-center text-left"
           >
-            <span className="flex-1 font-medium text-white">
+            <span className="flex-1 font-medium text-foreground">
               {profile.company_size || "Select size"}
             </span>
-            <ChevronDown className="size-5 text-slate-500" />
+            <ChevronDown className="size-5 text-muted-foreground" />
           </button>
         </section>
 
         {/* Specialties (Tags) */}
-        <section className="mt-4 rounded-2xl border border-slate-800 bg-[#0a1420] p-4">
+        <section className="profile-card mt-4 rounded-2xl p-4">
           <div className="flex items-center gap-3">
             <SectionIcon icon={Tag} />
             <div className="flex-1">
-              <p className="font-semibold text-white">Specialties</p>
-              <p className="text-sm text-slate-500">Select relevant areas</p>
+              <p className="font-semibold text-foreground">Specialties</p>
+              <p className="text-sm text-muted-foreground">Select relevant areas</p>
             </div>
             <button
               onClick={() => setSheet("specialties")}
-              className="flex h-9 items-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-3 text-sm text-slate-300"
+              className="flex h-9 items-center gap-2 rounded-lg border border-border bg-muted px-3 text-sm text-muted-foreground"
             >
               <Pencil className="size-3.5" /> Edit
             </button>
           </div>
           <div className="mt-4 flex flex-wrap gap-3">
             {(!profile.specialties || profile.specialties.length === 0) && (
-              <p className="text-sm text-slate-500">No specialties selected yet</p>
+              <p className="text-sm text-muted-foreground">No specialties selected yet</p>
             )}
             {profile.specialties?.map((t) => (
               <span
                 key={t}
-                className="rounded-lg border border-teal-500/50 bg-teal-500/5 px-4 py-2 text-sm text-teal-400"
+                className="rounded-lg border border-accent-teal/50 bg-accent-teal/5 px-4 py-2 text-sm text-accent-teal"
               >
                 {t}
               </span>
@@ -656,12 +655,12 @@ export default function RecruiterProfileEditPage() {
         </section>
 
         {/* About / Bio */}
-        <section className="mt-4 rounded-2xl border border-slate-800 bg-[#0a1420] p-4">
+        <section className="profile-card mt-4 rounded-2xl p-4">
           <div className="flex items-center gap-3">
             <SectionIcon icon={FileText} />
             <div>
-              <p className="font-semibold text-white">About</p>
-              <p className="text-sm text-slate-500">Tell clients about your company</p>
+              <p className="font-semibold text-foreground">About</p>
+              <p className="text-sm text-muted-foreground">Tell clients about your company</p>
             </div>
           </div>
           <div className="mt-4 leading-relaxed">
@@ -675,16 +674,16 @@ export default function RecruiterProfileEditPage() {
         </section>
 
         {/* Save indicator */}
-        <p className="mt-6 flex items-center justify-center gap-2 text-xs text-slate-600">
+        <p className="mt-6 flex items-center justify-center gap-2 text-xs text-muted-foreground/70">
           Changes save automatically when you tap Save
         </p>
       </div>
 
       {/* Size Sheet */}
       <Sheet open={sheet === "size"} onOpenChange={(o) => setSheet(o ? "size" : null)}>
-        <SheetContent side="bottom" className="rounded-t-2xl border-slate-800 bg-[#0a1420]">
+        <SheetContent side="bottom" className="profile-card rounded-t-2xl">
           <SheetHeader className="px-0">
-            <SheetTitle className="text-white">Company Size</SheetTitle>
+            <SheetTitle className="text-foreground">Company Size</SheetTitle>
             <SheetDescription>Number of employees</SheetDescription>
           </SheetHeader>
           <div className="flex flex-col gap-2 pb-8">
@@ -697,8 +696,8 @@ export default function RecruiterProfileEditPage() {
                 }}
                 className={`flex items-center rounded-xl border px-4 py-3 text-left ${
                   profile.company_size === o
-                    ? "border-teal-500/60 bg-teal-500/10 text-teal-400"
-                    : "border-slate-800 text-white"
+                     ? "border-accent-teal/60 bg-accent-teal-bg text-accent-teal"
+                     : "border-border text-foreground"
                 }`}
               >
                 <span className="flex-1">{o}</span>
@@ -714,9 +713,9 @@ export default function RecruiterProfileEditPage() {
         open={sheet === "specialties"}
         onOpenChange={(o) => setSheet(o ? "specialties" : null)}
       >
-        <SheetContent side="bottom" className="rounded-t-2xl border-slate-800 bg-[#0a1420]">
+        <SheetContent side="bottom" className="profile-card rounded-t-2xl">
           <SheetHeader className="px-0">
-            <SheetTitle className="text-white">Specialties</SheetTitle>
+            <SheetTitle className="text-foreground">Specialties</SheetTitle>
             <SheetDescription>Select all that apply</SheetDescription>
           </SheetHeader>
           <div className="flex flex-wrap gap-2 pb-8">
@@ -734,8 +733,8 @@ export default function RecruiterProfileEditPage() {
                   }}
                   className={`rounded-lg border px-4 py-2 text-sm ${
                     active
-                      ? "border-teal-500/60 bg-teal-500/10 text-teal-400"
-                      : "border-slate-800 text-slate-400"
+                       ? "border-accent-teal/60 bg-accent-teal-bg text-accent-teal"
+                       : "border-border text-muted-foreground"
                   }`}
                 >
                   {t}
@@ -743,8 +742,8 @@ export default function RecruiterProfileEditPage() {
               );
             })}
           </div>
-          <div className="border-t border-slate-800 pt-4 pb-4">
-            <p className="mb-2 text-sm text-slate-500">Or add a custom specialty:</p>
+          <div className="border-t border-border pb-4 pt-4">
+            <p className="mb-2 text-sm text-muted-foreground">Or add a custom specialty:</p>
             <TagInput
               value={profile.specialties ?? []}
               onChange={(tags) => handleFieldUpdate("specialties", tags)}

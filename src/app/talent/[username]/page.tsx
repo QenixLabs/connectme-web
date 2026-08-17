@@ -1,8 +1,11 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { DesktopView } from "@/components/rootin/DesktopView";
-import { MobileView } from "@/components/rootin/MobileView";
+import {
+  PrivateProfilePreview,
+  TalentProfileView,
+} from "@/components/talent-profile";
+import { isPrivateTalentProfileResponse } from "@/lib/api/talent";
 import {
   usePublicTalentProfile,
   useTalentPortfolio,
@@ -13,22 +16,24 @@ import {
 
 function ProfileSkeleton() {
   return (
-    <div className="min-h-screen bg-background">
-      <div className="hidden lg:block">
-        <div className="ml-[220px] p-6 pt-3">
-          <div className="h-[420px] animate-pulse rounded-3xl bg-muted" />
-          <div className="mt-5 h-10 w-96 animate-pulse rounded-xl bg-muted" />
-          <div className="mt-5 grid grid-cols-3 gap-6">
-            <div className="col-span-2 h-64 animate-pulse rounded-2xl bg-muted" />
-            <div className="row-span-2 h-96 animate-pulse rounded-2xl bg-muted" />
-            <div className="col-span-2 h-64 animate-pulse rounded-2xl bg-muted" />
+    <div className="min-h-screen bg-bg-page">
+      <div className="h-[58vh] animate-pulse bg-muted md:h-[62vh]" />
+      <div className="mx-auto max-w-5xl px-4 sm:px-6">
+        <div className="relative -mt-8 rounded-2xl border border-border bg-bg-surface p-5 shadow-[var(--surface-shadow)] sm:p-6">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-28 animate-pulse rounded-2xl bg-muted"
+              />
+            ))}
+          </div>
+          <div className="mt-6 h-12 animate-pulse rounded-2xl bg-muted" />
+          <div className="mt-6 grid gap-6 md:grid-cols-2">
+            <div className="h-48 animate-pulse rounded-2xl bg-muted" />
+            <div className="h-48 animate-pulse rounded-2xl bg-muted" />
           </div>
         </div>
-      </div>
-      <div className="space-y-6 px-4 pb-24 pt-6 lg:hidden">
-        <div className="h-[52vh] animate-pulse rounded-3xl bg-muted" />
-        <div className="h-48 animate-pulse rounded-2xl bg-muted" />
-        <div className="h-64 animate-pulse rounded-2xl bg-muted" />
       </div>
     </div>
   );
@@ -36,28 +41,42 @@ function ProfileSkeleton() {
 
 function ProfileNotFound({ username }: { username: string }) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
+    <div className="flex min-h-screen items-center justify-center bg-bg-page px-4">
       <div className="text-center">
         <h1 className="text-2xl font-bold text-foreground">Profile not found</h1>
         <p className="mt-2 text-muted-foreground">
-          The talent profile <span className="font-medium text-foreground">@{username}</span> doesn&apos;t exist.
+          The talent profile{" "}
+          <span className="font-medium text-foreground">@{username}</span> doesn&apos;t exist.
         </p>
       </div>
     </div>
   );
 }
 
-export default function Home() {
+export default function PublicTalentProfilePage() {
   const params = useParams();
   const username = (params?.username as string) || "";
 
-  const { data: profile, isLoading: profileLoading, error: profileError } = usePublicTalentProfile(username);
-  const { data: portfolioItems = [], isLoading: portfolioLoading } = useTalentPortfolio(username);
-  const { data: credits = [], isLoading: creditsLoading } = useTalentCredits(username);
-  const { data: testimonials = [], isLoading: testimonialsLoading } = useTalentTestimonials(username);
-  const { data: awards = [], isLoading: awardsLoading } = useTalentAwards(username);
+  const { data: profile, isLoading: profileLoading, error: profileError } =
+    usePublicTalentProfile(username);
+  const { data: portfolioRaw, isLoading: portfolioLoading } =
+    useTalentPortfolio(username);
+  const { data: creditsRaw, isLoading: creditsLoading } = useTalentCredits(username);
+  const { data: testimonialsRaw, isLoading: testimonialsLoading } =
+    useTalentTestimonials(username);
+  const { data: awardsRaw, isLoading: awardsLoading } = useTalentAwards(username);
 
-  const isLoading = profileLoading || portfolioLoading || creditsLoading || testimonialsLoading || awardsLoading;
+  const portfolioItems = Array.isArray(portfolioRaw) ? portfolioRaw : [];
+  const credits = Array.isArray(creditsRaw) ? creditsRaw : [];
+  const testimonials = Array.isArray(testimonialsRaw) ? testimonialsRaw : [];
+  const awards = Array.isArray(awardsRaw) ? awardsRaw : [];
+
+  const isLoading =
+    profileLoading ||
+    portfolioLoading ||
+    creditsLoading ||
+    testimonialsLoading ||
+    awardsLoading;
 
   if (isLoading) {
     return <ProfileSkeleton />;
@@ -67,22 +86,28 @@ export default function Home() {
     return <ProfileNotFound username={username} />;
   }
 
+  if (isPrivateTalentProfileResponse(profile)) {
+    return (
+      <PrivateProfilePreview
+        profile={{
+          ...profile.preview,
+          is_verified: profile.is_verified ?? profile.preview.is_verified,
+        }}
+      />
+    );
+  }
+
+  if (!profile.username) {
+    return <ProfileNotFound username={username} />;
+  }
+
   return (
-    <div className="min-h-screen bg-background">
-      <DesktopView
-        profile={profile}
-        portfolioItems={portfolioItems}
-        credits={credits}
-        testimonials={testimonials}
-        awards={awards}
-      />
-      <MobileView
-        profile={profile}
-        portfolioItems={portfolioItems}
-        credits={credits}
-        testimonials={testimonials}
-        awards={awards}
-      />
-    </div>
+    <TalentProfileView
+      profile={profile}
+      portfolioItems={portfolioItems}
+      credits={credits}
+      testimonials={testimonials}
+      awards={awards}
+    />
   );
 }

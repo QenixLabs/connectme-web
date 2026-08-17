@@ -116,7 +116,7 @@ export function PortfolioReelItem({
           muted
           loop
           playsInline
-          className="h-full w-full object-contain"
+          className="h-full w-full object-cover"
         />
       ) : (
         <img
@@ -128,7 +128,8 @@ export function PortfolioReelItem({
 
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
-      <div className="absolute right-3 bottom-24 z-20 flex flex-col items-center gap-5">
+      {/* Right action column */}
+      <div className="absolute right-3 bottom-24 z-20 flex flex-col items-center gap-5 sm:bottom-28 sm:right-5">
         <LikeButton
           itemId={item.id}
           initialLikes={item.likesCount}
@@ -141,29 +142,32 @@ export function PortfolioReelItem({
               e.stopPropagation();
               onShare(item);
             }}
-            className="flex flex-col items-center gap-1 text-white"
+            className="flex flex-col items-center gap-1 text-white transition-transform active:scale-90"
             aria-label="Share"
           >
-            <Share2 className="size-6" />
+            <span className="grid size-11 place-items-center rounded-full bg-black/40 backdrop-blur-sm">
+              <Share2 className="size-5" />
+            </span>
             <span className="text-[11px] font-medium">Share</span>
           </button>
         )}
-        <PortfolioActions
-          item={item}
-          username={username}
-          onEdit={isOwner ? onEdit : undefined}
-          onToggleFeatured={isOwner ? onToggleFeatured : undefined}
-          onShare={onShare}
-          onDelete={isOwner ? onDelete : undefined}
-        />
+        {isOwner && (
+          <PortfolioActions
+            item={item}
+            username={username}
+            onEdit={onEdit}
+            onToggleFeatured={onToggleFeatured}
+            onDelete={onDelete}
+            onShare={onShare}
+          />
+        )}
       </div>
 
-      <div className="absolute bottom-0 left-0 right-16 z-20 p-4 pb-6">
-        <h3 className="text-lg font-semibold text-white">{item.title}</h3>
+      {/* Bottom info */}
+      <div className="absolute bottom-0 left-0 right-16 z-20 p-4 pb-8 sm:right-20 sm:p-5 sm:pb-10">
+        <h3 className="text-lg font-semibold text-white sm:text-xl">{item.title}</h3>
         {item.description ? (
-          <p className="mt-1 line-clamp-2 text-sm text-white/80">
-            {item.description}
-          </p>
+          <p className="mt-1 line-clamp-2 text-sm text-white/80">{item.description}</p>
         ) : null}
         {item.skills.length > 0 && (
           <p className="mt-2 line-clamp-1 text-xs text-white/70">

@@ -7,7 +7,7 @@ export default function RecruiterCampaignEditPage() {
   const params = useParams<{ id: string }>();
 
   return (
-    <div className="min-h-screen bg-zinc-950 pb-28">
+    <div className="min-h-screen bg-bg-page pb-28">
       <div className="mx-auto w-full max-w-2xl px-4 pt-4 sm:px-6">
         <CampaignWizard campaignId={params.id} />
       </div>

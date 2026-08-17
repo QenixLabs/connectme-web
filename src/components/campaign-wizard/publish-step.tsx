@@ -34,11 +34,11 @@ const OPTIONS = [
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-2 pt-2 first:pt-0">
-      <div className="h-px flex-1 bg-zinc-700/40" />
-      <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-zinc-500 shrink-0">
+       <div className="h-px flex-1 bg-border" />
+       <span className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
         {children}
       </span>
-      <div className="h-px flex-1 bg-zinc-700/40" />
+       <div className="h-px flex-1 bg-border" />
     </div>
   );
 }
@@ -53,10 +53,10 @@ function RevCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-zinc-700/50 bg-zinc-900/30 overflow-hidden">
-      <div className="flex items-center gap-2 px-4 py-2.5 bg-zinc-800/50 border-b border-zinc-700/30">
-        <Icon className="w-3.5 h-3.5 text-zinc-500" strokeWidth={1.5} />
-        <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-zinc-500">
+    <div className="overflow-hidden rounded-xl border border-border bg-card">
+      <div className="flex items-center gap-2 border-b border-border bg-muted px-4 py-2.5">
+        <Icon className="size-3.5 text-muted-foreground" strokeWidth={1.5} />
+        <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
           {title}
         </span>
       </div>
@@ -67,9 +67,9 @@ function RevCard({
 
 function RevRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between text-sm py-1.5 border-b border-zinc-700/20 last:border-b-0">
-      <span className="text-zinc-500">{label}</span>
-      <span className="text-zinc-200 font-medium text-right ml-4">
+    <div className="flex justify-between border-b border-border/60 py-1.5 text-sm last:border-b-0">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="ml-4 text-right font-medium text-foreground">
         {value}
       </span>
     </div>
@@ -171,19 +171,19 @@ export function PublishStep() {
             {values.questions.map((q, i) => (
               <div
                 key={i}
-                className="flex items-center gap-2 py-1.5 border-b border-zinc-700/20 last:border-b-0"
+                 className="flex items-center gap-2 border-b border-border/60 py-1.5 last:border-b-0"
               >
-                <span className="text-xs font-bold text-zinc-500 shrink-0">
+                 <span className="shrink-0 text-xs font-bold text-muted-foreground">
                   {i + 1}.
                 </span>
-                <span className="text-sm text-zinc-200 flex-1">
+                 <span className="flex-1 text-sm text-foreground">
                   {q.question_text || "\u2014"}
                 </span>
-                <span className="text-[10px] font-medium text-zinc-500 bg-zinc-800 px-1.5 py-0.5 rounded">
+                 <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
                   {q.question_type}
                 </span>
                 {q.is_required && (
-                  <span className="text-[10px] font-semibold text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded">
+                   <span className="rounded bg-destructive/10 px-1.5 py-0.5 text-[10px] font-semibold text-destructive">
                     Required
                   </span>
                 )}
@@ -208,7 +208,7 @@ export function PublishStep() {
               value={`${values.task.deadline_days || 3} days after shortlist`}
             />
             {values.task.description && (
-              <div className="py-2 text-sm text-zinc-400 leading-relaxed">
+               <div className="py-2 text-sm leading-relaxed text-muted-foreground">
                 {values.task.description}
               </div>
             )}
@@ -239,16 +239,16 @@ export function PublishStep() {
                     className={cn(
                       "flex items-start gap-4 p-4 rounded-xl border text-left transition-all duration-200 w-full",
                       selected
-                        ? "border-teal-500 bg-teal-500/10 shadow-sm"
-                        : "border-zinc-700/50 bg-zinc-900/50 hover:border-zinc-600",
+                         ? "border-accent-teal bg-accent-teal-bg shadow-sm"
+                         : "border-border bg-card hover:border-border-hover",
                     )}
                   >
                     <div
                       className={cn(
                         "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5 transition-colors",
                         selected
-                          ? "bg-teal-500 text-white"
-                          : "bg-zinc-800 text-zinc-500",
+                           ? "bg-accent-teal text-accent-foreground"
+                           : "bg-muted text-muted-foreground",
                       )}
                     >
                       <Icon className="w-5 h-5" strokeWidth={1.5} />
@@ -257,22 +257,22 @@ export function PublishStep() {
                       <span
                         className={cn(
                           "text-sm font-semibold block",
-                          selected ? "text-zinc-100" : "text-zinc-200",
+                           selected ? "text-foreground" : "text-foreground/90",
                         )}
                       >
                         {opt.label}
                       </span>
-                      <span className="text-[13px] text-zinc-500 block mt-0.5 leading-relaxed">
+                       <span className="mt-0.5 block text-[13px] leading-relaxed text-muted-foreground">
                         {opt.description}
                       </span>
-                      <span className="text-[11px] text-zinc-500/60 block mt-1">
+                       <span className="mt-1 block text-[11px] text-muted-foreground/60">
                         {opt.hint}
                       </span>
                     </div>
                     {selected && (
-                      <div className="w-5 h-5 rounded-full bg-teal-500 flex items-center justify-center shrink-0 mt-1">
+                       <div className="mt-1 flex size-5 shrink-0 items-center justify-center rounded-full bg-accent-teal">
                         <svg
-                          className="w-3 h-3 text-white"
+                           className="size-3 text-accent-foreground"
                           viewBox="0 0 24 24"
                           fill="none"
                           stroke="currentColor"
@@ -296,15 +296,15 @@ export function PublishStep() {
         <>
           <SectionLabel>Scheduling</SectionLabel>
           <div className="space-y-3">
-            <div className="flex items-start gap-3 bg-zinc-900/50 border border-zinc-700/50 rounded-xl p-4">
-              <div className="w-10 h-10 rounded-xl bg-zinc-800/50 flex items-center justify-center shrink-0">
+             <div className="flex items-start gap-3 rounded-xl border border-border bg-card p-4">
+               <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted">
                 <Calendar
-                  className="w-5 h-5 text-zinc-500"
+                   className="size-5 text-muted-foreground"
                   strokeWidth={1.5}
                 />
               </div>
               <div className="flex-1">
-                <label className="text-sm font-semibold text-zinc-100 block mb-2">
+                 <label className="mb-2 block text-sm font-semibold text-foreground">
                   Publish date &amp; time
                 </label>
                 <input
@@ -315,12 +315,12 @@ export function PublishStep() {
                       shouldValidate: true,
                     })
                   }
-                  className="h-10 rounded-xl text-sm px-3 bg-zinc-900/50 border border-zinc-700/50 w-full focus-visible:ring-teal-500/30 text-zinc-100"
+                   className="h-10 w-full rounded-xl border-border bg-bg-surface-inset px-3 text-sm text-foreground focus-visible:ring-accent-teal/30"
                 />
               </div>
             </div>
             {scheduledPublishAt && (
-              <p className="text-xs text-amber-400/80 flex items-center gap-1.5 bg-amber-500/10 text-amber-400 rounded-lg p-2.5 border border-amber-500/20">
+               <p className="flex items-center gap-1.5 rounded-lg border border-accent-amber/30 bg-accent-amber-bg p-2.5 text-xs text-accent-amber">
                 <Clock
                   className="w-3.5 h-3.5 shrink-0"
                   strokeWidth={1.5}
@@ -334,9 +334,9 @@ export function PublishStep() {
       )}
 
       <SectionLabel>Settings</SectionLabel>
-      <div className="flex items-start gap-3 bg-zinc-900/50 border border-zinc-700/50 rounded-xl p-4">
-        <div className="w-10 h-10 rounded-xl bg-zinc-800/50 flex items-center justify-center shrink-0">
-          <Clock className="w-5 h-5 text-zinc-500" strokeWidth={1.5} />
+       <div className="flex items-start gap-3 rounded-xl border border-border bg-card p-4">
+         <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted">
+           <Clock className="size-5 text-muted-foreground" strokeWidth={1.5} />
         </div>
         <div className="flex-1">
           <label className="flex items-center gap-3 cursor-pointer">
@@ -348,13 +348,13 @@ export function PublishStep() {
                   shouldValidate: true,
                 })
               }
-              className="w-4 h-4 rounded accent-teal-500 shrink-0"
+               className="h-4 w-4 shrink-0 rounded accent-accent-teal"
             />
-            <span className="text-sm font-semibold text-zinc-100">
+             <span className="text-sm font-semibold text-foreground">
               Auto-close on deadline
             </span>
           </label>
-          <p className="text-xs text-zinc-500 mt-1.5 ml-7">
+           <p className="ml-7 mt-1.5 text-xs text-muted-foreground">
             Automatically close the campaign and stop receiving applications
             when the deadline passes.
           </p>

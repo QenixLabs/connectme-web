@@ -29,6 +29,7 @@ import {
   getYouTubeThumbnail,
   getYouTubeVideoId,
 } from "@/hooks/use-portfolio";
+import { extractVideoThumbnail } from "@/lib/video-thumbnail";
 
 const formSchema = z
   .object({
@@ -59,6 +60,7 @@ interface AddPortfolioModalProps {
     title: string;
     description?: string;
     file?: File;
+    thumbnail?: File;
     url?: string;
     isFeatured: boolean;
   }) => void;
@@ -101,6 +103,8 @@ export function AddPortfolioModal({
   const [selectedType, setSelectedType] = useState<PortfolioItemType | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [thumbnail, setThumbnail] = useState<File | null>(null);
+  const [thumbnailLoading, setThumbnailLoading] = useState(false);
   const [skills, setSkills] = useState<string[]>([]);
   const [skillInput, setSkillInput] = useState("");
   const [youtubePreview, setYoutubePreview] = useState<string | null>(null);
@@ -121,6 +125,8 @@ export function AddPortfolioModal({
     setSelectedType(null);
     setFile(null);
     setFileError(null);
+    setThumbnail(null);
+    setThumbnailLoading(false);
     setSkills([]);
     setSkillInput("");
     setYoutubePreview(null);
@@ -144,9 +150,10 @@ export function AddPortfolioModal({
     setStep("form");
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     setFileError(null);
+    setThumbnail(null);
     if (!f) {
       setFile(null);
       return;
@@ -160,6 +167,17 @@ export function AddPortfolioModal({
       return;
     }
     setFile(f);
+    if (selectedType === "video") {
+      setThumbnailLoading(true);
+      try {
+        const thumb = await extractVideoThumbnail(f);
+        setThumbnail(thumb);
+      } catch {
+        setThumbnail(null);
+      } finally {
+        setThumbnailLoading(false);
+      }
+    }
   };
 
   const handleImportYouTube = async () => {
@@ -203,6 +221,7 @@ export function AddPortfolioModal({
       title: values.title,
       description: values.description,
       file: file ?? undefined,
+      thumbnail: values.type === "video" ? (thumbnail ?? undefined) : undefined,
       url: values.type === "youtube" ? values.url : undefined,
       isFeatured: values.isFeatured,
     });
@@ -435,10 +454,12 @@ export function AddPortfolioModal({
                 <Button
                   type="submit"
                   className="flex-1 bg-primary text-primary-foreground shadow-button hover:bg-primary/90"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || thumbnailLoading}
                 >
                   {isSubmitting ? (
                     <Loader2 className="size-4 animate-spin" />
+                  ) : thumbnailLoading ? (
+                    "Generating thumbnail..."
                   ) : (
                     "Publish"
                   )}

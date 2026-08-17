@@ -33,6 +33,37 @@ export type {
 } from "./subscriptions";
 export { plansApi } from "./plans";
 export type { Plan } from "./plans";
+export { adminApi } from "./admin";
+export type {
+  DashboardStats,
+  DashboardActivity,
+  TimeSeriesPoint,
+  PendingVerificationItem,
+  ReportItem,
+  PaginatedReports,
+  ReportDetail,
+  MessageContextItem,
+  UserHistory,
+  AdminUser,
+  PaginatedUsers,
+  UserDetail,
+  AdminNote,
+  UserActivity,
+  PaginatedModerationActions,
+  AppealItem,
+  PaginatedAppeals,
+  AuditLogItem,
+  PaginatedAuditLogs,
+  SubscriptionAnalytics,
+  AdminUserSubscriptionDetail,
+  PaginatedAdminUserInvoices,
+  PendingPortfolioItem,
+  PortfolioTalent,
+  PortfolioItem,
+  CronJobInfo,
+  CronJobExecution,
+} from "./admin";
+export { queryKeys } from "./query-keys";
 export { campaignsApi } from "./campaigns";
 export type {
   Campaign,

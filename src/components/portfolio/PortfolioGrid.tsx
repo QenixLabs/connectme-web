@@ -20,7 +20,7 @@ export function PortfolioGrid({
 
   return (
     <section className="mt-6 sm:mt-8">
-      <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+      <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/50">
         All Work
       </h2>
       <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:gap-5">

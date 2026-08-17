@@ -4,18 +4,10 @@ import { useState, useRef, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import {
-  Menu,
-  Bell,
-  User,
   ArrowLeft,
   ShieldCheck,
   Lock,
   Info,
-  Home,
-  Briefcase,
-  Award,
-  MessageSquare,
-  Headphones,
   ChevronDown,
   Contact,
   X,
@@ -34,10 +26,10 @@ import {
   ArrowRight,
   ShieldQuestion,
   Loader2,
+  Headphones,
 } from "lucide-react";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { useVerification, useCreateVerification, useUploadVerificationDoc, useRemoveVerificationDoc } from "@/hooks/use-verification";
-import { useUnreadNotifications, useUnreadMessages } from "@/hooks/use-unread-counts";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const steps = [
@@ -98,74 +90,20 @@ function getStatusDisplay(status?: string): VerificationStatus {
   }
 }
 
-function Sidebar({ unreadMessages }: { unreadMessages?: number }) {
-  const navItems = [
-    { label: "Home", icon: Home, badge: null },
-    { label: "Jobs", icon: Briefcase, badge: null },
-    { label: "Experience", icon: Award, badge: null },
-    { label: "Messages", icon: MessageSquare, badge: unreadMessages && unreadMessages > 0 ? String(unreadMessages) : null },
-  ];
-
-  return (
-    <aside className="sticky top-16 flex h-[calc(100vh-4rem)] w-[136px] shrink-0 flex-col justify-between border-r border-border bg-surface/40 py-6">
-      <nav className="flex flex-col gap-2 px-3">
-        {navItems.map((item) => (
-          <button
-            key={item.label}
-            className="relative flex flex-col items-center gap-2 rounded-xl px-2 py-3 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          >
-            <item.icon className="h-6 w-6" strokeWidth={1.6} />
-            {item.label}
-            {item.badge ? (
-              <span className="absolute right-3 top-2 grid h-5 w-5 place-items-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-                {item.badge}
-              </span>
-            ) : null}
-          </button>
-        ))}
-      </nav>
-      <div className="mx-3 rounded-xl border border-border bg-surface p-4 text-center">
-        <Headphones className="mx-auto h-6 w-6 text-muted-foreground" strokeWidth={1.6} />
-        <p className="mt-2 text-sm font-semibold">Need Help?</p>
-        <a href="#support" className="mt-1 block text-xs font-medium text-primary hover:underline">
-          Contact our support team
-        </a>
-      </div>
-    </aside>
-  );
-}
-
 function LoadingSkeleton() {
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-background/90 px-4 backdrop-blur sm:px-6">
-        <Skeleton className="h-10 w-10 rounded-lg" />
-        <Skeleton className="h-7 w-36" />
-        <div className="ml-auto flex items-center gap-1">
-          <Skeleton className="h-10 w-10 rounded-lg" />
-          <Skeleton className="h-10 w-10 rounded-lg" />
+    <div className="min-w-0">
+      <Skeleton className="h-5 w-32 mb-4" />
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="space-y-5">
+          <Skeleton className="h-44 rounded-2xl" />
+          <Skeleton className="h-28 rounded-xl panel" />
+          <Skeleton className="h-80 rounded-xl panel" />
         </div>
-      </header>
-      <div className="flex min-h-[calc(100vh-4rem)]">
-        <div className="hidden lg:flex sticky top-16 h-[calc(100vh-4rem)] w-[136px] shrink-0 flex-col gap-2 border-r border-border bg-surface/40 p-3">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-20 rounded-xl" />
-          ))}
+        <div className="space-y-5">
+          <Skeleton className="h-64 rounded-xl panel" />
+          <Skeleton className="h-48 rounded-xl panel" />
         </div>
-        <main className="min-w-0 flex-1 px-4 py-5 sm:px-6">
-          <Skeleton className="h-5 w-32 mb-4" />
-          <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
-            <div className="space-y-5">
-              <Skeleton className="h-44 rounded-2xl" />
-              <Skeleton className="h-28 rounded-xl panel" />
-              <Skeleton className="h-80 rounded-xl panel" />
-            </div>
-            <div className="space-y-5">
-              <Skeleton className="h-64 rounded-xl panel" />
-              <Skeleton className="h-48 rounded-xl panel" />
-            </div>
-          </div>
-        </main>
       </div>
     </div>
   );
@@ -174,8 +112,6 @@ function LoadingSkeleton() {
 export default function TalentVerifyDocumentsPage() {
   const user = useAuthStore((s) => s.user);
   const { data: verification, isLoading } = useVerification(user?._id);
-  const { data: unreadNotifications } = useUnreadNotifications();
-  const { data: unreadMessages } = useUnreadMessages();
   const createVerification = useCreateVerification();
   const uploadDoc = useUploadVerificationDoc();
   const removeDoc = useRemoveVerificationDoc();
@@ -251,50 +187,13 @@ export default function TalentVerifyDocumentsPage() {
   if (isLoading) return <LoadingSkeleton />;
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Top bar */}
-      <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-background/90 px-4 backdrop-blur sm:px-6">
-        <button
-          aria-label="Open menu"
-          className="grid h-10 w-10 shrink-0 place-items-center rounded-lg text-foreground transition-colors hover:bg-accent"
-        >
-          <Menu className="h-5 w-5" />
-        </button>
-        <span className="truncate text-xl font-extrabold tracking-tight sm:text-2xl">
-          Connect<span className="text-primary">Me</span>
-        </span>
-        <div className="ml-auto flex shrink-0 items-center gap-1">
-          <Link
-            href="/talent/notifications"
-            aria-label="Notifications"
-            className="relative grid h-10 w-10 place-items-center rounded-lg transition-colors hover:bg-accent"
-          >
-            <Bell className="h-5 w-5" strokeWidth={1.7} />
-            {unreadNotifications && unreadNotifications.count > 0 ? (
-              <span className="absolute right-1 top-1 grid h-4 w-4 place-items-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-                {unreadNotifications.count}
-              </span>
-            ) : null}
-          </Link>
-          <button
-            aria-label="Account"
-            className="grid h-10 w-10 place-items-center rounded-lg transition-colors hover:bg-accent"
-          >
-            <User className="h-5 w-5" strokeWidth={1.7} />
-          </button>
-        </div>
-      </header>
-
-      <div className="flex min-h-[calc(100vh-4rem)]">
-        <Sidebar unreadMessages={unreadMessages?.count} />
-
-        <main className="min-w-0 flex-1 px-4 py-5 sm:px-6">
-          <Link
-            href="/talent/profile"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline"
-          >
-            <ArrowLeft className="h-4 w-4" /> Back to Profile
-          </Link>
+    <div className="min-w-0">
+      <Link
+        href="/talent/profile"
+        className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline"
+      >
+        <ArrowLeft className="h-4 w-4" /> Back to Profile
+      </Link>
 
           {/* No verification started */}
           {!verification && (
@@ -727,8 +626,6 @@ export default function TalentVerifyDocumentsPage() {
               </div>
             </div>
           )}
-        </main>
-      </div>
-    </div>
+        </div>
   );
 }

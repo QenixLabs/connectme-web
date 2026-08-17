@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useStore } from "zustand/react";
 import { authStore } from "@/stores/auth-store";
 import { toast } from "sonner";
@@ -52,9 +52,12 @@ export default function PortfolioPage() {
   );
 
   const [activeTab, setActiveTab] = useState<PortfolioTab>("All");
-  const [reelOpen, setReelOpen] = useState(false);
+
+  const searchParams = useSearchParams();
+  const initialItemIdFromUrl = searchParams.get("item");
+  const [reelOpen, setReelOpen] = useState(() => !!initialItemIdFromUrl);
   const [reelInitialItemId, setReelInitialItemId] = useState<string | null>(
-    null,
+    () => initialItemIdFromUrl,
   );
   const [addOpen, setAddOpen] = useState(false);
   const [editItem, setEditItem] = useState<PortfolioItem | null>(null);
@@ -120,6 +123,7 @@ export default function PortfolioPage() {
       title: string;
       description?: string;
       file?: File;
+      thumbnail?: File;
       url?: string;
       isFeatured: boolean;
     }) => {
@@ -135,7 +139,11 @@ export default function PortfolioPage() {
         if (data.type === "image" && data.file) {
           await uploadImage.mutateAsync({ file: data.file, data: basePayload });
         } else if (data.type === "video" && data.file) {
-          await uploadVideo.mutateAsync({ file: data.file, data: basePayload });
+          await uploadVideo.mutateAsync({
+            file: data.file,
+            thumbnail: data.thumbnail,
+            data: basePayload,
+          });
         } else if (data.type === "youtube" && data.url) {
           await uploadYouTube.mutateAsync({
             url: data.url,
@@ -256,11 +264,11 @@ export default function PortfolioPage() {
         />
 
         <div className="mt-6">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
             Portfolio
           </h1>
           <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-            Showcase your work and experience.
+            A curated showcase of work, reels and projects.
           </p>
         </div>
 
