@@ -25,7 +25,20 @@ export interface Verification {
 export const verificationApi = {
   getForUser: async (userId: string) => {
     const response = await apiClient.get(`/verifications/user/${userId}`);
-    return response.data as Verification | null;
+    const payload = response.data as {
+      verification: Verification | null;
+      docs?: VerificationDoc[];
+    };
+    if (!payload.verification) return null;
+    const docs = payload.docs ?? [];
+    return {
+      ...payload.verification,
+      submitted_docs: payload.verification.submitted_docs.map((doc, i) => ({
+        ...doc,
+        download_url: docs[i]?.download_url,
+        expires: docs[i]?.expires,
+      })),
+    } as Verification;
   },
 
   create: async (type: "talent_id" | "recruiter_company" = "talent_id") => {

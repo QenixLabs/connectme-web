@@ -2,8 +2,6 @@
 
 import {
   Search,
-  ChevronLeft,
-  ChevronRight,
   MapPin,
   Bookmark,
   Clapperboard,
@@ -15,16 +13,51 @@ import {
   Star,
   Film,
   Wifi,
+  LayoutGrid,
+  List,
+  SlidersHorizontal,
+  X,
+  ArrowRight,
+  Clock,
+  Users,
+  IndianRupee,
+  DollarSign,
 } from "lucide-react";
 import { useState, useCallback } from "react";
 import Link from "next/link";
+import { motion, AnimatePresence } from "motion/react";
 
 import { cn } from "@/lib/utils";
 import { useCampaigns, useCampaignCount, useBookmarkCampaign } from "@/hooks/use-campaigns";
 import type { Campaign, QueryCampaignsParams } from "@/lib/api/campaigns";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar";
 
-type Theme = "rose" | "blue" | "violet";
+type ViewMode = "grid" | "list";
+type Theme = "rose" | "blue" | "violet" | "amber" | "cyan";
 
 const roleIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   casting: Clapperboard,
@@ -44,8 +77,13 @@ function RoleIcon({ roleType, className }: { roleType?: string; className?: stri
 }
 
 const roleThemeMap: Record<string, Theme> = {
+  actor: "rose",
+  dancer: "amber",
   influencer: "blue",
   model: "violet",
+  musician: "cyan",
+  singer: "cyan",
+  casting: "rose",
 };
 
 function getRoleTheme(roleType?: string): Theme {
@@ -53,16 +91,52 @@ function getRoleTheme(roleType?: string): Theme {
   return roleThemeMap[roleType.toLowerCase()] ?? "rose";
 }
 
-function formatDeadline(deadline?: string): string {
-  if (!deadline) return "";
+const themeStyles: Record<
+  Theme,
+  { gradient: string; iconBg: string; iconText: string; badge: string }
+> = {
+  rose: {
+    gradient: "from-rose/30 via-rose/10 to-transparent",
+    iconBg: "bg-rose/15",
+    iconText: "text-rose",
+    badge: "border-rose/30 text-rose bg-rose/10",
+  },
+  blue: {
+    gradient: "from-blue/30 via-blue/10 to-transparent",
+    iconBg: "bg-blue/15",
+    iconText: "text-blue",
+    badge: "border-blue/30 text-blue bg-blue/10",
+  },
+  violet: {
+    gradient: "from-violet/30 via-violet/10 to-transparent",
+    iconBg: "bg-violet/15",
+    iconText: "text-violet",
+    badge: "border-violet/30 text-violet bg-violet/10",
+  },
+  amber: {
+    gradient: "from-warning/30 via-warning/10 to-transparent",
+    iconBg: "bg-warning/15",
+    iconText: "text-warning",
+    badge: "border-warning/30 text-warning bg-warning/10",
+  },
+  cyan: {
+    gradient: "from-cyan/30 via-cyan/10 to-transparent",
+    iconBg: "bg-cyan/15",
+    iconText: "text-cyan",
+    badge: "border-cyan/30 text-cyan bg-cyan/10",
+  },
+};
+
+function formatDeadline(deadline?: string): { text: string; urgent: boolean } {
+  if (!deadline) return { text: "", urgent: false };
   const diffMs = new Date(deadline).getTime() - Date.now();
-  if (diffMs < 0) return "Closed";
+  if (diffMs < 0) return { text: "Closed", urgent: false };
   const days = Math.ceil(diffMs / 86400000);
-  if (days === 0) return "Today";
-  if (days === 1) return "1d left";
-  if (days < 7) return days + "d left";
-  if (days < 30) return Math.floor(days / 7) + "w left";
-  return Math.floor(days / 30) + "mo left";
+  if (days === 0) return { text: "Today", urgent: true };
+  if (days === 1) return { text: "1d left", urgent: true };
+  if (days < 7) return { text: `${days}d left`, urgent: days <= 3 };
+  if (days < 30) return { text: `${Math.floor(days / 7)}w left`, urgent: false };
+  return { text: `${Math.floor(days / 30)}mo left`, urgent: false };
 }
 
 function formatLocation(location?: { city?: string; state?: string }): string {
@@ -72,121 +146,29 @@ function formatLocation(location?: { city?: string; state?: string }): string {
 
 function formatBudget(budget?: { min?: number; max?: number; currency?: string }): string {
   if (!budget) return "";
-  const sym = budget.currency === "INR" ? "₹" : "$";
-  if (budget.min && budget.max) return sym + budget.min.toLocaleString() + " – " + sym + budget.max.toLocaleString();
-  if (budget.min) return "From " + sym + budget.min.toLocaleString();
-  if (budget.max) return "Up to " + sym + budget.max.toLocaleString();
+  const isInr = budget.currency === "INR";
+  const sym = isInr ? "₹" : "$";
+  if (budget.min && budget.max) {
+    return `${sym}${budget.min.toLocaleString()} – ${sym}${budget.max.toLocaleString()}`;
+  }
+  if (budget.min) return `From ${sym}${budget.min.toLocaleString()}`;
+  if (budget.max) return `Up to ${sym}${budget.max.toLocaleString()}`;
   return "";
 }
 
-function JobCardSkeleton() {
-  return (
-    <article className="grid grid-cols-[auto_minmax(0,1fr)] gap-4 rounded-2xl border border-border/50 bg-card p-4">
-      <Skeleton className="h-[76px] w-[76px] rounded-2xl" />
-      <div className="min-w-0 space-y-2">
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-5 w-16 rounded-md" />
-          <Skeleton className="h-5 w-16 rounded-md" />
-        </div>
-        <Skeleton className="h-5 w-3/4" />
-        <Skeleton className="h-4 w-full" />
-        <div className="flex justify-between">
-          <Skeleton className="h-3 w-24" />
-          <Skeleton className="h-3 w-12" />
-        </div>
-      </div>
-    </article>
-  );
+function formatApplicants(count: number): string {
+  if (count >= 1000) return `${(count / 1000).toFixed(1)}k`;
+  return count.toString();
 }
 
-const cardTheme: Record<Theme, string> = {
-  rose: "border-rose/25 bg-gradient-to-br from-rose/20 to-transparent",
-  blue: "border-blue/25 bg-gradient-to-br from-blue/20 to-transparent",
-  violet: "border-purple/25 bg-gradient-to-br from-purple/20 to-transparent",
-};
-
-const iconTheme: Record<Theme, string> = {
-  rose: "bg-rose/20 text-rose-foreground",
-  blue: "bg-blue/25 text-foreground",
-  violet: "bg-purple/25 text-foreground",
-};
-
-function JobCard({
-  campaign,
-  onBookmark,
-  isBookmarking,
-}: {
-  campaign: Campaign;
-  onBookmark: (id: string) => void;
-  isBookmarking: boolean;
-}) {
-  const theme = getRoleTheme(campaign.role_type);
-
-  return (
-    <Link href={"/talent/opportunities/" + campaign._id}>
-      <article
-        className={cn(
-          "grid grid-cols-[auto_minmax(0,1fr)] gap-4 rounded-2xl border p-4 transition-colors hover:bg-accent/30",
-          cardTheme[theme],
-        )}
-      >
-        <div
-          className={cn(
-            "grid h-[76px] w-[76px] shrink-0 place-items-center rounded-2xl",
-            iconTheme[theme],
-          )}
-        >
-          <RoleIcon roleType={campaign.role_type} className="h-8 w-8" />
-        </div>
-        <div className="min-w-0">
-          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
-            <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <span className="rounded-md border border-border bg-background/40 px-2 py-0.5 text-xs font-medium">
-                {campaign.role_type || "Campaign"}
-              </span>
-              <span className="flex items-center gap-1 rounded-md border border-gold/40 bg-gold/10 px-2 py-0.5 text-xs font-medium text-gold">
-                {campaign.visibility === "invite_only" ? (
-                  <>
-                    <Wifi className="h-3 w-3" /> Invite Only
-                  </>
-                ) : (
-                  <>
-                    <MapPin className="h-3 w-3" /> Open
-                  </>
-                )}
-              </span>
-            </div>
-            <button
-              aria-label="Save opportunity"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onBookmark(campaign._id);
-              }}
-              disabled={isBookmarking}
-              className="shrink-0 rounded-md p-1 text-muted-foreground hover:text-foreground"
-            >
-              <Bookmark className="h-5 w-5" />
-            </button>
-          </div>
-          <h3 className="mt-2 truncate text-lg font-bold">{campaign.name}</h3>
-          <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-            {campaign.description || "No description provided."}
-          </p>
-          <div className="mt-4 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 text-xs text-muted-foreground">
-            <span className="flex min-w-0 items-center gap-1.5">
-              <MapPin className="h-3.5 w-3.5 shrink-0" />
-              <span className="truncate">{formatLocation(campaign.location)}</span>
-            </span>
-            <span className="shrink-0">{formatDeadline(campaign.deadline)}</span>
-          </div>
-          {formatBudget(campaign.budget_range) && (
-            <p className="mt-1 text-xs font-medium text-teal">{formatBudget(campaign.budget_range)}</p>
-          )}
-        </div>
-      </article>
-    </Link>
-  );
+function recruiterInitials(name?: string): string {
+  if (!name) return "R";
+  return name
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 }
 
 const tabs = ["All", "Applied", "Saved"] as const;
@@ -197,12 +179,283 @@ const sortOptions = [
 ];
 const roleTypes = ["All", "Actor", "Model", "Dancer", "Influencer", "Musician", "Casting"];
 
+/* -------------------------------------------------------------------------- */
+/*                                    SKELETONS                               */
+/* -------------------------------------------------------------------------- */
+
+function GridCardSkeleton() {
+  return (
+    <div className="group overflow-hidden rounded-2xl border border-border bg-card">
+      <Skeleton className="aspect-[16/10] w-full rounded-none" />
+      <div className="space-y-3 p-4">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-5 w-14 rounded-full" />
+          <Skeleton className="h-5 w-20 rounded-full" />
+        </div>
+        <Skeleton className="h-5 w-3/4" />
+        <Skeleton className="h-4 w-full" />
+        <div className="flex items-center gap-2 pt-1">
+          <Skeleton className="size-6 rounded-full" />
+          <Skeleton className="h-3 w-24" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ListCardSkeleton() {
+  return (
+    <div className="flex gap-4 rounded-2xl border border-border bg-card p-4">
+      <Skeleton className="size-24 shrink-0 rounded-xl" />
+      <div className="min-w-0 flex-1 space-y-2">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-5 w-14 rounded-full" />
+          <Skeleton className="h-5 w-20 rounded-full" />
+        </div>
+        <Skeleton className="h-5 w-1/2" />
+        <Skeleton className="h-4 w-3/4" />
+        <div className="flex gap-4 pt-1">
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-3 w-24" />
+        </div>
+      </div>
+      <Skeleton className="hidden h-9 w-28 shrink-0 rounded-lg sm:block" />
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*                                  CARDS                                     */
+/* -------------------------------------------------------------------------- */
+
+function OpportunityCard({
+  campaign,
+  onBookmark,
+  isBookmarking,
+  viewMode,
+}: {
+  campaign: Campaign;
+  onBookmark: (campaign: Campaign) => void;
+  isBookmarking: boolean;
+  viewMode: ViewMode;
+}) {
+  const theme = getRoleTheme(campaign.role_type);
+  const style = themeStyles[theme];
+  const deadline = formatDeadline(campaign.deadline);
+  const budget = formatBudget(campaign.budget_range);
+  const location = formatLocation(campaign.location);
+  const hasCover = !!campaign.cover_image_url;
+  const isInviteOnly = campaign.visibility === "invite_only";
+  const recruiterName = campaign.recruiter?.company_name || "Recruiter";
+
+  const cardContent = (
+    <>
+      {/* Cover / Header */}
+      <div
+        className={cn(
+          "relative overflow-hidden",
+          viewMode === "grid" ? "aspect-[16/10] w-full" : "hidden sm:block sm:size-28 sm:shrink-0 sm:rounded-xl",
+        )}
+      >
+        {hasCover ? (
+          <>
+            <img
+              src={campaign.cover_image_url}
+              alt=""
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/30 to-transparent" />
+          </>
+        ) : (
+          <div
+            className={cn(
+              "flex h-full w-full items-center justify-center bg-gradient-to-br",
+              style.gradient,
+            )}
+          >
+            <RoleIcon roleType={campaign.role_type} className={cn("h-12 w-12", style.iconText)} />
+          </div>
+        )}
+
+        {/* Badges overlay */}
+        <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
+          <Badge variant="outline" className={cn("text-[10px] font-semibold uppercase tracking-wider", style.badge)}>
+            {campaign.role_type || "Campaign"}
+          </Badge>
+          <Badge
+            variant="outline"
+            className={cn(
+              "gap-1 text-[10px] font-semibold uppercase tracking-wider",
+              isInviteOnly
+                ? "border-gold/30 bg-gold/10 text-gold"
+                : "border-border/60 bg-background/60 text-muted-foreground backdrop-blur-sm",
+            )}
+          >
+            {isInviteOnly ? <Wifi className="h-2.5 w-2.5" /> : <MapPin className="h-2.5 w-2.5" />}
+            {isInviteOnly ? "Invite Only" : "Open"}
+          </Badge>
+        </div>
+
+        {/* Bookmark */}
+        <button
+          aria-label={campaign.is_bookmarked ? "Remove bookmark" : "Save opportunity"}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onBookmark(campaign);
+              }}
+          disabled={isBookmarking}
+          className={cn(
+            "absolute right-3 top-3 grid size-8 place-items-center rounded-full border border-white/10 bg-black/40 text-white backdrop-blur-md transition-all hover:scale-110 hover:bg-black/60",
+            campaign.is_bookmarked && "bg-primary text-primary-foreground hover:bg-primary",
+          )}
+        >
+          <Bookmark className={cn("h-4 w-4", campaign.is_bookmarked && "fill-current")} />
+        </button>
+      </div>
+
+      {/* Content */}
+      <div className={cn("flex flex-col", viewMode === "grid" ? "p-4" : "flex-1 p-0 py-1 pr-2")}>
+        <h3
+          className={cn(
+            "line-clamp-1 font-semibold tracking-tight transition-colors group-hover:text-primary",
+            viewMode === "grid" ? "text-base" : "text-base sm:text-lg",
+          )}
+        >
+          {campaign.name}
+        </h3>
+
+        <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+          {campaign.description || "No description provided."}
+        </p>
+
+        {/* Recruiter */}
+        <div className="mt-3 flex items-center gap-2">
+          <Avatar size="sm">
+            <AvatarImage src={campaign.recruiter?.profile_photo} alt={recruiterName} />
+            <AvatarFallback className="bg-surface-2 text-xs font-medium">
+              {recruiterInitials(recruiterName)}
+            </AvatarFallback>
+          </Avatar>
+          <span className="truncate text-xs font-medium text-text-secondary">{recruiterName}</span>
+        </div>
+
+        {/* Metadata */}
+        <div
+          className={cn(
+            "mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground",
+            viewMode === "list" && "sm:flex-nowrap",
+          )}
+        >
+          <span className="flex items-center gap-1">
+            <MapPin className="h-3 w-3" />
+            <span className="truncate max-w-[120px] sm:max-w-none">{location}</span>
+          </span>
+          <span className={cn("flex items-center gap-1", deadline.urgent && "text-orange")}>
+            <Clock className="h-3 w-3" />
+            {deadline.text || "Open"}
+          </span>
+          <span className="flex items-center gap-1">
+            <Users className="h-3 w-3" />
+            {formatApplicants(campaign.applications_count)} applicants
+          </span>
+          {budget && (
+            <span className="flex items-center gap-1 font-medium text-green">
+              {campaign.budget_range?.currency === "INR" ? (
+                <IndianRupee className="h-3 w-3" />
+              ) : (
+                <DollarSign className="h-3 w-3" />
+              )}
+              {budget.replace(/[₹$]/g, "")}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {viewMode === "list" && (
+        <div className="hidden shrink-0 items-center self-center sm:flex">
+          <Button
+            size="sm"
+            className="gap-1.5 rounded-lg bg-gradient-teal font-semibold text-accent-foreground hover:brightness-110"
+          >
+            View
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      )}
+    </>
+  );
+
+  return (
+    <Link href={`/talent/opportunities/${campaign._id}`} className="block">
+      <motion.article
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+        className={cn(
+          "group relative overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:border-border-hover hover:shadow-card-lift",
+          viewMode === "list" && "flex gap-4 p-3 sm:p-4",
+        )}
+      >
+        {cardContent}
+      </motion.article>
+    </Link>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*                                    EMPTY                                   */
+/* -------------------------------------------------------------------------- */
+
+function EmptyState({ onClear }: { onClear: () => void }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+      className="flex flex-col items-center justify-center rounded-2xl border border-border bg-card py-16 text-center"
+    >
+      <div className="mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-primary/10">
+        <Film className="h-8 w-8 text-primary" />
+      </div>
+      <h3 className="text-lg font-semibold">No opportunities found</h3>
+      <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+        Try adjusting your search or filters to discover more casting calls and creative roles.
+      </p>
+      <Button onClick={onClear} variant="outline" className="mt-5 rounded-lg">
+        Clear all filters
+      </Button>
+    </motion.div>
+  );
+}
+
+function ErrorState() {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-border bg-card py-16 text-center">
+      <div className="mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-destructive/10">
+        <Wifi className="h-8 w-8 text-destructive" />
+      </div>
+      <h3 className="text-lg font-semibold">Failed to load opportunities</h3>
+      <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+        Something went wrong while fetching listings. Please try again in a moment.
+      </p>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*                                    PAGE                                    */
+/* -------------------------------------------------------------------------- */
+
 export function OpportunitiesPage() {
   const [tab, setTab] = useState<string>("All");
   const [search, setSearch] = useState("");
   const [roleType, setRoleType] = useState("");
   const [sort, setSort] = useState<"relevance" | "newest" | "oldest">("newest");
   const [page, setPage] = useState(1);
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
   const queryParams: QueryCampaignsParams = {
     status: "active",
@@ -219,170 +472,311 @@ export function OpportunitiesPage() {
   const bookmarkMutation = useBookmarkCampaign();
 
   const handleBookmark = useCallback(
-    (id: string) => {
-      bookmarkMutation.mutate({ id, bookmarked: false });
+    (campaign: Campaign) => {
+      bookmarkMutation.mutate({ id: campaign._id, bookmarked: campaign.is_bookmarked ?? false });
     },
     [bookmarkMutation],
   );
 
-  const totalPages = countData?.count ? Math.ceil(countData.count / 12) : 1;
+  const clearFilters = useCallback(() => {
+    setSearch("");
+    setRoleType("");
+    setSort("newest");
+    setTab("All");
+    setPage(1);
+  }, []);
+
+  const totalCount = countData?.count ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalCount / 12));
+  const startItem = totalCount === 0 ? 0 : (page - 1) * 12 + 1;
+  const endItem = Math.min(page * 12, totalCount);
+
+  const hasActiveFilters = search || roleType || sort !== "newest" || tab !== "All";
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-5 px-4 pb-28 pt-5 lg:px-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Opportunities</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Discover roles that match your talent
-        </p>
-      </div>
+    <div className="mx-auto w-full max-w-7xl space-y-6 px-4 pb-28 pt-4 md:pt-6 lg:px-6">
+      {/* Hero Header */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        className="relative overflow-hidden rounded-3xl border border-border bg-card p-6 md:p-8"
+      >
+        <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-primary/10 blur-3xl" />
+        <div className="absolute -bottom-20 -left-20 h-56 w-56 rounded-full bg-cyan/10 blur-3xl" />
+        <div className="relative z-10">
+          <Badge variant="outline" className="mb-3 border-primary/30 bg-primary/10 text-primary">
+            Casting Calls & Gigs
+          </Badge>
+          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Discover your next role</h1>
+          <p className="mt-1 max-w-xl text-sm text-muted-foreground">
+            Browse casting calls, modeling gigs, and creative opportunities matched to your talent.
+          </p>
 
-      <div className="grid grid-cols-3 gap-1 rounded-xl border border-border bg-card p-1 lg:max-w-2xl">
-        {tabs.map((t) => (
-          <button
-            key={t}
-            onClick={() => {
-              setTab(t);
-              setPage(1);
-            }}
-            className={cn(
-              "rounded-lg px-4 py-3 text-sm font-medium transition-colors",
-              tab === t
-                ? "bg-gradient-teal text-accent-foreground"
-                : "text-muted-foreground hover:bg-accent",
-            )}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
-
-      <div className="space-y-3 lg:flex lg:items-center lg:gap-3 lg:space-y-0">
-        <div className="flex items-center gap-3 lg:min-w-0 lg:flex-1">
-          <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-border bg-surface px-4 py-3">
-            <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
-            <input
-              placeholder="Search by keyword, role, or location..."
+          {/* Search Bar */}
+          <div className="mt-5 flex max-w-2xl items-center gap-3 rounded-2xl border border-border bg-background/80 px-4 py-3 shadow-search backdrop-blur-sm transition-all focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20">
+            <Search className="h-5 w-5 shrink-0 text-muted-foreground" />
+            <Input
+              placeholder="Search by role, keyword, or location..."
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+              className="h-auto border-0 bg-transparent px-0 text-base shadow-none placeholder:text-muted-foreground focus-visible:ring-0 md:text-base"
             />
-          </div>
-        </div>
-        <div className="no-scrollbar flex items-center gap-3 overflow-x-auto">
-          <select
-            value={roleType}
-            onChange={(e) => {
-              setRoleType(e.target.value);
-              setPage(1);
-            }}
-            className="flex shrink-0 items-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm hover:bg-accent"
-          >
-            {roleTypes.map((r) => (
-              <option key={r} value={r === "All" ? "" : r}>
-                {r === "All" ? "All Roles" : r}
-              </option>
-            ))}
-          </select>
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value as typeof sort)}
-            className="flex shrink-0 items-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm hover:bg-accent"
-          >
-            {sortOptions.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-          <button
-            onClick={() => {
-              setSearch("");
-              setRoleType("");
-              setSort("newest");
-              setPage(1);
-            }}
-            className="ml-auto shrink-0 text-sm font-medium text-teal lg:ml-2"
-          >
-            Clear
-          </button>
-        </div>
-      </div>
-
-      {isLoading ? (
-        <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <JobCardSkeleton key={i} />
-          ))}
-        </div>
-      ) : isError ? (
-        <div className="rounded-2xl border border-border bg-card p-12 text-center">
-          <p className="text-sm text-muted-foreground">
-            Failed to load opportunities. Please try again later.
-          </p>
-        </div>
-      ) : campaigns && campaigns.length > 0 ? (
-        <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-          {campaigns.map((c) => (
-            <JobCard
-              key={c._id}
-              campaign={c}
-              onBookmark={handleBookmark}
-              isBookmarking={bookmarkMutation.isPending}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="rounded-2xl border border-border bg-card p-12 text-center">
-          <Film className="mx-auto mb-3 h-10 w-10 text-muted-foreground/50" />
-          <p className="text-sm text-muted-foreground">
-            No opportunities found. Try adjusting your filters.
-          </p>
-        </div>
-      )}
-
-      {campaigns && campaigns.length > 0 && totalPages > 1 && (
-        <div className="hidden grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border border-border bg-card px-5 py-4 lg:grid">
-          <p className="truncate text-sm text-muted-foreground">
-            Showing {(page - 1) * 12 + 1} to{" "}
-            {Math.min(page * 12, countData?.count ?? 0)} of{" "}
-            {countData?.count ?? 0} opportunities
-          </p>
-          <div className="flex shrink-0 items-center gap-1">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="rounded-lg border border-border p-2 text-muted-foreground hover:bg-accent disabled:opacity-50"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map(
-              (p) => (
-                <button
-                  key={p}
-                  onClick={() => setPage(p)}
-                  className={cn(
-                    "min-w-9 rounded-lg border px-3 py-2 text-sm",
-                    p === page
-                      ? "border-transparent bg-gradient-teal font-semibold text-accent-foreground"
-                      : "border-border hover:bg-accent",
-                  )}
-                >
-                  {p}
-                </button>
-              ),
+            {search && (
+              <button
+                onClick={() => {
+                  setSearch("");
+                  setPage(1);
+                }}
+                className="grid size-6 place-items-center rounded-full bg-muted text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-3 w-3" />
+              </button>
             )}
-            <button
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-              className="rounded-lg border border-border p-2 text-muted-foreground hover:bg-accent disabled:opacity-50"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
           </div>
         </div>
+      </motion.div>
+
+      {/* Filters Bar */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
+        className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
+      >
+        {/* Role Chips */}
+        <div className="no-scrollbar -mx-1 flex items-center gap-1 overflow-x-auto px-1">
+          <div className="flex items-center gap-1.5 pr-2 text-muted-foreground">
+            <SlidersHorizontal className="h-4 w-4" />
+            <span className="text-xs font-medium uppercase tracking-wider">Role</span>
+          </div>
+          {roleTypes.map((r) => {
+            const value = r === "All" ? "" : r;
+            const active = roleType === value;
+            return (
+              <button
+                key={r}
+                onClick={() => {
+                  setRoleType(value);
+                  setPage(1);
+                }}
+                className={cn(
+                  "shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all",
+                  active
+                    ? "border-primary bg-primary text-primary-foreground shadow-glow"
+                    : "border-border bg-card text-muted-foreground hover:border-border-hover hover:text-foreground",
+                )}
+              >
+                {r}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Right Controls */}
+        <div className="flex items-center gap-2">
+          <Select
+            value={sort}
+            onValueChange={(value) => setSort(value as typeof sort)}
+          >
+            <SelectTrigger className="h-9 w-[130px] rounded-lg border-border bg-card text-xs">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              {sortOptions.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <div className="flex items-center rounded-lg border border-border bg-card p-0.5">
+            <button
+              aria-label="Grid view"
+              onClick={() => setViewMode("grid")}
+              className={cn(
+                "grid size-8 place-items-center rounded-md transition-all",
+                viewMode === "grid" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </button>
+            <button
+              aria-label="List view"
+              onClick={() => setViewMode("list")}
+              className={cn(
+                "grid size-8 place-items-center rounded-md transition-all",
+                viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <List className="h-4 w-4" />
+            </button>
+          </div>
+
+          {hasActiveFilters && (
+            <Button onClick={clearFilters} variant="ghost" size="sm" className="h-9 gap-1 text-xs text-muted-foreground hover:text-foreground">
+              <X className="h-3.5 w-3.5" />
+              Clear
+            </Button>
+          )}
+        </div>
+      </motion.div>
+
+      {/* Tabs */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+        className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <div className="inline-flex rounded-xl border border-border bg-card p-1">
+          {tabs.map((t) => (
+            <button
+              key={t}
+              onClick={() => {
+                setTab(t);
+                setPage(1);
+              }}
+              className={cn(
+                "rounded-lg px-4 py-2 text-sm font-medium transition-all",
+                tab === t
+                  ? "bg-gradient-teal text-accent-foreground shadow-sm"
+                  : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+              )}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+
+        <p className="text-xs text-muted-foreground">
+          {!isLoading && campaigns && campaigns.length > 0 ? (
+            <>
+              Showing <span className="font-medium text-foreground">{startItem}</span>–
+              <span className="font-medium text-foreground">{endItem}</span> of{" "}
+              <span className="font-medium text-foreground">{totalCount}</span> opportunities
+            </>
+          ) : (
+            <>&nbsp;</>
+          )}
+        </p>
+      </motion.div>
+
+      {/* Results */}
+      <AnimatePresence mode="wait">
+        {isLoading ? (
+          <motion.div
+            key="loading"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className={cn(
+              "grid gap-4",
+              viewMode === "grid" ? "lg:grid-cols-2 xl:grid-cols-3" : "flex flex-col gap-3",
+            )}
+          >
+            {Array.from({ length: 6 }).map((_, i) =>
+              viewMode === "grid" ? <GridCardSkeleton key={i} /> : <ListCardSkeleton key={i} />,
+            )}
+          </motion.div>
+        ) : isError ? (
+          <ErrorState />
+        ) : campaigns && campaigns.length > 0 ? (
+          <motion.div
+            key={`${viewMode}-${page}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.35 }}
+            className={cn(
+              viewMode === "grid" ? "grid gap-4 lg:grid-cols-2 xl:grid-cols-3" : "flex flex-col gap-3",
+            )}
+          >
+            {campaigns.map((c, i) => (
+              <motion.div
+                key={c._id}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.45,
+                  delay: i * 0.05,
+                  ease: [0.16, 1, 0.3, 1],
+                }}
+              >
+                <OpportunityCard
+                  campaign={c}
+                  onBookmark={handleBookmark}
+                  isBookmarking={bookmarkMutation.isPending}
+                  viewMode={viewMode}
+                />
+              </motion.div>
+            ))}
+          </motion.div>
+        ) : (
+          <EmptyState onClear={clearFilters} />
+        )}
+      </AnimatePresence>
+
+      {/* Pagination */}
+      {!isLoading && campaigns && campaigns.length > 0 && totalPages > 1 && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="flex flex-col items-center gap-3 pt-4 sm:flex-row sm:justify-between"
+        >
+          <p className="text-xs text-muted-foreground">
+            Page <span className="font-medium text-foreground">{page}</span> of{" "}
+            <span className="font-medium text-foreground">{totalPages}</span>
+          </p>
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setPage((p) => Math.max(1, p - 1));
+                  }}
+                  className={cn(page === 1 && "pointer-events-none opacity-50")}
+                />
+              </PaginationItem>
+              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map((p) => (
+                <PaginationItem key={p}>
+                  <PaginationLink
+                    href="#"
+                    isActive={p === page}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setPage(p);
+                    }}
+                    className={cn(
+                      p === page &&
+                        "border-transparent bg-gradient-teal font-semibold text-accent-foreground hover:bg-gradient-teal",
+                    )}
+                  >
+                    {p}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+              {totalPages > 5 && <PaginationEllipsis />}
+              <PaginationItem>
+                <PaginationNext
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setPage((p) => Math.min(totalPages, p + 1));
+                  }}
+                  className={cn(page === totalPages && "pointer-events-none opacity-50")}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </motion.div>
       )}
     </div>
   );

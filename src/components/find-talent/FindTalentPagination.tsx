@@ -11,20 +11,25 @@ function PageButton({
   onClick,
   disabled,
   active,
+  label,
 }: {
   children: React.ReactNode;
   onClick: () => void;
   disabled?: boolean;
   active?: boolean;
+  label?: string;
 }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`grid size-9 place-items-center rounded-lg text-sm font-medium transition-colors ${
+      aria-label={label}
+      aria-current={active ? "page" : undefined}
+      className={`grid size-10 place-items-center rounded-xl text-sm font-medium transition-all active:scale-[0.96] ${
         active
-          ? "bg-teal-500 text-[#050b14]"
-          : "border border-slate-700 text-slate-400 hover:text-white disabled:opacity-40"
+           ? "bg-primary font-semibold text-primary-foreground shadow-button"
+          : "border border-border bg-surface/60 text-muted-foreground hover:border-border-hover hover:bg-surface hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
       }`}
     >
       {children}
@@ -53,16 +58,20 @@ export function FindTalentPagination({
   }
 
   return (
-    <nav className="mt-8 flex items-center justify-center gap-2 text-sm">
+    <nav
+      aria-label="Pagination"
+      className="mt-10 flex items-center justify-center gap-2 text-sm"
+    >
       <PageButton
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage <= 1}
+        label="Previous page"
       >
         <ChevronLeft className="size-4" />
       </PageButton>
       {pages.map((p, i) =>
         p === "..." ? (
-          <span key={`ellipsis-${i}`} className="px-1 text-slate-500">
+          <span key={`ellipsis-${i}`} className="px-1 text-muted-foreground">
             ...
           </span>
         ) : (
@@ -70,6 +79,7 @@ export function FindTalentPagination({
             key={p}
             onClick={() => onPageChange(p)}
             active={p === currentPage}
+            label={`Page ${p}`}
           >
             {p}
           </PageButton>
@@ -78,6 +88,7 @@ export function FindTalentPagination({
       <PageButton
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage >= totalPages}
+        label="Next page"
       >
         <ChevronRight className="size-4" />
       </PageButton>

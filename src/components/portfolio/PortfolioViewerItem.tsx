@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { PortfolioItem } from "./PortfolioCard";
+import type { PortfolioItem } from "@/lib/types/portfolio";
 import { ImageSlide } from "./ImageSlide";
 import { VideoSlide } from "./VideoSlide";
 
@@ -19,7 +19,7 @@ export function PortfolioViewerItem({
   useEffect(() => {
     if (preload && !preloadedRef.current && item.type === "image") {
       const img = new Image();
-      img.src = item.src;
+      img.src = item.url;
       preloadedRef.current = true;
     }
   }, [preload, item]);
@@ -27,12 +27,12 @@ export function PortfolioViewerItem({
   if (item.type === "video") {
     return (
       <VideoSlide
-        src={item.src}
-        poster={item.src}
+        src={item.url}
+        poster={item.thumbnailUrl || item.url}
         active={active}
       />
     );
   }
 
-  return <ImageSlide src={item.src} alt={item.title} />;
+  return <ImageSlide src={item.url} alt={item.title} />;
 }

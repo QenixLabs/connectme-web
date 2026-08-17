@@ -58,6 +58,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   useMyCredits,
   useMyTestimonials,
   useMyAwards,
@@ -109,6 +116,36 @@ function formatYear(year?: number | string): string {
   if (!year) return "";
   const y = typeof year === "string" ? parseInt(year, 10) : year;
   return isNaN(y) ? "" : String(y);
+}
+
+function YearSelect({
+  value,
+  onChange,
+  placeholder = "Select year",
+}: {
+  value?: number;
+  onChange: (value?: number) => void;
+  placeholder?: string;
+}) {
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: currentYear - 1899 }, (_, i) => currentYear - i);
+  return (
+    <Select
+      value={value ? String(value) : ""}
+      onValueChange={(val) => onChange(val ? Number(val) : undefined)}
+    >
+      <SelectTrigger>
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent>
+        {years.map((year) => (
+          <SelectItem key={year} value={String(year)}>
+            {year}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
 }
 
 function StarRating({ rating }: { rating?: number }) {
@@ -434,6 +471,7 @@ function CreditFormDialog({
   async function onSubmit(data: CreditForm) {
     try {
       const payload = {
+        type: "credit" as const,
         ...data,
         year: data.year || undefined,
         credit_url: data.credit_url || undefined,
@@ -529,11 +567,10 @@ function CreditFormDialog({
                 <FormItem>
                   <FormLabel>Year</FormLabel>
                   <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="e.g. 2024"
-                      {...field}
-                      value={field.value ?? ""}
+                    <YearSelect
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select year"
                     />
                   </FormControl>
                   <FormMessage />
@@ -621,6 +658,7 @@ function TestimonialFormDialog({
   async function onSubmit(data: TestimonialForm) {
     try {
       const payload = {
+        type: "testimonial" as const,
         ...data,
         author_role: data.author_role || undefined,
         author_company: data.author_company || undefined,
@@ -785,6 +823,7 @@ function AwardFormDialog({
   async function onSubmit(data: AwardForm) {
     try {
       const payload = {
+        type: "award" as const,
         ...data,
         year: data.year || undefined,
         description: data.description || undefined,
@@ -849,11 +888,10 @@ function AwardFormDialog({
                 <FormItem>
                   <FormLabel>Year</FormLabel>
                   <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="e.g. 2024"
-                      {...field}
-                      value={field.value ?? ""}
+                    <YearSelect
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select year"
                     />
                   </FormControl>
                   <FormMessage />
@@ -1028,7 +1066,7 @@ export function ExperiencePage() {
   const awards = awardsQuery.data ?? [];
 
   return (
-    <div className="mx-auto w-full max-w-4xl">
+    <div className="mx-auto w-full max-w-4xl overflow-x-hidden">
       <div className="space-y-6 px-4 pb-40 pt-6 lg:px-6">
         {/* Header */}
         <div>
@@ -1040,43 +1078,47 @@ export function ExperiencePage() {
 
         {/* Tabs */}
         <Tabs value={tab} onValueChange={setTab}>
-          <div className="flex items-center justify-between gap-4">
-            <TabsList>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <TabsList className="w-full flex-wrap sm:w-fit">
               <TabsTrigger value="credits" className="gap-2">
                 <Briefcase className="h-4 w-4" />
-                Credits
+                <span className="hidden sm:inline">Credits</span>
                 {credits.length > 0 && (
-                  <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1 text-[10px]">
+                  <Badge variant="secondary" className="ml-1 hidden h-5 min-w-5 px-1 text-[10px] sm:inline-flex">
                     {credits.length}
                   </Badge>
                 )}
               </TabsTrigger>
               <TabsTrigger value="testimonials" className="gap-2">
                 <GraduationCap className="h-4 w-4" />
-                Testimonials
+                <span className="hidden sm:inline">Testimonials</span>
                 {testimonials.length > 0 && (
-                  <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1 text-[10px]">
+                  <Badge variant="secondary" className="ml-1 hidden h-5 min-w-5 px-1 text-[10px] sm:inline-flex">
                     {testimonials.length}
                   </Badge>
                 )}
               </TabsTrigger>
               <TabsTrigger value="awards" className="gap-2">
                 <Award className="h-4 w-4" />
-                Awards
+                <span className="hidden sm:inline">Awards</span>
                 {awards.length > 0 && (
-                  <Badge variant="secondary" className="ml-1 h-5 min-w-5 px-1 text-[10px]">
+                  <Badge variant="secondary" className="ml-1 hidden h-5 min-w-5 px-1 text-[10px] sm:inline-flex">
                     {awards.length}
                   </Badge>
                 )}
               </TabsTrigger>
             </TabsList>
-            <Button onClick={handleAddClick}>
-              <Plus className="mr-2 h-4 w-4" /> Add{" "}
-              {tab === "credits"
-                ? "Credit"
-                : tab === "testimonials"
-                  ? "Testimonial"
-                  : "Award"}
+            <Button onClick={handleAddClick} className="w-full sm:w-auto">
+              <Plus className="mr-2 h-4 w-4" />
+              <span className="sm:hidden">Add</span>
+              <span className="hidden sm:inline">
+                Add{" "}
+                {tab === "credits"
+                  ? "Credit"
+                  : tab === "testimonials"
+                    ? "Testimonial"
+                    : "Award"}
+              </span>
             </Button>
           </div>
 

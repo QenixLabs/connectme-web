@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "motion/react";
-import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import rootinLogo from "@/assets/rootin-logo-orange.png";
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -31,16 +32,21 @@ export function AuthLayout({ children, subtitle, showGlow }: AuthLayoutProps) {
         className={cn("w-full max-w-md", showGlow && "relative z-10")}
       >
         <div className="mb-10 text-center">
-          <Link href="/" className="group inline-flex items-center gap-2">
-            <motion.span
-              whileHover={{ rotate: -8, scale: 1.1 }}
+          <Link href="/" className="group inline-flex items-center">
+            <motion.div
+              whileHover={{ scale: 1.04 }}
               transition={{ type: "spring", stiffness: 300 }}
             >
-              <Sparkles className="h-5 w-5 text-primary" strokeWidth={1.5} />
-            </motion.span>
-            <span className="text-2xl font-bold tracking-tight text-foreground">
-              Root<span className="text-primary">In</span>
-            </span>
+              <Image
+                src={rootinLogo}
+                alt="RootIn logo"
+                height={56}
+                width={180}
+                priority
+                unoptimized
+                className="h-14 w-auto"
+              />
+            </motion.div>
           </Link>
           {subtitle && (
             <motion.p

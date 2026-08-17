@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { talentApi, type UpdateTalentProfilePayload } from "@/lib/api/talent";
+import { useAuthStore } from "@/providers/auth-store-provider";
 
 export const talentProfileKeys = {
   all: ["talent-profile"] as const,
@@ -39,6 +41,12 @@ export function useUpdateMyProfile() {
       qc.invalidateQueries({ queryKey: talentProfileKeys.myProfile() });
       qc.invalidateQueries({ queryKey: talentProfileKeys.completeness() });
     },
+  });
+}
+
+export function useUploadTalentPhoto() {
+  return useMutation({
+    mutationFn: (file: File) => talentApi.uploadProfilePhoto(file),
   });
 }
 
@@ -84,11 +92,13 @@ export function useTalentAwards(username: string) {
 
 export function useLikeTalent(username: string) {
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   const likeStatusQuery = useQuery({
     queryKey: [...talentProfileKeys.all, "like-status", username],
     queryFn: () => talentApi.getLikeStatus(username),
-    enabled: !!username,
+    enabled: !!username && isAuthenticated,
   });
 
   const likeMutation = useMutation({
@@ -161,10 +171,16 @@ export function useLikeTalent(username: string) {
     },
   });
 
-  const isLiked = likeStatusQuery.data?.is_liked ?? false;
+  const isLiked = isAuthenticated ? (likeStatusQuery.data?.is_liked ?? false) : false;
   const isPending = likeMutation.isPending || unlikeMutation.isPending;
 
   const toggleLike = () => {
+    if (!isAuthenticated) {
+      const currentPath = typeof window !== "undefined" ? window.location.pathname : "";
+      const redirectUrl = currentPath ? `/auth/login?redirect=${encodeURIComponent(currentPath)}` : "/auth/login";
+      router.push(redirectUrl);
+      return;
+    }
     if (isLiked) {
       unlikeMutation.mutate();
     } else {

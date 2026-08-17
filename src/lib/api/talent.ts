@@ -1,5 +1,22 @@
 import { apiClient } from "./client";
 
+export type Availability = "available" | "busy" | "not_available";
+export type PrivacyMode = "public" | "recruiters_only" | "private";
+
+export interface SectionVisibility {
+  bio?: boolean;
+  skills?: boolean;
+  experience?: boolean;
+  portfolio?: boolean;
+  availability?: boolean;
+  location?: boolean;
+  physical_attributes?: boolean;
+  languages?: boolean;
+  accents?: boolean;
+  documents?: boolean;
+  social_links?: boolean;
+}
+
 export interface UpdateTalentProfilePayload {
   username?: string;
   full_legal_name?: string;
@@ -10,7 +27,7 @@ export interface UpdateTalentProfilePayload {
   professions?: string[];
   specialties?: string[];
   hero_background?: string;
-  availability?: "available" | "busy" | "not_available";
+  availability?: Availability;
   headline?: string;
   about?: string;
   years_of_experience?: number;
@@ -29,7 +46,8 @@ export interface UpdateTalentProfilePayload {
   skills?: { name: string; proficiency: "beginner" | "intermediate" | "expert"; order?: number }[];
   documents?: { resume_url?: string; portfolio_pdf_url?: string; measurements_sheet_url?: string };
   social_links?: Record<string, { url?: string; visibility?: string; show_on_profile?: boolean }>;
-  privacy_mode?: "public" | "recruiters_only" | "private";
+  privacy_mode?: PrivacyMode;
+  section_visibility?: SectionVisibility;
 }
 
 export interface TalentProfile {
@@ -42,7 +60,7 @@ export interface TalentProfile {
   profile_photo?: string;
   location?: { country?: string; state?: string; city?: string };
   professions?: string[];
-  availability?: "available" | "busy" | "not_available";
+  availability?: Availability;
   headline?: string;
   about?: string;
   years_of_experience?: number;
@@ -61,8 +79,8 @@ export interface TalentProfile {
   skills?: { name: string; proficiency: string; order: number }[];
   documents?: { resume_url?: string; portfolio_pdf_url?: string; measurements_sheet_url?: string };
   social_links?: Record<string, { url?: string; visibility?: string; show_on_profile?: boolean }>;
-  privacy_mode?: string;
-  section_visibility?: Record<string, boolean>;
+  privacy_mode?: PrivacyMode;
+  section_visibility?: SectionVisibility;
   specialties?: string[];
   media_limits?: {
     images_used: number;
@@ -84,9 +102,30 @@ export interface TalentProfile {
   updated_at: string;
 }
 
+export type TalentProfilePreview = Pick<TalentProfile, "user_id" | "username"> &
+  Partial<Omit<TalentProfile, "user_id" | "username">>;
+
+export interface PrivateTalentProfileResponse {
+  private: true;
+  hasConnection?: boolean;
+  preview: TalentProfilePreview;
+  is_verified?: boolean;
+  active_plan?: string | null;
+}
+
+export type PublicTalentProfileResponse =
+  | TalentProfile
+  | PrivateTalentProfileResponse;
+
+export function isPrivateTalentProfileResponse(
+  profile: PublicTalentProfileResponse | undefined,
+): profile is PrivateTalentProfileResponse {
+  return profile != null && "private" in profile && profile.private === true;
+}
+
 export interface PortfolioApiResponse {
   id: string;
-  type: "image" | "video" | "link";
+  type: "image" | "video" | "youtube" | "instagram";
   category: "work" | "personal" | "intro";
   url: string;
   thumbnail_url?: string;
@@ -97,7 +136,10 @@ export interface PortfolioApiResponse {
   embed_url?: string;
   ai_moderation_status?: "pending" | "approved" | "flagged";
   view_count?: number;
+  likes_count?: number;
+  is_liked_by_me?: boolean;
   created_at?: string;
+  updated_at?: string;
 }
 
 export interface PortfolioStatsResponse {
@@ -183,6 +225,15 @@ export const talentApi = {
     return response.data as TalentProfile;
   },
 
+  uploadProfilePhoto: async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await apiClient.post("/talent/upload/profile-photo", formData, {
+      headers: { "Content-Type": undefined },
+    });
+    return response.data as { relativePath: string; signedUrl: string };
+  },
+
   getCompleteness: async () => {
     const response = await apiClient.get("/talent/completeness");
     return response.data as { isComplete: boolean; missingFields: string[] };
@@ -190,7 +241,7 @@ export const talentApi = {
 
   getPublicProfile: async (username: string) => {
     const response = await apiClient.get(`/talent/profile/${username}`);
-    return response.data as TalentProfile;
+    return response.data as PublicTalentProfileResponse;
   },
 
   getPortfolio: async (username: string) => {
@@ -268,6 +319,14 @@ export const talentApi = {
     return response.data;
   },
 
+  togglePortfolioFeatured: async (itemId: string, isPinned: boolean) => {
+    const response = await apiClient.patch(
+      `/talent/portfolio/items/${itemId}`,
+      { is_pinned: isPinned },
+    );
+    return response.data as PortfolioApiResponse;
+  },
+
   uploadPortfolioImage: async (
     file: File,
     data?: {
@@ -288,13 +347,14 @@ export const talentApi = {
       });
     }
     const response = await apiClient.post("/talent/portfolio/upload/image", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
+      headers: { "Content-Type": undefined },
     });
     return response.data as PortfolioApiResponse;
   },
 
   uploadPortfolioVideo: async (
     file: File,
+    thumbnail?: File,
     data?: {
       caption?: string;
       title?: string;
@@ -305,6 +365,9 @@ export const talentApi = {
   ) => {
     const formData = new FormData();
     formData.append("file", file);
+    if (thumbnail) {
+      formData.append("thumbnail", thumbnail);
+    }
     if (data) {
       Object.entries(data).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
@@ -313,7 +376,7 @@ export const talentApi = {
       });
     }
     const response = await apiClient.post("/talent/portfolio/upload/video", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
+      headers: { "Content-Type": undefined },
     });
     return response.data as PortfolioApiResponse;
   },
@@ -326,6 +389,7 @@ export const talentApi = {
   },
 
   createCredit: async (data: {
+    type: "credit";
     project_name: string;
     role_played: string;
     platform?: string;
@@ -370,6 +434,7 @@ export const talentApi = {
   },
 
   createTestimonial: async (data: {
+    type: "testimonial";
     author_name: string;
     content: string;
     author_role?: string;
@@ -418,6 +483,7 @@ export const talentApi = {
   },
 
   createAward: async (data: {
+    type: "award";
     title: string;
     awarding_body: string;
     year?: number;
@@ -462,6 +528,21 @@ export const talentApi = {
   getLikeStatus: async (username: string) => {
     const response = await apiClient.get(`/talent/like/${username}/status`);
     return response.data as { is_liked: boolean };
+  },
+
+  likePortfolioItem: async (itemId: string) => {
+    const response = await apiClient.post(`/talent/portfolio/items/${itemId}/like`);
+    return response.data as { liked: boolean; likes_count: number };
+  },
+
+  unlikePortfolioItem: async (itemId: string) => {
+    const response = await apiClient.delete(`/talent/portfolio/items/${itemId}/like`);
+    return response.data as { liked: boolean; likes_count: number };
+  },
+
+  getPortfolioItemLikeStatus: async (itemId: string) => {
+    const response = await apiClient.get(`/talent/portfolio/items/${itemId}/like/status`);
+    return response.data as { liked: boolean; likes_count: number };
   },
 
   // ── Media Kit ───────────────────────────────────────────

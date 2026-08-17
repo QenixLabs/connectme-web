@@ -3,13 +3,13 @@ import type { Metadata } from "next";
 import { ProfilePage } from "@/components/talent-app/ProfilePage";
 
 export const metadata: Metadata = {
-  title: "RootIn — Account Status",
+  title: "RootIn — My Profile",
   description:
-    "Track your trust score, profile completeness, verification status and performance stats on RootIn.",
+    "Manage your talent profile, visibility, analytics and account settings on RootIn.",
   openGraph: {
-    title: "RootIn — Account Status",
+    title: "RootIn — My Profile",
     description:
-      "Track your trust score, profile completeness, verification status and performance stats on RootIn.",
+      "Manage your talent profile, visibility, analytics and account settings on RootIn.",
   },
 };
 

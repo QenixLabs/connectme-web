@@ -25,9 +25,9 @@ function FieldLabel({
   required?: boolean;
 }) {
   return (
-    <label className="text-sm font-medium text-zinc-300">
+    <label className="text-sm font-medium text-foreground/80">
       {children}
-      {required && <span className="text-red-400 ml-0.5">*</span>}
+      {required && <span className="ml-0.5 text-destructive">*</span>}
     </label>
   );
 }
@@ -35,11 +35,11 @@ function FieldLabel({
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-2 pt-2 first:pt-0">
-      <div className="h-px flex-1 bg-zinc-700/40" />
-      <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-zinc-500 shrink-0">
+      <div className="h-px flex-1 bg-border" />
+      <span className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
         {children}
       </span>
-      <div className="h-px flex-1 bg-zinc-700/40" />
+      <div className="h-px flex-1 bg-border" />
     </div>
   );
 }
@@ -83,7 +83,7 @@ export function RequirementsStep({
                 placeholder="e.g., Classical dance, Guitar..."
               />
             </FormControl>
-            <p className="text-[11px] text-zinc-500/60">
+            <p className="text-[11px] text-muted-foreground/60">
               Press Enter to add a skill
             </p>
             <FormMessage />
@@ -108,7 +108,7 @@ export function RequirementsStep({
                 placeholder="e.g., Hindi, English..."
               />
             </FormControl>
-            <p className="text-[11px] text-zinc-500/60">
+            <p className="text-[11px] text-muted-foreground/60">
               Press Enter to add a language
             </p>
             <FormMessage />
@@ -143,8 +143,8 @@ export function RequirementsStep({
                       className={cn(
                         "px-4 py-2 rounded-xl text-sm font-medium border transition-all duration-200",
                         selected
-                          ? "bg-zinc-100 text-zinc-900 border-zinc-100 shadow-sm"
-                          : "bg-zinc-900/50 text-zinc-400 border-zinc-700/50 hover:border-zinc-600 hover:text-zinc-200",
+                           ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                           : "border-border bg-card text-muted-foreground hover:border-border-hover hover:text-foreground",
                       )}
                     >
                       {g}
@@ -179,7 +179,7 @@ export function RequirementsStep({
                     )
                   }
                   value={field.value ?? ""}
-                  className="text-sm h-11 rounded-xl border-zinc-700/50 bg-zinc-900/50 text-center focus-visible:ring-teal-500/30"
+                  className="h-11 rounded-xl border-border bg-bg-surface-inset text-center text-sm focus-visible:ring-accent-teal/30"
                 />
               </FormControl>
               <FormMessage />
@@ -207,7 +207,7 @@ export function RequirementsStep({
                     )
                   }
                   value={field.value ?? ""}
-                  className="text-sm h-11 rounded-xl border-zinc-700/50 bg-zinc-900/50 text-center focus-visible:ring-teal-500/30"
+                  className="h-11 rounded-xl border-border bg-bg-surface-inset text-center text-sm focus-visible:ring-accent-teal/30"
                 />
               </FormControl>
               <FormMessage />
@@ -237,7 +237,7 @@ export function RequirementsStep({
                     )
                   }
                   value={field.value ?? ""}
-                  className="text-sm h-11 rounded-xl border-zinc-700/50 bg-zinc-900/50 focus-visible:ring-teal-500/30"
+                  className="h-11 rounded-xl border-border bg-bg-surface-inset text-sm focus-visible:ring-accent-teal/30"
                 />
               </FormControl>
               <FormMessage />
@@ -263,7 +263,7 @@ export function RequirementsStep({
                     )
                   }
                   value={field.value ?? ""}
-                  className="text-sm h-11 rounded-xl border-zinc-700/50 bg-zinc-900/50 focus-visible:ring-teal-500/30"
+                  className="h-11 rounded-xl border-border bg-bg-surface-inset text-sm focus-visible:ring-accent-teal/30"
                 />
               </FormControl>
               <FormMessage />
@@ -281,7 +281,7 @@ export function RequirementsStep({
             <FormControl>
               <Textarea
                 placeholder="Any specific attributes, equipment, availability, or other requirements..."
-                className="min-h-[80px] text-sm rounded-xl border-zinc-700/50 bg-zinc-900/50 resize-y focus-visible:ring-teal-500/30 placeholder:text-zinc-500/50"
+                className="min-h-[80px] resize-y rounded-xl border-border bg-bg-surface-inset text-sm placeholder:text-muted-foreground/60 focus-visible:ring-accent-teal/30"
                 {...field}
               />
             </FormControl>
@@ -307,10 +307,10 @@ export function RequirementsStep({
           return (
             <div
               key={field.id}
-              className="border border-zinc-700/50 rounded-2xl p-4 space-y-3 bg-zinc-900/50"
+              className="space-y-3 rounded-2xl border border-border bg-card p-4"
             >
               <div className="flex items-start gap-3">
-                <span className="text-xs font-bold text-zinc-500 mt-3 min-w-[20px]">
+                <span className="mt-3 min-w-[20px] text-xs font-bold text-muted-foreground">
                   {index + 1}.
                 </span>
                 <div className="flex-1 space-y-3">
@@ -323,7 +323,7 @@ export function RequirementsStep({
                           <Input
                             placeholder="Enter your question..."
                             {...field}
-                            className="text-sm h-11 rounded-xl border-zinc-700/50 bg-zinc-900/50 focus-visible:ring-teal-500/30"
+                            className="h-11 rounded-xl border-border bg-bg-surface-inset text-sm focus-visible:ring-accent-teal/30"
                           />
                         </FormControl>
                         <FormMessage />
@@ -354,7 +354,7 @@ export function RequirementsStep({
                                   );
                                 }
                               }}
-                              className="text-sm h-10 rounded-xl border border-zinc-700/50 bg-zinc-900/50 px-3 text-zinc-100"
+                              className="h-10 rounded-xl border-border bg-bg-surface-inset px-3 text-sm text-foreground"
                             >
                               <option value="text">Text</option>
                               <option value="number">Number</option>
@@ -383,10 +383,10 @@ export function RequirementsStep({
                                 onChange={(e) =>
                                   field.onChange(e.target.checked)
                                 }
-                                className="w-4 h-4 rounded accent-teal-500"
+                                className="h-4 w-4 rounded accent-accent-teal"
                               />
                             </FormControl>
-                            <label className="text-sm text-zinc-300 font-medium">
+                            <label className="text-sm font-medium text-foreground/80">
                               Required
                             </label>
                           </FormItem>
@@ -424,7 +424,7 @@ export function RequirementsStep({
 
                 <button
                   type="button"
-                  className="text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg mt-1 shrink-0 p-1 transition-colors"
+                  className="mt-1 shrink-0 rounded-lg p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                   onClick={() => remove(index)}
                 >
                   <Trash2 className="w-4 h-4" strokeWidth={1.5} />
@@ -436,7 +436,7 @@ export function RequirementsStep({
 
         <button
           type="button"
-          className="w-full h-11 text-sm font-medium rounded-xl border-2 border-dashed border-zinc-700/50 hover:border-teal-500/50 hover:bg-teal-500/5 transition-all text-zinc-400 flex items-center justify-center gap-2"
+          className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border text-sm font-medium text-muted-foreground transition-all hover:border-accent-teal/50 hover:bg-accent-teal/5"
           onClick={() =>
             append({
               question_text: "",

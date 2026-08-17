@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "motion/react";
-import type { PortfolioItem } from "./PortfolioCard";
+import type { PortfolioItem } from "@/lib/types/portfolio";
 import { PortfolioViewerItem } from "./PortfolioViewerItem";
 import { ViewerTopBar } from "./ViewerTopBar";
 import { ViewerBottomBar } from "./ViewerBottomBar";
@@ -244,8 +244,8 @@ export function PortfolioViewer({
 
           <ViewerTopBar
             title={currentItem.title}
-            current={currentItem.index}
-            total={currentItem.total}
+            current={currentIndex + 1}
+            total={items.length}
             visible={controlsVisible}
             onClose={onClose}
           />

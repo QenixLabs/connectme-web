@@ -1,0 +1,9 @@
+export { AboutSection } from "./AboutSection";
+export { PortfolioSection } from "./PortfolioSection";
+export { ExperienceSection } from "./ExperienceSection";
+export { SkillsSection } from "./SkillsSection";
+export { ReviewsSection } from "./ReviewsSection";
+export { AwardsSection } from "./AwardsSection";
+export { MediaKitSection } from "./MediaKitSection";
+export { AnalyticsSection } from "./AnalyticsSection";
+export { DetailsSection } from "./DetailsSection";
