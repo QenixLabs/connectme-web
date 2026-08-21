@@ -1,11 +1,14 @@
 "use client";
 
 import { useParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import {
   PrivateProfilePreview,
   TalentProfileView,
 } from "@/components/talent-profile";
 import { isPrivateTalentProfileResponse } from "@/lib/api/talent";
+import { useAuthStore } from "@/providers/auth-store-provider";
+import { campaignsApi } from "@/lib/api/campaigns";
 import {
   usePublicTalentProfile,
   useTalentPortfolio,
@@ -71,6 +74,18 @@ export default function PublicTalentProfilePage() {
   const testimonials = Array.isArray(testimonialsRaw) ? testimonialsRaw : [];
   const awards = Array.isArray(awardsRaw) ? awardsRaw : [];
 
+  const user = useAuthStore((s) => s.user);
+  const viewerRole = user?.role ?? null;
+
+  const { data: campaignsData, isLoading: campaignsLoading } = useQuery({
+    queryKey: ["recruiter-campaigns-for-shortlist", viewerRole],
+    queryFn: () =>
+      campaignsApi.getRecruiterCampaigns({ status: "active", limit: 100 }),
+    enabled: viewerRole === "recruiter" || viewerRole === "admin",
+  });
+
+  const campaigns = campaignsData?.data ?? [];
+
   const isLoading =
     profileLoading ||
     portfolioLoading ||
@@ -108,6 +123,9 @@ export default function PublicTalentProfilePage() {
       credits={credits}
       testimonials={testimonials}
       awards={awards}
+      viewerRole={viewerRole}
+      campaigns={campaigns}
+      campaignsLoading={campaignsLoading}
     />
   );
 }
