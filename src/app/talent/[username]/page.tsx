@@ -108,6 +108,7 @@ export default function PublicTalentProfilePage() {
           ...profile.preview,
           is_verified: profile.is_verified ?? profile.preview.is_verified,
         }}
+        viewerRole={viewerRole}
       />
     );
   }
