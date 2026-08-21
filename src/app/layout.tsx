@@ -3,6 +3,7 @@ import { Rubik } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthStoreProvider } from "@/providers/auth-store-provider";
 import { QueryProvider } from "@/providers/query-provider";
+import { SocketProvider } from "@/providers/socket-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
@@ -43,12 +44,14 @@ export default function RootLayout({
       <body className="min-h-screen antialiased">
         <ThemeProvider>
           <AuthStoreProvider>
-            <QueryProvider>
-              <TooltipProvider>
-                {children}
-                <Toaster position="top-right" richColors />
-              </TooltipProvider>
-            </QueryProvider>
+            <SocketProvider>
+              <QueryProvider>
+                <TooltipProvider>
+                  {children}
+                  <Toaster position="top-right" richColors />
+                </TooltipProvider>
+              </QueryProvider>
+            </SocketProvider>
           </AuthStoreProvider>
         </ThemeProvider>
       </body>
