@@ -57,4 +57,9 @@ export const conversationsApi = {
     );
     return response.data;
   },
+
+  startByUsername: async (username: string) => {
+    const response = await apiClient.post('/conversations/start-by-username', { username });
+    return response.data as { conversation_id: string };
+  },
 };

@@ -530,6 +530,45 @@ export const talentApi = {
     return response.data as { is_liked: boolean };
   },
 
+  // ── Save ────────────────────────────────────────────────
+  saveTalent: async (username: string) => {
+    const response = await apiClient.post(`/talent/save/${username}`);
+    return response.data as { saved: boolean };
+  },
+
+  unsaveTalent: async (username: string) => {
+    const response = await apiClient.delete(`/talent/save/${username}`);
+    return response.data as { saved: boolean };
+  },
+
+  getSaveStatus: async (username: string) => {
+    const response = await apiClient.get(`/talent/save/${username}/status`);
+    return response.data as { is_saved: boolean };
+  },
+
+  // ── Shortlist ───────────────────────────────────────────
+  shortlistTalent: async (username: string, campaignId: string) => {
+    const response = await apiClient.post('/talent/shortlist', {
+      username,
+      campaign_id: campaignId,
+    });
+    return response.data as { shortlisted: boolean };
+  },
+
+  unshortlistTalent: async (username: string, campaignId: string) => {
+    const response = await apiClient.delete('/talent/shortlist', {
+      data: { username, campaign_id: campaignId },
+    });
+    return response.data as { shortlisted: boolean };
+  },
+
+  getShortlistStatus: async (username: string, campaignId: string) => {
+    const response = await apiClient.get('/talent/shortlist/status', {
+      params: { username, campaign_id: campaignId },
+    });
+    return response.data as { is_shortlisted: boolean };
+  },
+
   likePortfolioItem: async (itemId: string) => {
     const response = await apiClient.post(`/talent/portfolio/items/${itemId}/like`);
     return response.data as { liked: boolean; likes_count: number };
