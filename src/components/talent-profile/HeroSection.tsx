@@ -2,31 +2,31 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { motion } from "motion/react";
-import {
-  ArrowLeft,
-  Share2,
-  Heart,
-  MapPin,
-  Send,
-  Star,
-  Bookmark,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ArrowLeft, Share2, Heart, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLikeTalent } from "@/hooks/use-talent-profile";
 import type { TalentProfile, TalentProfilePreview } from "@/lib/api/talent";
+import type { Campaign } from "@/lib/api/campaigns";
 import { VerifiedBadge, AvailabilityBadge } from "./primitives";
 import { formatLocation } from "./data";
+import { TalentProfileActions } from "./TalentProfileActions";
+
+export interface HeroSectionProps {
+  profile: TalentProfile | TalentProfilePreview;
+  viewerRole: "talent" | "recruiter" | "admin" | null;
+  campaigns?: Campaign[];
+  campaignsLoading?: boolean;
+}
 
 export function HeroSection({
   profile,
-}: {
-  profile: TalentProfile | TalentProfilePreview;
-}) {
+  viewerRole,
+  campaigns,
+  campaignsLoading,
+}: HeroSectionProps) {
   const router = useRouter();
   const displayName = profile.full_legal_name?.trim() || profile.username?.trim() || "Talent";
   const roles = profile.professions || [];
@@ -35,8 +35,6 @@ export function HeroSection({
     profile.profile_photo || profile.hero_background || "/heroimage.jfif";
 
   const { isLiked, isPending, toggleLike } = useLikeTalent(profile.username);
-  const [saved, setSaved] = useState(false);
-  const [shortlisted, setShortlisted] = useState(false);
 
   const handleShare = async () => {
     try {
@@ -45,20 +43,6 @@ export function HeroSection({
     } catch {
       toast.error("Failed to copy link");
     }
-  };
-
-  const handleMessage = () => {
-    router.push(`/talent/messages?user=${profile.username}`);
-  };
-
-  const handleSave = () => {
-    setSaved((v) => !v);
-    toast.success(saved ? "Removed from saved" : "Saved to profile");
-  };
-
-  const handleShortlist = () => {
-    setShortlisted((v) => !v);
-    toast.success(shortlisted ? "Removed from shortlist" : "Shortlisted");
   };
 
   return (
@@ -164,50 +148,12 @@ export function HeroSection({
             )}
           </div>
 
-          {/* Action bar */}
-          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-            <Button
-              onClick={handleMessage}
-              className="h-12 w-full gap-2 rounded-xl bg-primary px-3 text-xs font-semibold text-primary-foreground shadow-[var(--shadow-button)] hover:bg-primary/90 hover:shadow-[var(--shadow-button-hover)] sm:px-5 sm:text-sm"
-            >
-              <Send className="size-5" />
-              Message
-            </Button>
-
-            <button
-              onClick={handleShortlist}
-              className={cn(
-                "flex h-12 w-full items-center justify-center gap-2 rounded-xl border px-3 text-xs font-semibold transition-all active:scale-95 sm:px-5 sm:text-sm",
-                shortlisted
-                  ? "border-gold/40 bg-gold/10 text-gold"
-                  : "profile-action",
-              )}
-            >
-              <Star className={cn("size-5", shortlisted && "fill-current")} />
-              {shortlisted ? "Shortlisted" : "Shortlist"}
-            </button>
-
-            <button
-              onClick={handleSave}
-              className={cn(
-                "flex h-12 w-full items-center justify-center gap-2 rounded-xl border px-3 text-xs font-semibold transition-all active:scale-95 sm:px-5 sm:text-sm",
-                saved
-                  ? "border-primary/40 bg-primary/10 text-primary"
-                  : "profile-action",
-              )}
-            >
-              <Bookmark className={cn("size-5", saved && "fill-current")} />
-              {saved ? "Saved" : "Save"}
-            </button>
-
-            <button
-              onClick={handleShare}
-              className="profile-action flex h-12 w-full items-center justify-center gap-2 rounded-xl px-3 text-xs font-semibold transition-all active:scale-95 sm:px-5 sm:text-sm"
-            >
-              <Share2 className="size-5" />
-              Share
-            </button>
-          </div>
+          <TalentProfileActions
+            profile={profile}
+            viewerRole={viewerRole}
+            campaigns={campaigns}
+            campaignsLoading={campaignsLoading}
+          />
         </motion.div>
       </div>
     </section>
