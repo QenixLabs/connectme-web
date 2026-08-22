@@ -39,28 +39,28 @@ export default function MarketingHomePage() {
         sizes="100vw"
       />
 
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background/90" />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#00060C]/80 via-[#00060C]/60 to-[#00060C]/90" />
       <div className="pointer-events-none absolute inset-0 bg-black/40" />
 
-      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-md flex-col animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-md flex-col text-white animate-in fade-in slide-in-from-bottom-4 duration-700">
         <header className="px-6 pt-10">
           <RootInLogo />
         </header>
 
         <section className="px-6 pt-8">
-          <h1 className="font-display text-[1.65rem] font-bold leading-[1.2] tracking-tight text-foreground drop-shadow-sm">
+          <h1 className="font-display text-[1.65rem] font-bold leading-[1.2] tracking-tight text-white drop-shadow-sm">
             The Professional Network
             <br />
             for Entertainment
             <br />& Creative Industry
           </h1>
-          <p className="mt-4 max-w-[22rem] text-sm leading-relaxed text-foreground/90 drop-shadow-sm">
+          <p className="mt-4 max-w-[22rem] text-sm leading-relaxed text-white/90 drop-shadow-sm">
             Join verified talent, recruiters, companies and mentors to create endless
             opportunities.
           </p>
           <a
             href="#network"
-            className="mt-5 inline-flex items-center justify-center rounded-full bg-blue px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:bg-blue/90 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue focus:ring-offset-2 focus:ring-offset-background"
+            className="mt-5 inline-flex items-center justify-center rounded-full bg-blue px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:bg-blue/90 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue focus:ring-offset-2 focus:ring-offset-[#00060C]"
           >
             Join Our Network
           </a>
@@ -96,12 +96,12 @@ function Stat({
   color: string;
 }) {
   return (
-    <div className="flex flex-col items-center rounded-xl bg-background/40 p-3 backdrop-blur-sm">
+    <div className="flex flex-col items-center rounded-xl bg-black/40 p-3 backdrop-blur-sm">
       <Icon className={`h-6 w-6 ${color}`} strokeWidth={1.75} aria-hidden="true" />
-      <p className="mt-3 font-display text-xl font-bold text-foreground drop-shadow-sm">
+      <p className="mt-3 font-display text-xl font-bold text-white drop-shadow-sm">
         {value}
       </p>
-      <p className="mt-1 text-[0.7rem] text-foreground/80">{label}</p>
+      <p className="mt-1 text-[0.7rem] text-white/80">{label}</p>
     </div>
   );
 }
