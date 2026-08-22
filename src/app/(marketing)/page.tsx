@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { Users, Briefcase, Star, type LucideIcon } from "lucide-react";
 import { RootInLogo } from "@/components/RootInLogo";
-
+import Link from "next/link";
 const title = "RootIn — Network for Entertainment & Creative Talent";
 const description =
   "RootIn connects verified talent, recruiters, companies and mentors across the entertainment and creative industry.";
@@ -47,7 +47,7 @@ export default function MarketingHomePage() {
           <RootInLogo />
         </header>
 
-        <section className="px-6 pt-8">
+        <section className="px-6">
           <h1 className="font-display text-[1.65rem] font-bold leading-[1.2] tracking-tight text-white drop-shadow-sm">
             The Professional Network
             <br />
@@ -58,12 +58,12 @@ export default function MarketingHomePage() {
             Join verified talent, recruiters, companies and mentors to create endless
             opportunities.
           </p>
-          <a
-            href="#network"
-            className="mt-5 inline-flex items-center justify-center rounded-full bg-blue px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:bg-blue/90 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue focus:ring-offset-2 focus:ring-offset-[#00060C]"
-          >
-            Join Our Network
-          </a>
+          <Link
+  href="/auth"
+  className="mt-5 inline-flex items-center justify-center rounded-full bg-blue px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:bg-blue/90 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue focus:ring-offset-2 focus:ring-offset-[#00060C]"
+>
+  Join Our Network
+</Link>
         </section>
 
         <div className="flex-1" />
