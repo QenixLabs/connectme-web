@@ -1,32 +1,11 @@
 import type { Metadata } from "next";
-import {
-  BadgeCheck,
-  Bell,
-  Briefcase,
-  ClipboardCheck,
-  Compass,
-  Filter,
-  Layers,
-  ListChecks,
-  MessagesSquare,
-  Search,
-  Sparkles,
-  UserRoundSearch,
-} from "lucide-react";
-
-import { SiteNav } from "@/components/landing/site-nav";
-import { Hero } from "@/components/landing/hero";
-import { AudienceSplit } from "@/components/landing/audience-split";
-import { HowItWorks } from "@/components/landing/how-it-works";
-import { Stats } from "@/components/landing/stats";
-import { FeatureGrid, type Feature } from "@/components/landing/feature-grid";
-import { ShortlistPreview } from "@/components/landing/shortlist-preview";
-import { CtaBand } from "@/components/landing/cta-band";
-import { SiteFooter } from "@/components/landing/site-footer";
-
-const title = "RootIn — Connect, collaborate, get in";
+import Image from "next/image";
+import { Users, Briefcase, Star, type LucideIcon } from "lucide-react";
+import { RootInLogo } from "@/components/RootInLogo";
+import Link from "next/link";
+const title = "RootIn — Network for Entertainment & Creative Talent";
 const description =
-  "RootIn connects professionals with opportunities and lets recruiters discover, shortlist and collaborate with the right talent — from profile to finished project.";
+  "RootIn connects verified talent, recruiters, companies and mentors across the entertainment and creative industry.";
 
 export const metadata: Metadata = {
   title,
@@ -35,107 +14,94 @@ export const metadata: Metadata = {
     title,
     description,
     type: "website",
+    url: "/",
   },
   twitter: {
     card: "summary_large_image",
   },
 };
 
-const talentFeatures: Feature[] = [
-  {
-    icon: Layers,
-    title: "Showcase your work",
-    copy: "A profile built around projects, skills and proof — not a bare CV.",
-  },
-  {
-    icon: Compass,
-    title: "Get discovered",
-    copy: "Appear in recruiter searches for the skills you actually have.",
-  },
-  {
-    icon: Sparkles,
-    title: "Matched opportunities",
-    copy: "See roles and campaigns relevant to your profile, not everything at once.",
-  },
-  {
-    icon: Bell,
-    title: "Apply and track",
-    copy: "Every application in one list, with its real status attached.",
-  },
-  {
-    icon: ClipboardCheck,
-    title: "Complete tasks",
-    copy: "Finish the tasks a campaign requires and let the work speak for you.",
-  },
-  {
-    icon: BadgeCheck,
-    title: "Build relationships",
-    copy: "Stay connected to the brands and recruiters you have worked with.",
-  },
-];
-
-const recruiterFeatures: Feature[] = [
-  {
-    icon: UserRoundSearch,
-    title: "Discover talent",
-    copy: "Search and filter profiles by skill, discipline and proven work.",
-  },
-  {
-    icon: Briefcase,
-    title: "Create campaigns",
-    copy: "Publish an opportunity or campaign with the requirements you need.",
-  },
-  {
-    icon: Search,
-    title: "Review applicants",
-    copy: "Applications arrive structured, so evaluation is not an inbox problem.",
-  },
-  {
-    icon: Filter,
-    title: "Compare and shortlist",
-    copy: "Put candidates next to each other and shortlist with confidence.",
-  },
-  {
-    icon: ListChecks,
-    title: "Assign and verify tasks",
-    copy: "See exactly who completed what before you commit.",
-  },
-  {
-    icon: MessagesSquare,
-    title: "Collaborate",
-    copy: "Communicate and manage the work with the people you selected.",
-  },
+const stats = [
+  { icon: Users, value: "500K+", label: "Verified Talent", color: "text-blue" },
+  { icon: Briefcase, value: "10K+", label: "Companies", color: "text-blue" },
+  { icon: Star, value: "50K+", label: "Opportunities", color: "text-gold" },
 ];
 
 export default function MarketingHomePage() {
   return (
-    <div className="min-h-screen bg-background font-sans">
-      <SiteNav />
-      <main>
-        <Hero />
-        <AudienceSplit />
-        <HowItWorks />
-        <Stats />
-        <FeatureGrid
-          eyebrow="Talent toolkit"
-          tone="cyan"
-          surface="background"
-          title="Everything you need to be found and chosen"
-          subtitle="Present your work once, then let relevant opportunities come to you."
-          features={talentFeatures}
-        />
-        <FeatureGrid
-          eyebrow="Recruiter toolkit"
-          tone="gold"
-          surface="surface"
-          title="From first search to finished collaboration"
-          subtitle="Discovery, applications, shortlists, tasks and delivery — one workflow instead of five tools."
-          features={recruiterFeatures}
-        />
-        <ShortlistPreview />
-        <CtaBand />
-      </main>
-      <SiteFooter />
+    <main className="relative min-h-screen overflow-hidden">
+      <Image
+        src="/hero-bg.png"
+        alt="A director's chair and lit studio spotlight on a dark film set"
+        fill
+        priority
+        className="absolute inset-0 h-full w-full object-cover"
+        sizes="100vw"
+      />
+
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#00060C]/80 via-[#00060C]/60 to-[#00060C]/90" />
+      <div className="pointer-events-none absolute inset-0 bg-black/40" />
+
+      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-md flex-col text-white animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <header className="px-6 pt-10">
+          <RootInLogo />
+        </header>
+
+        <section className="px-6">
+          <h1 className="font-display text-[1.65rem] font-bold leading-[1.2] tracking-tight text-white drop-shadow-sm">
+            The Professional Network
+            <br />
+            for Entertainment
+            <br />& Creative Industry
+          </h1>
+          <p className="mt-4 max-w-[22rem] text-sm leading-relaxed text-white/90 drop-shadow-sm">
+            Join verified talent, recruiters, companies and mentors to create endless
+            opportunities.
+          </p>
+          <Link
+  href="/auth"
+  className="mt-5 inline-flex items-center justify-center rounded-full bg-blue px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:bg-blue/90 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue focus:ring-offset-2 focus:ring-offset-[#00060C]"
+>
+  Join Our Network
+</Link>
+        </section>
+
+        <div className="flex-1" />
+
+        <section className="grid grid-cols-3 gap-4 px-6 pb-12 pt-2 text-center">
+          {stats.map(({ icon: Icon, value, label, color }) => (
+            <Stat
+              key={label}
+              icon={Icon}
+              value={value}
+              label={label}
+              color={color}
+            />
+          ))}
+        </section>
+      </div>
+    </main>
+  );
+}
+
+function Stat({
+  icon: Icon,
+  value,
+  label,
+  color,
+}: {
+  icon: LucideIcon;
+  value: string;
+  label: string;
+  color: string;
+}) {
+  return (
+    <div className="flex flex-col items-center rounded-xl bg-black/40 p-3 backdrop-blur-sm">
+      <Icon className={`h-6 w-6 ${color}`} strokeWidth={1.75} aria-hidden="true" />
+      <p className="mt-3 font-display text-xl font-bold text-white drop-shadow-sm">
+        {value}
+      </p>
+      <p className="mt-1 text-[0.7rem] text-white/80">{label}</p>
     </div>
   );
 }

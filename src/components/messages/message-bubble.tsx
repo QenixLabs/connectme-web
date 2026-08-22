@@ -26,6 +26,9 @@ function StatusIcon({ status }: { status: Message["status"] }) {
   if (status === "read") {
     return <CheckCheck className="size-3 text-cyan" />;
   }
+  if (status === "delivered") {
+    return <CheckCheck className="size-3 opacity-70" />;
+  }
   return <Check className="size-3 opacity-70" />;
 }
 

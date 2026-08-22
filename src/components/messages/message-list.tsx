@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { isSameDay, format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { getMessageSenderId } from "@/lib/messages";
 import { Separator } from "@/components/ui/separator";
 import { MessageBubble } from "./message-bubble";
 import { EmptyState } from "./empty-state";
@@ -95,9 +96,11 @@ export function MessageList({
             </div>
 
             {group.messages.map((m, idx) => {
-              const isMe = m.sender_id === currentUserId;
+              const senderId = getMessageSenderId(m);
+              const isMe = senderId === currentUserId;
               const prev = group.messages[idx - 1];
-              const showAvatar = !isMe && (!prev || prev.sender_id !== m.sender_id);
+              const prevSenderId = prev ? getMessageSenderId(prev) : undefined;
+              const showAvatar = !isMe && (!prev || prevSenderId !== senderId);
               return (
                 <MessageBubble
                   key={m._id}

@@ -6,12 +6,14 @@ import { GlassCard } from "./primitives";
 
 export function PrivateProfilePreview({
   profile,
+  viewerRole = null,
 }: {
   profile: TalentProfilePreview;
+  viewerRole?: "talent" | "recruiter" | "admin" | null;
 }) {
   return (
     <div className="relative min-h-screen bg-bg-page pb-24">
-      <HeroSection profile={profile} />
+      <HeroSection profile={profile} viewerRole={viewerRole} />
 
       <main className="relative z-10 mx-auto max-w-5xl px-4 sm:px-6">
         <GlassCard hover={false}>

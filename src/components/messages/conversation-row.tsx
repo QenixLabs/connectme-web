@@ -2,9 +2,10 @@
 
 import { memo } from "react";
 import { motion } from "motion/react";
-import { BadgeCheck, CheckCheck, Clock, Pin } from "lucide-react";
+import { BadgeCheck, Check, CheckCheck, Clock, Pin } from "lucide-react";
 import { cn, relativeTime } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getConversationParticipant } from "@/lib/messages";
 import type { Conversation } from "@/lib/api/types";
 
 interface ConversationRowProps {
@@ -15,6 +16,19 @@ interface ConversationRowProps {
   index?: number;
 }
 
+function StatusIcon({ status }: { status: string }) {
+  if (status === "sending" || status === "failed") {
+    return <Clock className="size-3.5 opacity-70" />;
+  }
+  if (status === "read") {
+    return <CheckCheck className="size-3.5 text-cyan" />;
+  }
+  if (status === "delivered") {
+    return <CheckCheck className="size-3.5 opacity-70" />;
+  }
+  return <Check className="size-3.5 opacity-70" />;
+}
+
 export const ConversationRow = memo(function ConversationRow({
   conversation,
   active,
@@ -22,8 +36,8 @@ export const ConversationRow = memo(function ConversationRow({
   onSelect,
   index = 0,
 }: ConversationRowProps) {
-  const p = conversation.participant;
-  const name = p?.full_legal_name || p?.company_name || "Unknown";
+  const p = getConversationParticipant(conversation, currentUserId);
+  const name = p?.full_legal_name || p?.company_name || p?.username || "Unknown";
   const initials = name
     .split(" ")
     .map((n) => n[0])
@@ -110,12 +124,12 @@ export const ConversationRow = memo(function ConversationRow({
             >
               {preview}
             </p>
-            {isMe && unread === 0 && (
+            {isMe && (
               <span className="shrink-0 text-muted-foreground">
                 {muted ? (
                   <Clock className="size-3.5" aria-label="Muted" />
                 ) : (
-                  <CheckCheck className="size-3.5 text-cyan" aria-label="Read" />
+                  <StatusIcon status={conversation.last_message_status || "sent"} />
                 )}
               </span>
             )}

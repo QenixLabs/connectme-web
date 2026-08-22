@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PortfolioReelOverlay } from "@/components/portfolio/PortfolioReelOverlay";
 import type { TalentProfile, PortfolioApiResponse, Credit, Testimonial, Award } from "@/lib/api/talent";
+import type { Campaign } from "@/lib/api/campaigns";
 import { HeroSection } from "./HeroSection";
 import { StatsBento } from "./StatsBento";
 import {
@@ -41,12 +42,18 @@ export function TalentProfileView({
   credits,
   testimonials,
   awards,
+  viewerRole,
+  campaigns,
+  campaignsLoading,
 }: {
   profile: TalentProfile;
   portfolioItems: PortfolioApiResponse[];
   credits: Credit[];
   testimonials: Testimonial[];
   awards: Award[];
+  viewerRole: "talent" | "recruiter" | "admin" | null;
+  campaigns?: Campaign[];
+  campaignsLoading?: boolean;
 }) {
   const [reelItemId, setReelItemId] = useState<string | null>(null);
 
@@ -65,7 +72,12 @@ export function TalentProfileView({
 
   return (
     <div className="relative min-h-screen bg-bg-page pb-24">
-      <HeroSection profile={profile} />
+      <HeroSection
+        profile={profile}
+        viewerRole={viewerRole}
+        campaigns={campaigns}
+        campaignsLoading={campaignsLoading}
+      />
 
       <main className="relative z-10 mx-auto max-w-5xl px-4 sm:px-6">
         <div className="space-y-6">

@@ -8,6 +8,7 @@ import { useStore } from "zustand/react";
 import {
   ArrowLeft,
   BadgeCheck,
+  Check,
   CheckCheck,
   MoreVertical,
   Paperclip,
@@ -15,6 +16,8 @@ import {
 } from "lucide-react";
 import { authStore } from "@/stores/auth-store";
 import { conversationsApi, type Conversation, type Message } from "@/lib/api";
+import { getConversationParticipant, getMessageSenderId } from "@/lib/messages";
+import { useConversationSocket } from "@/hooks/use-conversation-socket";
 
 function MessageSkeleton() {
   return (
@@ -44,7 +47,39 @@ export default function RecruiterConversationPage() {
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const participant = conversation?.participant;
+  const { sendMessage: sendSocketMessage, markMessageRead } = useConversationSocket(
+    conversationId,
+    {
+      onMessageNew: (msg) => {
+        setMessages((prev) => {
+          const byClientId = prev.findIndex((m) => m.client_message_id === msg.client_message_id);
+          if (byClientId !== -1) {
+            const next = [...prev];
+            next[byClientId] = msg;
+            return next;
+          }
+          const exists = prev.some((m) => m._id === msg._id);
+          if (exists) return prev;
+          return [...prev, msg];
+        });
+        if (getMessageSenderId(msg) !== currentUserId) {
+          markMessageRead({ conversation_id: msg.conversation_id, message_id: msg._id });
+        }
+      },
+      onMessageDelivered: (payload) => {
+        setMessages((prev) =>
+          prev.map((m) => (m._id === payload.message_id ? { ...m, status: "delivered" } : m))
+        );
+      },
+      onMessageRead: (payload) => {
+        setMessages((prev) =>
+          prev.map((m) => (m._id === payload.message_id ? { ...m, status: "read" } : m))
+        );
+      },
+    }
+  );
+
+  const participant = getConversationParticipant(conversation, currentUserId);
   const name = participant?.full_legal_name || participant?.company_name || "Unknown";
   const avatar = participant?.profile_photo || "/images/talent-avatar.jpg";
   const profession = participant?.professions?.[0] || participant?.role || "";
@@ -89,14 +124,43 @@ export default function RecruiterConversationPage() {
 
     const clientId = `client-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
+    const optimistic: Message = {
+      _id: clientId,
+      conversation_id: conversation._id,
+      sender_id: currentUserId ?? "",
+      content,
+      message_type: "text",
+      attachments: [],
+      client_message_id: clientId,
+      status: "sending",
+      read_by: [],
+      created_at: new Date().toISOString(),
+    };
+
+    setMessages((prev) => [...prev, optimistic]);
+
     try {
-      const msg = await conversationsApi.sendMessage({
+      sendSocketMessage({
         conversation_id: conversation._id,
         content,
         client_message_id: clientId,
       });
-      setMessages((prev) => [...prev, msg]);
+
+      setTimeout(() => {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.client_message_id === clientId && m.status === "sending"
+              ? { ...m, status: "failed" }
+              : m
+          )
+        );
+      }, 5000);
     } catch {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.client_message_id === clientId ? { ...m, status: "failed" } : m
+        )
+      );
       setSendText(content);
     } finally {
       setSending(false);
@@ -172,7 +236,7 @@ export default function RecruiterConversationPage() {
               </div>
 
               {messages.map((m) => {
-                const isMe = m.sender_id === currentUserId;
+                const isMe = getMessageSenderId(m) === currentUserId;
                 const time = new Date(m.created_at).toLocaleTimeString([], {
                   hour: "2-digit",
                   minute: "2-digit",
@@ -197,8 +261,18 @@ export default function RecruiterConversationPage() {
                         }`}
                       >
                         {time}
-                        {isMe && m.status === "read" && (
-                          <CheckCheck className="ml-1 inline h-3 w-3" />
+                        {isMe && (
+                          <span className="ml-1 inline-flex items-center">
+                            {m.status === "read" ? (
+                              <CheckCheck className="inline h-3 w-3 text-cyan" />
+                            ) : m.status === "delivered" ? (
+                              <CheckCheck className="inline h-3 w-3 opacity-70" />
+                            ) : m.status === "failed" ? (
+                              <span className="text-[10px] text-red-300">!</span>
+                            ) : (
+                              <Check className="inline h-3 w-3 opacity-70" />
+                            )}
+                          </span>
                         )}
                       </span>
                     </div>

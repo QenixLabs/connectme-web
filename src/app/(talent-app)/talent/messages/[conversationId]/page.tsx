@@ -6,6 +6,8 @@ import { useStore } from "zustand/react";
 import { toast } from "sonner";
 import { authStore } from "@/stores/auth-store";
 import { conversationsApi } from "@/lib/api";
+import { getConversationParticipant, getMessageSenderId } from "@/lib/messages";
+import { useConversationSocket } from "@/hooks/use-conversation-socket";
 import { ConversationHeader, MessageList, MessageComposer } from "@/components/messages";
 import type { Conversation, Message } from "@/lib/api/types";
 
@@ -20,6 +22,38 @@ export default function TalentConversationPage() {
   const [loading, setLoading] = useState(true);
   const [sendText, setSendText] = useState("");
   const [sending, setSending] = useState(false);
+
+  const { sendMessage: sendSocketMessage, markMessageRead } = useConversationSocket(
+    conversationId,
+    {
+      onMessageNew: (msg) => {
+        setMessages((prev) => {
+          const byClientId = prev.findIndex((m) => m.client_message_id === msg.client_message_id);
+          if (byClientId !== -1) {
+            const next = [...prev];
+            next[byClientId] = msg;
+            return next;
+          }
+          const exists = prev.some((m) => m._id === msg._id);
+          if (exists) return prev;
+          return [...prev, msg];
+        });
+        if (getMessageSenderId(msg) !== currentUserId) {
+          markMessageRead({ conversation_id: msg.conversation_id, message_id: msg._id });
+        }
+      },
+      onMessageDelivered: (payload) => {
+        setMessages((prev) =>
+          prev.map((m) => (m._id === payload.message_id ? { ...m, status: "delivered" } : m))
+        );
+      },
+      onMessageRead: (payload) => {
+        setMessages((prev) =>
+          prev.map((m) => (m._id === payload.message_id ? { ...m, status: "read" } : m))
+        );
+      },
+    }
+  );
 
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
@@ -62,14 +96,43 @@ export default function TalentConversationPage() {
     setSending(true);
     const clientId = `client-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
+    const optimistic: Message = {
+      _id: clientId,
+      conversation_id: conversation._id,
+      sender_id: currentUserId ?? "",
+      content,
+      message_type: "text",
+      attachments: [],
+      client_message_id: clientId,
+      status: "sending",
+      read_by: [],
+      created_at: new Date().toISOString(),
+    };
+
+    setMessages((prev) => [...prev, optimistic]);
+
     try {
-      const msg = await conversationsApi.sendMessage({
+      sendSocketMessage({
         conversation_id: conversation._id,
         content,
         client_message_id: clientId,
       });
-      setMessages((prev) => [...prev, msg]);
+
+      setTimeout(() => {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.client_message_id === clientId && m.status === "sending"
+              ? { ...m, status: "failed" }
+              : m
+          )
+        );
+      }, 5000);
     } catch {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.client_message_id === clientId ? { ...m, status: "failed" } : m
+        )
+      );
       setSendText(content);
       toast.error("Failed to send message.");
     } finally {
@@ -85,7 +148,7 @@ export default function TalentConversationPage() {
       .catch(() => toast.error("Could not mark as read"));
   }
 
-  const participant = conversation?.participant;
+  const participant = getConversationParticipant(conversation, currentUserId);
   const name = participant?.full_legal_name || participant?.company_name || "Unknown";
 
   return (
