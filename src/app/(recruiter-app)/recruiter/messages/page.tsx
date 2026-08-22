@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useStore } from "zustand/react";
 import {
   BadgeCheck,
+  Check,
   CheckCheck,
   Paperclip,
   Search,
@@ -14,6 +15,8 @@ import {
 } from "lucide-react";
 import { authStore } from "@/stores/auth-store";
 import { conversationsApi, type Conversation, type Message } from "@/lib/api";
+import { getConversationParticipant, getMessageSenderId } from "@/lib/messages";
+import { useConversationSocket } from "@/hooks/use-conversation-socket";
 
 const PAGE_SIZE = 20;
 
@@ -34,8 +37,8 @@ function ConversationRow({
   isLast: boolean;
   lastRef?: (node: HTMLDivElement | null) => void;
 }) {
-  const p = c.participant;
-  const name = p?.full_legal_name || p?.company_name || "Unknown";
+  const p = getConversationParticipant(c, currentUserId);
+  const name = p?.full_legal_name || p?.company_name || p?.username || "Unknown";
   const avatar = p?.profile_photo || "/images/avatars/msg-talent.jpg";
   const profession = p?.professions?.[0] || p?.role || "";
   const city = p?.location?.city || "";
@@ -91,11 +94,20 @@ function ConversationRow({
                 <span className="grid size-6 shrink-0 place-items-center rounded-full bg-teal text-xs font-bold text-primary-foreground">
                   {unreadCount}
                 </span>
-              ) : (
-                c.last_message_sender_id === currentUserId && (
-                  <CheckCheck className="size-4 shrink-0 text-teal" />
-                )
-              )}
+              ) : isMe ? (
+                <span className="shrink-0 text-muted-foreground">
+                  {(() => {
+                    const status = c.last_message_status || "sent";
+                    if (status === "read") {
+                      return <CheckCheck className="size-4 shrink-0 text-teal" />;
+                    }
+                    if (status === "delivered") {
+                      return <CheckCheck className="size-4 shrink-0 text-muted-foreground" />;
+                    }
+                    return <Check className="size-4 shrink-0 text-muted-foreground" />;
+                  })()}
+                </span>
+              ) : null}
             </div>
           </div>
         </div>
@@ -168,6 +180,65 @@ export default function RecruiterMessagesPage() {
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [sendText, setSendText] = useState("");
   const [sending, setSending] = useState(false);
+
+  const { sendMessage: sendSocketMessage, markMessageRead } = useConversationSocket(
+    activeId,
+    {
+      onMessageNew: (msg) => {
+        setMessages((prev) => {
+          const byClientId = prev.findIndex((m) => m.client_message_id === msg.client_message_id);
+          if (byClientId !== -1) {
+            const next = [...prev];
+            next[byClientId] = msg;
+            return next;
+          }
+          const exists = prev.some((m) => m._id === msg._id);
+          if (exists) return prev;
+          return [...prev, msg];
+        });
+        setConversations((prev) => {
+          const idx = prev.findIndex((c) => c._id === msg.conversation_id);
+          if (idx === -1) return prev;
+          const next = [...prev];
+          next[idx] = {
+            ...next[idx],
+            last_message_preview: typeof msg.content === "string" ? msg.content : "",
+            last_message_sender_id: getMessageSenderId(msg) ?? null,
+            last_message_at: msg.created_at,
+            last_message_status: msg.status,
+          };
+          return [next[idx], ...next.slice(0, idx), ...next.slice(idx + 1)];
+        });
+        if (getMessageSenderId(msg) !== currentUserId) {
+          markMessageRead({ conversation_id: msg.conversation_id, message_id: msg._id });
+        }
+      },
+      onMessageDelivered: (payload) => {
+        setMessages((prev) =>
+          prev.map((m) => (m._id === payload.message_id ? { ...m, status: "delivered" } : m))
+        );
+        setConversations((prev) =>
+          prev.map((c) =>
+            c._id === payload.conversation_id
+              ? { ...c, last_message_status: "delivered" }
+              : c
+          )
+        );
+      },
+      onMessageRead: (payload) => {
+        setMessages((prev) =>
+          prev.map((m) => (m._id === payload.message_id ? { ...m, status: "read" } : m))
+        );
+        setConversations((prev) =>
+          prev.map((c) =>
+            c._id === payload.conversation_id
+              ? { ...c, last_message_status: "read" }
+              : c
+          )
+        );
+      },
+    }
+  );
 
   const lastRowRef = useRef<HTMLDivElement | null>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -255,7 +326,7 @@ export default function RecruiterMessagesPage() {
     })
     .filter((c) => {
       if (!query) return true;
-      const p = c.participant;
+      const p = getConversationParticipant(c, currentUserId);
       const name = (p?.full_legal_name || p?.company_name || "").toLowerCase();
       const profession = (p?.professions?.[0] || "").toLowerCase();
       const q = query.toLowerCase();
@@ -263,7 +334,7 @@ export default function RecruiterMessagesPage() {
     });
 
   const active = safeConversations.find((c) => c._id === activeId) || null;
-  const activeParticipant = active?.participant;
+  const activeParticipant = getConversationParticipant(active, currentUserId);
   const unreadTotal = safeConversations.reduce(
     (sum, c) => sum + (c.unread_counts[currentUserId || ""] || 0),
     0,
@@ -284,22 +355,44 @@ export default function RecruiterMessagesPage() {
 
     const clientId = `client-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
+    const optimistic: Message = {
+      _id: clientId,
+      conversation_id: active._id,
+      sender_id: currentUserId ?? "",
+      content,
+      message_type: "text",
+      attachments: [],
+      client_message_id: clientId,
+      status: "sending",
+      read_by: [],
+      created_at: new Date().toISOString(),
+    };
+
+    setMessages((prev) => [...prev, optimistic]);
+
     try {
-      const msg = await conversationsApi.sendMessage({
+      sendSocketMessage({
         conversation_id: active._id,
         content,
         client_message_id: clientId,
       });
-      setMessages((prev) => [...prev, msg]);
-      setConversations((prev) =>
-        prev.map((c) =>
-          c._id === active._id
-            ? { ...c, last_message_preview: content, last_message_sender_id: currentUserId ?? null, last_message_at: new Date().toISOString() }
-            : c,
-        ),
-      );
+
+      setTimeout(() => {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.client_message_id === clientId && m.status === "sending"
+              ? { ...m, status: "failed" }
+              : m
+          )
+        );
+      }, 5000);
     } catch {
-      // could add retry UI
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.client_message_id === clientId ? { ...m, status: "failed" } : m
+        )
+      );
+      setSendText(content);
     } finally {
       setSending(false);
     }
@@ -425,7 +518,7 @@ export default function RecruiterMessagesPage() {
                   ) : (
                     <div className="space-y-4">
                       {messages.map((m) => {
-                        const isMe = m.sender_id === currentUserId;
+                        const isMe = getMessageSenderId(m) === currentUserId;
                         return (
                           <div
                             key={m._id}

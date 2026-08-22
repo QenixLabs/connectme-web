@@ -7,6 +7,8 @@ import { MessageSquarePlus } from "lucide-react";
 import { toast } from "sonner";
 import { authStore } from "@/stores/auth-store";
 import { conversationsApi } from "@/lib/api";
+import { getConversationParticipant, getMessageSenderId } from "@/lib/messages";
+import { useConversationSocket } from "@/hooks/use-conversation-socket";
 import { ConversationList, ConversationHeader, MessageList, MessageComposer, EmptyState } from "@/components/messages";
 import type { Conversation, Message } from "@/lib/api/types";
 
@@ -29,6 +31,65 @@ export default function TalentMessagesPage() {
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [sendText, setSendText] = useState("");
   const [sending, setSending] = useState(false);
+
+  const { sendMessage: sendSocketMessage, markMessageRead } = useConversationSocket(
+    activeId,
+    {
+      onMessageNew: (msg) => {
+        setMessages((prev) => {
+          const byClientId = prev.findIndex((m) => m.client_message_id === msg.client_message_id);
+          if (byClientId !== -1) {
+            const next = [...prev];
+            next[byClientId] = msg;
+            return next;
+          }
+          const exists = prev.some((m) => m._id === msg._id);
+          if (exists) return prev;
+          return [...prev, msg];
+        });
+        setConversations((prev) => {
+          const idx = prev.findIndex((c) => c._id === msg.conversation_id);
+          if (idx === -1) return prev;
+          const next = [...prev];
+          next[idx] = {
+            ...next[idx],
+            last_message_preview: typeof msg.content === "string" ? msg.content : "",
+            last_message_sender_id: getMessageSenderId(msg) ?? null,
+            last_message_at: msg.created_at,
+            last_message_status: msg.status,
+          };
+          return [next[idx], ...next.slice(0, idx), ...next.slice(idx + 1)];
+        });
+        if (getMessageSenderId(msg) !== currentUserId) {
+          markMessageRead({ conversation_id: msg.conversation_id, message_id: msg._id });
+        }
+      },
+      onMessageDelivered: (payload) => {
+        setMessages((prev) =>
+          prev.map((m) => (m._id === payload.message_id ? { ...m, status: "delivered" } : m))
+        );
+        setConversations((prev) =>
+          prev.map((c) =>
+            c._id === payload.conversation_id
+              ? { ...c, last_message_status: "delivered" }
+              : c
+          )
+        );
+      },
+      onMessageRead: (payload) => {
+        setMessages((prev) =>
+          prev.map((m) => (m._id === payload.message_id ? { ...m, status: "read" } : m))
+        );
+        setConversations((prev) =>
+          prev.map((c) =>
+            c._id === payload.conversation_id
+              ? { ...c, last_message_status: "read" }
+              : c
+          )
+        );
+      },
+    }
+  );
 
   const lastRowRef = useRef<HTMLDivElement | null>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -119,7 +180,7 @@ export default function TalentMessagesPage() {
     })
     .filter((c) => {
       if (!query) return true;
-      const p = c.participant;
+      const p = getConversationParticipant(c, currentUserId);
       const name = (p?.full_legal_name || p?.company_name || "").toLowerCase();
       const profession = (p?.professions?.[0] || "").toLowerCase();
       const q = query.toLowerCase();
@@ -127,7 +188,7 @@ export default function TalentMessagesPage() {
     });
 
   const active = safeConversations.find((c) => c._id === activeId) || null;
-  const activeParticipant = active?.participant;
+  const activeParticipant = getConversationParticipant(active, currentUserId);
   const unreadTotal = safeConversations.reduce(
     (sum, c) => sum + (c.unread_counts[currentUserId || ""] || 0),
     0
@@ -154,26 +215,43 @@ export default function TalentMessagesPage() {
     setSending(true);
     const clientId = `client-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
+    const optimistic: Message = {
+      _id: clientId,
+      conversation_id: active._id,
+      sender_id: currentUserId ?? "",
+      content,
+      message_type: "text",
+      attachments: [],
+      client_message_id: clientId,
+      status: "sending",
+      read_by: [],
+      created_at: new Date().toISOString(),
+    };
+
+    setMessages((prev) => [...prev, optimistic]);
+
     try {
-      const msg = await conversationsApi.sendMessage({
+      sendSocketMessage({
         conversation_id: active._id,
         content,
         client_message_id: clientId,
       });
-      setMessages((prev) => [...prev, msg]);
-      setConversations((prev) =>
-        prev.map((c) =>
-          c._id === active._id
-            ? {
-                ...c,
-                last_message_preview: content,
-                last_message_sender_id: currentUserId ?? null,
-                last_message_at: new Date().toISOString(),
-              }
-            : c
+
+      setTimeout(() => {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.client_message_id === clientId && m.status === "sending"
+              ? { ...m, status: "failed" }
+              : m
+          )
+        );
+      }, 5000);
+    } catch {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.client_message_id === clientId ? { ...m, status: "failed" } : m
         )
       );
-    } catch {
       setSendText(content);
       toast.error("Failed to send message.");
     } finally {

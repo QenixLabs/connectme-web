@@ -1,5 +1,6 @@
 export interface ConversationParticipant {
   _id: string;
+  email?: string;
   username?: string;
   full_legal_name?: string;
   company_name?: string;
@@ -12,12 +13,13 @@ export interface ConversationParticipant {
 
 export interface Conversation {
   _id: string;
-  participant_ids: string[];
+  participant_ids: (string | ConversationParticipant)[];
   participant?: ConversationParticipant;
   last_message_id: string | null;
   last_message_preview: string;
   last_message_sender_id: string | null;
   last_message_at: string;
+  last_message_status?: string;
   unread_counts: Record<string, number>;
   user_settings: Record<
     string,
@@ -40,7 +42,7 @@ export interface Attachment {
 export interface Message {
   _id: string;
   conversation_id: string;
-  sender_id: string;
+  sender_id: string | ConversationParticipant;
   content: string;
   message_type: "text" | "image" | "file" | "system";
   attachments: Attachment[];
