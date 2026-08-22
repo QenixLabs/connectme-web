@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import type { ComponentType } from "react";
-import { Building2, Star, Users } from "lucide-react";
-import logo from "@/assets/rootin-logo-orange.png";
+import { Users, Briefcase, Star, type LucideIcon } from "lucide-react";
+import { RootInLogo } from "@/components/RootInLogo";
 
-const title = "RootIn — Connect, collaborate, get in";
+const title = "RootIn — Network for Entertainment & Creative Talent";
 const description =
-  "RootIn connects professionals with opportunities and lets recruiters discover, shortlist and collaborate with the right talent — from profile to finished project.";
+  "RootIn connects verified talent, recruiters, companies and mentors across the entertainment and creative industry.";
 
 export const metadata: Metadata = {
   title,
@@ -15,47 +14,71 @@ export const metadata: Metadata = {
     title,
     description,
     type: "website",
+    url: "/",
   },
   twitter: {
     card: "summary_large_image",
   },
 };
 
+const stats = [
+  { icon: Users, value: "500K+", label: "Verified Talent", color: "text-blue" },
+  { icon: Briefcase, value: "10K+", label: "Companies", color: "text-blue" },
+  { icon: Star, value: "50K+", label: "Opportunities", color: "text-gold" },
+];
+
 export default function MarketingHomePage() {
   return (
-    <main className="relative flex h-screen w-full flex-col overflow-hidden bg-black text-white">
+    <main className="relative min-h-screen overflow-hidden">
       <Image
         src="/hero-bg.png"
-        alt="RootIn background"
+        alt="A director's chair and lit studio spotlight on a dark film set"
         fill
         priority
-        className="object-cover"
+        className="absolute inset-0 h-full w-full object-cover"
         sizes="100vw"
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/30 to-black/80" />
 
-      <div className="relative z-10 flex flex-1 flex-col justify-between px-6 py-10">
-        <div>
-          <Image src={logo} alt="RootIn" className="h-16 w-auto" priority />
-          <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-white/80">
-            Connect • Collaborate • Get in
-          </p>
-        </div>
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background/90" />
+      <div className="pointer-events-none absolute inset-0 bg-black/40" />
 
-        <div className="max-w-md">
-          <h1 className="font-display text-4xl font-bold leading-tight tracking-tight md:text-5xl">
-            The Professional Network for Entertainment & Creative Industry
+      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-md flex-col animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <header className="px-6 pt-10">
+          <RootInLogo />
+        </header>
+
+        <section className="px-6 pt-8">
+          <h1 className="font-display text-[1.65rem] font-bold leading-[1.2] tracking-tight text-foreground drop-shadow-sm">
+            The Professional Network
+            <br />
+            for Entertainment
+            <br />& Creative Industry
           </h1>
-          <p className="mt-4 text-base leading-relaxed text-white/80">
-            Join verified talent, recruiters, companies and mentors to create endless opportunities.
+          <p className="mt-4 max-w-[22rem] text-sm leading-relaxed text-foreground/90 drop-shadow-sm">
+            Join verified talent, recruiters, companies and mentors to create endless
+            opportunities.
           </p>
-        </div>
+          <a
+            href="#network"
+            className="mt-5 inline-flex items-center justify-center rounded-full bg-blue px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:bg-blue/90 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue focus:ring-offset-2 focus:ring-offset-background"
+          >
+            Join Our Network
+          </a>
+        </section>
 
-        <div className="grid grid-cols-3 gap-4">
-          <Stat icon={Users} value="500K+" label="Verified Talent" />
-          <Stat icon={Building2} value="10K+" label="Companies" />
-          <Stat icon={Star} value="50K+" label="Opportunities" />
-        </div>
+        <div className="flex-1" />
+
+        <section className="grid grid-cols-3 gap-4 px-6 pb-12 pt-2 text-center">
+          {stats.map(({ icon: Icon, value, label, color }) => (
+            <Stat
+              key={label}
+              icon={Icon}
+              value={value}
+              label={label}
+              color={color}
+            />
+          ))}
+        </section>
       </div>
     </main>
   );
@@ -65,18 +88,20 @@ function Stat({
   icon: Icon,
   value,
   label,
+  color,
 }: {
-  icon: ComponentType<{ className?: string }>;
+  icon: LucideIcon;
   value: string;
   label: string;
+  color: string;
 }) {
   return (
-    <div className="flex flex-col items-center text-center">
-      <Icon className="mb-2 h-6 w-6 text-blue-400" />
-      <span className="text-lg font-bold">{value}</span>
-      <span className="text-[10px] uppercase tracking-wide text-white/70">
-        {label}
-      </span>
+    <div className="flex flex-col items-center rounded-xl bg-background/40 p-3 backdrop-blur-sm">
+      <Icon className={`h-6 w-6 ${color}`} strokeWidth={1.75} aria-hidden="true" />
+      <p className="mt-3 font-display text-xl font-bold text-foreground drop-shadow-sm">
+        {value}
+      </p>
+      <p className="mt-1 text-[0.7rem] text-foreground/80">{label}</p>
     </div>
   );
 }
