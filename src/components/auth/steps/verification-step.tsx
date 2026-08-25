@@ -19,9 +19,10 @@ const ROLE_HOME: Record<string, string> = {
 interface VerificationStepProps {
   signupEmail: string;
   onBack: () => void;
+  onVerified?: () => void;
 }
 
-export function VerificationStep({ signupEmail, onBack }: VerificationStepProps) {
+export function VerificationStep({ signupEmail, onBack, onVerified }: VerificationStepProps) {
   const form = useFormContext<SignupFormValues>();
   const method = form.getValues("verification_method");
   const phone = form.getValues("phone");
@@ -59,12 +60,13 @@ export function VerificationStep({ signupEmail, onBack }: VerificationStepProps)
       await authApi.verifyOtp(signupEmail, otp);
       setStatus("verified");
       await login(signupEmail, form.getValues("password"));
+      onVerified?.();
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
       setApiError(e.response?.data?.message || "Invalid OTP. Please try again.");
       setStatus("entering");
     }
-  }, [signupEmail, otp, login, form]);
+  }, [signupEmail, otp, login, form, onVerified]);
 
   const handleResend = useCallback(async () => {
     setApiError(null);
@@ -89,13 +91,13 @@ export function VerificationStep({ signupEmail, onBack }: VerificationStepProps)
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.35, ease: [0.25, 0.4, 0.25, 1] }}
-          className="flex flex-col items-center py-10 text-center"
+          className="flex flex-col items-center py-6 text-center"
         >
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.1, type: "spring", stiffness: 200, damping: 15 }}
-            className="mb-5 grid size-16 place-items-center rounded-full bg-green-500/20"
+            className="mb-4 grid size-16 place-items-center rounded-full bg-green-500/20"
           >
             <CheckCircle2 className="size-8 text-green-500" strokeWidth={2} />
           </motion.div>
@@ -115,8 +117,8 @@ export function VerificationStep({ signupEmail, onBack }: VerificationStepProps)
           transition={{ duration: 0.25 }}
           className="flex flex-col items-center text-center"
         >
-          <div className="mb-6 text-center">
-            <span className="mb-4 inline-grid size-14 place-items-center rounded-full border border-primary/30 bg-primary/10">
+          <div className="mb-4 text-center">
+            <span className="mb-3 inline-grid size-14 place-items-center rounded-full border border-primary/30 bg-primary/10">
               <Icon className="size-6 text-primary" strokeWidth={1.75} />
             </span>
             <h1 className="text-2xl font-bold tracking-tight text-foreground">
@@ -141,9 +143,9 @@ export function VerificationStep({ signupEmail, onBack }: VerificationStepProps)
             Check your {isEmail ? "inbox" : "phone"} and enter the 6-digit code
           </p>
 
-          <OtpInput value={otp} onChange={setOtp} className="mt-6" />
+          <OtpInput value={otp} onChange={setOtp} className="mt-4" />
 
-          <p className="mt-5 text-sm text-muted-foreground">
+          <p className="mt-3 text-sm text-muted-foreground">
             {cooldown > 0 ? (
               <>
                 Resend code in{" "}
@@ -166,7 +168,7 @@ export function VerificationStep({ signupEmail, onBack }: VerificationStepProps)
 
           <Button
             size="lg"
-            className="mt-6 h-11 w-full rounded-xl text-sm font-semibold"
+            className="mt-4 h-11 w-full rounded-xl text-sm font-semibold sm:h-12"
             disabled={otp.length < 6 || status === "verifying"}
             onClick={handleVerify}
           >
@@ -183,7 +185,7 @@ export function VerificationStep({ signupEmail, onBack }: VerificationStepProps)
           <button
             type="button"
             onClick={onBack}
-            className="mt-5 flex w-full items-center justify-center gap-2 text-sm text-primary transition-colors hover:underline"
+            className="mt-3 flex w-full items-center justify-center gap-2 text-sm text-primary transition-colors hover:underline"
           >
             <ArrowLeft className="h-4 w-4" strokeWidth={1.5} /> Back to edit details
           </button>

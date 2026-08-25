@@ -97,6 +97,8 @@ export interface TalentProfile {
   hero_background?: string;
   creator_link?: string;
   trust_score?: number;
+  response_rate?: number;
+  response_time?: string;
   is_verified?: boolean;
   created_at: string;
   updated_at: string;

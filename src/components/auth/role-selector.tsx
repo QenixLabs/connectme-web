@@ -40,7 +40,7 @@ export function RoleSelector<T extends FieldValues>({
             type="button"
             onClick={() => form.setValue(fieldName, id as any, { shouldValidate: true })}
             className={cn(
-              "group relative flex flex-col items-center gap-3 rounded-2xl border-2 p-5 text-center transition-all duration-300",
+              "group relative flex flex-col items-center gap-2.5 rounded-2xl border-2 p-4 text-center transition-all duration-300",
               isSelected
                 ? "border-primary bg-primary/10 shadow-[var(--glow-accent)]"
                 : "border-border bg-card hover:border-primary/30 hover:bg-primary/5 hover:shadow-lg",
@@ -48,13 +48,13 @@ export function RoleSelector<T extends FieldValues>({
           >
             <span
               className={cn(
-                "grid size-12 place-items-center rounded-xl transition-colors duration-300",
+                "grid size-10 place-items-center rounded-xl transition-colors duration-300",
                 isSelected
                   ? "bg-primary/20 text-primary"
                   : "bg-secondary/40 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary",
               )}
             >
-              <Icon className="size-6" strokeWidth={1.75} />
+              <Icon className="size-5" strokeWidth={1.75} />
             </span>
             <div>
               <p

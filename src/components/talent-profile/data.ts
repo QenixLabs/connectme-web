@@ -7,10 +7,14 @@ import type {
 } from "@/lib/api/talent";
 import type { PortfolioItem } from "@/lib/types/portfolio";
 
-export interface ProfileFacts {
-  icon: "calendar" | "height" | "globe" | "eye";
+export interface DetailField {
   label: string;
   value: string;
+}
+
+export interface DetailGroup {
+  title: string;
+  fields: DetailField[];
 }
 
 export interface ExperienceItem {
@@ -62,42 +66,90 @@ export function formatRelativeTime(dateStr: string): string {
   return `${Math.floor(diffDays / 365)} years ago`;
 }
 
-export function getFacts(profile: TalentProfile): ProfileFacts[] {
-  const facts: ProfileFacts[] = [];
+function formatHeight(cm: number): string {
+  const feet = Math.floor(cm / 30.48);
+  const inches = Math.round((cm / 25.4) % 12);
+  return `${feet}'${inches}"`;
+}
 
-  if (profile.physical_attributes?.height_cm) {
-    const cm = profile.physical_attributes.height_cm;
-    const feet = Math.floor(cm / 30.48);
-    const inches = Math.round((cm / 25.4) % 12);
-    facts.push({ icon: "height", label: "Height", value: `${feet}'${inches}"` });
+function computeAge(dateOfBirth: string): number | null {
+  const birth = new Date(dateOfBirth);
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  return age;
+}
+
+export function getDetailGroups(
+  profile: TalentProfile,
+  awards: AwardItem[],
+): DetailGroup[] {
+  const groups: DetailGroup[] = [];
+
+  // Personal Information
+  const personalFields: DetailField[] = [];
+  if (profile.date_of_birth) {
+    const age = computeAge(profile.date_of_birth);
+    if (age !== null) personalFields.push({ label: "Age", value: String(age) });
   }
-
+  if (profile.gender) personalFields.push({ label: "Gender", value: profile.gender });
   if (profile.languages && profile.languages.length > 0) {
-    facts.push({
-      icon: "globe",
+    personalFields.push({
       label: "Languages",
       value: profile.languages.map((l) => `${l.name} (${l.fluency})`).join(", "),
     });
   }
+  if (profile.accents && profile.accents.length > 0) {
+    personalFields.push({ label: "Accents", value: profile.accents.join(", ") });
+  }
+  if (profile.location) {
+    const loc = formatLocation(profile.location);
+    if (loc) personalFields.push({ label: "Location", value: loc });
+  }
+  if (personalFields.length > 0) {
+    groups.push({ title: "Personal Information", fields: personalFields });
+  }
 
-  if (profile.physical_attributes?.eye_color) {
-    facts.push({
-      icon: "eye",
-      label: "Eye Color",
-      value: profile.physical_attributes.eye_color,
+  // Physical Attributes
+  const physicalFields: DetailField[] = [];
+  const pa = profile.physical_attributes;
+  if (pa?.height_cm) physicalFields.push({ label: "Height", value: formatHeight(pa.height_cm) });
+  if (pa?.weight_kg) physicalFields.push({ label: "Weight", value: `${pa.weight_kg} kg` });
+  if (pa?.body_type) physicalFields.push({ label: "Body Type", value: pa.body_type });
+  if (pa?.complexion) physicalFields.push({ label: "Complexion", value: pa.complexion });
+  if (pa?.hair_color) physicalFields.push({ label: "Hair Color", value: pa.hair_color });
+  if (pa?.hair_length) physicalFields.push({ label: "Hair Length", value: pa.hair_length });
+  if (pa?.eye_color) physicalFields.push({ label: "Eye Color", value: pa.eye_color });
+  if (pa?.distinctive_features) {
+    physicalFields.push({ label: "Distinctive Features", value: pa.distinctive_features });
+  }
+  if (physicalFields.length > 0) {
+    groups.push({ title: "Physical Attributes", fields: physicalFields });
+  }
+
+  // Professional
+  const proFields: DetailField[] = [];
+  if (profile.years_of_experience != null) {
+    proFields.push({ label: "Years of Experience", value: `${profile.years_of_experience} years` });
+  }
+  if (profile.specialties && profile.specialties.length > 0) {
+    proFields.push({ label: "Specialties", value: profile.specialties.join(", ") });
+  }
+  if (profile.headline) proFields.push({ label: "Headline", value: profile.headline });
+  if (proFields.length > 0) {
+    groups.push({ title: "Professional", fields: proFields });
+  }
+
+  // Awards & Recognitions
+  if (awards.length > 0) {
+    groups.push({
+      title: "Awards & Recognitions",
+      fields: awards.map((a) => ({ label: a.issuer, value: a.name })),
     });
   }
 
-  if (profile.date_of_birth) {
-    const birth = new Date(profile.date_of_birth);
-    const today = new Date();
-    let age = today.getFullYear() - birth.getFullYear();
-    const m = today.getMonth() - birth.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
-    facts.push({ icon: "calendar", label: "Age", value: String(age) });
-  }
-
-  return facts;
+  return groups;
 }
 
 export function toPortfolioItems(

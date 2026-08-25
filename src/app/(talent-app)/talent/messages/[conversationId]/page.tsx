@@ -112,11 +112,15 @@ export default function TalentConversationPage() {
     setMessages((prev) => [...prev, optimistic]);
 
     try {
-      sendSocketMessage({
+      const sent = sendSocketMessage({
         conversation_id: conversation._id,
         content,
         client_message_id: clientId,
       });
+
+      if (!sent) {
+        throw new Error("Socket not connected");
+      }
 
       setTimeout(() => {
         setMessages((prev) =>

@@ -26,7 +26,7 @@ export function GlassCard({
     >
       <Card
         className={cn(
-          "profile-card gap-0 overflow-hidden rounded-2xl p-5 sm:p-6",
+          "profile-card gap-0 overflow-hidden rounded-2xl p-4 sm:p-5",
           hover && "transition-all duration-200 hover:-translate-y-0.5 hover:border-border-hover",
           className,
         )}
@@ -49,17 +49,17 @@ export function SectionHeader({
   onAction?: () => void;
 }) {
   return (
-    <div className="mb-4 flex items-center justify-between gap-4">
+    <div className="mb-3 flex items-center justify-between gap-4">
       <div className="flex items-center gap-2.5">
         <span className="text-profile-section-icon">{icon}</span>
-        <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/50">
+        <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/60">
           {title}
         </h2>
       </div>
       {action && (
         <button
           onClick={onAction}
-          className="text-[11px] font-medium text-primary/80 transition-colors hover:text-primary"
+          className="shrink-0 text-xs font-semibold text-rootin transition-colors hover:text-rootin/80"
         >
           {action}
         </button>
@@ -86,7 +86,7 @@ export function StatCard({
       ? "text-accent-amber bg-accent-amber-bg border-accent-amber/30"
       : accent === "success"
         ? "text-accent-green bg-accent-green-bg border-accent-green/30"
-        : "text-accent-purple bg-accent-purple/10 border-accent-purple/20";
+        : "text-rootin bg-rootin/10 border-rootin/20";
 
   return (
     <motion.div
@@ -142,16 +142,28 @@ export function AvailabilityBadge({ status }: { status?: string }) {
         : status === "not_available"
           ? "Not Available"
           : "Available";
-  const color =
-    status === "available"
-      ? "bg-success"
-      : status === "busy"
-        ? "bg-warning"
-        : "bg-muted-foreground";
+
+  const tone =
+    status === "busy"
+      ? "border-warning/30 bg-warning/10 text-warning"
+      : status === "not_available"
+        ? "border-border bg-bg-surface-inset text-muted-foreground"
+        : "border-success/25 bg-success/10 text-success";
+  const dot =
+    status === "busy"
+      ? "bg-warning"
+      : status === "not_available"
+        ? "bg-muted-foreground"
+        : "bg-success";
 
   return (
-    <span className="profile-availability-badge inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs backdrop-blur-sm">
-      <span className={cn("size-1.5 rounded-full", color)} />
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium",
+        tone,
+      )}
+    >
+      <span className={cn("size-1.5 rounded-full", dot)} />
       {label}
     </span>
   );

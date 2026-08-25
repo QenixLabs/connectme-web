@@ -86,7 +86,7 @@ export function ProfessionGrid({ value, onChange, className }: ProfessionGridPro
         type="button"
         onClick={() => onChange(profession)}
         className={cn(
-          "flex flex-col items-center gap-2.5 rounded-xl border px-3 py-5 text-xs transition-all duration-200",
+          "flex flex-col items-center gap-1.5 rounded-xl border border-border bg-secondary/20 px-2 py-3 text-xs transition-all duration-200 sm:px-3",
           isSelected
             ? "border-primary bg-primary/10 font-medium text-primary shadow-[var(--glow-accent)]"
             : "border-border bg-secondary/20 text-foreground/80 hover:border-primary/20 hover:bg-secondary/40",
@@ -99,9 +99,9 @@ export function ProfessionGrid({ value, onChange, className }: ProfessionGridPro
   };
 
   return (
-    <div className={cn("space-y-4", className)}>
+    <div className={cn("space-y-3", className)}>
       <div>
-        <p className="mb-3 text-xs font-medium uppercase tracking-widest text-muted-foreground">
+        <p className="mb-2 text-xs font-medium uppercase tracking-widest text-muted-foreground">
           Popular choices
         </p>
         <div className="grid grid-cols-3 gap-2.5">
@@ -109,11 +109,11 @@ export function ProfessionGrid({ value, onChange, className }: ProfessionGridPro
         </div>
       </div>
 
-      <div className="border-t border-border/40 pt-4">
+      <div className="border-t border-border/40 pt-3">
         <button
           type="button"
           onClick={() => setSheetOpen(true)}
-          className="flex w-full items-center justify-between rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground transition-colors hover:border-primary/30 hover:bg-primary/5"
+          className="flex w-full items-center justify-between rounded-xl border border-border bg-card px-4 py-2.5 text-sm text-foreground transition-colors hover:border-primary/30 hover:bg-primary/5"
         >
           <span className="flex items-center gap-2">
             <Search className="size-4 text-muted-foreground" strokeWidth={1.5} />

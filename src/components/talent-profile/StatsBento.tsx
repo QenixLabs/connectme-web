@@ -1,65 +1,81 @@
 "use client";
 
-import { TrendingUp, Heart, Eye, Clapperboard, Star } from "lucide-react";
-import type { TalentProfile } from "@/lib/api/talent";
-import type { PortfolioApiResponse, Testimonial } from "@/lib/api/talent";
-import { StatCard } from "./primitives";
+import { Star } from "lucide-react";
+import { cn } from "@/lib/utils";
+import type { TalentProfile, Testimonial } from "@/lib/api/talent";
 import { computeRating } from "./data";
+
+function Metric({
+  label,
+  value,
+  sub,
+  tone,
+}: {
+  label: string;
+  value: React.ReactNode;
+  sub?: string;
+  tone: "rootin" | "success" | "gold";
+}) {
+  return (
+    <div className="profile-stat rounded-2xl px-2 py-3.5 text-center transition-all duration-200 hover:border-border-hover sm:px-3 sm:py-4">
+      <p
+        className={cn(
+          "flex items-baseline justify-center gap-1 text-[26px] font-bold leading-none tracking-tight sm:text-3xl",
+          tone === "rootin" && "text-rootin",
+          tone === "success" && "text-success",
+          tone === "gold" && "text-gold",
+        )}
+      >
+        {value}
+        {tone === "gold" && <Star className="size-4 self-center fill-gold text-gold" />}
+      </p>
+      <p className="mt-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        {label}
+      </p>
+      <p className="mt-0.5 min-h-[14px] text-[10px] text-muted-foreground/60">
+        {sub ?? ""}
+      </p>
+    </div>
+  );
+}
 
 export function StatsBento({
   profile,
-  portfolioItems,
   testimonials,
 }: {
   profile: TalentProfile;
-  portfolioItems: PortfolioApiResponse[];
   testimonials: Testimonial[];
 }) {
-  const analytics = profile.analytics;
-  const trustScore = profile.trust_score ?? 0;
-  const portfolioCount = portfolioItems.length;
-  const views = analytics?.profile_views_30d ?? 0;
-  const likes = analytics?.like_count ?? 0;
+  const trustScore = profile.trust_score;
+  const responseRate = profile.response_rate;
+  const responseTime = profile.response_time;
   const { average, count } = computeRating(testimonials);
 
   return (
-    <div className="grid grid-cols-2 gap-4 sm:gap-5 lg:grid-cols-4">
-      <StatCard
+    <div className="grid grid-cols-3 gap-2 sm:gap-3">
+      <Metric
         label="RootScore"
-        value={trustScore}
-        sub="Trust & completeness"
-        icon={<TrendingUp className="size-5" />}
-        accent="primary"
+        value={trustScore != null && trustScore > 0 ? trustScore : "—"}
+        sub={trustScore != null && trustScore > 0 ? "Trust score" : "Not scored yet"}
+        tone="rootin"
       />
-      <StatCard
-        label="Profile Views"
-        value={views.toLocaleString()}
-        sub="Last 30 days"
-        icon={<Eye className="size-5" />}
-        accent="primary"
-      />
-      <StatCard
-        label="Likes"
-        value={likes.toLocaleString()}
-        sub="From recruiters"
-        icon={<Heart className="size-5" />}
-        accent="gold"
-      />
-      <StatCard
-        label={average > 0 ? `Rating (${count})` : "Portfolio"}
-        value={
-          average > 0 ? (
-            <span className="flex items-center gap-2">
-              {average}
-              <Star className="inline size-5 fill-gold text-gold" />
-            </span>
-          ) : (
-            portfolioCount
-          )
+      <Metric
+        label="Response Rate"
+        value={responseRate != null ? `${responseRate}%` : "—"}
+        sub={
+          responseRate != null
+            ? responseTime
+              ? `Responds in ${responseTime}`
+              : "Avg. reply time"
+            : "Not shared"
         }
-        sub={average > 0 ? "Average review" : "Work samples"}
-        icon={average > 0 ? <Star className="size-5" /> : <Clapperboard className="size-5" />}
-        accent={average > 0 ? "gold" : "success"}
+        tone="success"
+      />
+      <Metric
+        label="Rating"
+        value={average > 0 ? average.toFixed(1) : "—"}
+        sub={count > 0 ? `${count} review${count === 1 ? "" : "s"}` : "No reviews yet"}
+        tone="gold"
       />
     </div>
   );
