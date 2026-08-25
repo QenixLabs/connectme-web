@@ -20,23 +20,26 @@ import {
 function ProfileSkeleton() {
   return (
     <div className="min-h-screen bg-bg-page">
-      <div className="h-[58vh] animate-pulse bg-muted md:h-[62vh]" />
-      <div className="mx-auto max-w-5xl px-4 sm:px-6">
-        <div className="relative -mt-8 rounded-2xl border border-border bg-bg-surface p-5 shadow-[var(--surface-shadow)] sm:p-6">
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div
-                key={i}
-                className="h-28 animate-pulse rounded-2xl bg-muted"
-              />
-            ))}
-          </div>
-          <div className="mt-6 h-12 animate-pulse rounded-2xl bg-muted" />
-          <div className="mt-6 grid gap-6 md:grid-cols-2">
-            <div className="h-48 animate-pulse rounded-2xl bg-muted" />
-            <div className="h-48 animate-pulse rounded-2xl bg-muted" />
-          </div>
+      <div className="h-[44vh] min-h-[300px] animate-pulse bg-muted md:h-[50vh]" />
+      <div className="mx-auto max-w-5xl space-y-4 px-4 pt-4 sm:px-6">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-24 animate-pulse rounded-2xl bg-muted"
+            />
+          ))}
         </div>
+        <div className="h-12 animate-pulse rounded-xl bg-muted" />
+        <div className="grid grid-cols-4 gap-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-16 animate-pulse rounded-xl bg-muted"
+            />
+          ))}
+        </div>
+        <div className="h-48 animate-pulse rounded-2xl bg-muted" />
       </div>
     </div>
   );

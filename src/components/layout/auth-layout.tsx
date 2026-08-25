@@ -14,7 +14,7 @@ interface AuthLayoutProps {
 
 export function AuthLayout({ children, subtitle, showGlow }: AuthLayoutProps) {
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-y-auto bg-background px-4 py-12">
+    <div className="relative flex min-h-dvh justify-center bg-background px-4 py-4">
       {showGlow && (
         <div
           className="pointer-events-none fixed inset-0 opacity-15"
@@ -29,9 +29,9 @@ export function AuthLayout({ children, subtitle, showGlow }: AuthLayoutProps) {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: [0.25, 0.4, 0.25, 1] }}
-        className={cn("w-full max-w-md", showGlow && "relative z-10")}
+        className={cn("my-auto w-full max-w-md", showGlow && "relative z-10")}
       >
-        <div className="mb-10 text-center">
+        <div className="text-center">
           <Link href="/" className="group inline-flex items-center">
             <motion.div
               whileHover={{ scale: 1.04 }}
@@ -40,11 +40,11 @@ export function AuthLayout({ children, subtitle, showGlow }: AuthLayoutProps) {
               <Image
                 src={rootinLogo}
                 alt="RootIn logo"
-                height={56}
-                width={180}
+                height={177}
+                width={264}
                 priority
                 unoptimized
-                className="h-14 w-auto"
+                className="h-auto w-[130px] sm:w-[150px] lg:w-[165px]"
               />
             </motion.div>
           </Link>

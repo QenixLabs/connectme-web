@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Briefcase, ExternalLink } from "lucide-react";
+import Link from "next/link";
+import { Briefcase, ExternalLink, ArrowRight } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -23,19 +24,19 @@ function ExperienceCard({
       onClick={onClick}
       className="relative w-full text-left"
     >
-      <span className="absolute -left-[25px] top-1.5 size-2 rounded-full bg-primary shadow-[var(--glow-accent)]" />
-      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/40">
+      <span className="absolute -left-[25px] top-1.5 size-2 rounded-full bg-rootin shadow-[0_0_10px_-3px_var(--rootin-blue)]" />
+      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/50">
         {item.years}
       </p>
       <div className="mt-1.5 flex flex-wrap items-center gap-2">
-        <h3 className="text-sm font-semibold text-foreground/85">{item.role}</h3>
-        <span className="rounded-full border border-primary/20 bg-primary/5 px-2 py-0.5 text-[10px] font-medium text-primary/80">
+        <h3 className="text-sm font-semibold text-foreground/90">{item.role}</h3>
+        <span className="rounded-full border border-rootin/20 bg-rootin/5 px-2 py-0.5 text-[10px] font-medium text-rootin">
           {item.platform}
         </span>
       </div>
-      <p className="mt-0.5 text-xs text-muted-foreground/55">{item.company}</p>
+      <p className="mt-0.5 text-xs text-muted-foreground/60">{item.company}</p>
       {item.description && (
-        <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-foreground/50">
+        <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-foreground/55">
           {item.description}
         </p>
       )}
@@ -43,51 +44,66 @@ function ExperienceCard({
   );
 }
 
-export function ExperienceSection({ data }: { data: ExperienceItem[] }) {
+export function ExperienceSection({
+  data,
+  isOwner = false,
+}: {
+  data: ExperienceItem[];
+  isOwner?: boolean;
+}) {
   const [selected, setSelected] = useState<ExperienceItem | null>(null);
-  const preview = data.slice(0, 4);
+  const [showAll, setShowAll] = useState(false);
+  const visible = showAll ? data : data.slice(0, 4);
   const hasMore = data.length > 4;
 
   return (
     <GlassCard>
-      <SectionHeader icon={<Briefcase className="size-4" />} title="Experience" />
+      <SectionHeader
+        icon={<Briefcase className="size-4" />}
+        title="Experience"
+        action={
+          hasMore ? (showAll ? "Show Less" : "View All") : undefined
+        }
+        onAction={hasMore ? () => setShowAll((v) => !v) : undefined}
+      />
 
       {data.length === 0 ? (
-        <p className="py-8 text-center text-sm text-muted-foreground/60">
-          No experience added yet.
-        </p>
-      ) : (
-        <>
-          <ol className="relative space-y-6 border-l border-primary/20 pl-6">
-            {preview.map((item) => (
-              <li key={item.id}>
-                <ExperienceCard item={item} onClick={() => setSelected(item)} />
-              </li>
-            ))}
-          </ol>
-          {hasMore && (
-            <button
-              onClick={() => setSelected(data[0])}
-              className="profile-inset mt-5 w-full rounded-xl py-2 text-xs font-medium text-foreground/70 transition-colors hover:bg-bg-surface"
+        <div className="py-4 text-center sm:py-5">
+          <p className="text-sm text-muted-foreground/60">
+            No experience added yet.
+          </p>
+          {isOwner && (
+            <Link
+              href="/talent/profile"
+              className="mt-1.5 inline-flex items-center gap-1 text-sm font-medium text-rootin transition-colors hover:text-rootin/80"
             >
-              View {data.length - 4} more
-            </button>
+              Add your first experience
+              <ArrowRight className="size-3.5" />
+            </Link>
           )}
-        </>
+        </div>
+      ) : (
+        <ol className="relative space-y-5 border-l border-rootin/20 pl-6">
+          {visible.map((item) => (
+            <li key={item.id}>
+              <ExperienceCard item={item} onClick={() => setSelected(item)} />
+            </li>
+          ))}
+        </ol>
       )}
 
       <Dialog open={!!selected} onOpenChange={(v) => !v && setSelected(null)}>
         <DialogContent className="profile-card max-h-[85vh] max-w-lg overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.12em] text-muted-foreground/60">
-              <Briefcase className="size-4 text-primary" />
+              <Briefcase className="size-4 text-rootin" />
               Experience
             </DialogTitle>
           </DialogHeader>
           {selected && (
             <div className="space-y-5 py-2">
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/40">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/50">
                   {selected.years}
                 </p>
                 <h3 className="mt-1 text-lg font-semibold text-foreground">{selected.role}</h3>
@@ -111,7 +127,7 @@ export function ExperienceSection({ data }: { data: ExperienceItem[] }) {
                   href={selected.creditUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+                  className="inline-flex items-center gap-1.5 text-sm font-medium text-rootin hover:text-rootin/80"
                 >
                   View credit <ExternalLink className="size-3.5" />
                 </a>

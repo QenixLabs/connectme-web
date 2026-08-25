@@ -3,23 +3,25 @@
 import { useMemo, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PortfolioReelOverlay } from "@/components/portfolio/PortfolioReelOverlay";
+import { MobileBottomNav } from "@/components/navigation/MobileBottomNav";
 import type { TalentProfile, PortfolioApiResponse, Credit, Testimonial, Award } from "@/lib/api/talent";
 import type { Campaign } from "@/lib/api/campaigns";
+import { useAuthStore } from "@/providers/auth-store-provider";
 import { HeroSection } from "./HeroSection";
 import { StatsBento } from "./StatsBento";
+import { TalentProfileActions } from "./TalentProfileActions";
+import { LetWorkTogetherCTA } from "./LetWorkTogetherCTA";
 import {
   AboutSection,
   PortfolioSection,
   ExperienceSection,
   SkillsSection,
   ReviewsSection,
-  AwardsSection,
   MediaKitSection,
   AnalyticsSection,
   DetailsSection,
 } from "./sections";
 import {
-  getFacts,
   toExperienceItems,
   toAwardItems,
   toReviewItems,
@@ -31,9 +33,8 @@ const tabs = [
   { id: "details", label: "Details" },
   { id: "portfolio", label: "Portfolio" },
   { id: "experience", label: "Experience" },
+  { id: "skills", label: "Skills" },
   { id: "reviews", label: "Reviews" },
-  { id: "media-kit", label: "Media Kit" },
-  { id: "analytics", label: "Analytics" },
 ];
 
 export function TalentProfileView({
@@ -56,8 +57,14 @@ export function TalentProfileView({
   campaignsLoading?: boolean;
 }) {
   const [reelItemId, setReelItemId] = useState<string | null>(null);
+  const authUser = useAuthStore((s) => s.user);
+  const isOwner =
+    viewerRole === "talent" &&
+    !!authUser?.username &&
+    profile.username === authUser.username;
 
-  const facts = useMemo(() => getFacts(profile), [profile]);
+  const displayName =
+    profile.full_legal_name?.trim() || profile.username?.trim() || "Talent";
   const experience = useMemo(() => toExperienceItems(credits), [credits]);
   const awardItems = useMemo(() => toAwardItems(awards), [awards]);
   const reviewItems = useMemo(() => toReviewItems(testimonials), [testimonials]);
@@ -71,79 +78,103 @@ export function TalentProfileView({
   );
 
   return (
-    <div className="relative min-h-screen bg-bg-page pb-24">
+    <div className="relative min-h-screen bg-bg-page">
       <HeroSection
         profile={profile}
         viewerRole={viewerRole}
         campaigns={campaigns}
         campaignsLoading={campaignsLoading}
+        showActions={false}
       />
 
-      <main className="relative z-10 mx-auto max-w-5xl px-4 sm:px-6">
-        <div className="space-y-6">
-          <StatsBento
+      <main className="relative z-10 mx-auto max-w-5xl px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-3 sm:px-6 lg:pb-12">
+        <div className="space-y-4">
+          <StatsBento profile={profile} testimonials={testimonials} />
+
+          <TalentProfileActions
             profile={profile}
-            portfolioItems={portfolioItems}
-            testimonials={testimonials}
+            viewerRole={viewerRole}
+            campaigns={campaigns}
+            campaignsLoading={campaignsLoading}
           />
 
-          <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="profile-card no-scrollbar mb-6 flex w-full justify-start gap-1 overflow-x-auto rounded-2xl p-1.5">
+          <Tabs defaultValue="overview" className="w-full pt-2">
+            <TabsList
+              variant="line"
+              className="no-scrollbar sticky top-0 z-20 mb-0 flex h-11 w-full justify-start gap-1 overflow-x-auto rounded-none border-b border-border bg-bg-page p-0"
+            >
               {tabs.map((tab) => (
                 <TabsTrigger
                   key={tab.id}
                   value={tab.id}
-                  className="shrink-0 rounded-xl px-4 py-2.5 text-sm font-medium text-muted-foreground transition-all hover:bg-bg-surface-inset hover:text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+                  className="flex-none rounded-none border-transparent px-3 text-sm font-medium text-muted-foreground after:bg-rootin data-[state=active]:text-rootin data-[state=active]:shadow-none dark:data-[state=active]:text-rootin sm:px-4"
                 >
                   {tab.label}
                 </TabsTrigger>
               ))}
             </TabsList>
 
-            <TabsContent value="overview" className="space-y-6 focus-visible:outline-none">
+            <TabsContent
+              value="overview"
+              className="mt-4 space-y-4 focus-visible:outline-none"
+            >
               <AboutSection bio={profile.about || ""} />
-              <PortfolioSection
-                items={portfolioItems}
-                username={profile.username}
-                onOpenReel={setReelItemId}
-              />
-              <ExperienceSection data={experience} />
-              <SkillsSection skills={skills} />
-              <AwardsSection data={awardItems} />
             </TabsContent>
 
-            <TabsContent value="details" className="space-y-6 focus-visible:outline-none">
-              <DetailsSection facts={facts} />
+            <TabsContent
+              value="details"
+              className="mt-4 space-y-4 focus-visible:outline-none"
+            >
+              <DetailsSection profile={profile} awards={awardItems} />
             </TabsContent>
 
-            <TabsContent value="portfolio" className="space-y-6 focus-visible:outline-none">
+            <TabsContent
+              value="portfolio"
+              className="mt-4 space-y-4 focus-visible:outline-none"
+            >
               <PortfolioSection
                 items={portfolioItems}
                 username={profile.username}
                 onOpenReel={setReelItemId}
                 showAllAction={false}
               />
-            </TabsContent>
-
-            <TabsContent value="experience" className="space-y-6 focus-visible:outline-none">
-              <ExperienceSection data={experience} />
-              <AwardsSection data={awardItems} />
-            </TabsContent>
-
-            <TabsContent value="reviews" className="space-y-6 focus-visible:outline-none">
-              <ReviewsSection data={reviewItems} />
-            </TabsContent>
-
-            <TabsContent value="media-kit" className="space-y-6 focus-visible:outline-none">
               <MediaKitSection profile={profile} />
             </TabsContent>
 
-            <TabsContent value="analytics" className="space-y-6 focus-visible:outline-none">
-              <AnalyticsSection profile={profile} />
+            <TabsContent
+              value="experience"
+              className="mt-4 space-y-4 focus-visible:outline-none"
+            >
+              <ExperienceSection data={experience} isOwner={isOwner} />
+              {isOwner && <AnalyticsSection profile={profile} />}
+            </TabsContent>
+
+            <TabsContent
+              value="skills"
+              className="mt-4 space-y-4 focus-visible:outline-none"
+            >
+              <SkillsSection skills={skills} />
+            </TabsContent>
+
+            <TabsContent
+              value="reviews"
+              className="mt-4 space-y-4 focus-visible:outline-none"
+            >
+              <ReviewsSection data={reviewItems} initialShowAll />
             </TabsContent>
           </Tabs>
+
+          {!isOwner && (
+            <LetWorkTogetherCTA
+              username={profile.username}
+              displayName={displayName}
+              viewerRole={viewerRole}
+            />
+          )}
         </div>
       </main>
+
+      <MobileBottomNav role={viewerRole} />
 
       <PortfolioReelOverlay
         items={mappedPortfolioItems}

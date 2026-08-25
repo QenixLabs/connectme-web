@@ -27,6 +27,22 @@ export const authApi = {
     return response.data;
   },
 
+  uploadProfilePhoto: async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await apiClient.post("/talent/upload/profile-photo", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data;
+  },
+
+  checkUsername: async (username: string): Promise<{ available: boolean }> => {
+    const response = await apiClient.get(`/talent/check-username`, {
+      params: { username },
+    });
+    return response.data;
+  },
+
   verifyOtp: async (email: string, otp: string) => {
     const response = await apiClient.post("/auth/verify-otp", { email, otp });
     return response.data;

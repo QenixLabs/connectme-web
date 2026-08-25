@@ -14,8 +14,6 @@ import {
 } from "@/components/ui/form";
 import { PasswordStrength } from "@/components/ui/password-strength";
 import { PasswordRules } from "@/components/ui/password-rules";
-import { RoleSelector } from "@/components/auth/role-selector";
-
 import type { SignupFormValues } from "@/lib/validations/auth.schema";
 
 function getPasswordRules(password: string) {
@@ -27,20 +25,20 @@ function getPasswordRules(password: string) {
   ];
 }
 
-export function CredentialsStep() {
+export function PersonalInfoStep() {
   const form = useFormContext<SignupFormValues>();
   const [showPassword, setShowPassword] = useState(false);
 
   const password = form.watch("password");
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div className="text-center">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Create your account
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Choose your role and fill in your details
+          Fill in your personal details
         </p>
       </div>
 
@@ -60,7 +58,7 @@ export function CredentialsStep() {
                 <Input
                   placeholder="Your full name"
                   autoComplete="name"
-                  className="h-11 rounded-xl border-border bg-card pl-10 transition-all duration-200 focus-visible:border-primary/40 focus-visible:ring-primary/30"
+                  className="h-11 rounded-xl border-border bg-card pl-10 transition-all duration-200 focus-visible:border-primary/40 focus-visible:ring-primary/30 sm:h-12"
                   {...field}
                 />
               </div>
@@ -87,7 +85,7 @@ export function CredentialsStep() {
                   type="email"
                   placeholder="you@example.com"
                   autoComplete="email"
-                  className="h-11 rounded-xl border-border bg-card pl-10 transition-all duration-200 focus-visible:border-primary/40 focus-visible:ring-primary/30"
+                  className="h-11 rounded-xl border-border bg-card pl-10 transition-all duration-200 focus-visible:border-primary/40 focus-visible:ring-primary/30 sm:h-12"
                   {...field}
                 />
               </div>
@@ -115,7 +113,7 @@ export function CredentialsStep() {
                     inputMode="tel"
                     placeholder="98765 43210"
                     autoComplete="tel"
-                    className="h-11 rounded-xl border-border bg-card transition-all duration-200 focus-visible:border-primary/40 focus-visible:ring-primary/30"
+                    className="h-11 rounded-xl border-border bg-card transition-all duration-200 focus-visible:border-primary/40 focus-visible:ring-primary/30 sm:h-12"
                     {...field}
                   />
                 </div>
@@ -143,7 +141,7 @@ export function CredentialsStep() {
                   type={showPassword ? "text" : "password"}
                   placeholder="Create a strong password"
                   autoComplete="new-password"
-                  className="h-11 rounded-xl border-border bg-card pl-10 pr-10 transition-all duration-200 focus-visible:border-primary/40 focus-visible:ring-primary/30"
+                  className="h-11 rounded-xl border-border bg-card pl-10 pr-10 transition-all duration-200 focus-visible:border-primary/40 focus-visible:ring-primary/30 sm:h-12"
                   {...field}
                 />
                 <button
@@ -184,7 +182,7 @@ export function CredentialsStep() {
                   type="password"
                   placeholder="Re-enter your password"
                   autoComplete="new-password"
-                  className="h-11 rounded-xl border-border bg-card pl-10 transition-all duration-200 focus-visible:border-primary/40 focus-visible:ring-primary/30"
+                  className="h-11 rounded-xl border-border bg-card pl-10 transition-all duration-200 focus-visible:border-primary/40 focus-visible:ring-primary/30 sm:h-12"
                   {...field}
                 />
               </div>
@@ -193,48 +191,6 @@ export function CredentialsStep() {
           </FormItem>
         )}
       />
-
-      <FormField
-        control={form.control}
-        name="verification_method"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-              Receive OTP via
-            </FormLabel>
-            <FormControl>
-              <div className="grid grid-cols-2 gap-3">
-                {([
-                  { id: "email" as const, icon: Mail, label: "Email" },
-                  { id: "phone" as const, icon: Phone, label: "Phone" },
-                ]).map(({ id, icon: Icon, label }) => (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => field.onChange(id)}
-                    className={`flex items-center justify-center gap-2 rounded-xl border py-3 text-sm transition-all ${
-                      field.value === id
-                        ? "border-primary bg-primary/10 font-medium text-primary"
-                        : "border-border bg-secondary/20 text-foreground/80 hover:bg-secondary/40"
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" strokeWidth={1.5} /> {label}
-                  </button>
-                ))}
-              </div>
-            </FormControl>
-          </FormItem>
-        )}
-      />
-
-      <div>
-        <p className="mb-3 text-xs font-medium uppercase tracking-widest text-muted-foreground">
-          I am here as
-        </p>
-        <RoleSelector form={form} />
-      </div>
-
-
 
       <p className="text-center text-sm text-muted-foreground">
         Already have an account?{" "}

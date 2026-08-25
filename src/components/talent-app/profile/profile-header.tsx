@@ -1,11 +1,12 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import { Camera, BadgeCheck } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { Card } from "@/components/ui/card";
+import { CropImageModal } from "@/components/ui/crop-image-modal";
 import { InlineField } from "./inline-field";
 import { TrustScoreRing } from "./trust-score-ring";
 import { PublicLinkButton } from "./public-link-button";
@@ -23,8 +24,16 @@ export function ProfileHeader({
   onPhotoSelect,
 }: ProfileHeaderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
 
   const isAvailable = profile.availability === "available";
+
+  useEffect(() => {
+    return () => {
+      if (cropImageSrc) URL.revokeObjectURL(cropImageSrc);
+    };
+  }, [cropImageSrc]);
 
   const handleAvailabilityToggle = (checked: boolean) => {
     onFieldUpdate("availability", checked ? "available" : "busy");
@@ -34,12 +43,32 @@ export function ProfileHeader({
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
-      // Parent should toast; keeping here for safety
       return;
     }
-    onPhotoSelect(file);
+    const url = URL.createObjectURL(file);
+    setCropImageSrc(url);
+    setCropModalOpen(true);
     e.target.value = "";
   };
+
+  const handleCropped = useCallback(
+    (file: File) => {
+      onPhotoSelect(file);
+      setCropImageSrc(null);
+    },
+    [onPhotoSelect],
+  );
+
+  const handleCropModalChange = useCallback(
+    (open: boolean) => {
+      setCropModalOpen(open);
+      if (!open && cropImageSrc) {
+        URL.revokeObjectURL(cropImageSrc);
+        setCropImageSrc(null);
+      }
+    },
+    [cropImageSrc],
+  );
 
   return (
     <Card className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-primary/10 via-card to-card p-5 shadow-card lg:p-6">
@@ -153,6 +182,15 @@ export function ProfileHeader({
         placeholder="Your full legal name"
         className="mt-4"
       />
+
+      {cropImageSrc && (
+        <CropImageModal
+          open={cropModalOpen}
+          onOpenChange={handleCropModalChange}
+          imageSrc={cropImageSrc}
+          onCropped={handleCropped}
+        />
+      )}
     </Card>
   );
 }

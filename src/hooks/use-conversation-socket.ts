@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { useAuthSocket } from "@/hooks/use-auth-socket";
 import type { Message } from "@/lib/api/types";
 
@@ -16,10 +16,15 @@ export function useConversationSocket(
 ) {
   const { socket, connected } = useAuthSocket();
   const handlersRef = useRef(handlers);
+  const socketRef = useRef(socket);
 
   useEffect(() => {
     handlersRef.current = handlers;
   }, [handlers]);
+
+  useEffect(() => {
+    socketRef.current = socket;
+  }, [socket]);
 
   useEffect(() => {
     if (!socket || !connected || !conversationId) return;
@@ -55,17 +60,33 @@ export function useConversationSocket(
     };
   }, [socket, connected, conversationId]);
 
-  const sendMessage = (payload: {
-    conversation_id: string;
-    content: string;
-    client_message_id: string;
-  }) => {
-    socket?.emit("message:send", payload);
-  };
+  const sendMessage = useCallback(
+    (payload: {
+      conversation_id: string;
+      content: string;
+      client_message_id: string;
+    }) => {
+      const s = socketRef.current;
+      if (!s) {
+        console.warn("[conversation-socket] sendMessage called but socket is null");
+        return false;
+      }
+      if (!s.connected) {
+        console.warn("[conversation-socket] sendMessage called but socket is not connected");
+        return false;
+      }
+      s.emit("message:send", payload);
+      return true;
+    },
+    [],
+  );
 
-  const markMessageRead = (payload: { conversation_id: string; message_id: string }) => {
-    socket?.emit("message:read", payload);
-  };
+  const markMessageRead = useCallback(
+    (payload: { conversation_id: string; message_id: string }) => {
+      socketRef.current?.emit("message:read", payload);
+    },
+    [],
+  );
 
   return { sendMessage, markMessageRead, connected };
 }

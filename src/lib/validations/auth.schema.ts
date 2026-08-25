@@ -34,12 +34,6 @@ export const credentialsSchema = z
 
 export type CredentialsValues = z.infer<typeof credentialsSchema>;
 
-export const talentProfessionSchema = z.object({
-  profession: z.string().min(1, "Please select a profession"),
-});
-
-export type TalentProfessionValues = z.infer<typeof talentProfessionSchema>;
-
 export const recruiterOrgSchema = z.object({
   companyName: z.string().min(1, "Company name is required").max(100),
   companyWebsite: z.string().url("Enter a valid URL").optional().or(z.literal("")),
@@ -48,10 +42,23 @@ export const recruiterOrgSchema = z.object({
 
 export type RecruiterOrgValues = z.infer<typeof recruiterOrgSchema>;
 
+export const talentProfessionalSchema = z.object({
+  username: z
+    .string()
+    .min(1, "Username is required")
+    .min(6, "At least 6 characters")
+    .max(20, "At most 20 characters")
+    .regex(/^[a-zA-Z0-9]+$/, "Only letters and numbers"),
+  profession: z.string().min(1, "Please select a profession"),
+  creator_link: z.string().url("Enter a valid URL").optional().or(z.literal("")),
+});
+
+export type TalentProfessionalValues = z.infer<typeof talentProfessionalSchema>;
+
 export const signupSchema = credentialsSchema
   .and(
     z.discriminatedUnion("role", [
-      z.object({ role: z.literal("talent") }).merge(talentProfessionSchema),
+      z.object({ role: z.literal("talent") }).merge(talentProfessionalSchema),
       z.object({ role: z.literal("recruiter") }).merge(recruiterOrgSchema),
     ]),
   );
@@ -66,6 +73,7 @@ export interface SignupFormValues {
   confirmPassword: string;
   verification_method: "email" | "phone";
   role: "talent" | "recruiter";
+  username: string;
   profession: string;
   creator_link: string;
   companyName: string;

@@ -11,7 +11,7 @@ interface PasswordRulesProps {
 
 export function PasswordRules({ rules }: PasswordRulesProps) {
   return (
-    <ul className="mt-2 space-y-0.5">
+    <ul className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1">
       {rules.map((r) => (
         <li
           key={r.text}

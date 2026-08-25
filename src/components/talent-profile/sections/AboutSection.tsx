@@ -15,7 +15,7 @@ export function AboutSection({ bio }: { bio: string }) {
       <SectionHeader icon={<User className="size-4" />} title="About" />
       <p
         className={cn(
-          "text-[15px] leading-7 text-foreground/75",
+          "text-sm leading-6 text-foreground/75 sm:text-[15px] sm:leading-7",
           !expanded && hasLongBio && "line-clamp-3",
         )}
       >
@@ -24,15 +24,15 @@ export function AboutSection({ bio }: { bio: string }) {
       {hasLongBio && (
         <button
           onClick={() => setExpanded((v) => !v)}
-          className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-primary/80"
+          className="mt-2.5 inline-flex items-center gap-1 text-xs font-semibold text-rootin transition-colors hover:text-rootin/80"
         >
           {expanded ? (
             <>
-              Show less <ChevronUp className="size-4" />
+              Show less <ChevronUp className="size-3.5" />
             </>
           ) : (
             <>
-              Show more <ChevronDown className="size-4" />
+              Show more <ChevronDown className="size-3.5" />
             </>
           )}
         </button>

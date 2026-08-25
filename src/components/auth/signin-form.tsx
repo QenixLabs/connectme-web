@@ -62,7 +62,7 @@ export function SignInForm() {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div className="text-center">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
           Welcome back
@@ -73,7 +73,7 @@ export function SignInForm() {
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           {error && (
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
@@ -97,7 +97,7 @@ export function SignInForm() {
                       type="email"
                       placeholder="you@example.com"
                       autoComplete="email"
-                      className="h-11 rounded-xl border-border bg-card pl-10 transition-all duration-200 focus-visible:border-primary/40 focus-visible:ring-primary/30"
+                      className="h-11 rounded-xl border-border bg-card pl-10 transition-all duration-200 focus-visible:border-primary/40 focus-visible:ring-primary/30 sm:h-12"
                       {...field}
                     />
                   </div>
@@ -132,7 +132,7 @@ export function SignInForm() {
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
                       autoComplete="current-password"
-                      className="h-11 rounded-xl border-border bg-card pl-10 pr-10 transition-all duration-200 focus-visible:border-primary/40 focus-visible:ring-primary/30"
+                      className="h-11 rounded-xl border-border bg-card pl-10 pr-10 transition-all duration-200 focus-visible:border-primary/40 focus-visible:ring-primary/30 sm:h-12"
                       {...field}
                     />
                     <button
@@ -157,7 +157,7 @@ export function SignInForm() {
           <Button
             type="submit"
             size="lg"
-            className="h-11 w-full rounded-xl text-sm font-semibold tracking-wide"
+            className="h-11 w-full rounded-xl text-sm font-semibold tracking-wide sm:h-12"
             disabled={storeLoading}
           >
             {storeLoading ? (

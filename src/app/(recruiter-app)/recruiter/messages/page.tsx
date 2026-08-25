@@ -371,11 +371,15 @@ export default function RecruiterMessagesPage() {
     setMessages((prev) => [...prev, optimistic]);
 
     try {
-      sendSocketMessage({
+      const sent = sendSocketMessage({
         conversation_id: active._id,
         content,
         client_message_id: clientId,
       });
+
+      if (!sent) {
+        throw new Error("Socket not connected");
+      }
 
       setTimeout(() => {
         setMessages((prev) =>

@@ -23,7 +23,7 @@ function UnifiedAuthContent() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15, duration: 0.45, ease: [0.25, 0.4, 0.25, 1] }}
       >
-        <div className="mb-6 flex rounded-xl bg-muted/30 p-1">
+        <div className="mt-4 flex rounded-xl bg-muted/30 p-1 sm:mt-5">
           {(["signin", "signup"] as const).map((m) => (
             <button
               key={m}
@@ -51,8 +51,8 @@ function UnifiedAuthContent() {
           ))}
         </div>
 
-        <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
-          <CardContent className="px-6 py-7 sm:px-8 sm:py-8">
+        <Card className="mt-4 border-border/50 bg-card/80 backdrop-blur-sm sm:mt-5">
+          <CardContent className="p-4 sm:p-6 lg:p-8">
             <AnimatePresence mode="wait">
               <motion.div
                 key={mode}
@@ -68,7 +68,7 @@ function UnifiedAuthContent() {
         </Card>
 
         {mode === "signin" && (
-          <div className="mt-6 border-t border-border/40 pt-6">
+          <div className="mt-4 border-t border-border/40 pt-4">
             <p className="mb-4 text-center text-xs font-light text-muted-foreground">
               New to RootIn?
             </p>
@@ -82,7 +82,7 @@ function UnifiedAuthContent() {
           </div>
         )}
 
-        <p className="mt-6 text-center text-xs font-light text-muted-foreground">
+        <p className="mt-4 text-center text-xs font-light text-muted-foreground">
           By using RootIn you agree to our{" "}
           <a
             href="/terms"
