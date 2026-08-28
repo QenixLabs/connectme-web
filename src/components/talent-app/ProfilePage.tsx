@@ -29,6 +29,7 @@ import {
   useMyProfile,
   useUpdateMyProfile,
   useUploadTalentPhoto,
+  useUploadTalentBanner,
   useProfileCompleteness,
 } from "@/hooks/use-talent-profile";
 import { useAuthStore } from "@/providers/auth-store-provider";
@@ -77,6 +78,7 @@ export function ProfilePage() {
   const completenessQuery = useProfileCompleteness();
   const updateProfile = useUpdateMyProfile();
   const uploadPhoto = useUploadTalentPhoto();
+  const uploadBanner = useUploadTalentBanner();
   const user = useAuthStore((s) => s.user);
 
   const [sheet, setSheet] = useState<
@@ -123,6 +125,23 @@ export function ProfilePage() {
     [uploadPhoto, handleFieldUpdate],
   );
 
+  const handleBannerSelect = useCallback(
+    (file: File) => {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Banner must be under 5MB");
+        return;
+      }
+      uploadBanner.mutate(file, {
+        onSuccess: (data) => {
+          handleFieldUpdate("hero_background", data.relativePath);
+          toast.success("Banner uploaded");
+        },
+        onError: () => toast.error("Banner upload failed"),
+      });
+    },
+    [uploadBanner, handleFieldUpdate],
+  );
+
   if (profileQuery.isLoading) return <ProfileSkeleton />;
 
   const profile = profileQuery.data;
@@ -134,6 +153,7 @@ export function ProfilePage() {
         profile={profile}
         onFieldUpdate={handleFieldUpdate}
         onPhotoSelect={handlePhotoSelect}
+        onBannerSelect={handleBannerSelect}
       />
 
       <div className="grid gap-6 lg:grid-cols-3">

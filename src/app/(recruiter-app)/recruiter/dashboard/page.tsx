@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Bell,
   User,
@@ -16,6 +17,7 @@ import {
   ArrowRight,
   Check,
   ChevronRight,
+  LogOut,
 } from "lucide-react";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { useUnreadNotifications } from "@/hooks/use-unread-counts";
@@ -46,6 +48,8 @@ function SkeletonBlock({ className }: { className?: string }) {
 }
 
 export default function RecruiterDashboardPage() {
+  const router = useRouter();
+  const logout = useAuthStore((s) => s.logout);
   const user = useAuthStore((s) => s.user);
   const { data: unreadData } = useUnreadNotifications();
   const { data: profile, isLoading: loadingProfile } = useRecruiterProfile();
@@ -407,6 +411,18 @@ export default function RecruiterDashboardPage() {
           ))}
         </div>
       )}
+
+      {/* Logout */}
+      <button
+        onClick={async () => {
+          await logout();
+          router.push("/auth/login");
+        }}
+        className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card p-3.5 text-sm font-medium text-muted-foreground transition-colors hover:border-red-500/50 hover:text-red-500"
+      >
+        <LogOut size={16} />
+        Log out
+      </button>
     </div>
   );
 }

@@ -50,6 +50,12 @@ export function useUploadTalentPhoto() {
   });
 }
 
+export function useUploadTalentBanner() {
+  return useMutation({
+    mutationFn: (file: File) => talentApi.uploadBanner(file),
+  });
+}
+
 export function usePublicTalentProfile(username: string) {
   return useQuery({
     queryKey: talentProfileKeys.publicProfile(username),

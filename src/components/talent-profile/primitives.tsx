@@ -1,11 +1,14 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
-import { BadgeCheck, Star } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { BadgeCheck, ChevronDown, ChevronRight, Star } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+} from "@/components/ui/collapsible";
 
 export function GlassCard({
   children,
@@ -24,15 +27,15 @@ export function GlassCard({
       transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
       className="relative"
     >
-      <Card
+      <div
         className={cn(
-          "profile-card gap-0 overflow-hidden rounded-2xl p-4 sm:p-5",
-          hover && "transition-all duration-200 hover:-translate-y-0.5 hover:border-border-hover",
+          "overflow-hidden rounded-2xl bg-card p-4 shadow-[var(--shadow-card)]",
+          hover && "transition-all duration-200 hover:-translate-y-0.5",
           className,
         )}
       >
         {children}
-      </Card>
+      </div>
     </motion.section>
   );
 }
@@ -42,80 +45,95 @@ export function SectionHeader({
   title,
   action,
   onAction,
+  collapsible = false,
+  open = true,
+  onToggle,
 }: {
   icon: ReactNode;
   title: string;
   action?: string;
   onAction?: () => void;
+  collapsible?: boolean;
+  open?: boolean;
+  onToggle?: () => void;
 }) {
+  const heading = (
+    <>
+      <span className="text-brand">{icon}</span>
+      <h2 className="text-sm font-bold text-foreground">{title}</h2>
+    </>
+  );
+
   return (
-    <div className="mb-3 flex items-center justify-between gap-4">
-      <div className="flex items-center gap-2.5">
-        <span className="text-profile-section-icon">{icon}</span>
-        <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/60">
-          {title}
-        </h2>
-      </div>
+    <div className="mb-3 flex items-center justify-between gap-3">
+      {collapsible ? (
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-expanded={open}
+          className="flex min-w-0 flex-1 items-center gap-2 text-left"
+        >
+          {heading}
+          <ChevronDown
+            className={cn(
+              "ml-auto size-4 shrink-0 text-muted-foreground transition-transform duration-200",
+              open && "rotate-180",
+            )}
+          />
+        </button>
+      ) : (
+        <div className="flex items-center gap-2">{heading}</div>
+      )}
       {action && (
         <button
           onClick={onAction}
-          className="shrink-0 text-xs font-semibold text-rootin transition-colors hover:text-rootin/80"
+          className="flex shrink-0 items-center gap-0.5 text-xs font-semibold text-brand transition-colors hover:text-brand/80"
         >
-          {action}
+          {action} <ChevronRight className="size-3.5" />
         </button>
       )}
     </div>
   );
 }
 
-export function StatCard({
-  label,
-  value,
-  sub,
+export function CollapsibleSection({
   icon,
-  accent = "primary",
+  title,
+  action,
+  onAction,
+  collapsible = false,
+  defaultOpen = true,
+  children,
 }: {
-  label: string;
-  value: ReactNode;
-  sub?: string;
   icon: ReactNode;
-  accent?: "primary" | "gold" | "success";
+  title: string;
+  action?: string;
+  onAction?: () => void;
+  collapsible?: boolean;
+  defaultOpen?: boolean;
+  children: ReactNode;
 }) {
-  const accentClass =
-    accent === "gold"
-      ? "text-accent-amber bg-accent-amber-bg border-accent-amber/30"
-      : accent === "success"
-        ? "text-accent-green bg-accent-green-bg border-accent-green/30"
-        : "text-rootin bg-rootin/10 border-rootin/20";
+  const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-      className="profile-stat relative overflow-hidden rounded-2xl p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-border-hover sm:p-5"
-    >
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground/45">
-            {label}
-          </p>
-          <div className="mt-2 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-            {value}
-          </div>
-          {sub && <p className="mt-1 text-xs text-muted-foreground/60">{sub}</p>}
-        </div>
-        <div
-          className={cn(
-            "grid h-9 w-9 place-items-center rounded-xl border",
-            accentClass,
-          )}
-        >
-          {icon}
-        </div>
-      </div>
-    </motion.div>
+    <GlassCard>
+      <SectionHeader
+        icon={icon}
+        title={title}
+        action={action}
+        onAction={onAction}
+        collapsible={collapsible}
+        open={open}
+        onToggle={() => setOpen((v) => !v)}
+      />
+      {collapsible ? (
+        <Collapsible open={open}>
+          <CollapsibleContent>{children}</CollapsibleContent>
+        </Collapsible>
+      ) : (
+        children
+      )}
+    </GlassCard>
   );
 }
 
@@ -123,12 +141,12 @@ export function VerifiedBadge({ large = false }: { large?: boolean }) {
   return (
     <span
       className={cn(
-        "profile-verified-badge inline-flex items-center gap-1 rounded-full backdrop-blur-sm",
-        large ? "px-3 py-1.5 text-xs" : "px-2 py-0.5 text-[10px]",
+        "inline-flex items-center gap-1 rounded-full bg-brand-soft px-2.5 py-1 text-brand",
+        large ? "text-xs" : "text-[10px]",
       )}
     >
       <BadgeCheck className={cn("fill-current", large ? "size-4" : "size-3")} />
-      <span className="font-semibold uppercase tracking-wider">RootVerified</span>
+      <span className="font-semibold uppercase tracking-wider">Verified</span>
     </span>
   );
 }
@@ -143,12 +161,6 @@ export function AvailabilityBadge({ status }: { status?: string }) {
           ? "Not Available"
           : "Available";
 
-  const tone =
-    status === "busy"
-      ? "border-warning/30 bg-warning/10 text-warning"
-      : status === "not_available"
-        ? "border-border bg-bg-surface-inset text-muted-foreground"
-        : "border-success/25 bg-success/10 text-success";
   const dot =
     status === "busy"
       ? "bg-warning"
@@ -157,12 +169,7 @@ export function AvailabilityBadge({ status }: { status?: string }) {
         : "bg-success";
 
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium",
-        tone,
-      )}
-    >
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-2.5 py-1 text-[11px] font-semibold text-foreground">
       <span className={cn("size-1.5 rounded-full", dot)} />
       {label}
     </span>
@@ -202,7 +209,7 @@ export function Stars({ value, size = 14 }: { value: number; size?: number }) {
           height={size}
           className={
             i < Math.round(value)
-              ? "fill-accent-amber text-accent-amber drop-shadow-[0_0_3px_var(--accent-amber)]"
+              ? "fill-warning text-warning"
               : "text-muted-foreground/30"
           }
         />

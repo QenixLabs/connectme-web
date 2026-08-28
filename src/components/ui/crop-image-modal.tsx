@@ -13,9 +13,11 @@ interface CropImageModalProps {
   onOpenChange: (open: boolean) => void;
   imageSrc: string;
   onCropped: (file: File) => void;
+  aspect?: number;
+  title?: string;
 }
 
-export function CropImageModal({ open, onOpenChange, imageSrc, onCropped }: CropImageModalProps) {
+export function CropImageModal({ open, onOpenChange, imageSrc, onCropped, aspect = 1, title = "Crop your photo" }: CropImageModalProps) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<{
@@ -51,7 +53,7 @@ export function CropImageModal({ open, onOpenChange, imageSrc, onCropped }: Crop
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Crop your photo</DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
 
         <div className="relative h-72 w-full overflow-hidden rounded-lg bg-muted">
@@ -59,7 +61,7 @@ export function CropImageModal({ open, onOpenChange, imageSrc, onCropped }: Crop
             image={imageSrc}
             crop={crop}
             zoom={zoom}
-            aspect={1}
+            aspect={aspect}
             onCropChange={setCrop}
             onZoomChange={setZoom}
             onCropComplete={onCropComplete}

@@ -1,24 +1,30 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles } from "lucide-react";
-import { GlassCard, SectionHeader } from "../primitives";
+import { Star, Sparkles } from "lucide-react";
+import { CollapsibleSection } from "../primitives";
 
 const MAX_VISIBLE = 8;
 
-export function SkillsSection({ skills }: { skills: string[] }) {
+export function SkillsSection({
+  skills,
+  collapsible = false,
+}: {
+  skills: string[];
+  collapsible?: boolean;
+}) {
   const [showAll, setShowAll] = useState(false);
   const hasMore = skills.length > MAX_VISIBLE;
   const visible = showAll ? skills : skills.slice(0, MAX_VISIBLE);
 
   return (
-    <GlassCard>
-      <SectionHeader
-        icon={<Sparkles className="size-4" />}
-        title="Skills"
-        action={hasMore ? (showAll ? "Show Less" : "View All") : undefined}
-        onAction={hasMore ? () => setShowAll((v) => !v) : undefined}
-      />
+    <CollapsibleSection
+      icon={<Star className="size-4" />}
+      title="Top Skills"
+      action={hasMore ? (showAll ? "Show Less" : "View All") : undefined}
+      onAction={hasMore ? () => setShowAll((v) => !v) : undefined}
+      collapsible={collapsible && skills.length > 0}
+    >
       {skills.length === 0 ? (
         <p className="py-6 text-center text-sm text-muted-foreground/60">
           No skills added yet.
@@ -28,21 +34,21 @@ export function SkillsSection({ skills }: { skills: string[] }) {
           {visible.map((skill) => (
             <span
               key={skill}
-              className="inline-flex items-center rounded-full border border-border bg-bg-surface-inset px-3 py-1.5 text-[13px] font-medium text-foreground/80 transition-colors hover:border-rootin/30 hover:text-rootin"
+              className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-3 py-1.5 text-[11px] font-semibold text-foreground"
             >
-              {skill}
+              <Sparkles className="size-3 text-brand" /> {skill}
             </span>
           ))}
           {!showAll && hasMore && (
             <button
               onClick={() => setShowAll(true)}
-              className="inline-flex items-center rounded-full px-3 py-1.5 text-[13px] font-semibold text-rootin transition-colors hover:text-rootin/80"
+              className="inline-flex items-center rounded-full px-3 py-1.5 text-[11px] font-semibold text-brand transition-colors hover:text-brand/80"
             >
               +{skills.length - MAX_VISIBLE} more
             </button>
           )}
         </div>
       )}
-    </GlassCard>
+    </CollapsibleSection>
   );
 }

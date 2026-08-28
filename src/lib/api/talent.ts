@@ -236,6 +236,15 @@ export const talentApi = {
     return response.data as { relativePath: string; signedUrl: string };
   },
 
+  uploadBanner: async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await apiClient.post("/talent/upload/banner", formData, {
+      headers: { "Content-Type": undefined },
+    });
+    return response.data as { relativePath: string; signedUrl: string };
+  },
+
   getCompleteness: async () => {
     const response = await apiClient.get("/talent/completeness");
     return response.data as { isComplete: boolean; missingFields: string[] };

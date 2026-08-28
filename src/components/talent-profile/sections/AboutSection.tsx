@@ -1,21 +1,31 @@
 "use client";
 
 import { useState } from "react";
-import { User, ChevronDown, ChevronUp } from "lucide-react";
-import { GlassCard, SectionHeader } from "../primitives";
+import { User, ChevronDown } from "lucide-react";
+import { CollapsibleSection } from "../primitives";
 import { cn } from "@/lib/utils";
 
-export function AboutSection({ bio }: { bio: string }) {
+export function AboutSection({
+  bio,
+  collapsible = false,
+}: {
+  bio: string;
+  collapsible?: boolean;
+}) {
   const [expanded, setExpanded] = useState(false);
   const hasLongBio = bio.length > 160;
+  const canCollapse = collapsible && !!bio.trim();
   const text = bio || "No bio added yet.";
 
   return (
-    <GlassCard>
-      <SectionHeader icon={<User className="size-4" />} title="About" />
+    <CollapsibleSection
+      icon={<User className="size-4" />}
+      title="About Me"
+      collapsible={canCollapse}
+    >
       <p
         className={cn(
-          "text-sm leading-6 text-foreground/75 sm:text-[15px] sm:leading-7",
+          "text-xs leading-relaxed text-muted-foreground",
           !expanded && hasLongBio && "line-clamp-3",
         )}
       >
@@ -24,19 +34,17 @@ export function AboutSection({ bio }: { bio: string }) {
       {hasLongBio && (
         <button
           onClick={() => setExpanded((v) => !v)}
-          className="mt-2.5 inline-flex items-center gap-1 text-xs font-semibold text-rootin transition-colors hover:text-rootin/80"
+          className="mt-2 flex items-center gap-1 text-xs font-bold text-brand"
         >
-          {expanded ? (
-            <>
-              Show less <ChevronUp className="size-3.5" />
-            </>
-          ) : (
-            <>
-              Show more <ChevronDown className="size-3.5" />
-            </>
-          )}
+          {expanded ? "Show less" : "Read More"}{" "}
+          <ChevronDown
+            className={cn(
+              "size-3.5 transition-transform",
+              expanded && "rotate-180",
+            )}
+          />
         </button>
       )}
-    </GlassCard>
+    </CollapsibleSection>
   );
 }

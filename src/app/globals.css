@@ -89,6 +89,10 @@
   --color-gold-hover: var(--gold-hover);
   --color-gold-soft: var(--gold-soft);
   --color-success-soft: var(--success-soft);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-soft: var(--brand-soft);
+  --color-pink: var(--pink);
   --color-text-secondary: var(--text-secondary);
   --color-text-muted: var(--text-muted);
   --color-text-disabled: var(--text-disabled);
@@ -316,6 +320,12 @@
   --glass-strong-border: rgba(255, 255, 255, 0.1);
   --scrollbar-thumb: rgba(255, 255, 255, 0.08);
   --scrollbar-thumb-hover: rgba(255, 255, 255, 0.14);
+  --brand: var(--primary);
+  --brand-foreground: var(--primary-foreground);
+  --brand-soft: rgba(79, 34, 244, 0.12);
+  --pink: #F43F5E;
+  --gradient-cover: linear-gradient(160deg, #3b1ad0, #F43F5E);
+  --gradient-brand: linear-gradient(90deg, #4F22F4, #F43F5E);
 }
 
 html[data-theme="light"] {

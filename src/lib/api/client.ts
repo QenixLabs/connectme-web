@@ -118,6 +118,9 @@ apiClient.interceptors.response.use(
             processQueue(err as Error, null);
             tokenStorage.setToken(null);
             if (typeof window !== "undefined") {
+              document.cookie = "auth_session=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+              document.cookie = "user_role=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+              localStorage.removeItem("auth-storage");
               window.location.href = "/auth/login";
             }
           })
