@@ -1,58 +1,47 @@
 "use client";
 
-import Link from "next/link";
-import { Trophy, ArrowRight } from "lucide-react";
-import { GlassCard, SectionHeader } from "../primitives";
+import { Award, ChevronRight } from "lucide-react";
+import { CollapsibleSection } from "../primitives";
 import type { AwardItem } from "../data";
 
 export function AwardsSection({
   data,
-  isOwner = false,
+  collapsible = false,
 }: {
   data: AwardItem[];
-  isOwner?: boolean;
+  collapsible?: boolean;
 }) {
   return (
-    <GlassCard>
-      <SectionHeader
-        icon={<Trophy className="size-4" />}
-        title="Awards & Recognitions"
-      />
+    <CollapsibleSection
+      icon={<Award className="size-4" />}
+      title="Awards"
+      collapsible={collapsible && data.length > 0}
+    >
       {data.length === 0 ? (
-        <div className="py-4 text-center sm:py-5">
-          <p className="text-sm text-muted-foreground/60">
-            No awards added yet.
-          </p>
-          {isOwner && (
-            <Link
-              href="/talent/profile"
-              className="mt-1.5 inline-flex items-center gap-1 text-sm font-medium text-rootin transition-colors hover:text-rootin/80"
-            >
-              Add your first award
-              <ArrowRight className="size-3.5" />
-            </Link>
-          )}
-        </div>
+        <p className="py-6 text-center text-sm text-muted-foreground/60">
+          No awards added yet.
+        </p>
       ) : (
-        <div className="space-y-2">
-          {data.map((award) => (
-            <div
-              key={award.id}
-              className="group flex items-start gap-3 rounded-xl border border-transparent p-2.5 transition-all duration-200 hover:border-gold/20 hover:bg-gold/[0.04]"
+        <ul className="space-y-2">
+          {data.map((a) => (
+            <li
+              key={a.id}
+              className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 border-b border-border/60 pb-2 last:border-0 last:pb-0"
             >
-              <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent-amber-bg">
-                <Trophy className="size-4 text-gold transition-transform group-hover:scale-110" />
-              </span>
+              <Award className="size-4 shrink-0 text-warning" />
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-foreground/90">
-                  {award.name}
+                <p className="truncate text-[11px] font-bold text-foreground">
+                  {a.name}
                 </p>
-                <p className="text-xs text-muted-foreground/60">{award.issuer}</p>
+                <p className="truncate text-[10px] text-muted-foreground">
+                  {a.issuer}
+                </p>
               </div>
-            </div>
+              <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" />
+            </li>
           ))}
-        </div>
+        </ul>
       )}
-    </GlassCard>
+    </CollapsibleSection>
   );
 }

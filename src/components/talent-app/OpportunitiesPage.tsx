@@ -23,7 +23,7 @@ import {
   IndianRupee,
   DollarSign,
 } from "lucide-react";
-import { useState, useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -445,6 +445,24 @@ function ErrorState() {
   );
 }
 
+function useStickyStuck(topOffset = 64) {
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const [stuck, setStuck] = useState(false);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setStuck(!entry.isIntersecting),
+      { rootMargin: `-${topOffset}px 0px 0px 0px`, threshold: 0 },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [topOffset]);
+
+  return { sentinelRef, stuck };
+}
+
 /* -------------------------------------------------------------------------- */
 /*                                    PAGE                                    */
 /* -------------------------------------------------------------------------- */
@@ -493,6 +511,8 @@ export function OpportunitiesPage() {
 
   const hasActiveFilters = search || roleType || sort !== "newest" || tab !== "All";
 
+  const { sentinelRef, stuck: controlsStuck } = useStickyStuck();
+
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6 px-4 pb-28 pt-4 md:pt-6 lg:px-6">
       {/* Hero Header */}
@@ -512,121 +532,161 @@ export function OpportunitiesPage() {
           <p className="mt-1 max-w-xl text-sm text-muted-foreground">
             Browse casting calls, modeling gigs, and creative opportunities matched to your talent.
           </p>
-
-          {/* Search Bar */}
-          <div className="mt-5 flex max-w-2xl items-center gap-3 rounded-2xl border border-border bg-background/80 px-4 py-3 shadow-search backdrop-blur-sm transition-all focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20">
-            <Search className="h-5 w-5 shrink-0 text-muted-foreground" />
-            <Input
-              placeholder="Search by role, keyword, or location..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-              className="h-auto border-0 bg-transparent px-0 text-base shadow-none placeholder:text-muted-foreground focus-visible:ring-0 md:text-base"
-            />
-            {search && (
-              <button
-                onClick={() => {
-                  setSearch("");
-                  setPage(1);
-                }}
-                className="grid size-6 place-items-center rounded-full bg-muted text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            )}
-          </div>
         </div>
       </motion.div>
 
-      {/* Filters Bar */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
-        className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
-      >
-        {/* Role Chips */}
-        <div className="no-scrollbar -mx-1 flex items-center gap-1 overflow-x-auto px-1">
-          <div className="flex items-center gap-1.5 pr-2 text-muted-foreground">
-            <SlidersHorizontal className="h-4 w-4" />
-            <span className="text-xs font-medium uppercase tracking-wider">Role</span>
-          </div>
-          {roleTypes.map((r) => {
-            const value = r === "All" ? "" : r;
-            const active = roleType === value;
-            return (
-              <button
-                key={r}
-                onClick={() => {
-                  setRoleType(value);
-                  setPage(1);
-                }}
-                className={cn(
-                  "shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all",
-                  active
-                    ? "border-primary bg-primary text-primary-foreground shadow-glow"
-                    : "border-border bg-card text-muted-foreground hover:border-border-hover hover:text-foreground",
-                )}
-              >
-                {r}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Right Controls */}
-        <div className="flex items-center gap-2">
-          <Select
-            value={sort}
-            onValueChange={(value) => setSort(value as typeof sort)}
-          >
-            <SelectTrigger className="h-9 w-[130px] rounded-lg border-border bg-card text-xs">
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              {sortOptions.map((o) => (
-                <SelectItem key={o.value} value={o.value}>
-                  {o.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <div className="flex items-center rounded-lg border border-border bg-card p-0.5">
-            <button
-              aria-label="Grid view"
-              onClick={() => setViewMode("grid")}
-              className={cn(
-                "grid size-8 place-items-center rounded-md transition-all",
-                viewMode === "grid" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <LayoutGrid className="h-4 w-4" />
-            </button>
-            <button
-              aria-label="List view"
-              onClick={() => setViewMode("list")}
-              className={cn(
-                "grid size-8 place-items-center rounded-md transition-all",
-                viewMode === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <List className="h-4 w-4" />
-            </button>
-          </div>
-
-          {hasActiveFilters && (
-            <Button onClick={clearFilters} variant="ghost" size="sm" className="h-9 gap-1 text-xs text-muted-foreground hover:text-foreground">
-              <X className="h-3.5 w-3.5" />
-              Clear
-            </Button>
+      {/* Sticky Search & Filter Controls */}
+      <div className="relative">
+        <div ref={sentinelRef} aria-hidden="true" className="absolute inset-x-0 top-0 h-px" />
+        <div
+          className={cn(
+            "sticky top-16 z-40 -mx-4 px-4 transition-all duration-300 lg:-mx-6 lg:px-6",
+            controlsStuck
+              ? "border-b border-border/60 bg-background/80 shadow-[0_8px_32px_-12px_rgba(0,0,0,0.25)] backdrop-blur-xl"
+              : "border-b border-transparent",
           )}
-        </div>
-      </motion.div>
+        >
+          <div className="flex flex-col gap-3 py-3 md:py-3.5">
+            {/* Search Row */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              className="group relative"
+            >
+              <div className="flex items-center gap-3 rounded-2xl border border-border/60 bg-card/90 px-4 py-2.5 shadow-[var(--shadow-search)] transition-all duration-200 focus-within:border-primary/50 focus-within:bg-card focus-within:shadow-[0_0_0_3px_hsl(var(--primary)/0.1)]">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors duration-200 group-focus-within:bg-primary group-focus-within:text-primary-foreground">
+                  <Search className="h-[18px] w-[18px]" />
+                </div>
+                <Input
+                  placeholder="Search roles, keywords, or locations..."
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setPage(1);
+                  }}
+                  className="h-auto flex-1 border-0 bg-transparent px-0 py-0.5 text-[15px] font-medium shadow-none placeholder:text-muted-foreground/60 focus-visible:ring-0"
+                />
+                {search && (
+                  <motion.button
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.8, opacity: 0 }}
+                    onClick={() => {
+                      setSearch("");
+                      setPage(1);
+                    }}
+                    className="grid size-7 shrink-0 place-items-center rounded-lg bg-muted/80 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    aria-label="Clear search"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </motion.button>
+                )}
+              </div>
+            </motion.div>
 
-      {/* Tabs */}
+            {/* Filters Row */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.05, ease: [0.16, 1, 0.3, 1] }}
+              className="flex items-center gap-2.5"
+            >
+              {/* Filter label */}
+              <div className="flex shrink-0 items-center gap-1.5 rounded-lg border border-border/60 bg-card/60 px-2.5 py-1.5 text-muted-foreground">
+                <SlidersHorizontal className="h-3.5 w-3.5" />
+                <span className="text-[11px] font-semibold uppercase tracking-widest">Filter</span>
+              </div>
+
+              {/* Role type chips */}
+              <div className="no-scrollbar flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto">
+                {roleTypes.map((r) => {
+                  const value = r === "All" ? "" : r;
+                  const active = roleType === value;
+                  return (
+                    <button
+                      key={r}
+                      onClick={() => {
+                        setRoleType(value);
+                        setPage(1);
+                      }}
+                      className={cn(
+                        "relative shrink-0 rounded-full px-3.5 py-[7px] text-[13px] font-medium transition-all duration-200",
+                        active
+                          ? "bg-primary text-primary-foreground shadow-[0_2px_8px_-2px_hsl(var(--primary)/0.5)]"
+                          : "border border-border/60 bg-card/60 text-muted-foreground hover:border-border hover:bg-card hover:text-foreground",
+                      )}
+                    >
+                      {r}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Actions */}
+              <div className="flex shrink-0 items-center gap-2">
+                <Select
+                  value={sort}
+                  onValueChange={(value) => setSort(value as typeof sort)}
+                >
+                  <SelectTrigger className="h-9 w-[120px] rounded-xl border-border/60 bg-card/60 text-xs font-medium sm:w-[130px]">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sortOptions.map((o) => (
+                      <SelectItem key={o.value} value={o.value}>
+                        {o.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* View toggle */}
+                <div className="flex items-center rounded-xl border border-border/60 bg-card/60 p-[3px]">
+                  <button
+                    aria-label="Grid view"
+                    onClick={() => setViewMode("grid")}
+                    className={cn(
+                      "grid size-[30px] place-items-center rounded-[10px] transition-all duration-200",
+                      viewMode === "grid"
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    <LayoutGrid className="h-4 w-4" />
+                  </button>
+                  <button
+                    aria-label="List view"
+                    onClick={() => setViewMode("list")}
+                    className={cn(
+                      "grid size-[30px] place-items-center rounded-[10px] transition-all duration-200",
+                      viewMode === "list"
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    <List className="h-4 w-4" />
+                  </button>
+                </div>
+
+                {hasActiveFilters && (
+                  <motion.button
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    onClick={clearFilters}
+                    className="flex h-9 items-center gap-1 rounded-xl border border-border/60 bg-card/60 px-3 text-xs font-medium text-muted-foreground transition-colors hover:border-destructive/30 hover:bg-destructive/5 hover:text-destructive"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    Clear
+                  </motion.button>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs & Results Count */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}

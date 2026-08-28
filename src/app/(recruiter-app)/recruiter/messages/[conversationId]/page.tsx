@@ -147,7 +147,15 @@ export default function RecruiterConversationPage() {
       });
 
       if (!sent) {
-        throw new Error("Socket not connected");
+        const saved = await conversationsApi.sendMessage({
+          conversation_id: conversation._id,
+          content,
+          client_message_id: clientId,
+        });
+        setMessages((prev) =>
+          prev.map((m) => (m.client_message_id === clientId ? saved : m))
+        );
+        return;
       }
 
       setTimeout(() => {

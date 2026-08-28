@@ -1,14 +1,36 @@
 "use client";
 
 import { BarChart3, Eye, Heart, Bookmark } from "lucide-react";
-import { GlassCard, SectionHeader, StatCard } from "../primitives";
+import { GlassCard, SectionHeader } from "../primitives";
 import type { TalentProfile } from "@/lib/api/talent";
+
+function StatItem({
+  label,
+  value,
+  icon,
+}: {
+  label: string;
+  value: React.ReactNode;
+  icon: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col items-center text-center">
+      {icon}
+      <p className="mt-1.5 text-lg font-extrabold leading-none text-foreground">
+        {value}
+      </p>
+      <p className="mt-0.5 text-[10px] leading-tight text-muted-foreground">
+        {label}
+      </p>
+    </div>
+  );
+}
 
 export function AnalyticsSection({ profile }: { profile: TalentProfile }) {
   const analytics = profile.analytics;
 
   return (
-    <GlassCard>
+    <GlassCard hover={false}>
       <SectionHeader icon={<BarChart3 className="size-4" />} title="Analytics" />
       {!analytics ? (
         <p className="py-8 text-center text-sm text-muted-foreground/60">
@@ -16,26 +38,25 @@ export function AnalyticsSection({ profile }: { profile: TalentProfile }) {
         </p>
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:gap-4">
-          <StatCard
+          <StatItem
             label="Views (7d)"
             value={analytics.profile_views_7d.toLocaleString()}
-            icon={<Eye className="size-5" />}
+            icon={<Eye className="size-4 text-brand" />}
           />
-          <StatCard
+          <StatItem
             label="Views (30d)"
             value={analytics.profile_views_30d.toLocaleString()}
-            icon={<Eye className="size-5" />}
+            icon={<Eye className="size-4 text-brand" />}
           />
-          <StatCard
+          <StatItem
             label="Likes"
             value={analytics.like_count.toLocaleString()}
-            icon={<Heart className="size-5" />}
-            accent="gold"
+            icon={<Heart className="size-4 text-warning" />}
           />
-          <StatCard
+          <StatItem
             label="Shortlists"
             value={analytics.shortlist_count.toLocaleString()}
-            icon={<Bookmark className="size-5" />}
+            icon={<Bookmark className="size-4 text-brand" />}
           />
         </div>
       )}

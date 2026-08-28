@@ -48,7 +48,11 @@ export function SignInForm() {
     if (isAuthenticated && user) {
       const redirect = searchParams.get("redirect");
       const target =
-        redirect && redirect.startsWith("/") ? redirect : ROLE_HOME[user.role] ?? "/";
+        redirect && redirect.startsWith("/")
+          ? redirect
+          : user.role === "talent" && user.username
+            ? `/talent/${user.username}`
+            : ROLE_HOME[user.role] ?? "/";
       router.push(target);
     }
   }, [isAuthenticated, user, router, searchParams]);

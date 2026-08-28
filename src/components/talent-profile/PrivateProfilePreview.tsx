@@ -3,6 +3,10 @@
 import type { TalentProfilePreview } from "@/lib/api/talent";
 import { HeroSection } from "./HeroSection";
 import { GlassCard } from "./primitives";
+import { BottomBar } from "@/components/shared/bottom-bar";
+import { AuthBottomBar } from "@/components/shared/AuthBottomBar";
+import { recruiterNavItems } from "@/components/shared/nav-config";
+import { useTalentNavItems } from "@/hooks/use-talent-nav-items";
 
 export function PrivateProfilePreview({
   profile,
@@ -11,6 +15,7 @@ export function PrivateProfilePreview({
   profile: TalentProfilePreview;
   viewerRole?: "talent" | "recruiter" | "admin" | null;
 }) {
+  const talentNavItems = useTalentNavItems();
   return (
     <div className="relative min-h-screen bg-bg-page pb-24">
       <HeroSection profile={profile} viewerRole={viewerRole} />
@@ -23,6 +28,10 @@ export function PrivateProfilePreview({
           </p>
         </GlassCard>
       </main>
+
+      {viewerRole === "talent" && <BottomBar navItems={talentNavItems} iconOnly />}
+      {viewerRole === "recruiter" && <BottomBar navItems={recruiterNavItems} iconOnly />}
+      {!viewerRole && <AuthBottomBar />}
     </div>
   );
 }

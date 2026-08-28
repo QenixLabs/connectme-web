@@ -1,4 +1,5 @@
 export { AboutSection } from "./AboutSection";
+export { ShowReelSection } from "./ShowReelSection";
 export { PortfolioSection } from "./PortfolioSection";
 export { ExperienceSection } from "./ExperienceSection";
 export { SkillsSection } from "./SkillsSection";
