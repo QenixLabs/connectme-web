@@ -153,6 +153,11 @@ apiClient.interceptors.response.use(
       }
     }
 
+    const responseData = error.response?.data as Record<string, unknown> | undefined;
+    if (responseData && typeof responseData === "object" && "message" in responseData) {
+      (error as AxiosError & { backendMessage?: string }).backendMessage = responseData.message as string;
+    }
+
     return Promise.reject(error);
   },
 );

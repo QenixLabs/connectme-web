@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   Home,
   Image as ImageIcon,
@@ -18,7 +18,10 @@ import type {
   Testimonial,
   Award as AwardType,
 } from "@/lib/api/talent";
+import type { Campaign } from "@/lib/api/campaigns";
 import { useAuthStore } from "@/providers/auth-store-provider";
+import { BottomBar } from "@/components/shared/bottom-bar";
+import { useTalentNavItems } from "@/hooks/use-talent-nav-items";
 import { HeroSection } from "./HeroSection";
 import { StatsBento } from "./StatsBento";
 import { TalentProfileActions } from "./TalentProfileActions";
@@ -36,7 +39,9 @@ import {
   toExperienceItems,
   toAwardItems,
   toReviewItems,
+  toPortfolioItems,
 } from "./data";
+import { MediaLightbox } from "@/components/portfolio/MediaLightbox";
 
 const tabItems = [
   { id: "overview", icon: Home, label: "Overview" },
@@ -54,6 +59,7 @@ export function TalentProfileView({
   testimonials,
   awards,
   viewerRole,
+  campaigns,
 }: {
   profile: TalentProfile;
   portfolioItems: PortfolioApiResponse[];
@@ -61,9 +67,11 @@ export function TalentProfileView({
   testimonials: Testimonial[];
   awards: AwardType[];
   viewerRole: "talent" | "recruiter" | "admin" | null;
+  campaigns?: Campaign[];
 }) {
   const [activeTab, setActiveTab] = useState("overview");
   const authUser = useAuthStore((s) => s.user);
+  const navItems = useTalentNavItems();
   const isOwner =
     viewerRole === "talent" &&
     !!authUser?.username &&
@@ -77,29 +85,47 @@ export function TalentProfileView({
     [profile],
   );
 
+  const portfolioItemsConverted = useMemo(
+    () => toPortfolioItems(portfolioItems),
+    [portfolioItems],
+  );
+
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxItemId, setLightboxItemId] = useState<string | null>(null);
+
+  const handleOpenLightbox = useCallback((itemId: string) => {
+    setLightboxItemId(itemId);
+    setLightboxOpen(true);
+  }, []);
+
   return (
-    <div className="mx-auto w-full max-w-md pb-24">
-      {/* Cover + profile card */}
-      <HeroSection
-        profile={profile}
-        viewerRole={viewerRole}
-        showActions={false}
-        isOwner={isOwner}
-      />
+    <>
+      <div className="mx-auto w-full max-w-md pb-24">
+        {/* Cover + profile card */}
+        <HeroSection
+          profile={profile}
+          viewerRole={viewerRole}
+          showActions={false}
+          isOwner={isOwner}
+        />
 
       <div className="space-y-3 px-5 pt-3">
         {/* Stats */}
         <StatsBento profile={profile} testimonials={testimonials} />
 
         {/* CTA + secondary buttons */}
-        <TalentProfileActions profile={profile} viewerRole={viewerRole} />
+        <TalentProfileActions
+          profile={profile}
+          viewerRole={viewerRole}
+          campaigns={campaigns}
+        />
 
         {/* Social connect */}
         <SocialConnectBar profile={profile} />
 
         {/* Tab bar */}
         <nav className="flex items-end justify-between rounded-2xl bg-card px-1 py-2 shadow-[var(--shadow-card)]">
-          {tabItems.map((t, i) => (
+          {tabItems.map((t) => (
             <button
               key={t.id}
               onClick={() => setActiveTab(t.id)}
@@ -120,11 +146,12 @@ export function TalentProfileView({
         {activeTab === "overview" && (
           <div className="space-y-3">
             <AboutSection bio={profile.about || ""} />
-            <ShowReelSection items={portfolioItems} collapsible />
+            <ShowReelSection items={portfolioItems} collapsible onOpenReel={handleOpenLightbox} />
             <PortfolioSection
               items={portfolioItems}
               username={profile.username}
               collapsible
+              onOpenReel={handleOpenLightbox}
             />
             <SkillsSection skills={skills} collapsible />
             <AwardsSection data={awardItems} collapsible />
@@ -134,11 +161,12 @@ export function TalentProfileView({
 
         {activeTab === "portfolio" && (
           <div className="space-y-3">
-            <ShowReelSection items={portfolioItems} />
+            <ShowReelSection items={portfolioItems} onOpenReel={handleOpenLightbox} />
             <PortfolioSection
               items={portfolioItems}
               username={profile.username}
               showAllAction={false}
+              onOpenReel={handleOpenLightbox}
             />
           </div>
         )}
@@ -172,6 +200,16 @@ export function TalentProfileView({
           <FileText className="size-3" /> Profile last updated Aug 2026
         </p>
       </div>
-    </div>
+      </div>
+
+      {isOwner && <BottomBar navItems={navItems} iconOnly />}
+
+      <MediaLightbox
+        items={portfolioItemsConverted}
+        initialItemId={lightboxItemId}
+        open={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+      />
+    </>
   );
 }

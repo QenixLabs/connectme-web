@@ -95,8 +95,8 @@ export function NewConversationDialog({
       setMessage("");
       onCreated(conversation);
       onSelect?.(conversation._id);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Could not start conversation.";
+    } catch (err: any) {
+      const message = err?.backendMessage || (err instanceof Error ? err.message : "Could not start conversation.");
       toast.error(message);
     } finally {
       setLoading(false);

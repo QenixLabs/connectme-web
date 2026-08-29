@@ -31,11 +31,20 @@ function ThumbCard({
         loading="lazy"
         className="h-24 w-full object-cover transition-transform duration-500 group-hover:scale-105"
       />
-      <span className="absolute inset-0 grid place-items-center">
-        <span className="grid size-7 place-items-center rounded-full bg-foreground/30 backdrop-blur-sm">
-          <Play className="size-3.5 fill-current text-card" />
+      {isVideo && (
+        <span className="absolute inset-0 grid place-items-center">
+          <span className="grid size-7 place-items-center rounded-full bg-foreground/30 backdrop-blur-sm">
+            <Play className="size-3.5 fill-current text-card" />
+          </span>
         </span>
-      </span>
+      )}
+      {!isVideo && (
+        <span className="absolute inset-0 grid place-items-center">
+          <span className="grid size-7 place-items-center rounded-full bg-foreground/30 backdrop-blur-sm">
+            <ImageIcon className="size-3.5 text-card" />
+          </span>
+        </span>
+      )}
       <span className="absolute bottom-1.5 right-1.5 max-w-[70%] truncate rounded bg-foreground/60 px-1.5 py-0.5 text-[9px] font-semibold text-card">
         {item.title}
       </span>
@@ -76,14 +85,14 @@ export function PortfolioSection({
       collapsible={collapsible && portfolioItems.length > 0}
     >
       {portfolioItems.length === 0 ? (
-        <p className="py-6 text-center text-sm text-muted-foreground/60">
+        <p className="py-6 text-center text-sm text-muted-foreground">
           No portfolio items yet.
         </p>
       ) : (
         <div className="space-y-3">
           {videos.length > 0 && (
             <div>
-              <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50">
+              <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Videos
               </p>
               <div className="-mx-1 flex gap-2.5 overflow-x-auto scroll-smooth px-1 pb-1 snap-x snap-mandatory">
@@ -100,7 +109,7 @@ export function PortfolioSection({
 
           {images.length > 0 && (
             <div>
-              <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50">
+              <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Images
               </p>
               <div className="-mx-1 flex gap-2.5 overflow-x-auto scroll-smooth px-1 pb-1 snap-x snap-mandatory">
