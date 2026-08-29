@@ -77,6 +77,15 @@ export interface CampaignRecommendation {
   _id: string;
   name: string;
   description?: string;
+  recruiter?: {
+    _id: string;
+    company_name?: string;
+    slug?: string;
+    profile_photo?: string;
+    headline?: string;
+    verification_status?: string;
+    location?: { country?: string; state?: string; city?: string };
+  };
   role_type?: string;
   location?: { city?: string; state?: string };
   specialties?: string[];
@@ -95,6 +104,14 @@ export interface CampaignRecommendation {
   match_score?: number;
   total_score?: number;
   created_at: string;
+}
+
+export interface TalentApplicationStats {
+  applied: number;
+  viewed: number;
+  shortlisted: number;
+  auditions: number;
+  callbacks: number;
 }
 
 export interface QueryCampaignsParams {
@@ -582,6 +599,11 @@ export const campaignsApi = {
   getDashboardStats: async () => {
     const response = await apiClient.get("/campaigns/dashboard/stats");
     return response.data as RecruiterDashboardStats;
+  },
+
+  getTalentApplicationStats: async () => {
+    const response = await apiClient.get("/campaigns/applications/stats");
+    return response.data as TalentApplicationStats;
   },
 
   /* ---- Create / Update Campaign ---- */

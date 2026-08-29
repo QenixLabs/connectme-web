@@ -118,12 +118,16 @@ export function PortfolioReelItem({
           playsInline
           className="h-full w-full object-cover"
         />
-      ) : (
+      ) : item.url ? (
         <img
           src={item.url}
           alt={item.title}
           className="absolute inset-0 h-full w-full object-cover"
         />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center bg-muted">
+          <Play className="size-12 text-white/70" />
+        </div>
       )}
 
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
