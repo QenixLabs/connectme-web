@@ -4,7 +4,13 @@ interface SocialAuthButtonsProps {
   className?: string;
 }
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1";
+
 export function SocialAuthButtons({ className }: SocialAuthButtonsProps) {
+  const handleGoogleLogin = () => {
+    window.location.href = `${API_BASE_URL}/auth/google`;
+  };
+
   return (
     <div className={className}>
       <div className="relative mb-4">
@@ -21,6 +27,7 @@ export function SocialAuthButtons({ className }: SocialAuthButtonsProps) {
       <div className="grid grid-cols-2 gap-3">
         <button
           type="button"
+          onClick={handleGoogleLogin}
           className="flex h-11 items-center justify-center gap-2.5 rounded-xl border border-border bg-card text-sm font-medium text-foreground/70 transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 active:scale-[0.98]"
         >
           <svg className="size-4" viewBox="0 0 24 24" fill="none">

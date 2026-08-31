@@ -1,18 +1,19 @@
 import type { Metadata } from "next";
 
-import { ProfilePage } from "@/components/talent-app/ProfilePage";
+import { ProfileEditorPage } from "@/components/talent-app/profile-editor/ProfileEditorPage";
 
 export const metadata: Metadata = {
-  title: "RootIn — My Profile",
+  title: "Edit Profile — Talent Casting Portfolio",
   description:
-    "Manage your talent profile, visibility, analytics and account settings on RootIn.",
+    "Mobile-first talent profile editor: manage your headshot, skills, portfolio, showreels, credits, awards, documents and profile visibility in one place.",
   openGraph: {
-    title: "RootIn — My Profile",
+    title: "Edit Profile — Talent Casting Portfolio",
     description:
-      "Manage your talent profile, visibility, analytics and account settings on RootIn.",
+      "Mobile-first talent profile editor: manage your headshot, skills, portfolio, showreels, credits, awards, documents and profile visibility in one place.",
+    type: "website",
   },
 };
 
 export default function TalentProfilePage() {
-  return <ProfilePage />;
+  return <ProfileEditorPage />;
 }

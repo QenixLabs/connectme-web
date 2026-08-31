@@ -2,6 +2,7 @@ import { apiClient } from "./client";
 
 export type Availability = "available" | "busy" | "not_available";
 export type PrivacyMode = "public" | "recruiters_only" | "private";
+export type DocumentType = "resume" | "portfolio_pdf" | "measurements_sheet";
 
 export interface SectionVisibility {
   bio?: boolean;
@@ -240,6 +241,15 @@ export const talentApi = {
     const formData = new FormData();
     formData.append("file", file);
     const response = await apiClient.post("/talent/upload/banner", formData, {
+      headers: { "Content-Type": undefined },
+    });
+    return response.data as { relativePath: string; signedUrl: string };
+  },
+
+  uploadDocument: async (file: File, type: DocumentType) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await apiClient.post("/talent/upload/document", formData, {
       headers: { "Content-Type": undefined },
     });
     return response.data as { relativePath: string; signedUrl: string };
