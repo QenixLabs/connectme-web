@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { Suspense, useState, useMemo, useCallback } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useStore } from "zustand/react";
 import { authStore } from "@/stores/auth-store";
@@ -33,7 +33,7 @@ import { ShareSheet } from "@/components/portfolio/ShareSheet";
 import { EmptyPortfolioState } from "@/components/portfolio/EmptyPortfolioState";
 import { PortfolioSkeleton } from "@/components/portfolio/PortfolioSkeleton";
 
-export default function PortfolioPage() {
+function PortfolioContent() {
   const params = useParams();
   const username = (params?.username as string) || "";
   const user = useStore(authStore, (s) => s.user);
@@ -372,5 +372,13 @@ export default function PortfolioPage() {
         onClose={() => setShareItem(null)}
       />
     </div>
+  );
+}
+
+export default function PortfolioPage() {
+  return (
+    <Suspense fallback={<PortfolioSkeleton />}>
+      <PortfolioContent />
+    </Suspense>
   );
 }

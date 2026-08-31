@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useStore } from "zustand/react";
 import { authStore } from "@/stores/auth-store";
@@ -12,7 +12,7 @@ function setCookie(name: string, value: string, days: number) {
   document.cookie = `${name}=${value};expires=${expires};path=/;SameSite=Strict;${secure}`;
 }
 
-export default function GoogleCallbackPage() {
+function GoogleCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { setAccessToken, fetchUser } = useStore(authStore);
@@ -57,5 +57,22 @@ export default function GoogleCallbackPage() {
         <p className="text-sm text-muted-foreground">Signing you in with Google...</p>
       </div>
     </div>
+  );
+}
+
+export default function GoogleCallbackPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="text-center">
+            <div className="mb-4 h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent mx-auto" />
+            <p className="text-sm text-muted-foreground">Signing you in with Google...</p>
+          </div>
+        </div>
+      }
+    >
+      <GoogleCallbackContent />
+    </Suspense>
   );
 }
