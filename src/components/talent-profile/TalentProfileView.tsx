@@ -9,6 +9,9 @@ import {
   Award,
   MessageSquare,
   FileText,
+  User,
+  BarChart3,
+  FolderOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type {
@@ -34,6 +37,9 @@ import {
   SkillsSection,
   ReviewsSection,
   AwardsSection,
+  DetailsSection,
+  MediaKitSection,
+  AnalyticsSection,
 } from "./sections";
 import {
   toExperienceItems,
@@ -48,8 +54,11 @@ const tabItems = [
   { id: "portfolio", icon: ImageIcon, label: "Portfolio" },
   { id: "experience", icon: Briefcase, label: "Experience" },
   { id: "skills", icon: Gem, label: "Skills" },
+  { id: "details", icon: User, label: "Details" },
   { id: "awards", icon: Award, label: "Awards" },
   { id: "reviews", icon: MessageSquare, label: "Reviews" },
+  { id: "media", icon: FolderOpen, label: "Media Kit" },
+  { id: "analytics", icon: BarChart3, label: "Analytics" },
 ];
 
 export function TalentProfileView({
@@ -192,6 +201,24 @@ export function TalentProfileView({
         {activeTab === "reviews" && (
           <div className="space-y-3">
             <ReviewsSection data={reviewItems} initialShowAll />
+          </div>
+        )}
+
+        {activeTab === "details" && (
+          <div className="space-y-3">
+            <DetailsSection profile={profile} awards={awardItems} />
+          </div>
+        )}
+
+        {activeTab === "media" && (
+          <div className="space-y-3">
+            <MediaKitSection profile={profile} />
+          </div>
+        )}
+
+        {activeTab === "analytics" && (
+          <div className="space-y-3">
+            <AnalyticsSection profile={profile} />
           </div>
         )}
 

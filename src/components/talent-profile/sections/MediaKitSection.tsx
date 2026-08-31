@@ -1,14 +1,41 @@
 "use client";
 
-import { FileText, ExternalLink, Instagram, Youtube, Linkedin, Twitter } from "lucide-react";
+import { FileText, ExternalLink, Globe } from "lucide-react";
+import {
+  SiInstagram,
+  SiYoutube,
+  SiFacebook,
+  SiTiktok,
+  SiX,
+  SiPinterest,
+  SiSnapchat,
+  SiTwitch,
+  SiDiscord,
+  SiBehance,
+  SiDribbble,
+  SiVimeo,
+  SiSpotify,
+} from "react-icons/si";
+import { FaLinkedin } from "react-icons/fa";
 import { GlassCard, SectionHeader } from "../primitives";
 import type { TalentProfile } from "@/lib/api/talent";
 
 const socialIcons: Record<string, React.ComponentType<{ className?: string }>> = {
-  instagram: Instagram,
-  youtube: Youtube,
-  linkedin: Linkedin,
-  twitter: Twitter,
+  instagram: SiInstagram,
+  youtube: SiYoutube,
+  facebook: SiFacebook,
+  linkedin: FaLinkedin,
+  tiktok: SiTiktok,
+  twitter: SiX,
+  pinterest: SiPinterest,
+  snapchat: SiSnapchat,
+  twitch: SiTwitch,
+  discord: SiDiscord,
+  behance: SiBehance,
+  dribbble: SiDribbble,
+  vimeo: SiVimeo,
+  spotify: SiSpotify,
+  website: Globe,
 };
 
 function formatSocialName(key: string): string {

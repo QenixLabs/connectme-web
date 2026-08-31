@@ -1,19 +1,40 @@
 "use client";
 
 import {
-  Instagram,
-  Youtube,
-  Facebook,
-  Linkedin,
-  Link2,
-} from "lucide-react";
+  SiInstagram,
+  SiYoutube,
+  SiFacebook,
+  SiTiktok,
+  SiX,
+  SiPinterest,
+  SiSnapchat,
+  SiTwitch,
+  SiDiscord,
+  SiBehance,
+  SiDribbble,
+  SiVimeo,
+  SiSpotify,
+} from "react-icons/si";
+import { FaLinkedin } from "react-icons/fa";
+import { Globe, Link2 } from "lucide-react";
 import type { TalentProfile } from "@/lib/api/talent";
 
 const socialIcons: Record<string, React.ComponentType<{ className?: string }>> = {
-  instagram: Instagram,
-  youtube: Youtube,
-  facebook: Facebook,
-  linkedin: Linkedin,
+  instagram: SiInstagram,
+  youtube: SiYoutube,
+  facebook: SiFacebook,
+  linkedin: FaLinkedin,
+  tiktok: SiTiktok,
+  twitter: SiX,
+  pinterest: SiPinterest,
+  snapchat: SiSnapchat,
+  twitch: SiTwitch,
+  discord: SiDiscord,
+  behance: SiBehance,
+  dribbble: SiDribbble,
+  vimeo: SiVimeo,
+  spotify: SiSpotify,
+  website: Globe,
 };
 
 export function SocialConnectBar({ profile }: { profile: TalentProfile }) {

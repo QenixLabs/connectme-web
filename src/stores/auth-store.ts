@@ -7,7 +7,7 @@ export interface User {
   _id: string;
   username?: string;
   email: string;
-  phone: string;
+  phone?: string;
   role: "talent" | "recruiter" | "admin";
   is_email_verified: boolean;
   is_phone_verified: boolean;
@@ -16,6 +16,8 @@ export interface User {
   status: string;
   active_plan?: string;
   subscription_status?: string;
+  auth_provider?: string;
+  google_id?: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -53,6 +53,7 @@ const isPublicEndpoint = (url: string): boolean => {
     "/auth/reset-password",
     "/auth/refresh",
     "/auth/check",
+    "/auth/google",
   ];
   return publicPaths.some((path) => url.includes(path));
 };
