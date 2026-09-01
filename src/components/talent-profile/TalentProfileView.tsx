@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   Home,
   Image as ImageIcon,
@@ -13,7 +13,6 @@ import {
   BarChart3,
   FolderOpen,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import type {
   TalentProfile,
   PortfolioApiResponse,
@@ -22,6 +21,7 @@ import type {
   Award as AwardType,
 } from "@/lib/api/talent";
 import { useAuthStore } from "@/providers/auth-store-provider";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { HeroSection } from "./HeroSection";
 import { StatsBento } from "./StatsBento";
 import { TalentProfileActions } from "./TalentProfileActions";
@@ -71,7 +71,6 @@ export function TalentProfileView({
   awards: AwardType[];
   viewerRole: "talent" | "recruiter" | "admin" | null;
 }) {
-  const [activeTab, setActiveTab] = useState("overview");
   const authUser = useAuthStore((s) => s.user);
   const isOwner =
     viewerRole === "talent" &&
@@ -88,7 +87,6 @@ export function TalentProfileView({
 
   return (
     <div className="mx-auto w-full max-w-md pb-24">
-      {/* Cover + profile card */}
       <HeroSection
         profile={profile}
         viewerRole={viewerRole}
@@ -97,37 +95,28 @@ export function TalentProfileView({
       />
 
       <div className="space-y-3 px-5 pt-3">
-        {/* Stats */}
         <StatsBento profile={profile} testimonials={testimonials} />
-
-        {/* CTA + secondary buttons */}
         <TalentProfileActions profile={profile} viewerRole={viewerRole} />
-
-        {/* Social connect */}
         <SocialConnectBar profile={profile} />
 
         {/* Tab bar */}
-        <nav className="flex items-end justify-between rounded-2xl bg-card px-1 py-2 shadow-[var(--shadow-card)]">
-          {tabItems.map((t, i) => (
-            <button
-              key={t.id}
-              onClick={() => setActiveTab(t.id)}
-              className={cn(
-                "flex flex-1 flex-col items-center gap-1 border-b-2 px-0.5 pb-1.5 pt-1 transition-colors",
-                activeTab === t.id
-                  ? "border-brand text-brand"
-                  : "border-transparent text-muted-foreground",
-              )}
-            >
-              <t.icon className="size-4" />
-              <span className="text-[9px] font-semibold">{t.label}</span>
-            </button>
-          ))}
-        </nav>
+        <Tabs defaultValue="overview">
+          <div className="overflow-x-auto rounded-2xl bg-card px-1 py-2 shadow-[var(--shadow-card)] scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none]">
+            <TabsList variant="line" className="w-full justify-start">
+              {tabItems.map((t) => (
+                <TabsTrigger
+                  key={t.id}
+                  value={t.id}
+                  className="min-w-[25%] shrink-0 flex-col items-center gap-1 border-b-2 border-transparent px-0.5 pb-1.5 pt-1 text-[9px] font-semibold data-[state=active]:border-brand data-[state=active]:text-brand data-[state=active]:bg-transparent data-[state=active]:shadow-none [&_svg]:size-4"
+                >
+                  <t.icon />
+                  <span>{t.label}</span>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
 
-        {/* Tab content */}
-        {activeTab === "overview" && (
-          <div className="space-y-3">
+          <TabsContent value="overview" className="space-y-3">
             <AboutSection bio={profile.about || ""} />
             <ShowReelSection items={portfolioItems} collapsible />
             <PortfolioSection
@@ -138,61 +127,45 @@ export function TalentProfileView({
             <SkillsSection skills={skills} collapsible />
             <AwardsSection data={awardItems} collapsible />
             <ReviewsSection data={reviewItems} initialShowAll collapsible />
-          </div>
-        )}
+          </TabsContent>
 
-        {activeTab === "portfolio" && (
-          <div className="space-y-3">
+          <TabsContent value="portfolio" className="space-y-3">
             <ShowReelSection items={portfolioItems} />
             <PortfolioSection
               items={portfolioItems}
               username={profile.username}
               showAllAction={false}
             />
-          </div>
-        )}
+          </TabsContent>
 
-        {activeTab === "experience" && (
-          <div className="space-y-3">
+          <TabsContent value="experience" className="space-y-3">
             <ExperienceSection data={experience} isOwner={isOwner} />
-          </div>
-        )}
+          </TabsContent>
 
-        {activeTab === "skills" && (
-          <div className="space-y-3">
+          <TabsContent value="skills" className="space-y-3">
             <SkillsSection skills={skills} />
-          </div>
-        )}
+          </TabsContent>
 
-        {activeTab === "awards" && (
-          <div className="space-y-3">
+          <TabsContent value="awards" className="space-y-3">
             <AwardsSection data={awardItems} />
-          </div>
-        )}
+          </TabsContent>
 
-        {activeTab === "reviews" && (
-          <div className="space-y-3">
+          <TabsContent value="reviews" className="space-y-3">
             <ReviewsSection data={reviewItems} initialShowAll />
-          </div>
-        )}
+          </TabsContent>
 
-        {activeTab === "details" && (
-          <div className="space-y-3">
+          <TabsContent value="details" className="space-y-3">
             <DetailsSection profile={profile} awards={awardItems} />
-          </div>
-        )}
+          </TabsContent>
 
-        {activeTab === "media" && (
-          <div className="space-y-3">
+          <TabsContent value="media" className="space-y-3">
             <MediaKitSection profile={profile} />
-          </div>
-        )}
+          </TabsContent>
 
-        {activeTab === "analytics" && (
-          <div className="space-y-3">
+          <TabsContent value="analytics" className="space-y-3">
             <AnalyticsSection profile={profile} />
-          </div>
-        )}
+          </TabsContent>
+        </Tabs>
 
         {/* Footer */}
         <p className="flex items-center justify-center gap-1 pt-1 text-[10px] text-muted-foreground">
