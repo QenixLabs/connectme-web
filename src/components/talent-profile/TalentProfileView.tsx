@@ -13,7 +13,6 @@ import {
   BarChart3,
   FolderOpen,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import type {
   TalentProfile,
   PortfolioApiResponse,
@@ -78,7 +77,6 @@ export function TalentProfileView({
   viewerRole: "talent" | "recruiter" | "admin" | null;
   campaigns?: Campaign[];
 }) {
-  const [activeTab, setActiveTab] = useState("overview");
   const authUser = useAuthStore((s) => s.user);
   const navItems = useTalentNavItems();
   const isOwner =
@@ -119,7 +117,6 @@ export function TalentProfileView({
         />
 
       <div className="space-y-3 px-5 pt-3">
-        {/* Stats */}
         <StatsBento profile={profile} testimonials={testimonials} />
 
         {/* CTA + secondary buttons */}
@@ -165,8 +162,7 @@ export function TalentProfileView({
             <SkillsSection skills={skills} collapsible />
             <AwardsSection data={awardItems} collapsible />
             <ReviewsSection data={reviewItems} initialShowAll collapsible />
-          </div>
-        )}
+          </TabsContent>
 
         {activeTab === "portfolio" && (
           <div className="space-y-3">
@@ -177,50 +173,36 @@ export function TalentProfileView({
               showAllAction={false}
               onOpenReel={handleOpenLightbox}
             />
-          </div>
-        )}
+          </TabsContent>
 
-        {activeTab === "experience" && (
-          <div className="space-y-3">
+          <TabsContent value="experience" className="space-y-3">
             <ExperienceSection data={experience} isOwner={isOwner} />
-          </div>
-        )}
+          </TabsContent>
 
-        {activeTab === "skills" && (
-          <div className="space-y-3">
+          <TabsContent value="skills" className="space-y-3">
             <SkillsSection skills={skills} />
-          </div>
-        )}
+          </TabsContent>
 
-        {activeTab === "awards" && (
-          <div className="space-y-3">
+          <TabsContent value="awards" className="space-y-3">
             <AwardsSection data={awardItems} />
-          </div>
-        )}
+          </TabsContent>
 
-        {activeTab === "reviews" && (
-          <div className="space-y-3">
+          <TabsContent value="reviews" className="space-y-3">
             <ReviewsSection data={reviewItems} initialShowAll />
-          </div>
-        )}
+          </TabsContent>
 
-        {activeTab === "details" && (
-          <div className="space-y-3">
+          <TabsContent value="details" className="space-y-3">
             <DetailsSection profile={profile} awards={awardItems} />
-          </div>
-        )}
+          </TabsContent>
 
-        {activeTab === "media" && (
-          <div className="space-y-3">
+          <TabsContent value="media" className="space-y-3">
             <MediaKitSection profile={profile} />
-          </div>
-        )}
+          </TabsContent>
 
-        {activeTab === "analytics" && (
-          <div className="space-y-3">
+          <TabsContent value="analytics" className="space-y-3">
             <AnalyticsSection profile={profile} />
-          </div>
-        )}
+          </TabsContent>
+        </Tabs>
 
         {/* Footer */}
         <p className="flex items-center justify-center gap-1 pt-1 text-[10px] text-muted-foreground">
