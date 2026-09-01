@@ -1,17 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
-import {
-  Bell,
-  ChevronRight,
-  Search,
-  ShieldCheck,
-  SlidersHorizontal,
-  User,
-  X,
-} from "lucide-react";
+import { Search, SlidersHorizontal } from "lucide-react";
 import { RequestCard } from "@/components/talent-app/RequestCard";
+import { RequestFiltersSheet } from "@/components/talent-app/request-filters-sheet";
 import { useMyRequests } from "@/hooks/use-requests";
 import type { CollaborationRequest } from "@/lib/api/requests";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -23,23 +15,11 @@ const toneClass: Record<string, string> = {
   red: "text-destructive",
 };
 
-function getRelativeTime(dateStr: string): string {
-  const now = Date.now();
-  const then = new Date(dateStr).getTime();
-  const diffMs = now - then;
-  const diffMin = Math.floor(diffMs / 60000);
-  if (diffMin < 1) return "just now";
-  if (diffMin < 60) return `${diffMin}m ago`;
-  const diffHr = Math.floor(diffMin / 60);
-  if (diffHr < 24) return `${diffHr}h ago`;
-  const diffDay = Math.floor(diffHr / 24);
-  return `${diffDay}d ago`;
-}
-
 export default function TalentRequestsPage() {
   const [active, setActive] = useState("Received");
-  const [safeBanner, setSafeBanner] = useState(true);
   const [query, setQuery] = useState("");
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false);
+  const [filters, setFilters] = useState({ status: "All Status", type: "All Types" });
 
   const { data, isLoading } = useMyRequests();
 
@@ -68,17 +48,43 @@ export default function TalentRequestsPage() {
   }, [active, sent, received, historyRequests]);
 
   const filtered = useMemo(() => {
-    if (!query) return activeRequests;
-    const q = query.toLowerCase();
-    return activeRequests.filter((r) => {
-      const other =
-        r.requester_id.role === "recruiter" ? r.requester_id : r.receiver_id;
-      const name = other.full_legal_name || other.username || "";
-      const company = other.company_name || "";
-      const reason = r.reason || "";
-      return `${name} ${company} ${reason}`.toLowerCase().includes(q);
-    });
-  }, [activeRequests, query]);
+    let result = activeRequests;
+
+    if (filters.status !== "All Status") {
+      const statusMap: Record<string, string> = {
+        Pending: "pending",
+        Accepted: "accepted",
+        Rejected: "rejected",
+      };
+      result = result.filter((r) => r.status === statusMap[filters.status]);
+    }
+
+    if (filters.type !== "All Types") {
+      const typeMap: Record<string, string> = {
+        Recruiter: "recruiter",
+        Mentor: "mentor",
+        Collaborator: "collaborator",
+      };
+      result = result.filter((r) => {
+        const role = r.requester_id.role;
+        return role === typeMap[filters.type];
+      });
+    }
+
+    if (query) {
+      const q = query.toLowerCase();
+      result = result.filter((r) => {
+        const other =
+          r.requester_id.role === "recruiter" ? r.requester_id : r.receiver_id;
+        const name = other.full_legal_name || other.username || "";
+        const company = other.company_name || "";
+        const reason = r.reason || "";
+        return `${name} ${company} ${reason}`.toLowerCase().includes(q);
+      });
+    }
+
+    return result;
+  }, [activeRequests, query, filters]);
 
   const stats = useMemo(() => {
     const pending = received.filter((r) => r.status === "pending").length;
@@ -106,13 +112,6 @@ export default function TalentRequestsPage() {
   if (isLoading) {
     return (
       <div className="page-gradient min-h-screen">
-        <header className="sticky top-0 z-30 border-b border-border bg-background/85 backdrop-blur-xl">
-          <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 lg:px-8">
-            <Link href="/talent/dashboard" className="text-2xl font-extrabold tracking-tight">
-              Connect<span className="text-teal">Me</span>
-            </Link>
-          </div>
-        </header>
         <main className="mx-auto max-w-7xl px-5 pb-28 pt-8 lg:px-8 lg:pb-16">
           <Skeleton className="h-10 w-64" />
           <Skeleton className="mt-2 h-5 w-96" />
@@ -132,32 +131,6 @@ export default function TalentRequestsPage() {
 
   return (
     <div className="page-gradient min-h-screen">
-      <header className="sticky top-0 z-30 border-b border-border bg-background/85 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 lg:px-8">
-          <Link href="/talent/dashboard" className="text-2xl font-extrabold tracking-tight">
-            Connect<span className="text-teal">Me</span>
-          </Link>
-          <nav className="hidden items-center gap-8 text-sm font-medium text-muted-foreground lg:flex">
-            <span className="text-foreground">Requests</span>
-            <span className="transition-colors hover:text-foreground">Discover</span>
-            <Link href="/talent/messages" className="transition-colors hover:text-foreground">
-              Messages
-            </Link>
-            <Link href="/talent/profile" className="transition-colors hover:text-foreground">
-              Profile
-            </Link>
-          </nav>
-          <div className="flex items-center gap-4">
-            <button className="relative rounded-full p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground">
-              <Bell className="size-5" />
-              <span className="absolute bottom-1.5 right-2 size-1.5 rounded-full bg-teal" />
-            </button>
-            <button className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground">
-              <User className="size-5" />
-            </button>
-          </div>
-        </div>
-      </header>
 
       <main className="mx-auto max-w-7xl px-5 pb-28 pt-8 lg:px-8 lg:pb-16">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -169,21 +142,6 @@ export default function TalentRequestsPage() {
               Manage requests from recruiters, mentors and collaborators.
             </p>
           </div>
-          {safeBanner && (
-            <div className="flex items-center gap-2 rounded-xl border border-teal/25 bg-teal/8 px-4 py-3">
-              <ShieldCheck className="size-5 text-teal" />
-              <span className="text-sm font-medium">Safe Connections</span>
-              <ChevronRight className="size-4 text-muted-foreground" />
-              <span className="mx-1 h-5 w-px bg-border" />
-              <button
-                onClick={() => setSafeBanner(false)}
-                aria-label="Dismiss"
-                className="text-muted-foreground transition-colors hover:text-foreground"
-              >
-                <X className="size-4" />
-              </button>
-            </div>
-          )}
         </div>
 
         <div className="mt-6 flex gap-8 border-b border-border">
@@ -223,7 +181,10 @@ export default function TalentRequestsPage() {
                   className="w-full bg-transparent text-base outline-none placeholder:text-muted-foreground"
                 />
               </label>
-              <button className="card-surface inline-flex items-center gap-2 rounded-xl px-5 text-base font-medium transition-colors hover:border-teal/40">
+              <button
+                onClick={() => setFilterSheetOpen(true)}
+                className="card-surface inline-flex items-center gap-2 rounded-xl px-5 text-base font-medium transition-colors hover:border-teal/40"
+              >
                 <SlidersHorizontal className="size-5 text-teal" />
                 <span className="hidden sm:inline">Filters</span>
               </button>
@@ -261,19 +222,6 @@ export default function TalentRequestsPage() {
               </dl>
             </div>
 
-            <div className="card-surface rounded-2xl p-5">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="size-5 text-teal" />
-                <h2 className="text-base font-semibold">We keep you safe</h2>
-              </div>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                We never share your data. Every verified profile is manually reviewed before it can
-                reach your inbox.
-              </p>
-              <button className="mt-3 text-sm font-medium text-teal transition-colors hover:text-teal/80">
-                Learn more →
-              </button>
-            </div>
           </aside>
         </div>
       </main>
@@ -293,22 +241,17 @@ export default function TalentRequestsPage() {
 
       <button
         aria-label="Filters"
+        onClick={() => setFilterSheetOpen(true)}
         className="btn-accept fixed bottom-24 right-5 z-30 grid size-14 place-items-center rounded-full lg:hidden"
       >
         <SlidersHorizontal className="size-6" />
       </button>
 
-      <footer className="hidden border-t border-border py-6 lg:block">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-8 text-sm text-muted-foreground">
-          <span className="inline-flex items-center gap-2">
-            <ShieldCheck className="size-4 text-teal" />
-            We never share your data. Learn how we keep you safe.
-          </span>
-          <button className="inline-flex items-center gap-1 text-teal">
-            Learn more <ChevronRight className="size-4" />
-          </button>
-        </div>
-      </footer>
+      <RequestFiltersSheet
+        open={filterSheetOpen}
+        onOpenChange={setFilterSheetOpen}
+        onApply={setFilters}
+      />
     </div>
   );
 }

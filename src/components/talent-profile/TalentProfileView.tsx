@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   Home,
   Image as ImageIcon,
@@ -20,8 +20,10 @@ import type {
   Testimonial,
   Award as AwardType,
 } from "@/lib/api/talent";
+import type { Campaign } from "@/lib/api/campaigns";
 import { useAuthStore } from "@/providers/auth-store-provider";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { BottomBar } from "@/components/shared/bottom-bar";
+import { useTalentNavItems } from "@/hooks/use-talent-nav-items";
 import { HeroSection } from "./HeroSection";
 import { StatsBento } from "./StatsBento";
 import { TalentProfileActions } from "./TalentProfileActions";
@@ -42,7 +44,9 @@ import {
   toExperienceItems,
   toAwardItems,
   toReviewItems,
+  toPortfolioItems,
 } from "./data";
+import { MediaLightbox } from "@/components/portfolio/MediaLightbox";
 
 const tabItems = [
   { id: "overview", icon: Home, label: "Overview" },
@@ -63,6 +67,7 @@ export function TalentProfileView({
   testimonials,
   awards,
   viewerRole,
+  campaigns,
 }: {
   profile: TalentProfile;
   portfolioItems: PortfolioApiResponse[];
@@ -70,8 +75,10 @@ export function TalentProfileView({
   testimonials: Testimonial[];
   awards: AwardType[];
   viewerRole: "talent" | "recruiter" | "admin" | null;
+  campaigns?: Campaign[];
 }) {
   const authUser = useAuthStore((s) => s.user);
+  const navItems = useTalentNavItems();
   const isOwner =
     viewerRole === "talent" &&
     !!authUser?.username &&
@@ -85,56 +92,86 @@ export function TalentProfileView({
     [profile],
   );
 
+  const portfolioItemsConverted = useMemo(
+    () => toPortfolioItems(portfolioItems),
+    [portfolioItems],
+  );
+
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxItemId, setLightboxItemId] = useState<string | null>(null);
+
+  const handleOpenLightbox = useCallback((itemId: string) => {
+    setLightboxItemId(itemId);
+    setLightboxOpen(true);
+  }, []);
+
   return (
-    <div className="mx-auto w-full max-w-md pb-24">
-      <HeroSection
-        profile={profile}
-        viewerRole={viewerRole}
-        showActions={false}
-        isOwner={isOwner}
-      />
+    <>
+      <div className="mx-auto w-full max-w-md pb-24">
+        {/* Cover + profile card */}
+        <HeroSection
+          profile={profile}
+          viewerRole={viewerRole}
+          showActions={false}
+          isOwner={isOwner}
+        />
 
       <div className="space-y-3 px-5 pt-3">
         <StatsBento profile={profile} testimonials={testimonials} />
-        <TalentProfileActions profile={profile} viewerRole={viewerRole} />
+
+        {/* CTA + secondary buttons */}
+        <TalentProfileActions
+          profile={profile}
+          viewerRole={viewerRole}
+          campaigns={campaigns}
+        />
+
+        {/* Social connect */}
         <SocialConnectBar profile={profile} />
 
         {/* Tab bar */}
-        <Tabs defaultValue="overview">
-          <div className="overflow-x-auto rounded-2xl bg-card px-1 py-2 shadow-[var(--shadow-card)] scrollbar-hide [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none]">
-            <TabsList variant="line" className="w-full justify-start">
-              {tabItems.map((t) => (
-                <TabsTrigger
-                  key={t.id}
-                  value={t.id}
-                  className="min-w-[25%] shrink-0 flex-col items-center gap-1 border-b-2 border-transparent px-0.5 pb-1.5 pt-1 text-[9px] font-semibold data-[state=active]:border-brand data-[state=active]:text-brand data-[state=active]:bg-transparent data-[state=active]:shadow-none [&_svg]:size-4"
-                >
-                  <t.icon />
-                  <span>{t.label}</span>
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </div>
+        <nav className="flex items-end justify-between rounded-2xl bg-card px-1 py-2 shadow-[var(--shadow-card)]">
+          {tabItems.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setActiveTab(t.id)}
+              className={cn(
+                "flex flex-1 flex-col items-center gap-1 border-b-2 px-0.5 pb-1.5 pt-1 transition-colors",
+                activeTab === t.id
+                  ? "border-brand text-brand"
+                  : "border-transparent text-muted-foreground",
+              )}
+            >
+              <t.icon className="size-4" />
+              <span className="text-[9px] font-semibold">{t.label}</span>
+            </button>
+          ))}
+        </nav>
 
-          <TabsContent value="overview" className="space-y-3">
+        {/* Tab content */}
+        {activeTab === "overview" && (
+          <div className="space-y-3">
             <AboutSection bio={profile.about || ""} />
-            <ShowReelSection items={portfolioItems} collapsible />
+            <ShowReelSection items={portfolioItems} collapsible onOpenReel={handleOpenLightbox} />
             <PortfolioSection
               items={portfolioItems}
               username={profile.username}
               collapsible
+              onOpenReel={handleOpenLightbox}
             />
             <SkillsSection skills={skills} collapsible />
             <AwardsSection data={awardItems} collapsible />
             <ReviewsSection data={reviewItems} initialShowAll collapsible />
           </TabsContent>
 
-          <TabsContent value="portfolio" className="space-y-3">
-            <ShowReelSection items={portfolioItems} />
+        {activeTab === "portfolio" && (
+          <div className="space-y-3">
+            <ShowReelSection items={portfolioItems} onOpenReel={handleOpenLightbox} />
             <PortfolioSection
               items={portfolioItems}
               username={profile.username}
               showAllAction={false}
+              onOpenReel={handleOpenLightbox}
             />
           </TabsContent>
 
@@ -172,6 +209,16 @@ export function TalentProfileView({
           <FileText className="size-3" /> Profile last updated Aug 2026
         </p>
       </div>
-    </div>
+      </div>
+
+      {isOwner && <BottomBar navItems={navItems} iconOnly />}
+
+      <MediaLightbox
+        items={portfolioItemsConverted}
+        initialItemId={lightboxItemId}
+        open={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+      />
+    </>
   );
 }

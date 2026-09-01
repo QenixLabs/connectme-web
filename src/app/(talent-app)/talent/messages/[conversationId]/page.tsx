@@ -139,14 +139,15 @@ export default function TalentConversationPage() {
           )
         );
       }, 5000);
-    } catch {
+    } catch (err: any) {
       setMessages((prev) =>
         prev.map((m) =>
           m.client_message_id === clientId ? { ...m, status: "failed" } : m
         )
       );
       setSendText(content);
-      toast.error("Failed to send message.");
+      const msg = err?.backendMessage || "Failed to send message.";
+      toast.error(msg);
     } finally {
       setSending(false);
     }

@@ -91,7 +91,7 @@ export function ShowReelSection({
       <div className="space-y-3">
         {pinnedVideos.length > 0 && (
           <div>
-            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50">
+            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               Videos
             </p>
             <div className="-mx-1 flex gap-3 overflow-x-auto scroll-smooth px-1 pb-1 snap-x snap-mandatory">
@@ -108,7 +108,7 @@ export function ShowReelSection({
 
         {pinnedImages.length > 0 && (
           <div>
-            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50">
+            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               Images
             </p>
             <div className="-mx-1 flex gap-3 overflow-x-auto scroll-smooth px-1 pb-1 snap-x snap-mandatory">

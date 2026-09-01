@@ -1,12 +1,11 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-
-import { talentApi } from "@/lib/api/talent";
 import { campaignsApi } from "@/lib/api/campaigns";
-import { subscriptionsApi } from "@/lib/api/subscriptions";
-import { notificationsApi } from "@/lib/api/notifications";
 import { conversationsApi } from "@/lib/api/conversations";
+import { notificationsApi } from "@/lib/api/notifications";
+import { subscriptionsApi } from "@/lib/api/subscriptions";
+import { talentApi } from "@/lib/api/talent";
+import { useQuery } from "@tanstack/react-query";
 
 export const talentDashboardKeys = {
   all: ["talent-dashboard"] as const,
@@ -25,6 +24,10 @@ export const talentDashboardKeys = {
   portfolioStats: () => [...talentDashboardKeys.all, "portfolio-stats"] as const,
   credits: () => [...talentDashboardKeys.all, "credits"] as const,
   testimonials: () => [...talentDashboardKeys.all, "testimonials"] as const,
+  applicationStats: () =>
+    [...talentDashboardKeys.all, "application-stats"] as const,
+  recentConversations: (limit: number) =>
+    [...talentDashboardKeys.all, "recent-conversations", limit] as const,
 };
 
 export function useTalentProfile() {
@@ -118,6 +121,23 @@ export function useMyTestimonials() {
     queryFn: async () => {
       const items = await talentApi.getMyTestimonials();
       return items.slice(0, 1);
+    },
+  });
+}
+
+export function useTalentApplicationStats() {
+  return useQuery({
+    queryKey: talentDashboardKeys.applicationStats(),
+    queryFn: () => campaignsApi.getTalentApplicationStats(),
+  });
+}
+
+export function useRecentConversations(limit = 2) {
+  return useQuery({
+    queryKey: talentDashboardKeys.recentConversations(limit),
+    queryFn: async () => {
+      const res = await conversationsApi.getConversations({ limit });
+      return res.slice(0, limit);
     },
   });
 }

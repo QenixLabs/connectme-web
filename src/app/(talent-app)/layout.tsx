@@ -10,7 +10,7 @@ export default function TalentAppLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex min-h-screen flex-col">
       <TopBar navItems={navItems} role="talent" showUserMenu />
-      <main className="flex-1 px-4 py-6 pb-24 md:pb-8">{children}</main>
+      <main className="flex-1 pb-10">{children}</main>
       <BottomBar navItems={navItems} iconOnly />
     </div>
   );

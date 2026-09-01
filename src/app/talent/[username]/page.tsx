@@ -128,6 +128,7 @@ export default function PublicTalentProfilePage() {
       testimonials={testimonials}
       awards={awards}
       viewerRole={viewerRole}
+      campaigns={campaigns}
     />
   );
 }
