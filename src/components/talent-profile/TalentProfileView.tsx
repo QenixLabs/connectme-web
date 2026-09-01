@@ -21,6 +21,7 @@ import type {
   Award as AwardType,
 } from "@/lib/api/talent";
 import type { Campaign } from "@/lib/api/campaigns";
+import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { BottomBar } from "@/components/shared/bottom-bar";
 import { useTalentNavItems } from "@/hooks/use-talent-nav-items";
@@ -100,6 +101,8 @@ export function TalentProfileView({
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxItemId, setLightboxItemId] = useState<string | null>(null);
 
+  const [activeTab, setActiveTab] = useState("overview");
+
   const handleOpenLightbox = useCallback((itemId: string) => {
     setLightboxItemId(itemId);
     setLightboxOpen(true);
@@ -162,7 +165,8 @@ export function TalentProfileView({
             <SkillsSection skills={skills} collapsible />
             <AwardsSection data={awardItems} collapsible />
             <ReviewsSection data={reviewItems} initialShowAll collapsible />
-          </TabsContent>
+          </div>
+        )}
 
         {activeTab === "portfolio" && (
           <div className="space-y-3">
@@ -173,36 +177,50 @@ export function TalentProfileView({
               showAllAction={false}
               onOpenReel={handleOpenLightbox}
             />
-          </TabsContent>
+          </div>
+        )}
 
-          <TabsContent value="experience" className="space-y-3">
+        {activeTab === "experience" && (
+          <div className="space-y-3">
             <ExperienceSection data={experience} isOwner={isOwner} />
-          </TabsContent>
+          </div>
+        )}
 
-          <TabsContent value="skills" className="space-y-3">
+        {activeTab === "skills" && (
+          <div className="space-y-3">
             <SkillsSection skills={skills} />
-          </TabsContent>
+          </div>
+        )}
 
-          <TabsContent value="awards" className="space-y-3">
+        {activeTab === "awards" && (
+          <div className="space-y-3">
             <AwardsSection data={awardItems} />
-          </TabsContent>
+          </div>
+        )}
 
-          <TabsContent value="reviews" className="space-y-3">
+        {activeTab === "reviews" && (
+          <div className="space-y-3">
             <ReviewsSection data={reviewItems} initialShowAll />
-          </TabsContent>
+          </div>
+        )}
 
-          <TabsContent value="details" className="space-y-3">
+        {activeTab === "details" && (
+          <div className="space-y-3">
             <DetailsSection profile={profile} awards={awardItems} />
-          </TabsContent>
+          </div>
+        )}
 
-          <TabsContent value="media" className="space-y-3">
+        {activeTab === "media" && (
+          <div className="space-y-3">
             <MediaKitSection profile={profile} />
-          </TabsContent>
+          </div>
+        )}
 
-          <TabsContent value="analytics" className="space-y-3">
+        {activeTab === "analytics" && (
+          <div className="space-y-3">
             <AnalyticsSection profile={profile} />
-          </TabsContent>
-        </Tabs>
+          </div>
+        )}
 
         {/* Footer */}
         <p className="flex items-center justify-center gap-1 pt-1 text-[10px] text-muted-foreground">
