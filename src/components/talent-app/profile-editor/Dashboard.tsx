@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Award,
   BadgeCheck,
@@ -108,6 +109,7 @@ export function Dashboard({
           icon: <Grid2x2 className="size-[18px]" />,
           title: "Portfolio",
           subtitle: `${profile.portfolio.length} items`,
+          href: "/talent/portfolio",
         },
         {
           key: "experience",
@@ -352,9 +354,11 @@ export function Dashboard({
 }
 
 function BottomNav({ onOpen }: { onOpen: (key: ScreenKey) => void }) {
+  const router = useRouter();
+
   const tabs: { label: string; icon: ReactNode; onClick: () => void }[] = [
     { label: "Overview", icon: <Home className="size-[19px]" />, onClick: () => {} },
-    { label: "Portfolio", icon: <ImageIcon className="size-[19px]" />, onClick: () => onOpen("portfolio") },
+    { label: "Portfolio", icon: <ImageIcon className="size-[19px]" />, onClick: () => router.push("/talent/portfolio") },
     { label: "Awards", icon: <Award className="size-[19px]" />, onClick: () => onOpen("awards") },
     { label: "Reviews", icon: <User className="size-[19px]" />, onClick: () => onOpen("testimonials") },
   ];

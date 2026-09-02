@@ -335,8 +335,8 @@ export function AddPortfolioModal({
                     </span>
                     <span className="text-xs text-muted-foreground">
                       {selectedType === "image"
-                        ? "JPG, PNG, WEBP up to 20MB"
-                        : "MP4, MOV up to 200MB"}
+                        ? "JPG, PNG, WEBP up to 10MB"
+                        : "MP4, MOV, WEBM up to 50MB"}
                     </span>
                     <input
                       type="file"

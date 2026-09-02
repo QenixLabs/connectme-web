@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Home,
   Image as ImageIcon,
@@ -102,6 +102,16 @@ export function TalentProfileView({
   const [lightboxItemId, setLightboxItemId] = useState<string | null>(null);
 
   const [activeTab, setActiveTab] = useState("overview");
+  const tabScrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const container = tabScrollRef.current;
+    if (!container) return;
+    const activeBtn = container.querySelector(`[data-tab="${activeTab}"]`);
+    if (activeBtn) {
+      activeBtn.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    }
+  }, [activeTab]);
 
   const handleOpenLightbox = useCallback((itemId: string) => {
     setLightboxItemId(itemId);
@@ -133,13 +143,17 @@ export function TalentProfileView({
         <SocialConnectBar profile={profile} />
 
         {/* Tab bar */}
-        <nav className="flex items-end justify-between rounded-2xl bg-card px-1 py-2 shadow-[var(--shadow-card)]">
+        <nav
+          ref={tabScrollRef}
+          className="no-scrollbar flex snap-x snap-mandatory items-end overflow-x-auto rounded-2xl bg-card px-1 py-2 shadow-[var(--shadow-card)]"
+        >
           {tabItems.map((t) => (
             <button
               key={t.id}
+              data-tab={t.id}
               onClick={() => setActiveTab(t.id)}
               className={cn(
-                "flex flex-1 flex-col items-center gap-1 border-b-2 px-0.5 pb-1.5 pt-1 transition-colors",
+                "w-1/4 min-w-[25%] snap-center flex flex-col items-center gap-1 border-b-2 px-0.5 pb-1.5 pt-1 transition-colors",
                 activeTab === t.id
                   ? "border-brand text-brand"
                   : "border-transparent text-muted-foreground",

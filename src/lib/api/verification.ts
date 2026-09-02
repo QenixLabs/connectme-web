@@ -71,4 +71,9 @@ export const verificationApi = {
     );
     return response.data as { message: string };
   },
+
+  submit: async (verificationId: string) => {
+    const response = await apiClient.post(`/verifications/${verificationId}/submit`);
+    return response.data as Verification;
+  },
 };

@@ -42,7 +42,7 @@ export function TopBar({ navItems, role, showUserMenu = false }: TopBarProps) {
             src={logoImage}
             alt="RootIn"
             height={32}
-            className="h-18 w-auto"
+            className="h-10 w-auto"
             priority
           />
         </Link>

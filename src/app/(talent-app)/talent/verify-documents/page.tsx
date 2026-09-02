@@ -29,7 +29,7 @@ import {
   Headphones,
 } from "lucide-react";
 import { useAuthStore } from "@/providers/auth-store-provider";
-import { useVerification, useCreateVerification, useUploadVerificationDoc, useRemoveVerificationDoc } from "@/hooks/use-verification";
+import { useVerification, useCreateVerification, useUploadVerificationDoc, useRemoveVerificationDoc, useSubmitVerification } from "@/hooks/use-verification";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const steps = [
@@ -115,6 +115,7 @@ export default function TalentVerifyDocumentsPage() {
   const createVerification = useCreateVerification();
   const uploadDoc = useUploadVerificationDoc();
   const removeDoc = useRemoveVerificationDoc();
+  const submitVerification = useSubmitVerification();
 
   const [docType, setDocType] = useState("Aadhaar Card");
   const frontInputRef = useRef<HTMLInputElement>(null);
@@ -124,7 +125,7 @@ export default function TalentVerifyDocumentsPage() {
   const frontDoc = docs.find((d) => d.type === "front");
   const backDoc = docs.find((d) => d.type === "back");
   const uploadedCount = docs.length;
-  const canSubmit = frontDoc && backDoc && verification?.status === "pending";
+  const canSubmit = uploadedCount > 0 && verification?.status === "pending";
   const statusDisplay = getStatusDisplay(verification?.status);
 
   const handleFileSelect = useCallback(
@@ -183,6 +184,16 @@ export default function TalentVerifyDocumentsPage() {
       toast.error("Failed to start verification");
     }
   }, [createVerification]);
+
+  const handleSubmit = useCallback(async () => {
+    if (!verification) return;
+    try {
+      await submitVerification.mutateAsync(verification._id);
+      toast.success("Documents submitted for verification");
+    } catch {
+      toast.error("Failed to submit. Please try again.");
+    }
+  }, [verification, submitVerification]);
 
   if (isLoading) return <LoadingSkeleton />;
 
@@ -544,15 +555,21 @@ export default function TalentVerifyDocumentsPage() {
                 {/* Submit */}
                 <div>
                   <button
-                    disabled={!canSubmit || uploadDoc.isPending}
+                    onClick={handleSubmit}
+                    disabled={!canSubmit || uploadDoc.isPending || submitVerification.isPending}
                     className="flex w-full items-center justify-center gap-2 rounded-xl border border-primary/25 bg-primary/15 px-4 py-4 text-base font-bold text-foreground/50 disabled:cursor-not-allowed enabled:border-primary enabled:bg-primary enabled:text-primary-foreground enabled:hover:bg-primary/90"
                   >
-                    <Lock className="h-4 w-4" /> Submit for Verification
+                    {submitVerification.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Lock className="h-4 w-4" />
+                    )}{" "}
+                    Submit for Verification
                   </button>
                   <p className="mt-3 flex items-center justify-center gap-2 text-center text-xs text-muted-foreground">
                     <ShieldQuestion className="h-4 w-4 shrink-0" />
                     {uploadedCount < 2
-                      ? "Upload both required sides to enable submission"
+                      ? "Upload at least one document side to enable submission"
                       : verification?.status === "pending"
                         ? "Ready to submit"
                         : verification?.status === "approved"

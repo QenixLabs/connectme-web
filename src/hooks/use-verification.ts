@@ -58,3 +58,13 @@ export function useRemoveVerificationDoc() {
     },
   });
 }
+
+export function useSubmitVerification() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (verificationId: string) => verificationApi.submit(verificationId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: verificationKeys.all });
+    },
+  });
+}

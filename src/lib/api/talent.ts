@@ -257,7 +257,11 @@ export const talentApi = {
 
   getCompleteness: async () => {
     const response = await apiClient.get("/talent/completeness");
-    return response.data as { isComplete: boolean; missingFields: string[] };
+    return response.data as {
+      isComplete: boolean;
+      missingFields: string[];
+      totalFields: number;
+    };
   },
 
   getPublicProfile: async (username: string) => {

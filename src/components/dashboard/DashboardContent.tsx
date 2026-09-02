@@ -39,6 +39,13 @@ import {
 } from "@/hooks/use-talent-dashboard";
 import { DashboardSkeleton } from "./DashboardSkeleton";
 
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning,";
+  if (hour < 17) return "Good afternoon,";
+  return "Good evening,";
+}
+
 function getInitials(name?: string | null) {
   if (!name) return "ME";
   return name
@@ -149,9 +156,13 @@ function SectionHeader({ title, href }: { title: string; href?: string }) {
   );
 }
 
-function calculateCompleteness(missingFields: string[] | undefined): number {
+function calculateCompleteness(
+  missingFields: string[] | undefined,
+  totalFields?: number,
+): number {
   if (!missingFields) return 0;
-  return Math.round(((30 - missingFields.length) / 30) * 100);
+  const total = totalFields ?? 29;
+  return Math.round(((total - missingFields.length) / total) * 100);
 }
 
 export function DashboardContent() {
@@ -183,7 +194,10 @@ export function DashboardContent() {
     return <DashboardSkeleton />;
   }
 
-  const completeness = calculateCompleteness(completenessData?.missingFields);
+  const completeness = calculateCompleteness(
+    completenessData?.missingFields,
+    completenessData?.totalFields,
+  );
   const unreadCount = unreadData?.count ?? 0;
 
   const name = profile?.full_legal_name || user?.username || "Talent";
@@ -324,7 +338,7 @@ export function DashboardContent() {
           {/* Center: profile info */}
           <div className="min-w-0 flex-1">
             <p className="text-[10px] leading-tight text-muted-foreground">
-              Good evening, 👋
+              {getGreeting()} 👋
             </p>
             <div className="mt-0.5 flex items-center gap-1">
               <Link href={profile?.username ? `/talent/${profile.username}` : "/talent/profile"}>
