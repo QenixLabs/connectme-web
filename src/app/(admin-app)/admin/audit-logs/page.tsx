@@ -88,13 +88,13 @@ const ACTION_OPTIONS = [
 
 const ACTOR_TYPE_COLORS: Record<string, string> = {
   user: "bg-primary/10 text-primary border-primary/20",
-  admin: "bg-violet-100 text-violet-800 border-violet-200",
+  admin: "bg-sky-100 text-sky-800 border-sky-200",
   system: "bg-muted text-muted-foreground border-border",
 };
 
 const ACTOR_TYPE_ICONS: Record<string, string> = {
   user: "bg-primary",
-  admin: "bg-violet-500",
+  admin: "bg-sky-500",
   system: "bg-muted-foreground",
 };
 
@@ -104,7 +104,7 @@ const ACTION_COLORS: Record<string, string> = {
   ban_user: "bg-rose-100 text-rose-800",
   user_blocked: "bg-rose-100 text-rose-800",
   user_unblocked: "bg-emerald-100 text-emerald-800",
-  update_user_status: "bg-violet-100 text-violet-800",
+  update_user_status: "bg-sky-100 text-sky-800",
   report_submitted: "bg-cyan-100 text-cyan-800",
   update_report_status: "bg-cyan-100 text-cyan-800",
 };

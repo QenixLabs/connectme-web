@@ -150,7 +150,7 @@ export default function AdminVerificationsPage() {
                           }}
                         />
                       ) : (
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-300 to-blue-400 flex items-center justify-center text-[10px] font-medium text-white shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-300 to-blue-500 flex items-center justify-center text-[10px] font-medium text-white shrink-0">
                           {item.user_name.charAt(0).toUpperCase()}
                         </div>
                       )}
@@ -345,7 +345,7 @@ export default function AdminVerificationsPage() {
                     }}
                   />
                 ) : (
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-300 to-blue-400 flex items-center justify-center text-sm font-medium text-white shrink-0">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-300 to-blue-500 flex items-center justify-center text-sm font-medium text-white shrink-0">
                     {viewerItem.user_name.charAt(0).toUpperCase()}
                   </div>
                 )}

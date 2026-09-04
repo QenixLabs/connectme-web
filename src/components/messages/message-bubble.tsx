@@ -67,7 +67,7 @@ export const MessageBubble = memo(function MessageBubble({
         className={cn(
           "relative max-w-[78%] rounded-2xl px-4 py-2.5 text-[15px] leading-relaxed shadow-sm transition-transform duration-150 active:scale-[0.99] lg:max-w-[60%]",
           isMe
-            ? "rounded-br-md bg-gradient-to-br from-primary to-[#6b4af7] text-white shadow-[var(--shadow-message)]"
+            ? "rounded-br-md bg-gradient-to-br from-primary to-[#4C8DF0] text-white shadow-[var(--shadow-message)]"
             : "rounded-bl-md border border-border bg-surface-raised text-foreground"
         )}
       >

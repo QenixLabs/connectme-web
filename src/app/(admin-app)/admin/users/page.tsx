@@ -145,7 +145,7 @@ const TIER_COLORS: Record<string, string> = {
 const RECRUITER_VERIFICATION_COLORS: Record<string, string> = {
   pending: "bg-amber-100 text-amber-800 border-amber-200",
   basic: "bg-blue-100 text-blue-800 border-blue-200",
-  enterprise: "bg-violet-100 text-violet-800 border-violet-200",
+  enterprise: "bg-sky-100 text-sky-800 border-sky-200",
   trusted_partner: "bg-emerald-100 text-emerald-800 border-emerald-200",
 };
 
@@ -467,8 +467,8 @@ function AdminUsersContent() {
         label: "Talent",
         value: stats?.total_artists ?? "\u2014",
         icon: UserCheck,
-        color: "bg-violet-500/10 text-violet-600",
-        border: "border-l-violet-500",
+        color: "bg-blue-500/10 text-blue-600",
+        border: "border-l-blue-500",
       },
       {
         label: "Recruiters",

@@ -62,7 +62,7 @@ export function ProfileStrength({ profile, completeness }: ProfileStrengthProps)
                 animate={{ strokeDashoffset: offset }}
                 transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
                 style={{
-                  filter: "drop-shadow(0 0 8px rgba(79,34,244,0.5))",
+                  filter: "drop-shadow(0 0 8px rgba(26,91,219,0.5))",
                 }}
               />
             </svg>

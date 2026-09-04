@@ -8,3 +8,5 @@ export { AwardsSection } from "./AwardsSection";
 export { MediaKitSection } from "./MediaKitSection";
 export { AnalyticsSection } from "./AnalyticsSection";
 export { DetailsSection } from "./DetailsSection";
+export { ShowreelPlayerCard } from "./ShowreelPlayerCard";
+export { HighlightRow } from "./HighlightRow";

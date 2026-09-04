@@ -45,7 +45,7 @@ const STATUS_COLORS: Record<string, string> = {
   expired: "#9ca3af",
 };
 
-const PLAN_COLORS = ["#eab308", "#f97316", "#8b5cf6", "#06b6d4"];
+const PLAN_COLORS = ["#eab308", "#f97316", "#4C8DF0", "#06b6d4"];
 
 const CANCEL_COLORS = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#6b7280"];
 

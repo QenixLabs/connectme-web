@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState, type CSSProperties, type ReactNode } from "react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
@@ -13,10 +13,12 @@ import {
 export function GlassCard({
   children,
   className,
+  style,
   hover = true,
 }: {
   children: ReactNode;
   className?: string;
+  style?: CSSProperties;
   hover?: boolean;
 }) {
   return (
@@ -28,6 +30,7 @@ export function GlassCard({
       className="relative"
     >
       <div
+        style={style}
         className={cn(
           "overflow-hidden rounded-2xl bg-card p-4 shadow-[var(--shadow-card)]",
           hover && "transition-all duration-200 hover:-translate-y-0.5",

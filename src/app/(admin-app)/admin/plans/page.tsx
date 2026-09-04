@@ -742,7 +742,7 @@ export default function AdminPlansPage() {
                             latest.target_role === "talent"
                               ? "bg-blue-50 text-blue-700 border-blue-200"
                               : latest.target_role === "recruiter"
-                              ? "bg-purple-50 text-purple-700 border-purple-200"
+                              ? "bg-sky-50 text-sky-700 border-sky-200"
                               : "bg-muted text-muted-foreground border-border"
                           }`}
                         >

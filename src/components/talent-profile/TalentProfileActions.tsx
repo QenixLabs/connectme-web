@@ -10,6 +10,8 @@ import {
   Check,
   Heart,
   Share2,
+  UserPlus,
+  UserCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -22,8 +24,10 @@ import {
   useStartConversation,
   useSaveTalent,
   useShortlistTalent,
+  useConnectionRequest,
 } from "@/hooks/use-talent-actions";
 import { useLikeTalent } from "@/hooks/use-talent-profile";
+import { useAuthStore } from "@/providers/auth-store-provider";
 import type { TalentProfile, TalentProfilePreview } from "@/lib/api/talent";
 import type { Campaign } from "@/lib/api/campaigns";
 
@@ -109,10 +113,18 @@ export function TalentProfileActions({
   const username = profile.username ?? "";
   const isRecruiter = viewerRole === "recruiter" || viewerRole === "admin";
 
+  const authUser = useAuthStore((s) => s.user);
+  const isOwnProfile = !!authUser && authUser._id === profile.user_id;
+
   const { start: startConversation, isPending: messagePending } =
     useStartConversation(username, viewerRole ?? undefined);
   const { isSaved, isPending: savePending, toggleSave } = useSaveTalent(username);
   const { isLiked, isPending: likePending, toggleLike } = useLikeTalent(username);
+  const {
+    status: connectionStatus,
+    isPending: connectPending,
+    send: sendConnectionRequest,
+  } = useConnectionRequest(profile.user_id ?? "");
 
   const handleCopyLink = async () => {
     try {
@@ -125,8 +137,33 @@ export function TalentProfileActions({
 
   return (
     <>
-      {/* Primary row: Message + Like + Share */}
+      {/* Primary row: Connect + Message + Like + Share */}
       <div className="mb-1 flex gap-2">
+        {!isOwnProfile && (
+          <button
+            onClick={sendConnectionRequest}
+            disabled={
+              connectPending ||
+              connectionStatus === "pending" ||
+              connectionStatus === "connected"
+            }
+            className="flex h-[52px] shrink-0 items-center justify-center gap-2 rounded-2xl bg-card px-4 text-sm font-semibold text-foreground shadow-[var(--shadow-card)] transition-all active:scale-95 disabled:opacity-70"
+          >
+            {connectPending ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : connectionStatus === "connected" ? (
+              <UserCheck className="size-4 text-brand" />
+            ) : (
+              <UserPlus className="size-4" />
+            )}
+            {connectionStatus === "pending"
+              ? "Pending"
+              : connectionStatus === "connected"
+                ? "Connected"
+                : "Connect"}
+          </button>
+        )}
+
         <button
           onClick={startConversation}
           disabled={messagePending}

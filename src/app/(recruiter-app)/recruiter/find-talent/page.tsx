@@ -142,7 +142,7 @@ export default function RecruiterFindTalentPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Ambient hero glow */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(80%_60%_at_50%_0%,rgba(79,34,244,0.12),transparent_60%)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[420px] bg-[radial-gradient(80%_60%_at_50%_0%,rgba(26,91,219,0.12),transparent_60%)]" />
 
       <div className="container-page relative pt-8 pb-16">
         {/* Header */}

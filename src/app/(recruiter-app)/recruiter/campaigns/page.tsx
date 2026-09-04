@@ -54,13 +54,13 @@ const statusStyles: Record<DisplayStatus, string> = {
   Draft:
     "border-muted-foreground/40 bg-muted/50 text-muted-foreground",
   Completed:
-    "border-violet-500/40 bg-violet-500/10 text-violet-400",
+    "border-blue-500/40 bg-blue-500/10 text-blue-400",
 };
 
 const statusDot: Record<DisplayStatus, string> = {
   Active: "bg-accent",
   Draft: "bg-muted-foreground",
-  Completed: "bg-violet-400",
+  Completed: "bg-blue-400",
 };
 
 /* -------------------------------------------------------------------------- */
@@ -365,7 +365,7 @@ export default function RecruiterCampaignsPage() {
       icon: Briefcase,
       value: closedCount?.count ?? 0,
       label: "Completed",
-      tone: "text-violet-400",
+      tone: "text-blue-400",
       loading: loadingClosed,
     },
   ];
