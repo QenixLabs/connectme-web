@@ -547,7 +547,7 @@ export default function AdminPortfolioPage() {
                             }}
                           />
                         ) : (
-                          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-300 to-blue-400 flex items-center justify-center text-xs font-medium text-white">
+                          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-300 to-blue-500 flex items-center justify-center text-xs font-medium text-white">
                             {(talent.user_name || "U")
                               .charAt(0)
                               .toUpperCase()}

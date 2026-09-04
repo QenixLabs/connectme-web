@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { talentApi } from "@/lib/api/talent";
 import { conversationsApi } from "@/lib/api/conversations";
+import { requestsApi } from "@/lib/api/requests";
+import { queryKeys } from "@/lib/api/query-keys";
 import { useAuthStore } from "@/providers/auth-store-provider";
 
 const savedTalentKeys = {
@@ -231,6 +233,56 @@ export function useShortlistTalent(username: string, campaignId: string) {
   };
 
   return { isShortlisted, isPending, toggleShortlist };
+}
+
+export function useConnectionRequest(targetUserId: string) {
+  const queryClient = useQueryClient();
+  const requireAuth = useRequireAuth();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
+  const statusQuery = useQuery({
+    queryKey: [
+      ...queryKeys.collaborationRequests.all(),
+      "status",
+      targetUserId,
+    ] as const,
+    queryFn: () => requestsApi.getMyRequests(),
+    enabled: !!targetUserId && isAuthenticated,
+    select: (data) => {
+      const sent = data.sent.find((r) => r.receiver_id?._id === targetUserId);
+      if (sent?.status === "pending") return "pending" as const;
+      if (sent?.status === "accepted" || sent?.status === "messaging_only")
+        return "connected" as const;
+      return "none" as const;
+    },
+  });
+
+  const mutation = useMutation({
+    mutationFn: () => requestsApi.createRequest({ receiver_id: targetUserId }),
+    onSuccess: () => {
+      toast.success("Connection request sent");
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.collaborationRequests.all(),
+      });
+    },
+    onError: (err) => {
+      const message =
+        (err as { response?: { data?: { message?: string } } }).response?.data
+          ?.message || "Failed to send connection request";
+      toast.error(message);
+    },
+  });
+
+  const send = () => {
+    if (!requireAuth()) return;
+    mutation.mutate();
+  };
+
+  return {
+    status: statusQuery.data ?? ("none" as const),
+    isPending: mutation.isPending,
+    send,
+  };
 }
 
 export function useStartConversation(

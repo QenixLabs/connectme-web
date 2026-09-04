@@ -1,6 +1,6 @@
 "use client";
 
-import { ShieldCheck, TrendingUp, Star, Briefcase } from "lucide-react";
+import { ShieldCheck, TrendingUp, Star, Bookmark } from "lucide-react";
 import type { TalentProfile, Testimonial } from "@/lib/api/talent";
 import { computeRating } from "./data";
 
@@ -14,14 +14,14 @@ export function StatsBento({
   const trustScore = profile.trust_score;
   const responseRate = profile.response_rate;
   const { average, count } = computeRating(testimonials);
-  const projects = profile.analytics?.shortlist_count ?? 0;
+  const shortlistCount = profile.analytics?.shortlist_count ?? 0;
 
   const stats = [
     {
       icon: ShieldCheck,
-      value: trustScore != null && trustScore > 0 ? String(trustScore) : "\u2014",
+      value: trustScore != null && trustScore > 0 ? String(trustScore) : "—",
       label: "RootScore",
-      sub:
+      note:
         trustScore != null && trustScore > 0
           ? trustScore >= 80
             ? "Excellent"
@@ -33,9 +33,9 @@ export function StatsBento({
     },
     {
       icon: TrendingUp,
-      value: responseRate != null ? `${responseRate}%` : "\u2014",
+      value: responseRate != null ? `${responseRate}%` : "—",
       label: "Response Rate",
-      sub:
+      note:
         responseRate != null
           ? responseRate >= 80
             ? "Very Responsive"
@@ -45,41 +45,38 @@ export function StatsBento({
     },
     {
       icon: Star,
-      value: average > 0 ? average.toFixed(1) : "\u2014",
+      value: average > 0 ? average.toFixed(1) : "—",
       label: "Rating",
-      sub: count > 0 ? `${count} Review${count === 1 ? "" : "s"}` : "No reviews",
-      color: "text-warning",
+      note: count > 0 ? `${count} Review${count === 1 ? "" : "s"}` : "No reviews",
+      color: "text-gold",
     },
     {
-      icon: Briefcase,
-      value: projects > 0 ? String(projects) : "\u2014",
-      label: "Projects",
-      sub: projects > 0 ? "Completed" : "None yet",
+      icon: Bookmark,
+      value: shortlistCount > 0 ? String(shortlistCount) : "—",
+      label: "Shortlists",
+      note: shortlistCount > 0 ? "Saved by recruiters" : "None yet",
       color: "text-pink",
     },
   ];
 
   return (
-    <section className="grid grid-cols-4 rounded-2xl bg-card py-4 shadow-[var(--shadow-card)]">
-      {stats.map((s, i) => (
-        <div
-          key={s.label}
-          className={`flex flex-col items-center px-1 text-center ${
-            i > 0 ? "border-l border-border/60" : ""
-          }`}
-        >
-          <s.icon className={`size-4 ${s.color}`} />
-          <p className="mt-1.5 text-lg font-extrabold leading-none text-foreground">
-            {s.value}
-          </p>
-          <p className="mt-0.5 text-[10px] leading-tight text-muted-foreground">
-            {s.label}
-          </p>
-          <p className="mt-0.5 text-[9.5px] font-semibold leading-tight text-brand">
-            {s.sub}
-          </p>
-        </div>
-      ))}
+    <section className="rounded-2xl bg-card p-4 shadow-[var(--shadow-card)]">
+      <div className="grid grid-cols-4 divide-x divide-border">
+        {stats.map((s) => (
+          <div key={s.label} className="px-1 text-center">
+            <s.icon className={`mx-auto size-5 ${s.color}`} />
+            <p className="mt-1.5 text-[20px] font-extrabold leading-none text-foreground">
+              {s.value}
+            </p>
+            <p className="mt-1 text-[11px] font-medium text-muted-foreground">
+              {s.label}
+            </p>
+            <p className="mt-0.5 text-[10px] font-semibold text-brand">
+              {s.note}
+            </p>
+          </div>
+        ))}
+      </div>
     </section>
   );
 }

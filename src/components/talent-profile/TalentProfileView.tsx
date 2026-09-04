@@ -12,6 +12,8 @@ import {
   User,
   BarChart3,
   FolderOpen,
+  Video,
+  Images,
 } from "lucide-react";
 import type {
   TalentProfile,
@@ -40,6 +42,8 @@ import {
   DetailsSection,
   MediaKitSection,
   AnalyticsSection,
+  ShowreelPlayerCard,
+  HighlightRow,
 } from "./sections";
 import {
   toExperienceItems,
@@ -97,6 +101,14 @@ export function TalentProfileView({
     () => toPortfolioItems(portfolioItems),
     [portfolioItems],
   );
+  const videoItems = useMemo(
+    () => portfolioItemsConverted.filter((i) => i.type !== "image"),
+    [portfolioItemsConverted],
+  );
+  const imageItems = useMemo(
+    () => portfolioItemsConverted.filter((i) => i.type === "image"),
+    [portfolioItemsConverted],
+  );
 
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxItemId, setLightboxItemId] = useState<string | null>(null);
@@ -121,16 +133,20 @@ export function TalentProfileView({
   return (
     <>
       <div className="mx-auto w-full max-w-md pb-24">
-        {/* Cover + profile card */}
+        {/* Cover + identity band */}
         <HeroSection
           profile={profile}
           viewerRole={viewerRole}
-          showActions={false}
           isOwner={isOwner}
+          statsOverlap
         />
 
+        {/* Stats card overlapping the identity band (pure-white reference) */}
+        <div className="relative z-10 -mt-9 px-5">
+          <StatsBento profile={profile} testimonials={testimonials} />
+        </div>
+
       <div className="space-y-3 px-5 pt-3">
-        <StatsBento profile={profile} testimonials={testimonials} />
 
         {/* CTA + secondary buttons */}
         <TalentProfileActions
@@ -169,16 +185,27 @@ export function TalentProfileView({
         {activeTab === "overview" && (
           <div className="space-y-3">
             <AboutSection bio={profile.about || ""} />
-            <ShowReelSection items={portfolioItems} collapsible onOpenReel={handleOpenLightbox} />
-            <PortfolioSection
-              items={portfolioItems}
-              username={profile.username}
-              collapsible
+            <SkillsSection skills={skills} />
+            <ShowreelPlayerCard
+              items={portfolioItemsConverted}
               onOpenReel={handleOpenLightbox}
             />
-            <SkillsSection skills={skills} collapsible />
-            <AwardsSection data={awardItems} collapsible />
-            <ReviewsSection data={reviewItems} initialShowAll collapsible />
+            <HighlightRow
+              icon={Video}
+              title="Video Highlights"
+              variant="video"
+              items={videoItems}
+              onOpenReel={handleOpenLightbox}
+            />
+            <HighlightRow
+              icon={Images}
+              title="Image Highlights"
+              variant="image"
+              items={imageItems}
+              onOpenReel={handleOpenLightbox}
+            />
+            <AwardsSection data={awardItems} />
+            <ReviewsSection data={reviewItems} />
           </div>
         )}
 
