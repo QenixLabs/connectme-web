@@ -215,7 +215,6 @@ export function TalentProfileView({
             <PortfolioSection
               items={portfolioItems}
               username={profile.username}
-              showAllAction={false}
               onOpenReel={handleOpenLightbox}
             />
           </div>

@@ -80,7 +80,7 @@ export function PortfolioSection({
     <CollapsibleSection
       icon={<Video className="size-4" />}
       title="Portfolio Highlights"
-      action={showAllAction && portfolioItems.length > 0 ? "View All" : undefined}
+      action={showAllAction && portfolioItems.length > 0 ? "View More" : undefined}
       onAction={showAllAction ? handleViewAll : undefined}
       collapsible={collapsible && portfolioItems.length > 0}
     >

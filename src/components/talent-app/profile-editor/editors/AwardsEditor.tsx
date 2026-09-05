@@ -16,6 +16,11 @@ import {
   SheetFooter,
 } from "@/components/ui/sheet";
 import { toast } from "sonner";
+import {
+  useCreateAward,
+  useUpdateAward,
+  useDeleteAward,
+} from "@/hooks/use-experience";
 import type { Profile, Award } from "../profile-types";
 
 interface EditorProps {
@@ -24,10 +29,12 @@ interface EditorProps {
   onUpdate: (patch: Partial<Profile>) => void;
 }
 
-const uid = () => Math.random().toString(36).slice(2, 9);
-
-export function AwardsEditor({ profile, onBack, onUpdate }: EditorProps) {
+export function AwardsEditor({ profile, onBack }: EditorProps) {
   const [editing, setEditing] = useState<Award | null>(null);
+  const createAward = useCreateAward();
+  const updateAward = useUpdateAward();
+  const deleteAward = useDeleteAward();
+  const isSaving = createAward.isPending || updateAward.isPending;
 
   const startAdd = () => {
     setEditing({ id: "", name: "", organization: "", year: "", description: "" });
@@ -38,20 +45,34 @@ export function AwardsEditor({ profile, onBack, onUpdate }: EditorProps) {
   };
 
   const save = () => {
-    if (!editing || !editing.name.trim()) return;
+    if (!editing) return;
+    if (!editing.name.trim() || !editing.organization.trim()) {
+      toast.error("Award name and organization are required");
+      return;
+    }
+    const yearNum = Number(editing.year.trim());
+    const data = {
+      title: editing.name.trim(),
+      awarding_body: editing.organization.trim(),
+      year: editing.year.trim() && Number.isFinite(yearNum) ? yearNum : undefined,
+      description: editing.description.trim() || undefined,
+    };
     const exists = profile.awards.some((a) => a.id === editing.id);
-    onUpdate({
-      awards: exists
-        ? profile.awards.map((a) => (a.id === editing.id ? editing : a))
-        : [...profile.awards, { ...editing, id: uid() }],
-    });
+    const onSuccess = () => toast.success(exists ? "Award updated" : "Award added");
+    const onError = () => toast.error("Save failed. Please try again.");
+    if (exists) {
+      updateAward.mutate({ id: editing.id, data }, { onSuccess, onError });
+    } else {
+      createAward.mutate({ type: "award", ...data }, { onSuccess, onError });
+    }
     setEditing(null);
-    toast.success(exists ? "Award updated" : "Award added");
   };
 
   const remove = (id: string) => {
-    onUpdate({ awards: profile.awards.filter((a) => a.id !== id) });
-    toast.success("Award removed");
+    deleteAward.mutate(id, {
+      onSuccess: () => toast.success("Award removed"),
+      onError: () => toast.error("Delete failed. Please try again."),
+    });
   };
 
   return (
@@ -171,7 +192,9 @@ export function AwardsEditor({ profile, onBack, onUpdate }: EditorProps) {
             <Button variant="outline" onClick={() => setEditing(null)}>
               Cancel
             </Button>
-            <Button onClick={save}>Save</Button>
+            <Button onClick={save} disabled={isSaving}>
+              {isSaving ? "Saving…" : "Save"}
+            </Button>
           </SheetFooter>
         </SheetContent>
       </Sheet>

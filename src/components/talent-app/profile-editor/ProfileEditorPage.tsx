@@ -8,6 +8,7 @@ import {
   useUploadTalentPhoto,
   useUploadTalentBanner,
 } from "@/hooks/use-talent-profile";
+import { useMyAwards } from "@/hooks/use-experience";
 import { CropImageModal } from "@/components/ui/crop-image-modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dashboard } from "./Dashboard";
@@ -28,7 +29,7 @@ import { AwardsEditor } from "./editors/AwardsEditor";
 import { ExperienceEditor } from "./editors/ExperienceEditor";
 import { CreditsEditor } from "./editors/CreditsEditor";
 import { TestimonialsEditor } from "./editors/TestimonialsEditor";
-import { mapServerToView, mapViewToPayload } from "./profile-mapper";
+import { mapServerToView, mapApiAwardsToView, mapViewToPayload } from "./profile-mapper";
 import type { ScreenKey, Profile } from "./profile-types";
 
 function ProfileSkeleton() {
@@ -55,6 +56,7 @@ export function ProfileEditorPage() {
   const updateProfile = useUpdateMyProfile();
   const uploadPhoto = useUploadTalentPhoto();
   const uploadBanner = useUploadTalentBanner();
+  const awardsQuery = useMyAwards();
 
   const [stack, setStack] = useState<ScreenKey[]>([]);
   const current = stack[stack.length - 1];
@@ -177,6 +179,7 @@ export function ProfileEditorPage() {
   if (!serverProfile) return null;
 
   const profile = mapServerToView(serverProfile);
+  profile.awards = mapApiAwardsToView(awardsQuery.data);
 
   const editorProps = {
     profile,

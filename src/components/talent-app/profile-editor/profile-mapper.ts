@@ -1,6 +1,7 @@
 import type {
   TalentProfile,
   UpdateTalentProfilePayload,
+  Award as ApiAward,
 } from "@/lib/api/talent";
 import type {
   Profile,
@@ -82,6 +83,16 @@ export function mapServerToView(server: TalentProfile): Profile {
     availableFrom: "",
     openToTravel: false,
   };
+}
+
+export function mapApiAwardsToView(awards: ApiAward[] | undefined): Award[] {
+  return (awards ?? []).map((a) => ({
+    id: a._id,
+    name: a.title ?? "",
+    organization: a.awarding_body ?? "",
+    year: a.year != null ? String(a.year) : "",
+    description: a.description ?? "",
+  }));
 }
 
 function formatLocation(loc?: TalentProfile["location"]): string {

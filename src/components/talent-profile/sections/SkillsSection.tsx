@@ -270,7 +270,7 @@ function getSkillIcon(skill: string) {
   return <Icon className="size-3 text-brand" />;
 }
 
-const MAX_VISIBLE = 8;
+const MAX_VISIBLE = 4;
 
 export function SkillsSection({
   skills,

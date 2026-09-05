@@ -137,7 +137,7 @@ export function TalentProfileActions({
 
   return (
     <>
-      {/* Primary row: Connect + Message + Like + Share */}
+      {/* Primary row: Connect + Message */}
       <div className="mb-1 flex gap-2">
         {!isOwnProfile && (
           <button
@@ -177,12 +177,15 @@ export function TalentProfileActions({
           )}
           Message Talent
         </button>
+      </div>
 
+      {/* Icon row: Like + Share */}
+      <div className="mb-1 flex gap-2">
         <button
           onClick={toggleLike}
           disabled={likePending}
           aria-label={isLiked ? "Unlike talent" : "Like talent"}
-          className="grid h-[52px] w-[52px] shrink-0 place-items-center rounded-2xl bg-card text-foreground shadow-[var(--shadow-card)] transition-all active:scale-95 disabled:opacity-70"
+          className="grid h-[52px] flex-1 place-items-center rounded-2xl bg-card text-foreground shadow-[var(--shadow-card)] transition-all active:scale-95 disabled:opacity-70"
         >
           <Heart
             className={`size-5 transition-colors ${
@@ -194,7 +197,7 @@ export function TalentProfileActions({
         <button
           onClick={handleCopyLink}
           aria-label="Share profile link"
-          className="grid h-[52px] w-[52px] shrink-0 place-items-center rounded-2xl bg-card text-foreground shadow-[var(--shadow-card)] transition-all active:scale-95"
+          className="grid h-[52px] flex-1 place-items-center rounded-2xl bg-card text-foreground shadow-[var(--shadow-card)] transition-all active:scale-95"
         >
           <Share2 className="size-5" />
         </button>

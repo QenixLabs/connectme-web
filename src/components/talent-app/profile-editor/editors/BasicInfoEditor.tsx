@@ -1,10 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, Circle } from "lucide-react";
+import { CheckCircle2, Circle, CalendarIcon, X } from "lucide-react";
+import { format, isValid, parseISO } from "date-fns";
 import { EditorShell, SaveAction } from "./EditorShell";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -22,6 +30,24 @@ interface EditorProps {
   onUpdate: (patch: Partial<Profile>) => void;
 }
 
+function parseDob(value: string): Date | undefined {
+  if (!value) return undefined;
+  const date = parseISO(value.slice(0, 10));
+  return isValid(date) ? date : undefined;
+}
+
+function toDobString(date: Date): string {
+  return format(date, "yyyy-MM-dd");
+}
+
+function calcAge(date: Date): number {
+  const now = new Date();
+  let age = now.getFullYear() - date.getFullYear();
+  const m = now.getMonth() - date.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < date.getDate())) age--;
+  return age;
+}
+
 export function BasicInfoEditor({ profile, onBack, onUpdate }: EditorProps) {
   const [fullLegalName, setFullLegalName] = useState(profile.fullLegalName);
   const [username, setUsername] = useState(profile.username);
@@ -31,6 +57,10 @@ export function BasicInfoEditor({ profile, onBack, onUpdate }: EditorProps) {
   const [location, setLocation] = useState(profile.location);
 
   const usernameValid = /^[a-z0-9_.]{4,}$/.test(username);
+  const [dobOpen, setDobOpen] = useState(false);
+  const dobDate = parseDob(dateOfBirth);
+  const today = new Date();
+  const earliestDob = new Date(1900, 0, 1);
 
   const save = () => {
     onUpdate({
@@ -116,12 +146,62 @@ export function BasicInfoEditor({ profile, onBack, onUpdate }: EditorProps) {
 
           <div className="space-y-1.5">
             <Label htmlFor="dateOfBirth">Date of Birth</Label>
-            <Input
-              id="dateOfBirth"
-              value={dateOfBirth}
-              onChange={(e) => setDateOfBirth(e.target.value)}
-              placeholder="e.g. 1995-08-12"
-            />
+            <Popover open={dobOpen} onOpenChange={setDobOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  id="dateOfBirth"
+                  variant="outline"
+                  className={cn(
+                    "w-full justify-between font-normal",
+                    !dobDate && "text-muted-foreground"
+                  )}
+                >
+                  {dobDate ? (
+                    format(dobDate, "d MMM yyyy")
+                  ) : (
+                    <span>Pick your date of birth</span>
+                  )}
+                  <span className="flex items-center gap-1">
+                    {dobDate ? (
+                      <span
+                        role="button"
+                        tabIndex={-1}
+                        aria-label="Clear date of birth"
+                        className="rounded-sm p-0.5 hover:bg-accent hover:text-accent-foreground"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDateOfBirth("");
+                        }}
+                      >
+                        <X className="size-4" />
+                      </span>
+                    ) : null}
+                    <CalendarIcon className="size-4" />
+                  </span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  captionLayout="dropdown-years"
+                  selected={dobDate}
+                  onSelect={(date) => {
+                    if (date) setDateOfBirth(toDobString(date));
+                    setDobOpen(false);
+                  }}
+                  disabled={{ after: today }}
+                  startMonth={earliestDob}
+                  endMonth={today}
+                  defaultMonth={dobDate ?? new Date(2000, 0)}
+                  autoFocus
+                />
+              </PopoverContent>
+            </Popover>
+            {dobDate ? (
+              <p className="text-xs text-muted-foreground">
+                Age {calcAge(dobDate)} — shown only to verified recruiters.
+              </p>
+            ) : null}
           </div>
 
           <div className="space-y-1.5">
