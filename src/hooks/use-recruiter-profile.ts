@@ -71,6 +71,26 @@ export function useUploadRecruiterPhoto() {
   });
 }
 
+export function useUploadRecruiterBanner() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (file: File) => recruiterApi.uploadBanner(file),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: recruiterProfileKeys.profile() });
+    },
+  });
+}
+
+export function useUploadRecruiterAsset() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (file: File) => recruiterApi.uploadAsset(file),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: recruiterProfileKeys.profile() });
+    },
+  });
+}
+
 export function useCheckSlugAvailability() {
   return useMutation({
     mutationFn: (slug: string) => recruiterApi.checkSlugAvailability(slug),

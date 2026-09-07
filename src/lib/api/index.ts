@@ -7,6 +7,9 @@ export type {
   PublicRecruiterProfile,
   PublicCampaignSummary,
   PublicCampaignsResponse,
+  PublicTeamMember,
+  PublicReview,
+  PublicReviewsResponse,
 } from "./recruiter";
 export { talentApi } from "./talent";
 export type {

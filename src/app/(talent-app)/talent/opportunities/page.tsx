@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 
 import { OpportunitiesPage } from "@/components/talent-app/OpportunitiesPage";
@@ -14,5 +15,9 @@ export const metadata: Metadata = {
 };
 
 export default function TalentOpportunitiesPage() {
-  return <OpportunitiesPage />;
+  return (
+    <Suspense fallback={null}>
+      <OpportunitiesPage />
+    </Suspense>
+  );
 }

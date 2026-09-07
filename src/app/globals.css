@@ -93,6 +93,7 @@
   --color-brand-foreground: var(--brand-foreground);
   --color-brand-soft: var(--brand-soft);
   --color-pink: var(--pink);
+  --color-accent-pink: var(--pink);
   --color-text-secondary: var(--text-secondary);
   --color-text-muted: var(--text-muted);
   --color-text-disabled: var(--text-disabled);
@@ -489,7 +490,9 @@ html[data-theme="light"] {
 
   html,
   body {
-    overflow-x: hidden;
+    /* `clip` (not `hidden`) — `hidden` creates a scroll container on
+       html/body that silently breaks all position:sticky descendants. */
+    overflow-x: clip;
   }
 
   body {
@@ -870,6 +873,16 @@ html[data-theme="light"] {
 
 @utility snap-start {
   scroll-snap-align: start;
+}
+
+@utility gradient-brand {
+  background-image: var(--gradient-brand);
+}
+
+@utility card-soft {
+  background-color: var(--card);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
 }
 
 @media (prefers-reduced-motion: reduce) {

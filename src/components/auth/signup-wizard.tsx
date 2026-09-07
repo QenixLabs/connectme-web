@@ -27,7 +27,7 @@ const stepVariants = {
   exit: (dir: number) => ({ x: dir > 0 ? -30 : 30, opacity: 0 }),
 };
 
-export function SignupWizard() {
+export function SignupWizard({ initialRole = "talent" }: { initialRole?: "talent" | "recruiter" }) {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [showOtp, setShowOtp] = useState(false);
   const [direction, setDirection] = useState(1);
@@ -46,7 +46,7 @@ export function SignupWizard() {
       password: "",
       confirmPassword: "",
       verification_method: "email",
-      role: "talent",
+      role: initialRole,
       username: "",
       profession: "Actor",
       creator_link: "",

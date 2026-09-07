@@ -19,15 +19,22 @@ import {
   FileText,
   Check,
   Camera,
+  Image as ImageIcon,
   Save,
   X,
+  Instagram,
+  Youtube,
+  Languages,
 } from "lucide-react";
+import { siX } from "simple-icons/icons";
 import { toast } from "sonner";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import {
   useRecruiterProfile,
   useUpdateRecruiterProfile,
   useUploadRecruiterPhoto,
+  useUploadRecruiterBanner,
+  useUploadRecruiterAsset,
   useCheckSlugAvailability,
 } from "@/hooks/use-recruiter-profile";
 import type { RecruiterProfile } from "@/lib/api/recruiter";
@@ -61,6 +68,21 @@ const SPECIALTY_OPTIONS = [
   "Entertainment",
   "Fashion",
   "Technology",
+];
+
+const LANGUAGE_OPTIONS = [
+  "English",
+  "Hindi",
+  "Telugu",
+  "Tamil",
+  "Bengali",
+  "Marathi",
+  "Kannada",
+  "Malayalam",
+  "Punjabi",
+  "Gujarati",
+  "Urdu",
+  "French",
 ];
 
 function getInitials(name: string): string {
@@ -109,6 +131,14 @@ function SectionIcon({ icon: Icon }: { icon: typeof Tag }) {
     <div className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-accent-teal/30 bg-accent-teal-bg">
       <Icon className="size-4.5 text-accent-teal" />
     </div>
+  );
+}
+
+function XBrandIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+      <path d={siX.path} />
+    </svg>
   );
 }
 
@@ -244,15 +274,27 @@ export default function RecruiterProfileEditPage() {
   const { data: profile, isLoading } = useRecruiterProfile();
   const updateProfile = useUpdateRecruiterProfile();
   const uploadPhoto = useUploadRecruiterPhoto();
+  const uploadBanner = useUploadRecruiterBanner();
+  const uploadAsset = useUploadRecruiterAsset();
   const checkSlug = useCheckSlugAvailability();
 
-  const [sheet, setSheet] = useState<null | "size" | "specialties">(null);
+  const [sheet, setSheet] = useState<null | "size" | "specialties" | "languages">(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
+  const ctaInputRef = useRef<HTMLInputElement>(null);
 
   const saved = (label: string) => toast.success(`${label} updated`);
 
   const handleFieldUpdate = useCallback(
-    (field: string, value: string | number | string[] | Record<string, string>) => {
+    (
+      field: string,
+      value:
+        | string
+        | number
+        | string[]
+        | Record<string, string>
+        | { title: string; description: string }[],
+    ) => {
       updateProfile.mutate({ [field]: value } as Parameters<typeof updateProfile.mutate>[0], {
         onSuccess: () => saved(field.replace(/_/g, " ")),
         onError: () => toast.error("Update failed"),
@@ -279,6 +321,46 @@ export default function RecruiterProfileEditPage() {
       e.target.value = "";
     },
     [uploadPhoto, handleFieldUpdate],
+  );
+
+  const handleBannerUpload = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error("Banner must be under 10MB");
+        return;
+      }
+      uploadBanner.mutate(file, {
+        onSuccess: (data) => {
+          handleFieldUpdate("banner_image_url", data.relativePath);
+          toast.success("Banner uploaded");
+        },
+        onError: () => toast.error("Banner upload failed"),
+      });
+      e.target.value = "";
+    },
+    [uploadBanner, handleFieldUpdate],
+  );
+
+  const handleCtaImageUpload = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image must be under 5MB");
+        return;
+      }
+      uploadAsset.mutate(file, {
+        onSuccess: (data) => {
+          handleFieldUpdate("cta_image_url", data.relativePath);
+          toast.success("CTA image uploaded");
+        },
+        onError: () => toast.error("CTA image upload failed"),
+      });
+      e.target.value = "";
+    },
+    [uploadAsset, handleFieldUpdate],
   );
 
   const handleSlugUpdate = useCallback(
@@ -351,6 +433,36 @@ export default function RecruiterProfileEditPage() {
 
         {/* Identity card */}
         <section className="profile-card mt-5 rounded-2xl p-4">
+          {/* Banner */}
+          <button
+            onClick={() => bannerInputRef.current?.click()}
+            className="relative mb-4 flex h-28 w-full items-center justify-center overflow-hidden rounded-xl border border-dashed border-border bg-muted text-muted-foreground"
+            aria-label="Upload banner image"
+          >
+            {profile.banner_image_url ? (
+              <img
+                src={profile.banner_image_url}
+                alt="Profile banner"
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="flex flex-col items-center gap-1">
+                <ImageIcon className="size-6" />
+                <span className="text-xs">Upload banner</span>
+              </div>
+            )}
+            <span className="absolute bottom-2 right-2 flex size-7 items-center justify-center rounded-full border-2 border-bg-surface bg-muted shadow-sm">
+              <Camera className="size-3.5 text-foreground" />
+            </span>
+          </button>
+          <input
+            ref={bannerInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleBannerUpload}
+          />
+
           <div className="flex gap-4">
             {/* Avatar */}
             <button
@@ -536,6 +648,24 @@ export default function RecruiterProfileEditPage() {
                 label: "Website",
                 active: !!profile.company_website,
               },
+              {
+                key: "instagram",
+                Icon: Instagram,
+                label: "Instagram",
+                active: !!profile.instagram_url,
+              },
+              {
+                key: "youtube",
+                Icon: Youtube,
+                label: "YouTube",
+                active: !!profile.youtube_url,
+              },
+              {
+                key: "x",
+                Icon: XBrandIcon,
+                label: "X",
+                active: !!profile.x_url,
+              },
             ].map(({ key, Icon, label, active }) => (
               <div
                 key={key}
@@ -571,6 +701,36 @@ export default function RecruiterProfileEditPage() {
               inputType="url"
               placeholder="https://linkedin.com/company/..."
               onSave={(v) => handleFieldUpdate("linkedin_company_url", v)}
+              className="text-accent-teal"
+            />
+          </div>
+          <div className="mt-3 border-t border-border pt-3">
+            <InlineField
+              label="Instagram"
+              value={profile.instagram_url ?? ""}
+              inputType="url"
+              placeholder="https://instagram.com/..."
+              onSave={(v) => handleFieldUpdate("instagram_url", v)}
+              className="text-accent-teal"
+            />
+          </div>
+          <div className="mt-3 border-t border-border pt-3">
+            <InlineField
+              label="YouTube"
+              value={profile.youtube_url ?? ""}
+              inputType="url"
+              placeholder="https://youtube.com/@..."
+              onSave={(v) => handleFieldUpdate("youtube_url", v)}
+              className="text-accent-teal"
+            />
+          </div>
+          <div className="mt-3 border-t border-border pt-3">
+            <InlineField
+              label="X (Twitter)"
+              value={profile.x_url ?? ""}
+              inputType="url"
+              placeholder="https://x.com/..."
+              onSave={(v) => handleFieldUpdate("x_url", v)}
               className="text-accent-teal"
             />
           </div>
@@ -654,6 +814,36 @@ export default function RecruiterProfileEditPage() {
           </div>
         </section>
 
+        {/* Languages (Tags) */}
+        <section className="profile-card mt-4 rounded-2xl p-4">
+          <div className="flex items-center gap-3">
+            <SectionIcon icon={Languages} />
+            <div className="flex-1">
+              <p className="font-semibold text-foreground">Languages</p>
+              <p className="text-sm text-muted-foreground">Languages your team works in</p>
+            </div>
+            <button
+              onClick={() => setSheet("languages")}
+              className="flex h-9 items-center gap-2 rounded-lg border border-border bg-muted px-3 text-sm text-muted-foreground"
+            >
+              <Pencil className="size-3.5" /> Edit
+            </button>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-3">
+            {(!profile.languages || profile.languages.length === 0) && (
+              <p className="text-sm text-muted-foreground">No languages added yet</p>
+            )}
+            {profile.languages?.map((t) => (
+              <span
+                key={t}
+                className="rounded-lg border border-accent-teal/50 bg-accent-teal/5 px-4 py-2 text-sm text-accent-teal"
+              >
+                {t}
+              </span>
+            ))}
+          </div>
+        </section>
+
         {/* About / Bio */}
         <section className="profile-card mt-4 rounded-2xl p-4">
           <div className="flex items-center gap-3">
@@ -669,6 +859,172 @@ export default function RecruiterProfileEditPage() {
               value={profile.about ?? ""}
               placeholder="Add a company description"
               onSave={(v) => handleFieldUpdate("about", v)}
+            />
+          </div>
+        </section>
+
+        {/* Banner Tags */}
+        <section className="profile-card mt-4 rounded-2xl p-4">
+          <div className="flex items-center gap-3">
+            <SectionIcon icon={Tag} />
+            <div>
+              <p className="font-semibold text-foreground">Banner Tags</p>
+              <p className="text-sm text-muted-foreground">Shown under the hero banner</p>
+            </div>
+          </div>
+          <div className="mt-4">
+            <TagInput
+              value={profile.banner_tags ?? []}
+              onChange={(tags) => handleFieldUpdate("banner_tags", tags)}
+              placeholder="e.g. FILM, OTT, TVC"
+            />
+          </div>
+        </section>
+
+        {/* Motto */}
+        <section className="profile-card mt-4 rounded-2xl p-4">
+          <div className="flex items-center gap-3">
+            <SectionIcon icon={FileText} />
+            <div>
+              <p className="font-semibold text-foreground">Motto</p>
+              <p className="text-sm text-muted-foreground">Short quote on your overview</p>
+            </div>
+          </div>
+          <div className="mt-4 leading-relaxed">
+            <InlineField
+              value={profile.motto ?? ""}
+              placeholder="We don't just cast. We create opportunities."
+              onSave={(v) => handleFieldUpdate("motto", v)}
+            />
+          </div>
+        </section>
+
+        {/* Casting Categories */}
+        <section className="profile-card mt-4 rounded-2xl p-4">
+          <div className="flex items-center gap-3">
+            <SectionIcon icon={Tag} />
+            <div>
+              <p className="font-semibold text-foreground">Casting Categories</p>
+              <p className="text-sm text-muted-foreground">Categories shown on the Projects tab</p>
+            </div>
+          </div>
+          <div className="mt-4">
+            <TagInput
+              value={profile.casting_categories ?? []}
+              onChange={(tags) => handleFieldUpdate("casting_categories", tags)}
+              placeholder="e.g. Actors, Models, Dancers"
+            />
+          </div>
+        </section>
+
+        {/* Team Values */}
+        <section className="profile-card mt-4 rounded-2xl p-4">
+          <div className="flex items-center gap-3">
+            <SectionIcon icon={Users} />
+            <div>
+              <p className="font-semibold text-foreground">What We Look For</p>
+              <p className="text-sm text-muted-foreground">Values shown on the Team tab</p>
+            </div>
+          </div>
+          <div className="mt-4 space-y-3">
+            {(profile.team_values ?? []).map((item, index) => (
+              <div key={index} className="rounded-xl border border-border bg-bg-page p-3">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={item.title}
+                    placeholder="Title"
+                    onChange={(e) => {
+                      const next = [...(profile.team_values ?? [])];
+                      next[index] = { ...next[index], title: e.target.value };
+                      handleFieldUpdate("team_values", next);
+                    }}
+                    className="min-w-0 flex-1 rounded-lg border border-accent-teal/30 bg-bg-surface-inset px-3 py-2 text-sm text-foreground outline-none"
+                  />
+                  <button
+                    onClick={() => {
+                      const next = [...(profile.team_values ?? [])];
+                      next.splice(index, 1);
+                      handleFieldUpdate("team_values", next);
+                    }}
+                    className="flex size-9 items-center justify-center rounded-lg border border-border text-muted-foreground"
+                    aria-label="Remove value"
+                  >
+                    <X className="size-4" />
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  value={item.description}
+                  placeholder="Description"
+                  onChange={(e) => {
+                    const next = [...(profile.team_values ?? [])];
+                    next[index] = { ...next[index], description: e.target.value };
+                    handleFieldUpdate("team_values", next);
+                  }}
+                  className="mt-2 w-full rounded-lg border border-accent-teal/30 bg-bg-surface-inset px-3 py-2 text-sm text-foreground outline-none"
+                />
+              </div>
+            ))}
+            <button
+              onClick={() => {
+                const next = [...(profile.team_values ?? []), { title: "", description: "" }];
+                handleFieldUpdate("team_values", next);
+              }}
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-border py-2.5 text-sm text-muted-foreground"
+            >
+              <Users className="size-4" /> Add value
+            </button>
+          </div>
+        </section>
+
+        {/* Reviews CTA */}
+        <section className="profile-card mt-4 rounded-2xl p-4">
+          <div className="flex items-center gap-3">
+            <SectionIcon icon={FileText} />
+            <div>
+              <p className="font-semibold text-foreground">Reviews CTA Banner</p>
+              <p className="text-sm text-muted-foreground">Banner at the bottom of the Reviews tab</p>
+            </div>
+          </div>
+          <div className="mt-4 space-y-3">
+            <button
+              onClick={() => ctaInputRef.current?.click()}
+              className="relative flex h-24 w-full items-center justify-center overflow-hidden rounded-xl border border-dashed border-border bg-muted text-muted-foreground"
+              aria-label="Upload CTA background image"
+            >
+              {profile.cta_image_url ? (
+                <img
+                  src={profile.cta_image_url}
+                  alt="CTA background"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex flex-col items-center gap-1">
+                  <ImageIcon className="size-6" />
+                  <span className="text-xs">Upload CTA image</span>
+                </div>
+              )}
+              <span className="absolute bottom-2 right-2 flex size-7 items-center justify-center rounded-full border-2 border-bg-surface bg-muted shadow-sm">
+                <Camera className="size-3.5 text-foreground" />
+              </span>
+            </button>
+            <input
+              ref={ctaInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleCtaImageUpload}
+            />
+            <InlineField
+              value={profile.cta_headline ?? ""}
+              placeholder="Let's Create Great Stories Together"
+              onSave={(v) => handleFieldUpdate("cta_headline", v)}
+            />
+            <InlineField
+              value={profile.cta_subheadline ?? ""}
+              placeholder="Get in touch for collaborations and talent requirements."
+              onSave={(v) => handleFieldUpdate("cta_subheadline", v)}
             />
           </div>
         </section>
@@ -747,6 +1103,51 @@ export default function RecruiterProfileEditPage() {
             <TagInput
               value={profile.specialties ?? []}
               onChange={(tags) => handleFieldUpdate("specialties", tags)}
+              placeholder="Type and press Enter"
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Languages Sheet */}
+      <Sheet
+        open={sheet === "languages"}
+        onOpenChange={(o) => setSheet(o ? "languages" : null)}
+      >
+        <SheetContent side="bottom" className="profile-card rounded-t-2xl">
+          <SheetHeader className="px-0">
+            <SheetTitle className="text-foreground">Languages</SheetTitle>
+            <SheetDescription>Select all that apply</SheetDescription>
+          </SheetHeader>
+          <div className="flex flex-wrap gap-2 pb-8">
+            {LANGUAGE_OPTIONS.map((t) => {
+              const active = profile.languages?.includes(t) ?? false;
+              return (
+                <button
+                  key={t}
+                  onClick={() => {
+                    const current = profile.languages ?? [];
+                    const next = active
+                      ? current.filter((s) => s !== t)
+                      : [...current, t];
+                    handleFieldUpdate("languages", next);
+                  }}
+                  className={`rounded-lg border px-4 py-2 text-sm ${
+                    active
+                       ? "border-accent-teal/60 bg-accent-teal-bg text-accent-teal"
+                      : "border-border text-muted-foreground"
+                  }`}
+                >
+                  {t}
+                </button>
+              );
+            })}
+          </div>
+          <div className="border-t border-border pb-4 pt-4">
+            <p className="mb-2 text-sm text-muted-foreground">Or add a custom language:</p>
+            <TagInput
+              value={profile.languages ?? []}
+              onChange={(tags) => handleFieldUpdate("languages", tags)}
               placeholder="Type and press Enter"
             />
           </div>

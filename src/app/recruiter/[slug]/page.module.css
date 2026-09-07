@@ -1,0 +1,1209 @@
+.pageShell {
+  min-height: 100vh;
+}
+
+.phoneCanvas {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  margin: 0 auto;
+  background: var(--card);
+  overflow: hidden;
+}
+
+.heroPanel {
+  position: relative;
+  height: 245px;
+  overflow: hidden;
+  background: var(--foreground);
+}
+
+.heroPanel > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.heroOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+      90deg,
+      color-mix(in oklab, var(--foreground) 85%, transparent),
+      transparent 72%
+    ),
+    linear-gradient(
+      0deg,
+      color-mix(in oklab, var(--foreground) 62%, transparent),
+      transparent 48%
+    );
+}
+
+.heroScript {
+  position: absolute;
+  top: 64px;
+  left: 18px;
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  font-size: 29px;
+  font-weight: 700;
+  line-height: 0.86;
+  transform: rotate(-5deg);
+}
+
+.heroTags {
+  position: absolute;
+  bottom: 21px;
+  left: 18px;
+  color: var(--foreground);
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.slideCount {
+  position: absolute;
+  right: 16px;
+  bottom: 21px;
+  color: var(--foreground);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.iconButtonDark {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: inherit;
+  background: color-mix(in oklab, var(--foreground) 38%, transparent);
+}
+
+.brandKnot {
+  font-size: 24px;
+  color: var(--primary);
+  transform: rotate(45deg);
+}
+
+.profilePanel {
+  position: relative;
+  padding: 0 16px 14px;
+}
+
+.brandRow {
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr);
+  align-items: end;
+  gap: 10px;
+  margin-top: -31px;
+  position: relative;
+  z-index: 2;
+}
+
+.agencyLogo {
+  width: 78px;
+  height: 78px;
+  border: 4px solid var(--card);
+  border-radius: 50%;
+  background: var(--foreground);
+  color: var(--background);
+  display: grid;
+  place-content: center;
+  text-align: center;
+  box-shadow: 0 2px 8px color-mix(in oklab, var(--foreground) 18%, transparent);
+}
+
+.agencyLogo span {
+  font-size: 27px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.agencyLogo small {
+  margin-top: 3px;
+  font-size: 5px;
+  font-weight: 700;
+}
+
+.brandRow h1 {
+  margin: 0 0 5px;
+  font-size: 18px;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.brandRow h1 span {
+  color: var(--primary);
+  font-size: 10px;
+}
+
+.brandRow p {
+  margin: 0 0 4px;
+  color: var(--muted-foreground);
+  font-size: 10px;
+}
+
+.profilePanel > h2 {
+  margin: 17px 0 8px;
+  font-size: 12px;
+}
+
+.bio {
+  color: var(--muted-foreground);
+  font-size: 10px;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.aboutText {
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 1.65;
+  margin: 0;
+  white-space: pre-line;
+}
+
+.statsRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin: 16px -4px 13px;
+}
+
+.statCell {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border-right: 1px solid var(--border);
+}
+
+.statCell:last-child {
+  border: 0;
+}
+
+.statCell strong,
+.statCell small {
+  display: block;
+  white-space: nowrap;
+}
+
+.statCell strong {
+  font-size: 11px;
+}
+
+.statCell small {
+  color: var(--muted-foreground);
+  font-size: 6px;
+}
+
+.primaryRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.primaryRow button,
+.ctaBanner button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 40px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.primaryAction {
+  border: 1px solid var(--primary);
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.secondaryAction {
+  border: 1px solid var(--primary);
+  background: var(--card);
+  color: var(--primary);
+}
+
+.secondaryRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr 40px;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.ghostAction {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  height: 34px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.ghostAction:hover {
+  background: var(--muted);
+  color: var(--foreground);
+}
+
+.ghostAction.on {
+  color: var(--rose);
+}
+
+.moreWrap {
+  position: relative;
+}
+
+.moreAction {
+  display: grid;
+  width: 100%;
+  height: 34px;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--card);
+  color: var(--foreground);
+}
+
+.moreMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 25;
+  min-width: 160px;
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--popover);
+  box-shadow: 0 10px 30px color-mix(in oklab, var(--foreground) 18%, transparent);
+}
+
+.moreMenu button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 9px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 10px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.moreMenu button:hover {
+  background: var(--muted);
+}
+
+.divider {
+  height: 1px;
+  margin: 15px 0 12px;
+  background: var(--border);
+}
+
+.socialRow {
+  display: flex;
+  justify-content: space-around;
+  padding: 0 4px;
+}
+
+.socialLink {
+  display: flex;
+  min-width: 44px;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 6px;
+  border-radius: 8px;
+  color: var(--muted-foreground);
+  font-size: 7px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  transition:
+    color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.socialLink:hover {
+  color: var(--primary);
+  transform: translateY(-1px);
+}
+
+.followers {
+  width: 100%;
+  height: 36px;
+  margin-top: 14px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 7px;
+  color: var(--muted-foreground);
+  background: var(--muted);
+  font-size: 9px;
+}
+
+.followers > span:nth-child(2) {
+  flex: 1;
+  text-align: left;
+}
+
+.followers strong {
+  color: var(--foreground);
+}
+
+.avatarStack {
+  display: flex;
+}
+
+.avatarStack img {
+  width: 19px;
+  height: 19px;
+  object-fit: cover;
+  border: 1px solid var(--card);
+  border-radius: 50%;
+  margin-right: -5px;
+}
+
+.tabBar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  height: 43px;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in oklab, var(--card) 95%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.tabBar button {
+  height: 100%;
+  padding: 0 5px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: var(--muted-foreground);
+  background: transparent;
+  font-size: 9px;
+}
+
+.tabBar button.active {
+  border-color: var(--primary);
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.tabBar button span {
+  display: inline-grid;
+  width: 15px;
+  height: 15px;
+  margin-left: 3px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--muted);
+  color: var(--primary);
+  font-size: 7px;
+}
+
+.contentPanel {
+  padding: 18px 16px 28px;
+}
+
+.overviewCard {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 13px;
+}
+
+.sectionTitleCopy {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 9px;
+}
+
+.sectionTitleIcon {
+  display: grid;
+  width: 29px;
+  height: 29px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 9px;
+  background: var(--brand-soft);
+  color: var(--brand);
+}
+
+.sectionTitle h2 {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.2;
+}
+
+.sectionTitle button {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  border: 0;
+  color: var(--brand);
+  background: transparent;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chipRow span {
+  padding: 7px 11px;
+  border-radius: 20px;
+  background: var(--brand-soft);
+  color: var(--foreground);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--brand) 12%, transparent);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.featuredWorkCard {
+  padding-bottom: 14px;
+}
+
+.featuredWorkCard .sectionTitle {
+  margin-bottom: 12px;
+}
+
+.showreel {
+  position: relative;
+  width: 100%;
+  height: 172px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 7px;
+  color: var(--foreground);
+  text-align: left;
+  background: var(--foreground);
+}
+
+.showreel > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 32%;
+}
+
+.showreelShade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    0deg,
+    color-mix(in oklab, var(--foreground) 74%, transparent),
+    transparent 70%
+  );
+}
+
+.playButton {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 45px;
+  height: 45px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--foreground);
+  border-radius: 50%;
+}
+
+.showreelCopy {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+}
+
+.showreelCopy strong,
+.showreelCopy small {
+  display: block;
+}
+
+.showreelCopy strong {
+  font-size: 10px;
+}
+
+.showreelCopy small {
+  font-size: 7px;
+  margin-top: 2px;
+}
+
+.duration {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.thumbnailRow {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.thumbnailRow img {
+  width: 100%;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.achievementGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-radius: 8px;
+  background: var(--muted);
+  overflow: hidden;
+}
+
+.achievementGrid div {
+  min-height: 69px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-content: center;
+  column-gap: 5px;
+  padding: 8px;
+  border-right: 1px solid var(--card);
+}
+
+.achievementGrid div:last-child {
+  border: 0;
+}
+
+.achievementGrid svg {
+  grid-row: 1/3;
+  width: 19px;
+  color: var(--primary);
+}
+
+.achievementGrid div:nth-child(2) svg {
+  color: var(--rose);
+}
+
+.achievementGrid div:nth-child(3) svg {
+  color: var(--gold);
+  fill: currentColor;
+}
+
+.achievementGrid strong {
+  font-size: 12px;
+}
+
+.achievementGrid small {
+  font-size: 7px;
+  color: var(--muted-foreground);
+}
+
+.blockquote {
+  margin: 0;
+  padding: 15px;
+  border-radius: 7px;
+  color: var(--primary);
+  background: var(--secondary);
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.blockquote small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted-foreground);
+  font-weight: 400;
+}
+
+.projectScroll {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 34%;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.projectCard div {
+  position: relative;
+  height: 132px;
+  overflow: hidden;
+  border-radius: 7px;
+}
+
+.projectCard img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.projectCard div::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    0deg,
+    color-mix(in oklab, var(--foreground) 65%, transparent),
+    transparent 55%
+  );
+}
+
+.projectCard strong {
+  position: absolute;
+  z-index: 1;
+  left: 7px;
+  bottom: 7px;
+  color: var(--foreground);
+  font-size: 10px;
+}
+
+.projectCard p,
+.projectCard small {
+  display: block;
+  margin: 5px 0 0;
+  font-size: 8px;
+  color: var(--muted-foreground);
+}
+
+.projectCard small {
+  margin-top: 2px;
+}
+
+.jobCard {
+  display: flex;
+  gap: 9px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px color-mix(in oklab, var(--foreground) 5%, transparent);
+}
+
+.jobCard > img {
+  width: 75px;
+  height: 98px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.jobHeading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 5px;
+}
+
+.jobHeading span {
+  display: inline-block;
+  padding: 2px 4px;
+  border-radius: 3px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-size: 6px;
+  font-weight: 800;
+}
+
+.jobHeading h3 {
+  margin: 3px 0 5px;
+  font-size: 10px;
+}
+
+.jobHeading button {
+  align-self: start;
+  border: 0;
+  background: transparent;
+  color: var(--muted-foreground);
+}
+
+.tagRow {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+
+.tagRow span {
+  padding: 2px 5px;
+  border-radius: 3px;
+  background: var(--muted);
+  color: var(--muted-foreground);
+  font-size: 7px;
+}
+
+.jobCard p {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 5px 0 0;
+  color: var(--muted-foreground);
+  font-size: 7px;
+}
+
+.applyButton {
+  display: flex;
+  width: 100%;
+  height: 25px;
+  margin-top: 7px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 1px solid var(--primary);
+  border-radius: 4px;
+  color: var(--primary);
+  background: var(--card);
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.jobCard:first-child .applyButton {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.categoryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 7px;
+}
+
+.category {
+  min-height: 67px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 6px;
+  background: var(--muted);
+  font-size: 8px;
+}
+
+.category svg {
+  width: 20px;
+}
+
+.category0 svg {
+  color: var(--gold);
+  fill: currentColor;
+}
+
+.category1 svg {
+  color: var(--primary);
+}
+
+.category2 svg {
+  color: var(--rose);
+}
+
+.category3 svg {
+  color: var(--violet);
+}
+
+.teamGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 7px;
+}
+
+.teamGrid article {
+  min-width: 0;
+  padding: 8px 4px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  text-align: center;
+  box-shadow: 0 2px 7px color-mix(in oklab, var(--foreground) 4%, transparent);
+}
+
+.teamGrid img {
+  width: 54px;
+  height: 54px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.teamGrid strong,
+.teamGrid small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.teamGrid strong {
+  margin-top: 5px;
+  font-size: 8px;
+}
+
+.teamGrid small {
+  margin-top: 2px;
+  color: var(--muted-foreground);
+  font-size: 6px;
+}
+
+.teamGrid a {
+  display: inline-grid;
+  width: 18px;
+  height: 18px;
+  margin-top: 5px;
+  place-items: center;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.valuesGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+}
+
+.value {
+  min-height: 76px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: var(--muted);
+  text-align: center;
+}
+
+.value svg {
+  width: 23px;
+  color: var(--gold);
+}
+
+.value1 svg {
+  color: var(--primary);
+}
+
+.value2 svg {
+  color: var(--success);
+}
+
+.value strong {
+  margin-top: 4px;
+  font-size: 8px;
+}
+
+.value small {
+  margin-top: 2px;
+  color: var(--muted-foreground);
+  font-size: 6px;
+}
+
+.review {
+  padding-bottom: 13px;
+  border-bottom: 1px solid var(--border);
+}
+
+.reviewHead {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.reviewHead img {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.reviewHead strong,
+.reviewHead small {
+  display: block;
+}
+
+.reviewHead strong {
+  font-size: 10px;
+}
+
+.reviewHead small {
+  margin-top: 2px;
+  color: var(--muted-foreground);
+  font-size: 8px;
+}
+
+.reviewHead time {
+  color: var(--muted-foreground);
+  font-size: 7px;
+}
+
+.stars {
+  margin: 5px 0 2px;
+  color: var(--gold);
+  letter-spacing: 1px;
+}
+
+.review p {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.ctaBanner {
+  position: relative;
+  min-height: 175px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: var(--foreground);
+  color: var(--foreground);
+}
+
+.ctaBanner > img {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.5;
+}
+
+.ctaBanner::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--foreground) 92%, transparent),
+    color-mix(in oklab, var(--foreground) 20%, transparent)
+  );
+}
+
+.ctaBanner > div {
+  position: relative;
+  z-index: 1;
+  padding: 19px;
+}
+
+.ctaBanner h2 {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.1;
+  color: var(--background);
+}
+
+.ctaBanner p {
+  max-width: 240px;
+  margin: 8px 0 15px;
+  font-size: 8px;
+  line-height: 1.4;
+  color: var(--background);
+}
+
+.ctaBanner > div > div {
+  display: flex;
+  gap: 8px;
+}
+
+.ctaBanner button {
+  height: 31px;
+  padding: 0 11px;
+  border: 1px solid var(--primary);
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-size: 8px;
+}
+
+.ctaBanner button:last-child {
+  background: var(--card);
+  color: var(--primary);
+}
+
+.toast {
+  position: fixed;
+  z-index: 30;
+  bottom: 22px;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 14px;
+  border-radius: 99px;
+  background: var(--foreground);
+  color: var(--background);
+  font-size: 10px;
+  transform: translateX(-50%);
+  box-shadow: 0 8px 30px color-mix(in oklab, var(--foreground) 25%, transparent);
+}
+
+.spaceY3 > * + * {
+  margin-top: 12px;
+}
+
+.spaceY4 > * + * {
+  margin-top: 16px;
+}
+
+.spaceY5 > * + * {
+  margin-top: 20px;
+}
+
+.spaceY6 > * + * {
+  margin-top: 24px;
+}
+
+@media (min-width: 640px) {
+  .pageShell {
+    padding: 28px 0;
+  }
+
+  .phoneCanvas {
+    max-width: 430px;
+    min-height: calc(100vh - 56px);
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    box-shadow: 0 20px 65px color-mix(in oklab, var(--foreground) 15%, transparent);
+  }
+
+  .heroPanel {
+    height: 275px;
+  }
+}
+
+/* Overview cards use the same layered rhythm as the public talent profile. */
+.featuredWorkCard .showreel {
+  height: 190px;
+  border-radius: 12px;
+}
+
+.featuredWorkCard .showreelCopy {
+  bottom: 13px;
+  left: 13px;
+}
+
+.featuredWorkCard .showreelCopy strong {
+  font-size: 12px;
+}
+
+.featuredWorkCard .showreelCopy small {
+  margin-top: 3px;
+  color: color-mix(in oklab, var(--foreground) 75%, transparent);
+  font-size: 9px;
+}
+
+.featuredWorkCard .playButton {
+  width: 48px;
+  height: 48px;
+  background: color-mix(in oklab, var(--foreground) 16%, transparent);
+  backdrop-filter: blur(4px);
+}
+
+.featuredWorkCard .thumbnailRow {
+  gap: 7px;
+  margin-top: 9px;
+}
+
+.featuredWorkCard .thumbnailRow img {
+  height: 54px;
+  border-radius: 7px;
+}
+
+.achievementGrid {
+  gap: 8px;
+  overflow: visible;
+  background: transparent;
+}
+
+.achievementGrid div {
+  min-width: 0;
+  min-height: 94px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 4px;
+  padding: 13px 11px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+}
+
+.achievementGrid svg {
+  width: 19px;
+  margin-bottom: 2px;
+}
+
+.achievementGrid strong {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.achievementGrid small {
+  font-size: 8px;
+  line-height: 1.25;
+}
+
+.blockquote {
+  position: relative;
+  padding: 20px 18px 17px;
+  border: 1px solid color-mix(in oklab, var(--primary) 25%, var(--border));
+  border-radius: 16px;
+  background: color-mix(in oklab, var(--secondary) 82%, var(--primary));
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.quoteMark {
+  display: block;
+  height: 18px;
+  color: var(--primary);
+  font-family: Georgia, serif;
+  font-size: 34px;
+  line-height: 0.8;
+}
+
+.blockquote p {
+  margin: 4px 0 0;
+}
+
+.blockquote small {
+  margin-top: 9px;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+@media (max-width: 359px) {
+  .achievementGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .achievementGrid div {
+    min-height: 72px;
+  }
+}

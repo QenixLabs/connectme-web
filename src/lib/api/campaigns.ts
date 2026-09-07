@@ -428,6 +428,18 @@ export const campaignsApi = {
     return response.data as { count: number };
   },
 
+  getOpportunityStats: async () => {
+    const response = await apiClient.get("/campaigns/opportunity-stats");
+    // Both the backend transform interceptor and the axios response
+    // interceptor have already unwrapped the envelope — this IS the payload.
+    return response.data as {
+      open_roles: number;
+      closing_soon: number;
+      new_this_week: number;
+      remote: number;
+    };
+  },
+
   getCampaignById: async (id: string) => {
     const response = await apiClient.get(`/campaigns/${id}`);
     return response.data as Campaign;

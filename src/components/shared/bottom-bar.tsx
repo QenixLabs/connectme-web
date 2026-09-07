@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useFilterSheetOpen } from "@/hooks/use-filter-sheet";
 import type { NavItem } from "./nav-config";
 
 interface BottomBarProps {
@@ -12,9 +13,13 @@ interface BottomBarProps {
 
 export function BottomBar({ navItems, iconOnly }: BottomBarProps) {
   const pathname = usePathname();
+  const filterSheetOpen = useFilterSheetOpen();
 
   return (
-    <nav className="fixed bottom-0 left-0 z-50 w-full border-t border-border bg-bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden">
+    <nav className={cn(
+      "fixed bottom-0 left-0 z-50 w-full border-t border-border bg-bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden",
+      filterSheetOpen && "hidden"
+    )}>
       <div className="grid h-16 auto-cols-fr grid-flow-col">
         {navItems.map((item) => {
           const active = pathname.startsWith(item.href);

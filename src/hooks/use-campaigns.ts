@@ -38,10 +38,11 @@ export const campaignKeys = {
     [...campaignKeys.all, "submissions", campaignId, params] as const,
 };
 
-export function useCampaigns(params: QueryCampaignsParams = {}) {
+export function useCampaigns(params: QueryCampaignsParams = {}, enabled = true) {
   return useQuery({
     queryKey: campaignKeys.list(params),
     queryFn: () => campaignsApi.getCampaigns(params),
+    enabled,
   });
 }
 
@@ -65,10 +66,18 @@ export function useMyApplications(
   });
 }
 
-export function useCampaignCount(params: QueryCampaignsParams = {}) {
+export function useCampaignCount(params: QueryCampaignsParams = {}, enabled = true) {
   return useQuery({
     queryKey: [...campaignKeys.list(params), "count"],
     queryFn: () => campaignsApi.getCampaignCount(params),
+    enabled,
+  });
+}
+
+export function useOpportunityStats() {
+  return useQuery({
+    queryKey: [...campaignKeys.all, "opportunity-stats"],
+    queryFn: () => campaignsApi.getOpportunityStats(),
   });
 }
 
@@ -110,10 +119,22 @@ export function useBookmarkCampaign() {
       bookmarked
         ? campaignsApi.unbookmarkCampaign(id)
         : campaignsApi.bookmarkCampaign(id),
-    onSuccess: (_data, variables) => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: campaignKeys.bookmarks() });
       queryClient.invalidateQueries({ queryKey: campaignKeys.detail(variables.id) });
       queryClient.invalidateQueries({ queryKey: campaignKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: [...campaignKeys.all, "recommendations"] });
+
+      if (data?.bookmarked) {
+        toast.success("Job saved", {
+          action: {
+            label: "Click here to view all saved jobs",
+            onClick: () => {
+              window.location.href = "/talent/opportunities?tab=All&bookmarked=true";
+            },
+          },
+        });
+      }
     },
   });
 }

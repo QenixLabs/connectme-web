@@ -14,6 +14,7 @@ type Mode = "signin" | "signup";
 function UnifiedAuthContent() {
   const searchParams = useSearchParams();
   const initialMode = (searchParams.get("mode") === "signup" ? "signup" : "signin") as Mode;
+  const initialRole = searchParams.get("role") === "recruiter" ? "recruiter" : "talent";
   const [mode, setMode] = useState<Mode>(initialMode);
 
   return (
@@ -61,7 +62,7 @@ function UnifiedAuthContent() {
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.2 }}
               >
-                {mode === "signin" ? <SignInForm /> : <SignupWizard />}
+                {mode === "signin" ? <SignInForm /> : <SignupWizard initialRole={initialRole} />}
               </motion.div>
             </AnimatePresence>
           </CardContent>

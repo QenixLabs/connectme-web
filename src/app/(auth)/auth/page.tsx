@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import { UnifiedAuthForm } from "@/components/auth/unified-auth-form";
+import { AuthEntry } from "@/components/auth/auth-entry";
 
 export const metadata: Metadata = {
-  title: "Sign In | RootIn",
-  description: "Sign in or create your RootIn account — the creative talent platform.",
+  title: "RootIn — Find the right people for extraordinary work",
+  description:
+    "Connect with verified creative talent, production teams and recruiters across the entertainment industry.",
 };
 
 export default function AuthPage() {
-  return <UnifiedAuthForm />;
+  return <AuthEntry />;
 }
