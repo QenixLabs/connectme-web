@@ -101,30 +101,26 @@ export default function RecruiterDashboardPage() {
   return (
     <main className="mx-auto min-h-screen w-full max-w-[430px] bg-background pb-8">
       <header className="relative overflow-hidden pb-8">
-        <img
-          src="/images/casting/casting-hero.jpg"
-          alt="Casting team at work"
-          className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-30"
-        />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/60 via-background/75 to-background" />
+        {/* Right-side hero image with soft blurred edges, faded into the background */}
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-[100%]">
+          <img
+            src="/images/casting/casting-hero.png"
+            alt=""
+            aria-hidden
+            className="absolute inset-0 h-full w-full rounded-3xl object-cover blur-lg"
+          />
+          <img
+            src="/images/casting/casting-hero.png"
+            alt="Film set with director's chair"
+            className="absolute inset-[6px] h-[calc(100%-12px)] w-[calc(100%-12px)] rounded-[20px] object-cover"
+          />
+          {/* Fade the left and bottom edges into the page background */}
+          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/50 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background" />
+        </div>
 
         <div className="relative px-5 pt-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="flex size-11 items-center justify-center rounded-2xl bg-accent-teal-bg text-accent-teal">
-                <Sparkles className="size-6" strokeWidth={2.4} />
-              </span>
-              <div>
-                <p className="text-2xl font-extrabold leading-none tracking-tight">Rootin</p>
-                <p className="mt-1 text-[0.7rem] font-medium text-muted-foreground">People. Talent. Opportunities.</p>
-              </div>
-            </div>
-            <div className="flex size-11 items-center justify-center rounded-full bg-foreground text-sm font-bold text-primary">
-              {initials(displayName)}
-            </div>
-          </div>
 
-          <p className="mt-5 max-w-[11rem] text-lg font-medium italic leading-tight text-foreground/70">Discover Connect Create</p>
           <h1 className="mt-3 text-[1.9rem] font-extrabold tracking-tight">
             {getGreeting()}, {displayName} <span aria-hidden>👋</span>
           </h1>

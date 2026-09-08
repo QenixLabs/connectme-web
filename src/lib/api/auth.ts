@@ -7,6 +7,7 @@ export const authApi = {
   },
 
   signup: async (data: {
+    name: string;
     email: string;
     password: string;
     phone: string;

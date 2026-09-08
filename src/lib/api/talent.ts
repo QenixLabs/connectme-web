@@ -205,16 +205,41 @@ export interface SearchTalentsParams {
   location_city?: string;
   availability?: string;
   gender?: string;
+  languages?: string;
+  skills?: string;
+  age_min?: number;
+  age_max?: number;
+  min_experience?: number;
+  max_experience?: number;
   sort?: "newest" | "oldest" | "name_asc" | "name_desc" | "relevance";
+  cursor?: string;
   page?: number;
   limit?: number;
 }
 
 export interface SearchTalentsResponse {
-  data: TalentProfile[];
+  data: (TalentProfile & {
+    match_score?: number;
+    matched_campaign?: string;
+  })[];
   total: number;
+  nextCursor?: string | null;
   page?: number;
   hasMore?: boolean;
+}
+
+export interface AiSearchCriteria {
+  search: string;
+  profession: string | null;
+  location: string | null;
+  gender: "Female" | "Male" | null;
+  availability: "available" | "busy" | "not_available" | null;
+  languages: string[];
+  skills: string[];
+  ageMin: number | null;
+  ageMax: number | null;
+  experienceMin: number | null;
+  experienceMax: number | null;
 }
 
 export const talentApi = {
@@ -631,5 +656,10 @@ export const talentApi = {
       params: q ? { q } : undefined,
     });
     return response.data as string[];
+  },
+
+  extractSearchCriteria: async (userInput: string) => {
+    const response = await apiClient.post("/talent/ai-search/criteria", { userInput });
+    return response.data as AiSearchCriteria;
   },
 };

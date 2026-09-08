@@ -95,6 +95,7 @@ export function SignupWizard({ initialRole = "talent" }: { initialRole?: "talent
       setSignupLoading(true);
       try {
         await authApi.signup({
+          name: values.name,
           email: values.email,
           password: values.password,
           phone: `+91${values.phone}`,
