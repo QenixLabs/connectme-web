@@ -145,6 +145,8 @@ export interface CursorPaginatedResponse {
 export interface RecruiterCampaignParams {
   status?: string;
   search?: string;
+  role_type?: string;
+  sort?: "newest" | "oldest";
   cursor?: string;
   limit?: number;
 }

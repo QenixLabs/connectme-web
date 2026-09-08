@@ -34,6 +34,7 @@ export function TopBar({ navItems, role, showUserMenu = false }: TopBarProps) {
   if (pathname.startsWith(`/${role}/messages`)) return null;
   if (pathname.match(/^\/talent\/[^/]+\/portfolio(\/|$)/)) return null;
   if (pathname === "/talent/applications") return null;
+  if (pathname === "/recruiter/find-talent/ai-search") return null;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-bg-surface/95 backdrop-blur-xl">

@@ -3,42 +3,47 @@
 import { useMemo, useState } from "react";
 import {
   Bell,
-  CheckCircle2,
+  CalendarDays,
   ChevronRight,
-  Clock,
-  Filter,
-  Inbox,
+  FileText,
   Loader2,
-  Search,
-  Trash2,
-  Zap,
+  MessageSquare,
+  Megaphone,
+  UserPlus,
+  type LucideIcon,
 } from "lucide-react";
+import { format, isToday, isYesterday } from "date-fns";
 import { toast } from "sonner";
-
-import { cn, relativeTime } from "@/lib/utils";
-import {
-  useNotificationsInfinite,
-  useUnreadNotifications,
-  useMarkAllNotificationsRead,
-  useMarkNotificationRead,
-  useMoveNotificationToHistory,
-  useClearNotificationHistory,
-} from "@/hooks/use-notifications";
-import { notificationTypeLabel, type Notification } from "@/lib/api/notifications";
 
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Skeleton } from "@/components/ui/skeleton";
+  useClearNotificationHistory,
+  useMarkAllNotificationsRead,
+  useMarkNotificationRead,
+  useMoveNotificationToHistory,
+  useNotificationsInfinite,
+  useUnreadNotifications,
+} from "@/hooks/use-notifications";
+import { cn, relativeTime } from "@/lib/utils";
+import {
+  notificationTypeLabel,
+  type Notification,
+} from "@/lib/api/notifications";
 
+type Category = "All" | "Action Required" | "Applications" | "Messages";
+type Tone = "alert" | "violet" | "mint" | "sky" | "amber" | "neutral";
 type Tab = "active" | "history";
+
+const filters: Category[] = ["All", "Action Required", "Applications", "Messages"];
+
+const toneClass: Record<Tone, string> = {
+  alert: "bg-destructive/10 text-destructive",
+  violet: "bg-primary/10 text-primary",
+  mint: "bg-success/10 text-success",
+  sky: "bg-info/10 text-info",
+  amber: "bg-warning/10 text-warning",
+  neutral: "bg-muted text-muted-foreground",
+};
 
 function actorName(notification: Notification): string {
   const actor = notification.actor_id;
@@ -46,93 +51,161 @@ function actorName(notification: Notification): string {
   return actor.full_legal_name || actor.company_name || actor.email || "ConnectMe";
 }
 
-function actorInitial(notification: Notification): string {
-  const source = notification.title || actorName(notification);
-  return source.charAt(0).toUpperCase();
+function getCategory(notification: Notification): Category {
+  const text = `${notification.title} ${notification.body}`.toLowerCase();
+
+  if (
+    notification.action_status === "pending" ||
+    text.includes("review") ||
+    text.includes("request") ||
+    text.includes("approve")
+  ) {
+    return "Action Required";
+  }
+  if (text.includes("message") || text.includes("replied") || text.includes("sent you")) {
+    return "Messages";
+  }
+  if (notification.type.startsWith("application")) return "Applications";
+  return "All";
+}
+
+function getTone(notification: Notification): Tone {
+  const category = getCategory(notification);
+  if (category === "Action Required") return "alert";
+  if (category === "Applications") return "violet";
+  if (category === "Messages") return "mint";
+  if (notification.type === "campaign_invite" || notification.type === "campaign_recommendation") {
+    return "sky";
+  }
+  if (notification.type.startsWith("subscription")) return "amber";
+  return "neutral";
+}
+
+function getIcon(notification: Notification): LucideIcon {
+  const category = getCategory(notification);
+  if (category === "Messages") return MessageSquare;
+  if (category === "Applications") return UserPlus;
+  if (category === "Action Required") return CalendarDays;
+  if (notification.type.startsWith("campaign")) return Megaphone;
+  if (notification.type.startsWith("application")) return FileText;
+  return Bell;
+}
+
+function getActionLabel(notification: Notification): string {
+  const category = getCategory(notification);
+  if (category === "Action Required") return "Review";
+  if (category === "Applications") return "View Profile";
+  if (category === "Messages") return "Reply";
+  if (notification.type.startsWith("campaign")) return "View Campaign";
+  return "View Details";
+}
+
+function getLabel(notification: Notification): string {
+  const category = getCategory(notification);
+  if (category !== "All") {
+    if (category === "Applications") return "New Application";
+    if (category === "Messages") return "Talent Message";
+    return category;
+  }
+  return notificationTypeLabel(notification.type);
+}
+
+function getTimeLabel(createdAt: string): string {
+  const date = new Date(createdAt);
+  if (Number.isNaN(date.getTime())) return relativeTime(createdAt);
+  if (isToday(date)) return format(date, "hh:mm a");
+  if (isYesterday(date)) return "Yesterday";
+  return format(date, "d MMM");
 }
 
 function NotificationSkeleton() {
   return (
-    <Card>
-      <CardContent className="py-5">
-        <div className="flex items-start gap-4">
-          <Skeleton className="size-14 shrink-0 rounded-full" />
-          <div className="min-w-0 flex-1 space-y-2">
-            <div className="flex items-center gap-2">
-              <Skeleton className="h-4 w-32 rounded" />
-              <Skeleton className="h-4 w-20 rounded" />
-            </div>
-            <Skeleton className="h-3 w-full rounded" />
-            <Skeleton className="h-3 w-3/4 rounded" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-3">
+      <div className="size-12 shrink-0 animate-pulse rounded-xl bg-muted" />
+      <div className="min-w-0 flex-1 space-y-2">
+        <div className="h-3 w-24 animate-pulse rounded bg-muted" />
+        <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
+        <div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
+      </div>
+      <div className="hidden w-28 space-y-2 sm:block">
+        <div className="ml-auto h-3 w-16 animate-pulse rounded bg-muted" />
+        <div className="h-8 animate-pulse rounded bg-muted" />
+      </div>
+    </div>
   );
 }
 
-function NotificationItem({
+function NotificationRow({
   notification,
   onClick,
 }: {
   notification: Notification;
   onClick: () => void;
 }) {
+  const category = getCategory(notification);
+  const tone = getTone(notification);
+  const Icon = getIcon(notification);
   const isUnread = notification.status === "unread";
 
   return (
-    <Card
-      onClick={onClick}
+    <article
       className={cn(
-        "relative cursor-pointer transition-colors hover:border-primary/40",
-        isUnread && "border-l-4 border-l-primary",
+        "flex cursor-pointer items-center gap-3 rounded-xl border border-border bg-card p-3 transition-colors hover:border-primary/40",
+        tone === "alert" && "border-destructive/20 bg-destructive/5",
       )}
+      onClick={onClick}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") onClick();
+      }}
+      role="button"
+      tabIndex={0}
     >
-      <CardContent className="py-5">
-        <div className="flex items-start gap-4">
-          <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-primary/10 text-lg font-medium text-muted-foreground">
-            {actorInitial(notification)}
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-base font-semibold text-foreground">
-                {notification.title}
-              </h2>
-              <Badge variant="secondary" className="text-xs font-medium">
-                {notificationTypeLabel(notification.type)}
-              </Badge>
-              {isUnread && (
-                <span className="size-2 rounded-full bg-primary" aria-hidden />
-              )}
-              <span className="ml-auto hidden items-center gap-1.5 text-xs text-muted-foreground lg:flex">
-                <Clock className="size-3.5" />
-                {relativeTime(notification.created_at)}
-              </span>
-            </div>
-            <p className="mt-0.5 text-sm text-muted-foreground">
-              {actorName(notification)}
-            </p>
-            {notification.body && (
-              <p className="mt-1.5 text-sm text-foreground/80 line-clamp-2">
-                {notification.body}
-              </p>
-            )}
-            <span className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground lg:hidden">
-              <Clock className="size-3.5" />
-              {relativeTime(notification.created_at)}
-            </span>
-          </div>
-          <ChevronRight className="mt-6 size-5 shrink-0 self-center text-muted-foreground lg:hidden" />
+      <div className={cn("grid size-12 shrink-0 place-items-center rounded-xl", toneClass[tone])}>
+        <Icon className="size-6" strokeWidth={2.25} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className={cn("text-xs font-semibold", tone === "alert" ? "text-destructive" : toneClass[tone].split(" ")[1])}>
+          {getLabel(notification)}
+        </p>
+        <h3 className="truncate text-sm font-bold text-foreground sm:text-base">
+          {notification.title}
+        </h3>
+        <p className="truncate text-xs text-muted-foreground sm:text-sm">
+          {notification.body || actorName(notification)}
+        </p>
+      </div>
+      <div className="flex w-28 shrink-0 flex-col items-end gap-2 sm:w-36">
+        <div className="flex items-center gap-2">
+          <time className="text-xs font-medium text-muted-foreground" dateTime={notification.created_at}>
+            {getTimeLabel(notification.created_at)}
+          </time>
+          {isUnread && (
+            <span
+              className={cn("size-2 rounded-full", tone === "alert" ? "bg-destructive" : "bg-primary")}
+              aria-label="Unread"
+            />
+          )}
         </div>
-      </CardContent>
-    </Card>
+        <Button
+          variant={tone === "alert" ? "destructive" : "outline"}
+          size="sm"
+          className="w-full"
+          onClick={(event) => {
+            event.stopPropagation();
+            onClick();
+          }}
+        >
+          <span className="truncate">{getActionLabel(notification)}</span>
+          <ChevronRight className="size-3.5 sm:hidden" />
+        </Button>
+      </div>
+    </article>
   );
 }
 
 export function NotificationsPage() {
+  const [filter, setFilter] = useState<Category>("All");
   const [tab, setTab] = useState<Tab>("active");
-  const [query, setQuery] = useState("");
-
   const {
     data,
     isLoading,
@@ -142,233 +215,181 @@ export function NotificationsPage() {
     fetchNextPage,
   } = useNotificationsInfinite(tab === "history");
   const { data: unreadData } = useUnreadNotifications();
-
   const markAll = useMarkAllNotificationsRead();
   const markRead = useMarkNotificationRead();
   const moveToHistory = useMoveNotificationToHistory();
   const clearHistory = useClearNotificationHistory();
 
-  const unreadCount = unreadData?.count ?? 0;
-
   const items = useMemo(
     () => data?.pages.flatMap((page) => page.data) ?? [],
     [data],
   );
+  const visible = useMemo(
+    () => items.filter((item) => filter === "All" || getCategory(item) === filter),
+    [filter, items],
+  );
+  const counts = useMemo(
+    () =>
+      filters.reduce<Record<Category, number>>(
+        (result, category) => {
+          result[category] = category === "All" ? items.length : items.filter((item) => getCategory(item) === category).length;
+          return result;
+        },
+        { All: 0, "Action Required": 0, Applications: 0, Messages: 0 },
+      ),
+    [items],
+  );
+  const unreadCount = unreadData?.count ?? 0;
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return items;
-    return items.filter(
-      (n) =>
-        n.title.toLowerCase().includes(q) ||
-        n.body.toLowerCase().includes(q) ||
-        notificationTypeLabel(n.type).toLowerCase().includes(q),
-    );
-  }, [items, query]);
-
-  function handleTabChange(value: string) {
-    setTab(value as Tab);
-    setQuery("");
+  function handleItemClick(notification: Notification) {
+    if (tab === "active" && notification.status === "unread") {
+      markRead.mutate(notification._id);
+    } else if (tab === "active") {
+      moveToHistory.mutate(notification._id);
+    }
   }
 
   function handleMarkAll() {
     if (unreadCount === 0) return;
     markAll.mutate(undefined, {
-      onSuccess: (res) => {
-        toast.success(
-          res.modified > 0
-            ? `${res.modified} notification${res.modified === 1 ? "" : "s"} marked as read`
-            : "Notifications marked as read",
-        );
-      },
+      onSuccess: (response) => toast.success(`${response.modified || unreadCount} notification${response.modified === 1 ? "" : "s"} marked as read`),
       onError: () => toast.error("Failed to mark notifications as read"),
     });
   }
 
   function handleClearHistory() {
     clearHistory.mutate(undefined, {
-      onSuccess: (res) => {
-        toast.success(
-          res.modified > 0
-            ? `${res.modified} history item${res.modified === 1 ? "" : "s"} cleared`
-            : "History cleared",
-        );
-      },
+      onSuccess: () => toast.success("History cleared"),
       onError: () => toast.error("Failed to clear history"),
     });
   }
 
-  function handleItemClick(notification: Notification) {
-    if (tab === "active" && notification.status === "unread") {
-      markRead.mutate(notification._id);
-      return;
-    }
-    if (tab === "active" && notification.status === "read") {
-      moveToHistory.mutate(notification._id);
-    }
-  }
-
-  function handleEnablePush() {
-    toast.info("Push notification subscription is not available yet.");
-  }
-
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-5 px-4 pb-28 pt-5 lg:px-6">
-      {/* Hero */}
-      <Card className="overflow-hidden">
-        <CardHeader>
-          <div className="flex items-start justify-between gap-6">
-            <div>
-              <CardTitle className="text-3xl font-bold tracking-tight lg:text-4xl">
-                Notifications
-              </CardTitle>
-              <CardDescription className="mt-2 text-base">
-                Stay updated with your latest recruiting activity — applications, messages, and campaign updates in one feed.
-              </CardDescription>
-            </div>
-            <div className="flex size-24 shrink-0 items-center justify-center rounded-full border border-primary/20 bg-primary/5 text-primary lg:size-32">
-              <Bell className="size-10 lg:size-12" strokeWidth={1.5} />
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
+    <div className="relative isolate mx-auto min-h-[calc(100vh-4rem)] w-full max-w-5xl overflow-hidden px-4 pb-28 pt-6 sm:px-6 lg:px-8">
+      <div className="ambient-glow right-[-8rem] top-[-5rem] size-72 bg-primary/30" />
 
-      {/* Tabs */}
-      <Tabs value={tab} onValueChange={handleTabChange}>
-        <TabsList className="grid w-full grid-cols-2 sm:w-fit">
-          <TabsTrigger value="active" className="gap-2">
-            Active
-            {unreadCount > 0 && (
-              <Badge
-                variant="default"
-                className="grid size-5 place-items-center rounded-full p-0 text-[10px]"
+      <header className="relative mb-7 overflow-hidden rounded-2xl bg-[url('/images/notifications-hero.png')] bg-cover bg-center bg-no-repeat">
+        <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/80 to-background/60" />
+        <div className="relative px-6 py-8">
+          <h1 className="font-display text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
+            Notifications
+          </h1>
+          <p className="mt-1 text-base font-medium text-muted-foreground sm:text-lg">
+            Stay updated on your talent pipeline.
+          </p>
+        </div>
+      </header>
+
+      <div className="relative mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Notification filters">
+          {filters.map((category) => {
+            const active = filter === category;
+            return (
+              <Button
+                key={category}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                variant={active ? "default" : "outline"}
+                size="sm"
+                className={cn("rounded-full px-3", active && "shadow-button")}
+                onClick={() => setFilter(category)}
               >
-                {unreadCount}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
-        </TabsList>
-      </Tabs>
+                {category}
+                <span className={cn("grid size-5 place-items-center rounded-full text-[10px]", active ? "bg-primary-foreground/20" : "bg-muted text-muted-foreground")}>
+                  {counts[category]}
+                </span>
+              </Button>
+            );
+          })}
+        </div>
+        <div className="flex shrink-0 items-center gap-1 self-start rounded-lg border border-border bg-card p-1">
+          {(["active", "history"] as const).map((value) => (
+            <Button
+              key={value}
+              type="button"
+              variant={tab === value ? "secondary" : "ghost"}
+              size="sm"
+              className="h-7 px-3 text-xs capitalize"
+              onClick={() => {
+                setTab(value);
+                setFilter("All");
+              }}
+            >
+              {value}
+            </Button>
+          ))}
+        </div>
+      </div>
 
-      {/* Action bar */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-4 flex min-h-8 items-center justify-between gap-3">
+        <p className="text-xs font-medium text-muted-foreground">
+          {tab === "active" && unreadCount > 0 ? `${unreadCount} unread notification${unreadCount === 1 ? "" : "s"}` : `${visible.length} notification${visible.length === 1 ? "" : "s"}`}
+        </p>
         {tab === "active" ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleMarkAll}
-            disabled={markAll.isPending || unreadCount === 0}
-            className="w-fit"
-          >
-            <CheckCircle2 className="size-4 text-primary" />
+          <Button variant="ghost" size="sm" className="h-8 text-xs" disabled={markAll.isPending || unreadCount === 0} onClick={handleMarkAll}>
             Mark all as read
           </Button>
         ) : (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleClearHistory}
-            disabled={clearHistory.isPending || filtered.length === 0}
-            className="w-fit text-destructive hover:text-destructive"
-          >
-            <Trash2 className="size-4" />
+          <Button variant="ghost" size="sm" className="h-8 text-xs text-destructive hover:text-destructive" disabled={clearHistory.isPending || items.length === 0} onClick={handleClearHistory}>
             Clear history
           </Button>
         )}
-
-        <div className="flex items-center gap-2">
-          <div className="flex min-w-0 flex-1 items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 sm:min-w-[240px]">
-            <Search className="size-4 shrink-0 text-muted-foreground" />
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search notifications..."
-              className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-            />
-          </div>
-          <Button variant="outline" size="sm" disabled>
-            <Filter className="size-4" />
-            Filter
-          </Button>
-        </div>
       </div>
 
-      {/* List */}
-      <div className="space-y-3">
-        {isLoading &&
-          Array.from({ length: 5 }).map((_, i) => <NotificationSkeleton key={i} />)}
+      <main className="relative">
+        {isLoading && (
+          <div className="space-y-2">
+            {Array.from({ length: 5 }).map((_, index) => <NotificationSkeleton key={index} />)}
+          </div>
+        )}
 
         {!isLoading && isError && (
-          <Card className="py-12 text-center">
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Failed to load notifications. Please try again later.
-              </p>
-            </CardContent>
-          </Card>
+          <div className="rounded-xl border border-border bg-card px-5 py-12 text-center text-sm text-muted-foreground">
+            Failed to load notifications. Please try again later.
+          </div>
         )}
 
-        {!isLoading && !isError && filtered.length === 0 && (
-          <Card className="py-12 text-center">
-            <CardContent>
-              <Inbox className="mx-auto size-10 text-muted-foreground/50" />
-              <p className="mt-4 text-sm text-muted-foreground">
-                No {tab} notifications.
-              </p>
-            </CardContent>
-          </Card>
+        {!isLoading && !isError && visible.length === 0 && (
+          <div className="rounded-xl border border-border bg-card px-5 py-12 text-center text-sm text-muted-foreground">
+            No {tab} notifications.
+          </div>
         )}
 
-        {!isLoading &&
-          !isError &&
-          filtered.map((n) => (
-            <NotificationItem
-              key={n._id}
-              notification={n}
-              onClick={() => handleItemClick(n)}
-            />
-          ))}
+        {!isLoading && !isError && (["Today", "Earlier"] as const).map((group) => {
+          const grouped = visible.filter((notification) => {
+            const date = new Date(notification.created_at);
+            return group === "Today" && !Number.isNaN(date.getTime()) && isToday(date) || group === "Earlier" && (Number.isNaN(date.getTime()) || !isToday(date));
+          });
+          if (!grouped.length) return null;
+          return (
+            <section key={group} aria-labelledby={group.toLowerCase()} className="mb-6">
+              <h2 id={group.toLowerCase()} className="px-2 py-2 font-display text-2xl font-bold">
+                {group}
+              </h2>
+              <div className="space-y-2">
+                {grouped.map((notification) => (
+                  <NotificationRow
+                    key={notification._id}
+                    notification={notification}
+                    onClick={() => handleItemClick(notification)}
+                  />
+                ))}
+              </div>
+            </section>
+          );
+        })}
 
         {isFetchingNextPage && <NotificationSkeleton />}
-      </div>
+      </main>
 
       {hasNextPage && (
-        <div className="flex justify-center">
-          <Button
-            variant="outline"
-            onClick={() => fetchNextPage()}
-            disabled={isFetchingNextPage}
-          >
-            {isFetchingNextPage ? (
-              <>
-                <Loader2 className="size-4 animate-spin" />
-                Loading...
-              </>
-            ) : (
-              "Load more"
-            )}
+        <div className="relative mt-5 flex justify-center">
+          <Button variant="outline" onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
+            {isFetchingNextPage ? <><Loader2 className="size-4 animate-spin" /> Loading...</> : "Load more"}
           </Button>
         </div>
       )}
-
-      {/* Push promo (mobile) */}
-      <Card className="lg:hidden">
-        <CardContent className="flex flex-wrap items-center gap-4 py-5">
-          <div className="flex size-14 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <Zap className="size-6" />
-          </div>
-          <div className="min-w-[180px] flex-1">
-            <p className="font-bold">Never miss important updates</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Enable push notifications and stay updated in real-time.
-            </p>
-          </div>
-          <Button onClick={handleEnablePush} className="shrink-0">
-            Enable Now
-          </Button>
-        </CardContent>
-      </Card>
     </div>
   );
 }
