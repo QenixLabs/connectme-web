@@ -15,6 +15,7 @@ import {
   Layers,
   Flag,
   ClipboardList,
+  Send,
 } from "lucide-react";
 
 export interface NavItem {
@@ -36,6 +37,7 @@ export const recruiterNavItems: NavItem[] = [
   { label: "Campaigns", href: "/recruiter/campaigns", icon: FolderKanban },
   { label: "Find Talent", href: "/recruiter/find-talent", icon: Search },
   { label: "Saved Talent", href: "/recruiter/saved-talent", icon: Bookmark },
+  { label: "Invites", href: "/recruiter/invites", icon: Send },
   { label: "Messages", href: "/recruiter/messages", icon: MessageSquare },
   { label: "Notifications", href: "/recruiter/notifications", icon: Bell },
 ];
