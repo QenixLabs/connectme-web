@@ -7,6 +7,8 @@ export const queryKeys = {
       ['campaigns', 'applications', campaignId, filters] as const,
     invites: (campaignId: string) =>
       ['campaigns', 'invites', campaignId] as const,
+    recruiterInvites: (params?: Record<string, unknown>) =>
+      ['campaigns', 'recruiter-invites', params] as const,
     analytics: (campaignId: string, range?: { from?: string; to?: string }) =>
       ['campaigns', 'analytics', campaignId, range] as const,
     demographics: (campaignId: string) =>

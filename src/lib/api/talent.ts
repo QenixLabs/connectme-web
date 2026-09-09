@@ -108,6 +108,12 @@ export interface TalentProfile {
 export type TalentProfilePreview = Pick<TalentProfile, "user_id" | "username"> &
   Partial<Omit<TalentProfile, "user_id" | "username">>;
 
+export type SavedTalentItem = Pick<TalentProfile, "user_id" | "username"> &
+  Partial<Omit<TalentProfile, "user_id" | "username">> & {
+    is_verified?: boolean;
+    saved_at?: string;
+  };
+
 export interface PrivateTalentProfileResponse {
   private: true;
   hasConnection?: boolean;
@@ -584,6 +590,11 @@ export const talentApi = {
   saveTalent: async (username: string) => {
     const response = await apiClient.post(`/talent/save/${username}`);
     return response.data as { saved: boolean };
+  },
+
+  getSavedTalents: async () => {
+    const response = await apiClient.get("/talent/saved");
+    return response.data as SavedTalentItem[];
   },
 
   unsaveTalent: async (username: string) => {

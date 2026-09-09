@@ -7,6 +7,7 @@ import {
   Briefcase,
   MessageSquare,
   Bell,
+  Bookmark,
   FolderKanban,
   Search,
   Users,
@@ -34,6 +35,7 @@ export const recruiterNavItems: NavItem[] = [
   { label: "Dashboard", href: "/recruiter/dashboard", icon: LayoutDashboard },
   { label: "Campaigns", href: "/recruiter/campaigns", icon: FolderKanban },
   { label: "Find Talent", href: "/recruiter/find-talent", icon: Search },
+  { label: "Saved Talent", href: "/recruiter/saved-talent", icon: Bookmark },
   { label: "Messages", href: "/recruiter/messages", icon: MessageSquare },
   { label: "Notifications", href: "/recruiter/notifications", icon: Bell },
 ];
