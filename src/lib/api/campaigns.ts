@@ -304,6 +304,37 @@ export interface CampaignInvite {
   created_at: string;
 }
 
+export interface RecruiterInvite {
+  _id: string;
+  campaign_id: string;
+  talent_id: string;
+  status: "pending" | "accepted" | "declined";
+  message?: string;
+  created_at: string;
+  talent: {
+    full_legal_name?: string;
+    username?: string;
+    professions: string[];
+    specialties: string[];
+    location?: { city?: string; state?: string };
+    profile_photo?: string;
+    is_verified: boolean;
+  };
+  campaign: {
+    _id: string;
+    name: string;
+    role_type?: string;
+    location?: { city?: string; state?: string };
+    cover_image_url?: string;
+    status: string;
+  } | null;
+}
+
+export interface QueryRecruiterInvitesParams {
+  status?: string;
+  campaign_id?: string;
+}
+
 /* -------------------------------------------------------------------------- */
 /*                            CAMPAIGN TEAM                                   */
 /* -------------------------------------------------------------------------- */
@@ -567,6 +598,31 @@ export const campaignsApi = {
   getCampaignInvites: async (campaignId: string) => {
     const response = await apiClient.get(`/campaigns/${campaignId}/invites`);
     return response.data as CampaignInvite[];
+  },
+
+  inviteTalent: async (
+    campaignId: string,
+    talentId: string,
+    message?: string,
+  ) => {
+    const response = await apiClient.post(`/campaigns/${campaignId}/invite`, {
+      talent_id: talentId,
+      ...(message ? { message } : {}),
+    });
+    return response.data as CampaignInvite;
+  },
+
+  getRecruiterInvites: async (params: QueryRecruiterInvitesParams = {}) => {
+    const response = await apiClient.get("/campaigns/invites", { params });
+    return response.data as RecruiterInvite[];
+  },
+
+  cancelCampaignInvite: async (inviteId: string) => {
+    await apiClient.delete(`/campaigns/invites/${inviteId}`);
+  },
+
+  sendCampaignInviteReminder: async (inviteId: string) => {
+    await apiClient.post(`/campaigns/invites/${inviteId}/reminder`);
   },
 
   /* ---- Campaign Team (Recruiter) ---- */

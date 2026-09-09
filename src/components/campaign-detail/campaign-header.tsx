@@ -177,6 +177,16 @@ export function CampaignHeader({ campaign }: { campaign: Campaign }) {
         </DropdownMenu>
       </div>
 
+      {campaign.cover_image_url && (
+        <div className="relative -mx-5 -mt-5 mb-5 aspect-[3/1] overflow-hidden rounded-t-xl lg:-mx-6 lg:-mt-6 lg:mb-6">
+          <img
+            src={campaign.cover_image_url}
+            alt={campaign.name}
+            className="h-full w-full object-cover"
+          />
+        </div>
+      )}
+
       <h1 className="mt-4 font-display text-2xl font-bold tracking-tight lg:text-[27px]">
         {campaign.name}
       </h1>

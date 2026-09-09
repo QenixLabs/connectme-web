@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, type CSSProperties } from "react";
 import {
   Area,
   AreaChart,
@@ -16,12 +16,15 @@ import {
 import { TrendingUp } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
 import type { CampaignAnalytics, CampaignDemographics } from "@/lib/api/campaigns";
+
+const TOOLTIP_STYLE: CSSProperties = {
+  background: "var(--popover)",
+  border: "1px solid var(--border)",
+  borderRadius: 10,
+  color: "var(--popover-foreground)",
+  fontSize: 12,
+};
 
 const STATUS_COLORS = {
   pending: "oklch(0.78 0.16 75)",
@@ -111,13 +114,10 @@ export function ApplicationsChart({
               stroke="var(--border)"
               tickLine={false}
             />
-            <ChartTooltip
-              content={
-                <ChartTooltipContent
-                  labelFormatter={(l) => `${l}`}
-                  formatter={(v) => [v as number, "Applications"]}
-                />
-              }
+            <Tooltip
+              contentStyle={TOOLTIP_STYLE}
+              labelFormatter={(l) => `${l}`}
+              formatter={(v) => [v as number, "Applications"]}
             />
             <Area
               type="linear"

@@ -84,6 +84,8 @@ export type {
   CampaignAnalyticsParams,
   CampaignDemographics,
   CampaignInvite,
+  RecruiterInvite,
+  QueryRecruiterInvitesParams,
   CampaignTeamMember,
   CampaignTeamResponse,
   CampaignSubmission,

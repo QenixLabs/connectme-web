@@ -7,6 +7,7 @@ import type {
   CampaignAnalyticsParams,
   QuerySubmissionsParams,
   RecruiterCampaignParams,
+  QueryRecruiterInvitesParams,
 } from "@/lib/api/campaigns";
 
 export const campaignKeys = {
@@ -32,6 +33,8 @@ export const campaignKeys = {
     [...campaignKeys.all, "demographics", campaignId] as const,
   invites: (campaignId: string) =>
     [...campaignKeys.all, "invites", campaignId] as const,
+  recruiterInvites: (params?: QueryRecruiterInvitesParams) =>
+    [...campaignKeys.all, "recruiter-invites", params] as const,
   team: (campaignId: string) =>
     [...campaignKeys.all, "team", campaignId] as const,
   submissions: (campaignId: string, params?: QuerySubmissionsParams) =>
@@ -299,6 +302,58 @@ export function useCampaignInvites(campaignId: string) {
     queryKey: campaignKeys.invites(campaignId),
     queryFn: () => campaignsApi.getCampaignInvites(campaignId),
     enabled: !!campaignId,
+  });
+}
+
+export function useRecruiterInvites(
+  params: QueryRecruiterInvitesParams = {},
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: campaignKeys.recruiterInvites(params),
+    queryFn: () => campaignsApi.getRecruiterInvites(params),
+    enabled,
+  });
+}
+
+export function useCancelCampaignInvite() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (inviteId: string) => campaignsApi.cancelCampaignInvite(inviteId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [...campaignKeys.all, "recruiter-invites"],
+      });
+      toast.success("Invitation cancelled");
+    },
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { message?: string } } };
+      const message =
+        err.response?.data?.message || "Failed to cancel invitation. Please try again.";
+      toast.error(message);
+    },
+  });
+}
+
+export function useSendCampaignInviteReminder() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (inviteId: string) =>
+      campaignsApi.sendCampaignInviteReminder(inviteId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [...campaignKeys.all, "recruiter-invites"],
+      });
+      toast.success("Reminder sent");
+    },
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { message?: string } } };
+      const message =
+        err.response?.data?.message || "Failed to send reminder. Please try again.";
+      toast.error(message);
+    },
   });
 }
 

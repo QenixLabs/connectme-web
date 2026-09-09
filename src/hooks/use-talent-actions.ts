@@ -83,6 +83,7 @@ export function useSaveTalent(username: string) {
       queryClient.invalidateQueries({
         queryKey: savedTalentKeys.status(username),
       });
+      queryClient.invalidateQueries({ queryKey: ["saved-talents"] });
     },
   });
 
@@ -119,6 +120,7 @@ export function useSaveTalent(username: string) {
       queryClient.invalidateQueries({
         queryKey: savedTalentKeys.status(username),
       });
+      queryClient.invalidateQueries({ queryKey: ["saved-talents"] });
     },
   });
 
