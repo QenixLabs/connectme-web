@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import Cropper from "react-easy-crop";
 import { Loader2 } from "lucide-react";
 
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { getCroppedImg } from "@/lib/crop-image";
 
@@ -15,9 +15,11 @@ interface CropImageModalProps {
   onCropped: (file: File) => void;
   aspect?: number;
   title?: string;
+  description?: string;
+  preview?: boolean;
 }
 
-export function CropImageModal({ open, onOpenChange, imageSrc, onCropped, aspect = 1, title = "Crop your photo" }: CropImageModalProps) {
+export function CropImageModal({ open, onOpenChange, imageSrc, onCropped, aspect = 1, title = "Crop your photo", description, preview = false }: CropImageModalProps) {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<{
@@ -27,6 +29,40 @@ export function CropImageModal({ open, onOpenChange, imageSrc, onCropped, aspect
     height: number;
   } | null>(null);
   const [isCropping, setIsCropping] = useState(false);
+  const [imageReady, setImageReady] = useState(false);
+  const imageRef = useRef<HTMLImageElement | null>(null);
+  const previewCanvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const img = new Image();
+    img.src = imageSrc;
+    img.onload = () => {
+      imageRef.current = img;
+      setImageReady(true);
+    };
+    return () => {
+      imageRef.current = null;
+      setImageReady(false);
+    };
+  }, [imageSrc]);
+
+  const drawPreview = useCallback(() => {
+    const canvas = previewCanvasRef.current;
+    const img = imageRef.current;
+    const area = croppedAreaPixels;
+    if (!canvas || !img || !area) return;
+    const dpr = window.devicePixelRatio || 1;
+    const displaySize = 64;
+    canvas.width = displaySize * dpr;
+    canvas.height = displaySize * dpr;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(img, area.x, area.y, area.width, area.height, 0, 0, canvas.width, canvas.height);
+  }, [croppedAreaPixels]);
+
+  useEffect(() => {
+    if (preview && imageReady) drawPreview();
+  }, [preview, imageReady, drawPreview]);
 
   const onCropComplete = useCallback(
     (_croppedArea: unknown, croppedAreaPixels: { x: number; y: number; width: number; height: number }) => {
@@ -54,6 +90,7 @@ export function CropImageModal({ open, onOpenChange, imageSrc, onCropped, aspect
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
+          {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
 
         <div className="relative h-72 w-full overflow-hidden rounded-lg bg-muted">
@@ -80,6 +117,18 @@ export function CropImageModal({ open, onOpenChange, imageSrc, onCropped, aspect
             className="w-full"
           />
         </div>
+
+        {preview && (
+          <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/40 p-3">
+            <canvas
+              ref={previewCanvasRef}
+              className="size-16 shrink-0 rounded-lg border border-border bg-muted"
+              aria-label="Final square preview"
+              role="img"
+            />
+            <p className="text-xs text-muted-foreground">This is how your square campaign cover will look.</p>
+          </div>
+        )}
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isCropping}>

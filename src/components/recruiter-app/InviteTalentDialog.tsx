@@ -27,12 +27,16 @@ export function InviteTalentDialog({
   talent,
   open,
   onOpenChange,
+  initialCampaignId,
 }: {
   talent: InviteTalentTarget | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialCampaignId?: string;
 }) {
-  const [campaignId, setCampaignId] = useState<string | null>(null);
+  const [campaignId, setCampaignId] = useState<string | null>(
+    initialCampaignId ?? null,
+  );
   const [message, setMessage] = useState("");
   const { data: campaignsData, isLoading } = useRecruiterCampaigns();
   const invite = useInviteTalentToCampaign();
@@ -46,7 +50,7 @@ export function InviteTalentDialog({
   );
 
   const reset = () => {
-    setCampaignId(null);
+    setCampaignId(initialCampaignId ?? null);
     setMessage("");
   };
 

@@ -89,6 +89,12 @@
   --color-gold-hover: var(--gold-hover);
   --color-gold-soft: var(--gold-soft);
   --color-success-soft: var(--success-soft);
+  --color-hero-foreground: var(--hero-foreground);
+  --color-hero-surface: var(--hero-surface);
+  --color-hero-line: var(--hero-line);
+  --color-hero-glass: var(--hero-glass);
+  --color-hero-glass-hover: var(--hero-glass-hover);
+  --color-primary-soft: var(--primary-soft);
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
   --color-brand-soft: var(--brand-soft);
@@ -249,6 +255,12 @@
   --gold-hover: #FBBF24;
   --gold-soft: rgba(245, 158, 11, 0.12);
   --success-soft: rgba(34, 197, 94, 0.12);
+  --hero-foreground: oklch(0.99 0 0);
+  --hero-surface: oklch(0.2 0.08 272);
+  --hero-line: oklch(1 0 0 / 25%);
+  --hero-glass: oklch(0.3 0.1 275 / 62%);
+  --hero-glass-hover: oklch(0.39 0.15 282 / 75%);
+  --primary-soft: oklch(0.94 0.045 288 / 16%);
   --text-secondary: #C9CED6;
   --text-muted: #8B95A5;
   --text-disabled: #5A6573;
@@ -573,6 +585,23 @@ html[data-theme="light"] {
   }
   50% {
     transform: translateY(-6px);
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .animate-rise {
+    animation: rise-in 420ms ease-out both;
   }
 }
 

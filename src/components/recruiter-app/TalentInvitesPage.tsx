@@ -230,12 +230,12 @@ export default function TalentInvitesPage() {
 
         {/* Filters */}
         <section
-          className="mt-4 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 sm:grid-cols-[220px_minmax(0,1fr)_44px_130px]"
+          className="mt-4 flex flex-wrap items-center gap-2"
           aria-label="Invitation filters"
         >
-          <div className="hidden sm:block">
+          <div className="w-full sm:w-[220px]">
             <Select value={campaignFilter} onValueChange={setCampaignFilter}>
-              <SelectTrigger className="h-11 rounded-xl border-border/70 bg-surface">
+              <SelectTrigger className="h-11 w-full rounded-xl border-border/70 bg-surface">
                 <SelectValue placeholder="All Campaigns" />
               </SelectTrigger>
               <SelectContent>
@@ -248,7 +248,7 @@ export default function TalentInvitesPage() {
               </SelectContent>
             </Select>
           </div>
-          <div className="relative">
+          <div className="relative min-w-[180px] flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={query}
@@ -257,7 +257,6 @@ export default function TalentInvitesPage() {
               className="h-11 rounded-xl border-border/70 bg-surface pl-9"
             />
           </div>
-          <span className="hidden sm:block" aria-hidden />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button

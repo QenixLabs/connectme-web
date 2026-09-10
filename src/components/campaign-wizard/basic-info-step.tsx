@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import {
   FormField,
@@ -24,6 +24,7 @@ import {
   INFLUENCER_SPECIALTIES,
 } from "@/lib/constants/profession-fields";
 import { TagInput } from "@/components/ui/tag-input";
+import { CropImageModal } from "@/components/ui/crop-image-modal";
 import { Upload, X, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -140,9 +141,40 @@ export function BasicInfoStep({
   const selectedRole = watch("role_type");
   const selectedState = watch("location.state");
   const [dragOver, setDragOver] = useState(false);
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+  const [cropModalOpen, setCropModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const cityOptions = selectedState ? getCitiesForState(selectedState) : [];
+
+  const openCropModal = (file: File) => {
+    const url = URL.createObjectURL(file);
+    setCropImageSrc(url);
+    setCropModalOpen(true);
+  };
+
+  const handleCropped = useCallback(
+    (file: File) => {
+      onMediaChange?.(file);
+      setCropModalOpen(false);
+      if (cropImageSrc) {
+        URL.revokeObjectURL(cropImageSrc);
+        setCropImageSrc(null);
+      }
+    },
+    [onMediaChange, cropImageSrc],
+  );
+
+  const handleCropModalChange = useCallback(
+    (open: boolean) => {
+      setCropModalOpen(open);
+      if (!open && cropImageSrc) {
+        URL.revokeObjectURL(cropImageSrc);
+        setCropImageSrc(null);
+      }
+    },
+    [cropImageSrc],
+  );
 
   const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
@@ -150,7 +182,7 @@ export function BasicInfoStep({
     setDragOver(false);
     const file = e.dataTransfer.files?.[0];
     if (file && file.type.startsWith("image/")) {
-      onMediaChange?.(file);
+      openCropModal(file);
     }
   };
 
@@ -449,7 +481,7 @@ export function BasicInfoStep({
 
       <div className="space-y-3">
         {existingCoverUrl && !mediaFile && (
-          <div className="relative aspect-video w-full max-w-[320px] overflow-hidden rounded-xl border border-border">
+          <div className="relative aspect-square w-full max-w-[320px] overflow-hidden rounded-xl border border-border">
             <img
               src={existingCoverUrl}
               alt=""
@@ -459,7 +491,7 @@ export function BasicInfoStep({
         )}
 
         {mediaFile ? (
-          <div className="relative aspect-video w-full max-w-[320px] overflow-hidden rounded-xl border border-border">
+          <div className="relative aspect-square w-full max-w-[320px] overflow-hidden rounded-xl border border-border">
             <img
               src={URL.createObjectURL(mediaFile)}
               alt="Preview"
@@ -481,7 +513,7 @@ export function BasicInfoStep({
               accept="image/*"
               onChange={(e) => {
                 const file = e.target.files?.[0];
-                if (file) onMediaChange?.(file);
+                if (file) openCropModal(file);
                 e.target.value = "";
               }}
               className="hidden"
@@ -494,7 +526,7 @@ export function BasicInfoStep({
               onDragEnter={handleDragEnter}
               onDragLeave={handleDragLeave}
               className={cn(
-                "flex flex-col items-center justify-center gap-3 w-full max-w-[320px] aspect-video rounded-xl border-2 border-dashed cursor-pointer transition-all duration-200",
+                "flex flex-col items-center justify-center gap-3 w-full max-w-[320px] aspect-square rounded-xl border-2 border-dashed cursor-pointer transition-all duration-200",
                 dragOver
                    ? "border-accent-teal bg-accent-teal-bg"
                    : "border-border bg-bg-surface-inset hover:border-accent-teal/40 hover:bg-card",
@@ -523,12 +555,25 @@ export function BasicInfoStep({
                 {dragOver ? "Drop image here" : "Upload cover image"}
               </span>
                <span className="text-xs text-muted-foreground/60">
-                PNG, JPG or WebP
+                PNG, JPG or WebP &middot; crops to 1:1
               </span>
             </label>
           </>
         )}
       </div>
+
+      {cropImageSrc && (
+        <CropImageModal
+          open={cropModalOpen}
+          onOpenChange={handleCropModalChange}
+          imageSrc={cropImageSrc}
+          onCropped={handleCropped}
+          aspect={1}
+          title="Crop campaign cover"
+          description="Campaign covers use a 1:1 square format. Adjust your image to choose what will be visible."
+          preview
+        />
+      )}
     </div>
   );
 }
