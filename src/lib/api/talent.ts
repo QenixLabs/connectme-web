@@ -114,6 +114,36 @@ export type SavedTalentItem = Pick<TalentProfile, "user_id" | "username"> &
     saved_at?: string;
   };
 
+export interface ShortlistTalentItem {
+  user_id: string;
+  username: string;
+  full_legal_name?: string;
+  headline?: string;
+  profile_photo?: string;
+  location?: { country?: string; state?: string; city?: string };
+  professions?: string[];
+  specialties?: string[];
+  availability?: string;
+  is_verified: boolean;
+}
+
+export interface ShortlistCampaignSummary {
+  _id: string;
+  name: string;
+  role_type?: string;
+  industry?: string;
+  location?: { city?: string; state?: string };
+  status: string;
+}
+
+export interface RecruiterShortlist {
+  _id: string;
+  name: string;
+  campaign: ShortlistCampaignSummary | null;
+  talent_count: number;
+  talents: ShortlistTalentItem[];
+}
+
 export interface PrivateTalentProfileResponse {
   private: true;
   hasConnection?: boolean;
@@ -628,6 +658,11 @@ export const talentApi = {
       params: { username, campaign_id: campaignId },
     });
     return response.data as { is_shortlisted: boolean };
+  },
+
+  getRecruiterShortlists: async () => {
+    const response = await apiClient.get('/talent/shortlists');
+    return response.data as RecruiterShortlist[];
   },
 
   likePortfolioItem: async (itemId: string) => {

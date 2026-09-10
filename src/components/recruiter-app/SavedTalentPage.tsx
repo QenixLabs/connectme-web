@@ -1,17 +1,20 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import {
   BadgeCheck,
   Bookmark,
-  FolderKanban,
+  Check,
   MapPin,
+  Plus,
   Search,
   Send,
   Share2,
   User,
+  UsersRound,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -25,13 +28,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
 import {
-  useInviteTalentToCampaign,
   useRemoveSavedTalent,
   useSavedTalents,
 } from "@/hooks/use-saved-talents";
-import { useRecruiterCampaigns } from "@/hooks/use-campaigns";
+import { InviteTalentDialog } from "@/components/recruiter-app/InviteTalentDialog";
 import type { SavedTalentItem } from "@/lib/api/talent";
 
 function timeAgo(iso?: string): string {
@@ -54,150 +55,33 @@ function formatLocation(loc?: SavedTalentItem["location"]): string {
   return parts.length > 0 ? parts.join(", ") : "Location not set";
 }
 
-function InviteDialog({
-  talent,
-  open,
-  onOpenChange,
-}: {
-  talent: SavedTalentItem | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}) {
-  const [campaignId, setCampaignId] = useState<string | null>(null);
-  const [message, setMessage] = useState("");
-  const { data: campaignsData, isLoading } = useRecruiterCampaigns();
-  const invite = useInviteTalentToCampaign();
-
-  const campaigns = useMemo(
-    () =>
-      (campaignsData?.pages.flatMap((page) => page.data) ?? []).filter(
-        (campaign) => campaign.status === "active",
-      ),
-    [campaignsData],
-  );
-
-  const send = () => {
-    if (!talent || !campaignId) return;
-    invite.mutate(
-      { campaignId, talentId: talent.user_id, message: message.trim() || undefined },
-      {
-        onSuccess: () => {
-          setCampaignId(null);
-          setMessage("");
-          onOpenChange(false);
-        },
-      },
-    );
-  };
-
-  return (
-    <Dialog
-      open={open}
-      onOpenChange={(next) => {
-        if (!next) {
-          setCampaignId(null);
-          setMessage("");
-        }
-        onOpenChange(next);
-      }}
-    >
-      <DialogContent className="max-h-[85vh] overflow-y-auto border-border bg-card sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>
-            Invite {talent?.full_legal_name || talent?.username || "talent"} to a campaign
-          </DialogTitle>
-          <DialogDescription>
-            Pick one of your active campaigns to send an invite. They will see
-            it in their opportunities.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="mt-2 space-y-2">
-          {isLoading ? (
-            <>
-              <Skeleton className="h-16 rounded-xl" />
-              <Skeleton className="h-16 rounded-xl" />
-            </>
-          ) : campaigns.length === 0 ? (
-            <div className="rounded-xl border border-border/70 bg-surface p-4 text-sm text-muted-foreground">
-              No active campaigns yet.{" "}
-              <Link
-                href="/recruiter/campaigns/new"
-                className="font-semibold text-primary hover:underline"
-              >
-                Create one
-              </Link>{" "}
-              to invite talent.
-            </div>
-          ) : (
-            campaigns.map((campaign) => {
-              const selected = campaignId === campaign._id;
-              return (
-                <button
-                  key={campaign._id}
-                  type="button"
-                  onClick={() => setCampaignId(campaign._id)}
-                  className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left transition-colors ${
-                    selected
-                      ? "border-primary bg-primary/10"
-                      : "border-border/70 bg-surface hover:border-primary/40"
-                  }`}
-                >
-                  <span
-                    className={`grid size-10 shrink-0 place-items-center rounded-full ${
-                      selected ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary"
-                    }`}
-                  >
-                    <FolderKanban className="size-5" />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-bold text-foreground">
-                      {campaign.name}
-                    </span>
-                    <span className="block truncate text-xs text-muted-foreground">
-                      {[campaign.role_type, campaign.location?.city]
-                        .filter(Boolean)
-                        .join(" • ")}
-                      {campaign.applications_count > 0 &&
-                        ` • ${campaign.applications_count} applicants`}
-                    </span>
-                  </span>
-                </button>
-              );
-            })
-          )}
-        </div>
-
-        <Textarea
-          value={message}
-          onChange={(event) => setMessage(event.target.value)}
-          placeholder="Add a personal message (optional)..."
-          maxLength={500}
-          className="mt-4 resize-none rounded-xl border-border/70 bg-surface"
-          rows={3}
-        />
-
-        <DialogFooter className="mt-4">
-          <Button
-            type="button"
-            onClick={send}
-            disabled={!campaignId || invite.isPending}
-            className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90"
-          >
-            <Send className="size-4" />
-            {invite.isPending ? "Sending..." : "Send Invite"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 export default function SavedTalentPage() {
   const { data: talents, isLoading } = useSavedTalents();
   const removeSaved = useRemoveSavedTalent();
+  const router = useRouter();
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [inviteTarget, setInviteTarget] = useState<SavedTalentItem | null>(null);
   const [confirmRemove, setConfirmRemove] = useState<SavedTalentItem | null>(null);
+
+  const toggleSelected = (userId: string) =>
+    setSelected((current) => {
+      const next = new Set(current);
+      if (next.has(userId)) next.delete(userId);
+      else next.add(userId);
+      return next;
+    });
+
+  const compareSelected = () => {
+    const usernames = (talents ?? [])
+      .filter((t) => selected.has(t.user_id))
+      .map((t) => t.username);
+    if (usernames.length === 0) return;
+    const params = new URLSearchParams({
+      ids: usernames.join(","),
+      from: "saved",
+    });
+    router.push(`/recruiter/compare?${params.toString()}`);
+  };
 
   const share = (talent: SavedTalentItem) => {
     const url = `${window.location.origin}/talent/${talent.username}`;
@@ -287,8 +171,22 @@ export default function SavedTalentPage() {
               return (
                 <article
                   key={talent.user_id}
-                  className="grid grid-cols-[64px_minmax(0,1fr)] gap-4 rounded-2xl border border-border/70 bg-surface p-3 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.25)] sm:grid-cols-[96px_minmax(0,1fr)_220px] sm:gap-5 sm:p-4"
+                  className={`relative grid grid-cols-[64px_minmax(0,1fr)] gap-4 rounded-2xl border bg-surface p-3 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.25)] sm:grid-cols-[96px_minmax(0,1fr)_220px] sm:gap-5 sm:p-4 ${
+                    selected.has(talent.user_id)
+                      ? "border-primary/50 ring-1 ring-primary/10"
+                      : "border-border/70"
+                  }`}
                 >
+                  <Button
+                    type="button"
+                    variant={selected.has(talent.user_id) ? "default" : "outline"}
+                    size="icon"
+                    aria-label={`${selected.has(talent.user_id) ? "Deselect" : "Select"} ${name}`}
+                    onClick={() => toggleSelected(talent.user_id)}
+                    className="absolute right-3 top-3 z-10 size-8 rounded-full"
+                  >
+                    {selected.has(talent.user_id) ? <Check /> : <Plus />}
+                  </Button>
                   <div className="relative size-16 overflow-hidden rounded-xl bg-muted sm:size-24">
                     {talent.profile_photo ? (
                       <Image
@@ -389,7 +287,7 @@ export default function SavedTalentPage() {
         )}
       </div>
 
-      <InviteDialog
+      <InviteTalentDialog
         talent={inviteTarget}
         open={inviteTarget !== null}
         onOpenChange={(open) => {
@@ -436,6 +334,28 @@ export default function SavedTalentPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {selected.size > 0 && (
+        <div className="fixed inset-x-0 bottom-16 z-30 px-4 md:bottom-6">
+          <div className="mx-auto flex max-w-[460px] gap-2 rounded-2xl border bg-card p-2 shadow-card-lift">
+            <Button
+              className="h-11 min-w-0 flex-1 rounded-xl"
+              onClick={compareSelected}
+            >
+              <UsersRound /> Compare {selected.size}
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="size-11 rounded-xl"
+              aria-label="Clear selection"
+              onClick={() => setSelected(new Set())}
+            >
+              <X />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
