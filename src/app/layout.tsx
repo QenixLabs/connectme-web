@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Rubik } from "next/font/google";
+import { Caveat, Rubik } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthStoreProvider } from "@/providers/auth-store-provider";
 import { QueryProvider } from "@/providers/query-provider";
@@ -13,6 +13,12 @@ const rubik = Rubik({
   variable: "--font-rubik",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
+});
+
+const caveat = Caveat({
+  variable: "--font-script",
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
 });
 
 export const metadata: Metadata = {
@@ -38,7 +44,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${rubik.variable}`}
+      className={`${rubik.variable} ${caveat.variable}`}
       data-theme="light"
       suppressHydrationWarning
     >

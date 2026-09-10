@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, AnimatePresence } from "motion/react";
-import { ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowRight, ArrowLeft, BriefcaseBusiness, Loader2 } from "lucide-react";
 import { authApi } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -27,8 +27,15 @@ const stepVariants = {
   exit: (dir: number) => ({ x: dir > 0 ? -30 : 30, opacity: 0 }),
 };
 
-export function SignupWizard({ initialRole = "talent" }: { initialRole?: "talent" | "recruiter" }) {
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+export function SignupWizard({
+  initialRole = "talent",
+  roleLocked = false,
+}: {
+  initialRole?: "talent" | "recruiter";
+  roleLocked?: boolean;
+}) {
+  const minStep = roleLocked ? 2 : 1;
+  const [step, setStep] = useState<1 | 2 | 3>(minStep);
   const [showOtp, setShowOtp] = useState(false);
   const [direction, setDirection] = useState(1);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -126,8 +133,8 @@ export function SignupWizard({ initialRole = "talent" }: { initialRole?: "talent
 
   const handleBack = useCallback(() => {
     setApiError(null);
-    goTo(step - 1);
-  }, [step, goTo]);
+    if (step > minStep) goTo(step - 1);
+  }, [step, goTo, minStep]);
 
   const handleOtpBack = useCallback(() => {
     setShowOtp(false);
@@ -166,10 +173,26 @@ export function SignupWizard({ initialRole = "talent" }: { initialRole?: "talent
         }}
       >
         <StepIndicator
-          steps={STEPS}
-          current={step - 1}
+          steps={roleLocked ? STEPS.slice(1) : STEPS}
+          current={roleLocked ? step - 2 : step - 1}
           className="justify-center"
         />
+
+        {roleLocked && (
+          <div className="flex items-center justify-between rounded-xl border border-primary/15 bg-primary/[0.06] px-3 py-2.5">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span className="grid size-7 place-items-center rounded-lg bg-primary/15 text-primary">
+                <BriefcaseBusiness className="size-3.5" />
+              </span>
+              <span>
+                Joining as <strong className="font-semibold text-foreground capitalize">{role}</strong>
+              </span>
+            </div>
+            <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+              Step {step - minStep + 1} of {STEPS.length - 1}
+            </span>
+          </div>
+        )}
 
         {apiError && (
           <Alert variant="destructive">
@@ -196,7 +219,7 @@ export function SignupWizard({ initialRole = "talent" }: { initialRole?: "talent
         </AnimatePresence>
 
         <div className="flex gap-3">
-          {step > 1 && (
+          {step > minStep && (
             <Button
               type="button"
               variant="outline"
@@ -221,7 +244,11 @@ export function SignupWizard({ initialRole = "talent" }: { initialRole?: "talent
               </>
             ) : (
               <>
-                Continue
+                {step === 3
+                  ? role === "recruiter"
+                    ? "Create recruiter account"
+                    : "Create account"
+                  : "Continue"}
                 <ArrowRight className="h-4 w-4" strokeWidth={1.5} />
               </>
             )}

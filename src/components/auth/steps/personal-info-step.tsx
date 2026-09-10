@@ -30,15 +30,18 @@ export function PersonalInfoStep() {
   const [showPassword, setShowPassword] = useState(false);
 
   const password = form.watch("password");
+  const role = form.watch("role");
 
   return (
     <div className="space-y-4">
       <div className="text-center">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          Create your account
+          {role === "recruiter" ? "Create your recruiter account" : "Create your account"}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Fill in your personal details
+          {role === "recruiter"
+            ? "Set up your hiring workspace in a few quick steps"
+            : "Fill in your personal details"}
         </p>
       </div>
 

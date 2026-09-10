@@ -176,7 +176,7 @@ function ProfilePhotoUpload({
         onChange={handleSelect}
       />
       <p className="text-xs text-muted-foreground">
-        {preview ? "Photo selected" : "Add profile photo (optional)"}
+        {preview ? "Photo selected" : "Add profile photo (optional) — cropped to 1:1"}
       </p>
       {error && <p className="text-xs text-destructive">{error}</p>}
 
@@ -314,19 +314,21 @@ function TalentProfessionalForm({ onPhotoChange }: { onPhotoChange?: (file: File
   );
 }
 
-function RecruiterOrgForm() {
+function RecruiterOrgForm({ onPhotoChange }: { onPhotoChange?: (file: File | null) => void }) {
   const form = useFormContext<SignupFormValues>();
 
   return (
     <div className="space-y-4">
       <div className="text-center">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          Tell us about your company
+          Set up your hiring workspace
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          This is how others will see you on RootIn
+          Help creative professionals understand who they could work with
         </p>
       </div>
+
+      <ProfilePhotoUpload onChange={onPhotoChange ?? (() => {})} />
 
       <FormField
         control={form.control}
@@ -423,5 +425,5 @@ export function ProfessionalProfileStep({ onPhotoChange }: ProfessionalProfileSt
   const form = useFormContext<SignupFormValues>();
   const role = form.watch("role");
 
-  return role === "talent" ? <TalentProfessionalForm onPhotoChange={onPhotoChange} /> : <RecruiterOrgForm />;
+  return role === "talent" ? <TalentProfessionalForm onPhotoChange={onPhotoChange} /> : <RecruiterOrgForm onPhotoChange={onPhotoChange} />;
 }

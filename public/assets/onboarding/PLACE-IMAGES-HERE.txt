@@ -1,0 +1,8 @@
+Place the three onboarding art images in this directory:
+
+- rootin-talent-collage.png     (welcome screen collage)
+- rootin-recruiter-banner.png   (recruiter role card art)
+- rootin-talent-banner.png      (talent role card art)
+
+They are referenced by src/components/onboarding/onboarding-flow.tsx.
+Download them from the design-pixel-perfect Lovable asset URLs, or export from the design tool.

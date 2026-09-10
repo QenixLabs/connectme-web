@@ -10,9 +10,10 @@ interface AuthLayoutProps {
   children: React.ReactNode;
   subtitle?: string;
   showGlow?: boolean;
+  wide?: boolean;
 }
 
-export function AuthLayout({ children, subtitle, showGlow }: AuthLayoutProps) {
+export function AuthLayout({ children, subtitle, showGlow, wide = false }: AuthLayoutProps) {
   return (
     <div className="relative flex min-h-dvh justify-center bg-background px-4 py-4">
       {showGlow && (
@@ -29,7 +30,7 @@ export function AuthLayout({ children, subtitle, showGlow }: AuthLayoutProps) {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: [0.25, 0.4, 0.25, 1] }}
-        className={cn("my-auto w-full max-w-md", showGlow && "relative z-10")}
+        className={cn("my-auto w-full", wide ? "max-w-xl" : "max-w-md", showGlow && "relative z-10")}
       >
         <div className="text-center">
           <Link href="/" className="group inline-flex items-center">
