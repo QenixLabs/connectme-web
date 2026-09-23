@@ -162,9 +162,10 @@ function mapCampaignToDefaults(campaign: Campaign): CampaignWizardInput {
 
 interface CampaignWizardProps {
   campaignId?: string;
+  showHero?: boolean;
 }
 
-export function CampaignWizard({ campaignId }: CampaignWizardProps) {
+export function CampaignWizard({ campaignId, showHero = false }: CampaignWizardProps) {
   const router = useRouter();
   const isEdit = !!campaignId;
   const [step, setStep] = useState(1);
@@ -218,6 +219,7 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
     if (existingCampaign) {
       const timer = setTimeout(() => {
         form.reset(mapCampaignToDefaults(existingCampaign));
+        void form.trigger();
       }, 0);
       return () => clearTimeout(timer);
     }
@@ -382,7 +384,7 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
           );
           setPendingTaskDoc(null);
         } catch {
-          // silently fail — task doc upload is optional
+          toast.error("Task attachment could not be uploaded. You can retry from the Auditions tab.");
         }
       }
 
@@ -434,11 +436,43 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
         onSubmit={form.handleSubmit(onSubmit)}
         className="mx-auto max-w-[680px] overflow-hidden rounded-2xl border border-border bg-card shadow-[var(--surface-shadow)]"
       >
-        <div className="px-6 sm:px-8 pt-6 sm:pt-8">
-          <h2 className="text-xl font-semibold tracking-tight text-foreground">
+        <div
+          className={cn(
+            "relative overflow-hidden px-6 pr-[90px] sm:px-8 sm:pr-[90px]",
+            showHero
+              ? "isolate min-h-44 bg-cover bg-center py-6 sm:py-8"
+              : "pt-6 sm:pt-8",
+          )}
+          style={
+            showHero
+              ? { backgroundImage: "url('/campaign-creation-hero.png')" }
+              : undefined
+          }
+        >
+          {showHero && (
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 z-0 bg-gradient-to-r from-slate-950/85 via-slate-950/55 to-slate-950/20"
+            />
+          )}
+          <h2
+            className={cn(
+              "text-xl font-semibold tracking-tight",
+              showHero
+                ? "relative z-10 text-white"
+                : "text-foreground",
+            )}
+          >
             {isEdit ? "Edit campaign" : "New campaign"}
           </h2>
-          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+          <p
+            className={cn(
+              "mt-1 text-sm leading-relaxed",
+              showHero
+                ? "relative z-10 text-white/80"
+                : "text-muted-foreground",
+            )}
+          >
             {isEdit
               ? "Update your casting call details"
               : "Create a casting call and start receiving applications"}
@@ -542,7 +576,10 @@ export function CampaignWizard({ campaignId }: CampaignWizardProps) {
               step === 3 ? "block opacity-100" : "hidden opacity-0",
             )}
           >
-            <PublishStep />
+            <PublishStep
+              mediaFile={pendingMediaFile}
+              existingCoverUrl={existingCampaign?.cover_image_url ?? null}
+            />
           </div>
 
           {serverError && (

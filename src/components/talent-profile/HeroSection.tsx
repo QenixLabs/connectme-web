@@ -1,7 +1,5 @@
 "use client";
 
-/* eslint-disable @next/next/no-img-element */
-
 import Link from "next/link";
 import { ArrowLeft, BadgeCheck, MapPin, Pencil, Plane } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -26,20 +24,12 @@ export function HeroSection({
     profile.full_legal_name?.trim() || profile.username?.trim() || "Talent";
   const roles = profile.professions || [];
   const location = formatLocation(profile.location);
-  const heroImage =
-    profile.hero_background || profile.profile_photo || "/heroimage.jfif";
   const availability = profile.availability ?? "available";
 
   return (
     <header className="relative">
       {/* Cover */}
-      <div className="relative h-56 w-full overflow-hidden">
-        <img
-          src={heroImage}
-          alt={displayName}
-          className="absolute inset-0 h-full w-full object-cover object-top"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-foreground/40 to-transparent" />
+      <div className="relative h-56 w-full overflow-hidden bg-background">
         {!isOwner && (
           <div className="absolute inset-x-0 top-4 flex items-center px-4">
             <Link

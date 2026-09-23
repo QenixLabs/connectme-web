@@ -68,7 +68,7 @@ interface AddPortfolioModalProps {
 }
 
 const typeOptions: {
-  type: Exclude<PortfolioItemType, "instagram">;
+  type: "image" | "video" | "youtube";
   icon: React.ReactNode;
   label: string;
   description: string;
@@ -144,7 +144,7 @@ export function AddPortfolioModal({
     onClose();
   }, [reset, onClose]);
 
-  const selectType = (type: Exclude<PortfolioItemType, "instagram">) => {
+  const selectType = (type: "image" | "video" | "youtube") => {
     setSelectedType(type);
     form.setValue("type", type);
     setStep("form");

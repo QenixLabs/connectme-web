@@ -976,6 +976,105 @@
   line-height: 1.45;
 }
 
+.writeReviewButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 7px 9px;
+  border: 1px solid color-mix(in oklab, var(--primary) 45%, var(--border));
+  border-radius: 7px;
+  color: var(--primary);
+  background: var(--card);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.sectionTitle .writeReviewButton {
+  border: 1px solid color-mix(in oklab, var(--primary) 45%, var(--border));
+  color: var(--primary);
+  background: var(--card);
+  font-size: 9px;
+}
+
+.writeReviewButton:hover {
+  background: var(--primary-soft, var(--muted));
+}
+
+.reviewComposer {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 13px;
+  border: 1px solid color-mix(in oklab, var(--primary) 24%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in oklab, var(--primary-soft, var(--muted)) 45%, var(--card));
+}
+
+.reviewComposer label,
+.reviewComposerLabel {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--foreground);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.reviewComposer select,
+.reviewComposer textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  color: var(--foreground);
+  background: var(--card);
+  font: inherit;
+  font-size: 10px;
+}
+
+.reviewComposer select {
+  height: 32px;
+  padding: 0 8px;
+}
+
+.reviewComposer textarea {
+  min-height: 76px;
+  padding: 8px;
+  resize: vertical;
+  line-height: 1.4;
+}
+
+.ratingPicker {
+  display: flex;
+  gap: 3px;
+}
+
+.ratingPicker button {
+  padding: 2px;
+  border: 0;
+  color: var(--border);
+  background: transparent;
+}
+
+.ratingPicker button.ratingSelected {
+  color: var(--gold);
+}
+
+.submitReviewButton {
+  width: 100%;
+  height: 34px;
+  border: 1px solid var(--primary);
+  border-radius: 7px;
+  color: var(--primary-foreground);
+  background: var(--primary);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.submitReviewButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .ctaBanner {
   position: relative;
   min-height: 175px;
@@ -1206,4 +1305,1721 @@
   .achievementGrid div {
     min-height: 72px;
   }
+}
+
+/* Reputation tab */
+.reputationPage {
+  display: grid;
+  gap: 24px;
+}
+
+.reputationIntro {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.reputationIntro h2,
+.reputationSectionHeading h3 {
+  margin: 0;
+  color: var(--foreground);
+  font-size: 18px;
+  line-height: 1.15;
+}
+
+.reputationIntro > div > p:last-child,
+.reputationSectionHeading h3 + p {
+  max-width: 540px;
+  margin: 7px 0 0;
+  color: var(--muted-foreground);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.eyebrow,
+.cardKicker {
+  margin: 0 0 6px;
+  color: var(--primary);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.reputationTopGrid {
+  display: grid;
+  gap: 12px;
+}
+
+.ratingSummaryCard,
+.categoryRatings,
+.trustHighlight,
+.reviewCard,
+.badgeCard,
+.reputationCta {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--card);
+}
+
+.ratingSummaryCard {
+  display: flex;
+  min-height: 174px;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 18px;
+  background: color-mix(in oklab, var(--brand-soft) 35%, var(--card));
+}
+
+.overallRating {
+  display: block;
+  color: var(--foreground);
+  font-size: 38px;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.overallRating span {
+  margin-left: 4px;
+  color: var(--muted-foreground);
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.ratingStars {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--gold);
+}
+
+.ratingSummaryCard > div:first-child > .ratingStars {
+  margin-top: 9px;
+}
+
+.ratingMeta {
+  margin: 6px 0 0;
+  color: var(--muted-foreground);
+  font-size: 10px;
+}
+
+.ratingSummaryNote {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--success);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.ratingSummaryNotePending {
+  color: var(--muted-foreground);
+}
+
+.categoryRatings {
+  padding: 17px;
+}
+
+.reputationSectionHeading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.reputationSectionHeading .eyebrow {
+  margin-bottom: 5px;
+}
+
+.reputationSectionHeading h3 {
+  font-size: 15px;
+}
+
+.categoryList {
+  display: grid;
+  gap: 11px;
+}
+
+.categoryRatingRow {
+  display: grid;
+  grid-template-columns: minmax(110px, 1fr) auto;
+  gap: 4px 10px;
+  align-items: center;
+}
+
+.categoryRatingRow strong {
+  font-size: 11px;
+}
+
+.categoryScore {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted-foreground);
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.categoryScore .ratingStars {
+  color: color-mix(in oklab, var(--gold) 45%, var(--border));
+}
+
+.categoryRatingRow small {
+  grid-column: 1 / -1;
+  color: var(--muted-foreground);
+  font-size: 9px;
+}
+
+.trustHighlight {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 15px 17px;
+  border-color: color-mix(in oklab, var(--primary) 20%, var(--border));
+  background: color-mix(in oklab, var(--brand-soft) 45%, var(--card));
+}
+
+.trustHighlightMain,
+.trustHighlightSecondary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.trustHighlightMain {
+  min-width: 0;
+}
+
+.trustHighlight strong,
+.trustHighlight span {
+  display: block;
+}
+
+.trustHighlight strong {
+  font-size: 12px;
+}
+
+.trustHighlight p,
+.trustHighlightSecondary span {
+  margin: 4px 0 0;
+  color: var(--muted-foreground);
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.trustHighlightSecondary {
+  flex-shrink: 0;
+  color: var(--primary);
+}
+
+.trustHighlightSecondary > svg {
+  flex-shrink: 0;
+}
+
+.reputationIcon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 11px;
+  color: var(--primary);
+  background: var(--brand-soft);
+}
+
+.reputationStats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.reputationStat {
+  display: grid;
+  min-height: 86px;
+  align-content: center;
+  gap: 5px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+}
+
+.reputationStat:last-child {
+  grid-column: 1 / -1;
+}
+
+.reputationStat > span {
+  color: var(--primary);
+}
+
+.reputationStat strong {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.reputationStat small {
+  color: var(--muted-foreground);
+  font-size: 9px;
+}
+
+.reviewsSection {
+  min-width: 0;
+}
+
+.reviewCount {
+  padding-top: 3px;
+  color: var(--muted-foreground);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.reviewList {
+  display: grid;
+  gap: 10px;
+}
+
+.reviewCard {
+  padding: 14px;
+  background: color-mix(in oklab, var(--muted) 38%, var(--card));
+}
+
+.reviewHead {
+  grid-template-columns: 40px minmax(0, 1fr);
+  align-items: start;
+}
+
+.reviewIdentity strong {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.reviewIdentity strong svg,
+.reviewFooter svg {
+  color: var(--success);
+}
+
+.reviewProject {
+  grid-column: 2;
+  margin-top: 2px;
+  overflow: hidden;
+  color: var(--primary);
+  font-size: 9px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reviewRating {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 12px 0 8px;
+  color: var(--muted-foreground);
+  font-size: 10px;
+}
+
+.reviewRating strong {
+  color: var(--foreground);
+}
+
+.reviewCard > p {
+  margin: 0;
+  color: var(--foreground);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.reviewFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+  color: var(--muted-foreground);
+  font-size: 9px;
+}
+
+.reviewFooter span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--success);
+  font-weight: 700;
+}
+
+.emptyReviews,
+.emptySection {
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+
+.emptyReviews {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 18px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+}
+
+.emptyReviews p,
+.emptySection {
+  margin: 0;
+}
+
+.loadMoreReviews {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  color: var(--primary);
+  background: var(--card);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.loadMoreReviews:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.sectionAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  border: 0;
+  color: var(--primary);
+  background: transparent;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.badgeGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.badgeCard {
+  display: grid;
+  align-content: start;
+  gap: 5px;
+  min-height: 104px;
+  padding: 12px;
+  background: color-mix(in oklab, var(--brand-soft) 38%, var(--card));
+}
+
+.badgeCard > span {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 9px;
+  color: var(--success);
+  background: color-mix(in oklab, var(--success) 12%, var(--card));
+}
+
+.badgeCard strong {
+  font-size: 10px;
+}
+
+.badgeCard small {
+  color: var(--muted-foreground);
+  font-size: 8px;
+  line-height: 1.35;
+}
+
+.reputationProjectScroll {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 1px 2px 5px;
+  scrollbar-width: thin;
+}
+
+.reputationProjectCard {
+  display: grid;
+  width: 164px;
+  flex: 0 0 164px;
+  gap: 5px;
+  color: var(--foreground);
+  text-decoration: none;
+}
+
+.reputationProjectCard img {
+  width: 100%;
+  aspect-ratio: 1.45;
+  border-radius: 11px;
+  object-fit: cover;
+  background: var(--muted);
+}
+
+.reputationProjectCard strong {
+  overflow: hidden;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reputationProjectCard small {
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reputationCta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-color: color-mix(in oklab, var(--primary) 20%, var(--border));
+  background: color-mix(in oklab, var(--brand-soft) 48%, var(--card));
+}
+
+.reputationCta > div {
+  min-width: 0;
+  flex: 1;
+}
+
+.reputationCta strong {
+  font-size: 12px;
+}
+
+.reputationCta p {
+  margin: 4px 0 0;
+  color: var(--muted-foreground);
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.reputationCta > svg {
+  flex-shrink: 0;
+  color: var(--primary);
+}
+
+@media (min-width: 640px) {
+  .reputationStats {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .reputationStat:last-child {
+    grid-column: auto;
+  }
+
+  .reputationProjectScroll {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    overflow: visible;
+  }
+
+  .reputationProjectCard {
+    width: auto;
+  }
+}
+
+@media (min-width: 960px) {
+  .phoneCanvas {
+    max-width: 1120px;
+    border-radius: 24px;
+  }
+
+  .contentPanel {
+    padding: 30px 48px 48px;
+  }
+
+  .reputationPage {
+    max-width: 1020px;
+    margin: 0 auto;
+    gap: 28px;
+  }
+
+  .reputationTopGrid {
+    grid-template-columns: minmax(280px, 0.86fr) minmax(420px, 1.14fr);
+    align-items: stretch;
+  }
+
+  .categoryRatingRow {
+    grid-template-columns: minmax(130px, 0.8fr) auto minmax(160px, 1.2fr);
+    gap: 10px;
+  }
+
+  .categoryRatingRow small {
+    grid-column: auto;
+  }
+
+  .badgeGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .reputationProjectScroll {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Reputation polish: keep the profile structure, but give the review view
+   the scale and breathing room it needs on small screens. */
+.reputationPage {
+  gap: 32px;
+}
+
+.reputationIntro h2,
+.reputationSectionHeading h3 {
+  font-size: 20px;
+}
+
+.reputationIntro > div > p:last-child,
+.reputationSectionHeading h3 + p {
+  font-size: 13px;
+}
+
+.eyebrow,
+.cardKicker {
+  font-size: 11px;
+}
+
+.reputationTopGrid {
+  gap: 16px;
+}
+
+.ratingSummaryCard {
+  min-height: 0;
+  gap: 22px;
+  padding: 20px;
+}
+
+.overallRating {
+  font-size: 52px;
+}
+
+.overallRating span {
+  font-size: 18px;
+}
+
+.ratingSummaryCard > div:first-child > .ratingStars {
+  margin-top: 11px;
+}
+
+.ratingSummaryCard > div:first-child > .ratingStars svg {
+  width: 18px;
+  height: 18px;
+}
+
+.ratingMeta {
+  font-size: 12px;
+}
+
+.ratingSummaryNote {
+  gap: 9px;
+  font-size: 12px;
+}
+
+.ratingSummaryNote svg {
+  width: 21px;
+  height: 21px;
+}
+
+.categoryRatings {
+  padding: 19px;
+}
+
+.reputationSectionHeading {
+  margin-bottom: 14px;
+}
+
+.reputationSectionHeading h3 {
+  font-size: 18px;
+}
+
+.categoryList {
+  gap: 0;
+}
+
+.categoryRatingRow {
+  gap: 6px 10px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.categoryRatingRow:first-child {
+  padding-top: 2px;
+}
+
+.categoryRatingRow:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.categoryRatingRow strong {
+  font-size: 13px;
+}
+
+.categoryScore {
+  gap: 7px;
+  font-size: 11px;
+}
+
+.categoryScore .ratingStars svg {
+  width: 16px;
+  height: 16px;
+}
+
+.categoryRatingRow small {
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.trustHighlight {
+  padding: 17px 18px;
+}
+
+.trustHighlightMain,
+.trustHighlightSecondary {
+  gap: 12px;
+}
+
+.trustHighlight strong {
+  font-size: 14px;
+}
+
+.trustHighlight p,
+.trustHighlightSecondary span {
+  font-size: 12px;
+}
+
+.trustHighlight .reputationIcon {
+  width: 42px;
+  height: 42px;
+}
+
+.trustHighlight .reputationIcon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.reputationStats {
+  gap: 10px;
+}
+
+.reputationStat {
+  min-height: 104px;
+  gap: 7px;
+  padding: 15px;
+}
+
+.reputationStat > span svg {
+  width: 21px;
+  height: 21px;
+}
+
+.reputationStat strong {
+  font-size: 24px;
+}
+
+.reputationStat small {
+  font-size: 11px;
+}
+
+.reviewCount {
+  font-size: 12px;
+}
+
+.reviewList {
+  gap: 14px;
+}
+
+.reviewCard {
+  padding: 16px;
+  border-radius: 16px;
+}
+
+.reviewHead {
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 10px;
+}
+
+.reviewAvatar {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.reviewAvatarFallback {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--foreground);
+  background: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.reviewIdentity strong {
+  font-size: 14px;
+}
+
+.reviewIdentity small {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+
+.reviewProject {
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 3px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: var(--brand-soft);
+  font-size: 11px;
+}
+
+.reviewRating {
+  gap: 8px;
+  margin: 16px 0 10px;
+  font-size: 12px;
+}
+
+.reviewRating .ratingStars svg {
+  width: 17px;
+  height: 17px;
+}
+
+.reviewCard > p {
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.reviewFooter {
+  margin-top: 16px;
+  font-size: 11px;
+}
+
+.badgeGrid {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 1px 2px 5px;
+  scrollbar-width: thin;
+}
+
+.badgeCard {
+  min-width: 210px;
+  min-height: 128px;
+  padding: 16px;
+  border-radius: 16px;
+}
+
+.badgeCard > span {
+  width: 36px;
+  height: 36px;
+}
+
+.badgeCard strong {
+  font-size: 13px;
+}
+
+.badgeCard small {
+  font-size: 11px;
+}
+
+.reputationProjectScroll {
+  gap: 12px;
+}
+
+.reputationProjectCard {
+  width: calc((100% - 12px) / 2.2);
+  flex: 0 0 calc((100% - 12px) / 2.2);
+  gap: 7px;
+}
+
+.reputationProjectCard img {
+  aspect-ratio: 4 / 3;
+  border-radius: 14px;
+}
+
+.reputationProjectCard strong {
+  font-size: 13px;
+}
+
+.reputationProjectCard small {
+  font-size: 11px;
+}
+
+.reputationCta {
+  gap: 12px;
+  min-height: 76px;
+  padding: 16px;
+}
+
+.reputationCta .reputationIcon {
+  width: 44px;
+  height: 44px;
+}
+
+.reputationCta .reputationIcon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.reputationCta strong {
+  font-size: 14px;
+}
+
+.reputationCta p {
+  font-size: 11px;
+}
+
+@media (min-width: 640px) {
+  .badgeGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: visible;
+  }
+
+  .badgeCard {
+    min-width: 0;
+  }
+
+  .reputationProjectCard {
+    width: auto;
+    flex: initial;
+  }
+}
+
+@media (min-width: 960px) {
+  .badgeGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .reviewList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Keep the profile header readable without changing its architecture. */
+.brandRow h1 {
+  font-size: 19px;
+}
+
+.brandRow p {
+  font-size: 11px;
+}
+
+.profilePanel > h2 {
+  font-size: 14px;
+}
+
+.statCell strong {
+  font-size: 13px;
+}
+
+.statCell small {
+  font-size: 8px;
+}
+
+.primaryRow button,
+.ctaBanner button {
+  height: 44px;
+  font-size: 12px;
+}
+
+.tabBar {
+  height: 48px;
+}
+
+.tabBar button {
+  font-size: 11px;
+}
+
+.contentPanel {
+  padding-top: 22px;
+  padding-bottom: 32px;
+}
+
+/* Compact reputation section header. */
+.reputationIntro {
+  display: grid;
+  gap: 12px;
+  margin-bottom: -8px;
+}
+
+.reputationIntro > div {
+  min-width: 0;
+}
+
+.reputationIntro .eyebrow {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.reputationIntro h2 {
+  font-size: 23px;
+  font-weight: 600;
+  line-height: 1.08;
+}
+
+.reputationIntro > div > p:last-child {
+  max-width: 340px;
+  margin: 6px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.reputationIntro .writeReviewButton {
+  width: fit-content;
+  height: 40px;
+  padding: 0 14px;
+  gap: 6px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+@media (min-width: 640px) {
+  .reputationIntro {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+  }
+}
+
+.trustHighlightMain > .reputationIcon {
+  display: grid;
+  align-self: center;
+  place-items: center;
+  line-height: 0;
+}
+
+.trustHighlightMain > .reputationIcon svg {
+  display: block;
+}
+
+/* Compact reputation hierarchy. */
+.reputationPage {
+  gap: 24px;
+}
+
+.ratingSummaryCard {
+  min-height: 0;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 14px;
+}
+
+.overallRating {
+  font-size: 40px;
+}
+
+.overallRating span {
+  font-size: 16px;
+}
+
+.ratingSummaryCard > div:first-child > .ratingStars {
+  margin-top: 8px;
+}
+
+.ratingMeta {
+  margin-top: 5px;
+  font-size: 11px;
+}
+
+.ratingSummaryNote {
+  align-items: flex-start;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid color-mix(in oklab, var(--border) 75%, transparent);
+  font-size: 11px;
+}
+
+.ratingSummaryNote > span {
+  display: grid;
+  gap: 2px;
+}
+
+.ratingSummaryNote strong {
+  color: var(--foreground);
+  font-size: 11px;
+}
+
+.ratingSummaryNote small {
+  color: var(--muted-foreground);
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.categoryRatings {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.categoryRatings .reputationSectionHeading {
+  margin-bottom: 8px;
+}
+
+.categoryRatings .reputationSectionHeading h3 {
+  font-size: 15px;
+}
+
+.categoryRatings .reputationSectionHeading h3 + p {
+  margin-top: 4px;
+  font-size: 10px;
+}
+
+.categoryList {
+  gap: 0;
+  border-top: 1px solid var(--border);
+}
+
+.categoryRatingRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.categoryRatingRow:last-child {
+  border-bottom: 0;
+}
+
+.categoryRatingRow strong {
+  font-size: 12px;
+}
+
+.categoryUnavailable {
+  color: var(--muted-foreground);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.reputationStats {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.reputationStat,
+.reputationStat:last-child {
+  min-height: 72px;
+  grid-column: auto;
+  gap: 5px;
+  padding: 10px;
+}
+
+.reputationStat strong {
+  font-size: 19px;
+}
+
+.reputationStat small {
+  font-size: 9px;
+}
+
+.reviewsSection .reputationSectionHeading {
+  margin-bottom: 10px;
+}
+
+.reviewsSection .reputationSectionHeading h3 {
+  font-size: 15px;
+}
+
+.reviewList {
+  gap: 8px;
+}
+
+.reviewCard {
+  padding: 12px;
+  border-radius: 12px;
+}
+
+.reviewHead {
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.reviewAvatar,
+.reviewAvatarFallback {
+  width: 34px;
+  height: 34px;
+}
+
+.reviewAvatarFallback {
+  font-size: 11px;
+}
+
+.reviewIdentity strong {
+  font-size: 12px;
+}
+
+.reviewIdentity small {
+  margin-top: 2px;
+  font-size: 10px;
+}
+
+.reviewProject {
+  margin-top: 3px;
+  padding: 4px 7px;
+  font-size: 9px;
+}
+
+.reviewRating {
+  gap: 6px;
+  margin: 9px 0 7px;
+  font-size: 10px;
+}
+
+.reviewRating .ratingStars svg {
+  width: 14px;
+  height: 14px;
+}
+
+.reviewCard > p {
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.reviewFooter {
+  margin-top: 9px;
+  font-size: 9px;
+}
+
+.viewAllReviews {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in oklab, var(--primary) 35%, var(--border));
+  border-radius: 9px;
+  color: var(--primary);
+  background: var(--card);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.viewAllReviews:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.badgeGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  overflow: visible;
+}
+
+.badgeCard {
+  min-width: 0;
+  min-height: 74px;
+  gap: 4px;
+  padding: 10px;
+  border-radius: 12px;
+}
+
+.badgeCard > span {
+  width: 26px;
+  height: 26px;
+}
+
+.badgeCard strong {
+  font-size: 10px;
+}
+
+.badgeCard small {
+  font-size: 9px;
+}
+
+/* Premium public reputation treatment. */
+.reputationIntro h2 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.reputationTitleIcon,
+.sectionHeadingIcon {
+  display: inline-grid;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 10px;
+  color: var(--primary);
+  background: color-mix(in oklab, var(--primary) 11%, white);
+}
+
+.reputationTitleIcon {
+  width: 32px;
+  height: 32px;
+}
+
+.sectionHeadingIcon {
+  width: 28px;
+  height: 28px;
+  margin-right: 7px;
+  vertical-align: -7px;
+  border-radius: 8px;
+}
+
+.ratingSummaryCard {
+  gap: 14px;
+  padding: 16px;
+  overflow: hidden;
+  border-color: color-mix(in oklab, var(--primary) 24%, var(--border));
+  background: linear-gradient(135deg, var(--card) 0%, color-mix(in oklab, var(--primary) 6%, white) 58%, color-mix(in oklab, #b9a7ff 10%, white) 100%);
+  box-shadow: 0 10px 28px color-mix(in oklab, var(--primary) 7%, transparent);
+}
+
+.ratingHeroMain {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+}
+
+.overallRatingLine {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.overallRatingLine > span {
+  color: var(--muted-foreground);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.overallRating {
+  font-size: 46px;
+  letter-spacing: -0.06em;
+}
+
+.ratingSummaryCard > .ratingHeroMain > div:first-child > .ratingStars {
+  margin-top: 6px;
+}
+
+.ratingSummaryCard > .ratingHeroMain > div:first-child > .ratingStars svg {
+  width: 16px;
+  height: 16px;
+}
+
+.ratingRing {
+  display: grid;
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 50%;
+}
+
+.ratingRing > div {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  align-content: center;
+  gap: 1px;
+  border-radius: 50%;
+  background: var(--card);
+}
+
+.ratingRing strong {
+  font-size: 15px;
+  line-height: 1;
+}
+
+.ratingRing small {
+  max-width: 48px;
+  color: var(--muted-foreground);
+  font-size: 7px;
+  line-height: 1.15;
+  text-align: center;
+}
+
+.ratingSummaryNote {
+  min-width: 0;
+  padding-top: 11px;
+  border-top-color: color-mix(in oklab, var(--primary) 14%, var(--border));
+}
+
+.ratingSummaryNote > span:not(.trustStripIcon) {
+  display: grid;
+  gap: 2px;
+}
+
+.trustStripIcon {
+  display: grid !important;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: 8px;
+  color: var(--success);
+  background: color-mix(in oklab, var(--success) 12%, white);
+}
+
+.categoryRatings {
+  padding: 0 2px;
+}
+
+.categoryRatings .reputationSectionHeading h3 {
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+}
+
+.categoryList {
+  border-top: 1px solid color-mix(in oklab, var(--border) 82%, transparent);
+}
+
+.categoryRatingRow {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) minmax(112px, 0.8fr);
+  gap: 9px;
+  align-items: center;
+  padding: 11px 0;
+  border-bottom-color: color-mix(in oklab, var(--border) 82%, transparent);
+}
+
+.categoryIcon {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 9px;
+  color: var(--primary);
+  background: color-mix(in oklab, var(--primary) 9%, white);
+}
+
+.categoryRatingRow strong {
+  font-size: 11px;
+}
+
+.categoryRatingValue {
+  display: grid;
+  justify-items: end;
+  gap: 5px;
+  min-width: 0;
+}
+
+.categoryUnavailable {
+  padding: 4px 7px;
+  border-radius: 999px;
+  color: var(--muted-foreground);
+  background: color-mix(in oklab, var(--muted) 68%, white);
+  font-size: 8px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.categoryTrack {
+  display: block;
+  width: 100%;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--border) 70%, white);
+}
+
+.categoryTrack span {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary);
+}
+
+.reputationStats {
+  gap: 9px;
+}
+
+.reputationStat,
+.reputationStat:last-child {
+  position: relative;
+  min-height: 94px;
+  align-content: start;
+  gap: 4px;
+  padding: 12px;
+  overflow: hidden;
+  border-color: color-mix(in oklab, var(--primary) 10%, var(--border));
+  background: linear-gradient(145deg, color-mix(in oklab, var(--primary) 5%, white), var(--card));
+}
+
+.reputationStat:nth-child(2) {
+  background: linear-gradient(145deg, color-mix(in oklab, var(--success) 6%, white), var(--card));
+}
+
+.reputationStat:nth-child(3) {
+  background: linear-gradient(145deg, color-mix(in oklab, var(--gold) 9%, white), var(--card));
+}
+
+.reputationStat:nth-child(4) {
+  background: linear-gradient(145deg, color-mix(in oklab, #9a86ff 8%, white), var(--card));
+}
+
+.reputationStatIcon {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  margin-bottom: 2px;
+  border-radius: 9px;
+  color: var(--primary);
+  background: color-mix(in oklab, var(--primary) 11%, white);
+}
+
+.reputationStat:nth-child(2) .reputationStatIcon {
+  color: var(--success);
+  background: color-mix(in oklab, var(--success) 12%, white);
+}
+
+.reputationStat:nth-child(3) .reputationStatIcon {
+  color: var(--gold);
+  background: color-mix(in oklab, var(--gold) 14%, white);
+}
+
+.reputationStat:nth-child(4) .reputationStatIcon {
+  color: #7662dc;
+  background: color-mix(in oklab, #9a86ff 14%, white);
+}
+
+.reputationStat strong {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.reviewCount {
+  align-self: center;
+  padding: 5px 8px;
+  border-radius: 999px;
+  color: var(--primary);
+  background: color-mix(in oklab, var(--primary) 8%, white);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.reviewList {
+  gap: 10px;
+}
+
+.reviewCard {
+  padding: 14px;
+  border-color: color-mix(in oklab, var(--gold) 12%, var(--border));
+  border-radius: 16px;
+  background: linear-gradient(145deg, color-mix(in oklab, var(--gold) 5%, white), var(--card) 70%);
+  box-shadow: 0 7px 20px color-mix(in oklab, var(--foreground) 4%, transparent);
+}
+
+.reviewHead {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  gap: 9px;
+  align-items: center;
+}
+
+.reviewAvatar,
+.reviewAvatarFallback {
+  width: 42px;
+  height: 42px;
+}
+
+.reviewIdentity strong {
+  font-size: 12px;
+}
+
+.reviewIdentity small {
+  font-size: 10px;
+}
+
+.reviewRating {
+  display: grid;
+  justify-items: end;
+  gap: 3px;
+  margin: 0;
+  font-size: 11px;
+}
+
+.reviewRating .ratingStars {
+  gap: 1px;
+}
+
+.reviewRating .ratingStars svg {
+  width: 13px;
+  height: 13px;
+}
+
+.reviewRating strong span {
+  color: var(--gold);
+}
+
+.reviewProject {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 11px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  color: var(--primary);
+  background: color-mix(in oklab, var(--primary) 9%, white);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.reviewProject svg {
+  flex-shrink: 0;
+}
+
+.reviewProject span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reviewQuote {
+  display: flex;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.reviewQuote > svg {
+  flex-shrink: 0;
+  color: color-mix(in oklab, var(--primary) 35%, var(--border));
+}
+
+.reviewQuote p {
+  margin: 0;
+  color: var(--foreground);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.reviewFooter {
+  margin-top: 12px;
+  font-size: 9px;
+}
+
+.reviewFooter time {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.viewAllReviews {
+  margin-top: 11px;
+  padding: 12px;
+  border-color: color-mix(in oklab, var(--primary) 12%, var(--border));
+  color: var(--primary);
+  background: linear-gradient(100deg, color-mix(in oklab, var(--primary) 8%, white), color-mix(in oklab, #a993ff 8%, white));
+  box-shadow: none;
+}
+
+.badgeGrid {
+  display: flex;
+  gap: 9px;
+  overflow-x: auto;
+  padding: 1px 1px 5px;
+  scrollbar-width: thin;
+}
+
+.badgeCard {
+  display: flex;
+  min-width: 156px;
+  min-height: 76px;
+  align-items: center;
+  gap: 9px;
+  padding: 11px;
+  border-color: color-mix(in oklab, var(--success) 13%, var(--border));
+  border-radius: 14px;
+  background: linear-gradient(145deg, color-mix(in oklab, var(--success) 6%, white), var(--card));
+}
+
+.badgeCard > span {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 10px;
+}
+
+.badgeCard > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.badgeCard strong {
+  font-size: 11px;
+}
+
+.badgeCard small {
+  font-size: 9px;
+}
+
+.reputationProjectScroll {
+  gap: 10px;
+  padding-top: 2px;
+}
+
+.reputationProjectCard {
+  gap: 5px;
+}
+
+.reputationProjectCard img {
+  aspect-ratio: 4 / 3;
+  border-radius: 15px;
+}
+
+.reputationProjectCard strong {
+  font-size: 11px;
+}
+
+.reputationProjectCard small {
+  font-size: 9px;
+}
+
+.reputationCta {
+  min-height: 70px;
+  padding: 13px 14px;
+  border-color: color-mix(in oklab, var(--primary) 18%, var(--border));
+  background: linear-gradient(105deg, color-mix(in oklab, var(--primary) 9%, white), color-mix(in oklab, #a993ff 11%, white));
+}
+
+.reputationCta .reputationIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  color: var(--primary);
+  background: color-mix(in oklab, var(--primary) 12%, white);
+}
+
+.reputationCta strong {
+  font-size: 12px;
+}
+
+.reputationCta p {
+  margin-top: 3px;
+  font-size: 9px;
 }

@@ -160,7 +160,9 @@ export function toPortfolioItems(
       item.type === "image" ||
       item.type === "video" ||
       item.type === "youtube" ||
-      item.type === "instagram"
+      item.type === "instagram" ||
+      item.type === "link" ||
+      item.type === "document"
         ? item.type
         : "image";
     return {
@@ -171,7 +173,12 @@ export function toPortfolioItems(
       description: item.description || "",
       url: item.url,
       thumbnailUrl: item.thumbnail_url || item.url,
+      mimeType: item.mime_type,
+      fileName: item.file_name,
+      fileSize: item.file_size,
+      duration: item.duration ? `${Math.floor(item.duration / 60)}:${String(Math.floor(item.duration % 60)).padStart(2, "0")}` : undefined,
       embedUrl: item.embed_url,
+      profileHighlightType: item.profile_highlight_type,
       isFeatured: !!item.is_pinned,
       sortOrder: index,
       skills: [],

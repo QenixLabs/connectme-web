@@ -46,7 +46,13 @@ export function CompareTalentPage() {
   );
   const dropped = Math.max(parsed.length - MAX_COMPARE_TALENTS, 0);
   const usernames = parsed.slice(0, MAX_COMPARE_TALENTS);
-  const from = searchParams.get("from") === "saved" ? "saved" : "shortlist";
+  const fromParam = searchParams.get("from");
+  const from =
+    fromParam === "saved"
+      ? "saved"
+      : fromParam === "applications"
+        ? "applications"
+        : "shortlist";
   const campaignParam = searchParams.get("campaign");
 
   const warnedRef = useRef(false);
@@ -67,10 +73,21 @@ export function CompareTalentPage() {
     setHidden((current) => new Set(current).add(username));
 
   const backHref =
-    from === "saved" ? "/recruiter/saved-talent" : "/recruiter/shortlist";
+    from === "saved"
+      ? "/recruiter/saved-talent"
+      : from === "applications" && campaignParam
+        ? `/recruiter/campaigns/${campaignParam}/applications`
+        : "/recruiter/shortlist";
+
+  const backLabel =
+    from === "saved"
+      ? "saved talent"
+      : from === "applications"
+        ? "applications"
+        : "shortlist";
 
   const campaign = useMemo(() => {
-    if (from !== "shortlist" || !campaignParam) return null;
+    if (from === "saved" || !campaignParam) return null;
     const campaigns = campaignsData?.pages.flatMap((page) => page.data) ?? [];
     return campaigns.find((c) => c._id === campaignParam) ?? null;
   }, [from, campaignParam, campaignsData]);
@@ -114,16 +131,19 @@ export function CompareTalentPage() {
               No talent to compare
             </h2>
             <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
-              Select talent from your shortlist or saved list, then come back
-              to compare them here.
+              Select talent from your{" "}
+              {from === "applications"
+                ? "campaign applicants"
+                : from === "saved"
+                  ? "saved list"
+                  : "shortlist"}
+              , then come back to compare them here.
             </p>
             <Button
               asChild
               className="mt-5 gap-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90"
             >
-              <Link href={backHref}>
-                Back to {from === "saved" ? "saved talent" : "shortlist"}
-              </Link>
+              <Link href={backHref}>Back to {backLabel}</Link>
             </Button>
           </section>
         ) : visibleUsernames.length === 0 ? (
@@ -139,15 +159,13 @@ export function CompareTalentPage() {
               variant="secondary"
               className="mt-5 gap-2 rounded-xl"
             >
-              <Link href={backHref}>
-                Back to {from === "saved" ? "saved talent" : "shortlist"}
-              </Link>
+              <Link href={backHref}>Back to {backLabel}</Link>
             </Button>
           </section>
         ) : (
           <>
-            {/* Brief card (shortlist entry only) */}
-            {from === "shortlist" && (
+            {/* Brief card (shortlist / applications entry only) */}
+            {from !== "saved" && (
               <section className="mt-5 rounded-2xl border border-primary/15 bg-card p-3 shadow-card">
                 <div className="grid grid-cols-[52px_minmax(0,1fr)] items-center gap-3">
                   <span className="grid size-[52px] place-items-center rounded-xl bg-primary/10 text-primary">
@@ -160,7 +178,10 @@ export function CompareTalentPage() {
                         : "Campaign"}
                     </p>
                     <h2 className="truncate font-display text-sm font-bold text-foreground">
-                      {campaign?.name ?? "General shortlist"}
+                      {campaign?.name ??
+                        (from === "applications"
+                          ? "Campaign applicants"
+                          : "General shortlist")}
                     </h2>
                     <p className="truncate text-[11px] text-muted-foreground">
                       {[

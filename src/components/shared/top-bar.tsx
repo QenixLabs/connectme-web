@@ -3,14 +3,17 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { LogOut, Bell, User, CreditCard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/providers/auth-store-provider";
+import { talentApi } from "@/lib/api/talent";
+import { recruiterApi } from "@/lib/api/recruiter";
 import { useUnreadNotifications } from "@/hooks/use-unread-counts";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,6 +25,10 @@ import {
 import type { NavItem } from "./nav-config";
 import logoImage from "@/assets/rootin-logo-orange.png";
 
+const subscribe = () => () => {};
+const getClientSnapshot = () => true;
+const getServerSnapshot = () => false;
+
 interface TopBarProps {
   navItems: NavItem[];
   role: "talent" | "recruiter" | "admin";
@@ -30,14 +37,30 @@ interface TopBarProps {
 
 export function TopBar({ navItems, role, showUserMenu = false }: TopBarProps) {
   const pathname = usePathname();
+  const isMounted = useSyncExternalStore(
+    subscribe,
+    getClientSnapshot,
+    getServerSnapshot,
+  );
 
   if (pathname.startsWith(`/${role}/messages`)) return null;
   if (pathname.match(/^\/talent\/[^/]+\/portfolio(\/|$)/)) return null;
   if (pathname === "/talent/applications") return null;
   if (pathname === "/recruiter/find-talent/ai-search") return null;
+  if (pathname.match(/^\/recruiter\/campaigns\/[^/]+\/applications(\/|$)/))
+    return null;
+
+  // Talent Search owns its compact mobile header — hide the large app bar on
+  // small screens so the page matches the reference (desktop keeps nav).
+  const hideOnMobile = pathname === "/recruiter/find-talent";
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border bg-bg-surface/95 backdrop-blur-xl">
+    <header
+      className={cn(
+        "sticky top-0 z-50 w-full border-b border-border bg-bg-surface/95 backdrop-blur-xl",
+        hideOnMobile && "max-md:hidden",
+      )}
+    >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href={`/${role}/dashboard`} className="flex items-center">
           <Image
@@ -51,7 +74,7 @@ export function TopBar({ navItems, role, showUserMenu = false }: TopBarProps) {
 
         <nav className="hidden items-center gap-1 rounded-full border border-border bg-bg-surface p-1 md:flex">
           {navItems.map((item) => {
-            const active = pathname.startsWith(item.href);
+            const active = isMounted && pathname.startsWith(item.href);
             return (
               <Link
                 key={item.href}
@@ -107,6 +130,15 @@ function UserMenu({ role }: { role: TopBarProps["role"] }) {
   const logout = useAuthStore((s) => s.logout);
   const router = useRouter();
   const [isPending, setIsPending] = useState(false);
+  const { data: profile } = useQuery<{ profile_photo?: string }>({
+    queryKey:
+      role === "talent"
+        ? ["talent-profile", "my"]
+        : ["recruiter-profile", "profile"],
+    queryFn: async () =>
+      role === "talent" ? talentApi.getMyProfile() : recruiterApi.getMyProfile(),
+    enabled: role !== "admin" && !!user,
+  });
 
   const handleLogout = async () => {
     setIsPending(true);
@@ -132,6 +164,10 @@ function UserMenu({ role }: { role: TopBarProps["role"] }) {
           aria-label="User menu"
         >
           <Avatar className="size-8 border border-border">
+            <AvatarImage
+              src={profile?.profile_photo}
+              alt={`${user?.username || user?.email || "User"} profile photo`}
+            />
             <AvatarFallback className="bg-muted text-xs font-semibold">
               {initials}
             </AvatarFallback>

@@ -1,6 +1,6 @@
 "use client";
 
-import { ImageIcon, Play, Youtube } from "lucide-react";
+import { FileText, ImageIcon, Link2, Play, Youtube } from "lucide-react";
 import type { PortfolioItemType } from "@/lib/types/portfolio";
 
 interface PortfolioTypeBadgeProps {
@@ -16,6 +16,8 @@ const config: Record<
   video: { icon: <Play className="size-3.5 fill-current" />, label: "Video" },
   youtube: { icon: <Youtube className="size-3.5" />, label: "YouTube" },
   instagram: { icon: <ImageIcon className="size-3.5" />, label: "Instagram" },
+  link: { icon: <Link2 className="size-3.5" />, label: "Link" },
+  document: { icon: <FileText className="size-3.5" />, label: "Document" },
 };
 
 export function PortfolioTypeBadge({ type, className }: PortfolioTypeBadgeProps) {

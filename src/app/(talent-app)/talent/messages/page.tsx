@@ -9,11 +9,11 @@ import { authStore } from "@/stores/auth-store";
 import { conversationsApi } from "@/lib/api";
 import { getConversationParticipant, getMessageSenderId } from "@/lib/messages";
 import { useConversationSocket } from "@/hooks/use-conversation-socket";
-import { ConversationList, ConversationHeader, MessageList, MessageComposer, EmptyState } from "@/components/messages";
+import { ConversationList, ConversationHeader, MessageList, MessageComposer, EmptyState, matchesConversationFilter } from "@/components/messages";
+import type { ConversationFilter } from "@/components/messages";
 import type { Conversation, Message } from "@/lib/api/types";
 
 const PAGE_SIZE = 20;
-type Filter = "All" | "Unread" | "Pinned";
 
 export default function TalentMessagesPage() {
   const router = useRouter();
@@ -24,7 +24,7 @@ export default function TalentMessagesPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
-  const [filter, setFilter] = useState<Filter>("All");
+  const [filter, setFilter] = useState<ConversationFilter>("All");
   const [query, setQuery] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -173,11 +173,7 @@ export default function TalentMessagesPage() {
 
   const safeConversations = Array.isArray(conversations) ? conversations : [];
   const filtered = safeConversations
-    .filter((c) => {
-      if (filter === "Unread") return (c.unread_counts[currentUserId || ""] || 0) > 0;
-      if (filter === "Pinned") return c.user_settings?.[currentUserId || ""]?.pinned;
-      return true;
-    })
+    .filter((c) => matchesConversationFilter(c, filter, currentUserId))
     .filter((c) => {
       if (!query) return true;
       const p = getConversationParticipant(c, currentUserId);
@@ -289,8 +285,8 @@ export default function TalentMessagesPage() {
   }
 
   return (
-    <div className="fixed inset-x-0 top-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-40 flex flex-col bg-background lg:bottom-0">
-      <div className="flex h-full flex-col lg:grid lg:grid-cols-[380px_1fr] lg:gap-0">
+    <div className="fixed inset-x-0 top-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-40 flex w-full min-w-0 max-w-full flex-col overflow-hidden bg-background lg:bottom-0">
+      <div className="flex h-full w-full min-w-0 max-w-full flex-col overflow-hidden lg:grid lg:grid-cols-[380px_1fr] lg:gap-0">
         <ConversationList
           conversations={filtered}
           activeId={activeId}

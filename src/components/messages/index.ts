@@ -1,4 +1,9 @@
-export { ConversationList } from "./conversation-list";
+export {
+  ConversationList,
+  matchesConversationFilter,
+  isCampaignConversation,
+} from "./conversation-list";
+export type { ConversationFilter } from "./conversation-list";
 export { ConversationRow } from "./conversation-row";
 export { ConversationHeader } from "./conversation-header";
 export { MessageList } from "./message-list";

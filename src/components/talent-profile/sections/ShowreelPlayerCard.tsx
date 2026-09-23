@@ -13,7 +13,7 @@ export function ShowreelPlayerCard({
   items: PortfolioItem[];
   onOpenReel?: (itemId: string) => void;
 }) {
-  const hero = items.find((i) => i.isFeatured && i.type !== "image");
+  const hero = items.find((i) => i.profileHighlightType === "showreel");
   if (!hero) return null;
 
   const img = hero.thumbnailUrl || hero.url;
@@ -28,7 +28,7 @@ export function ShowreelPlayerCard({
       </div>
       <button
         onClick={() => onOpenReel?.(hero.id)}
-        className="group relative block h-40 w-full overflow-hidden rounded-xl"
+        className="group relative block aspect-video w-full overflow-hidden rounded-xl"
       >
         <img
           src={img}

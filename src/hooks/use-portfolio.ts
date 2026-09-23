@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { talentApi, type PortfolioApiResponse } from "@/lib/api/talent";
+import { talentApi, type PortfolioApiResponse, type ProfileHighlightsResponse } from "@/lib/api/talent";
+import { talentProfileKeys } from "@/hooks/use-talent-profile";
 import type {
   PortfolioItem,
   PortfolioItemType,
@@ -36,7 +37,7 @@ function apiItemToPortfolioItem(
   const type = item.type || "image";
   const title = item.title || item.caption || "Untitled work";
   const safeType: PortfolioItem["type"] =
-    type === "image" || type === "video" || type === "youtube" || type === "instagram"
+    type === "image" || type === "video" || type === "youtube" || type === "instagram" || type === "link" || type === "document"
       ? type
       : "image";
 
@@ -48,8 +49,13 @@ function apiItemToPortfolioItem(
     description: item.description || "",
     url: item.url,
     thumbnailUrl: item.thumbnail_url || item.url,
+    mimeType: item.mime_type,
+    fileName: item.file_name,
+    fileSize: item.file_size,
+    duration: formatDuration(item.duration),
     embedUrl: item.embed_url,
     isFeatured: !!item.is_pinned,
+    profileHighlightType: item.profile_highlight_type,
     sortOrder: index,
     skills: [],
     likesCount: item.likes_count ?? 0,
@@ -135,8 +141,9 @@ export function useCreatePortfolioLink() {
       category?: string;
       is_pinned?: boolean;
     }) => talentApi.addPortfolioLink(data),
-    onSuccess: () => {
+  onSuccess: () => {
       qc.invalidateQueries({ queryKey: portfolioKeys.my() });
+      qc.invalidateQueries({ queryKey: [...portfolioKeys.all, "my-collection"] });
     },
   });
 }
@@ -155,10 +162,13 @@ export function useUpdatePortfolioItem() {
         description?: string;
         category?: string;
         is_pinned?: boolean;
+        profile_highlight_type?: "showreel" | "video" | "image" | null;
+        replace_profile_highlight?: boolean;
       };
     }) => talentApi.updatePortfolioItem(itemId, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: portfolioKeys.my() });
+      qc.invalidateQueries({ queryKey: [...portfolioKeys.all, "my-collection"] });
     },
   });
 }
@@ -169,6 +179,7 @@ export function useDeletePortfolioItem() {
     mutationFn: (itemId: string) => talentApi.deletePortfolioItem(itemId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: portfolioKeys.my() });
+      qc.invalidateQueries({ queryKey: [...portfolioKeys.all, "my-collection"] });
     },
   });
 }
@@ -180,6 +191,7 @@ export function useTogglePortfolioFeatured() {
       talentApi.togglePortfolioFeatured(itemId, isPinned),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: portfolioKeys.my() });
+      qc.invalidateQueries({ queryKey: [...portfolioKeys.all, "my-collection"] });
     },
   });
 }
@@ -190,6 +202,7 @@ export function useReorderPortfolio() {
     mutationFn: (itemIds: string[]) => talentApi.reorderPortfolio(itemIds),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: portfolioKeys.my() });
+      qc.invalidateQueries({ queryKey: [...portfolioKeys.all, "my-collection"] });
     },
   });
 }
@@ -212,6 +225,7 @@ export function useUploadPortfolioImage() {
     }) => talentApi.uploadPortfolioImage(file, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: portfolioKeys.my() });
+      qc.invalidateQueries({ queryKey: [...portfolioKeys.all, "my-collection"] });
     },
   });
 }
@@ -232,10 +246,42 @@ export function useUploadPortfolioVideo() {
         description?: string;
         category?: string;
         is_pinned?: boolean;
+        duration?: number;
       };
     }) => talentApi.uploadPortfolioVideo(file, thumbnail, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: portfolioKeys.my() });
+      qc.invalidateQueries({ queryKey: [...portfolioKeys.all, "my-collection"] });
+    },
+  });
+}
+
+export function useMyPortfolioCollection() {
+  return useQuery({
+    queryKey: [...portfolioKeys.all, "my-collection"] as const,
+    queryFn: () => talentApi.getMyPortfolioCollection(),
+  });
+}
+
+export function useUpdateProfileShowcase() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: ProfileHighlightsResponse) => talentApi.updateProfileShowcase(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: portfolioKeys.all });
+      qc.invalidateQueries({ queryKey: talentProfileKeys.all });
+    },
+  });
+}
+
+export function useUploadPortfolioDocument() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ file, data }: { file: File; data?: { title?: string; caption?: string; description?: string; category?: string } }) =>
+      talentApi.uploadPortfolioDocument(file, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: portfolioKeys.my() });
+      qc.invalidateQueries({ queryKey: [...portfolioKeys.all, "my-collection"] });
     },
   });
 }

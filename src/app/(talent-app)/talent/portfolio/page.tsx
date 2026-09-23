@@ -3,13 +3,12 @@ import type { Metadata } from "next";
 import { PortfolioPage } from "@/components/talent-app/PortfolioPage";
 
 export const metadata: Metadata = {
-  title: "RootIn — My Portfolio",
+  title: "RootIn — Media Library",
   description:
-    "Showcase your best work to get noticed by top recruiters and clients on RootIn.",
+    "Manage and showcase your photos, videos and documents on RootIn.",
   openGraph: {
-    title: "RootIn — My Portfolio",
-    description:
-      "Showcase your best work to get noticed by top recruiters and clients on RootIn.",
+    title: "RootIn — Media Library",
+    description: "Manage and showcase your photos, videos and documents on RootIn.",
   },
 };
 

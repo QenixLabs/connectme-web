@@ -10,6 +10,7 @@ export type {
   PublicTeamMember,
   PublicReview,
   PublicReviewsResponse,
+  SubmitRecruiterReviewPayload,
 } from "./recruiter";
 export { talentApi } from "./talent";
 export type {

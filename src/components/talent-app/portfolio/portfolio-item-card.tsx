@@ -3,16 +3,19 @@
 /* eslint-disable @next/next/no-img-element */
 
 import {
-  Image as ImageIcon,
-  Eye,
-  Pin,
   Play,
+  Star,
+  Clapperboard,
   ExternalLink,
   Trash2,
   Pencil,
+  FileText,
+  MoreVertical,
+  Check,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { PortfolioItem } from "./types";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export function PortfolioItemCard({
   item,
@@ -20,130 +23,122 @@ export function PortfolioItemCard({
   onEdit,
   onDelete,
   onTogglePin,
+  onSetShowreel,
   onOpen,
+  selectionMode,
 }: {
   item: PortfolioItem;
   onToggleSelect: () => void;
   onEdit: () => void;
   onDelete: () => void;
   onTogglePin: () => void;
+  onSetShowreel: () => void;
   onOpen: () => void;
+  selectionMode: boolean;
 }) {
+  const mediaType = item.kind === "image"
+    ? (item.mime_type?.split("/")[1]?.toUpperCase() || "PHOTO")
+      : item.kind === "video" || item.type === "youtube"
+        ? "VIDEO"
+      : item.kind === "document"
+        ? "DOCUMENT"
+        : "EXTERNAL LINK";
+  const size = item.file_size
+    ? item.file_size < 1024 * 1024
+      ? `${Math.max(1, Math.round(item.file_size / 1024))} KB`
+      : `${(item.file_size / (1024 * 1024)).toFixed(1)} MB`
+      : null;
+  const isOnProfile = item.onProfile === true;
+
   return (
-    <article className="group overflow-hidden rounded-2xl border border-border bg-card shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-card-lift">
-      <button
+    <article className="group overflow-hidden rounded-[14px] border border-[#e8e7f2] bg-card shadow-[0_10px_28px_-25px_rgba(36,42,94,0.7)] transition-all hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md">
+      <div
         onClick={onOpen}
-        className="relative block aspect-[16/10] w-full overflow-hidden text-left"
+        role="button"
+        tabIndex={0}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") onOpen();
+        }}
+         className="relative block aspect-[4/3] w-full overflow-hidden bg-[#f1f1f8] text-left"
       >
-        <img
-          src={item.image}
-          alt={item.title}
-          width={800}
-          height={600}
-          loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-background/70 to-transparent" />
+         {item.kind === "document" ? (
+           <div className="grid h-full w-full place-items-center bg-secondary/60"><FileText className="size-9 text-primary/70" /><span className="absolute bottom-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Document</span></div>
+         ) : item.kind === "link" && item.type !== "youtube" ? (
+           <div className="grid h-full w-full place-items-center bg-secondary/60"><ExternalLink className="size-9 text-primary/70" /><span className="absolute bottom-3 max-w-[80%] truncate text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{item.linkLabel || "External link"}</span></div>
+         ) : (
+            <img src={item.image} alt={item.title} width={800} height={600} loading="lazy" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+         )}
+          {item.kind !== "document" && item.kind !== "link" && <div className="absolute inset-0 bg-gradient-to-t from-background/35 to-transparent" />}
 
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleSelect();
-          }}
-          className={cn(
-            "absolute left-3 top-3 grid h-6 w-6 place-items-center rounded-md border-2 transition-colors",
-            item.selected
-              ? "border-teal bg-teal/25"
-              : "border-foreground/50 bg-background/50",
-          )}
-          aria-label="Select item"
-        >
-          {item.selected && <div className="h-2.5 w-2.5 rounded-sm bg-teal" />}
-        </button>
-
-        <div className="absolute right-3 top-3 flex items-center gap-2">
-          {item.pinned && (
-            <span className="rounded-md bg-background/80 px-2 py-1 text-[10px] font-bold tracking-wide">
-              PINNED
+          {isOnProfile && (
+            <span className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 text-[9px] font-bold text-primary shadow-sm backdrop-blur-sm">
+              <Star className="size-2.5 fill-current" /> On Profile
             </span>
           )}
+
+          {(selectionMode || item.selected) && <button
+           onClick={(e) => {
+             e.stopPropagation();
+             onToggleSelect();
+          }}
+           className={cn(
+              "absolute right-2 top-2 grid size-5 place-items-center rounded-full border transition-colors",
+              item.selected
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-foreground/25 bg-background/75 opacity-90 sm:opacity-0 sm:group-hover:opacity-100",
+           )}
+           aria-label="Select item for bulk actions"
+         >
+            {item.selected && <Check className="size-3" />}
+         </button>}
+
+          <div className="absolute right-2 top-2">
+           <span className="sr-only">{item.tag}</span>
           <span
             className={cn(
-              "rounded-md px-2 py-1 text-[10px] font-bold tracking-wide text-foreground",
-              item.tag === "WORK"
-                ? "bg-orange/90"
-                : item.tag === "PERSONAL"
-                  ? "bg-purple/90"
-                  : "bg-teal/90",
+              "hidden rounded-md px-2 py-1 text-[10px] font-bold tracking-wide text-foreground",
+              item.tag === "WORK" ? "bg-orange/90" : item.tag === "PERSONAL" ? "bg-purple/90" : "bg-teal/90",
             )}
           >
             {item.tag}
           </span>
         </div>
 
-        {item.kind === "video" && (
+          {(item.kind === "video" || item.type === "youtube") && (
           <div className="absolute inset-0 grid place-items-center">
-            <span className="grid h-12 w-12 place-items-center rounded-full bg-background/60 backdrop-blur">
-              <Play className="h-5 w-5 fill-foreground" />
+              <span className="grid size-10 place-items-center rounded-full bg-background/70 backdrop-blur">
+               <Play className="size-4 fill-foreground" />
             </span>
           </div>
         )}
 
-        {item.kind === "link" && (
-          <span className="absolute bottom-3 right-3 grid h-8 w-8 place-items-center rounded-lg bg-background/85">
+        {item.kind === "link" && item.type !== "youtube" && (
+            <span className="absolute bottom-2 right-2 grid size-7 place-items-center rounded-lg bg-background/85">
             <ExternalLink className="h-4 w-4" />
           </span>
         )}
 
-        {item.kind === "image" && (
-          <span className="absolute bottom-3 left-3 grid h-8 w-8 place-items-center rounded-lg bg-background/85">
-            <ImageIcon className="h-4 w-4" />
-          </span>
-        )}
-      </button>
+      </div>
 
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-4 py-3">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-2.5 py-2">
         <div className="min-w-0">
-          <h3 className="truncate text-sm font-semibold">{item.title}</h3>
-          <p className="mt-1 flex items-center gap-2 truncate text-xs text-muted-foreground">
-            {item.linkLabel && (
-              <span className="font-medium text-foreground/80">
-                {item.linkLabel} ·
-              </span>
-            )}
-            {item.date}
-            <span className="flex items-center gap-1">
-              <Eye className="h-3.5 w-3.5" /> {item.views} views
-            </span>
-          </p>
+            <h3 className="truncate text-xs font-semibold">{item.title}</h3>
+           <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+              {mediaType}{item.duration ? ` · ${item.duration}` : size ? ` · ${size}` : ""}
+           </p>
         </div>
         <div className="flex shrink-0 items-center gap-1">
-          <button
-            onClick={onTogglePin}
-            className={cn(
-              "rounded-md p-1.5 transition-colors",
-              item.pinned
-                ? "text-teal bg-teal/15"
-                : "text-muted-foreground hover:bg-accent",
-            )}
-            title={item.pinned ? "Unpin" : "Pin"}
-          >
-            <Pin className="h-4 w-4" />
-          </button>
-          <button
-            onClick={onEdit}
-            className="rounded-md p-1.5 text-muted-foreground hover:bg-accent"
-            title="Edit"
-          >
-            <Pencil className="h-4 w-4" />
-          </button>
-          <button
-            onClick={onDelete}
-            className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-            title="Delete"
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button onClick={(event) => event.stopPropagation()} className="rounded-md p-1.5 text-muted-foreground hover:bg-accent" aria-label="More actions"><MoreVertical className="size-4" /></button>
+             </DropdownMenuTrigger>
+             <DropdownMenuContent align="end">
+               {(item.kind === "image" || item.kind === "video" || item.type === "youtube") && <DropdownMenuItem onClick={onTogglePin}><Star className="size-4" /> {item.highlightType ? "Remove From Profile" : "Show on Profile"}</DropdownMenuItem>}
+               {(item.kind === "video" || item.type === "youtube") && <DropdownMenuItem onClick={onSetShowreel}><Clapperboard className="size-4" /> {item.highlightType === "showreel" ? "Remove Showreel" : "Set as Showreel"}</DropdownMenuItem>}
+               <DropdownMenuItem onClick={onEdit}><Pencil className="size-4" /> Edit details</DropdownMenuItem>
+               <DropdownMenuItem onClick={onDelete} variant="destructive"><Trash2 className="size-4" /> Delete</DropdownMenuItem>
+             </DropdownMenuContent>
+           </DropdownMenu>
         </div>
       </div>
     </article>

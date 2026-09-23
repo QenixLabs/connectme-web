@@ -23,6 +23,15 @@ export const authApi = {
     creator_link?: string;
     is_influencer?: boolean;
     influencer_speciality?: string[];
+    professional_name?: string;
+    willing_to_travel?: string;
+    preferred_cities?: string[];
+    contact_name?: string;
+    industry?: string;
+    city?: string;
+    years_in_business?: string;
+    is_independent?: boolean;
+    founded_year?: number;
   }) => {
     const response = await apiClient.post("/auth/signup", data);
     return response.data;

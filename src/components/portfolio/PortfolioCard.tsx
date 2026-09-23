@@ -2,8 +2,9 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import { Play, Youtube, Star, Heart, Eye } from "lucide-react";
+import { Play, Youtube, Star, Heart, Eye, Clapperboard, Check } from "lucide-react";
 import type { PortfolioItem } from "@/lib/types/portfolio";
+import { Button } from "@/components/ui/button";
 import { PortfolioTypeBadge } from "./PortfolioTypeBadge";
 import { PortfolioActions } from "./PortfolioActions";
 import { formatCount } from "@/hooks/use-portfolio";
@@ -13,6 +14,8 @@ interface PortfolioCardProps {
   isOwner?: boolean;
   onClick?: () => void;
   onEdit?: (item: PortfolioItem) => void;
+  onToggleFeatured?: (item: PortfolioItem) => void;
+  onSetShowreel?: (item: PortfolioItem) => void;
 }
 
 export function PortfolioCard({
@@ -20,6 +23,8 @@ export function PortfolioCard({
   isOwner,
   onClick,
   onEdit,
+  onToggleFeatured,
+  onSetShowreel,
 }: PortfolioCardProps) {
   const isVideo = item.type === "video" || item.type === "youtube";
 
@@ -56,9 +61,8 @@ export function PortfolioCard({
 
         {item.isFeatured && (
           <div className="absolute right-3 top-3">
-            <span className="inline-flex items-center gap-1 rounded-md bg-gold/90 px-2 py-1 text-[11px] font-medium text-black">
-              <Star className="size-3 fill-current" />
-              Featured
+            <span className="inline-flex items-center gap-1 rounded-md bg-primary/90 px-2 py-1 text-[10px] font-bold tracking-wide text-primary-foreground">
+              <Check className="size-3" /> PUBLIC PROFILE
             </span>
           </div>
         )}
@@ -83,9 +87,31 @@ export function PortfolioCard({
 
         {isOwner && (
           <div
-            className="absolute right-3 top-3 opacity-0 transition-opacity group-hover:opacity-100"
+            className="absolute right-3 top-3 flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100"
             onClick={(e) => e.stopPropagation()}
           >
+            {onToggleFeatured && (
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                className={item.isFeatured ? "rounded-full bg-primary text-primary-foreground hover:bg-primary/90" : "rounded-full bg-black/40 text-white hover:bg-black/60 hover:text-white"}
+                onClick={() => onToggleFeatured(item)}
+                title={item.isFeatured ? "Remove from public profile" : "Show on public profile"}
+              >
+                <Star className={`size-4 ${item.isFeatured ? "fill-current" : ""}`} />
+              </Button>
+            )}
+            {onSetShowreel && isVideo && (
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                className={item.profileHighlightType === "showreel" ? "rounded-full bg-primary text-primary-foreground hover:bg-primary/90" : "rounded-full bg-black/40 text-white hover:bg-black/60 hover:text-white"}
+                onClick={() => onSetShowreel(item)}
+                title={item.profileHighlightType === "showreel" ? "Remove showreel" : "Set as showreel"}
+              >
+                <Clapperboard className="size-4" />
+              </Button>
+            )}
             <PortfolioActions item={item} onEdit={onEdit} />
           </div>
         )}

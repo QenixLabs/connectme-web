@@ -66,7 +66,7 @@ export function ShowReelSection({
   collapsible?: boolean;
 }) {
   const pinnedItems = useMemo(
-    () => toPortfolioItems(items.filter((i) => i.is_pinned)),
+    () => toPortfolioItems(items.filter((i) => i.profile_highlight_type === "showreel")),
     [items],
   );
 

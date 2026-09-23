@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Upload, Video, Loader2 } from "lucide-react";
+import { Upload, Video, FileText, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +36,7 @@ import {
 import {
   useUploadPortfolioImage,
   useUploadPortfolioVideo,
+  useUploadPortfolioDocument,
 } from "@/hooks/use-portfolio";
 import { extractVideoThumbnail } from "@/lib/video-thumbnail";
 
@@ -55,22 +56,24 @@ export function UploadDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  type: "image" | "video";
+  type: "image" | "video" | "document";
 }) {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [thumbnail, setThumbnail] = useState<File | null>(null);
+  const [duration, setDuration] = useState<number | undefined>();
   const [thumbnailLoading, setThumbnailLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadImage = useUploadPortfolioImage();
   const uploadVideo = useUploadPortfolioVideo();
+  const uploadDocument = useUploadPortfolioDocument();
 
   const form = useForm<UploadForm>({
     resolver: zodResolver(uploadSchema),
     defaultValues: { title: "", caption: "", description: "", category: "work" },
   });
 
-  const isPending = uploadImage.isPending || uploadVideo.isPending;
+  const isPending = uploadImage.isPending || uploadVideo.isPending || uploadDocument.isPending;
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -83,6 +86,13 @@ export function UploadDialog({
     setFile(f);
     setPreview(URL.createObjectURL(f));
     if (type === "video") {
+      const video = document.createElement("video");
+      video.preload = "metadata";
+      video.onloadedmetadata = () => {
+        setDuration(Number.isFinite(video.duration) ? Math.round(video.duration) : undefined);
+        URL.revokeObjectURL(video.src);
+      };
+      video.src = URL.createObjectURL(f);
       setThumbnailLoading(true);
       try {
         const thumb = await extractVideoThumbnail(f);
@@ -109,14 +119,16 @@ export function UploadDialog({
       };
       if (type === "image") {
         await uploadImage.mutateAsync({ file, data: payload });
-      } else {
+      } else if (type === "video") {
         await uploadVideo.mutateAsync({
           file,
           thumbnail: thumbnail ?? undefined,
-          data: payload,
+          data: { ...payload, duration },
         });
+      } else {
+        await uploadDocument.mutateAsync({ file, data: payload });
       }
-      toast.success(`${type === "image" ? "Image" : "Video"} uploaded`);
+      toast.success(`${type === "image" ? "Photo" : type === "video" ? "Video" : "Document"} uploaded`);
       handleClose();
     } catch {
       toast.error("Upload failed");
@@ -127,6 +139,7 @@ export function UploadDialog({
     setFile(null);
     setPreview(null);
     setThumbnail(null);
+    setDuration(undefined);
     setThumbnailLoading(false);
     form.reset();
     onOpenChange(false);
@@ -136,11 +149,13 @@ export function UploadDialog({
     <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Upload {type === "image" ? "Image" : "Video"}</DialogTitle>
+          <DialogTitle>Upload {type === "image" ? "Photo" : type === "video" ? "Video" : "Resume / Document"}</DialogTitle>
           <DialogDescription>
             {type === "image"
-              ? "Add a photo to your portfolio. Max 10MB."
-              : "Add a video to your portfolio. Max 50MB."}
+              ? "Add a photo to your media library. Max 10MB."
+              : type === "video"
+                ? "Add a video to your media library. Max 50MB."
+                : "Add a resume or document to your media library. Max 10MB."}
           </DialogDescription>
         </DialogHeader>
 
@@ -154,9 +169,13 @@ export function UploadDialog({
                 <div className="relative w-full">
                   {type === "image" ? (
                     <img src={preview} alt="Preview" className="max-h-48 w-full rounded-lg object-cover" />
-                  ) : (
+                  ) : type === "video" ? (
                     <div className="flex h-32 items-center justify-center rounded-lg bg-muted">
                       <Video className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                  ) : (
+                    <div className="flex h-32 items-center justify-center rounded-lg bg-muted">
+                      <FileText className="h-8 w-8 text-muted-foreground" />
                     </div>
                   )}
                   <p className="mt-2 text-sm text-muted-foreground">{file?.name}</p>
@@ -166,7 +185,7 @@ export function UploadDialog({
                   <Upload className="h-10 w-10 text-muted-foreground/50" />
                   <p className="mt-2 text-sm font-medium">Click to select file</p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {type === "image" ? "JPG, PNG, WebP" : "MP4, MOV, WebM"}
+                     {type === "image" ? "JPG, PNG, WebP" : type === "video" ? "MP4, MOV, WebM" : "PDF, DOC, DOCX"}
                   </p>
                 </>
               )}
@@ -174,7 +193,7 @@ export function UploadDialog({
             <input
               ref={fileInputRef}
               type="file"
-              accept={type === "image" ? "image/*" : "video/*"}
+               accept={type === "image" ? "image/*" : type === "video" ? "video/*" : ".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"}
               className="hidden"
               onChange={handleFileChange}
             />

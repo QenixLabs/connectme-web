@@ -136,15 +136,37 @@ export const campaignWizardSchema = z
       }
     }
 
-    if (data.deadline && data.dates?.start) {
+    if (data.deadline) {
       const deadline = new Date(data.deadline + "T00:00:00");
-      const start = new Date(data.dates.start + "T00:00:00");
-      if (deadline > start) {
+
+      if (Number.isNaN(deadline.getTime())) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Application deadline must be on or before the start date.",
+          message: "Enter a valid application deadline.",
           path: ["deadline"],
         });
+      } else {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (deadline < today) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Application deadline cannot be in the past.",
+            path: ["deadline"],
+          });
+        }
+
+        if (data.dates?.start) {
+          const start = new Date(data.dates.start + "T00:00:00");
+          if (deadline > start) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Application deadline must be on or before the start date.",
+              path: ["deadline"],
+            });
+          }
+        }
       }
     }
   });

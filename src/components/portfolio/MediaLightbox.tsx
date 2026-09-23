@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { X, Share2, Play } from "lucide-react";
+import { X, Share2, Play, FileText, ExternalLink } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -256,6 +256,14 @@ function ReelSlide({
               </div>
             </div>
           )
+        ) : item.type === "document" ? (
+          item.mimeType === "application/pdf" ? (
+            <iframe src={item.url} title={item.title} className="h-full w-full bg-white" />
+          ) : <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-center text-white">
+            <FileText className="size-14 text-white/70" />
+            <p className="text-lg font-semibold">{item.title}</p>
+            <a href={item.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-lg bg-white/15 px-4 py-2 text-sm font-semibold hover:bg-white/25">Open document <ExternalLink className="size-4" /></a>
+          </div>
         ) : isVideo ? (
           <video
             ref={videoRef}
@@ -264,13 +272,14 @@ function ReelSlide({
             muted
             loop
             playsInline
-            className="h-full w-full object-cover"
+            controls
+            className="h-full w-full object-contain"
           />
         ) : (
           <img
             src={url}
             alt={item.title}
-            className="absolute inset-0 h-full w-full object-cover"
+            className="absolute inset-0 h-full w-full object-contain"
           />
         )}
 

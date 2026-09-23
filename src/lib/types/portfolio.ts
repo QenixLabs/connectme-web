@@ -1,4 +1,5 @@
-export type PortfolioItemType = "image" | "video" | "youtube" | "instagram";
+export type PortfolioItemType = "image" | "video" | "youtube" | "instagram" | "link" | "document";
+export type ProfileHighlightType = "showreel" | "video" | "image";
 
 export type PortfolioVisibility = "public" | "recruiters_only" | "private";
 
@@ -13,6 +14,9 @@ export interface PortfolioItem {
   description?: string;
   url: string;
   thumbnailUrl?: string;
+  mimeType?: string;
+  fileName?: string;
+  fileSize?: number;
   embedUrl?: string;
   duration?: string;
   skills: string[];
@@ -20,6 +24,7 @@ export interface PortfolioItem {
   isLiked?: boolean;
   viewsCount: number;
   isFeatured: boolean;
+  profileHighlightType?: ProfileHighlightType;
   sortOrder: number;
   visibility: PortfolioVisibility;
   createdAt: string;

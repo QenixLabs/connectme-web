@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import {
   Megaphone,
   Users,
@@ -18,56 +19,56 @@ import { ScriptNote } from "./brand";
 
 const roles = [
   {
-    id: "casting-director",
+    id: "Casting Director",
     icon: Megaphone,
     title: "Casting Director",
     text: "Find and cast the perfect talent for projects.",
     image: "/assets/recruiter-signup/role-casting.jpg",
   },
   {
-    id: "talent-manager",
+    id: "Talent Manager",
     icon: Users,
     title: "Talent Manager",
     text: "Manage and represent talent professionals.",
     image: "/assets/recruiter-signup/role-manager.jpg",
   },
   {
-    id: "talent-agency",
+    id: "Talent Agency",
     icon: Building2,
     title: "Talent Agency",
     text: "Discover, manage and place talent across industries.",
     image: "/assets/recruiter-signup/role-agency.jpg",
   },
   {
-    id: "production-house",
+    id: "Production House",
     icon: Clapperboard,
     title: "Production House",
     text: "Create powerful content with amazing talent.",
     image: "/assets/recruiter-signup/role-production.jpg",
   },
   {
-    id: "brand",
+    id: "Brand / Advertiser",
     icon: Megaphone,
     title: "Brand / Advertiser",
     text: "Collaborate with talent for campaigns and brand stories.",
     image: "/assets/recruiter-signup/role-brand.jpg",
   },
   {
-    id: "creative-director",
+    id: "Creative Director",
     icon: Lightbulb,
     title: "Creative Director",
     text: "Bring creative visions to life with the right talent.",
     image: "/assets/recruiter-signup/role-creative.jpg",
   },
   {
-    id: "event-company",
+    id: "Event Company",
     icon: Calendar,
     title: "Event Company",
     text: "Hire talent for events, shows and live experiences.",
     image: "/assets/recruiter-signup/role-event.jpg",
   },
   {
-    id: "photographer",
+    id: "Photographer",
     icon: Camera,
     title: "Photographer",
     text: "Work with talent for shoots, portfolios and campaigns.",
@@ -86,8 +87,16 @@ export function StepRoles({
 }) {
   return (
     <div className="space-y-6">
+      <div
+        className="relative -mx-4 w-[calc(100%+2rem)] bg-cover bg-center bg-no-repeat px-4 py-4 sm:-mx-7 sm:w-[calc(100%+3.5rem)] sm:px-7"
+        style={{
+          backgroundImage: "url('/images/recruiter-hero.png')",
+        }}
+      >
       <div className="flex items-start justify-between gap-4">
-        <RootInLogo className="w-28 pt-1" />
+        <Link href="/" aria-label="Go to RootIn homepage">
+          <RootInLogo className="w-28 pt-1 pb-4" />
+        </Link>
         <ScriptNote lines={["Different", "People", "Bigger", "Stories"]} />
       </div>
 
@@ -100,8 +109,9 @@ export function StepRoles({
           experience.
         </p>
       </div>
+        </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-2 gap-2.5 sm:gap-4">
         {roles.map(({ id, icon: Icon, title, text, image }) => {
           const active = selected.includes(id);
           return (
@@ -110,23 +120,23 @@ export function StepRoles({
               type="button"
               aria-pressed={active}
               onClick={() => onToggle(id)}
-              className={`relative flex gap-3 rounded-3xl border p-4 text-left shadow-[var(--shadow-card)] transition-colors ${
+              className={`relative grid min-h-[10.5rem] grid-cols-[minmax(0,1fr)_5.5rem] gap-2 overflow-hidden rounded-2xl border p-2.5 text-left shadow-[var(--shadow-onboarding-card)] transition-colors sm:min-h-44 sm:grid-cols-[minmax(0,1fr)_6rem] sm:p-3 ${
                 active ? "border-primary bg-accent/50" : "border-border bg-card hover:bg-accent/30"
               }`}
             >
               <span className="flex-1">
-                <Icon className="size-7 text-primary" />
-                <span className="mt-3 block font-bold text-foreground">{title}</span>
-                <span className="mt-1 block text-sm text-muted-foreground">{text}</span>
+                <Icon className="size-6 text-primary sm:size-7" />
+                <span className="mt-2 block text-[0.72rem] font-bold leading-tight text-foreground sm:text-sm">{title}</span>
+                <span className="mt-1 block text-[0.6rem] leading-[1.3] text-muted-foreground sm:text-xs">{text}</span>
               </span>
-              <span className="relative">
+              <span className="relative my-0.5 mr-0.5 overflow-hidden rounded-xl">
                 <Image
                   src={image}
                   alt=""
                   loading="lazy"
                   width={512}
                   height={640}
-                  className="h-32 w-24 rounded-2xl object-cover"
+                  className="h-full min-h-[9.5rem] w-full object-cover sm:min-h-[10.5rem]"
                 />
                 <span
                   className={`absolute -right-1 -top-1 flex size-7 items-center justify-center rounded-lg border ${

@@ -3,13 +3,11 @@ import type { Metadata } from "next";
 import { CampaignDashboard } from "@/components/campaign-detail/campaign-dashboard";
 
 export const metadata: Metadata = {
-  title: "Lead Actor Campaign — Rootin Casting",
-  description:
-    "Review candidates and manage the Lead Actor web series casting campaign.",
+  title: "Campaign Details",
+  description: "Review candidates and manage your campaign.",
   openGraph: {
-    title: "Lead Actor Campaign — Rootin Casting",
-    description:
-      "Review candidates and manage the Lead Actor web series casting campaign.",
+    title: "Campaign Details",
+    description: "Review candidates and manage your campaign.",
     type: "website",
   },
   twitter: {

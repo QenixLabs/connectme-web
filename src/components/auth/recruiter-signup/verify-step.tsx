@@ -12,10 +12,12 @@ export function VerifyStep({
   email,
   password,
   onBack,
+  onVerified,
 }: {
   email: string;
   password: string;
   onBack: () => void;
+  onVerified?: () => Promise<void>;
 }) {
   const { login, user, isAuthenticated } = useAuthStore();
   const [otp, setOtp] = useState("");
@@ -27,7 +29,9 @@ export function VerifyStep({
   useEffect(() => {
     if (isAuthenticated && user && status === "verified") {
       const timer = setTimeout(() => {
-        window.location.href = "/recruiter/dashboard";
+        // Fresh signups land on the one-time welcome screen first; it bounces
+        // already-seen visitors straight to the dashboard ("never again").
+        window.location.href = "/recruiter/welcome";
       }, 1500);
       return () => clearTimeout(timer);
     }
@@ -44,17 +48,18 @@ export function VerifyStep({
     setStatus("verifying");
     try {
       await authApi.verifyOtp(email, otp);
+      await login(email, password);
+      await onVerified?.();
       setStatus("verified");
       toast.success("Recruiter account ready", {
         description: "Welcome to RootIn!",
       });
-      await login(email, password);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
       setApiError(e.response?.data?.message || "Invalid OTP. Please try again.");
       setStatus("entering");
     }
-  }, [email, otp, password, login]);
+  }, [email, otp, password, login, onVerified]);
 
   const handleResend = useCallback(async () => {
     setApiError(null);
@@ -91,7 +96,7 @@ export function VerifyStep({
           </motion.div>
           <h2 className="text-xl font-bold tracking-tight text-foreground">You&apos;re all set!</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Welcome to RootIn. Redirecting to your dashboard...
+            Welcome to RootIn. Taking you to your getting-started guide...
           </p>
         </motion.div>
       ) : (

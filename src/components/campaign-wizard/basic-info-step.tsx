@@ -84,7 +84,14 @@ function DateBlock({
 
   return (
     <div
-      className="relative flex cursor-pointer flex-col gap-0.5 rounded-xl border border-border bg-bg-surface-inset px-4 py-3 transition-all hover:border-accent-teal/40 hover:shadow-sm"
+      aria-invalid={!!error}
+      data-error={!!error}
+      className={cn(
+        "relative flex cursor-pointer flex-col gap-0.5 rounded-xl border bg-bg-surface-inset px-4 py-3 transition-all hover:border-accent-teal/40 hover:shadow-sm",
+        error
+          ? "border-destructive/60 ring-2 ring-destructive/10"
+          : "border-border",
+      )}
       onClick={() => {
         const input = inputRef.current as HTMLInputElement;
         if (input?.showPicker) {
@@ -115,6 +122,7 @@ function DateBlock({
         type="date"
         value={value || ""}
         onChange={(e) => onChange(e.target.value)}
+        aria-invalid={!!error}
         className="absolute inset-0 opacity-0 cursor-pointer w-full h-full pointer-events-none"
       />
       {error && <p className="mt-1 text-xs text-destructive">{error}</p>}

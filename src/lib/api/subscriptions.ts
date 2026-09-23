@@ -77,7 +77,16 @@ export interface UpgradePayload {
 }
 
 export interface UpgradeResponse {
-  checkout_url: string;
+  razorpay_subscription_id: string;
+  short_url: string | null;
+  resume: boolean;
+  /** Legacy alias — backend returns `short_url`. */
+  checkout_url?: string;
+}
+
+/** Checkout URL from an upgrade response (prefers backend `short_url`). */
+export function getUpgradeCheckoutUrl(result: UpgradeResponse): string | null {
+  return result.short_url || result.checkout_url || null;
 }
 
 export interface UpdatePaymentMethodPayload {
@@ -86,6 +95,13 @@ export interface UpdatePaymentMethodPayload {
 
 export interface PaymentMethodResponse {
   payment_url: string;
+}
+
+export interface CheckoutStatusResponse {
+  pending: boolean;
+  razorpay_subscription_id?: string;
+  short_url?: string;
+  plan_key?: string;
 }
 
 export const subscriptionsApi = {
@@ -109,6 +125,11 @@ export const subscriptionsApi = {
   upgrade: async (payload: UpgradePayload) => {
     const response = await apiClient.post("/subscriptions/upgrade", payload);
     return response.data as UpgradeResponse;
+  },
+
+  getCheckoutStatus: async () => {
+    const response = await apiClient.get("/subscriptions/checkout/status");
+    return response.data as CheckoutStatusResponse;
   },
 
   updatePaymentMethod: async (payload: UpdatePaymentMethodPayload) => {

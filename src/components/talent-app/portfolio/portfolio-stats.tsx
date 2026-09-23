@@ -6,6 +6,7 @@ import {
   Layers,
   Video,
   Link2,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -22,12 +23,14 @@ export function PortfolioStats({
   imagesUsed,
   videosUsed,
   linksCount,
+  documentsCount,
   totalViews,
 }: {
   totalItems: number;
   imagesUsed: number;
   videosUsed: number;
   linksCount: number;
+  documentsCount: number;
   totalViews: number;
 }) {
   const stats = [
@@ -35,11 +38,12 @@ export function PortfolioStats({
     { value: String(imagesUsed), label: "Images", icon: ImageIcon, color: "green" },
     { value: String(videosUsed), label: "Videos", icon: Video, color: "purple" },
     { value: String(linksCount), label: "Links", icon: Link2, color: "orange" },
+    { value: String(documentsCount), label: "Documents", icon: FileText, color: "orange" },
     { value: String(totalViews), label: "Views", icon: Eye, color: "blue" },
   ] as const;
 
   return (
-    <div className="no-scrollbar -mx-4 flex snap-x gap-2 overflow-x-auto px-4 lg:mx-0 lg:grid lg:grid-cols-5 lg:px-0">
+    <div className="no-scrollbar -mx-4 flex snap-x gap-2 overflow-x-auto px-4 lg:mx-0 lg:grid lg:grid-cols-6 lg:px-0">
       {stats.map((s) => (
         <div
           key={s.label}

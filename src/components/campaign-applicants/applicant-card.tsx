@@ -1,5 +1,4 @@
 import {
-  MessageSquare,
   Eye,
   Star,
   MoreVertical,
@@ -10,6 +9,7 @@ import {
   Loader2,
 } from "lucide-react";
 import type { EnrichedApplication, TaskSubmissionStatus } from "@/lib/api/campaigns";
+import { MessageTalentButton } from "@/components/campaign-detail/message-talent-button";
 import { cn } from "@/lib/utils";
 
 type TaskState = "not-started" | "in-progress" | "completed" | "under-review";
@@ -85,6 +85,13 @@ function getRole(app: EnrichedApplication): string {
 
 function getCity(app: EnrichedApplication): string {
   return app.talent_profile?.location?.city || "";
+}
+
+function getUsername(app: EnrichedApplication): string | undefined {
+  if (app.talent_profile?.username) return app.talent_profile.username;
+  const tid = app.talent_id;
+  if (typeof tid === "object") return tid.username;
+  return undefined;
 }
 
 interface ApplicantCardProps {
@@ -204,9 +211,7 @@ export function ApplicantCard({
       )}
 
       <div className="mt-3 flex items-center justify-between border-t border-border pt-2 text-muted-foreground">
-        <button className="flex-1 py-1 transition-colors hover:text-foreground">
-          <MessageSquare className="mx-auto h-4 w-4" />
-        </button>
+        <MessageTalentButton username={getUsername(application)} talentName={name} />
         <span className="h-5 w-px bg-border" />
         <button className="flex-1 py-1 transition-colors hover:text-foreground">
           <Eye className="mx-auto h-4 w-4" />

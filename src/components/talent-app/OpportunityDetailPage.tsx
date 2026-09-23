@@ -27,8 +27,9 @@ import {
   CheckCircle2,
   Circle,
 } from "lucide-react";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { motion } from "motion/react";
+import { toast } from "sonner";
 
 import {
   Avatar,
@@ -47,6 +48,7 @@ import {
   useBookmarkCampaign,
   useApplyToCampaign,
 } from "@/hooks/use-campaigns";
+import { ApplyCampaignDialog } from "@/components/talent-app/ApplyCampaignDialog";
 
 /* -------------------------------------------------------------------------- */
 /*                                  HELPERS                                   */
@@ -240,6 +242,7 @@ export function OpportunityDetailPage() {
   const { data: recommendations } = useCampaignRecommendations(3);
   const bookmarkMutation = useBookmarkCampaign();
   const applyMutation = useApplyToCampaign();
+  const [applyDialogOpen, setApplyDialogOpen] = useState(false);
 
   const handleBookmark = useCallback(() => {
     if (!id) return;
@@ -248,8 +251,22 @@ export function OpportunityDetailPage() {
 
   const handleApply = useCallback(() => {
     if (!id) return;
-    applyMutation.mutate({ id });
-  }, [id, applyMutation]);
+    // Campaigns with custom questions need answers — collect them in a dialog.
+    // The backend rejects required unanswered questions (400), so a direct
+    // apply without answers would always fail for those campaigns.
+    if ((campaign?.questions?.length ?? 0) > 0) {
+      setApplyDialogOpen(true);
+      return;
+    }
+    applyMutation.mutate(
+      { id },
+      {
+        onSuccess: () => {
+          toast.success("Application submitted successfully.");
+        },
+      },
+    );
+  }, [id, campaign?.questions?.length, applyMutation]);
 
   if (isLoading) return <DetailSkeleton />;
   if (isError || !campaign) return <NotFound />;
@@ -873,6 +890,17 @@ export function OpportunityDetailPage() {
           </div>
         </div>
       </motion.div>
+
+      {/* Apply dialog — collects cover message + answers to custom questions */}
+      {hasQuestions && (
+        <ApplyCampaignDialog
+          campaignId={id}
+          campaignName={campaign.name}
+          questions={campaign.questions ?? []}
+          open={applyDialogOpen}
+          onOpenChange={setApplyDialogOpen}
+        />
+      )}
     </div>
   );
 }

@@ -22,7 +22,6 @@ import {
   Star,
   X,
   XCircle,
-  Zap,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 
@@ -147,7 +146,7 @@ function formatLocation(location?: { city?: string; state?: string }): string {
 
 function formatAppliedDate(createdAt?: string): string {
   if (!createdAt) return "";
-  return `Applied on ${new Date(createdAt).toLocaleDateString("en-US", {
+  return `Applied ${new Date(createdAt).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -202,11 +201,11 @@ function Header({
   const messageCount = messages?.count ?? 0;
 
   return (
-    <div className="flex items-center justify-between gap-4">
-      <div className="flex items-center gap-3">
+    <div className="flex items-center justify-between gap-2.5">
+      <div className="flex min-w-0 items-center gap-2.5">
         <div className="rounded-full bg-gradient-to-br from-fuchsia-500 via-primary to-indigo-500 p-[2px]">
           {profilePhoto ? (
-            <div className="relative size-12 overflow-hidden rounded-full border-2 border-card">
+            <div className="relative size-11 overflow-hidden rounded-full border-2 border-card">
               <Image
                 src={profilePhoto}
                 alt={name}
@@ -216,45 +215,38 @@ function Header({
               />
             </div>
           ) : (
-            <div className="flex size-12 items-center justify-center rounded-full bg-muted text-sm font-bold text-foreground">
+            <div className="flex size-11 items-center justify-center rounded-full bg-muted text-sm font-bold text-foreground">
               {initials}
             </div>
           )}
         </div>
-        <div>
-          <h1 className="text-xl font-extrabold tracking-tight text-foreground">
+        <div className="min-w-0">
+          <h1 className="truncate text-[19px] font-extrabold tracking-tight text-foreground">
             My Applications
           </h1>
-          <p className="text-xs text-muted-foreground">
-            Track all the opportunities you&apos;ve applied for
+          <p className="whitespace-nowrap text-[11px] leading-4 text-muted-foreground">
+            Track your applications and their progress.
           </p>
         </div>
       </div>
 
-      <div className="flex items-center gap-1">
+      <div className="-mt-2 flex h-10 shrink-0 items-center gap-2 self-start">
         <Link
           href="/talent/notifications"
-          className="relative grid size-10 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-muted"
+          className="relative grid size-10 place-items-center text-slate-500 transition-colors hover:rounded-full hover:bg-slate-100 hover:text-slate-700 active:rounded-full active:bg-slate-100 focus-visible:rounded-full focus-visible:bg-slate-100 focus-visible:outline-none"
           aria-label="Notifications"
         >
-          <Bell className="size-5" />
+          <Bell className="size-[22px]" strokeWidth={1.9} />
           {notificationCount > 0 && (
-            <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-badge-red px-1 text-[10px] font-bold text-white">
-              {notificationCount > 9 ? "9+" : notificationCount}
-            </span>
+            <span className="absolute right-2 top-2 size-1.5 rounded-full bg-primary" />
           )}
         </Link>
         <Link
           href="/talent/messages"
-          className="relative grid size-10 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-muted"
-          aria-label="Messages"
+          className="relative grid size-10 place-items-center text-slate-500 transition-colors hover:rounded-full hover:bg-slate-100 hover:text-slate-700 active:rounded-full active:bg-slate-100 focus-visible:rounded-full focus-visible:bg-slate-100 focus-visible:outline-none"
+          aria-label={messageCount > 0 ? "Messages, unread" : "Messages"}
         >
-          <MessageCircle className="size-5" />
-          {messageCount > 0 && (
-            <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-badge-red px-1 text-[10px] font-bold text-white">
-              {messageCount > 9 ? "9+" : messageCount}
-            </span>
-          )}
+          <MessageCircle className="size-[22px]" strokeWidth={1.9} />
         </Link>
       </div>
     </div>
@@ -263,15 +255,15 @@ function Header({
 
 function HeaderSkeleton() {
   return (
-    <div className="flex items-center justify-between gap-4">
-      <div className="flex items-center gap-3">
-        <Skeleton className="size-12 rounded-full" />
+    <div className="flex items-center justify-between gap-2.5">
+      <div className="flex items-center gap-2.5">
+        <Skeleton className="size-11 rounded-full" />
         <div className="space-y-2">
           <Skeleton className="h-5 w-40" />
-          <Skeleton className="h-3 w-48" />
+          <Skeleton className="h-3 w-52" />
         </div>
       </div>
-      <div className="flex gap-2">
+      <div className="flex gap-1">
         <Skeleton className="size-10 rounded-full" />
         <Skeleton className="size-10 rounded-full" />
       </div>
@@ -298,30 +290,37 @@ function OverviewStats({
             key={item.key}
             onClick={() => onSelect(item.key)}
             className={cn(
-              "flex shrink-0 flex-col items-center gap-2 rounded-2xl border px-4 py-3 transition-all active:scale-95",
+              "flex h-[76px] shrink-0 items-center gap-3 rounded-[18px] border px-3 py-2 transition-all active:scale-95",
+              item.key === "all"
+                ? "w-[96px]"
+                : item.key === "under_review"
+                  ? "w-[140px]"
+                  : "w-[128px]",
               selected
-                ? "border-transparent bg-gradient-to-br from-primary to-indigo-600 text-white shadow-md"
-                : "border-border bg-card text-foreground hover:bg-muted"
+                ? "border-transparent bg-gradient-to-br from-primary to-indigo-600 text-white shadow-sm"
+                : "border-border/70 bg-card text-foreground hover:bg-muted"
             )}
           >
             <span
               className={cn(
-                "grid size-9 place-items-center rounded-xl",
+                "grid size-8 shrink-0 place-items-center rounded-full",
                 selected ? "bg-white/20 text-white" : item.tone
               )}
             >
               <Icon className="size-4" />
             </span>
-            <span className="text-lg font-extrabold leading-none">
-              {counts[item.key] ?? 0}
-            </span>
-            <span
-              className={cn(
-                "whitespace-nowrap text-[10px] font-medium leading-none",
-                selected ? "text-white/90" : "text-muted-foreground"
-              )}
-            >
-              {item.label}
+            <span className="min-w-0 flex-1 text-left">
+              <span className="block text-[21px] font-extrabold leading-5">
+                {counts[item.key] ?? 0}
+              </span>
+              <span
+                className={cn(
+                  "block whitespace-nowrap text-[11px] font-semibold leading-4",
+                  selected ? "text-white/90" : "text-muted-foreground"
+                )}
+              >
+                {item.label}
+              </span>
             </span>
           </button>
         );
@@ -336,7 +335,10 @@ function OverviewStatsSkeleton() {
       {Array.from({ length: 6 }).map((_, i) => (
         <Skeleton
           key={i}
-          className="h-[92px] w-[76px] shrink-0 rounded-2xl"
+          className={cn(
+            "h-[76px] shrink-0 rounded-[18px]",
+            i === 0 ? "w-[96px]" : "w-[132px]"
+          )}
         />
       ))}
     </div>
@@ -394,11 +396,11 @@ function ApplicationCard({
   const appliedDate = formatAppliedDate(campaign.my_application?.created_at);
 
   return (
-    <Card className="overflow-hidden rounded-2xl border-border bg-card p-0 shadow-sm transition-all hover:shadow-card">
+    <Card className="overflow-hidden rounded-xl border-border/80 bg-card p-0 shadow-sm transition-all hover:shadow-card">
       <CardContent className="p-3">
         <div className="flex gap-3">
           {/* Thumbnail */}
-          <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-muted">
+          <div className="relative aspect-square size-24 shrink-0 overflow-hidden rounded-lg bg-muted">
             {campaign.cover_image_url ? (
               <Image
                 src={campaign.cover_image_url}
@@ -414,7 +416,7 @@ function ApplicationCard({
             )}
             <span
               className={cn(
-                "absolute left-2 top-2 rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white shadow",
+                "absolute left-1.5 top-1.5 rounded px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider text-white shadow",
                 badge.className
               )}
             >
@@ -425,42 +427,41 @@ function ApplicationCard({
           {/* Content */}
           <div className="flex min-w-0 flex-1 flex-col">
             <div className="flex items-start justify-between gap-2">
-              <h3 className="line-clamp-1 text-sm font-bold text-foreground">
+              <h3 className="line-clamp-1 text-[15px] font-bold leading-5 text-foreground">
                 {campaign.name}
               </h3>
-              <div className="flex shrink-0 items-center gap-0.5">
+              <div className="flex shrink-0 items-center">
                 <span
                   className={cn(
-                    "flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold",
+                    "flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[9px] font-semibold",
                     meta.tone
                   )}
                 >
                   <StatusIcon className="size-3" />
                   {meta.label}
                 </span>
-                <ChevronRight className="size-4 text-muted-foreground" />
               </div>
             </div>
 
-            <p className="mt-0.5 text-xs text-muted-foreground">
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">
               {campaign.role_type || "Role"}
             </p>
 
-            <div className="mt-2 space-y-1">
-              <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                <span className="grid size-4 place-items-center rounded bg-muted">
+            <div className="mt-1.5 space-y-0.5">
+              <p className="flex min-w-0 items-center gap-1.5 truncate text-[10px] leading-4 text-muted-foreground">
+                <span className="grid size-3.5 shrink-0 place-items-center rounded bg-muted">
                   <Briefcase className="size-2.5" />
                 </span>
                 {company}
               </p>
-              <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                <span className="grid size-4 place-items-center rounded bg-muted">
+              <p className="flex min-w-0 items-center gap-1.5 truncate text-[10px] leading-4 text-muted-foreground">
+                <span className="grid size-3.5 shrink-0 place-items-center rounded bg-muted">
                   <MapPin className="size-2.5" />
                 </span>
                 {location}
               </p>
-              <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                <span className="grid size-4 place-items-center rounded bg-muted">
+              <p className="flex min-w-0 items-center gap-1.5 truncate text-[10px] leading-4 text-muted-foreground">
+                <span className="grid size-3.5 shrink-0 place-items-center rounded bg-muted">
                   <Calendar className="size-2.5" />
                 </span>
                 {appliedDate}
@@ -470,10 +471,10 @@ function ApplicationCard({
         </div>
 
         {/* Actions */}
-        <div className="mt-3 grid grid-cols-1 gap-2">
+        <div className="mt-2.5 flex items-center gap-3">
           <Button
             variant="outline"
-            className="w-full rounded-full border-border bg-background text-sm font-semibold text-brand hover:bg-brand/5"
+            className="h-11 flex-1 rounded-lg border-primary/20 bg-primary/5 text-sm font-semibold text-brand hover:bg-brand/10"
             asChild
           >
             <Link href={`/talent/opportunities/${campaign._id}`}>
@@ -483,15 +484,15 @@ function ApplicationCard({
           </Button>
           {status === "under_review" && (
             <Button
-              variant="outline"
-              className="w-full rounded-full border-border text-sm font-semibold text-muted-foreground hover:text-destructive"
+              variant="ghost"
+              className="h-auto shrink-0 px-0 text-xs font-medium text-muted-foreground hover:bg-transparent hover:text-destructive"
               onClick={() => onWithdraw(campaign._id)}
               disabled={isWithdrawing}
             >
               {isWithdrawing ? (
-                <Loader2 className="mr-1 size-4 animate-spin" />
+                <Loader2 className="size-3.5 animate-spin" />
               ) : (
-                <X className="mr-1 size-4" />
+                <X className="size-3.5" />
               )}
               Withdraw
             </Button>
@@ -504,10 +505,10 @@ function ApplicationCard({
 
 function ApplicationCardSkeleton() {
   return (
-    <Card className="overflow-hidden rounded-2xl border-border bg-card p-0">
+    <Card className="overflow-hidden rounded-xl border-border bg-card p-0">
       <CardContent className="p-3">
         <div className="flex gap-3">
-          <Skeleton className="h-20 w-20 shrink-0 rounded-xl" />
+          <Skeleton className="size-24 shrink-0 rounded-lg" />
           <div className="flex min-w-0 flex-1 flex-col gap-2">
             <div className="flex items-start justify-between gap-2">
               <Skeleton className="h-4 w-2/3" />
@@ -518,7 +519,7 @@ function ApplicationCardSkeleton() {
             <Skeleton className="h-3 w-2/3" />
           </div>
         </div>
-        <Skeleton className="mt-3 h-9 w-full rounded-full" />
+        <Skeleton className="mt-2.5 h-11 w-full rounded-lg" />
       </CardContent>
     </Card>
   );
@@ -529,7 +530,7 @@ function PremiumBanner() {
   if (dismissed) return null;
 
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary to-indigo-600 p-4 text-white shadow-md">
+    <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-primary to-indigo-600 p-3 text-white shadow-md">
       <button
         onClick={() => setDismissed(true)}
         className="absolute right-2 top-2 grid size-7 place-items-center rounded-full text-white/80 transition-colors hover:bg-white/10"
@@ -538,14 +539,14 @@ function PremiumBanner() {
         <X className="size-4" />
       </button>
 
-      <div className="relative z-10 flex items-center gap-4">
+      <div className="relative z-10 flex items-center gap-3">
         <div className="flex-1">
-          <p className="text-base font-extrabold">Get More Opportunities</p>
-          <p className="mt-1 text-xs leading-snug text-white/85">
+          <p className="text-[15px] font-extrabold">Get More Opportunities</p>
+          <p className="mt-0.5 text-[11px] leading-snug text-white/85">
             Upgrade to Premium and get priority access to new opportunities.
           </p>
           <Button
-            className="mt-3 h-9 rounded-full bg-white px-4 text-sm font-bold text-primary hover:bg-white/90"
+            className="mt-2.5 h-8 rounded-lg bg-white px-3 text-xs font-bold text-primary hover:bg-white/90"
             asChild
           >
             <Link href="/talent/billing">
@@ -692,7 +693,7 @@ export function ApplicationsPage() {
         )}
       </div>
 
-      <div className="mt-5 px-4">
+      <div className="mt-3 px-4">
         {isLoading ? (
           <OverviewStatsSkeleton />
         ) : (
@@ -708,9 +709,9 @@ export function ApplicationsPage() {
       </div>
 
       {/* Search + filters */}
-      <div className="mt-5 px-4">
+      <div className="mt-4 px-4">
         <div className="flex items-center gap-2">
-          <div className="flex flex-1 items-center gap-2 rounded-xl border border-border bg-background px-3 py-2.5">
+          <div className="flex h-10 flex-1 items-center gap-2 rounded-lg border border-border/70 bg-muted/25 px-3">
             <Search className="size-4 shrink-0 text-muted-foreground" />
             <input
               type="text"
@@ -724,7 +725,7 @@ export function ApplicationsPage() {
             type="button"
             onClick={() => setShowFilters((s) => !s)}
             aria-label="Toggle filters"
-            className="grid size-10 shrink-0 place-items-center rounded-xl border border-border bg-card text-foreground transition-colors hover:bg-muted"
+            className="grid size-10 shrink-0 place-items-center rounded-lg border border-border/70 bg-muted/25 text-foreground transition-colors hover:bg-muted active:scale-95"
           >
             <SlidersHorizontal className="size-5" />
           </button>
@@ -733,7 +734,7 @@ export function ApplicationsPage() {
 
       {/* Filter chips */}
       {!isLoading && (
-        <div className="mt-3">
+        <div className="mt-2">
           <FilterChips
             counts={filterCounts}
             active={activeFilter}
@@ -746,7 +747,7 @@ export function ApplicationsPage() {
       )}
 
       {/* Results */}
-      <div className="mt-5 space-y-4 px-4">
+      <div className="mt-4 space-y-3 px-4">
         {isLoading ? (
           Array.from({ length: 4 }).map((_, i) => (
             <ApplicationCardSkeleton key={i} />
@@ -794,7 +795,7 @@ export function ApplicationsPage() {
 
       {/* Premium banner */}
       {!isLoading && !isError && (
-        <div className="mt-6 px-4">
+        <div className="mt-4 px-4">
           <PremiumBanner />
         </div>
       )}

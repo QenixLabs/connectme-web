@@ -2,9 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSyncExternalStore } from "react";
 import { cn } from "@/lib/utils";
 import { useFilterSheetOpen } from "@/hooks/use-filter-sheet";
 import type { NavItem } from "./nav-config";
+
+const subscribe = () => () => {};
+const getClientSnapshot = () => true;
+const getServerSnapshot = () => false;
 
 interface BottomBarProps {
   navItems: NavItem[];
@@ -13,6 +18,11 @@ interface BottomBarProps {
 
 export function BottomBar({ navItems, iconOnly }: BottomBarProps) {
   const pathname = usePathname();
+  const isMounted = useSyncExternalStore(
+    subscribe,
+    getClientSnapshot,
+    getServerSnapshot,
+  );
   const filterSheetOpen = useFilterSheetOpen();
 
   return (
@@ -22,7 +32,7 @@ export function BottomBar({ navItems, iconOnly }: BottomBarProps) {
     )}>
       <div className="grid h-16 auto-cols-fr grid-flow-col">
         {navItems.map((item) => {
-          const active = pathname.startsWith(item.href);
+          const active = isMounted && pathname.startsWith(item.href);
           const Icon = item.icon;
           return (
             <Link

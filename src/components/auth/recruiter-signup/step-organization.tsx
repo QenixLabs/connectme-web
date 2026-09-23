@@ -1,6 +1,8 @@
 "use client";
+import { RootInLogo } from "@/components/RootInLogo";
+import Link from "next/link";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Image from "next/image";
 import {
   Building2,
@@ -11,11 +13,18 @@ import {
   Users,
   Camera,
   Check,
+  ChevronDown,
   Loader2,
 } from "lucide-react";
-import { RootInLogo } from "@/components/RootInLogo";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ScriptNote } from "./brand";
 import { Field, inputClass } from "./field";
+import { cn } from "@/lib/utils";
 
 export type OrgValues = {
   name: string;
@@ -31,37 +40,113 @@ const industries = ["Film", "Television", "OTT / Digital", "Advertising", "Event
 const yearOptions = ["Less than 1", "1 - 3", "3 - 5", "5 - 10", "10+"];
 const teamOptions = ["Just me", "2 - 10", "11 - 50", "51 - 200", "200+"];
 
+function OrgDropdown({
+  icon,
+  label,
+  required,
+  value,
+  placeholder,
+  options,
+  onSelect,
+}: {
+  icon: ReactNode;
+  label: string;
+  required?: boolean;
+  value: string;
+  placeholder: string;
+  options: string[];
+  onSelect: (value: string) => void;
+}) {
+  return (
+    <div className="flex min-h-[52px] items-center gap-3 rounded-[13px] border border-border bg-card px-3 py-2 shadow-[0_2px_8px_rgba(55,33,110,0.04)] transition-colors focus-within:border-primary">
+      <span className="shrink-0 text-muted-foreground [&>svg]:size-[18px]">{icon}</span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[10px] leading-3 text-muted-foreground">
+          {label}
+          {required ? <span className="ml-0.5 text-destructive">*</span> : null}
+        </span>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            type="button"
+            aria-label={label}
+            className={cn(
+              inputClass,
+              "flex w-full cursor-pointer items-center justify-between gap-2 text-left",
+            )}
+          >
+            <span
+              className={cn(
+                "truncate",
+                !value && "font-normal text-muted-foreground/70",
+              )}
+            >
+              {value || placeholder}
+            </span>
+            <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="start"
+            className="max-h-72 w-[var(--radix-dropdown-menu-trigger-width)] overflow-auto"
+          >
+            {options.map((option) => (
+              <DropdownMenuItem
+                key={option}
+                onSelect={() => onSelect(option)}
+                className="flex items-center justify-between gap-2"
+              >
+                <span className="truncate">{option}</span>
+                {value === option ? <Check className="size-4 shrink-0" /> : null}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </span>
+    </div>
+  );
+}
+
 export function StepOrganization({
   values,
   onChange,
+  onLogoChange,
   onSubmit,
   submitting = false,
   error,
 }: {
   values: OrgValues;
   onChange: (values: OrgValues) => void;
+  onLogoChange?: (file: File | null) => void;
   onSubmit: () => void;
   submitting?: boolean;
   error?: string | null;
 }) {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoError, setLogoError] = useState<string | null>(null);
+  const [industryError, setIndustryError] = useState<string | null>(null);
 
-  const set = <K extends keyof OrgValues>(key: K, value: OrgValues[K]) =>
+  const set = <K extends keyof OrgValues>(key: K, value: OrgValues[K]) => {
     onChange({ ...values, [key]: value });
+    if (key === "industry") setIndustryError(null);
+  };
 
   const handleLogoChange = (file: File | undefined) => {
     setLogoError(null);
-    if (!file) return;
+    if (!file) {
+      onLogoChange?.(null);
+      return;
+    }
     if (!["image/jpeg", "image/png", "image/svg+xml"].includes(file.type)) {
       setLogoError("Use a PNG, JPG or SVG image.");
+      onLogoChange?.(null);
       return;
     }
     if (file.size > 2 * 1024 * 1024) {
       setLogoError("Logo must be under 2 MB.");
+      onLogoChange?.(null);
       return;
     }
     setLogoPreview(URL.createObjectURL(file));
+    onLogoChange?.(file);
   };
 
   return (
@@ -69,34 +154,49 @@ export function StepOrganization({
       className="space-y-6"
       onSubmit={(event) => {
         event.preventDefault();
+        if (!values.industry) {
+          setIndustryError("Please select your industry");
+          return;
+        }
         onSubmit();
       }}
     >
-      <div className="flex items-start justify-between gap-4">
-        <RootInLogo className="w-28 pt-1" />
-        <ScriptNote lines={["Great", "People", "Create", "Great Projects"]} />
-      </div>
+       <section
+       className="
+         relative
+         -mx-4 w-[calc(100%+2rem)]
+         sm:-mx-7 sm:w-[calc(100%+3.5rem)]
+         h-[22vh]
+        bg-cover
+        bg-center
+        bg-no-repeat
+      "
+       style={{
+         backgroundImage: "url('/images/recruiter-hero.png')",
+       }}
+      >
+       <Link
+         href="/"
+         aria-label="Go to RootIn homepage"
+         className="absolute left-[6%] top-3 z-10 sm:top-4"
+       >
+         <RootInLogo className="w-28 pb-4" />
+       </Link>
+       <div className="absolute left-[6%] top-[56%] w-[52%] -translate-y-1/2 mt-1">
+         <h1 className=" mt-2 text-[clamp(26px,5vw,35px)] font-bold leading-[1.05] text-[#080B2B]">
+           Tell us about
+           <br />
+           <span className="text-[#5B32FF]">your organization</span>
+         </h1>
 
-      <div className="grid gap-6 sm:grid-cols-[1.1fr_1fr] sm:items-center">
-        <div>
-          <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-foreground">
-            Tell us about <span className="block text-primary">your organization</span>
-          </h1>
-          <p className="mt-3 text-base text-muted-foreground">
-            This helps talent learn more about you and your work.
-          </p>
-        </div>
-        <Image
-          src="/assets/recruiter-signup/hero-org.jpg"
-          alt="Director chair on a lit film set"
-          loading="lazy"
-          width={900}
-          height={1024}
-          className="h-56 w-full rounded-[2rem] rounded-tl-[5rem] object-cover sm:h-64"
-        />
-      </div>
+         <p className="mt-3 max-w-[200px] text-[clamp(10px,2.5vw,15px)] leading-[1.4] text-[#555C7A]">
+           This help talents learn more about you and your work
+         </p>
+         
+       </div>
+     </section>
 
-      <div className="flex items-center gap-5 rounded-3xl bg-accent/50 p-5">
+      <div className="mt-5 flex items-center gap-4 rounded-3xl bg-accent/50 p-4">
         <label className="flex size-28 shrink-0 cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden rounded-2xl border-2 border-dashed border-primary/60 text-primary transition-colors hover:bg-accent/60">
           {logoPreview ? (
             <Image
@@ -139,19 +239,18 @@ export function StepOrganization({
             onChange={(e) => set("name", e.target.value)}
           />
         </Field>
-        <Field icon={<Layers className="size-5" />} label="Industry" required>
-          <select
-            required
-            className={inputClass}
-            value={values.industry}
-            onChange={(e) => set("industry", e.target.value)}
-          >
-            <option value="">Select your industry</option>
-            {industries.map((option) => (
-              <option key={option}>{option}</option>
-            ))}
-          </select>
-        </Field>
+        <OrgDropdown
+          icon={<Layers className="size-5" />}
+          label="Industry"
+          required
+          value={values.industry}
+          placeholder="Select your industry"
+          options={industries}
+          onSelect={(value) => set("industry", value)}
+        />
+        {industryError ? (
+          <p className="-mt-2 px-1 text-[11px] text-destructive">{industryError}</p>
+        ) : null}
         <Field icon={<MapPin className="size-5" />} label="City / Location" required>
           <input
             required
@@ -170,30 +269,22 @@ export function StepOrganization({
           />
         </Field>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Field icon={<BarChart3 className="size-5" />} label="Years in Business">
-            <select
-              className={inputClass}
-              value={values.years}
-              onChange={(e) => set("years", e.target.value)}
-            >
-              <option value="">Select</option>
-              {yearOptions.map((option) => (
-                <option key={option}>{option}</option>
-              ))}
-            </select>
-          </Field>
-          <Field icon={<Users className="size-5" />} label="Team Size">
-            <select
-              className={inputClass}
-              value={values.teamSize}
-              onChange={(e) => set("teamSize", e.target.value)}
-            >
-              <option value="">Select</option>
-              {teamOptions.map((option) => (
-                <option key={option}>{option}</option>
-              ))}
-            </select>
-          </Field>
+          <OrgDropdown
+            icon={<BarChart3 className="size-5" />}
+            label="Years in Business"
+            value={values.years}
+            placeholder="Select"
+            options={yearOptions}
+            onSelect={(value) => set("years", value)}
+          />
+          <OrgDropdown
+            icon={<Users className="size-5" />}
+            label="Team Size"
+            value={values.teamSize}
+            placeholder="Select"
+            options={teamOptions}
+            onSelect={(value) => set("teamSize", value)}
+          />
         </div>
       </div>
 

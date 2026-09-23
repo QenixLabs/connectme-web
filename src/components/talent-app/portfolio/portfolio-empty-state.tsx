@@ -1,5 +1,3 @@
-import { cn } from "@/lib/utils";
-
 export function PortfolioEmptyState({
   icon: Icon,
   title,
@@ -12,11 +10,11 @@ export function PortfolioEmptyState({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border py-16 text-center">
-      <div className="grid h-14 w-14 place-items-center rounded-full bg-muted">
-        <Icon className="h-7 w-7 text-muted-foreground/50" />
+    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-10 text-center">
+      <div className="grid size-10 place-items-center rounded-full bg-muted">
+        <Icon className="size-5 text-muted-foreground/50" />
       </div>
-      <p className="mt-4 text-sm font-semibold">{title}</p>
+      <p className="mt-3 text-sm font-semibold">{title}</p>
       <p className="mt-1 max-w-xs text-xs text-muted-foreground">
         {description}
       </p>

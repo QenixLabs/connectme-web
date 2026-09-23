@@ -18,7 +18,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CampaignWizardInput } from "@/lib/validations/campaign-wizard.schema";
-import { useTaskDocument, useUploadTaskDocument, useDeleteTaskDocument } from "@/hooks/use-campaign-task";
+import { useTaskDocument, useUploadTaskDocument, useDeleteTaskDocument, TASK_DOCUMENT_ACCEPT, TASK_DOCUMENT_MAX_BYTES, isAllowedTaskDocument, formatTaskFileSize, taskDocumentKindLabel } from "@/hooks/use-campaign-task";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { ClipboardList, Upload, FileText, X, Shield } from "lucide-react";
 
@@ -56,17 +57,50 @@ export function TaskConfigSection({
   const { control, watch, setValue } = useFormContext<CampaignWizardInput>();
   const hasTask = watch("task") !== undefined;
   const [pendingDoc, setPendingDoc] = useState<File | null>(null);
+  const [docError, setDocError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: taskDocument } = useTaskDocument(campaignId ?? "");
+  const effectiveCampaignId = campaignId ?? undefined;
+  const { data: taskDocument } = useTaskDocument(effectiveCampaignId ?? "");
   const uploadDoc = useUploadTaskDocument();
   const deleteDoc = useDeleteTaskDocument();
-
-  const effectiveCampaignId = campaignId ?? undefined;
 
   const setPending = (file: File | null) => {
     setPendingDoc(file);
     onPendingDocChange?.(file);
+  };
+
+  const handlePickedFile = (file: File | undefined) => {
+    setDocError(null);
+    if (!file) return;
+    if (!isAllowedTaskDocument(file)) {
+      setDocError("Only PDF, Word, PowerPoint, Excel, text or image files are allowed.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+    if (file.size > TASK_DOCUMENT_MAX_BYTES) {
+      setDocError("File must be 50 MB or smaller.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+    // Campaign already saved → upload straight away so talent sees it.
+    // New campaign (no id yet) → keep it pending, uploaded on save.
+    if (effectiveCampaignId) {
+      uploadDoc.mutate(
+        { campaignId: effectiveCampaignId, file },
+        {
+          onSuccess: () => {
+            setPending(null);
+            toast.success("Task attachment uploaded");
+          },
+          onError: () =>
+            setDocError("Could not upload file. Please try again."),
+        },
+      );
+    } else {
+      setPending(file);
+    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   return (
@@ -212,9 +246,8 @@ export function TaskConfigSection({
             />
           </div>
 
-          {effectiveCampaignId ? (
-            <div className="space-y-2">
-              <FieldLabel>Reference Script (PDF)</FieldLabel>
+          <div className="space-y-2">
+              <FieldLabel>Task attachment (PDF, PPTX, DOCX…)</FieldLabel>
               {taskDocument ? (
                 <div className="flex items-center gap-3 rounded-xl border border-border bg-bg-surface-inset p-3">
                   <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent-teal-bg">
@@ -228,13 +261,26 @@ export function TaskConfigSection({
                       {taskDocument.name}
                     </p>
                     <p className="text-[10px] text-muted-foreground">
-                      {(taskDocument.size / 1024 / 1024).toFixed(1)} MB
+                      {taskDocumentKindLabel(taskDocument.name)} ·{" "}
+                      {formatTaskFileSize(taskDocument.size)}
                     </p>
                   </div>
                   <button
                     type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadDoc.isPending}
+                    className="shrink-0 rounded-lg px-2 py-1.5 text-[11px] font-semibold text-accent-teal transition-colors hover:bg-accent-teal/10 disabled:opacity-50"
+                  >
+                    {uploadDoc.isPending ? "Uploading…" : "Replace"}
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Remove task attachment"
                     onClick={() => {
-                      if (confirm("Remove reference document?")) {
+                      if (
+                        effectiveCampaignId &&
+                        confirm("Remove task attachment?")
+                      ) {
                         deleteDoc.mutate(effectiveCampaignId);
                       }
                     }}
@@ -257,12 +303,16 @@ export function TaskConfigSection({
                       {pendingDoc.name}
                     </p>
                   <p className="text-[10px] text-muted-foreground">
-                      {(pendingDoc.size / 1024 / 1024).toFixed(1)} MB — will
-                      upload on save
+                      {taskDocumentKindLabel(pendingDoc.name)} ·{" "}
+                      {formatTaskFileSize(pendingDoc.size)}
+                      {effectiveCampaignId
+                        ? " — uploading…"
+                        : " — will upload on save"}
                     </p>
                   </div>
                   <button
                     type="button"
+                    aria-label="Remove selected file"
                     onClick={() => {
                       setPending(null);
                       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -276,28 +326,31 @@ export function TaskConfigSection({
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex w-full items-center gap-2 rounded-xl border-2 border-dashed border-border bg-bg-surface-inset p-3 text-sm text-muted-foreground transition-colors hover:border-accent-teal/50 hover:bg-accent-teal/5"
+                  disabled={uploadDoc.isPending}
+                  className="flex w-full items-center gap-2 rounded-xl border-2 border-dashed border-border bg-bg-surface-inset p-3 text-sm text-muted-foreground transition-colors hover:border-accent-teal/50 hover:bg-accent-teal/5 disabled:opacity-50"
                 >
                   <Upload className="w-4 h-4" strokeWidth={1.5} />
-                  Attach a PDF script or reference material
+                  {uploadDoc.isPending
+                    ? "Uploading attachment…"
+                    : "Attach a brief, script, PPTX or reference file"}
                 </button>
+              )}
+              {docError ? (
+                <p className="text-xs font-medium text-destructive">{docError}</p>
+              ) : (
+                <p className="text-[11px] text-muted-foreground/70">
+                  PDF, Word, PowerPoint, Excel, text or image · up to 50 MB.
+                  Shortlisted talent will see this file with the task.
+                </p>
               )}
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="application/pdf"
+                accept={TASK_DOCUMENT_ACCEPT}
                 className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) setPending(file);
-                }}
+                onChange={(e) => handlePickedFile(e.target.files?.[0])}
               />
             </div>
-          ) : (
-              <p className="text-xs text-muted-foreground/70">
-              Save campaign to enable file uploads.
-            </p>
-          )}
 
           <div className="border-t border-border pt-4">
             <div className="flex items-center justify-between">

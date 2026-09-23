@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  ArrowLeft,
   ArrowRight,
   BadgeCheck,
   BarChart3,
@@ -139,7 +138,6 @@ function RoleCard({
         </span>
       </span>
       {selected && <span className="select-check"><Check size={15} strokeWidth={3} /></span>}
-      <span className="role-arrow"><ArrowRight size={17} /></span>
       <span className="role-symbol">{recruiter ? <Search size={17} /> : <UsersRound size={17} />}</span>
       <span className="tag-list">
         {tags.map((tag) => <span className="tag" key={tag}>{tag}</span>)}
@@ -148,20 +146,17 @@ function RoleCard({
   );
 }
 
-function RoleScreen({ onBack }: { onBack: () => void }) {
+function RoleScreen() {
   const router = useRouter();
   const [selected, setSelected] = useState<Role>("recruiter");
 
   const handleContinue = () => {
-    router.push(`/auth?mode=signup&role=${selected}`);
+    router.push(selected === "talent" ? "/auth/talent/signup" : "/auth/recruiter/signup");
   };
 
   return (
     <main className="screen role-screen">
-      <header className="role-header">
-        <button className="icon-button" type="button" onClick={onBack} aria-label="Go back">
-          <ArrowLeft size={24} />
-        </button>
+      <header className="role-header flex items-center">
         <RootinLogo />
         <span className="h-10 w-10" />
       </header>
@@ -205,7 +200,7 @@ export function OnboardingFlow() {
       {step === "welcome" ? (
         <WelcomeScreen onContinue={() => setStep("role")} />
       ) : (
-        <RoleScreen onBack={() => setStep("welcome")} />
+        <RoleScreen />
       )}
     </div>
   );

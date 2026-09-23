@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import {
   Home,
   Image as ImageIcon,
@@ -101,13 +102,31 @@ export function TalentProfileView({
     () => toPortfolioItems(portfolioItems),
     [portfolioItems],
   );
+  const publicPortfolioItems = useMemo(() => {
+    const itemsById = new Map(portfolioItemsConverted.map((item) => [item.id, item]));
+    // The portfolio endpoint applies the ordered showcase IDs to each item.
+    // Prefer that current source over the older profile snapshot when present.
+    const configuredItems = portfolioItemsConverted.filter((item) => !!item.profileHighlightType);
+    if (configuredItems.length > 0) return configuredItems;
+
+    if (profile.portfolioHighlights?.length) {
+      return profile.portfolioHighlights
+        .map((item) => itemsById.get(item.id))
+        .filter((item): item is (typeof portfolioItemsConverted)[number] => !!item);
+    }
+
+    return [];
+  }, [portfolioItemsConverted, profile.portfolioHighlights]);
   const videoItems = useMemo(
-    () => portfolioItemsConverted.filter((i) => i.type !== "image"),
-    [portfolioItemsConverted],
+    () =>
+      publicPortfolioItems.filter(
+        (i) => i.type !== "image" && i.profileHighlightType !== "showreel",
+      ),
+    [publicPortfolioItems],
   );
   const imageItems = useMemo(
-    () => portfolioItemsConverted.filter((i) => i.type === "image"),
-    [portfolioItemsConverted],
+    () => publicPortfolioItems.filter((i) => i.type === "image"),
+    [publicPortfolioItems],
   );
 
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -186,8 +205,14 @@ export function TalentProfileView({
           <div className="space-y-3">
             <AboutSection bio={profile.about || ""} />
             <SkillsSection skills={skills} />
+            {(isOwner || publicPortfolioItems.length > 0) && (
+              <div className="flex items-center justify-between rounded-2xl bg-card px-4 py-3 shadow-[var(--shadow-card)]">
+                <h2 className="text-sm font-bold text-foreground">Portfolio Highlights</h2>
+                {isOwner && <Link href="/talent/portfolio/showcase" className="text-xs font-semibold text-brand hover:underline">Manage Profile Showcase</Link>}
+              </div>
+            )}
             <ShowreelPlayerCard
-              items={portfolioItemsConverted}
+              items={publicPortfolioItems}
               onOpenReel={handleOpenLightbox}
             />
             <HighlightRow
@@ -204,6 +229,12 @@ export function TalentProfileView({
               items={imageItems}
               onOpenReel={handleOpenLightbox}
             />
+            <Link
+              href={`/talent/${profile.username}/portfolio`}
+              className="block rounded-xl border border-border bg-card px-4 py-3 text-center text-sm font-semibold text-brand transition-colors hover:bg-secondary"
+            >
+              View Full Portfolio →
+            </Link>
             <AwardsSection data={awardItems} />
             <ReviewsSection data={reviewItems} />
           </div>
@@ -211,12 +242,30 @@ export function TalentProfileView({
 
         {activeTab === "portfolio" && (
           <div className="space-y-3">
-            <ShowReelSection items={portfolioItems} onOpenReel={handleOpenLightbox} />
+            {isOwner && (
+              <Link href="/talent/portfolio/showcase" className="block rounded-xl border border-border bg-card px-4 py-3 text-center text-sm font-semibold text-brand transition-colors hover:bg-secondary">
+                Manage Profile Showcase
+              </Link>
+            )}
+            <ShowReelSection
+              items={portfolioItems.filter((item) =>
+                publicPortfolioItems.some((highlight) => highlight.id === item.id),
+              )}
+              onOpenReel={handleOpenLightbox}
+            />
             <PortfolioSection
-              items={portfolioItems}
+              items={portfolioItems.filter((item) =>
+                publicPortfolioItems.some((highlight) => highlight.id === item.id),
+              )}
               username={profile.username}
               onOpenReel={handleOpenLightbox}
             />
+            <Link
+              href={`/talent/${profile.username}/portfolio`}
+              className="block rounded-xl border border-border bg-card px-4 py-3 text-center text-sm font-semibold text-brand transition-colors hover:bg-secondary"
+            >
+              View Full Portfolio →
+            </Link>
           </div>
         )}
 
@@ -272,7 +321,7 @@ export function TalentProfileView({
       {isOwner && <BottomBar navItems={navItems} iconOnly />}
 
       <MediaLightbox
-        items={portfolioItemsConverted}
+        items={publicPortfolioItems}
         initialItemId={lightboxItemId}
         open={lightboxOpen}
         onClose={() => setLightboxOpen(false)}

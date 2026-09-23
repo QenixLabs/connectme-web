@@ -1,14 +1,15 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 import { ArrowRight, BriefcaseBusiness, Search, Users } from "lucide-react";
-import { cn } from "@/lib/utils";
+import Link from "next/link";
 import { AuthLayout } from "@/components/layout/auth-layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { SignInForm } from "@/components/auth/signin-form";
 import { SignupWizard } from "@/components/auth/signup-wizard";
+import { RootInLogo } from "@/components/RootInLogo";
 
 type Mode = "signin" | "signup";
 
@@ -18,8 +19,26 @@ function UnifiedAuthContent() {
   const roleParam = searchParams.get("role");
   const roleLocked = roleParam === "recruiter" || roleParam === "talent";
   const initialRole = roleParam === "recruiter" ? "recruiter" : "talent";
-  const [mode, setMode] = useState<Mode>(initialMode);
   const recruiterSignup = initialMode === "signup" && initialRole === "recruiter";
+
+  if (initialMode === "signin") {
+    return (
+      <main className="onboarding-theme relative min-h-dvh overflow-hidden bg-[#F8FAFF] text-[#080B2B]">
+        <div className="pointer-events-none absolute -left-32 top-0 size-[22rem] rounded-full bg-[#EDEBFF]/70 blur-3xl" />
+        <div className="pointer-events-none absolute -right-40 bottom-0 size-[24rem] rounded-full bg-[#EAF4FF]/80 blur-3xl" />
+        <div className="relative mx-auto flex min-h-dvh w-full max-w-[430px] flex-col px-[18px] py-5 sm:px-6 sm:py-7">
+          <header className="flex items-center">
+            <Link href="/" aria-label="RootIn home" className="w-[104px]">
+              <RootInLogo />
+            </Link>
+          </header>
+          <div className="flex flex-1 flex-col justify-start py-4 sm:py-6">
+            <SignInForm />
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <AuthLayout showGlow wide={recruiterSignup}>
@@ -63,64 +82,24 @@ function UnifiedAuthContent() {
           </div>
         )}
 
-        <div className="mt-4 flex rounded-xl bg-muted/30 p-1 sm:mt-5">
-          {(["signin", "signup"] as const).map((m) => (
-            <button
-              key={m}
-              type="button"
-              onClick={() => setMode(m)}
-              className={cn(
-                "relative flex-1 rounded-lg py-2.5 text-sm font-medium whitespace-nowrap transition-colors duration-200",
-                mode === m
-                  ? "text-foreground"
-                  : "text-muted-foreground hover:text-foreground/80",
-              )}
-            >
-              {mode !== m && (m === "signin" ? "Sign In" : "Create Account")}
-              {mode === m && (
-                <>
-                  <motion.div
-                    layoutId="auth-tab-indicator"
-                    className="absolute inset-0 rounded-lg bg-card shadow-sm"
-                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                  />
-                  <span className="relative z-10">{m === "signin" ? "Sign In" : "Create Account"}</span>
-                </>
-              )}
-            </button>
-          ))}
-        </div>
-
         <Card className="mt-4 border-border/50 bg-card/80 backdrop-blur-sm sm:mt-5">
           <CardContent className="p-4 sm:p-6 lg:p-8">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={mode}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2 }}
-              >
-                {mode === "signin" ? <SignInForm /> : <SignupWizard initialRole={initialRole} roleLocked={roleLocked} />}
-              </motion.div>
-            </AnimatePresence>
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <SignupWizard initialRole={initialRole} roleLocked={roleLocked} />
+            </motion.div>
           </CardContent>
         </Card>
 
-        {mode === "signin" && (
-          <div className="mt-4 border-t border-border/40 pt-4">
-            <p className="mb-4 text-center text-xs font-light text-muted-foreground">
-              New to RootIn?
-            </p>
-            <button
-              type="button"
-              onClick={() => setMode("signup")}
-              className="flex h-11 w-full items-center justify-center rounded-xl border border-border bg-card text-sm font-medium text-muted-foreground transition-all duration-200 hover:border-primary/30 hover:bg-primary/10 hover:text-foreground active:scale-[0.98]"
-            >
-              Create your account
-            </button>
-          </div>
-        )}
+        <p className="mt-4 text-center text-xs font-light text-muted-foreground">
+          Already have an account?{" "}
+          <Link href="/auth/login" className="font-semibold text-primary hover:underline">
+            Sign in
+          </Link>
+        </p>
 
         <p className="mt-4 text-center text-xs font-light text-muted-foreground">
           By using RootIn you agree to our{" "}

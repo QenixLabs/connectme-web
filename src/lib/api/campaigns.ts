@@ -48,6 +48,7 @@ export interface Campaign {
   questions?: CampaignQuestion[];
   scheduled_publish_at?: string;
   auto_close_on_deadline?: boolean;
+  audition_message?: string;
   task?: {
     is_enabled?: boolean;
     title?: string;
@@ -56,7 +57,13 @@ export interface Campaign {
     deadline_days?: number;
     nda_enabled?: boolean;
     nda_text?: string;
-    document?: { url: string; name: string; mime_type: string; size: number; uploaded_at: string };
+    document?: {
+      url: string;
+      name: string;
+      mime_type: string;
+      size: number;
+      uploaded_at: string;
+    };
   };
   my_application?: MyApplication | null;
   is_bookmarked?: boolean;
@@ -193,7 +200,12 @@ export interface EnrichedApplication {
   _id: string;
   campaign_id: string;
   talent_id:
-    | { _id: string; email: string; full_legal_name?: string; username?: string }
+    | {
+        _id: string;
+        email: string;
+        full_legal_name?: string;
+        username?: string;
+      }
     | string;
   status: "pending" | "accepted" | "rejected";
   message?: string;
@@ -292,13 +304,15 @@ export interface CampaignDemographics {
 export interface CampaignInvite {
   _id: string;
   campaign_id: string;
-  talent_id: {
-    _id: string;
-    email: string;
-    full_legal_name: string;
-    username: string;
-    professions: string[];
-  } | string;
+  talent_id:
+    | {
+        _id: string;
+        email: string;
+        full_legal_name: string;
+        username: string;
+        professions: string[];
+      }
+    | string;
   status: "pending" | "accepted" | "declined";
   message?: string;
   created_at: string;
@@ -336,25 +350,114 @@ export interface QueryRecruiterInvitesParams {
 }
 
 /* -------------------------------------------------------------------------- */
+/*                     CAMPAIGN → TALENT DISCOVERY (Talent tab)                */
+/* -------------------------------------------------------------------------- */
+
+export interface MatchingTalent {
+  _id: string;
+  user_id: string;
+  username: string;
+  full_legal_name?: string;
+  professional_name?: string;
+  profile_photo?: string;
+  headline?: string;
+  location?: { country?: string; state?: string; city?: string };
+  professions?: string[];
+  specialties?: string[];
+  skills?: { name: string; proficiency: string; order: number }[] | string[];
+  languages?: { name: string; fluency: string }[] | string[];
+  gender?: string;
+  date_of_birth?: string;
+  years_of_experience?: number;
+  availability?: string;
+  is_verified?: boolean;
+  match_score: number;
+}
+
+export interface QueryMatchingTalentsParams {
+  search?: string;
+  minMatch?: number;
+  profession?: string;
+  location?: string;
+  location_city?: string;
+  gender?: string;
+  ageMin?: number;
+  ageMax?: number;
+  skills?: string;
+  languages?: string;
+  availability?: string;
+  verified_only?: boolean;
+  page?: number;
+  limit?: number;
+  sort?: "match_desc" | "match_asc" | "newest" | "oldest" | "name_asc" | "name_desc" | "best_match";
+}
+
+export interface MatchingTalentsResponse {
+  data: MatchingTalent[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface BulkInvitePreview {
+  eligible: number;
+  already_excluded: number;
+  to_send: number;
+  min_match: number;
+}
+
+export interface BulkInviteByFilterPayload {
+  minMatch?: number;
+  filters?: {
+    search?: string;
+    profession?: string;
+    location?: string;
+    location_city?: string;
+    gender?: string;
+    ageMin?: number;
+    ageMax?: number;
+    skills?: string;
+    languages?: string;
+    availability?: string;
+    verified_only?: boolean;
+  };
+  talent_ids?: string[];
+  message?: string;
+  limit?: number;
+}
+
+export interface BulkInviteByFilterResult {
+  requested: number;
+  invited: number;
+  skipped: number;
+  failed?: Array<{ talent_id: string; reason: string }>;
+}
+
+/* -------------------------------------------------------------------------- */
 /*                            CAMPAIGN TEAM                                   */
 /* -------------------------------------------------------------------------- */
 
 export interface CampaignTeamMember {
   _id: string;
   campaign_id: string;
-  user_id: {
-    _id: string;
-    email: string;
-    full_legal_name: string;
-    username: string;
-  } | string;
+  user_id:
+    | {
+        _id: string;
+        email: string;
+        full_legal_name: string;
+        username: string;
+      }
+    | string;
   role: "owner" | "editor" | "viewer";
-  invited_by: {
-    _id: string;
-    email: string;
-    full_legal_name: string;
-    username: string;
-  } | string;
+  invited_by:
+    | {
+        _id: string;
+        email: string;
+        full_legal_name: string;
+        username: string;
+      }
+    | string;
   status: "active" | "pending" | "removed";
   created_at: string;
   updated_at: string;
@@ -443,13 +546,20 @@ export const campaignsApi = {
   getRecruiterCampaigns: async (params: RecruiterCampaignParams = {}) => {
     const response = await apiClient.get("/campaigns", { params });
     const raw = response.data;
-    if (raw && typeof raw === "object" && "data" in raw && "nextCursor" in raw) {
+    if (
+      raw &&
+      typeof raw === "object" &&
+      "data" in raw &&
+      "nextCursor" in raw
+    ) {
       return raw as CursorPaginatedResponse;
     }
     return { data: normalizeCampaignList(raw), nextCursor: null };
   },
 
-  getMyApplications: async (params: Omit<QueryCampaignsParams, "applied"> = {}) => {
+  getMyApplications: async (
+    params: Omit<QueryCampaignsParams, "applied"> = {},
+  ) => {
     const response = await apiClient.get("/campaigns", {
       params: { ...params, applied: "true" },
     });
@@ -612,6 +722,54 @@ export const campaignsApi = {
     return response.data as CampaignInvite;
   },
 
+  getMatchingTalents: async (
+    campaignId: string,
+    params: QueryMatchingTalentsParams = {},
+  ) => {
+    const response = await apiClient.get(
+      `/campaigns/${campaignId}/matching-talents`,
+      { params },
+    );
+    return response.data as MatchingTalentsResponse;
+  },
+
+  previewBulkInvite: async (
+    campaignId: string,
+    params: QueryMatchingTalentsParams = {},
+  ) => {
+    const response = await apiClient.get(
+      `/campaigns/${campaignId}/invitations/preview`,
+      { params },
+    );
+    return response.data as BulkInvitePreview;
+  },
+
+  bulkInviteByFilter: async (
+    campaignId: string,
+    payload: BulkInviteByFilterPayload,
+  ) => {
+    const response = await apiClient.post(
+      `/campaigns/${campaignId}/invitations/bulk`,
+      payload,
+    );
+    return response.data as BulkInviteByFilterResult;
+  },
+
+  bulkInviteTalents: async (
+    campaignId: string,
+    talentIds: string[],
+    message?: string,
+  ) => {
+    const response = await apiClient.post(`/campaigns/${campaignId}/bulk-invite`, {
+      talent_ids: talentIds,
+      ...(message ? { message } : {}),
+    });
+    return response.data as {
+      successful: string[];
+      failed: Array<{ talent_id: string; reason: string }>;
+    };
+  },
+
   getRecruiterInvites: async (params: QueryRecruiterInvitesParams = {}) => {
     const response = await apiClient.get("/campaigns/invites", { params });
     return response.data as RecruiterInvite[];
@@ -632,6 +790,34 @@ export const campaignsApi = {
     return response.data as CampaignTeamResponse;
   },
 
+  inviteCampaignTeamMember: async (
+    campaignId: string,
+    email: string,
+    role: CampaignTeamMember["role"],
+  ) => {
+    const response = await apiClient.post(
+      `/campaigns/${campaignId}/team/invite`,
+      { email, role },
+    );
+    return response.data as CampaignTeamMember;
+  },
+
+  updateCampaignTeamMemberRole: async (
+    campaignId: string,
+    memberId: string,
+    role: CampaignTeamMember["role"],
+  ) => {
+    const response = await apiClient.patch(
+      `/campaigns/${campaignId}/team/${memberId}/role`,
+      { role },
+    );
+    return response.data as CampaignTeamMember;
+  },
+
+  removeCampaignTeamMember: async (campaignId: string, memberId: string) => {
+    await apiClient.delete(`/campaigns/${campaignId}/team/${memberId}`);
+  },
+
   /* ---- Campaign Submissions (Recruiter) ---- */
 
   getCampaignSubmissions: async (
@@ -645,11 +831,33 @@ export const campaignsApi = {
     return response.data as CampaignSubmissionsResponse;
   },
 
+  reviewTaskSubmission: async (
+    campaignId: string,
+    submissionId: string,
+    payload: { recruiter_notes?: string; recruiter_rating?: number },
+  ) => {
+    const response = await apiClient.patch(
+      `/campaigns/${campaignId}/task/submissions/${submissionId}`,
+      payload,
+    );
+    return response.data;
+  },
+
   /* ---- Campaign Actions (Recruiter) ---- */
 
   closeCampaign: async (campaignId: string) => {
     const response = await apiClient.post(`/campaigns/${campaignId}/close`);
     return response.data as Campaign;
+  },
+
+  reopenCampaign: async (campaignId: string) => {
+    const response = await apiClient.post(`/campaigns/${campaignId}/reopen`);
+    return response.data as Campaign;
+  },
+
+  deleteCampaign: async (campaignId: string) => {
+    const response = await apiClient.delete(`/campaigns/${campaignId}`);
+    return response.data as { message: string };
   },
 
   cloneCampaign: async (campaignId: string) => {
@@ -719,7 +927,10 @@ export const campaignsApi = {
   updateCampaign: async (
     id: string,
     payload: Partial<
-      Omit<Campaign, "_id" | "recruiter_id" | "applications_count" | "created_at">
+      Omit<
+        Campaign,
+        "_id" | "recruiter_id" | "applications_count" | "created_at"
+      >
     >,
   ) => {
     const response = await apiClient.patch(`/campaigns/${id}`, payload);
@@ -729,9 +940,13 @@ export const campaignsApi = {
   /* ---- Campaign Media ---- */
 
   uploadCampaignMedia: async (campaignId: string, formData: FormData) => {
-    const response = await apiClient.post(`/campaigns/${campaignId}/media`, formData, {
-      headers: { "Content-Type": undefined },
-    });
+    const response = await apiClient.post(
+      `/campaigns/${campaignId}/media`,
+      formData,
+      {
+        headers: { "Content-Type": undefined },
+      },
+    );
     return response.data as { url: string };
   },
 
@@ -754,7 +969,10 @@ export const campaignsApi = {
       nda_text?: string;
     },
   ) => {
-    const response = await apiClient.put(`/campaigns/${campaignId}/task`, payload);
+    const response = await apiClient.put(
+      `/campaigns/${campaignId}/task`,
+      payload,
+    );
     return response.data;
   },
 
@@ -764,21 +982,34 @@ export const campaignsApi = {
   },
 
   getTaskDocument: async (campaignId: string) => {
-    const response = await apiClient.get(`/campaigns/${campaignId}/task/document`);
-    return response.data as { url: string; name: string; mime_type: string; size: number } | null;
+    const response = await apiClient.get(
+      `/campaigns/${campaignId}/task/document`,
+    );
+    return response.data as {
+      url: string;
+      name: string;
+      mime_type: string;
+      size: number;
+    } | null;
   },
 
   uploadTaskDocument: async (campaignId: string, file: File) => {
     const formData = new FormData();
     formData.append("file", file);
-    const response = await apiClient.post(`/campaigns/${campaignId}/task/document`, formData, {
-      headers: { "Content-Type": undefined },
-    });
+    const response = await apiClient.post(
+      `/campaigns/${campaignId}/task/document`,
+      formData,
+      {
+        headers: { "Content-Type": undefined },
+      },
+    );
     return response.data as { url: string };
   },
 
   deleteTaskDocument: async (campaignId: string) => {
-    const response = await apiClient.delete(`/campaigns/${campaignId}/task/document`);
+    const response = await apiClient.delete(
+      `/campaigns/${campaignId}/task/document`,
+    );
     return response.data as { message: string };
   },
 
@@ -786,11 +1017,6 @@ export const campaignsApi = {
 
   publishCampaign: async (campaignId: string) => {
     const response = await apiClient.post(`/campaigns/${campaignId}/publish`);
-    return response.data as Campaign;
-  },
-
-  reopenCampaign: async (campaignId: string) => {
-    const response = await apiClient.post(`/campaigns/${campaignId}/reopen`);
     return response.data as Campaign;
   },
 };

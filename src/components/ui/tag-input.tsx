@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, type KeyboardEvent } from "react";
+import { useState, useRef, type ComponentProps, type KeyboardEvent } from "react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -20,7 +20,8 @@ export function TagInput({
   placeholder = "Add...",
   maxTags,
   className,
-}: TagInputProps) {
+  ...props
+}: TagInputProps & Omit<ComponentProps<"div">, keyof TagInputProps>) {
   const [input, setInput] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -54,7 +55,13 @@ export function TagInput({
 
   return (
     <div className={cn("relative", className)}>
-      <div className="flex flex-wrap gap-1.5 rounded-xl border border-input bg-transparent px-3 py-2 min-h-[42px] focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50 transition-[color,box-shadow]">
+      <div
+        {...props}
+        className={cn(
+          "flex min-h-[42px] flex-wrap gap-1.5 rounded-xl border border-input bg-transparent px-3 py-2 transition-[color,box-shadow] focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20",
+          className,
+        )}
+      >
         {value.map((tag) => (
           <span
             key={tag}

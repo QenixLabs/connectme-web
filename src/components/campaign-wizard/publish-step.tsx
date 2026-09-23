@@ -1,10 +1,11 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { FormField, FormItem } from "@/components/ui/form";
 import { CampaignWizardInput } from "@/lib/validations/campaign-wizard.schema";
 import { cn } from "@/lib/utils";
-import { Lock, Globe, UserPlus, Calendar, Clock, Tag, ClipboardList } from "lucide-react";
+import { Lock, Globe, UserPlus, Calendar, Clock, Tag, ClipboardList, Image as ImageIcon } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 const OPTIONS = [
@@ -76,7 +77,13 @@ function RevRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function PublishStep() {
+export function PublishStep({
+  mediaFile,
+  existingCoverUrl,
+}: {
+  mediaFile?: File | null;
+  existingCoverUrl?: string | null;
+} = {}) {
   const { control, watch, setValue } =
     useFormContext<CampaignWizardInput>();
   const publishOption = watch("publishOption");
@@ -106,9 +113,37 @@ export function PublishStep() {
       ? `\u20B9${values.budget_range?.min ?? 0} \u2013 \u20B9${values.budget_range?.max ?? 0}`
       : "Not specified";
 
+  const [mediaPreviewUrl, setMediaPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!mediaFile) {
+      setMediaPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(mediaFile);
+    setMediaPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [mediaFile]);
+
+  const coverUrl = mediaPreviewUrl ?? existingCoverUrl ?? null;
+
   return (
     <div className="flex flex-col gap-4">
       <SectionLabel>Review your campaign</SectionLabel>
+
+      {coverUrl && (
+        <RevCard title="Cover media" icon={ImageIcon}>
+          <div className="py-2">
+            <div className="relative aspect-square w-full max-w-[320px] overflow-hidden rounded-xl border border-border">
+              <img
+                src={coverUrl}
+                alt="Campaign cover preview"
+                className="h-full w-full object-cover"
+              />
+            </div>
+          </div>
+        </RevCard>
+      )}
 
       <div className="space-y-3">
         <RevCard title="Basic Info" icon={ClipboardList}>

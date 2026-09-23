@@ -21,6 +21,9 @@ export interface SectionVisibility {
 export interface UpdateTalentProfilePayload {
   username?: string;
   full_legal_name?: string;
+  professional_name?: string;
+  willing_to_travel?: string;
+  preferred_cities?: string[];
   date_of_birth?: string;
   gender?: string;
   profile_photo?: string;
@@ -56,6 +59,9 @@ export interface TalentProfile {
   user_id: string;
   username: string;
   full_legal_name?: string;
+  professional_name?: string;
+  willing_to_travel?: string;
+  preferred_cities?: string[];
   date_of_birth?: string;
   gender?: string;
   profile_photo?: string;
@@ -101,6 +107,7 @@ export interface TalentProfile {
   response_rate?: number;
   response_time?: string;
   is_verified?: boolean;
+  portfolioHighlights?: PortfolioApiResponse[];
   created_at: string;
   updated_at: string;
 }
@@ -164,14 +171,19 @@ export function isPrivateTalentProfileResponse(
 
 export interface PortfolioApiResponse {
   id: string;
-  type: "image" | "video" | "youtube" | "instagram";
+  type: "image" | "video" | "youtube" | "instagram" | "link" | "document";
   category: "work" | "personal" | "intro";
   url: string;
   thumbnail_url?: string;
+  file_name?: string;
+  file_size?: number;
+  mime_type?: string;
+  duration?: number;
   caption?: string;
   title?: string;
   description?: string;
   is_pinned?: boolean;
+  profile_highlight_type?: "showreel" | "video" | "image";
   embed_url?: string;
   ai_moderation_status?: "pending" | "approved" | "flagged";
   view_count?: number;
@@ -179,6 +191,17 @@ export interface PortfolioApiResponse {
   is_liked_by_me?: boolean;
   created_at?: string;
   updated_at?: string;
+}
+
+export interface ProfileHighlightsResponse {
+  showreel_id: string | null;
+  video_ids: string[];
+  image_ids: string[];
+}
+
+export interface MyPortfolioResponse {
+  items: PortfolioApiResponse[];
+  profile_highlights?: ProfileHighlightsResponse;
 }
 
 export interface PortfolioStatsResponse {
@@ -332,8 +355,37 @@ export const talentApi = {
 
   getPortfolio: async (username: string) => {
     const response = await apiClient.get(`/talent/portfolio/${username}`);
-    const body = response.data as { profile: unknown; items: PortfolioApiResponse[] };
-    return body.items;
+    const body = response.data as {
+      profile: unknown;
+      items: PortfolioApiResponse[];
+      profile_highlights?: ProfileHighlightsResponse;
+    };
+    const highlights = body.profile_highlights;
+    if (!highlights) return body.items;
+
+    const highlightTypes = new Map<string, PortfolioApiResponse["profile_highlight_type"]>();
+    if (highlights.showreel_id) highlightTypes.set(highlights.showreel_id, "showreel");
+    highlights.video_ids.forEach((id) => highlightTypes.set(id, "video"));
+    highlights.image_ids.forEach((id) => highlightTypes.set(id, "image"));
+
+    const itemsById = new Map(body.items.map((item) => [item.id, item]));
+    const orderedHighlightIds = [
+      ...(highlights.showreel_id ? [highlights.showreel_id] : []),
+      ...highlights.video_ids,
+      ...highlights.image_ids,
+    ];
+    const highlighted: PortfolioApiResponse[] = orderedHighlightIds.flatMap((id) => {
+      const item = itemsById.get(id);
+      return item
+        ? [{ ...item, profile_highlight_type: highlightTypes.get(id) }]
+        : [];
+    });
+    const highlightedIds = new Set(highlighted.map((item) => item.id));
+
+    return [
+      ...highlighted,
+      ...body.items.filter((item) => !highlightedIds.has(item.id)),
+    ];
   },
 
   getCredits: async (username: string) => {
@@ -357,6 +409,16 @@ export const talentApi = {
     return body.items;
   },
 
+  getMyPortfolioCollection: async () => {
+    const response = await apiClient.get("/talent/portfolio");
+    return response.data as MyPortfolioResponse;
+  },
+
+  updateProfileShowcase: async (data: ProfileHighlightsResponse) => {
+    const response = await apiClient.patch("/talent/portfolio/showcase", data);
+    return response.data as { profile_highlights: ProfileHighlightsResponse };
+  },
+
   getPortfolioStats: async () => {
     const response = await apiClient.get("/talent/portfolio/stats");
     return response.data as PortfolioStatsResponse;
@@ -374,6 +436,28 @@ export const talentApi = {
     return response.data as PortfolioApiResponse;
   },
 
+  uploadPortfolioDocument: async (
+    file: File,
+    data?: {
+      caption?: string;
+      title?: string;
+      description?: string;
+      category?: string;
+    },
+  ) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    if (data) {
+      Object.entries(data).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) formData.append(key, String(value));
+      });
+    }
+    const response = await apiClient.post("/talent/portfolio/upload/document", formData, {
+      headers: { "Content-Type": undefined },
+    });
+    return response.data as PortfolioApiResponse;
+  },
+
   updatePortfolioItem: async (
     itemId: string,
     data: {
@@ -382,6 +466,8 @@ export const talentApi = {
       description?: string;
       category?: string;
       is_pinned?: boolean;
+      profile_highlight_type?: "showreel" | "video" | "image" | null;
+      replace_profile_highlight?: boolean;
     },
   ) => {
     const response = await apiClient.patch(
@@ -447,6 +533,7 @@ export const talentApi = {
       description?: string;
       category?: string;
       is_pinned?: boolean;
+      duration?: number;
     },
   ) => {
     const formData = new FormData();

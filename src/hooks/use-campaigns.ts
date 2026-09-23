@@ -1,4 +1,9 @@
-import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+} from "@tanstack/react-query";
 import { toast } from "sonner";
 import { campaignsApi } from "@/lib/api/campaigns";
 import type {
@@ -8,6 +13,8 @@ import type {
   QuerySubmissionsParams,
   RecruiterCampaignParams,
   QueryRecruiterInvitesParams,
+  QueryMatchingTalentsParams,
+  BulkInviteByFilterPayload,
 } from "@/lib/api/campaigns";
 
 export const campaignKeys = {
@@ -19,12 +26,13 @@ export const campaignKeys = {
     [...campaignKeys.all, "recruiter-list", params] as const,
   details: () => [...campaignKeys.all, "detail"] as const,
   detail: (id: string) => [...campaignKeys.details(), id] as const,
-  talentView: (id: string) =>
-    [...campaignKeys.all, "talent-view", id] as const,
+  talentView: (id: string) => [...campaignKeys.all, "talent-view", id] as const,
   bookmarks: () => [...campaignKeys.all, "bookmarks"] as const,
   recommendations: (limit: number) =>
     [...campaignKeys.all, "recommendations", limit] as const,
   applications: () => [...campaignKeys.all, "applications"] as const,
+  applicationList: (params: Omit<QueryCampaignsParams, "applied"> = {}) =>
+    [...campaignKeys.applications(), params] as const,
   campaignApplications: (campaignId: string, params?: QueryApplicationParams) =>
     [...campaignKeys.all, "campaign-applications", campaignId, params] as const,
   analytics: (campaignId: string, params?: CampaignAnalyticsParams) =>
@@ -39,9 +47,16 @@ export const campaignKeys = {
     [...campaignKeys.all, "team", campaignId] as const,
   submissions: (campaignId: string, params?: QuerySubmissionsParams) =>
     [...campaignKeys.all, "submissions", campaignId, params] as const,
+  matchingTalents: (campaignId: string, params?: QueryMatchingTalentsParams) =>
+    [...campaignKeys.all, "matching-talents", campaignId, params] as const,
+  bulkInvitePreview: (campaignId: string, params?: QueryMatchingTalentsParams) =>
+    [...campaignKeys.all, "bulk-invite-preview", campaignId, params] as const,
 };
 
-export function useCampaigns(params: QueryCampaignsParams = {}, enabled = true) {
+export function useCampaigns(
+  params: QueryCampaignsParams = {},
+  enabled = true,
+) {
   return useQuery({
     queryKey: campaignKeys.list(params),
     queryFn: () => campaignsApi.getCampaigns(params),
@@ -62,14 +77,19 @@ export function useRecruiterCampaigns(params: RecruiterCampaignParams = {}) {
 
 export function useMyApplications(
   params: Omit<QueryCampaignsParams, "applied"> = {},
+  enabled = true,
 ) {
   return useQuery({
-    queryKey: campaignKeys.applications(),
+    queryKey: campaignKeys.applicationList(params),
     queryFn: () => campaignsApi.getMyApplications(params),
+    enabled,
   });
 }
 
-export function useCampaignCount(params: QueryCampaignsParams = {}, enabled = true) {
+export function useCampaignCount(
+  params: QueryCampaignsParams = {},
+  enabled = true,
+) {
   return useQuery({
     queryKey: [...campaignKeys.list(params), "count"],
     queryFn: () => campaignsApi.getCampaignCount(params),
@@ -124,16 +144,21 @@ export function useBookmarkCampaign() {
         : campaignsApi.bookmarkCampaign(id),
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: campaignKeys.bookmarks() });
-      queryClient.invalidateQueries({ queryKey: campaignKeys.detail(variables.id) });
+      queryClient.invalidateQueries({
+        queryKey: campaignKeys.detail(variables.id),
+      });
       queryClient.invalidateQueries({ queryKey: campaignKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: [...campaignKeys.all, "recommendations"] });
+      queryClient.invalidateQueries({
+        queryKey: [...campaignKeys.all, "recommendations"],
+      });
 
       if (data?.bookmarked) {
         toast.success("Job saved", {
           action: {
             label: "Click here to view all saved jobs",
             onClick: () => {
-              window.location.href = "/talent/opportunities?tab=All&bookmarked=true";
+              window.location.href =
+                "/talent/opportunities?tab=All&bookmarked=true";
             },
           },
         });
@@ -151,7 +176,10 @@ export function useApplyToCampaign() {
       payload,
     }: {
       id: string;
-      payload?: { message?: string; answers?: { question_id: string; answer: string }[] };
+      payload?: {
+        message?: string;
+        answers?: { question_id: string; answer: string }[];
+      };
     }) => campaignsApi.applyToCampaign(id, payload),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
@@ -161,7 +189,8 @@ export function useApplyToCampaign() {
     },
     onError: (error: unknown) => {
       const err = error as { response?: { data?: { message?: string } } };
-      const message = err.response?.data?.message || "Failed to apply. Please try again.";
+      const message =
+        err.response?.data?.message || "Failed to apply. Please try again.";
       toast.error(message);
     },
   });
@@ -171,7 +200,8 @@ export function useWithdrawApplication() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id }: { id: string }) => campaignsApi.withdrawApplication(id),
+    mutationFn: ({ id }: { id: string }) =>
+      campaignsApi.withdrawApplication(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: campaignKeys.applications() });
       queryClient.invalidateQueries({ queryKey: campaignKeys.lists() });
@@ -204,7 +234,8 @@ export function useBulkUpdateApplications() {
       campaignId: string;
       applicationIds: string[];
       status: "pending" | "accepted" | "rejected";
-    }) => campaignsApi.bulkUpdateApplications(campaignId, applicationIds, status),
+    }) =>
+      campaignsApi.bulkUpdateApplications(campaignId, applicationIds, status),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: campaignKeys.campaignApplications(variables.campaignId),
@@ -265,7 +296,13 @@ export function useUpsertApplicantNote() {
       applicationId: string;
       noteText?: string;
       rating?: number;
-    }) => campaignsApi.upsertApplicantNote(campaignId, applicationId, noteText, rating),
+    }) =>
+      campaignsApi.upsertApplicantNote(
+        campaignId,
+        applicationId,
+        noteText,
+        rating,
+      ),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: campaignKeys.campaignApplications(variables.campaignId),
@@ -320,7 +357,8 @@ export function useCancelCampaignInvite() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (inviteId: string) => campaignsApi.cancelCampaignInvite(inviteId),
+    mutationFn: (inviteId: string) =>
+      campaignsApi.cancelCampaignInvite(inviteId),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: [...campaignKeys.all, "recruiter-invites"],
@@ -330,7 +368,8 @@ export function useCancelCampaignInvite() {
     onError: (error: unknown) => {
       const err = error as { response?: { data?: { message?: string } } };
       const message =
-        err.response?.data?.message || "Failed to cancel invitation. Please try again.";
+        err.response?.data?.message ||
+        "Failed to cancel invitation. Please try again.";
       toast.error(message);
     },
   });
@@ -351,7 +390,8 @@ export function useSendCampaignInviteReminder() {
     onError: (error: unknown) => {
       const err = error as { response?: { data?: { message?: string } } };
       const message =
-        err.response?.data?.message || "Failed to send reminder. Please try again.";
+        err.response?.data?.message ||
+        "Failed to send reminder. Please try again.";
       toast.error(message);
     },
   });
@@ -364,6 +404,70 @@ export function useCampaignTeam(campaignId: string) {
     queryKey: campaignKeys.team(campaignId),
     queryFn: () => campaignsApi.getCampaignTeam(campaignId),
     enabled: !!campaignId,
+  });
+}
+
+export function useInviteCampaignTeamMember() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      campaignId,
+      email,
+      role,
+    }: {
+      campaignId: string;
+      email: string;
+      role: "editor" | "viewer";
+    }) => campaignsApi.inviteCampaignTeamMember(campaignId, email, role),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: campaignKeys.team(variables.campaignId),
+      });
+      toast.success("Team member added");
+    },
+    onError: () => toast.error("Could not add team member"),
+  });
+}
+
+export function useUpdateCampaignTeamMemberRole() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      campaignId,
+      memberId,
+      role,
+    }: {
+      campaignId: string;
+      memberId: string;
+      role: "editor" | "viewer";
+    }) => campaignsApi.updateCampaignTeamMemberRole(campaignId, memberId, role),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: campaignKeys.team(variables.campaignId),
+      });
+      toast.success("Team role updated");
+    },
+    onError: () => toast.error("Could not update team role"),
+  });
+}
+
+export function useRemoveCampaignTeamMember() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      campaignId,
+      memberId,
+    }: {
+      campaignId: string;
+      memberId: string;
+    }) => campaignsApi.removeCampaignTeamMember(campaignId, memberId),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: campaignKeys.team(variables.campaignId),
+      });
+      toast.success("Team member removed");
+    },
+    onError: () => toast.error("Could not remove team member"),
   });
 }
 
@@ -380,6 +484,57 @@ export function useCampaignSubmissions(
   });
 }
 
+export function useReviewTaskSubmission() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      campaignId,
+      submissionId,
+      recruiter_notes,
+      recruiter_rating,
+    }: {
+      campaignId: string;
+      submissionId: string;
+      recruiter_notes?: string;
+      recruiter_rating?: number;
+    }) =>
+      campaignsApi.reviewTaskSubmission(campaignId, submissionId, {
+        recruiter_notes,
+        recruiter_rating,
+      }),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: campaignKeys.submissions(variables.campaignId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: campaignKeys.campaignApplications(variables.campaignId),
+      });
+    },
+  });
+}
+
+/* ---- Campaign Task ---- */
+
+export function useUpsertCampaignTask() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      campaignId,
+      payload,
+    }: {
+      campaignId: string;
+      payload: Parameters<typeof campaignsApi.upsertTask>[1];
+    }) => campaignsApi.upsertTask(campaignId, payload),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: campaignKeys.detail(variables.campaignId),
+      });
+    },
+  });
+}
+
 /* ---- Campaign Actions ---- */
 
 export function useCloseCampaign() {
@@ -388,8 +543,57 @@ export function useCloseCampaign() {
   return useMutation({
     mutationFn: (campaignId: string) => campaignsApi.closeCampaign(campaignId),
     onSuccess: (_data, campaignId) => {
-      queryClient.invalidateQueries({ queryKey: campaignKeys.detail(campaignId) });
+      queryClient.invalidateQueries({
+        queryKey: campaignKeys.detail(campaignId),
+      });
       queryClient.invalidateQueries({ queryKey: campaignKeys.lists() });
+      toast.success("Campaign closed");
+    },
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(
+        err.response?.data?.message ?? "Failed to close campaign",
+      );
+    },
+  });
+}
+
+export function useReopenCampaign() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (campaignId: string) => campaignsApi.reopenCampaign(campaignId),
+    onSuccess: (_data, campaignId) => {
+      queryClient.invalidateQueries({
+        queryKey: campaignKeys.detail(campaignId),
+      });
+      queryClient.invalidateQueries({ queryKey: campaignKeys.lists() });
+      toast.success("Campaign reopened");
+    },
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(
+        err.response?.data?.message ?? "Failed to reopen campaign",
+      );
+    },
+  });
+}
+
+export function useDeleteCampaign() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (campaignId: string) =>
+      campaignsApi.deleteCampaign(campaignId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: campaignKeys.lists() });
+      toast.success("Campaign deleted");
+    },
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { message?: string } } };
+      toast.error(
+        err.response?.data?.message ?? "Failed to delete campaign",
+      );
     },
   });
 }
@@ -466,10 +670,89 @@ export function usePublishCampaign() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (campaignId: string) => campaignsApi.publishCampaign(campaignId),
+    mutationFn: (campaignId: string) =>
+      campaignsApi.publishCampaign(campaignId),
     onSuccess: (_data, campaignId) => {
-      queryClient.invalidateQueries({ queryKey: campaignKeys.detail(campaignId) });
+      queryClient.invalidateQueries({
+        queryKey: campaignKeys.detail(campaignId),
+      });
       queryClient.invalidateQueries({ queryKey: campaignKeys.lists() });
+    },
+  });
+}
+
+/* ---- Campaign → Talent discovery (Talent tab) ---- */
+
+export function useCampaignMatchingTalents(
+  campaignId: string,
+  params: QueryMatchingTalentsParams = {},
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: campaignKeys.matchingTalents(campaignId, params),
+    queryFn: () => campaignsApi.getMatchingTalents(campaignId, params),
+    enabled: !!campaignId && enabled,
+    placeholderData: (prev) => prev,
+    staleTime: 15 * 1000,
+  });
+}
+
+export function useBulkInvitePreview(
+  campaignId: string,
+  params: QueryMatchingTalentsParams = {},
+  enabled = false,
+) {
+  return useQuery({
+    queryKey: campaignKeys.bulkInvitePreview(campaignId, params),
+    queryFn: () => campaignsApi.previewBulkInvite(campaignId, params),
+    enabled: !!campaignId && enabled,
+    staleTime: 10 * 1000,
+  });
+}
+
+export function useInviteSingleTalent() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      campaignId,
+      talentId,
+      message,
+    }: {
+      campaignId: string;
+      talentId: string;
+      message?: string;
+    }) => campaignsApi.inviteTalent(campaignId, talentId, message),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: [...campaignKeys.all, "matching-talents", variables.campaignId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: campaignKeys.invites(variables.campaignId),
+      });
+    },
+  });
+}
+
+export function useBulkInviteMatchingTalent() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      campaignId,
+      payload,
+    }: {
+      campaignId: string;
+      payload: BulkInviteByFilterPayload;
+    }) => campaignsApi.bulkInviteByFilter(campaignId, payload),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: [...campaignKeys.all, "matching-talents", variables.campaignId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: campaignKeys.invites(variables.campaignId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: [...campaignKeys.all, "bulk-invite-preview", variables.campaignId],
+      });
     },
   });
 }

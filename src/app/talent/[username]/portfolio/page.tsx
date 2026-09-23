@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable @next/next/no-img-element */
+
 import { Suspense, useState, useMemo, useCallback } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useStore } from "zustand/react";
@@ -12,7 +14,6 @@ import {
   useUploadPortfolioYouTube,
   useUpdatePortfolioItem,
   useDeletePortfolioItem,
-  useTogglePortfolioFeatured,
   useReorderPortfolio,
   filterPortfolioItems,
 } from "@/hooks/use-portfolio";
@@ -23,7 +24,6 @@ import type {
 } from "@/lib/types/portfolio";
 import { PortfolioHeader } from "@/components/portfolio/PortfolioHeader";
 import { PortfolioTabs } from "@/components/portfolio/PortfolioTabs";
-import { FeaturedPortfolio } from "@/components/portfolio/FeaturedPortfolio";
 import { PortfolioGrid } from "@/components/portfolio/PortfolioGrid";
 import { PortfolioReelOverlay } from "@/components/portfolio/PortfolioReelOverlay";
 import { AddPortfolioModal } from "@/components/portfolio/AddPortfolioModal";
@@ -32,6 +32,16 @@ import { ReorderSheet } from "@/components/portfolio/ReorderSheet";
 import { ShareSheet } from "@/components/portfolio/ShareSheet";
 import { EmptyPortfolioState } from "@/components/portfolio/EmptyPortfolioState";
 import { PortfolioSkeleton } from "@/components/portfolio/PortfolioSkeleton";
+import { ProfileHighlightsStatus } from "@/components/talent-app/portfolio/profile-highlights-status";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 function PortfolioContent() {
   const params = useParams();
@@ -61,6 +71,7 @@ function PortfolioContent() {
   );
   const [addOpen, setAddOpen] = useState(false);
   const [editItem, setEditItem] = useState<PortfolioItem | null>(null);
+  const [showreelCandidate, setShowreelCandidate] = useState<PortfolioItem | null>(null);
   const [reorderOpen, setReorderOpen] = useState(false);
   const [shareItem, setShareItem] = useState<PortfolioItem | null>(null);
 
@@ -69,7 +80,6 @@ function PortfolioContent() {
   const uploadYouTube = useUploadPortfolioYouTube();
   const updateItem = useUpdatePortfolioItem();
   const deleteItem = useDeletePortfolioItem();
-  const toggleFeatured = useTogglePortfolioFeatured();
   const reorder = useReorderPortfolio();
 
   const isSubmitting =
@@ -78,7 +88,6 @@ function PortfolioContent() {
     uploadYouTube.isPending ||
     updateItem.isPending ||
     deleteItem.isPending ||
-    toggleFeatured.isPending ||
     reorder.isPending;
 
   const counts = useMemo(
@@ -91,17 +100,9 @@ function PortfolioContent() {
     [items],
   );
 
-  const featuredItem = useMemo(
-    () => sortedItems.find((i) => i.isFeatured) || null,
-    [sortedItems],
-  );
-
   const filteredItems = useMemo(() => {
-    const withoutFeatured = featuredItem
-      ? sortedItems.filter((i) => i.id !== featuredItem.id)
-      : sortedItems;
-    return filterPortfolioItems(withoutFeatured, activeTab);
-  }, [sortedItems, featuredItem, activeTab]);
+    return filterPortfolioItems(sortedItems, activeTab);
+  }, [sortedItems, activeTab]);
 
   const handleTabChange = useCallback((tab: PortfolioTab) => {
     setActiveTab(tab);
@@ -131,7 +132,6 @@ function PortfolioContent() {
         title: data.title,
         caption: data.title,
         description: data.description,
-        is_pinned: data.isFeatured,
         category: "work" as const,
       };
 
@@ -171,13 +171,16 @@ function PortfolioContent() {
       },
     ) => {
       try {
+        const currentItem = items.find((item) => item.id === itemId);
         await updateItem.mutateAsync({
           itemId,
           data: {
             title: data.title,
             caption: data.title,
             description: data.description,
-            is_pinned: data.isFeatured,
+            profile_highlight_type: data.isFeatured
+              ? currentItem?.profileHighlightType || (currentItem?.type === "image" ? "image" : "video")
+              : null,
             category: "work",
           },
         });
@@ -187,25 +190,85 @@ function PortfolioContent() {
         toast.error("Failed to save changes");
       }
     },
-    [updateItem],
+    [items, updateItem],
   );
 
   const handleToggleFeatured = useCallback(
     async (item: PortfolioItem) => {
+      if (!item.profileHighlightType) {
+        const isImage = item.type === "image";
+        const count = items.filter(
+          (candidate) => candidate.profileHighlightType === (isImage ? "image" : "video"),
+        ).length;
+        if (count >= (isImage ? 4 : 3)) {
+          toast.error(isImage ? "4 photos already featured" : "3 videos already featured", {
+            description: isImage
+              ? "Remove a featured photo before adding another."
+              : "Remove a featured video before adding another.",
+          });
+          return;
+        }
+      }
+
       try {
-        await toggleFeatured.mutateAsync({
+        await updateItem.mutateAsync({
           itemId: item.id,
-          isPinned: !item.isFeatured,
+          data: {
+            profile_highlight_type: item.profileHighlightType
+              ? null
+              : item.type === "image"
+                ? "image"
+                : "video",
+          },
         });
-        toast.success(
-          item.isFeatured ? "Removed from featured" : "Set as featured",
-        );
+        toast.success(item.profileHighlightType ? "Removed from public profile" : "Added to public profile");
       } catch {
-        toast.error("Failed to update featured status");
+        toast.error("Failed to update public profile selection");
       }
     },
-    [toggleFeatured],
+    [items, updateItem],
   );
+
+  const handleSetShowreel = useCallback(
+    async (item: PortfolioItem) => {
+      if (item.profileHighlightType === "showreel") {
+        await handleToggleFeatured(item);
+        return;
+      }
+      const currentShowreel = items.find((candidate) => candidate.profileHighlightType === "showreel");
+      if (currentShowreel) {
+        setShowreelCandidate(item);
+        return;
+      }
+      try {
+        await updateItem.mutateAsync({
+          itemId: item.id,
+          data: { profile_highlight_type: "showreel" },
+        });
+        toast.success("Showreel added to public profile");
+      } catch {
+        toast.error("Failed to set showreel");
+      }
+    },
+    [handleToggleFeatured, items, updateItem],
+  );
+
+  const replaceShowreel = useCallback(async () => {
+    if (!showreelCandidate) return;
+    try {
+      await updateItem.mutateAsync({
+        itemId: showreelCandidate.id,
+        data: {
+          profile_highlight_type: "showreel",
+          replace_profile_highlight: true,
+        },
+      });
+      setShowreelCandidate(null);
+      toast.success("Showreel replaced");
+    } catch {
+      toast.error("Failed to replace showreel");
+    }
+  }, [showreelCandidate, updateItem]);
 
   const handleDelete = useCallback(
     async (item: PortfolioItem) => {
@@ -272,6 +335,8 @@ function PortfolioContent() {
           </p>
         </div>
 
+        {isOwner && <ProfileHighlightsStatus items={items} />}
+
         <PortfolioTabs
           activeTab={activeTab}
           onChange={handleTabChange}
@@ -285,15 +350,6 @@ function PortfolioContent() {
           />
         ) : (
           <>
-            {featuredItem && activeTab === "All" && (
-              <FeaturedPortfolio
-                item={featuredItem}
-                isOwner={isOwner}
-                onClick={() => handleItemClick(featuredItem)}
-                onEdit={isOwner ? setEditItem : undefined}
-              />
-            )}
-
             {isOwner && items.length > 1 && (
               <div className="mt-4 flex justify-end">
                 <button
@@ -310,6 +366,8 @@ function PortfolioContent() {
               isOwner={isOwner}
               onItemClick={handleItemClick}
               onEdit={isOwner ? setEditItem : undefined}
+              onToggleFeatured={isOwner ? handleToggleFeatured : undefined}
+              onSetShowreel={isOwner ? handleSetShowreel : undefined}
             />
 
             {filteredItems.length === 0 && (
@@ -360,6 +418,47 @@ function PortfolioContent() {
           />
         </>
       )}
+
+      <Dialog
+        open={!!showreelCandidate}
+        onOpenChange={(open) => !open && setShowreelCandidate(null)}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Replace featured showreel?</DialogTitle>
+            <DialogDescription>
+              Your public profile can show one showreel. Choose which work should appear first.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-3">
+            {[items.find((item) => item.profileHighlightType === "showreel"), showreelCandidate]
+              .filter(Boolean)
+              .map((item, index) => (
+                <div key={item!.id} className="min-w-0">
+                  <div className="relative aspect-video overflow-hidden rounded-lg bg-muted">
+                    <img
+                      src={item!.thumbnailUrl || item!.url}
+                      alt={item!.title}
+                      className="h-full w-full object-cover"
+                    />
+                    <span className="absolute left-2 top-2 rounded bg-background/80 px-1.5 py-0.5 text-[10px] font-semibold">
+                      {index === 0 ? "Current" : "New"}
+                    </span>
+                  </div>
+                  <p className="mt-1 truncate text-xs font-medium">{item!.title}</p>
+                </div>
+              ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowreelCandidate(null)}>
+              Cancel
+            </Button>
+            <Button onClick={replaceShowreel} disabled={updateItem.isPending}>
+              Replace Showreel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <ShareSheet
         url={

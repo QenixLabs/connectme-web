@@ -69,7 +69,9 @@ export function PortfolioSection({
   const portfolioItems = useMemo(() => toPortfolioItems(items), [items]);
 
   const limit = showAllAction ? 6 : Infinity;
-  const videos = portfolioItems.filter((i) => i.type !== "image").slice(0, limit);
+  const videos = portfolioItems
+    .filter((i) => i.type !== "image" && i.profileHighlightType !== "showreel")
+    .slice(0, limit);
   const images = portfolioItems.filter((i) => i.type === "image").slice(0, limit);
 
   const handleViewAll = () => {

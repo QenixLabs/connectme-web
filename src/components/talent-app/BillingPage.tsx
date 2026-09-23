@@ -232,11 +232,17 @@ export function BillingPage() {
         planKey,
         interval: "monthly",
       });
-      if (result.checkout_url) {
-        window.location.href = result.checkout_url;
+      const url = result.short_url || result.checkout_url;
+      if (url) {
+        window.location.href = url;
+        return;
       }
-    } catch {
-      toast.error("Failed to initiate upgrade. Please try again.");
+      // Paid-to-paid change applied without a new checkout.
+      toast.success("Plan updated successfully.");
+      setIsUpgrading(false);
+    } catch (err) {
+      const backendMessage = (err as { backendMessage?: string })?.backendMessage;
+      toast.error(backendMessage || "Failed to initiate upgrade. Please try again.");
       setIsUpgrading(false);
     }
   };

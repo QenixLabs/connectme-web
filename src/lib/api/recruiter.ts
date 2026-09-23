@@ -6,6 +6,9 @@ export interface RecruiterProfile {
   slug: string;
   company_name: string;
   company_website?: string;
+  contact_name?: string;
+  years_in_business?: string;
+  is_independent?: boolean;
   company_email_domain?: string;
   linkedin_company_url?: string;
   instagram_url?: string;
@@ -41,6 +44,10 @@ export interface UpdateRecruiterProfilePayload {
   slug?: string;
   company_name?: string;
   company_website?: string;
+  contact_name?: string;
+  years_in_business?: string;
+  is_independent?: boolean;
+  founded_year?: number;
   linkedin_company_url?: string;
   instagram_url?: string;
   youtube_url?: string;
@@ -49,7 +56,6 @@ export interface UpdateRecruiterProfilePayload {
   industry?: string;
   headline?: string;
   about?: string;
-  founded_year?: number;
   location?: { country?: string; state?: string; city?: string };
   specialties?: string[];
   languages?: string[];
@@ -97,6 +103,7 @@ export interface PublicRecruiterProfile {
   verification_tier: number;
   active_plan?: string | null;
   member_since?: string | null;
+  years_on_rootin?: number | null;
   active_campaigns_count: number;
   completed_campaigns_count: number;
   total_talents_count: number;
@@ -139,12 +146,22 @@ export interface PublicReview {
   author_photo?: string;
   author_role?: string;
   campaign_id?: string;
+  campaign_name?: string;
+  is_verified?: boolean;
   created_at: string;
 }
 
 export interface PublicReviewsResponse {
   data: PublicReview[];
   total: number;
+  verified_total?: number;
+  has_reviewed?: boolean;
+}
+
+export interface SubmitRecruiterReviewPayload {
+  rating: number;
+  content: string;
+  campaign_id: string;
 }
 
 export const recruiterApi = {
@@ -213,6 +230,11 @@ export const recruiterApi = {
     if (limit) params.limit = limit;
     const response = await apiClient.get(`/recruiters/public/${slug}/reviews`, { params });
     return response.data as PublicReviewsResponse;
+  },
+
+  submitReview: async (slug: string, payload: SubmitRecruiterReviewPayload) => {
+    const response = await apiClient.post(`/recruiters/${slug}/reviews`, payload);
+    return response.data as PublicReview;
   },
 
   saveRecruiter: async (slug: string) => {

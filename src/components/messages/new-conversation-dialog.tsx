@@ -23,12 +23,14 @@ interface NewConversationDialogProps {
   currentUserId?: string;
   onCreated: (conversation: Conversation) => void;
   onSelect?: (conversationId: string) => void;
+  trigger?: React.ReactNode;
 }
 
 export function NewConversationDialog({
   currentUserId,
   onCreated,
   onSelect,
+  trigger,
 }: NewConversationDialogProps) {
   const [open, setOpen] = useState(false);
   const [username, setUsername] = useState("");
@@ -95,8 +97,13 @@ export function NewConversationDialog({
       setMessage("");
       onCreated(conversation);
       onSelect?.(conversation._id);
-    } catch (err: any) {
-      const message = err?.backendMessage || (err instanceof Error ? err.message : "Could not start conversation.");
+    } catch (err: unknown) {
+      const message =
+        typeof err === "object" && err !== null && "backendMessage" in err
+          ? String((err as { backendMessage: unknown }).backendMessage)
+          : err instanceof Error
+            ? err.message
+            : "Could not start conversation.";
       toast.error(message);
     } finally {
       setLoading(false);
@@ -106,13 +113,15 @@ export function NewConversationDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button
-          size="icon"
-          aria-label="New message"
-          className="rounded-full bg-surface-raised text-primary shadow-[var(--shadow-card)] transition-all hover:bg-surface-2 hover:shadow-[var(--shadow-card-hover)]"
-        >
-          <Plus className="size-5" />
-        </Button>
+        {trigger ?? (
+          <Button
+            size="icon"
+            aria-label="New message"
+            className="rounded-full bg-surface-raised text-primary shadow-[var(--shadow-card)] transition-all hover:bg-surface-2 hover:shadow-[var(--shadow-card-hover)]"
+          >
+            <Plus className="size-5" />
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="gap-0 border-border bg-card p-0 sm:max-w-md">
         <DialogHeader className="border-b border-border p-5 text-left">

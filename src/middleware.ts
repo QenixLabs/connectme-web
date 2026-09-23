@@ -19,6 +19,8 @@ const PROTECTED_TALENT_PATHS = [
 
 const PROTECTED_RECRUITER_PATHS = [
   "/recruiter/dashboard",
+  "/recruiter/welcome",
+  "/recruiter/new",
   "/recruiter/profile",
   "/recruiter/campaigns",
   "/recruiter/find-talent",

@@ -8,6 +8,8 @@ interface PortfolioGridProps {
   isOwner?: boolean;
   onItemClick: (item: PortfolioItem, index: number) => void;
   onEdit?: (item: PortfolioItem) => void;
+  onToggleFeatured?: (item: PortfolioItem) => void;
+  onSetShowreel?: (item: PortfolioItem) => void;
 }
 
 export function PortfolioGrid({
@@ -15,6 +17,8 @@ export function PortfolioGrid({
   isOwner,
   onItemClick,
   onEdit,
+  onToggleFeatured,
+  onSetShowreel,
 }: PortfolioGridProps) {
   if (items.length === 0) return null;
 
@@ -31,6 +35,8 @@ export function PortfolioGrid({
             isOwner={isOwner}
             onClick={() => onItemClick(item, index)}
             onEdit={onEdit}
+            onToggleFeatured={onToggleFeatured}
+            onSetShowreel={onSetShowreel}
           />
         ))}
       </div>

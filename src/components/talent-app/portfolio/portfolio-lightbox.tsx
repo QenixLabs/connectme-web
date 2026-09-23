@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { ChevronUp, ChevronDown, X, ExternalLink } from "lucide-react";
+import { ChevronUp, ChevronDown, X, ExternalLink, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getYouTubeVideoId } from "@/hooks/use-portfolio";
 import type { PortfolioItem } from "./types";
@@ -77,7 +77,7 @@ export function PortfolioLightbox({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-sm"
       onClick={() => onOpenChange(false)}
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
@@ -144,8 +144,18 @@ export function PortfolioLightbox({
               autoPlay
               muted
               playsInline
-              className="max-h-[80vh] w-full rounded-lg"
+              className="max-h-[80vh] w-full rounded-lg object-contain"
             />
+          )}
+
+          {item.kind === "document" && (
+            item.mime_type === "application/pdf" ? (
+              <iframe src={item.url} title={item.title} className="h-[80vh] w-full rounded-lg bg-white" />
+            ) : <div className="flex max-h-[80vh] min-h-[55vh] w-full flex-col items-center justify-center gap-3 rounded-lg bg-white p-6 text-center text-foreground">
+              <FileText className="size-12 text-muted-foreground" />
+              <p className="text-lg font-semibold">{item.title}</p>
+              <a href={item.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Open document <ExternalLink className="size-4" /></a>
+            </div>
           )}
 
           {item.kind === "link" && youtubeId && (

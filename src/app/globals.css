@@ -95,6 +95,29 @@
   --color-hero-glass: var(--hero-glass);
   --color-hero-glass-hover: var(--hero-glass-hover);
   --color-primary-soft: var(--primary-soft);
+  --color-primary-strong: var(--primary-strong);
+  --color-canvas: var(--canvas);
+  --color-header: var(--header);
+  --color-header-foreground: var(--header-foreground);
+  --color-header-muted: var(--header-muted);
+  --color-header-border: var(--header-border);
+  --color-header-control: var(--header-control);
+  --color-brand-pop: var(--brand-pop);
+  --color-project-placeholder: var(--project-placeholder);
+  --color-info-soft: var(--info-soft);
+  --color-teal-soft: var(--teal-soft);
+  --color-metric: var(--metric);
+  --color-action: var(--action);
+  --color-warning-soft: var(--warning-soft);
+  --color-alert: var(--alert);
+  --color-alert-soft: var(--alert-soft);
+  --color-private: var(--private);
+  --color-private-soft: var(--private-soft);
+  --color-brand-warm: var(--brand-warm);
+  --shadow-app: var(--shadow-app);
+  --shadow-nav: var(--shadow-nav);
+  --shadow-control: var(--shadow-control);
+  --shadow-primary: var(--shadow-primary);
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
   --color-brand-soft: var(--brand-soft);
@@ -108,6 +131,7 @@
   --animate-orbit: orbit 26s linear infinite;
   --animate-orbit-reverse: orbit-reverse 18s linear infinite;
   --animate-float-soft: float-soft 6s ease-in-out infinite;
+  --animate-perks-scroll: perks-scroll 24s linear infinite;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -589,6 +613,20 @@ html[data-theme="light"] {
   }
 }
 
+@keyframes perks-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.perks-marquee:hover .perks-marquee-track,
+.perks-marquee:focus-within .perks-marquee-track {
+  animation-play-state: paused;
+}
+
 @keyframes rise-in {
   from {
     opacity: 0;
@@ -968,6 +1006,12 @@ html[data-theme="light"] {
     var(--color-muted);
 }
 
+main.signup-shell {
+  width: 100%;
+  min-width: 0;
+  min-height: auto;
+}
+
 @utility screen {
   position: relative;
   width: min(100%, 430px);
@@ -976,6 +1020,11 @@ html[data-theme="light"] {
   background: var(--color-background);
   box-shadow: var(--shadow-phone);
   animation: screen-in 360ms ease-out both;
+}
+
+.signup-shell .signup-screen {
+  min-width: 0;
+  min-height: auto;
 }
 
 @utility welcome-screen {
@@ -1255,4 +1304,675 @@ html[data-theme="light"] {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ---------------------------------------------------------------------------
+   Support page — ported from app-support-hub src/styles.css + src/routes/index.tsx
+
+   The source design is light-themed while this app defaults to dark, so the
+   light theme tokens are scoped to .support-theme and only apply inside the
+   support page. Because @theme inline maps e.g. bg-background to
+   var(--background), overriding the vars on .support-theme recolors all
+   shared utilities (bg-background, text-ink, bg-card, ...) within the page.
+--------------------------------------------------------------------------- */
+.support-theme {
+  color-scheme: light;
+  --radius: 0.5rem;
+  --background: oklch(0.995 0.003 285);
+  --foreground: oklch(0.25 0.055 278);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.25 0.055 278);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.25 0.055 278);
+  --primary: oklch(0.48 0.29 288);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.955 0.025 285);
+  --secondary-foreground: oklch(0.3 0.16 284);
+  --muted: oklch(0.97 0.012 282);
+  --muted-foreground: oklch(0.5 0.055 275);
+  --accent: oklch(0.94 0.045 286);
+  --accent-foreground: oklch(0.33 0.2 286);
+  --destructive: oklch(0.62 0.23 25);
+  --destructive-foreground: oklch(0.99 0 0);
+  --border: oklch(0.91 0.025 282);
+  --input: oklch(0.91 0.025 282);
+  --ring: oklch(0.55 0.26 288);
+  --ink: oklch(0.26 0.15 274);
+  --support: oklch(0.965 0.025 286);
+  --success: oklch(0.62 0.18 150);
+}
+
+.support-theme h1,
+.support-theme h2,
+.support-theme h3 {
+  letter-spacing: 0;
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+.support-theme .support-hero {
+  background:
+    radial-gradient(circle at 12% 85%, color-mix(in oklab, var(--primary) 13%, transparent), transparent 36%),
+    var(--support);
+}
+
+.support-theme .support-agent-fade {
+  background: linear-gradient(to bottom, transparent 48%, var(--support) 100%);
+}
+
+.support-theme .shadow-hero-search {
+  box-shadow: 0 12px 28px color-mix(in oklab, var(--primary) 14%, transparent);
+}
+
+.support-theme .category-card {
+  width: 118px;
+  min-height: 148px;
+  flex: 0 0 auto;
+  border: 1px solid color-mix(in oklab, var(--border) 75%, transparent);
+  border-radius: var(--radius);
+  padding: 16px 12px;
+  text-align: center;
+  transition: transform 160ms ease, border-color 160ms ease;
+}
+
+.support-theme .category-card:hover { transform: translateY(-2px); border-color: color-mix(in oklab, var(--primary) 30%, var(--border)); }
+.support-theme .category-card:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.support-theme .category-icon { display: grid; height: 38px; place-items: center; }
+.support-theme .category-icon svg { width: 26px; height: 26px; stroke-width: 2.5; }
+.support-theme .category-violet { background: oklch(0.96 0.03 292); color: oklch(0.5 0.29 288); }
+.support-theme .category-blue { background: oklch(0.965 0.027 252); color: oklch(0.55 0.22 256); }
+.support-theme .category-green { background: oklch(0.965 0.035 162); color: oklch(0.48 0.16 155); }
+.support-theme .category-rose { background: oklch(0.965 0.033 15); color: oklch(0.65 0.22 18); }
+.support-theme .category-orange { background: oklch(0.97 0.035 70); color: oklch(0.66 0.19 55); }
+.support-theme .category-purple { background: oklch(0.96 0.035 302); color: oklch(0.53 0.27 297); }
+.support-theme .category-teal { background: oklch(0.96 0.035 195); color: oklch(0.47 0.13 205); }
+
+.support-theme .status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 9px;
+  font-weight: 700;
+}
+.support-theme .status-open { background: oklch(0.94 0.05 20); color: oklch(0.6 0.21 24); }
+.support-theme .status-progress { background: oklch(0.95 0.08 83); color: oklch(0.61 0.16 65); }
+.support-theme .status-resolved { background: oklch(0.94 0.07 153); color: oklch(0.47 0.15 155); }
+
+@media (min-width: 768px) {
+  .support-theme .category-card { width: auto; min-width: 0; }
+  .support-theme .support-agent-fade {
+    background: linear-gradient(to right, var(--support) 0%, transparent 32%);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Agency edit page — ported from mobile-first-magic src/routes/index.tsx +
+   src/styles.css
+
+   The source design is light violet-themed while this app defaults to dark,
+   so tokens are scoped to .agency-edit-theme (same pattern as
+   .onboarding-theme / .support-theme). Only utilities actually used by the
+   edit page are ported (logo-mark, cover-art, avatar, input-icon...).
+--------------------------------------------------------------------------- */
+.agency-edit-theme {
+  color-scheme: light;
+  --radius: 0.5rem;
+  --background: oklch(0.975 0.006 270);
+  --foreground: oklch(0.22 0.09 276);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.129 0.042 264.695);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.129 0.042 264.695);
+  --primary: oklch(0.55 0.28 286);
+  --primary-strong: oklch(0.46 0.26 286);
+  --primary-soft: oklch(0.96 0.025 286);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.91 0.04 255);
+  --secondary-foreground: oklch(0.25 0.08 276);
+  --muted: oklch(0.965 0.008 270);
+  --muted-foreground: oklch(0.53 0.045 270);
+  --accent: oklch(0.955 0.03 286);
+  --accent-foreground: oklch(0.42 0.2 286);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.984 0.003 247.858);
+  --border: oklch(0.9 0.025 275);
+  --input: oklch(0.9 0.025 275);
+  --ring: oklch(0.55 0.28 286);
+  --cover-foreground: oklch(0.99 0 0);
+  --success: oklch(0.55 0.15 155);
+  --success-foreground: oklch(0.99 0 0);
+  --rating: oklch(0.78 0.17 78);
+  --scrim: oklch(0.12 0.03 275 / 62%);
+  --shadow-action: 0 8px 18px color-mix(in oklab, var(--primary) 24%, transparent);
+  --shadow-panel: 0 16px 44px color-mix(in oklab, var(--foreground) 9%, transparent);
+  --font-display: "Sora", var(--font-sans);
+}
+
+.agency-edit-theme input:not([type="checkbox"]),
+.agency-edit-theme textarea,
+.agency-edit-theme select {
+  width: 100%;
+  border: 1px solid var(--input);
+  border-radius: calc(var(--radius) - 2px);
+  background: var(--card);
+  color: var(--foreground);
+  font-size: 0.8125rem;
+  outline: none;
+}
+
+.agency-edit-theme input:not([type="checkbox"]),
+.agency-edit-theme select {
+  min-height: 2.75rem;
+  padding: 0 0.75rem;
+}
+
+.agency-edit-theme textarea {
+  resize: vertical;
+  padding: 0.75rem;
+  line-height: 1.5;
+}
+
+.agency-edit-theme input:focus,
+.agency-edit-theme textarea:focus,
+.agency-edit-theme select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 13%, transparent);
+}
+
+.agency-edit-theme select {
+  appearance: none;
+  padding-right: 2.5rem;
+}
+
+.agency-edit-theme .ae-input-icon { position: relative; }
+.agency-edit-theme .ae-input-icon > svg {
+  position: absolute;
+  left: 0.75rem;
+  top: 0.875rem;
+  z-index: 1;
+  width: 1rem;
+  height: 1rem;
+  color: var(--muted-foreground);
+}
+.agency-edit-theme .ae-input-icon > input { padding-left: 2.25rem; }
+
+.agency-edit-theme .ae-logo-mark {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  border-radius: calc(var(--radius) - 2px);
+  background: oklch(0.15 0.015 275);
+  color: var(--cover-foreground);
+  box-shadow: inset 0 0 0 1px oklch(1 0 0 / 15%);
+  overflow: hidden;
+}
+.agency-edit-theme .ae-logo-mark > span {
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: oklch(0.83 0.13 80);
+}
+.agency-edit-theme .ae-logo-mark > small {
+  margin-top: 0.15rem;
+  font-size: 0.45rem;
+  letter-spacing: 0.12em;
+}
+
+.agency-edit-theme .ae-cover-art {
+  background-color: oklch(0.32 0.08 265);
+  background-image: linear-gradient(110deg, oklch(0.2 0.06 270), oklch(0.58 0.16 30) 52%, oklch(0.87 0.14 80));
+  position: relative;
+}
+.agency-edit-theme .ae-cover-art::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(90deg, transparent 0 12%, oklch(0.08 0.02 270 / 72%) 12% 14%, transparent 14% 29%);
+  opacity: 0.55;
+}
+.agency-edit-theme .ae-bg-cover-overlay {
+  background: linear-gradient(90deg, oklch(0.08 0.02 270 / 70%), transparent 68%);
+}
+
+.agency-edit-theme .ae-avatar {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: none;
+  place-items: center;
+  border-radius: 999px;
+  background: linear-gradient(145deg, var(--secondary), var(--accent));
+  color: var(--foreground);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+/* ---------------------------------------------------------------------------
+   Recruiter campaigns page — ported from mobile-first-pages
+   src/routes/index.tsx + src/styles.css
+
+   The source design is light-themed while this app defaults to dark, so the
+   light theme tokens are scoped to .campaigns-theme (same pattern as
+   .support-theme / .agency-edit-theme). Because @theme inline maps e.g.
+   bg-canvas to var(--canvas), overriding the vars on .campaigns-theme
+   recolors all shared utilities within the page.
+--------------------------------------------------------------------------- */
+:root {
+  --canvas: #0a141c;
+  --header: #101c26;
+  --header-foreground: #F4F6FA;
+  --header-muted: #8B95A5;
+  --header-border: rgba(255, 255, 255, 0.12);
+  --header-control: rgba(255, 255, 255, 0.08);
+  --brand-pop: #4C8DF0;
+  --project-placeholder: #13202B;
+  --info-soft: rgba(26, 91, 219, 0.12);
+  --teal-soft: rgba(26, 91, 219, 0.12);
+  --shadow-nav: 0 -8px 30px rgba(0, 0, 0, 0.4);
+  --metric: #0d161f;
+  --action: #13202b;
+  --success-soft: rgba(34, 197, 94, 0.12);
+  --warning-soft: rgba(245, 158, 11, 0.14);
+  --alert: #f87171;
+  --alert-soft: rgba(239, 68, 68, 0.12);
+  --private: #a78bfa;
+  --private-soft: rgba(167, 139, 250, 0.14);
+  --brand-warm: #f59e0b;
+  --primary-strong: #1d47ab;
+  --shadow-app: 0 0 32px rgba(0, 0, 0, 0.45);
+  --shadow-control: 0 4px 14px rgba(0, 0, 0, 0.35);
+  --shadow-primary: 0 8px 22px rgba(26, 91, 219, 0.35);
+}
+
+.campaigns-theme {
+  color-scheme: light;
+  --radius: 0.75rem;
+  --background: oklch(0.995 0.002 250);
+  --foreground: oklch(0.19 0.045 258);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.19 0.045 258);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.19 0.045 258);
+  --primary: oklch(0.57 0.245 258);
+  --primary-strong: oklch(0.5 0.25 260);
+  --primary-foreground: oklch(1 0 0);
+  --primary-soft: oklch(0.93 0.045 257);
+  --secondary: oklch(0.965 0.009 255);
+  --secondary-foreground: oklch(0.22 0.04 258);
+  --muted: oklch(0.96 0.009 255);
+  --muted-foreground: oklch(0.56 0.055 257);
+  --accent: oklch(0.94 0.035 257);
+  --accent-foreground: oklch(0.5 0.23 258);
+  --destructive: oklch(0.62 0.24 23);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.91 0.018 255);
+  --input: oklch(0.91 0.018 255);
+  --ring: oklch(0.6 0.21 258);
+  --canvas: oklch(0.965 0.012 253);
+  --metric: oklch(0.97 0.012 254);
+  --action: oklch(0.93 0.04 255);
+  --success: oklch(0.62 0.18 158);
+  --success-soft: oklch(0.93 0.065 158);
+  --warning: oklch(0.74 0.17 70);
+  --warning-soft: oklch(0.96 0.04 76);
+  --alert: oklch(0.65 0.25 12);
+  --alert-soft: oklch(0.96 0.035 10);
+  --private: oklch(0.5 0.24 292);
+  --private-soft: oklch(0.93 0.06 292);
+  --brand-warm: oklch(0.67 0.22 43);
+  --shadow-app: 0 0 32px oklch(0.35 0.05 255 / 0.09);
+  --shadow-control: 0 4px 14px oklch(0.35 0.04 255 / 0.08);
+  --shadow-primary: 0 8px 22px oklch(0.57 0.245 258 / 0.25);
+}
+
+.campaigns-theme .campaign-card {
+  border: 1px solid var(--border);
+  border-radius: 1.75rem;
+  background: var(--card);
+  padding: 1rem;
+  box-shadow: var(--shadow-control);
+}
+@media (min-width: 640px) {
+  .campaigns-theme .campaign-card { padding: 1.25rem; }
+}
+
+.campaigns-theme .artwork {
+  position: relative;
+  height: 112px;
+  width: 112px;
+  overflow: hidden;
+  border-radius: 1rem;
+  isolation: isolate;
+  flex: none;
+}
+@media (min-width: 640px) {
+  .campaigns-theme .artwork { height: 146px; width: 172px; }
+}
+.campaigns-theme .artwork img {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.campaigns-theme .artwork-studio { background: linear-gradient(135deg, oklch(0.3 0.18 275), oklch(0.58 0.25 320) 48%, oklch(0.32 0.16 244)); }
+.campaigns-theme .artwork-studio::before { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, oklch(0.08 0.03 260 / 0.8), transparent 58%); }
+.campaigns-theme .studio-light { position: absolute; top: 14px; width: 14px; height: 54px; background: oklch(0.98 0.05 230); filter: blur(4px); transform: rotate(8deg); box-shadow: 0 0 22px oklch(0.94 0.12 225); }
+.campaigns-theme .studio-light-left { left: 9px; }
+.campaigns-theme .studio-light-right { right: 13px; transform: rotate(-8deg); }
+.campaigns-theme .camera-body { position: absolute; z-index: 2; right: 22px; bottom: 35px; width: 42px; height: 27px; border-radius: 4px; background: oklch(0.08 0.015 255); }
+.campaigns-theme .camera-lens { position: absolute; z-index: 2; right: 9px; bottom: 41px; width: 18px; height: 15px; border-radius: 0 10px 10px 0; background: oklch(0.06 0.01 255); }
+.campaigns-theme .camera-tripod { position: absolute; z-index: 2; right: 38px; bottom: -8px; width: 4px; height: 48px; background: oklch(0.08 0.015 255); transform: rotate(11deg); box-shadow: 17px 0 0 oklch(0.08 0.015 255); }
+.campaigns-theme .camera-person { position: absolute; z-index: 3; left: 29px; bottom: -5px; width: 35px; height: 67px; border-radius: 48% 48% 10px 10px; background: oklch(0.08 0.025 260); transform: rotate(8deg); }
+.campaigns-theme .artwork-series { display: flex; flex-direction: column; align-items: center; justify-content: center; color: oklch(0.83 0.15 74); background: radial-gradient(circle at 50% 30%, oklch(0.38 0.1 68), transparent 42%), linear-gradient(145deg, oklch(0.12 0.025 60), oklch(0.24 0.06 50), oklch(0.09 0.02 255)); text-align: center; }
+.campaigns-theme .artwork-series::before { content: ""; position: absolute; inset: 8px; border: 1px solid oklch(0.82 0.13 74 / 0.38); }
+.campaigns-theme .artwork-series strong { z-index: 1; font-family: Georgia, serif; font-size: 1.25rem; letter-spacing: 0.06em; text-shadow: 0 2px 0 oklch(0.15 0.03 50); }
+.campaigns-theme .artwork-series small, .campaigns-theme .series-kicker { z-index: 1; font-size: 5px; letter-spacing: 0.16em; }
+.campaigns-theme .series-kicker { margin-bottom: 5px; color: oklch(0.96 0.02 70); }
+.campaigns-theme .artwork-portrait { background: linear-gradient(145deg, oklch(0.82 0.08 22), oklch(0.94 0.06 30)); }
+.campaigns-theme .portrait-face { position: absolute; z-index: 2; left: 42px; top: 24px; width: 38px; height: 47px; border-radius: 48% 48% 44% 44%; background: oklch(0.75 0.105 43); box-shadow: inset -6px -2px 0 oklch(0.62 0.1 35 / 0.3); }
+.campaigns-theme .portrait-hair { position: absolute; z-index: 1; left: 29px; top: 12px; width: 66px; height: 92px; border-radius: 45% 50% 28% 32%; background: linear-gradient(90deg, oklch(0.18 0.05 34), oklch(0.34 0.09 37), oklch(0.15 0.04 30)); }
+.campaigns-theme .portrait-neck { position: absolute; z-index: 1; left: 50px; top: 62px; width: 28px; height: 35px; background: oklch(0.71 0.1 42); }
+.campaigns-theme .portrait-body { position: absolute; z-index: 2; left: 13px; bottom: -34px; width: 104px; height: 77px; border-radius: 50% 50% 0 0; background: oklch(0.66 0.12 34); }
+
+/* ---------------------------------------------------------------------------
+   Recruiter welcome page — ported from screenshot-exact src/routes/index.tsx +
+   src/styles.css
+
+   The source design is light violet-themed while this app defaults to dark,
+   so tokens are scoped to .recruiter-welcome-theme (same pattern as
+   .support-theme / .campaigns-theme). Because @theme inline maps e.g.
+   bg-background to var(--background), overriding the vars on
+   .recruiter-welcome-theme recolors all shared utilities (bg-card,
+   text-muted-foreground, text-primary, bg-muted, border-border, ...) within
+   the page. Classes with no app-wide equivalent (bg-tint-*, bg-gradient-*,
+   text-gradient-primary, script) are defined as plain scoped classes below.
+--------------------------------------------------------------------------- */
+.recruiter-welcome-theme {
+  color-scheme: light;
+  --radius: 1.125rem;
+  --background: oklch(0.99 0.004 300);
+  --foreground: oklch(0.24 0.08 275);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.24 0.08 275);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.24 0.08 275);
+  --primary: oklch(0.52 0.25 292);
+  --primary-foreground: oklch(0.99 0.005 300);
+  --secondary: oklch(0.6 0.19 258);
+  --secondary-foreground: oklch(0.99 0.005 300);
+  --muted: oklch(0.965 0.012 295);
+  --muted-foreground: oklch(0.53 0.04 280);
+  --accent: oklch(0.62 0.25 340);
+  --accent-foreground: oklch(0.99 0.005 300);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.984 0.003 247.858);
+  --border: oklch(0.92 0.02 295);
+  --input: oklch(0.92 0.02 295);
+  --ring: oklch(0.52 0.25 292);
+  --success: oklch(0.72 0.16 160);
+  --success-foreground: oklch(0.2 0.05 160);
+  --warning: oklch(0.79 0.16 78);
+  --warning-foreground: oklch(0.28 0.07 78);
+  --tint-violet: oklch(0.96 0.03 295);
+  --tint-blue: oklch(0.96 0.03 250);
+  --tint-pink: oklch(0.96 0.03 340);
+  --tint-green: oklch(0.95 0.05 160);
+  --tint-amber: oklch(0.96 0.05 80);
+  --gradient-primary: linear-gradient(135deg, oklch(0.55 0.25 292), oklch(0.48 0.24 300));
+  --gradient-blue: linear-gradient(135deg, oklch(0.63 0.19 255), oklch(0.55 0.2 262));
+  --gradient-pink: linear-gradient(135deg, oklch(0.66 0.25 345), oklch(0.56 0.25 330));
+  --gradient-stage: linear-gradient(180deg, oklch(0.97 0.03 300), oklch(0.99 0.005 300));
+  --shadow-card: 0 1px 2px oklch(0.24 0.08 275 / 0.04), 0 8px 24px oklch(0.24 0.08 275 / 0.06);
+  --shadow-cta: 0 6px 18px oklch(0.52 0.25 292 / 0.32);
+  --font-display: "Plus Jakarta Sans", var(--font-sans);
+  --font-script: var(--font-script), cursive;
+}
+
+.recruiter-welcome-theme .bg-tint-violet { background-color: var(--tint-violet); }
+.recruiter-welcome-theme .bg-tint-blue { background-color: var(--tint-blue); }
+.recruiter-welcome-theme .bg-tint-pink { background-color: var(--tint-pink); }
+.recruiter-welcome-theme .bg-tint-green { background-color: var(--tint-green); }
+.recruiter-welcome-theme .bg-tint-amber { background-color: var(--tint-amber); }
+.recruiter-welcome-theme .bg-gradient-primary { background-image: var(--gradient-primary); }
+.recruiter-welcome-theme .bg-gradient-blue { background-image: var(--gradient-blue); }
+.recruiter-welcome-theme .bg-gradient-pink { background-image: var(--gradient-pink); }
+.recruiter-welcome-theme .bg-gradient-stage { background-image: var(--gradient-stage); }
+.recruiter-welcome-theme .text-gradient-primary {
+  background-image: var(--gradient-primary);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+.recruiter-welcome-theme .shadow-card { box-shadow: var(--shadow-card); }
+.recruiter-welcome-theme .shadow-cta { box-shadow: var(--shadow-cta); }
+.recruiter-welcome-theme .script { font-family: var(--font-script), cursive; }
+
+/* ---------------------------------------------------------------------------
+   Recruiter dashboard page — ported from screenshot-exact src/routes/index.tsx
+   + src/styles.css
+
+   The source design is light violet-themed while this app defaults to dark,
+   so tokens are scoped to .recruiter-dashboard-theme (same pattern as
+   .recruiter-welcome-theme / .campaigns-theme). Because @theme inline maps
+   e.g. bg-background to var(--background), overriding the vars on
+   .recruiter-dashboard-theme recolors all shared utilities (bg-card,
+   text-muted-foreground, text-primary, bg-muted, border-border, text-alert,
+   bg-info, bg-warning, ...) within the page. Classes with no app-wide
+   equivalent (text-brand-ink, bg-copilot, metric-*, strip-*) are defined as
+   plain scoped classes below.
+--------------------------------------------------------------------------- */
+.recruiter-dashboard-theme {
+  color-scheme: light;
+  --radius: 1.125rem;
+  --background: oklch(0.99 0.004 300);
+  --foreground: oklch(0.24 0.08 275);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.24 0.08 275);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.24 0.08 275);
+  --primary: oklch(0.52 0.25 292);
+  --primary-foreground: oklch(0.99 0.005 300);
+  --secondary: oklch(0.6 0.19 258);
+  --secondary-foreground: oklch(0.99 0.005 300);
+  --muted: oklch(0.965 0.012 295);
+  --muted-foreground: oklch(0.53 0.04 280);
+  --accent: oklch(0.62 0.25 340);
+  --accent-foreground: oklch(0.99 0.005 300);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.984 0.003 247.858);
+  --border: oklch(0.92 0.02 295);
+  --input: oklch(0.92 0.02 295);
+  --ring: oklch(0.52 0.25 292);
+  --success: oklch(0.72 0.16 160);
+  --success-foreground: oklch(0.2 0.05 160);
+  --warning: oklch(0.79 0.16 78);
+  --warning-foreground: oklch(0.28 0.07 78);
+  --brand-ink: oklch(0.2 0.09 278);
+  --alert: oklch(0.63 0.24 25);
+  --alert-foreground: oklch(0.99 0 0);
+  --info: oklch(0.62 0.2 250);
+  --info-foreground: oklch(0.99 0 0);
+  --gradient-copilot: linear-gradient(120deg, oklch(0.98 0.025 300), oklch(0.9 0.095 292));
+  --shadow-panel: 0 2px 10px oklch(0.25 0.08 285 / 0.08);
+  --shadow-app: 0 0 40px oklch(0.25 0.08 285 / 0.1);
+  --shadow-card: 0 1px 2px oklch(0.24 0.08 275 / 0.04), 0 8px 24px oklch(0.24 0.08 275 / 0.06);
+  --info-foreground: oklch(0.99 0 0);
+}
+
+.recruiter-dashboard-theme .text-brand-ink { color: var(--brand-ink); }
+.recruiter-dashboard-theme .text-info-foreground { color: var(--info-foreground); }
+.recruiter-dashboard-theme .bg-copilot { background-image: var(--gradient-copilot); }
+.recruiter-dashboard-theme .shadow-panel { box-shadow: var(--shadow-panel); }
+.recruiter-dashboard-theme .shadow-app { box-shadow: var(--shadow-app); }
+.recruiter-dashboard-theme .script { font-family: var(--font-script), cursive; }
+.recruiter-dashboard-theme .metric-purple { background: oklch(0.93 0.07 295); color: oklch(0.53 0.25 292); }
+.recruiter-dashboard-theme .metric-blue { background: oklch(0.93 0.055 245); color: oklch(0.58 0.2 250); }
+.recruiter-dashboard-theme .metric-gold { background: oklch(0.95 0.08 85); color: oklch(0.75 0.17 75); }
+.recruiter-dashboard-theme .metric-green { background: oklch(0.93 0.07 160); color: oklch(0.64 0.18 155); }
+.recruiter-dashboard-theme .metric-indigo { background: oklch(0.93 0.07 285); color: oklch(0.53 0.25 285); }
+.recruiter-dashboard-theme .metric-pink { background: oklch(0.94 0.07 340); color: oklch(0.62 0.24 340); }
+.recruiter-dashboard-theme .metric-red { background: oklch(0.95 0.06 20); color: oklch(0.63 0.23 20); }
+.recruiter-dashboard-theme .metric-orange { background: oklch(0.95 0.07 70); color: oklch(0.72 0.18 60); }
+.recruiter-dashboard-theme .strip-first { left: 0; }
+.recruiter-dashboard-theme .strip-second { left: -100%; }
+.recruiter-dashboard-theme .strip-third { left: -200%; }
+
+/* ---------------------------------------------------------------------------
+   Recruiter campaign applications page — ported from talent-hub-pro
+   src/routes/index.tsx ("My Shortlist") + src/styles.css
+
+   The source design is light violet-themed while this app defaults to dark,
+   so tokens are scoped to .campaign-applications-theme (same pattern as
+   .recruiter-dashboard-theme / .campaigns-theme). Because @theme inline maps
+   e.g. bg-background to var(--background), overriding the vars on
+   .campaign-applications-theme recolors all shared utilities (bg-card,
+   text-muted-foreground, text-primary, bg-muted, border-border, ...) within
+   the page. Classes with no app-wide equivalent (bg-campaign, avatar-*,
+   metric-*, bg-verified, text-rating, text-avatar) are defined as plain
+   scoped classes below.
+--------------------------------------------------------------------------- */
+.campaign-applications-theme {
+  color-scheme: light;
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.129 0.042 264.695);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.129 0.042 264.695);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.129 0.042 264.695);
+  --primary: oklch(0.56 0.25 292);
+  --primary-foreground: oklch(0.984 0.003 247.858);
+  --secondary: oklch(0.968 0.007 247.896);
+  --secondary-foreground: oklch(0.208 0.042 265.755);
+  --muted: oklch(0.968 0.007 247.896);
+  --muted-foreground: oklch(0.554 0.046 257.417);
+  --accent: oklch(0.968 0.007 247.896);
+  --accent-foreground: oklch(0.208 0.042 265.755);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.984 0.003 247.858);
+  --border: oklch(0.929 0.013 255.508);
+  --input: oklch(0.929 0.013 255.508);
+  --ring: oklch(0.56 0.25 292);
+  --campaign: oklch(0.94 0.035 292);
+  --primary-soft: oklch(0.965 0.025 292);
+  --success: oklch(0.58 0.16 160);
+  --success-soft: oklch(0.96 0.04 160);
+  --warning: oklch(0.64 0.16 70);
+  --warning-soft: oklch(0.97 0.035 80);
+  --rating: oklch(0.75 0.17 75);
+  --verified: oklch(0.61 0.19 250);
+  --avatar-text: oklch(0.99 0 0);
+}
+
+.campaign-applications-theme .bg-campaign { background-color: var(--campaign); }
+.campaign-applications-theme .bg-verified { background-color: var(--verified); }
+.campaign-applications-theme .text-rating { color: var(--rating); }
+.campaign-applications-theme .text-avatar { color: var(--avatar-text); }
+.campaign-applications-theme .avatar-rose { background: linear-gradient(145deg, oklch(0.72 0.09 20), oklch(0.34 0.1 10)); }
+.campaign-applications-theme .avatar-blue { background: linear-gradient(145deg, oklch(0.68 0.1 240), oklch(0.3 0.08 265)); }
+.campaign-applications-theme .avatar-gold { background: linear-gradient(145deg, oklch(0.78 0.12 75), oklch(0.38 0.08 40)); }
+.campaign-applications-theme .avatar-mint { background: linear-gradient(145deg, oklch(0.72 0.1 165), oklch(0.3 0.08 185)); }
+.campaign-applications-theme .metric-primary { background-color: var(--primary-soft); color: var(--primary); }
+.campaign-applications-theme .metric-sky { background-color: oklch(0.95 0.045 235); color: oklch(0.62 0.17 240); }
+.campaign-applications-theme .metric-violet { background-color: oklch(0.94 0.05 310); color: oklch(0.58 0.22 305); }
+.campaign-applications-theme .metric-mint { background-color: var(--success-soft); color: var(--success); }
+
+/* ---------------------------------------------------------------------------
+   Recruiter campaign detail page — ported from page-architect
+   src/routes/index.tsx ("City Lights Campaign") + src/styles.css
+
+   The source design is light violet-themed while this app defaults to dark,
+   so tokens are scoped to .campaign-detail-theme (same pattern as
+   .campaigns-theme / .campaign-applications-theme). Because @theme inline
+   maps e.g. bg-background to var(--background), overriding the vars on
+   .campaign-detail-theme recolors all shared utilities (bg-canvas,
+   text-muted-foreground, bg-primary-soft, border-border, ...) within the
+   page. Classes with no app-wide equivalent (dashboard-section,
+   metric-tile, project-grid) are defined as plain scoped classes below.
+   Note: --color-teal maps app-wide to var(--accent), so the teal Decision
+   tile uses bg-[var(--teal-soft)] / text-[var(--teal)] instead of bg-teal-soft.
+--------------------------------------------------------------------------- */
+.campaign-detail-theme {
+  color-scheme: light;
+  --radius: 0.5rem;
+  --background: oklch(0.995 0.002 285);
+  --foreground: oklch(0.235 0.05 285);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.129 0.042 264.695);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.129 0.042 264.695);
+  --primary: oklch(0.56 0.25 292);
+  --primary-foreground: oklch(0.99 0.002 285);
+  --secondary: oklch(0.955 0.025 292);
+  --secondary-foreground: oklch(0.42 0.15 292);
+  --muted: oklch(0.965 0.008 285);
+  --muted-foreground: oklch(0.53 0.04 285);
+  --accent: oklch(0.94 0.04 292);
+  --accent-foreground: oklch(0.42 0.15 292);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.984 0.003 247.858);
+  --border: oklch(0.91 0.015 285);
+  --input: oklch(0.89 0.02 285);
+  --ring: oklch(0.56 0.25 292);
+  --canvas: oklch(0.975 0.008 285);
+  --header: oklch(0.19 0.055 268);
+  --header-foreground: oklch(0.985 0.004 285);
+  --header-muted: oklch(0.86 0.025 278);
+  --header-border: oklch(0.98 0.01 285 / 18%);
+  --header-control: oklch(0.12 0.05 270 / 58%);
+  --brand-pop: oklch(0.67 0.27 292);
+  --project-placeholder: oklch(0.27 0.09 290);
+  --primary-soft: oklch(0.94 0.045 292);
+  --success: oklch(0.57 0.17 158);
+  --success-soft: oklch(0.93 0.07 158);
+  --warning: oklch(0.67 0.16 69);
+  --warning-soft: oklch(0.96 0.07 82);
+  --info: oklch(0.59 0.19 247);
+  --info-soft: oklch(0.93 0.05 247);
+  --teal: oklch(0.55 0.12 184);
+  --teal-soft: oklch(0.93 0.06 184);
+  --alert: oklch(0.59 0.23 14);
+  --alert-soft: oklch(0.95 0.05 14);
+  --shadow-nav: 0 -8px 30px oklch(0.25 0.04 285 / 8%);
+}
+
+.campaign-detail-theme .dashboard-section {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--card);
+  padding: 16px;
+  box-shadow: 0 1px 2px oklch(0.25 0.04 285 / 5%);
+}
+
+/* Compact density variant: 14px internal padding on mobile, 16px on sm+.
+   (Plain CSS — Tailwind v3-style `!p-*` important prefixes do not compile
+   under Tailwind v4, so density is handled here, scoped to this theme.) */
+.campaign-detail-theme .dashboard-section-compact {
+  padding: 14px;
+}
+
+@media (min-width: 640px) {
+  .campaign-detail-theme .dashboard-section-compact {
+    padding: 16px;
+  }
+}
+
+/* Hero card: same chrome as .dashboard-section but zero padding so the
+   cover image bleeds edge-to-edge. */
+.campaign-detail-theme .dashboard-hero {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--card);
+  padding: 0;
+  overflow: hidden;
+  box-shadow: 0 1px 2px oklch(0.25 0.04 285 / 5%);
 }

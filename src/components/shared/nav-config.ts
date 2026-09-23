@@ -6,8 +6,6 @@ import {
   User,
   Briefcase,
   MessageSquare,
-  Bell,
-  Bookmark,
   FolderKanban,
   Search,
   Users,
@@ -15,8 +13,8 @@ import {
   Layers,
   Flag,
   ClipboardList,
-  Send,
   UsersRound,
+  BarChart3,
 } from "lucide-react";
 
 export interface NavItem {
@@ -36,12 +34,11 @@ export const talentNavItems: NavItem[] = [
 export const recruiterNavItems: NavItem[] = [
   { label: "Dashboard", href: "/recruiter/dashboard", icon: LayoutDashboard },
   { label: "Campaigns", href: "/recruiter/campaigns", icon: FolderKanban },
+  { label: "Analytics", href: "/recruiter/analytics", icon: BarChart3 },
   { label: "Find Talent", href: "/recruiter/find-talent", icon: Search },
   { label: "Shortlist", href: "/recruiter/shortlist", icon: UsersRound },
-  { label: "Saved Talent", href: "/recruiter/saved-talent", icon: Bookmark },
-  { label: "Invites", href: "/recruiter/invites", icon: Send },
+  { label: "Team", href: "/recruiter/team", icon: Users },
   { label: "Messages", href: "/recruiter/messages", icon: MessageSquare },
-  { label: "Notifications", href: "/recruiter/notifications", icon: Bell },
 ];
 
 export const adminNavItems: NavItem[] = [
