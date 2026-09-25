@@ -42,7 +42,6 @@ export interface LanguageItem {
 
 export interface SkillItem {
   name: string;
-  proficiency: "beginner" | "intermediate" | "expert";
   order: number;
 }
 

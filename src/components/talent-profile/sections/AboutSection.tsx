@@ -12,16 +12,23 @@ export function AboutSection({ bio }: { bio: string }) {
 
   return (
     <GlassCard
-      style={{ backgroundColor: "color-mix(in oklab, #91adab 60%, transparent)" }}
+      className="relative"
+      style={{
+        background:
+          "linear-gradient(135deg, rgba(239,246,255,0.96), rgba(245,243,255,0.92) 62%, rgba(255,255,255,0.98))",
+      }}
     >
-      <div className="flex items-center gap-2">
-        <UserRound className="size-4.5 text-brand" />
+      <div className="pointer-events-none absolute -right-8 -top-10 size-28 rounded-full bg-purple-200/20 blur-2xl" />
+      <div className="relative flex items-center gap-2">
+        <span className="grid size-7 place-items-center rounded-lg bg-blue-100 text-[#2563EB]">
+          <UserRound className="size-4" />
+        </span>
         <h2 className="text-[15px] font-bold text-foreground">About Me</h2>
       </div>
-      <div className="mt-2">
+      <div className="relative mt-3">
         <p
           className={cn(
-            "text-[13px] leading-relaxed text-muted-foreground",
+            "text-[13px] leading-relaxed text-slate-600",
             !expanded && hasLongBio && "line-clamp-3",
           )}
         >
@@ -31,7 +38,7 @@ export function AboutSection({ bio }: { bio: string }) {
       {hasLongBio && (
         <button
           onClick={() => setExpanded((v) => !v)}
-          className="mt-2 flex items-center gap-1 text-[13px] font-semibold text-brand"
+          className="mt-3 inline-flex items-center gap-1 rounded-full bg-white/75 px-3 py-1.5 text-[12px] font-bold text-[#2563EB] shadow-sm transition-colors hover:bg-white"
         >
           {expanded ? "Show less" : "Read More"}
           <ChevronDown

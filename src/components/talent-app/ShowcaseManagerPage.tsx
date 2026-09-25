@@ -24,7 +24,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useMyPortfolioCollection, useUpdateProfileShowcase } from "@/hooks/use-portfolio";
-import { useMyProfile } from "@/hooks/use-talent-profile";
 import type { PortfolioApiResponse } from "@/lib/api/talent";
 import { cn } from "@/lib/utils";
 
@@ -77,7 +76,7 @@ function SortableMediaRow({
   return (
     <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }} className={cn("grid min-h-[68px] grid-cols-[auto_auto_52px_minmax(0,1fr)_auto] items-center gap-2 border-b border-border/70 px-1", isDragging && "z-10 rounded-lg bg-card shadow-lg ring-1 ring-primary/20") }>
       <button type="button" className="grid size-8 touch-none place-items-center rounded-md text-muted-foreground hover:bg-accent" aria-label={`Drag ${item.title}`} {...attributes} {...listeners}><GripVertical className="size-5" /></button>
-      <span className={cn(POSITION_LABEL_CLASS, "w-7 text-center")}>{String(index + 1).padStart(2, "0")}</span>
+      <span className={cn(POSITION_LABEL_CLASS, "w-9 text-center")}>✓ #{index + 1}</span>
       <Thumb item={item} className="aspect-[4/3] w-[52px]" />
       <div className="min-w-0">
         <p className="truncate text-sm font-semibold">{item.title || item.caption || "Untitled work"}</p>
@@ -101,7 +100,7 @@ function PhotoCard({ item, index, onMove, onReplace, onRemove }: { item: Portfol
   return (
     <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }} className={cn("group relative aspect-[4/3] overflow-hidden rounded-lg bg-muted", isDragging && "z-10 scale-[1.02] shadow-lg ring-1 ring-primary/30")}>
       <Thumb item={item} className="aspect-[4/3] w-full rounded-none" />
-      <span className={cn("absolute left-2 top-2", POSITION_LABEL_CLASS)}>{String(index + 1).padStart(2, "0")}</span>
+      <span className={cn("absolute left-2 top-2", POSITION_LABEL_CLASS)}>✓ #{index + 1}</span>
       <button type="button" className="absolute bottom-2 left-2 grid size-7 touch-none place-items-center rounded-md bg-black/45 text-white backdrop-blur-sm" aria-label={`Drag ${item.title}`} {...attributes} {...listeners}><GripVertical className="size-3.5" /></button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild><button className="absolute bottom-2 right-2 grid size-7 place-items-center rounded-md bg-black/45 text-white backdrop-blur-sm" aria-label="Photo actions"><MoreVertical className="size-3.5" /></button></DropdownMenuTrigger>
@@ -165,7 +164,6 @@ function Picker({
 
 export function ShowcaseManagerPage() {
   const collection = useMyPortfolioCollection();
-  const profileQuery = useMyProfile();
   const saveShowcase = useUpdateProfileShowcase();
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -176,7 +174,6 @@ export function ShowcaseManagerPage() {
   const [photos, setPhotos] = useState<string[]>([]);
   const [picker, setPicker] = useState<PickerKind | null>(null);
   const [replaceId, setReplaceId] = useState<string | null>(null);
-  const [previewOpen, setPreviewOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const [dirty, setDirty] = useState(false);
 
@@ -304,41 +301,29 @@ export function ShowcaseManagerPage() {
   return (
      <div className="mx-auto w-full max-w-4xl px-4 pb-[calc(9rem+env(safe-area-inset-bottom))] pt-4 sm:px-6 lg:pb-12">
        <div className="mb-5 border-b border-border/70 pb-4">
-         <div className="flex items-start justify-between gap-4">
-           <div><Link href="/talent/portfolio" className="mb-3 inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground"><ArrowLeft className="size-3.5" /> Media Library</Link><h1 className="text-[26px] font-bold leading-none tracking-tight">Profile Showcase</h1><p className="mt-2 text-[13px] text-muted-foreground">Arrange what recruiters see first.</p></div>
-           <button type="button" onClick={() => setPreviewOpen(true)} className="mt-7 shrink-0 text-xs font-semibold text-primary hover:underline">Preview Profile <span aria-hidden="true">→</span></button>
-         </div>
+          <div className="flex items-start justify-between gap-4">
+            <div><Link href="/talent/portfolio" className="mb-3 inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground"><ArrowLeft className="size-3.5" /> Media Library</Link><h1 className="text-[26px] font-bold leading-none tracking-tight">Choose what recruiters see first</h1><p className="mt-2 text-[13px] text-muted-foreground">Your full portfolio will still be available on your public profile.</p></div>
+          </div>
          <div className="mt-4 flex items-center gap-3"><div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary transition-all" style={{ width: `${(selectedCount / 8) * 100}%` }} /></div><span className="shrink-0 text-[11px] font-semibold text-muted-foreground">{selectedCount} of 8 selected</span></div>
        </div>
 
        <div className="space-y-7">
-         <section>
-             <div className="mb-2 flex items-center justify-between"><h2 className="text-[13px] font-bold uppercase tracking-[0.12em]">Showreel <span className="ml-1 text-muted-foreground">{showreel ? "1 / 1" : "0 / 1"}</span></h2></div>
-              {showreelItem ? <div className="relative aspect-video overflow-hidden rounded-xl border border-border bg-card"><Thumb item={showreelItem} className="h-full w-full rounded-none" /><div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 bg-gradient-to-t from-black/80 via-black/35 to-transparent px-3 pb-3 pt-12 text-white"><div className="min-w-0"><p className="truncate text-sm font-semibold">{showreelItem.title || showreelItem.caption || "Untitled work"}</p><p className="mt-0.5 text-[11px] text-white/75">{durationLabel(showreelItem.duration) || "Showreel"} · {mediaLabel(showreelItem)}</p></div><DropdownMenu><DropdownMenuTrigger asChild><button className="grid size-7 place-items-center rounded-md text-white/85 hover:bg-white/15" aria-label="Showreel actions"><MoreVertical className="size-4" /></button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onClick={() => openPicker("showreel", showreelItem.id)}>Replace</DropdownMenuItem><DropdownMenuItem onClick={() => { setShowreel(null); setDirty(true); }}>Remove from Profile</DropdownMenuItem></DropdownMenuContent></DropdownMenu></div></div> : <button type="button" onClick={() => openPicker("showreel")} className="flex min-h-14 w-full items-center justify-center gap-2 rounded-lg border border-dashed border-border text-sm font-semibold text-primary hover:bg-accent"><Plus className="size-4" /> Choose Showreel From Library</button>}
+              <section>
+               <div className="mb-2 flex items-center justify-between"><div><h2 className="text-[13px] font-bold uppercase tracking-[0.12em]">Showreel <span className="ml-1 text-muted-foreground">{showreel ? "1 / 1" : "0 / 1"}</span></h2><p className="mt-1 text-xs text-muted-foreground">Choose one video to appear as your primary showreel.</p></div></div>
+               {showreelItem ? <div className="relative aspect-video overflow-hidden rounded-xl border border-border bg-card"><Thumb item={showreelItem} className="h-full w-full rounded-none" /><div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 bg-gradient-to-t from-black/80 via-black/35 to-transparent px-3 pb-3 pt-12 text-white"><div className="min-w-0"><p className="truncate text-sm font-semibold">{showreelItem.title || showreelItem.caption || "Untitled work"}</p><p className="mt-0.5 text-[11px] text-white/75">✓ Current Showreel · {mediaLabel(showreelItem)}</p></div><DropdownMenu><DropdownMenuTrigger asChild><button className="grid size-7 place-items-center rounded-md text-white/85 hover:bg-white/15" aria-label="Showreel actions"><MoreVertical className="size-4" /></button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onClick={() => openPicker("showreel", showreelItem.id)}>Replace</DropdownMenuItem><DropdownMenuItem onClick={() => { setShowreel(null); setDirty(true); }}>Remove from Showcase</DropdownMenuItem></DropdownMenuContent></DropdownMenu></div></div> : <button type="button" onClick={() => openPicker("showreel")} className="flex min-h-14 w-full items-center justify-center gap-2 rounded-lg border border-dashed border-border text-sm font-semibold text-primary hover:bg-accent"><Plus className="size-4" /> Set as Showreel</button>}
           </section>
 
          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(event) => updateOrder("video", event)}>
-              <section><div className="mb-2 flex items-end justify-between"><div><h2 className="text-[13px] font-bold uppercase tracking-[0.12em]">Featured Videos <span className="ml-1 text-muted-foreground">{videos.length} / 3</span></h2><p className="mt-1 text-xs text-muted-foreground">Drag to set public profile order</p></div><Video className="size-4 text-primary" /></div><div><SortableContext items={videos} strategy={verticalListSortingStrategy}>{videos.map((id, index) => { const item = byId.get(id); return item ? <SortableMediaRow key={id} item={item} index={index} onMove={(direction) => move("video", id, direction)} onReplace={() => openPicker("video", id)} onRemove={() => remove("video", id)} /> : null; })}</SortableContext>{(videos.length === 0 ? VIDEO_SLOT_LABELS : VIDEO_SLOT_LABELS.slice(videos.length)).map((label, index) => { const position = videos.length === 0 ? index : videos.length + index; return <button type="button" key={`empty-video-${position}`} onClick={() => openPicker("video")} className="flex min-h-[52px] w-full items-center gap-3 border-b border-border/70 text-left last:border-0 hover:bg-accent/50"><span className={cn(POSITION_LABEL_CLASS, "ml-1 w-7 text-center")}>{String(position + 1).padStart(2, "0")}</span><Plus className="size-3.5 text-muted-foreground" /><span className="text-xs font-semibold text-muted-foreground">{label}</span></button>; })}</div></section>
+               <section><div className="mb-2 flex items-end justify-between"><div><h2 className="text-[13px] font-bold uppercase tracking-[0.12em]">Videos <span className="ml-1 text-muted-foreground">{videos.length} / 3</span></h2><p className="mt-1 text-xs text-muted-foreground">Select and drag up to 3 videos into priority order.</p></div><Video className="size-4 text-primary" /></div><div><SortableContext items={videos} strategy={verticalListSortingStrategy}>{videos.map((id, index) => { const item = byId.get(id); return item ? <SortableMediaRow key={id} item={item} index={index} onMove={(direction) => move("video", id, direction)} onReplace={() => openPicker("video", id)} onRemove={() => remove("video", id)} /> : null; })}</SortableContext>{(videos.length === 0 ? VIDEO_SLOT_LABELS : VIDEO_SLOT_LABELS.slice(videos.length)).map((label, index) => { const position = videos.length === 0 ? index : videos.length + index; return <button type="button" key={`empty-video-${position}`} onClick={() => openPicker("video")} className="flex min-h-[52px] w-full items-center gap-3 border-b border-border/70 text-left last:border-0 hover:bg-accent/50"><span className={cn(POSITION_LABEL_CLASS, "ml-1 w-7 text-center")}>#{position + 1}</span><Plus className="size-3.5 text-muted-foreground" /><span className="text-xs font-semibold text-muted-foreground">Add to Showcase</span></button>; })}</div></section>
          </DndContext>
 
          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(event) => updateOrder("image", event)}>
-             <section><div className="mb-2 flex items-end justify-between"><div><h2 className="text-[13px] font-bold uppercase tracking-[0.12em]">Featured Photos <span className="ml-1 text-muted-foreground">{photos.length} / 4</span></h2><p className="mt-1 text-xs text-muted-foreground">Drag to arrange public profile order</p></div><ImageIcon className="size-4 text-primary" /></div><div className="grid grid-cols-2 gap-2"><SortableContext items={photos} strategy={rectSortingStrategy}>{photos.map((id, index) => { const item = byId.get(id); return item ? <PhotoCard key={id} item={item} index={index} onMove={(direction) => move("image", id, direction)} onReplace={() => openPicker("image", id)} onRemove={() => remove("image", id)} /> : null; })}{Array.from({ length: MAX.image - photos.length }).map((_, index) => <button type="button" key={`empty-photo-${index}`} onClick={() => openPicker("image")} className="flex aspect-[4/3] flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-border text-xs font-semibold text-primary hover:bg-accent"><span className={POSITION_LABEL_CLASS}>{String(photos.length + index + 1).padStart(2, "0")}</span><Plus className="size-4" /><span>Add Photo</span></button>)}</SortableContext></div></section>
+              <section><div className="mb-2 flex items-end justify-between"><div><h2 className="text-[13px] font-bold uppercase tracking-[0.12em]">Images <span className="ml-1 text-muted-foreground">{photos.length} / 4</span></h2><p className="mt-1 text-xs text-muted-foreground">Select and drag up to 4 images into priority order.</p></div><ImageIcon className="size-4 text-primary" /></div><div className="grid grid-cols-2 gap-2"><SortableContext items={photos} strategy={rectSortingStrategy}>{photos.map((id, index) => { const item = byId.get(id); return item ? <PhotoCard key={id} item={item} index={index} onMove={(direction) => move("image", id, direction)} onReplace={() => openPicker("image", id)} onRemove={() => remove("image", id)} /> : null; })}{Array.from({ length: MAX.image - photos.length }).map((_, index) => <button type="button" key={`empty-photo-${index}`} onClick={() => openPicker("image")} className="flex aspect-[4/3] flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-border text-xs font-semibold text-primary hover:bg-accent"><span className={POSITION_LABEL_CLASS}>#{photos.length + index + 1}</span><Plus className="size-4" /><span>Add to Showcase</span></button>)}</SortableContext></div></section>
          </DndContext>
       </div>
 
          {dirty && <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-40 border-t border-border bg-background/95 p-3 shadow-lg backdrop-blur sm:static sm:mt-5 sm:border-0 sm:bg-transparent sm:p-0"><div className="mx-auto flex max-w-4xl items-center justify-between gap-3"><span className="hidden text-xs text-muted-foreground sm:block">Changes are private until you save.</span><Button onClick={save} disabled={saveShowcase.isPending} className="ml-auto min-h-11 w-full sm:w-auto">{saveShowcase.isPending ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />} Save Showcase</Button></div></div>}
-        <Sheet open={previewOpen} onOpenChange={setPreviewOpen}>
-          <SheetContent side="bottom" className="max-h-[92dvh] overflow-y-auto rounded-t-2xl p-4 sm:mx-auto sm:max-w-2xl sm:p-6">
-            <SheetHeader className="px-0 text-left"><SheetTitle>Portfolio Highlights</SheetTitle><SheetDescription>This is the order visitors will see on your profile.</SheetDescription></SheetHeader>
-            <div className="mt-5 space-y-6">
-              <section><h3 className="mb-2 text-xs font-bold uppercase tracking-[0.12em]">Showreel</h3>{showreelItem ? <Thumb item={showreelItem} className="aspect-video w-full" /> : <div className="grid aspect-video place-items-center rounded-lg border border-dashed border-border text-xs text-muted-foreground">No showreel selected</div>}</section>
-              <section><h3 className="mb-2 text-xs font-bold uppercase tracking-[0.12em]">Featured Videos</h3><div className="grid grid-cols-3 gap-2">{videos.map((id, index) => { const item = byId.get(id); return item ? <div key={id} className="min-w-0"><Thumb item={item} className="aspect-video w-full" /><p className="mt-1 truncate text-[10px] font-semibold">{String(index + 1).padStart(2, "0")} · {item.title || "Untitled"}</p></div> : null; })}</div></section>
-              <section><h3 className="mb-2 text-xs font-bold uppercase tracking-[0.12em]">Featured Photos</h3><div className="grid grid-cols-2 gap-2">{photos.map((id, index) => { const item = byId.get(id); return item ? <div key={id} className="relative"><Thumb item={item} className="aspect-[4/3] w-full" /><span className="absolute left-2 top-2 rounded bg-background/85 px-1.5 py-0.5 text-[10px] font-bold">{String(index + 1).padStart(2, "0")}</span></div> : null; })}</div></section>
-              <Link href={profileQuery.data?.username ? `/talent/${profileQuery.data.username}` : "/talent/profile"} className="block text-center text-sm font-semibold text-primary hover:underline">View Full Portfolio →</Link>
-            </div>
-          </SheetContent>
-        </Sheet>
-        <Picker key={picker ?? "closed"} kind={picker} items={items} selectedIds={[showreel, ...videos, ...photos].filter((id): id is string => !!id)} showreelId={showreel} replaceId={replaceId} onSelect={choose} onClose={() => { setPicker(null); setReplaceId(null); }} />
+         <Picker key={picker ?? "closed"} kind={picker} items={items} selectedIds={[showreel, ...videos, ...photos].filter((id): id is string => !!id)} showreelId={showreel} replaceId={replaceId} onSelect={choose} onClose={() => { setPicker(null); setReplaceId(null); }} />
     </div>
   );
 }

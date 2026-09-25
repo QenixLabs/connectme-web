@@ -10,3 +10,5 @@ export { AnalyticsSection } from "./AnalyticsSection";
 export { DetailsSection } from "./DetailsSection";
 export { ShowreelPlayerCard } from "./ShowreelPlayerCard";
 export { HighlightRow } from "./HighlightRow";
+export { PublicPortfolioSections } from "./PublicPortfolioSections";
+export { PublicDocumentsSection } from "./PublicDocumentsSection";

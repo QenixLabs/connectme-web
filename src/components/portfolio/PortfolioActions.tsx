@@ -9,6 +9,7 @@ import {
   Copy,
   Share2,
   Trash2,
+  Clapperboard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +26,7 @@ interface PortfolioActionsProps {
   username?: string;
   onEdit?: (item: PortfolioItem) => void;
   onToggleFeatured?: (item: PortfolioItem) => void;
+  onSetShowreel?: (item: PortfolioItem) => void;
   onReorder?: () => void;
   onShare?: (item: PortfolioItem) => void;
   onDelete?: (item: PortfolioItem) => void;
@@ -35,6 +37,7 @@ export function PortfolioActions({
   username,
   onEdit,
   onToggleFeatured,
+  onSetShowreel,
   onReorder,
   onShare,
   onDelete,
@@ -72,6 +75,12 @@ export function PortfolioActions({
                 Set as Featured
               </>
             )}
+          </DropdownMenuItem>
+        )}
+        {onSetShowreel && (item.type === "video" || item.type === "youtube") && (
+          <DropdownMenuItem onClick={() => onSetShowreel(item)}>
+            <Clapperboard className="size-4" />
+            {item.profileHighlightType === "showreel" ? "Remove Showreel" : "Set as Showreel"}
           </DropdownMenuItem>
         )}
         {onReorder && (

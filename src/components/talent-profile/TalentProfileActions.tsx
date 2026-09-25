@@ -75,7 +75,7 @@ function ShortlistButton({
     return (
       <button
         onClick={() => toast.error("No active campaigns to shortlist to")}
-        className="flex items-center justify-center gap-1.5 rounded-2xl bg-card py-3.5 text-xs font-semibold text-foreground shadow-[var(--shadow-card)] transition-all active:scale-95"
+        className="flex items-center justify-center gap-1.5 rounded-2xl bg-card py-3.5 text-xs font-semibold text-foreground shadow-[0_6px_24px_rgba(15,23,42,0.05)] transition-all active:scale-95"
       >
         <Star className="size-4" /> Shortlist
       </button>
@@ -85,7 +85,7 @@ function ShortlistButton({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center justify-center gap-1.5 rounded-2xl bg-card py-3.5 text-xs font-semibold text-foreground shadow-[var(--shadow-card)] transition-all active:scale-95">
+        <button className="flex items-center justify-center gap-1.5 rounded-2xl bg-card py-3.5 text-xs font-semibold text-foreground shadow-[0_6px_24px_rgba(15,23,42,0.05)] transition-all active:scale-95">
           <Star className="size-4" /> Shortlist
         </button>
       </DropdownMenuTrigger>
@@ -147,7 +147,7 @@ export function TalentProfileActions({
               connectionStatus === "pending" ||
               connectionStatus === "connected"
             }
-            className="flex h-[52px] shrink-0 items-center justify-center gap-2 rounded-2xl bg-card px-4 text-sm font-semibold text-foreground shadow-[var(--shadow-card)] transition-all active:scale-95 disabled:opacity-70"
+            className="flex h-[52px] shrink-0 items-center justify-center gap-2 rounded-2xl bg-card px-4 text-sm font-semibold text-foreground shadow-[0_6px_24px_rgba(15,23,42,0.05)] transition-all active:scale-95 disabled:opacity-70"
           >
             {connectPending ? (
               <Loader2 className="size-4 animate-spin" />
@@ -167,7 +167,7 @@ export function TalentProfileActions({
         <button
           onClick={startConversation}
           disabled={messagePending}
-          className="flex h-[52px] flex-1 items-center justify-center gap-2 rounded-2xl text-sm font-semibold text-brand-foreground shadow-[var(--shadow-card)] disabled:opacity-70"
+          className="flex h-[52px] flex-1 items-center justify-center gap-2 rounded-2xl text-sm font-semibold text-brand-foreground shadow-[0_6px_24px_rgba(15,23,42,0.05)] disabled:opacity-70"
           style={{ background: "var(--gradient-brand)" }}
         >
           {messagePending ? (
@@ -185,7 +185,7 @@ export function TalentProfileActions({
           onClick={toggleLike}
           disabled={likePending}
           aria-label={isLiked ? "Unlike talent" : "Like talent"}
-          className="grid h-[52px] flex-1 place-items-center rounded-2xl bg-card text-foreground shadow-[var(--shadow-card)] transition-all active:scale-95 disabled:opacity-70"
+           className="grid h-12 flex-1 place-items-center rounded-2xl bg-card text-foreground shadow-[0_6px_24px_rgba(15,23,42,0.05)] transition-all active:scale-95 disabled:opacity-70"
         >
           <Heart
             className={`size-5 transition-colors ${
@@ -197,7 +197,7 @@ export function TalentProfileActions({
         <button
           onClick={handleCopyLink}
           aria-label="Share profile link"
-          className="grid h-[52px] flex-1 place-items-center rounded-2xl bg-card text-foreground shadow-[var(--shadow-card)] transition-all active:scale-95"
+           className="grid h-12 flex-1 place-items-center rounded-2xl bg-card text-foreground shadow-[0_6px_24px_rgba(15,23,42,0.05)] transition-all active:scale-95"
         >
           <Share2 className="size-5" />
         </button>
@@ -211,7 +211,7 @@ export function TalentProfileActions({
           <button
             onClick={toggleSave}
             disabled={savePending}
-            className="flex items-center justify-center gap-1.5 rounded-2xl bg-card py-3.5 text-xs font-semibold text-foreground shadow-[var(--shadow-card)] transition-all active:scale-95 disabled:opacity-70"
+            className="flex items-center justify-center gap-1.5 rounded-2xl bg-card py-3.5 text-xs font-semibold text-foreground shadow-[0_6px_24px_rgba(15,23,42,0.05)] transition-all active:scale-95 disabled:opacity-70"
           >
             {savePending ? (
               <Loader2 className="size-4 animate-spin" />
@@ -223,7 +223,7 @@ export function TalentProfileActions({
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center justify-center gap-1.5 rounded-2xl bg-card py-3.5 text-xs font-semibold text-foreground shadow-[var(--shadow-card)] transition-all active:scale-95">
+              <button className="flex items-center justify-center gap-1.5 rounded-2xl bg-card py-3.5 text-xs font-semibold text-foreground shadow-[0_6px_24px_rgba(15,23,42,0.05)] transition-all active:scale-95">
                 <MoreHorizontal className="size-4" /> More
               </button>
             </DropdownMenuTrigger>

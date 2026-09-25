@@ -32,7 +32,7 @@ export function GlassCard({
       <div
         style={style}
         className={cn(
-          "overflow-hidden rounded-2xl bg-card p-4 shadow-[var(--shadow-card)]",
+          "overflow-hidden rounded-[20px] bg-card/95 p-4 shadow-[0_6px_24px_rgba(15,23,42,0.05)]",
           hover && "transition-all duration-200 hover:-translate-y-0.5",
           className,
         )}
@@ -60,9 +60,22 @@ export function SectionHeader({
   open?: boolean;
   onToggle?: () => void;
 }) {
+  const iconTone =
+    title === "Awards"
+      ? "bg-amber-50 text-[#D97706]"
+      : title === "What People Say"
+        ? "bg-pink-50 text-[#DB2777]"
+        : title === "Experience"
+          ? "bg-teal-50 text-[#0F9F92]"
+          : title === "Media Kit"
+            ? "bg-violet-50 text-[#7C3AED]"
+            : "bg-blue-50 text-[#2563EB]";
+
   const heading = (
     <>
-      <span className="text-brand">{icon}</span>
+      <span className={cn("grid size-7 shrink-0 place-items-center rounded-lg", iconTone)}>
+        {icon}
+      </span>
       <h2 className="text-sm font-bold text-foreground">{title}</h2>
     </>
   );

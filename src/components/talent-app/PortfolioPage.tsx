@@ -153,6 +153,7 @@ export function PortfolioPage() {
   const planMaxImages = ml?.plan_max_images ?? 5;
   const videosUsed = ml?.videos_used ?? 0;
   const planMaxVideos = ml?.plan_max_videos ?? 1;
+  const usage = { imagesUsed, planMaxImages, videosUsed, planMaxVideos };
   const selectedItems = items.filter((i) => selectedIds.has(i.id));
 
   const openMediaDialog = useCallback((type?: PortfolioUploadType) => {
@@ -160,10 +161,18 @@ export function PortfolioPage() {
       setAddMediaOpen(true);
       return;
     }
+    if (type === "image" && imagesUsed >= planMaxImages) {
+      toast.error("Photo upload limit reached", { description: "Upgrade your plan or remove a photo to upload more." });
+      return;
+    }
+    if (type === "video" && videosUsed >= planMaxVideos) {
+      toast.error("Video upload limit reached", { description: "Upgrade your plan or remove a video to upload more." });
+      return;
+    }
     if (type === "link") setExternalLinkOpen(true);
     else if (type === "video") setAddVideoOpen(true);
     else setUploadType(type);
-  }, []);
+  }, [imagesUsed, planMaxImages, videosUsed, planMaxVideos]);
 
   // ── Handlers ───────────────────────────────────────────
 
@@ -343,7 +352,7 @@ export function PortfolioPage() {
     <div className="mx-auto w-full max-w-7xl">
         <div className="space-y-4 px-4 pb-[calc(9rem+env(safe-area-inset-bottom))] pt-5 lg:px-6 lg:pb-12">
         {/* Header */}
-        <PortfolioHeader onAddMedia={openMediaDialog} />
+        <PortfolioHeader onAddMedia={openMediaDialog} usage={usage} />
 
         <ProfileHighlightsStatus items={items} showcase={showcase} />
 
@@ -389,11 +398,7 @@ export function PortfolioPage() {
       <AddMediaSheet
         open={addMediaOpen}
         onOpenChange={setAddMediaOpen}
-        onChoose={(type) => {
-          if (type === "link") setExternalLinkOpen(true);
-          else if (type === "video") setAddVideoOpen(true);
-          else setUploadType(type);
-        }}
+        onChoose={openMediaDialog}
       />
       <UploadDialog
         open={uploadType !== null}

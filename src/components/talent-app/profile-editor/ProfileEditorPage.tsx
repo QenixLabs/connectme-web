@@ -8,7 +8,8 @@ import {
   useUploadTalentPhoto,
   useUploadTalentBanner,
 } from "@/hooks/use-talent-profile";
-import { useMyAwards } from "@/hooks/use-experience";
+import { useMyAwards, useMyCredits, useMyTestimonials } from "@/hooks/use-experience";
+import { useMyPortfolioCollection } from "@/hooks/use-portfolio";
 import { CropImageModal } from "@/components/ui/crop-image-modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dashboard } from "./Dashboard";
@@ -57,6 +58,9 @@ export function ProfileEditorPage() {
   const uploadPhoto = useUploadTalentPhoto();
   const uploadBanner = useUploadTalentBanner();
   const awardsQuery = useMyAwards();
+  const creditsQuery = useMyCredits();
+  const testimonialsQuery = useMyTestimonials();
+  const portfolioQuery = useMyPortfolioCollection();
 
   const [stack, setStack] = useState<ScreenKey[]>([]);
   const current = stack[stack.length - 1];
@@ -180,6 +184,41 @@ export function ProfileEditorPage() {
 
   const profile = mapServerToView(serverProfile);
   profile.awards = mapApiAwardsToView(awardsQuery.data);
+  profile.portfolio = (portfolioQuery.data?.items ?? []).map((item) => ({
+    id: item.id,
+    title: item.title || item.file_name || item.type,
+    subtitle: item.profile_highlight_type || item.type,
+    date: item.created_at ?? "",
+    featured: Boolean(item.is_pinned),
+  }));
+  profile.media = (portfolioQuery.data?.items ?? []).map((item) => ({
+    id: item.id,
+    name: item.title || item.file_name || item.type,
+    kind:
+      item.profile_highlight_type === "showreel"
+        ? "showreel"
+        : item.type === "image"
+          ? "image"
+          : "video",
+    meta: item.type,
+    featured: Boolean(item.is_pinned),
+  }));
+  profile.credits = (creditsQuery.data ?? []).map((credit) => ({
+    id: credit._id,
+    project: credit.project_name ?? "",
+    role: credit.role_played ?? "",
+    production: credit.platform ?? "",
+    year: credit.year != null ? String(credit.year) : "",
+    description: credit.description ?? "",
+  }));
+  profile.testimonials = (testimonialsQuery.data ?? []).map((testimonial) => ({
+    id: testimonial._id,
+    author: testimonial.author_name,
+    role: testimonial.author_role ?? testimonial.author_company ?? "",
+    rating: testimonial.rating ?? 0,
+    text: testimonial.content ?? "",
+    approvedByTalent: Boolean(testimonial.is_approved_by_talent),
+  }));
 
   const editorProps = {
     profile,
@@ -188,7 +227,11 @@ export function ProfileEditorPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-[430px] overflow-hidden rounded-xl md:my-6 md:border md:shadow-sm">
+    <div
+      className={`mx-auto w-full overflow-hidden rounded-xl ${
+        current === undefined ? "max-w-[1100px]" : "max-w-[430px]"
+      } md:my-6 md:border md:shadow-sm`}
+    >
       <input
         ref={fileInputRef}
         type="file"
@@ -207,6 +250,8 @@ export function ProfileEditorPage() {
       {current === undefined ? (
         <Dashboard
           profile={profile}
+          portfolioItems={portfolioQuery.data?.items ?? []}
+          profileHighlights={portfolioQuery.data?.profile_highlights}
           onOpen={open}
           onPhotoClick={() => fileInputRef.current?.click()}
           onBannerClick={() => bannerInputRef.current?.click()}

@@ -45,7 +45,6 @@ import {
   PROFESSION_SUGGESTIONS,
   SPECIALTY_SUGGESTIONS,
   LANGUAGE_FLUENCY_OPTIONS,
-  PROFICIENCY_OPTIONS,
 } from "./profile/profile-constants";
 import { ChangePasswordDialog } from "./settings/change-password-dialog";
 import { VerifyPhoneDialog } from "./settings/verify-phone-dialog";
@@ -88,10 +87,7 @@ export function ProfilePage() {
   const [editingLanguageIdx, setEditingLanguageIdx] = useState<number | null>(null);
   const [languageDraft, setLanguageDraft] = useState({ name: "", fluency: "Fluent" });
   const [editingSkillIdx, setEditingSkillIdx] = useState<number | null>(null);
-  const [skillDraft, setSkillDraft] = useState<{
-    name: string;
-    proficiency: "beginner" | "intermediate" | "expert";
-  }>({ name: "", proficiency: "intermediate" });
+  const [skillDraft, setSkillDraft] = useState({ name: "" });
 
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [phoneVerifyOpen, setPhoneVerifyOpen] = useState(false);
@@ -214,15 +210,12 @@ export function ProfilePage() {
                 onFieldUpdate={handleFieldUpdate}
                 onOpenSkillsAdd={() => {
                   setEditingSkillIdx(null);
-                  setSkillDraft({ name: "", proficiency: "intermediate" });
+                  setSkillDraft({ name: "" });
                   setSheet("skills");
                 }}
                 onEditSkill={(idx, skill) => {
                   setEditingSkillIdx(idx);
-                  setSkillDraft({
-                    name: skill.name,
-                    proficiency: skill.proficiency as "beginner" | "intermediate" | "expert",
-                  });
+                  setSkillDraft({ name: skill.name });
                   setSheet("skills");
                 }}
                 onDeleteSkill={(idx) => {
@@ -420,25 +413,11 @@ export function ProfilePage() {
                 placeholder="e.g. Classical Dance, Guitar, Swimming"
               />
             </div>
-            <div>
-              <p className="mb-1.5 text-xs font-medium text-muted-foreground">Proficiency</p>
-              <Select
-                value={skillDraft.proficiency}
-                onValueChange={(v) => setSkillDraft((d) => ({ ...d, proficiency: v as typeof skillDraft.proficiency }))}
-              >
-                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {PROFICIENCY_OPTIONS.map((opt) => (
-                    <SelectItem key={opt} value={opt}>{opt.charAt(0).toUpperCase() + opt.slice(1)}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
             <Button
               onClick={() => {
                 if (!skillDraft.name.trim()) return;
                 const skills = [...(profile.skills ?? [])];
-                const newSkill = { ...skillDraft, order: skills.length };
+                const newSkill = { name: skillDraft.name.trim(), order: skills.length };
                 if (editingSkillIdx !== null) {
                   skills[editingSkillIdx] = { ...skills[editingSkillIdx], ...newSkill };
                 } else {

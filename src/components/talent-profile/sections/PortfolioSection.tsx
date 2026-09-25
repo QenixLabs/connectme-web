@@ -58,12 +58,14 @@ export function PortfolioSection({
   onOpenReel,
   showAllAction = true,
   collapsible = false,
+  title = "Portfolio",
 }: {
   items: PortfolioApiResponse[];
   username: string;
   onOpenReel?: (itemId: string) => void;
   showAllAction?: boolean;
   collapsible?: boolean;
+  title?: string;
 }) {
   const router = useRouter();
   const portfolioItems = useMemo(() => toPortfolioItems(items), [items]);
@@ -81,7 +83,7 @@ export function PortfolioSection({
   return (
     <CollapsibleSection
       icon={<Video className="size-4" />}
-      title="Portfolio Highlights"
+      title={title}
       action={showAllAction && portfolioItems.length > 0 ? "View More" : undefined}
       onAction={showAllAction ? handleViewAll : undefined}
       collapsible={collapsible && portfolioItems.length > 0}

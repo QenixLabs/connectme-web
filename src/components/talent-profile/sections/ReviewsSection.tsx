@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Quote, Star } from "lucide-react";
+import { Quote } from "lucide-react";
 import { CollapsibleSection, Stars } from "../primitives";
 import type { ReviewItem } from "../data";
 
@@ -68,11 +68,15 @@ export function ReviewsSection({
       collapsible={collapsible && data.length > 0}
     >
       {data.length === 0 ? (
-        <p className="py-6 text-center text-sm text-muted-foreground/60">
-          No reviews yet.
-        </p>
+        <div className="flex flex-col items-center py-2 text-center">
+          <span className="grid size-10 place-items-center rounded-2xl bg-pink-50 text-[#DB2777]">
+            <Quote className="size-4.5" />
+          </span>
+          <p className="mt-1.5 text-sm font-semibold text-foreground/70">No reviews just yet.</p>
+          <p className="mt-0.5 text-xs text-muted-foreground/60">Great collaborations will show up here.</p>
+        </div>
       ) : (
-        <ul className="space-y-3">
+        <ul className="space-y-2.5">
           {visible.map((review) => (
             <ReviewCard key={review.id} review={review} />
           ))}

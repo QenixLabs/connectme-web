@@ -45,7 +45,6 @@ export function mapServerToView(server: TalentProfile): Profile {
     skills:
       server.skills?.map((s, index) => ({
         name: s.name,
-        proficiency: s.proficiency as "beginner" | "intermediate" | "expert",
         order: s.order ?? index,
       })) ?? [],
     documents: {

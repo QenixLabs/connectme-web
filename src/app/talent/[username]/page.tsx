@@ -19,7 +19,7 @@ import {
 
 function ProfileSkeleton() {
   return (
-    <div className="min-h-screen bg-bg-page">
+      <div className="min-h-screen bg-[#F7F8FC]">
       <div className="h-[44vh] min-h-[300px] animate-pulse bg-muted md:h-[50vh]" />
       <div className="mx-auto max-w-5xl space-y-4 px-4 pt-4 sm:px-6">
         <div className="grid grid-cols-3 gap-2 sm:gap-3">
@@ -47,7 +47,7 @@ function ProfileSkeleton() {
 
 function ProfileNotFound({ username }: { username: string }) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-bg-page px-4">
+    <div className="flex min-h-screen items-center justify-center bg-[#F7F8FC] px-4">
       <div className="text-center">
         <h1 className="text-2xl font-bold text-foreground">Profile not found</h1>
         <p className="mt-2 text-muted-foreground">

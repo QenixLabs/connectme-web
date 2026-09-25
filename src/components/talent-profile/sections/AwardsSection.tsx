@@ -18,9 +18,13 @@ export function AwardsSection({
       collapsible={collapsible && data.length > 0}
     >
       {data.length === 0 ? (
-        <p className="py-6 text-center text-sm text-muted-foreground/60">
-          No awards added yet.
-        </p>
+        <div className="flex flex-col items-center py-2 text-center">
+          <span className="grid size-10 place-items-center rounded-2xl bg-amber-50 text-[#D97706]">
+            <Award className="size-4.5" />
+          </span>
+          <p className="mt-1.5 text-sm font-semibold text-foreground/70">The spotlight is ready.</p>
+          <p className="mt-0.5 text-xs text-muted-foreground/60">Awards and recognitions will appear here.</p>
+        </div>
       ) : (
         <ul className="space-y-2">
           {data.map((a) => (

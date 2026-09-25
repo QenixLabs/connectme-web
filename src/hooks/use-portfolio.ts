@@ -169,6 +169,8 @@ export function useUpdatePortfolioItem() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: portfolioKeys.my() });
       qc.invalidateQueries({ queryKey: [...portfolioKeys.all, "my-collection"] });
+      qc.invalidateQueries({ queryKey: talentProfileKeys.myProfile() });
+      qc.invalidateQueries({ queryKey: talentProfileKeys.all });
     },
   });
 }
@@ -180,6 +182,8 @@ export function useDeletePortfolioItem() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: portfolioKeys.my() });
       qc.invalidateQueries({ queryKey: [...portfolioKeys.all, "my-collection"] });
+      qc.invalidateQueries({ queryKey: talentProfileKeys.myProfile() });
+      qc.invalidateQueries({ queryKey: talentProfileKeys.all });
     },
   });
 }
@@ -192,6 +196,8 @@ export function useTogglePortfolioFeatured() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: portfolioKeys.my() });
       qc.invalidateQueries({ queryKey: [...portfolioKeys.all, "my-collection"] });
+      qc.invalidateQueries({ queryKey: talentProfileKeys.myProfile() });
+      qc.invalidateQueries({ queryKey: talentProfileKeys.all });
     },
   });
 }
@@ -203,6 +209,8 @@ export function useReorderPortfolio() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: portfolioKeys.my() });
       qc.invalidateQueries({ queryKey: [...portfolioKeys.all, "my-collection"] });
+      qc.invalidateQueries({ queryKey: talentProfileKeys.myProfile() });
+      qc.invalidateQueries({ queryKey: talentProfileKeys.all });
     },
   });
 }
@@ -226,6 +234,8 @@ export function useUploadPortfolioImage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: portfolioKeys.my() });
       qc.invalidateQueries({ queryKey: [...portfolioKeys.all, "my-collection"] });
+      qc.invalidateQueries({ queryKey: talentProfileKeys.myProfile() });
+      qc.invalidateQueries({ queryKey: talentProfileKeys.all });
     },
   });
 }
@@ -252,6 +262,8 @@ export function useUploadPortfolioVideo() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: portfolioKeys.my() });
       qc.invalidateQueries({ queryKey: [...portfolioKeys.all, "my-collection"] });
+      qc.invalidateQueries({ queryKey: talentProfileKeys.myProfile() });
+      qc.invalidateQueries({ queryKey: talentProfileKeys.all });
     },
   });
 }
@@ -282,6 +294,8 @@ export function useUploadPortfolioDocument() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: portfolioKeys.my() });
       qc.invalidateQueries({ queryKey: [...portfolioKeys.all, "my-collection"] });
+      qc.invalidateQueries({ queryKey: talentProfileKeys.myProfile() });
+      qc.invalidateQueries({ queryKey: talentProfileKeys.all });
     },
   });
 }

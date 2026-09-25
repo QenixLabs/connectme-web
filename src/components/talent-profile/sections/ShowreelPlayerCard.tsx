@@ -3,14 +3,17 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { Clapperboard, Play } from "lucide-react";
+import Link from "next/link";
 import { GlassCard } from "../primitives";
 import type { PortfolioItem } from "@/lib/types/portfolio";
 
 export function ShowreelPlayerCard({
   items,
+  username,
   onOpenReel,
 }: {
   items: PortfolioItem[];
+  username: string;
   onOpenReel?: (itemId: string) => void;
 }) {
   const hero = items.find((i) => i.profileHighlightType === "showreel");
@@ -19,16 +22,22 @@ export function ShowreelPlayerCard({
   const img = hero.thumbnailUrl || hero.url;
 
   return (
-    <GlassCard>
+    <GlassCard className="bg-gradient-to-br from-slate-50 to-blue-50/70 p-3.5 sm:p-4">
       <div className="mb-3 flex items-center gap-2">
-        <span className="grid size-6 place-items-center rounded-md bg-secondary">
-          <Clapperboard className="size-3.5 text-brand" />
-        </span>
-        <h2 className="text-[15px] font-bold text-foreground">Showreel</h2>
+        <span className="grid size-7 place-items-center rounded-lg bg-purple-100 text-[#7C3AED]">
+          <Clapperboard className="size-4" />
+         </span>
+         <h2 className="text-[15px] font-bold text-foreground">Showreel</h2>
+         <Link
+           href={`/talent/${encodeURIComponent(username)}/portfolio`}
+           className="ml-auto shrink-0 text-xs font-semibold text-brand transition-colors hover:text-brand/80"
+         >
+           View All
+         </Link>
       </div>
       <button
         onClick={() => onOpenReel?.(hero.id)}
-        className="group relative block aspect-video w-full overflow-hidden rounded-xl"
+        className="group relative block aspect-video w-full overflow-hidden rounded-[18px] bg-slate-900 shadow-[0_10px_24px_rgba(15,23,42,0.14)]"
       >
         <img
           src={img}
@@ -36,11 +45,14 @@ export function ShowreelPlayerCard({
           loading="lazy"
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
-        <span className="absolute inset-0 bg-gradient-to-t from-foreground/40 to-transparent" />
+        <span className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/5 to-transparent" />
         <span className="absolute inset-0 grid place-items-center">
           <span className="grid size-12 place-items-center rounded-full border-2 border-card bg-foreground/30 backdrop-blur-sm transition-colors group-hover:bg-foreground/45">
             <Play className="size-5 fill-card text-card" />
           </span>
+        </span>
+        <span className="absolute left-3 top-3 rounded-full bg-white/15 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-white backdrop-blur-md">
+          Video
         </span>
         <span className="absolute bottom-2 left-3 max-w-[60%] truncate rounded-md bg-foreground/60 px-2 py-0.5 text-[11px] font-semibold text-card">
           {hero.title}

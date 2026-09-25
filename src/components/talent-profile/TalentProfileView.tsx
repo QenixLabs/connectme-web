@@ -13,11 +13,10 @@ import {
   User,
   BarChart3,
   FolderOpen,
-  Video,
-  Images,
 } from "lucide-react";
 import type {
   TalentProfile,
+  TalentSkill,
   PortfolioApiResponse,
   Credit,
   Testimonial,
@@ -34,8 +33,6 @@ import { TalentProfileActions } from "./TalentProfileActions";
 import { SocialConnectBar } from "./SocialConnectBar";
 import {
   AboutSection,
-  ShowReelSection,
-  PortfolioSection,
   ExperienceSection,
   SkillsSection,
   ReviewsSection,
@@ -43,8 +40,8 @@ import {
   DetailsSection,
   MediaKitSection,
   AnalyticsSection,
-  ShowreelPlayerCard,
-  HighlightRow,
+  PublicPortfolioSections,
+  PublicDocumentsSection,
 } from "./sections";
 import {
   toExperienceItems,
@@ -93,41 +90,23 @@ export function TalentProfileView({
   const experience = useMemo(() => toExperienceItems(credits), [credits]);
   const awardItems = useMemo(() => toAwardItems(awards), [awards]);
   const reviewItems = useMemo(() => toReviewItems(testimonials), [testimonials]);
-  const skills = useMemo(
-    () => (profile.skills || []).map((s) => s.name),
+  const skills = useMemo<TalentSkill[]>(
+    () =>
+      [...(profile.skills || [])]
+        .sort((left, right) => left.order - right.order)
+        .map((skill, index) => ({ ...skill, order: skill.order ?? index })),
     [profile],
   );
 
-  const portfolioItemsConverted = useMemo(
-    () => toPortfolioItems(portfolioItems),
+  const publicMediaItems = useMemo(
+    () => toPortfolioItems(
+      portfolioItems.filter(
+        (item) => item.type === "image" || item.type === "video" || item.type === "youtube",
+      ),
+    ),
     [portfolioItems],
   );
-  const publicPortfolioItems = useMemo(() => {
-    const itemsById = new Map(portfolioItemsConverted.map((item) => [item.id, item]));
-    // The portfolio endpoint applies the ordered showcase IDs to each item.
-    // Prefer that current source over the older profile snapshot when present.
-    const configuredItems = portfolioItemsConverted.filter((item) => !!item.profileHighlightType);
-    if (configuredItems.length > 0) return configuredItems;
-
-    if (profile.portfolioHighlights?.length) {
-      return profile.portfolioHighlights
-        .map((item) => itemsById.get(item.id))
-        .filter((item): item is (typeof portfolioItemsConverted)[number] => !!item);
-    }
-
-    return [];
-  }, [portfolioItemsConverted, profile.portfolioHighlights]);
-  const videoItems = useMemo(
-    () =>
-      publicPortfolioItems.filter(
-        (i) => i.type !== "image" && i.profileHighlightType !== "showreel",
-      ),
-    [publicPortfolioItems],
-  );
-  const imageItems = useMemo(
-    () => publicPortfolioItems.filter((i) => i.type === "image"),
-    [publicPortfolioItems],
-  );
+  const publicViewerItems = useMemo(() => toPortfolioItems(portfolioItems), [portfolioItems]);
 
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxItemId, setLightboxItemId] = useState<string | null>(null);
@@ -151,7 +130,7 @@ export function TalentProfileView({
 
   return (
     <>
-      <div className="mx-auto w-full max-w-md pb-24">
+      <div className="mx-auto w-full max-w-md bg-[#F7F8FC] pb-24">
         {/* Cover + identity band */}
         <HeroSection
           profile={profile}
@@ -165,7 +144,7 @@ export function TalentProfileView({
           <StatsBento profile={profile} testimonials={testimonials} />
         </div>
 
-      <div className="space-y-3 px-5 pt-3">
+      <div className="space-y-2.5 px-5 pt-3">
 
         {/* CTA + secondary buttons */}
         <TalentProfileActions
@@ -180,7 +159,7 @@ export function TalentProfileView({
         {/* Tab bar */}
         <nav
           ref={tabScrollRef}
-          className="no-scrollbar flex snap-x snap-mandatory items-end overflow-x-auto rounded-2xl bg-card px-1 py-2 shadow-[var(--shadow-card)]"
+           className="no-scrollbar flex snap-x snap-mandatory items-end overflow-x-auto rounded-[20px] bg-white/90 px-1 py-1.5 shadow-[0_6px_24px_rgba(15,23,42,0.05)]"
         >
           {tabItems.map((t) => (
             <button
@@ -190,7 +169,7 @@ export function TalentProfileView({
               className={cn(
                 "w-1/4 min-w-[25%] snap-center flex flex-col items-center gap-1 border-b-2 px-0.5 pb-1.5 pt-1 transition-colors",
                 activeTab === t.id
-                  ? "border-brand text-brand"
+                   ? "border-[#2563EB] text-[#2563EB]"
                   : "border-transparent text-muted-foreground",
               )}
             >
@@ -202,111 +181,95 @@ export function TalentProfileView({
 
         {/* Tab content */}
         {activeTab === "overview" && (
-          <div className="space-y-3">
+           <div className="space-y-2.5">
             <AboutSection bio={profile.about || ""} />
             <SkillsSection skills={skills} />
-            {(isOwner || publicPortfolioItems.length > 0) && (
-              <div className="flex items-center justify-between rounded-2xl bg-card px-4 py-3 shadow-[var(--shadow-card)]">
-                <h2 className="text-sm font-bold text-foreground">Portfolio Highlights</h2>
-                {isOwner && <Link href="/talent/portfolio/showcase" className="text-xs font-semibold text-brand hover:underline">Manage Profile Showcase</Link>}
-              </div>
+            {(isOwner || publicMediaItems.length > 0) && (
+               <div className="flex items-center justify-between gap-3 px-1 py-1">
+                 <div className="flex min-w-0 items-center gap-2.5">
+                   <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-purple-50 text-[#7C3AED]">
+                     <FolderOpen className="size-4" />
+                   </span>
+                   <div className="min-w-0">
+                     <h2 className="text-sm font-bold text-slate-800">Portfolio</h2>
+                     <p className="truncate text-[10px] text-muted-foreground">Showcase your strongest work</p>
+                   </div>
+                 </div>
+                 {isOwner && (
+                   <Link href="/talent/portfolio/showcase" className="shrink-0 text-[11px] font-bold text-[#2563EB] hover:underline">
+                     Manage -&gt;
+                   </Link>
+                 )}
+               </div>
             )}
-            <ShowreelPlayerCard
-              items={publicPortfolioItems}
-              onOpenReel={handleOpenLightbox}
-            />
-            <HighlightRow
-              icon={Video}
-              title="Video Highlights"
-              variant="video"
-              items={videoItems}
-              onOpenReel={handleOpenLightbox}
-            />
-            <HighlightRow
-              icon={Images}
-              title="Image Highlights"
-              variant="image"
-              items={imageItems}
-              onOpenReel={handleOpenLightbox}
-            />
-            <Link
-              href={`/talent/${profile.username}/portfolio`}
-              className="block rounded-xl border border-border bg-card px-4 py-3 text-center text-sm font-semibold text-brand transition-colors hover:bg-secondary"
-            >
-              View Full Portfolio →
-            </Link>
+              <PublicPortfolioSections
+                items={portfolioItems}
+                username={profile.username}
+                onOpenReel={handleOpenLightbox}
+              />
             <AwardsSection data={awardItems} />
             <ReviewsSection data={reviewItems} />
           </div>
         )}
 
         {activeTab === "portfolio" && (
-          <div className="space-y-3">
+         <div className="space-y-2.5">
             {isOwner && (
               <Link href="/talent/portfolio/showcase" className="block rounded-xl border border-border bg-card px-4 py-3 text-center text-sm font-semibold text-brand transition-colors hover:bg-secondary">
                 Manage Profile Showcase
               </Link>
-            )}
-            <ShowReelSection
-              items={portfolioItems.filter((item) =>
-                publicPortfolioItems.some((highlight) => highlight.id === item.id),
-              )}
-              onOpenReel={handleOpenLightbox}
-            />
-            <PortfolioSection
-              items={portfolioItems.filter((item) =>
-                publicPortfolioItems.some((highlight) => highlight.id === item.id),
-              )}
-              username={profile.username}
-              onOpenReel={handleOpenLightbox}
-            />
-            <Link
-              href={`/talent/${profile.username}/portfolio`}
-              className="block rounded-xl border border-border bg-card px-4 py-3 text-center text-sm font-semibold text-brand transition-colors hover:bg-secondary"
-            >
-              View Full Portfolio →
-            </Link>
-          </div>
+             )}
+             <PublicPortfolioSections
+               items={portfolioItems}
+               username={profile.username}
+               onOpenReel={handleOpenLightbox}
+             />
+             <PublicDocumentsSection
+               items={portfolioItems}
+               username={profile.username}
+               onOpen={handleOpenLightbox}
+             />
+           </div>
         )}
 
         {activeTab === "experience" && (
-          <div className="space-y-3">
+         <div className="space-y-2.5">
             <ExperienceSection data={experience} isOwner={isOwner} />
           </div>
         )}
 
         {activeTab === "skills" && (
-          <div className="space-y-3">
+         <div className="space-y-2.5">
             <SkillsSection skills={skills} />
           </div>
         )}
 
         {activeTab === "awards" && (
-          <div className="space-y-3">
+         <div className="space-y-2.5">
             <AwardsSection data={awardItems} />
           </div>
         )}
 
         {activeTab === "reviews" && (
-          <div className="space-y-3">
+         <div className="space-y-2.5">
             <ReviewsSection data={reviewItems} initialShowAll />
           </div>
         )}
 
         {activeTab === "details" && (
-          <div className="space-y-3">
+         <div className="space-y-2.5">
             <DetailsSection profile={profile} awards={awardItems} />
           </div>
         )}
 
         {activeTab === "media" && (
-          <div className="space-y-3">
+         <div className="space-y-2.5">
             <MediaKitSection profile={profile} />
           </div>
         )}
 
         {activeTab === "analytics" && (
-          <div className="space-y-3">
+           <div className="space-y-2.5">
             <AnalyticsSection profile={profile} />
           </div>
         )}
@@ -321,7 +284,7 @@ export function TalentProfileView({
       {isOwner && <BottomBar navItems={navItems} iconOnly />}
 
       <MediaLightbox
-        items={publicPortfolioItems}
+        items={publicViewerItems}
         initialItemId={lightboxItemId}
         open={lightboxOpen}
         onClose={() => setLightboxOpen(false)}

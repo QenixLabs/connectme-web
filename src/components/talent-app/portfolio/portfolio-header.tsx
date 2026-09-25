@@ -7,12 +7,14 @@ export type PortfolioUploadType = "image" | "video" | "document" | "link";
 
 export function PortfolioHeader({
   onAddMedia,
+  usage,
 }: {
   onAddMedia: (type: PortfolioUploadType) => void;
+  usage: { imagesUsed: number; planMaxImages: number; videosUsed: number; planMaxVideos: number };
 }) {
   const actions = [
-    { type: "image" as const, label: "Upload Photo", detail: "JPG, PNG or WebP", Icon: Image, tone: "bg-[#f0edff] text-[#6556c8]" },
-    { type: "video" as const, label: "Upload Video", detail: "MP4, MOV or WebM", Icon: Video, tone: "bg-[#eaf3ff] text-[#3476c9]" },
+    { type: "image" as const, label: "Upload Photo", detail: usage.imagesUsed >= usage.planMaxImages ? "Plan limit reached" : `${usage.imagesUsed} / ${usage.planMaxImages} used`, Icon: Image, tone: "bg-[#f0edff] text-[#6556c8]", disabled: usage.imagesUsed >= usage.planMaxImages },
+    { type: "video" as const, label: "Upload Video", detail: usage.videosUsed >= usage.planMaxVideos ? "Plan limit reached" : `${usage.videosUsed} / ${usage.planMaxVideos} used`, Icon: Video, tone: "bg-[#eaf3ff] text-[#3476c9]", disabled: usage.videosUsed >= usage.planMaxVideos },
     { type: "document" as const, label: "Resume / Document", detail: "PDF, DOC or DOCX", Icon: FileText, tone: "bg-[#f8efff] text-[#a04bc0]" },
     { type: "link" as const, label: "External Link", detail: "YouTube, Vimeo or web", Icon: Link2, tone: "bg-[#e8f8f8] text-[#2d8b91]" },
   ];
@@ -34,12 +36,14 @@ export function PortfolioHeader({
       </section>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {actions.map(({ type, label, detail, Icon, tone }) => (
-          <button key={type} type="button" onClick={() => onAddMedia(type)} className="group flex min-h-[92px] items-start gap-2.5 rounded-[14px] border border-border/70 bg-card p-3 text-left shadow-[0_8px_24px_-22px_rgba(35,43,91,0.7)] transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md">
+        {actions.map(({ type, label, detail, Icon, tone, disabled }) => {
+          const content = <>
             <span className={`grid size-8 shrink-0 place-items-center rounded-[10px] ${tone}`}><Icon className="size-4" /></span>
-            <span className="min-w-0 pt-0.5"><span className="block truncate text-[11px] font-bold text-foreground">{label}</span><span className="mt-1 block text-[10px] leading-4 text-muted-foreground">{detail}</span></span>
-          </button>
-        ))}
+            <span className="min-w-0 pt-0.5"><span className="block truncate text-[11px] font-bold text-foreground">{label}</span><span className="mt-1 block text-[10px] leading-4 text-muted-foreground">{detail}</span>{disabled && <Link href="/talent/billing" className="mt-1 block text-[10px] font-bold text-primary hover:underline">Upgrade plan</Link>}</span>
+          </>;
+          const className = "group flex min-h-[92px] items-start gap-2.5 rounded-[14px] border border-border/70 bg-card p-3 text-left shadow-[0_8px_24px_-22px_rgba(35,43,91,0.7)] transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md";
+          return disabled ? <div key={type} className={`${className} cursor-not-allowed opacity-50 hover:translate-y-0`}>{content}</div> : <button key={type} type="button" onClick={() => onAddMedia(type)} className={className}>{content}</button>;
+        })}
       </div>
     </div>
   );

@@ -59,7 +59,7 @@ export function ScrollDots({
   if (count <= 1 || !overflows) return null;
 
   return (
-    <div className="flex items-center justify-center gap-1.5 pt-3">
+    <div className="flex items-center justify-center gap-1.5 pt-2.5">
       {Array.from({ length: count }).map((_, i) => (
         <button
           key={i}
@@ -69,8 +69,8 @@ export function ScrollDots({
           className={cn(
             "h-1.5 rounded-full transition-all",
             i === active
-              ? "w-4 bg-brand"
-              : "w-1.5 bg-border hover:bg-muted-foreground/50",
+               ? "w-5 bg-[#2563EB]"
+               : "w-1.5 bg-border hover:bg-muted-foreground/50",
           )}
         />
       ))}

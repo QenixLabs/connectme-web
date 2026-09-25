@@ -2,7 +2,6 @@
 
 import { MapPin, Eye, Paperclip, Pencil, Plus, Trash2 } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -25,7 +24,7 @@ interface ProfileDetailsTabProps {
   profile: TalentProfile;
   onFieldUpdate: (field: string, value: unknown) => void;
   onOpenSkillsAdd: () => void;
-  onEditSkill: (idx: number, skill: { name: string; proficiency: string }) => void;
+  onEditSkill: (idx: number, skill: { name: string }) => void;
   onDeleteSkill: (idx: number) => void;
 }
 
@@ -177,9 +176,6 @@ export function ProfileDetailsTab({
               >
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">{skill.name}</span>
-                  <Badge variant="secondary" className="text-[10px] capitalize">
-                    {skill.proficiency}
-                  </Badge>
                 </div>
                 <div className="flex gap-1">
                   <button

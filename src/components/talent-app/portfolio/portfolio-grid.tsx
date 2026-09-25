@@ -13,7 +13,6 @@ const TABS = [
   { value: "all", label: "All", icon: Layers },
   { value: "image", label: "Photos", icon: ImageIcon },
   { value: "video", label: "Videos", icon: Video },
-  { value: "document", label: "Documents", icon: FileText },
   { value: "link", label: "Links", icon: Link2 },
 ] as const;
 
@@ -49,9 +48,10 @@ export function PortfolioGrid({
   const filtered = useMemo(() => {
     const result = items.filter((item) => {
       const matchesTab = activeTab === "all"
-        || item.kind === activeTab
-        || (activeTab === "video" && item.type === "youtube")
-        || (activeTab === "link" && item.kind === "link" && item.type !== "youtube");
+        ? item.kind !== "document"
+        : item.kind === activeTab
+          || (activeTab === "video" && item.type === "youtube")
+          || (activeTab === "link" && item.kind === "link" && item.type !== "youtube");
       const query = search.trim().toLowerCase();
       return matchesTab && (!profileOnly || item.onProfile) && (!query || `${item.title} ${item.caption || ""} ${item.type} ${item.category || ""}`.toLowerCase().includes(query));
     });
@@ -62,6 +62,22 @@ export function PortfolioGrid({
       return sort === "oldest" ? aTime - bTime : bTime - aTime;
     });
   }, [activeTab, items, profileOnly, search, sort]);
+
+  const filteredDocuments = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    const documents = items.filter(
+      (item) =>
+        item.kind === "document" &&
+        (!profileOnly || item.onProfile) &&
+        (!query || `${item.title} ${item.caption || ""} ${item.type} ${item.category || ""}`.toLowerCase().includes(query)),
+    );
+    return [...documents].sort((a, b) => {
+      if (sort === "profile") return Number(b.onProfile) - Number(a.onProfile);
+      const aTime = new Date(sort === "updated" ? (a.updated_at ?? a.created_at ?? 0) : (a.created_at ?? 0)).getTime();
+      const bTime = new Date(sort === "updated" ? (b.updated_at ?? b.created_at ?? 0) : (b.created_at ?? 0)).getTime();
+      return sort === "oldest" ? aTime - bTime : bTime - aTime;
+    });
+  }, [items, profileOnly, search, sort]);
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3">
@@ -74,7 +90,7 @@ export function PortfolioGrid({
           {TABS.map((tab) => {
             const count =
               tab.value === "all"
-                ? items.length
+                ? items.filter((item) => item.kind !== "document").length
                 : items.filter((i) => (i.kind === tab.value && !(tab.value === "link" && i.type === "youtube")) || (tab.value === "video" && i.type === "youtube")).length;
             return (
               <TabsTrigger
@@ -147,8 +163,35 @@ export function PortfolioGrid({
               />
             ))}
           </div>
-        )}
+       )}
       </TabsContent>
+
+      {filteredDocuments.length > 0 && (
+        <section className="rounded-[16px] border border-border/70 bg-card p-3 shadow-[0_8px_24px_-22px_rgba(35,43,91,0.7)] sm:p-4">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="grid size-8 place-items-center rounded-lg bg-[#f8efff] text-[#a04bc0]"><FileText className="size-4" /></span>
+              <div><h2 className="text-[15px] font-bold text-foreground">Documents</h2><p className="text-[11px] text-muted-foreground">Resumes and other uploaded documents</p></div>
+            </div>
+            <span className="text-[11px] font-semibold text-muted-foreground">{filteredDocuments.length}</span>
+          </div>
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-4">
+            {filteredDocuments.map((item) => (
+              <PortfolioItemCard
+                key={item.id}
+                item={item}
+                onToggleSelect={() => onToggleSelect(item.id)}
+                onEdit={() => onEdit(item)}
+                onDelete={() => onDelete(item)}
+                onTogglePin={() => onTogglePin(item)}
+                onSetShowreel={() => onSetShowreel(item)}
+                onOpen={() => onOpen(item.id, item.kind)}
+                selectionMode={selectionMode}
+              />
+            ))}
+          </div>
+        </section>
+      )}
     </Tabs>
   );
 }

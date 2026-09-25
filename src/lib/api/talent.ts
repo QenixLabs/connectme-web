@@ -3,6 +3,13 @@ import { apiClient } from "./client";
 export type Availability = "available" | "busy" | "not_available";
 export type PrivacyMode = "public" | "recruiters_only" | "private";
 export type DocumentType = "resume" | "portfolio_pdf" | "measurements_sheet";
+export type SkillProficiency = "beginner" | "intermediate" | "advanced" | "expert";
+
+export interface TalentSkill {
+  name: string;
+  proficiency?: SkillProficiency;
+  order: number;
+}
 
 export interface SectionVisibility {
   bio?: boolean;
@@ -47,7 +54,7 @@ export interface UpdateTalentProfilePayload {
   };
   languages?: { name: string; fluency: string }[];
   accents?: string[];
-  skills?: { name: string; proficiency: "beginner" | "intermediate" | "expert"; order?: number }[];
+  skills?: { name: string; proficiency?: SkillProficiency; order?: number }[];
   documents?: { resume_url?: string; portfolio_pdf_url?: string; measurements_sheet_url?: string };
   social_links?: Record<string, { url?: string; visibility?: string; show_on_profile?: boolean }>;
   privacy_mode?: PrivacyMode;
@@ -83,7 +90,7 @@ export interface TalentProfile {
   };
   languages?: { name: string; fluency: string }[];
   accents?: string[];
-  skills?: { name: string; proficiency: string; order: number }[];
+  skills?: TalentSkill[];
   documents?: { resume_url?: string; portfolio_pdf_url?: string; measurements_sheet_url?: string };
   social_links?: Record<string, { url?: string; visibility?: string; show_on_profile?: boolean }>;
   privacy_mode?: PrivacyMode;
@@ -521,7 +528,7 @@ export const talentApi = {
     const response = await apiClient.post("/talent/portfolio/upload/image", formData, {
       headers: { "Content-Type": undefined },
     });
-    return response.data as PortfolioApiResponse;
+    return response.data as { item: PortfolioApiResponse };
   },
 
   uploadPortfolioVideo: async (
@@ -551,7 +558,7 @@ export const talentApi = {
     const response = await apiClient.post("/talent/portfolio/upload/video", formData, {
       headers: { "Content-Type": undefined },
     });
-    return response.data as PortfolioApiResponse;
+    return response.data as { item: PortfolioApiResponse };
   },
 
   // ── Credits ──────────────────────────────────────────────

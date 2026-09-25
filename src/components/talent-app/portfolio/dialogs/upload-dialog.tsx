@@ -128,10 +128,13 @@ export function UploadDialog({
       } else {
         await uploadDocument.mutateAsync({ file, data: payload });
       }
-      toast.success(`${type === "image" ? "Photo" : type === "video" ? "Video" : "Document"} uploaded`);
+      toast.success(
+        `${type === "image" ? "Photo" : type === "video" ? "Video" : "Document"} uploaded`,
+      );
       handleClose();
-    } catch {
-      toast.error("Upload failed");
+    } catch (error) {
+      const message = (error as { response?: { data?: { message?: string } } }).response?.data?.message;
+      toast.error(message || "Upload failed");
     }
   };
 
@@ -257,8 +260,8 @@ export function UploadDialog({
                   </Select>
                   <FormMessage />
                 </FormItem>
-              )}
-            />
+                )}
+              />
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={handleClose} disabled={isPending}>

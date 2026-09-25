@@ -1,20 +1,20 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Award,
   ArrowRight,
   BadgeCheck,
-  Briefcase,
+  BriefcaseBusiness,
+  CalendarDays,
   Camera,
   Check,
   ChevronRight,
   Clapperboard,
   FileText,
-  Grid2x2,
   Home,
   Image as ImageIcon,
+  Instagram,
   Languages,
   Link2,
   Lock,
@@ -26,13 +26,16 @@ import {
   Sparkles,
   Star,
   Trophy,
-  User,
   UserRound,
   Wand2,
+  Youtube,
 } from "lucide-react";
 import type { ReactNode } from "react";
+import type {
+  PortfolioApiResponse,
+  ProfileHighlightsResponse,
+} from "@/lib/api/talent";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { computeStrength } from "./compute-strength";
 import { Ring } from "./editors/StrengthScreen";
@@ -40,549 +43,551 @@ import type { Profile, ScreenKey } from "./profile-types";
 
 interface DashboardProps {
   profile: Profile;
+  portfolioItems: PortfolioApiResponse[];
+  profileHighlights?: ProfileHighlightsResponse;
   onOpen: (key: ScreenKey) => void;
   onPhotoClick: () => void;
   onBannerClick: () => void;
 }
 
-type MenuItem = {
-  key: ScreenKey;
-  icon: ReactNode;
+type CardProps = {
   title: string;
   subtitle: string;
-  href?: string;
-  strengthKey: string;
-  done: boolean;
-  progress?: string;
+  icon: ReactNode;
+  done?: boolean;
+  actionLabel?: string;
+  children?: ReactNode;
+  className?: string;
+  onClick: () => void;
+};
+
+const strengthKeyByScreen: Partial<Record<ScreenKey, string>> = {
+  basic: "basic_info",
+  professional: "professional_profile",
+  about: "about",
+  skills: "skills",
+  portfolio: "portfolio",
+  media: "media",
+  awards: "awards",
+  physical: "physical_attributes",
+  languages: "languages",
+  social: "social_links",
+  documents: "resume",
 };
 
 export function Dashboard({
   profile,
+  portfolioItems,
+  profileHighlights,
   onOpen,
   onPhotoClick,
   onBannerClick,
 }: DashboardProps) {
-  const { percent, items } = computeStrength(profile);
-  const remaining = items.filter((i) => !i.done);
-  const completedCount = items.length - remaining.length;
-  const nextItem = remaining[0];
   const router = useRouter();
+  const strength = computeStrength(profile);
+  const strengthMap = new Map(strength.items.map((item) => [item.key, item]));
+  const completedCount = strength.items.filter((item) => item.done).length;
+  const nextItem = strength.items.find((item) => !item.done);
 
-  const socialCount = Object.values(profile.socialLinks).filter((l) => Boolean(l.url)).length;
-  const documentCount = [
-    profile.documents.resume_url,
-    profile.documents.portfolio_pdf_url,
-    profile.documents.measurements_sheet_url,
-  ].filter(Boolean).length;
-  const physicalAttributeCount = [
+  const socialEntries = Object.entries(profile.socialLinks).filter(([, link]) => Boolean(link.url));
+  const documentEntries = [
+    ["Resume", profile.documents.resume_url],
+    ["Portfolio PDF", profile.documents.portfolio_pdf_url],
+    ["Measurements", profile.documents.measurements_sheet_url],
+  ].filter(([, url]) => Boolean(url));
+  const physicalValues = [
     profile.physicalAttributes.height_cm,
     profile.physicalAttributes.weight_kg,
-  ].filter(Boolean).length;
-  const screenByStrengthKey: Partial<Record<string, ScreenKey>> = {
-    basic_info: "basic",
-    professional_profile: "professional",
-    physical_attributes: "physical",
-    social_links: "social",
-    resume: "documents",
-    measurements: "documents",
+    profile.physicalAttributes.body_type,
+    profile.physicalAttributes.complexion,
+    profile.physicalAttributes.hair_color,
+    profile.physicalAttributes.eye_color,
+  ].filter(Boolean);
+  const approvedTestimonials = profile.testimonials.filter((item) => item.approvedByTalent);
+
+  const navigateToStrengthItem = (key?: string) => {
+    if (!key) {
+      onOpen("strength");
+      return;
+    }
+    if (key === "profile_photo") return onPhotoClick();
+    if (key === "cover_image") return onBannerClick();
+    if (key === "portfolio") return router.push("/talent/portfolio");
+    if (key === "resume" || key === "measurements") return onOpen("documents");
+    const screen = Object.entries(strengthKeyByScreen).find(([, value]) => value === key)?.[0];
+    onOpen((screen as ScreenKey | undefined) ?? "strength");
   };
 
-  const sectionState = {
-    basic: Boolean(profile.fullLegalName && profile.username && profile.location),
-    professional: profile.professions.length > 0 && Boolean(profile.headline),
-    about: profile.about.trim().length > 80,
-    availability: Boolean(profile.availability),
-    skills: profile.skills.length >= 5,
-    portfolio: profile.portfolio.length > 0,
-    experience: profile.experience.length > 0,
-    credits: profile.credits.length > 0,
-    awards: profile.awards.length > 0,
-    physical: physicalAttributeCount === 2,
-    languages: profile.languages.length >= 4,
-    social: socialCount >= 3,
-    documents: documentCount >= 2,
-    testimonials: profile.testimonials.some((t) => t.approvedByTalent),
-    privacy: true,
-  };
+  const nextDetail = nextItem
+    ? nextItem.key === "skills"
+      ? `${profile.skills.length} added · aim for 5`
+      : nextItem.key === "portfolio"
+        ? "Add a project or portfolio media"
+        : nextItem.key === "media"
+          ? "Show recruiters your work"
+          : `Add your ${nextItem.label.toLowerCase()}`
+    : "Your profile is ready to be discovered";
 
-  const nextAction = nextItem
-    ? {
-        label: nextItem.label,
-        run:
-          nextItem.key === "profile_photo"
-            ? onPhotoClick
-            : nextItem.key === "cover_image"
-              ? onBannerClick
-              : nextItem.key === "portfolio"
-                ? () => router.push("/talent/portfolio")
-                : () => onOpen(screenByStrengthKey[nextItem.key] ?? (nextItem.key as ScreenKey)),
-      }
-    : { label: "Review your profile", run: () => onOpen("strength") };
+  const sectionState = (screen: ScreenKey, fallback = false) =>
+    strengthMap.get(strengthKeyByScreen[screen] ?? "")?.done ?? fallback;
 
-  const groups: { label: string; items: MenuItem[] }[] = [
-    {
-      label: "Profile",
-      items: [
-        {
-          key: "basic",
-          icon: <UserRound className="size-[18px]" />,
-          title: "Basic Information",
-          subtitle: "Name, username, location, DOB",
-          strengthKey: "basic_info",
-          done: sectionState.basic,
-        },
-        {
-          key: "professional",
-          icon: <Sparkles className="size-[18px]" />,
-          title: "Professional Profile",
-          subtitle:
-            profile.professions.length > 0
-              ? `${profile.professions.length} professions · ${profile.specialties.length} specialties`
-              : "Add a role and headline to get discovered",
-          strengthKey: "professional_profile",
-          done: sectionState.professional,
-        },
-        {
-          key: "about",
-          icon: <Wand2 className="size-[18px]" />,
-          title: "About Me",
-          subtitle: profile.about ? "Your story in your words" : "Not added yet",
-          strengthKey: "about",
-          done: sectionState.about,
-        },
-        {
-          key: "availability",
-          icon: <MapPin className="size-[18px]" />,
-          title: "Availability",
-          subtitle:
-            profile.availability === "available"
-              ? "Available now"
-              : profile.availability === "busy"
-                ? "Busy"
-                : "Not available",
-          strengthKey: "availability",
-          done: sectionState.availability,
-        },
-      ],
-    },
-    {
-      label: "Work",
-      items: [
-        {
-          key: "skills",
-          icon: <Star className="size-[18px]" />,
-          title: "Skills",
-          subtitle:
-            profile.skills.length > 0
-              ? `${profile.skills.length} added · aim for 5`
-              : "Add skills recruiters search for",
-          strengthKey: "skills",
-          done: sectionState.skills,
-          progress:
-            profile.skills.length > 0 && !sectionState.skills
-              ? `${Math.round((profile.skills.length / 5) * 100)}%`
-              : undefined,
-        },
-        {
-          key: "portfolio",
-          icon: <Grid2x2 className="size-[18px]" />,
-          title: "Portfolio",
-          subtitle:
-            profile.portfolio.length > 0
-              ? `${profile.portfolio.length} projects`
-              : "Add your first project",
-          href: "/talent/portfolio",
-          strengthKey: "portfolio",
-          done: sectionState.portfolio,
-        },
-        {
-          key: "experience",
-          icon: <Briefcase className="size-[18px]" />,
-          title: "Work Experience",
-          subtitle:
-            profile.experience.length > 0
-              ? `${profile.experience.length} roles added`
-              : "Add your first role or production",
-          strengthKey: "experience",
-          done: sectionState.experience,
-        },
-        {
-          key: "credits",
-          icon: <Clapperboard className="size-[18px]" />,
-          title: "Credits",
-          subtitle:
-            profile.credits.length > 0
-              ? `${profile.credits.length} projects`
-              : "Add a credit to build trust",
-          strengthKey: "credits",
-          done: sectionState.credits,
-        },
-        {
-          key: "awards",
-          icon: <Trophy className="size-[18px]" />,
-          title: "Awards",
-          subtitle:
-            profile.awards.length > 0
-              ? `${profile.awards.length} recognitions`
-              : "Add awards and recognitions",
-          strengthKey: "awards",
-          done: sectionState.awards,
-        },
-      ],
-    },
-    {
-      label: "Personal",
-      items: [
-        {
-          key: "physical",
-          icon: <Ruler className="size-[18px]" />,
-          title: "Physical Attributes",
-          subtitle:
-            physicalAttributeCount > 0
-              ? `${profile.physicalAttributes.height_cm ?? "—"} cm · ${profile.physicalAttributes.body_type ?? "Add body type"}`
-              : "Add measurements recruiters may need",
-          strengthKey: "physical_attributes",
-          done: sectionState.physical,
-          progress: physicalAttributeCount === 1 ? "50%" : undefined,
-        },
-        {
-          key: "languages",
-          icon: <Languages className="size-[18px]" />,
-          title: "Languages & Accents",
-          subtitle:
-            profile.languages.map((l) => l.name).join(", ") || "Add languages and accents",
-          strengthKey: "languages",
-          done: sectionState.languages,
-          progress:
-            profile.languages.length > 0 && !sectionState.languages
-              ? `${Math.round((profile.languages.length / 4) * 100)}%`
-              : undefined,
-        },
-      ],
-    },
-    {
-      label: "Account",
-      items: [
-        {
-          key: "social",
-          icon: <Link2 className="size-[18px]" />,
-          title: "Social Links",
-          subtitle: socialCount > 0 ? `${socialCount} connected` : "Connect social proof for more reach",
-          strengthKey: "social_links",
-          done: sectionState.social,
-          progress:
-            socialCount > 0 && !sectionState.social
-              ? `${Math.round((socialCount / 3) * 100)}%`
-              : undefined,
-        },
-        {
-          key: "documents",
-          icon: <FileText className="size-[18px]" />,
-          title: "Documents",
-          subtitle:
-            documentCount > 0
-              ? `${documentCount} uploaded`
-              : "Upload a resume or measurements sheet",
-          strengthKey: "resume",
-          done: sectionState.documents,
-          progress: documentCount === 1 ? "50%" : undefined,
-        },
-        {
-          key: "testimonials",
-          icon: <MessageSquareQuote className="size-[18px]" />,
-          title: "Testimonials",
-          subtitle: profile.testimonials.some((t) => t.approvedByTalent)
-            ? "Testimonials approved"
-            : "Request a testimonial",
-          strengthKey: "testimonials",
-          done: sectionState.testimonials,
-        },
-        {
-          key: "privacy",
-          icon: <Lock className="size-[18px]" />,
-          title: "Privacy & Visibility",
-          subtitle: `Profile is ${profile.privacyMode}`,
-          strengthKey: "privacy",
-          done: sectionState.privacy,
-        },
-      ],
-    },
+  const profileCategory = [
+    "profile_photo",
+    "cover_image",
+    "basic_info",
+    "professional_profile",
+    "about",
+  ];
+  const personalCategory = ["physical_attributes", "languages"];
+  const creativeSections = [
+    sectionState("skills"),
+    portfolioItems.length > 0,
+    profile.yearsOfExperience > 0,
+    profile.credits.length > 0,
+    profile.awards.length > 0,
+  ];
+  const accountSections = [
+    socialEntries.length > 0,
+    documentEntries.length > 0,
+    approvedTestimonials.length > 0,
+    Boolean(profile.privacyMode),
   ];
 
+  const recommendations: Recommendation[] = [];
+  const hasShowreel = profile.media.some((item) => item.kind === "showreel");
+  if (!hasShowreel) {
+    recommendations.push({
+      icon: <Clapperboard className="size-4" />,
+      title: "Add your showreel",
+      description: "Show recruiters your work immediately.",
+      action: "Add Showreel",
+      onClick: () => onOpen("media"),
+    });
+  }
+  if (profile.skills.length < 5) {
+    recommendations.push({
+      icon: <Star className="size-4" />,
+      title: "Add another skill",
+      description: `${profile.skills.length} skills added · aim for 5.`,
+      action: "Add Skill",
+      onClick: () => onOpen("skills"),
+    });
+  }
+  if (portfolioItems.length === 0) {
+    recommendations.push({
+      icon: <ImageIcon className="size-4" />,
+      title: "Add portfolio media",
+      description: "Give recruiters a quick view of your work.",
+      action: "Add Portfolio",
+      onClick: () => router.push("/talent/portfolio"),
+    });
+  }
+  if (profile.yearsOfExperience === 0 && recommendations.length < 3) {
+    recommendations.push({
+      icon: <BriefcaseBusiness className="size-4" />,
+      title: "Add work experience",
+      description: "Show recruiters the roles you have worked on.",
+      action: "Add Experience",
+      onClick: () => onOpen("experience"),
+    });
+  }
+  const visibleRecommendations = recommendations.slice(0, 3);
+
   return (
-    <div className="min-h-full pb-8">
-      {/* Hero */}
-      <div className="relative">
-        <div
-          className={cn(
-            "h-36 w-full bg-cover bg-center",
-            !profile.heroBackground && "bg-gradient-to-br from-primary/10 via-muted to-muted/50",
-          )}
-          style={
-            profile.heroBackground
-              ? { backgroundImage: `url(${profile.heroBackground})` }
-              : undefined
-          }
+    <div className="min-h-full bg-[linear-gradient(180deg,#f8f9ff_0%,#f5f7fc_46%,#f8f9fc_100%)] pb-28">
+      <div className="mx-auto w-full max-w-[1060px] px-4 pb-8 pt-3 sm:px-6 lg:px-8">
+        <IdentityHeader
+          profile={profile}
+          onPhotoClick={onPhotoClick}
+          onBannerClick={onBannerClick}
         />
-        <button
-          onClick={onBannerClick}
-          className="absolute top-3 right-3 flex items-center gap-1.5 rounded-full bg-card/85 px-3 py-1.5 text-xs font-bold text-secondary-foreground backdrop-blur active:scale-95"
-        >
-          <Camera className="size-3.5" /> Cover
-        </button>
 
-        <div className="px-4">
-          <div className="-mt-12 flex items-end gap-3">
-            <div className="relative">
-              <div className="grid size-24 place-items-center overflow-hidden rounded-3xl border-4 border-background bg-muted text-[26px] font-extrabold tracking-wide">
-                {profile.profilePhoto ? (
-                  <img
-                    src={profile.profilePhoto}
-                    alt="Profile"
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  (profile.fullLegalName || profile.username || "?")[0]?.toUpperCase()
-                )}
-              </div>
-              <button
-                onClick={onPhotoClick}
-                aria-label="Change photo"
-                className="absolute -right-1 -bottom-1 grid size-8 place-items-center rounded-full border-2 border-background bg-primary text-primary-foreground shadow active:scale-95"
-              >
-                <Camera className="size-3.5" />
-              </button>
-            </div>
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(
-                  `${window.location.origin}/talent/${profile.username}`,
-                );
-                // toast handled by parent if needed
-              }}
-              className="mb-1 ml-auto flex items-center gap-1.5 rounded-full border border-border bg-card px-3.5 py-2 text-xs font-bold text-secondary-foreground active:scale-95"
-            >
-              <Share2 className="size-3.5" /> Share
-            </button>
-          </div>
-
-          <div className="mt-3">
-            <div className="flex items-center gap-1.5">
-              <h1 className="truncate text-[22px] font-extrabold tracking-tight">
-                {profile.fullLegalName || "Add your name"}
-              </h1>
-              {profile.isVerified ? (
-                <BadgeCheck className="size-5 shrink-0 text-primary" />
-              ) : null}
-            </div>
-            <p className="text-[13.5px] font-semibold text-muted-foreground">
-              @{profile.username}
-            </p>
-            <p className="mt-1 text-[14px] font-semibold">{profile.headline}</p>
-            <p className="mt-1 flex items-center gap-1 text-[12.5px] text-muted-foreground">
-              <MapPin className="size-3.5" /> {profile.location || "Add location"}
-            </p>
-            <div className="mt-2.5 flex flex-wrap gap-1.5">
-              {profile.professions.slice(0, 3).map((p) => (
-                <span
-                  key={p}
-                  className="rounded-full bg-primary/10 px-3 py-1.5 text-[12px] font-bold text-primary"
-                >
-                  {p}
-                </span>
-              ))}
-              <span
-                className={cn(
-                  "rounded-full px-3 py-1.5 text-[12px] font-bold",
-                  profile.availability === "available"
-                    ? "bg-success/15 text-success"
-                    : "bg-muted text-muted-foreground",
-                )}
-              >
-                {profile.availability === "available"
-                  ? "Available now"
-                  : profile.availability === "busy"
-                    ? "Busy"
-                    : "Not available"}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Strength */}
-      <div className="mt-5 px-4">
-        <Card
-          className="cursor-pointer border-primary/15 shadow-[0_8px_24px_rgba(37,99,235,0.08)]"
-          onClick={() => onOpen("strength")}
-        >
-          <CardContent className="p-4 sm:p-5">
-            <div className="flex items-center gap-4">
-              <Ring percent={percent} size={104} />
-              <div className="min-w-0 flex-1">
-                <p className="text-[16px] font-extrabold tracking-tight">Profile Strength</p>
-                <p className="mt-1 text-[14px] font-bold text-primary">{percent}% complete</p>
-                <p className="mt-0.5 text-[12.5px] text-muted-foreground">
-                  {completedCount} of {items.length} sections complete
+        <section className="relative mt-5 overflow-hidden rounded-[22px] border border-[#dfe2fb] bg-[#fbfbff] shadow-[0_16px_40px_rgba(61,70,160,0.10)]">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_15%,rgba(99,102,241,0.15),transparent_34%),linear-gradient(115deg,#ffffff_0%,#f5f3ff_58%,#eeeaff_100%)]" />
+          <div className="relative h-[238px] md:h-[260px]">
+            <div className="absolute inset-y-0 left-0 z-20 w-[48%] pb-3 pl-5 pr-2 pt-5 sm:px-7 sm:pt-7">
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-primary/75">
+                Profile strength
+              </p>
+              <h2 className="mt-2 max-w-full font-display text-[19px] font-bold leading-[1.05] tracking-[-0.04em] text-[#14225a] sm:text-3xl">
+                <span className="block">Build a profile</span>
+                <span className="block">recruiters</span>
+                <span className="block">can&apos;t overlook.</span>
+              </h2>
+              <div className="mt-3">
+                <div className="w-fit text-center">
+                  <Ring percent={strength.percent} size={72} />
+                  <p className="mt-0.5 text-[11px] font-bold text-[#18265e]">Complete</p>
+                </div>
+                <p className="mt-1 text-[11.5px] leading-snug text-muted-foreground">
+                  {completedCount} of {strength.items.length} sections
                 </p>
               </div>
             </div>
-            <p className="mt-4 text-[13px] leading-relaxed text-muted-foreground">
-              Complete your profile to improve your visibility to recruiters.
-            </p>
-            <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-primary/5 px-3 py-2.5">
-              <div className="min-w-0">
-                <p className="text-[11px] font-bold uppercase tracking-wide text-primary/75">Next</p>
-                <p className="truncate text-[13px] font-semibold">{nextAction.label}</p>
-              </div>
-              <Button
-                size="sm"
-                className="h-9 rounded-lg px-3 text-xs font-bold shadow-sm"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  nextAction.run();
-                }}
-              >
-                Complete Profile <ArrowRight className="size-3.5" />
-              </Button>
+            <div className="absolute inset-y-0 right-0 z-10 w-[52%]">
+              <img
+                src="/assets/talent-dashboard/profile-hero.png"
+                alt=""
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 h-full w-full object-contain object-bottom object-right"
+              />
             </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Groups */}
-      <div className="space-y-6 px-4 pt-4 pb-24">
-        {groups.map((g) => (
-          <div key={g.label}>
-            <p className="mb-2 flex items-center justify-between px-1 text-xs font-extrabold uppercase tracking-wide text-muted-foreground">
-              <span>{g.label}</span>
-              <span className="text-[10px] font-bold tracking-normal text-muted-foreground/70">
-                {g.items.filter((item) => item.done).length}/{g.items.length}
-              </span>
-            </p>
-            <Card className="divide-y p-0">
-              {g.items.map((it) => {
-                const isRecommended =
-                  it.strengthKey === nextItem?.key ||
-                  (it.key === "documents" &&
-                    (nextItem?.key === "resume" || nextItem?.key === "measurements"));
-                const content = (
-                  <>
-                    <span
-                      className={cn(
-                        "grid size-8 shrink-0 place-items-center rounded-lg",
-                        isRecommended
-                          ? "bg-primary/10 text-primary"
-                          : "bg-muted text-muted-foreground",
-                      )}
-                    >
-                      {it.icon}
-                    </span>
-                    <span
-                      className={cn(
-                        "grid size-5 shrink-0 place-items-center rounded-full",
-                        it.done
-                          ? "bg-success/15 text-success"
-                          : isRecommended
-                            ? "border border-primary/50 bg-primary/5 text-primary"
-                            : "border border-muted-foreground/35 text-transparent",
-                      )}
-                    >
-                      {it.done ? <Check className="size-3" strokeWidth={3} /> : null}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p
-                        className={cn(
-                          "text-[14.5px] font-semibold",
-                          isRecommended && "text-primary",
-                        )}
-                      >
-                        {it.title}
-                      </p>
-                      <p className="truncate text-[12.5px] text-muted-foreground">
-                        {it.subtitle}
-                      </p>
-                    </div>
-                    {it.progress ? (
-                      <span className="shrink-0 text-[10px] font-bold text-primary/75">
-                        {it.progress}
-                      </span>
-                    ) : null}
-                    <ChevronRight className="size-[18px] shrink-0 text-muted-foreground/70" />
-                  </>
-                );
-
-                return it.href ? (
-                  <Link
-                    key={it.key}
-                    href={it.href}
-                    className={cn(
-                      "flex items-center gap-2.5 px-4 py-3 transition-colors hover:bg-muted/40",
-                      isRecommended && "bg-primary/[0.035]",
-                    )}
-                  >
-                    {content}
-                  </Link>
-                ) : (
-                  <button
-                    key={it.key}
-                    onClick={() => onOpen(it.key as ScreenKey)}
-                    className={cn(
-                      "flex w-full items-center gap-2.5 px-4 py-3 text-left transition-colors hover:bg-muted/40",
-                      isRecommended && "bg-primary/[0.035]",
-                    )}
-                  >
-                    {content}
-                  </button>
-                );
-              })}
-            </Card>
           </div>
-        ))}
-      </div>
+          <div className="relative z-30 border-t border-[#e1e2f3] bg-[#fbfbff]/95 px-5 pb-4 pt-3 backdrop-blur-[2px] sm:px-7">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-primary/70">
+              Next to complete
+            </p>
+            <button
+              className="mt-1 flex w-full items-center gap-2 text-left"
+              onClick={() => navigateToStrengthItem(nextItem?.key)}
+            >
+              <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-white/80 text-primary shadow-sm">
+                <Sparkles className="size-3.5" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-xs font-bold text-[#17245b]">
+                  {nextItem?.label ?? "Profile complete"}
+                </span>
+                <span className="block truncate text-[10px] text-muted-foreground">
+                  {nextDetail}
+                </span>
+              </span>
+              <ChevronRight className="size-4 shrink-0 text-primary" />
+            </button>
+            <Button
+              className="mt-3 h-9 w-full rounded-xl text-xs font-bold shadow-[0_7px_16px_rgba(86,71,220,0.20)]"
+              onClick={() => navigateToStrengthItem(nextItem?.key)}
+            >
+              Complete Profile <ArrowRight className="size-3.5" />
+            </Button>
+          </div>
+        </section>
 
+        <section className="mt-5">
+          <div className="flex items-end justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-primary/75">
+                Profile completion
+              </p>
+              <h2 className="mt-1 font-display text-xl font-bold tracking-tight text-[#14225a]">
+                See what&apos;s complete and what needs attention.
+              </h2>
+            </div>
+            <span className="shrink-0 text-sm font-extrabold text-primary">
+              {completedCount}/{strength.items.length}
+            </span>
+          </div>
+          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#e5e8f4]">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-blue-600 to-violet-500 transition-all"
+              style={{ width: `${strength.percent}%` }}
+            />
+          </div>
+        </section>
+
+        <CategoryHeader label="Profile" done={countDone(profileCategory, strengthMap)} total={profileCategory.length} />
+        <div className="grid gap-2.5 md:grid-cols-2">
+          <SummaryCard
+            title="Basic Information"
+            subtitle={`${basicCount(profile)}/4 details complete`}
+            icon={<UserRound className="size-[17px]" />}
+            done={sectionState("basic")}
+            onClick={() => onOpen("basic")}
+          />
+          <SummaryCard
+            title="Professional Profile"
+            subtitle={`${profile.professions.length} professions · ${profile.specialties.length} specialties`}
+            icon={<Sparkles className="size-[17px]" />}
+            done={sectionState("professional")}
+            onClick={() => onOpen("professional")}
+          />
+          <SummaryCard
+            title="About Me"
+            subtitle={profile.about.trim() ? `${wordCount(profile.about)} words · Complete` : "Not added yet"}
+            icon={<Wand2 className="size-[17px]" />}
+            done={sectionState("about")}
+            onClick={() => onOpen("about")}
+          />
+          <SummaryCard
+            title="Availability"
+            subtitle={availabilityLabel(profile.availability)}
+            icon={<CalendarDays className="size-[17px]" />}
+            done={Boolean(profile.availability)}
+            onClick={() => onOpen("availability")}
+          />
+        </div>
+
+        <CategoryHeader label="Creative & career" done={creativeSections.filter(Boolean).length} total={creativeSections.length} />
+        <div className="mt-2 grid gap-2.5 md:grid-cols-2">
+          <SummaryCard
+            title="Skills"
+            subtitle={`${profile.skills.length} ${profile.skills.length === 1 ? "skill" : "skills"}${profile.skills.length > 0 ? " · aim for 5" : ""}`}
+            icon={<Star className="size-[17px]" />}
+            done={sectionState("skills")}
+            className="border-primary/20 bg-[linear-gradient(135deg,#fff 0%,#f6f3ff 100%)]"
+            onClick={() => onOpen("skills")}
+          >
+            {profile.skills.length > 0 ? (
+              <div className="mt-3 flex max-w-full items-center gap-1.5 overflow-hidden">
+                {profile.skills.slice(0, 3).map((skill) => (
+                  <span key={skill.name} className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[10px] font-bold text-primary shadow-sm ring-1 ring-primary/10">
+                    {skill.name}
+                  </span>
+                ))}
+                {profile.skills.length > 3 ? (
+                  <span className="shrink-0 text-[10px] font-bold text-muted-foreground">
+                    +{profile.skills.length - 3}
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
+          </SummaryCard>
+
+          <PortfolioCard
+            items={portfolioItems}
+            profileHighlights={profileHighlights}
+            onClick={() => router.push("/talent/portfolio")}
+          />
+          <SummaryCard
+            title="Work Experience"
+            subtitle={profile.yearsOfExperience > 0 ? `${profile.yearsOfExperience} years experience` : "No experience added yet"}
+            icon={<BriefcaseBusiness className="size-[17px]" />}
+            done={profile.yearsOfExperience > 0}
+            actionLabel={profile.yearsOfExperience > 0 ? undefined : "+ Add"}
+            onClick={() => onOpen("experience")}
+          >
+            {profile.yearsOfExperience > 0 ? (
+              <p className="mt-3 truncate text-xs text-muted-foreground">Experience summary available in your profile</p>
+            ) : null}
+          </SummaryCard>
+          <SummaryCard
+            title="Credits"
+            subtitle={profile.credits.length > 0 ? `${profile.credits.length} ${profile.credits.length === 1 ? "credit" : "credits"}` : "No credits added"}
+            icon={<Clapperboard className="size-[17px]" />}
+            done={profile.credits.length > 0}
+            actionLabel={profile.credits.length > 0 ? undefined : "+ Add"}
+            onClick={() => onOpen("credits")}
+          >
+            {profile.credits[0]?.project ? <p className="mt-3 truncate text-xs text-muted-foreground">{profile.credits[0].project}</p> : null}
+          </SummaryCard>
+          <SummaryCard
+            title="Awards"
+            subtitle={profile.awards.length > 0 ? `${profile.awards.length} ${profile.awards.length === 1 ? "award" : "awards"}` : "No awards added"}
+            icon={<Trophy className="size-[17px]" />}
+            done={profile.awards.length > 0}
+            actionLabel={profile.awards.length > 0 ? undefined : "+ Add"}
+            onClick={() => onOpen("awards")}
+          >
+            {profile.awards[0]?.name ? <p className="mt-3 truncate text-xs text-muted-foreground">{profile.awards[0].name}</p> : null}
+          </SummaryCard>
+        </div>
+
+        <CategoryHeader label="Personal" done={countDone(personalCategory, strengthMap)} total={personalCategory.length} />
+        <div className="grid gap-2.5 md:grid-cols-2">
+          <SummaryCard
+            title="Physical Attributes"
+            subtitle={physicalValues.length > 0 ? `${profile.physicalAttributes.height_cm ? `${profile.physicalAttributes.height_cm} cm` : ""}${profile.physicalAttributes.height_cm && profile.physicalAttributes.body_type ? " · " : ""}${profile.physicalAttributes.body_type ?? ""}` : "Not added yet"}
+            icon={<Ruler className="size-[17px]" />}
+            done={sectionState("physical")}
+            onClick={() => onOpen("physical")}
+          />
+          <SummaryCard
+            title="Languages & Accents"
+            subtitle={`${profile.languages.length} ${profile.languages.length === 1 ? "language" : "languages"} · ${profile.accents.length} ${profile.accents.length === 1 ? "accent" : "accents"}`}
+            icon={<Languages className="size-[17px]" />}
+            done={sectionState("languages")}
+            onClick={() => onOpen("languages")}
+          >
+            {profile.languages.length > 0 ? <p className="mt-3 truncate text-[11.5px] text-muted-foreground">{languagePreview(profile.languages.map((language) => language.name))}</p> : null}
+          </SummaryCard>
+        </div>
+
+        <CategoryHeader label="Account" done={accountSections.filter(Boolean).length} total={accountSections.length} />
+        <div className="grid gap-2.5 md:grid-cols-2">
+          <SummaryCard
+            title="Social Links"
+            subtitle={socialEntries.length > 0 ? `${socialEntries.length} connected` : "No social links connected"}
+            icon={<Link2 className="size-[17px]" />}
+            done={socialEntries.length > 0}
+            className="rounded-[14px] bg-white/80 shadow-none"
+            onClick={() => onOpen("social")}
+          >
+            {socialEntries.length > 0 ? <SocialPlatforms entries={socialEntries.map(([key]) => key)} /> : null}
+          </SummaryCard>
+          <SummaryCard
+            title="Documents"
+            subtitle={documentEntries.length > 0 ? `${documentEntries.length} uploaded` : "No documents uploaded"}
+            icon={<FileText className="size-[17px]" />}
+            done={documentEntries.length > 0}
+            actionLabel={documentEntries.length > 0 ? undefined : "+ Upload"}
+            className="rounded-[14px] bg-white/80 shadow-none"
+            onClick={() => onOpen("documents")}
+          >
+            {documentEntries.length > 0 ? <p className="mt-3 truncate text-xs text-muted-foreground">{documentEntries.map(([label]) => label).join(" · ")}</p> : null}
+          </SummaryCard>
+          <SummaryCard
+            title="Testimonials"
+            subtitle={approvedTestimonials.length > 0 ? `${approvedTestimonials.length} received` : "No testimonials yet"}
+            icon={<MessageSquareQuote className="size-[17px]" />}
+            done={approvedTestimonials.length > 0}
+            actionLabel={approvedTestimonials.length > 0 ? undefined : "Request"}
+            className="rounded-[14px] bg-white/80 shadow-none"
+            onClick={() => onOpen("testimonials")}
+          />
+          <SummaryCard
+            title="Privacy & Visibility"
+            subtitle={privacyLabel(profile.privacyMode)}
+            icon={<Lock className="size-[17px]" />}
+            done
+            className="rounded-[14px] bg-white/80 shadow-none"
+            onClick={() => onOpen("privacy")}
+          />
+        </div>
+
+        {visibleRecommendations.length > 0 ? (
+          <section className="mt-6">
+            <div className="flex items-end justify-between gap-3">
+              <div>
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-primary/75">Improve your profile</p>
+                <h2 className="mt-1 font-display text-xl font-bold tracking-tight text-[#14225a]">A few things that can make your profile stronger.</h2>
+              </div>
+              <button onClick={() => onOpen("strength")} className="shrink-0 text-[11px] font-bold text-primary">View all <ArrowRight className="ml-0.5 inline size-3" /></button>
+            </div>
+            <div className="mt-3 space-y-2.5">
+              {visibleRecommendations.map((recommendation) => (
+                <RecommendationCard key={recommendation.title} {...recommendation} />
+              ))}
+            </div>
+          </section>
+        ) : null}
+      </div>
       <BottomNav onOpen={onOpen} />
     </div>
   );
 }
 
+interface Recommendation {
+  icon: ReactNode;
+  title: string;
+  description: string;
+  action: string;
+  onClick: () => void;
+}
+
+function IdentityHeader({ profile, onPhotoClick, onBannerClick }: Pick<DashboardProps, "profile" | "onPhotoClick" | "onBannerClick">) {
+  return (
+    <section className="relative">
+      <div className="relative h-32 overflow-hidden rounded-b-[22px] rounded-t-[18px] bg-[#e9eafa] sm:h-40">
+        {profile.heroBackground ? <img src={profile.heroBackground} alt="Cover" className="h-full w-full object-cover" /> : <div className="h-full w-full bg-[radial-gradient(circle_at_15%_20%,rgba(93,85,225,0.22),transparent_35%),linear-gradient(115deg,#e7eafd,#f3efff)]" />}
+        <button onClick={onBannerClick} className="absolute right-3 top-3 flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-[11px] font-bold text-[#263267] shadow-sm backdrop-blur" aria-label="Change cover image"><Camera className="size-3.5" /> Cover</button>
+      </div>
+      <div className="px-1 sm:px-3">
+        <div className="-mt-11 flex items-end gap-3">
+          <div className="relative">
+            <button onClick={onPhotoClick} aria-label="Change profile photo" className="grid size-[88px] place-items-center overflow-hidden rounded-[25px] border-4 border-[#f8f9ff] bg-[#e6e8f4] text-2xl font-extrabold shadow-md sm:size-24">
+              {profile.profilePhoto ? <img src={profile.profilePhoto} alt="Profile" className="h-full w-full object-cover" /> : (profile.fullLegalName || profile.username || "?")[0]?.toUpperCase()}
+            </button>
+            <span className="pointer-events-none absolute -bottom-1 -right-1 grid size-7 place-items-center rounded-full border-2 border-[#f8f9ff] bg-primary text-primary-foreground shadow-sm"><Camera className="size-3.5" /></span>
+          </div>
+          <button onClick={() => navigator.clipboard.writeText(`${window.location.origin}/talent/${profile.username}`)} className="mb-1 ml-auto flex items-center gap-1.5 rounded-full border border-[#dfe2ed] bg-white px-3.5 py-2 text-[11px] font-bold text-[#263267] shadow-sm"><Share2 className="size-3.5" /> Share</button>
+        </div>
+        <div className="mt-3">
+          <div className="flex items-center gap-1.5"><h1 className="truncate font-display text-[23px] font-bold tracking-tight text-[#14225a]">{profile.fullLegalName || "Add your name"}</h1>{profile.isVerified ? <BadgeCheck className="size-5 shrink-0 text-primary" /> : null}</div>
+          <p className="text-[13px] font-semibold text-muted-foreground">@{profile.username}</p>
+          <p className="mt-1 text-sm font-semibold text-[#263267]">{profile.headline || "Add a professional headline"}</p>
+          <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="size-3.5" /> {profile.location || "Add location"}</p>
+          <div className="mt-2.5 flex flex-wrap gap-1.5">
+            {profile.professions.slice(0, 3).map((profession) => <span key={profession} className="rounded-full bg-primary/10 px-3 py-1.5 text-[11px] font-bold text-primary">{profession}</span>)}
+            {profile.specialties.slice(0, 2).map((specialty) => <span key={specialty} className="rounded-full border border-primary/15 bg-white/80 px-3 py-1.5 text-[11px] font-bold text-primary">{specialty}</span>)}
+            {profile.availability ? <span className={cn("rounded-full px-3 py-1.5 text-[11px] font-bold", profile.availability === "available" ? "bg-success/15 text-success" : "bg-muted text-muted-foreground")}>{availabilityShortLabel(profile.availability)}</span> : null}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function SummaryCard({ title, subtitle, icon, done, actionLabel, children, className, onClick }: CardProps) {
+  return (
+    <button onClick={onClick} className={cn("group w-full rounded-[18px] border border-[#e1e4ef] bg-white p-3.5 text-left shadow-[0_7px_20px_rgba(31,48,107,0.045)] transition hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-[0_12px_26px_rgba(31,48,107,0.09)]", className)}>
+      <div className="flex items-start gap-3">
+        <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#f0efff] text-primary">{icon}</span>
+        <span className="min-w-0 flex-1"><span className="flex items-center gap-1.5 text-[13.5px] font-bold text-[#17245b]"><span className="truncate">{title}</span>{done ? <span className="grid size-4 shrink-0 place-items-center rounded-full bg-[#e0f5ea] text-[#21925a]"><Check className="size-2.5" strokeWidth={3} /></span> : null}</span><span className="mt-0.5 block truncate text-[11.5px] text-muted-foreground">{subtitle}</span></span>
+        {actionLabel ? <span className="shrink-0 rounded-full bg-primary/8 px-2 py-1 text-[10px] font-bold text-primary">{actionLabel}</span> : null}
+        <ChevronRight className="mt-1 size-4 shrink-0 text-muted-foreground/60 transition group-hover:translate-x-0.5 group-hover:text-primary" />
+      </div>
+      {children}
+    </button>
+  );
+}
+
+function PortfolioCard({ items, profileHighlights, onClick }: { items: PortfolioApiResponse[]; profileHighlights?: ProfileHighlightsResponse; onClick: () => void }) {
+  const counts = portfolioCounts(items);
+  const showcaseCount = profileHighlights ? Number(Boolean(profileHighlights.showreel_id)) + profileHighlights.video_ids.length + profileHighlights.image_ids.length : null;
+  return (
+    <button onClick={onClick} className="group relative min-h-[120px] overflow-hidden rounded-[18px] border border-[#d8dcf5] bg-[linear-gradient(135deg,#ffffff_0%,#f3f2ff_100%)] p-3.5 text-left shadow-[0_8px_22px_rgba(58,62,154,0.07)] transition hover:-translate-y-0.5">
+      <div className="relative z-10 flex items-start gap-3"><span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#e9e8ff] text-primary"><ImageIcon className="size-[17px]" /></span><span className="min-w-0 flex-1"><span className="flex items-center gap-1.5 text-[13.5px] font-bold text-[#17245b]">Portfolio<span className="grid size-4 place-items-center rounded-full bg-[#e0f5ea] text-[#21925a]"><Check className="size-2.5" strokeWidth={3} /></span></span><span className="mt-0.5 block text-[11.5px] text-muted-foreground">{items.length > 0 ? `${items.length} ${items.length === 1 ? "item" : "items"}` : "No portfolio items yet"}</span>{items.length > 0 ? <span className="mt-1 block truncate text-[10.5px] font-medium text-primary/80">{counts.join(" · ")}</span> : null}{showcaseCount !== null ? <span className="mt-1 block text-[10px] text-muted-foreground">Featured on profile · {showcaseCount} of 8 slots used</span> : null}</span><ChevronRight className="mt-1 size-4 shrink-0 text-muted-foreground/60 group-hover:text-primary" /></div>
+      {items.length > 0 ? <div className="absolute bottom-3 right-3 flex -space-x-2">{items.filter((item) => thumbnailFor(item)).slice(0, 3).map((item) => <span key={item.id} className="grid size-12 overflow-hidden rounded-xl border-2 border-white bg-[#e4e6f4] shadow-sm"><img src={thumbnailFor(item)} alt="" className="h-full w-full object-cover" /></span>)}</div> : <span className="absolute bottom-3 right-3 rounded-lg bg-white/80 px-2 py-1 text-[10px] font-bold text-primary shadow-sm">+ Add Portfolio</span>}
+    </button>
+  );
+}
+
+function RecommendationCard({ icon, title, description, action, onClick }: Recommendation) {
+  return <div className="flex items-center gap-3 rounded-[16px] border border-primary/12 bg-[linear-gradient(110deg,#ffffff_0%,#f7f4ff_100%)] p-3 shadow-[0_6px_18px_rgba(31,48,107,0.04)]"><span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#f0efff] text-primary">{icon}</span><div className="min-w-0 flex-1"><p className="truncate text-[12.5px] font-bold text-[#17245b]">{title}</p><p className="truncate text-[11px] text-muted-foreground">{description}</p></div><Button variant="outline" size="sm" onClick={onClick} className="h-8 shrink-0 rounded-lg px-2.5 text-[10px] font-bold text-primary">{action}</Button></div>;
+}
+
+function CategoryHeader({ label, done, total }: { label: string; done: number; total: number }) {
+  return <div className="mt-6 flex items-center gap-3"><div className="flex min-w-0 items-center gap-2"><span className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-muted-foreground">{label}</span><span className="text-[10px] font-bold text-muted-foreground/70">{done}/{total}</span></div><span className="h-px flex-1 bg-gradient-to-r from-primary/30 to-transparent" /></div>;
+}
+
+function SocialPlatforms({ entries }: { entries: string[] }) {
+  return <div className="mt-3 flex items-center gap-2 overflow-hidden">{entries.slice(0, 3).map((entry) => <span key={entry} className="flex shrink-0 items-center gap-1 rounded-full bg-muted/70 px-2 py-1 text-[10px] font-semibold text-muted-foreground"><SocialIcon platform={entry} />{socialLabel(entry)}</span>)}{entries.length > 3 ? <span className="shrink-0 text-[10px] font-bold text-muted-foreground">+{entries.length - 3}</span> : null}</div>;
+}
+
+function SocialIcon({ platform }: { platform: string }) {
+  const value = platform.toLowerCase();
+  if (value.includes("instagram")) return <Instagram className="size-3" />;
+  if (value.includes("youtube")) return <Youtube className="size-3" />;
+  return <Link2 className="size-3" />;
+}
+
+function socialLabel(platform: string) { return platform.replaceAll("_", " ").replace(/(^|\s)\S/g, (letter) => letter.toUpperCase()); }
+function wordCount(value: string) { return value.trim().split(/\s+/).filter(Boolean).length; }
+function basicCount(profile: Profile) { return [profile.fullLegalName, profile.username, profile.location, profile.dateOfBirth].filter(Boolean).length; }
+function languagePreview(languages: string[]) { return languages.length > 2 ? `${languages.slice(0, 2).join(" · ")} +${languages.length - 2}` : languages.join(" · "); }
+function countDone(keys: string[], map: Map<string, { done: boolean }>) { return keys.filter((key) => map.get(key)?.done).length; }
+function availabilityLabel(value: Profile["availability"]) { return value === "available" ? "Available now · Open to work" : value === "busy" ? "Busy" : "Not available"; }
+function availabilityShortLabel(value: Profile["availability"]) { return value === "available" ? "Available now" : value === "busy" ? "Busy" : "Not available"; }
+function privacyLabel(value: Profile["privacyMode"]) { return value === "recruiters_only" ? "Recruiters only" : value === "private" ? "Private" : "Public"; }
+
+function portfolioCounts(items: PortfolioApiResponse[]) {
+  const counts: string[] = [];
+  const showreels = items.filter((item) => item.profile_highlight_type === "showreel").length;
+  const videos = items.filter((item) => item.type === "video" || item.type === "youtube").length;
+  const images = items.filter((item) => item.type === "image").length;
+  const links = items.filter((item) => item.type === "link" || item.type === "instagram").length;
+  if (showreels) counts.push(`${showreels} ${showreels === 1 ? "Reel" : "Reels"}`);
+  if (videos) counts.push(`${videos} ${videos === 1 ? "Video" : "Videos"}`);
+  if (images) counts.push(`${images} ${images === 1 ? "Photo" : "Photos"}`);
+  if (links) counts.push(`${links} ${links === 1 ? "Link" : "Links"}`);
+  return counts.length > 0 ? counts : ["Media added"];
+}
+
+function thumbnailFor(item: PortfolioApiResponse) {
+  return item.thumbnail_url || (item.type === "image" ? item.url : undefined);
+}
+
 function BottomNav({ onOpen }: { onOpen: (key: ScreenKey) => void }) {
   const router = useRouter();
-
   const tabs: { label: string; icon: ReactNode; onClick: () => void }[] = [
     { label: "Overview", icon: <Home className="size-[19px]" />, onClick: () => {} },
     { label: "Portfolio", icon: <ImageIcon className="size-[19px]" />, onClick: () => router.push("/talent/portfolio") },
     { label: "Awards", icon: <Award className="size-[19px]" />, onClick: () => onOpen("awards") },
-    { label: "Reviews", icon: <User className="size-[19px]" />, onClick: () => onOpen("testimonials") },
+    { label: "Reviews", icon: <UserRound className="size-[19px]" />, onClick: () => onOpen("testimonials") },
   ];
-
-  return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 mx-auto flex w-full max-w-[430px] items-end justify-around border-t bg-background/95 px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-xl">
-      {tabs.slice(0, 2).map((t) => (
-        <NavTab key={t.label} {...t} />
-      ))}
-      <button
-        onClick={() => onOpen("media")}
-        aria-label="Add media"
-        className="-mt-6 flex size-14 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg active:scale-95"
-      >
-        <Plus className="size-6" strokeWidth={2.5} />
-      </button>
-      {tabs.slice(2).map((t) => (
-        <NavTab key={t.label} {...t} />
-      ))}
-    </nav>
-  );
+  return <nav className="fixed inset-x-0 bottom-0 z-40 mx-auto flex w-full max-w-[430px] items-end justify-around border-t border-[#e0e3ee] bg-white/95 px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-8px_20px_rgba(32,47,96,0.06)] backdrop-blur-xl">{tabs.slice(0, 2).map((tab) => <NavTab key={tab.label} {...tab} />)}<button onClick={() => onOpen("media")} aria-label="Add media" className="-mt-6 flex size-14 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg active:scale-95"><Plus className="size-6" strokeWidth={2.5} /></button>{tabs.slice(2).map((tab) => <NavTab key={tab.label} {...tab} />)}</nav>;
 }
 
 function NavTab({ label, icon, onClick }: { label: string; icon: ReactNode; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className="flex w-16 flex-col items-center gap-1 rounded-2xl py-1.5 text-[10.5px] font-bold text-muted-foreground transition-colors hover:text-primary"
-    >
-      {icon}
-      {label}
-    </button>
-  );
+  return <button onClick={onClick} className="flex w-16 flex-col items-center gap-1 rounded-2xl py-1.5 text-[10.5px] font-bold text-muted-foreground transition-colors hover:text-primary">{icon}{label}</button>;
 }
