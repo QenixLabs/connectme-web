@@ -4,6 +4,18 @@ export type Availability = "available" | "busy" | "not_available";
 export type PrivacyMode = "public" | "recruiters_only" | "private";
 export type DocumentType = "resume" | "portfolio_pdf" | "measurements_sheet";
 export type SkillProficiency = "beginner" | "intermediate" | "advanced" | "expert";
+export type AchievementType =
+  | "credit"
+  | "award"
+  | "nomination"
+  | "training"
+  | "workshop"
+  | "certification"
+  | "institution";
+export type AchievementVerificationStatus =
+  | "self_reported"
+  | "public_record"
+  | "recruiter_cosigned";
 
 export interface TalentSkill {
   name: string;
@@ -236,6 +248,60 @@ export interface Credit {
   created_at: string;
 }
 
+export interface Achievement {
+  _id: string;
+  user_id: string;
+  type: AchievementType;
+  title?: string;
+  organization?: string;
+  category?: string;
+  role_level?: string;
+  institution?: string;
+  trainer?: string;
+  project_name?: string;
+  role_played?: string;
+  awarding_body?: string;
+  platform?: string;
+  director?: string;
+  year?: number;
+  start_date?: string;
+  end_date?: string;
+  description?: string;
+  media_url?: string;
+  proof_url?: string;
+  credit_url?: string;
+  verification_status?: AchievementVerificationStatus;
+  verification_method?: string;
+  featured?: boolean;
+  order?: number;
+  created_at: string;
+}
+
+export interface AchievementPayload {
+  type: AchievementType;
+  title?: string;
+  organization?: string;
+  category?: string;
+  role_level?: string;
+  institution?: string;
+  trainer?: string;
+  platform?: string;
+  director?: string;
+  year?: number;
+  start_date?: string;
+  end_date?: string;
+  description?: string;
+  media_url?: string;
+  proof_url?: string;
+  verification_status?: AchievementVerificationStatus;
+  verification_method?: string;
+  featured?: boolean;
+  project_name?: string;
+  role_played?: string;
+  credit_url?: string;
+  awarding_body?: string;
+}
+
 export interface Testimonial {
   _id: string;
   user_id: string;
@@ -410,6 +476,11 @@ export const talentApi = {
     return response.data as Award[];
   },
 
+  getAchievements: async (username: string) => {
+    const response = await apiClient.get(`/talent/profile/${username}/achievements`);
+    return response.data as Achievement[] | { private: true };
+  },
+
   getMyPortfolio: async () => {
     const response = await apiClient.get("/talent/portfolio");
     const body = response.data as { items: PortfolioApiResponse[] };
@@ -566,6 +637,39 @@ export const talentApi = {
     const response = await apiClient.get("/talent/credits");
     const body = response.data as { data: Credit[]; total: number };
     return body.data;
+  },
+
+  // ── Unified achievements ──────────────────────────────────
+  getMyAchievements: async () => {
+    const response = await apiClient.get("/talent/achievements");
+    const body = response.data as { data: Achievement[]; total: number };
+    return body.data;
+  },
+
+  createAchievement: async (data: AchievementPayload) => {
+    const response = await apiClient.post("/talent/achievements", data);
+    return response.data as Achievement;
+  },
+
+  updateAchievement: async (
+    id: string,
+    data: Omit<AchievementPayload, "type">,
+  ) => {
+    const response = await apiClient.patch(`/talent/achievements/${id}`, data);
+    return response.data as Achievement;
+  },
+
+  deleteAchievement: async (id: string) => {
+    await apiClient.delete(`/talent/achievements/${id}`);
+  },
+
+  uploadAchievementProof: async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await apiClient.post("/talent/achievements/proof", formData, {
+      headers: { "Content-Type": undefined },
+    });
+    return response.data as { relativePath: string; signedUrl: string };
   },
 
   createCredit: async (data: {

@@ -17,6 +17,8 @@ export const talentProfileKeys = {
     [...talentProfileKeys.all, "testimonials", username] as const,
   awards: (username: string) =>
     [...talentProfileKeys.all, "awards", username] as const,
+  achievements: (username: string) =>
+    [...talentProfileKeys.all, "achievements", username] as const,
 };
 
 export function useMyProfile() {
@@ -92,6 +94,14 @@ export function useTalentAwards(username: string) {
   return useQuery({
     queryKey: talentProfileKeys.awards(username),
     queryFn: () => talentApi.getAwards(username),
+    enabled: !!username,
+  });
+}
+
+export function useTalentAchievements(username: string) {
+  return useQuery({
+    queryKey: talentProfileKeys.achievements(username),
+    queryFn: () => talentApi.getAchievements(username),
     enabled: !!username,
   });
 }

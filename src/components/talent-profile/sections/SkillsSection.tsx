@@ -69,6 +69,7 @@ import {
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import type { TalentSkill } from "@/lib/api/talent";
+import { findSkillByName, SKILL_TONE_CLASSES } from "@/data/skills";
 import { GlassCard, SectionHeader } from "../primitives";
 
 const skillIconMap: Record<string, LucideIcon> = {
@@ -349,6 +350,14 @@ const genericSkillIcon: SkillIconStyle = {
 };
 
 export function getSkillIcon(skillName: string): SkillIconStyle {
+  const curatedSkill = findSkillByName(skillName);
+  if (curatedSkill) {
+    return {
+      icon: curatedSkill.icon,
+      ...SKILL_TONE_CLASSES[curatedSkill.tone],
+    };
+  }
+
   const normalized = skillName.trim().toLowerCase();
   const exactIcon = Object.entries(skillIconMap).find(
     ([name]) => name.toLowerCase() === normalized,

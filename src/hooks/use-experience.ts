@@ -7,6 +7,7 @@ export const experienceKeys = {
   credits: () => [...experienceKeys.all, "credits"] as const,
   testimonials: () => [...experienceKeys.all, "testimonials"] as const,
   awards: () => [...experienceKeys.all, "awards"] as const,
+  achievements: () => [...experienceKeys.all, "achievements"] as const,
 };
 
 // ── Query Hooks ────────────────────────────────────────────
@@ -28,6 +29,39 @@ export function useMyAwards() {
   return useQuery({
     queryKey: experienceKeys.awards(),
     queryFn: () => talentApi.getMyAwards(),
+  });
+}
+
+export function useMyAchievements() {
+  return useQuery({
+    queryKey: experienceKeys.achievements(),
+    queryFn: () => talentApi.getMyAchievements(),
+  });
+}
+
+export function useCreateAchievement() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Parameters<typeof talentApi.createAchievement>[0]) =>
+      talentApi.createAchievement(data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: experienceKeys.achievements() }),
+  });
+}
+
+export function useUpdateAchievement() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof talentApi.updateAchievement>[1] }) =>
+      talentApi.updateAchievement(id, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: experienceKeys.achievements() }),
+  });
+}
+
+export function useDeleteAchievement() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => talentApi.deleteAchievement(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: experienceKeys.achievements() }),
   });
 }
 

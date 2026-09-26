@@ -2,6 +2,7 @@
 
 import type { LucideIcon } from "lucide-react";
 import {
+  Home,
   LayoutDashboard,
   User,
   Briefcase,
@@ -12,7 +13,6 @@ import {
   ShieldCheck,
   Layers,
   Flag,
-  ClipboardList,
   UsersRound,
   BarChart3,
 } from "lucide-react";
@@ -24,15 +24,15 @@ export interface NavItem {
 }
 
 export const talentNavItems: NavItem[] = [
-  { label: "Dashboard", href: "/talent/dashboard", icon: LayoutDashboard },
-  { label: "Profile", href: "/talent/profile", icon: User },
+  { label: "Home", href: "/talent/dashboard", icon: Home },
   { label: "Opportunities", href: "/talent/opportunities", icon: Briefcase },
-  { label: "Applications", href: "/talent/applications", icon: ClipboardList },
+  { label: "Network", href: "/talent/network", icon: UsersRound },
   { label: "Messages", href: "/talent/messages", icon: MessageSquare },
+  { label: "Profile", href: "/talent/profile", icon: User },
 ];
 
 export const recruiterNavItems: NavItem[] = [
-  { label: "Dashboard", href: "/recruiter/dashboard", icon: LayoutDashboard },
+  { label: "Dashboard", href: "/recruiter/dashboard", icon: Home },
   { label: "Campaigns", href: "/recruiter/campaigns", icon: FolderKanban },
   { label: "Analytics", href: "/recruiter/analytics", icon: BarChart3 },
   { label: "Find Talent", href: "/recruiter/find-talent", icon: Search },

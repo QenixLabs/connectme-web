@@ -3,13 +3,13 @@ import type { Metadata } from "next";
 import { SettingsPage } from "@/components/talent-app/SettingsPage";
 
 export const metadata: Metadata = {
-  title: "Account Settings | ConnectMe",
+  title: "Account Settings | Rootin",
   description:
-    "Manage your ConnectMe account preferences, password, and security settings.",
+    "Manage your Rootin account preferences, password, and security settings.",
   openGraph: {
-    title: "Account Settings | ConnectMe",
+    title: "Account Settings | Rootin",
     description:
-      "Manage your ConnectMe account preferences and security.",
+      "Manage your Rootin account preferences and security.",
   },
 };
 

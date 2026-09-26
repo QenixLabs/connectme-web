@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import { ExperiencePage } from "@/components/talent-app/ExperiencePage";
 
 export const metadata: Metadata = {
-  title: "Experience & Recognition — ConnectMe",
+  title: "Awards & Training — RootIn",
   description:
-    "Manage your professional credits, testimonials, and awards.",
+    "Manage your awards, training, workshops, certifications and credits on RootIn.",
   openGraph: {
-    title: "Experience & Recognition — ConnectMe",
+    title: "Awards & Training — RootIn",
     description:
-      "Manage your professional credits, testimonials, and awards.",
+      "Manage your awards, training, workshops, certifications and credits on RootIn.",
     type: "website",
   },
   twitter: {

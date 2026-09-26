@@ -113,6 +113,7 @@ export function Dashboard({
     if (key === "profile_photo") return onPhotoClick();
     if (key === "cover_image") return onBannerClick();
     if (key === "portfolio") return router.push("/talent/portfolio");
+    if (key === "awards") return router.push("/talent/experience");
     if (key === "resume" || key === "measurements") return onOpen("documents");
     const screen = Object.entries(strengthKeyByScreen).find(([, value]) => value === key)?.[0];
     onOpen((screen as ScreenKey | undefined) ?? "strength");
@@ -371,12 +372,12 @@ export function Dashboard({
             {profile.credits[0]?.project ? <p className="mt-3 truncate text-xs text-muted-foreground">{profile.credits[0].project}</p> : null}
           </SummaryCard>
           <SummaryCard
-            title="Awards"
-            subtitle={profile.awards.length > 0 ? `${profile.awards.length} ${profile.awards.length === 1 ? "award" : "awards"}` : "No awards added"}
+            title="Awards & Training"
+            subtitle={profile.awards.length > 0 ? `${profile.awards.length} ${profile.awards.length === 1 ? "award" : "awards"}` : "Add awards, training & certifications"}
             icon={<Trophy className="size-[17px]" />}
             done={profile.awards.length > 0}
-            actionLabel={profile.awards.length > 0 ? undefined : "+ Add"}
-            onClick={() => onOpen("awards")}
+            actionLabel="Open"
+            onClick={() => router.push("/talent/experience")}
           >
             {profile.awards[0]?.name ? <p className="mt-3 truncate text-xs text-muted-foreground">{profile.awards[0].name}</p> : null}
           </SummaryCard>
@@ -582,7 +583,7 @@ function BottomNav({ onOpen }: { onOpen: (key: ScreenKey) => void }) {
   const tabs: { label: string; icon: ReactNode; onClick: () => void }[] = [
     { label: "Overview", icon: <Home className="size-[19px]" />, onClick: () => {} },
     { label: "Portfolio", icon: <ImageIcon className="size-[19px]" />, onClick: () => router.push("/talent/portfolio") },
-    { label: "Awards", icon: <Award className="size-[19px]" />, onClick: () => onOpen("awards") },
+    { label: "Awards", icon: <Award className="size-[19px]" />, onClick: () => router.push("/talent/experience") },
     { label: "Reviews", icon: <UserRound className="size-[19px]" />, onClick: () => onOpen("testimonials") },
   ];
   return <nav className="fixed inset-x-0 bottom-0 z-40 mx-auto flex w-full max-w-[430px] items-end justify-around border-t border-[#e0e3ee] bg-white/95 px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] shadow-[0_-8px_20px_rgba(32,47,96,0.06)] backdrop-blur-xl">{tabs.slice(0, 2).map((tab) => <NavTab key={tab.label} {...tab} />)}<button onClick={() => onOpen("media")} aria-label="Add media" className="-mt-6 flex size-14 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg active:scale-95"><Plus className="size-6" strokeWidth={2.5} /></button>{tabs.slice(2).map((tab) => <NavTab key={tab.label} {...tab} />)}</nav>;

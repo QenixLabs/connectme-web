@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Home,
   Image as ImageIcon,
@@ -81,11 +82,13 @@ export function TalentProfileView({
   campaigns?: Campaign[];
 }) {
   const authUser = useAuthStore((s) => s.user);
+  const router = useRouter();
   const navItems = useTalentNavItems();
   const isOwner =
     viewerRole === "talent" &&
     !!authUser?.username &&
     profile.username === authUser.username;
+  const achievementsHref = `/talent/${encodeURIComponent(profile.username)}/achievements`;
 
   const experience = useMemo(() => toExperienceItems(credits), [credits]);
   const awardItems = useMemo(() => toAwardItems(awards), [awards]);
@@ -207,7 +210,11 @@ export function TalentProfileView({
                 username={profile.username}
                 onOpenReel={handleOpenLightbox}
               />
-            <AwardsSection data={awardItems} />
+             <AwardsSection
+               data={awardItems}
+               action="View All"
+               onAction={() => router.push(achievementsHref)}
+             />
             <ReviewsSection data={reviewItems} />
           </div>
         )}
@@ -246,7 +253,11 @@ export function TalentProfileView({
 
         {activeTab === "awards" && (
          <div className="space-y-2.5">
-            <AwardsSection data={awardItems} />
+             <AwardsSection
+               data={awardItems}
+               action="View All"
+               onAction={() => router.push(achievementsHref)}
+             />
           </div>
         )}
 

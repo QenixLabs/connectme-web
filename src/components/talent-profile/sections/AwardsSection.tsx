@@ -7,14 +7,20 @@ import type { AwardItem } from "../data";
 export function AwardsSection({
   data,
   collapsible = false,
+  action,
+  onAction,
 }: {
   data: AwardItem[];
   collapsible?: boolean;
+  action?: string;
+  onAction?: () => void;
 }) {
   return (
     <CollapsibleSection
       icon={<Award className="size-4" />}
       title="Awards"
+      action={action}
+      onAction={onAction}
       collapsible={collapsible && data.length > 0}
     >
       {data.length === 0 ? (
