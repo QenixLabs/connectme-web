@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   ChevronRight,
   HelpCircle,
+  Eye,
   Instagram,
   Link2,
   Linkedin,
@@ -437,6 +438,16 @@ export function SettingsPage() {
               }
               title="Professional Identity"
               description="Profession, skills, experience, verified documents"
+            />
+            <SettingRow
+              href="/talent/settings/profile-visibility"
+              icon={
+                <SettingIcon>
+                  <Eye className="size-6" strokeWidth={1.8} />
+                </SettingIcon>
+              }
+              title="Profile Visibility"
+              description="Control who can discover your profile, view your portfolio and contact you"
             />
             <SettingRow
               href="/talent/verify-documents"

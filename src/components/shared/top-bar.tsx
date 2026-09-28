@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useSyncExternalStore } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { LogOut, Bell, User, CreditCard } from "lucide-react";
+import { LogOut, Bell, User, CreditCard, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { talentApi } from "@/lib/api/talent";
@@ -198,6 +198,14 @@ function UserMenu({ role }: { role: TopBarProps["role"] }) {
                 Billing
               </Link>
             </DropdownMenuItem>
+            {role === "talent" && (
+              <DropdownMenuItem asChild>
+                <Link href="/talent/settings" className="cursor-pointer">
+                  <Settings className="mr-2 size-4" />
+                  Settings
+                </Link>
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
           </>
         )}

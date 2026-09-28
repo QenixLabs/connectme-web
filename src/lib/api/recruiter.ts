@@ -151,6 +151,46 @@ export interface PublicReview {
   created_at: string;
 }
 
+export interface PublicRecruiterDirectoryItem {
+  slug: string;
+  company_name: string;
+  profile_photo?: string;
+  banner_image_url?: string;
+  headline?: string;
+  about?: string;
+  industry?: string;
+  position?: string;
+  location?: { country?: string; state?: string; city?: string };
+  specialties?: string[];
+  casting_categories?: string[];
+  verification_status: "pending" | "basic" | "enterprise" | "trusted_partner";
+  is_verified: boolean;
+  average_rating?: number | null;
+  total_reviews_count: number;
+  project_count: number;
+  projects: Array<{ _id: string; name?: string; cover_image_url?: string }>;
+  created_at?: string;
+}
+
+export interface PublicRecruiterDirectoryResponse {
+  data: PublicRecruiterDirectoryItem[];
+  total: number;
+  page: number;
+  hasMore: boolean;
+}
+
+export interface PublicRecruiterDirectoryParams {
+  search?: string;
+  category?: string;
+  location_city?: string;
+  specialization?: string;
+  min_rating?: number;
+  verified_only?: boolean;
+  sort?: "relevance" | "rating" | "name_asc" | "name_desc" | "newest";
+  page?: number;
+  limit?: number;
+}
+
 export interface PublicReviewsResponse {
   data: PublicReview[];
   total: number;
@@ -230,6 +270,11 @@ export const recruiterApi = {
     if (limit) params.limit = limit;
     const response = await apiClient.get(`/recruiters/public/${slug}/reviews`, { params });
     return response.data as PublicReviewsResponse;
+  },
+
+  getPublicDirectory: async (params: PublicRecruiterDirectoryParams = {}) => {
+    const response = await apiClient.get("/recruiters/public", { params });
+    return response.data as PublicRecruiterDirectoryResponse;
   },
 
   submitReview: async (slug: string, payload: SubmitRecruiterReviewPayload) => {

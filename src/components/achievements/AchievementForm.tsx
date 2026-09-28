@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Check, FileCheck2, Loader2, Upload, X } from "lucide-react";
@@ -156,7 +156,7 @@ export function AchievementForm({ open, onOpenChange, achievement }: Achievement
   const [proofName, setProofName] = useState<string | undefined>();
   const [uploadingProof, setUploadingProof] = useState(false);
   const form = useForm<AchievementFormValues>({
-    resolver: zodResolver(achievementFormSchema),
+    resolver: zodResolver(achievementFormSchema) as unknown as Resolver<AchievementFormValues>,
     mode: "onTouched",
     defaultValues: getDefaultValues(achievement),
   });

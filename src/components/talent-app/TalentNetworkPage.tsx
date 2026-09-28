@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useRef, useState, type ReactNode } from "react";
 import {
   ArrowRight,
@@ -17,23 +18,46 @@ import {
   Home,
   MapPin,
   MessageCircle,
-  MoreHorizontal,
   Plus,
   Search,
   ShieldCheck,
   Sparkles,
   Star,
+  SlidersHorizontal,
   UserRound,
   UsersRound,
   Waypoints,
   X,
+  type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 
+import logoImage from "@/assets/rootin-logo-orange.png";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useCampaigns } from "@/hooks/use-campaigns";
+import { useConnectionRequest, useSaveTalent, useStartConversation } from "@/hooks/use-talent-actions";
+import { useTalentProfile } from "@/hooks/use-talent-dashboard";
+import { useTalentSearch } from "@/hooks/use-talent-search";
+import { useRecruiterDirectory } from "@/hooks/use-recruiter-directory";
+import { useSaveRecruiter, useStartConversation as useRecruiterConversation } from "@/hooks/use-recruiter-actions";
+import { useMyRequests, useAcceptRequest, useRejectRequest } from "@/hooks/use-requests";
+import { useUnreadMessages, useUnreadNotifications } from "@/hooks/use-unread-counts";
+import type { CollaborationRequest } from "@/lib/api/requests";
+import type { Campaign } from "@/lib/api/campaigns";
+import type { PublicRecruiterDirectoryItem, PublicRecruiterDirectoryParams } from "@/lib/api/recruiter";
+import type { SearchTalentsParams, TalentProfile } from "@/lib/api/talent";
 import { cn } from "@/lib/utils";
 
 const categories = [
@@ -53,93 +77,27 @@ const categories = [
   { label: "Voice Artists", image: "/images/portfolio/p10.jpg" },
 ];
 
-const collaborators = [
-  {
-    id: "ananya-sharma",
-    name: "Ananya Sharma",
-    image: "/images/avatars/avatar-sarah.jpg",
-    role: "Dancer | Choreographer",
-    location: "Mumbai",
-    tags: ["Dance", "Choreography", "Acts"],
-    score: 88,
-    match: 92,
-    reason: "Strong match for your filmmaking + acting interests.",
-  },
-  {
-    id: "arjun-mehta",
-    name: "Arjun Mehta",
-    image: "/images/avatars/avatar-arjun.jpg",
-    role: "Actor | Model",
-    location: "Mumbai",
-    tags: ["Acting", "Modeling", "Fashion"],
-    score: 91,
-    match: 86,
-    reason: "Great fit for commercial, short film and brand projects.",
-  },
-  {
-    id: "riya-kapoor",
-    name: "Riya Kapoor",
-    image: "/images/avatars/avatar-priya.jpg",
-    role: "Singer | Songwriter",
-    location: "Delhi",
-    tags: ["Vocals", "Lyrics", "Music Prod."],
-    score: 85,
-    match: 78,
-    reason: "Can add a unique music dimension to your project.",
-  },
-  {
-    id: "karan-vohra",
-    name: "Karan Vohra",
-    image: "/images/avatars/avatar-rohan.jpg",
-    role: "Filmmaker | Editor",
-    location: "Mumbai",
-    tags: ["Direction", "Editing", "Cinematography"],
-    score: 89,
-    match: 84,
-    reason: "Experienced in visual storytelling and music videos.",
-  },
-];
-
-const projects = [
-  {
-    name: "Midnight Echoes",
-    type: "Music Video",
-    image: "/images/casting/casting-team.jpg",
-    creator: "Rohan Malhotra",
-    location: "Mumbai",
-    needs: "Dancer, DOP, Editor, Stylist",
-    stage: "Pre-Production",
-    detail: "Collaboration (Revenue Share)",
-    deadline: "15 Sep 2026",
-    collaborators: "4/6 Collaborators",
-  },
-  {
-    name: "City Lights",
-    type: "Short Film",
-    image: "/images/casting/casting-hero.jpg",
-    creator: "Neha Singh",
-    location: "Pune",
-    needs: "Actor, Cinematographer, Music Composer",
-    stage: "Script Stage",
-    detail: "Portfolio / Credit",
-    deadline: "30 Sep 2026",
-    collaborators: "2/5 Collaborators",
-  },
-];
-
 type RequestTab = "incoming" | "sent" | "active";
 
-const requestTabs: Array<{ id: RequestTab; label: string; count: number }> = [
-  { id: "incoming", label: "Incoming", count: 3 },
-  { id: "sent", label: "Sent", count: 2 },
-  { id: "active", label: "Active", count: 5 },
+const requestTabs: Array<{ id: RequestTab; label: string }> = [
+  { id: "incoming", label: "Incoming" },
+  { id: "sent", label: "Sent" },
+  { id: "active", label: "Active" },
 ];
 
-const networkNavigation = [
+const recruiterCategoryOptions = [
+  { label: "All", value: undefined, icon: Waypoints },
+  { label: "Casting Directors", value: "Casting Director", icon: Clapperboard },
+  { label: "Agencies", value: "Agency", icon: UsersRound },
+  { label: "Production Houses", value: "Production", icon: BriefcaseBusiness },
+  { label: "Brands", value: "Brand", icon: Sparkles },
+] as const;
+
+const networkNavigation: Array<{ label: string; href: string; icon: LucideIcon; active?: boolean; badge?: number }> = [
   { label: "Home", href: "/talent/dashboard", icon: Home },
+  { label: "Discover", href: "/talent/network", icon: UsersRound, active: true },
   { label: "Opportunities", href: "/talent/opportunities", icon: BriefcaseBusiness },
-  { label: "Network", href: "/talent/network", icon: UsersRound, active: true },
-  { label: "Messages", href: "/talent/messages", icon: MessageCircle, badge: 3 },
+  { label: "Messages", href: "/talent/messages", icon: MessageCircle },
   { label: "Profile", href: "/talent/profile", icon: UserRound },
 ];
 
@@ -206,129 +164,203 @@ function CategoryTile({
 
 function CollaboratorCard({
   collaborator,
-  saved,
-  invited,
-  onToggleSaved,
-  onInvite,
 }: {
-  collaborator: (typeof collaborators)[number];
-  saved: boolean;
-  invited: boolean;
-  onToggleSaved: () => void;
-  onInvite: () => void;
+  collaborator: TalentProfile & { match_score?: number; is_verified?: boolean };
 }) {
+  const save = useSaveTalent(collaborator.username);
+  const connection = useConnectionRequest(collaborator.user_id);
+  const conversation = useStartConversation(collaborator.username, "talent");
+  const name = collaborator.full_legal_name || collaborator.username;
+  const professions = collaborator.professions?.join(" | ") || "Creative professional";
+  const location = collaborator.location?.city || collaborator.location?.state || "Location not listed";
+  const tags = (collaborator.specialties?.length ? collaborator.specialties : collaborator.skills?.map((skill) => skill.name) ?? []).slice(0, 3);
+  const portfolioItems = (collaborator.portfolioHighlights ?? [])
+    .filter((item) => item.thumbnail_url || item.type === "image")
+    .slice(0, 4);
+  const initials = name
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
   return (
-    <Card className="group min-w-[244px] snap-start gap-0 overflow-hidden rounded-[17px] border-[#e3def7] bg-white py-0 shadow-[0_5px_18px_rgba(67,54,132,0.09)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_12px_28px_rgba(67,54,132,0.15)] sm:min-w-[260px] lg:min-w-0">
-      <div className="relative h-[132px] overflow-hidden bg-[#eeeaff]">
-        <Image
-          src={collaborator.image}
-          alt={collaborator.name}
-          fill
-          sizes="(max-width: 640px) 244px, 260px"
-          className="object-cover transition duration-500 group-hover:scale-105"
-        />
+    <Card className="group gap-0 overflow-hidden rounded-[20px] border-[#e7e2f4] bg-white py-0 shadow-[0_8px_26px_rgba(67,54,132,0.08)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_14px_34px_rgba(67,54,132,0.14)]">
+      <div className="relative aspect-[16/7] overflow-hidden bg-[#eeeaff]">
+        {collaborator.hero_background || collaborator.profile_photo ? (
+          <Image
+            src={collaborator.hero_background || collaborator.profile_photo || ""}
+            alt={name}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 580px"
+            className="object-cover transition duration-500 group-hover:scale-105"
+          />
+        ) : (
+          <div className="grid size-full place-items-center bg-gradient-to-br from-[#e8ddff] to-[#c8b8ff] text-3xl font-bold text-[#5420e8]">{initials}</div>
+        )}
         <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-[#10102d]/35 to-transparent" />
         <Button
           type="button"
           variant="ghost"
           size="icon-sm"
-          onClick={onToggleSaved}
-          aria-label={saved ? `Remove ${collaborator.name} from saved` : `Save ${collaborator.name}`}
-          className={cn(
-            "absolute right-2 top-2 rounded-full bg-black/20 text-white backdrop-blur-sm hover:bg-black/35 hover:text-white",
-            saved && "bg-white text-[#f03368] hover:bg-white hover:text-[#f03368]",
-          )}
+          onClick={save.toggleSave}
+          disabled={save.isPending}
+          aria-label={save.isSaved ? `Remove ${name} from saved` : `Save ${name}`}
+          className="absolute right-3 top-3 rounded-full bg-white/95 text-[#4f20e8] shadow-[0_4px_12px_rgba(31,18,91,0.14)] hover:bg-white hover:text-[#4f20e8]"
         >
-          <Heart className={cn("size-4", saved && "fill-current")} />
+          <Heart className={cn("size-4", save.isSaved && "fill-[#f03368] text-[#f03368]")} />
         </Button>
-        <Badge className="absolute bottom-2 right-2 gap-1 rounded-full border-0 bg-[#c7f7dd] px-2 py-1 text-[10px] font-bold text-[#0b8a52] shadow-sm">
-          <Check className="size-3" strokeWidth={3} /> {collaborator.match}%
-        </Badge>
+        {collaborator.match_score != null ? (
+          <Badge className="absolute bottom-2 right-2 gap-1 rounded-full border-0 bg-[#c7f7dd] px-2 py-1 text-[10px] font-bold text-[#0b8a52] shadow-sm">
+            <Check className="size-3" strokeWidth={3} /> {Math.round(collaborator.match_score)}% match
+          </Badge>
+        ) : null}
       </div>
 
-      <CardContent className="space-y-2.5 p-3.5">
+      <CardContent className="relative space-y-3 p-4 pt-9 sm:p-5 sm:pt-9">
+        <div className="absolute -top-8 left-4 grid size-16 place-items-center overflow-hidden rounded-full border-4 border-white bg-[#eee7ff] text-lg font-bold text-[#5520e8] shadow-[0_4px_14px_rgba(45,28,125,0.16)] sm:left-5">
+          {collaborator.profile_photo ? <Image src={collaborator.profile_photo} alt={name} fill sizes="64px" className="object-cover" /> : initials}
+        </div>
+
         <div className="min-w-0">
-          <h3 className="flex items-center gap-1 truncate text-[14px] font-bold tracking-[-0.02em] text-[#171737]">
-            <span className="truncate">{collaborator.name}</span>
-            <BadgeCheck className="size-4 shrink-0 fill-[#2289e8] text-white" aria-label="Verified" />
+          <h3 className="flex items-center gap-1 truncate text-[16px] font-bold tracking-[-0.02em] text-[#171737]">
+            <span className="truncate">{name}</span>
+            {collaborator.is_verified ? <BadgeCheck className="size-4 shrink-0 fill-[#2289e8] text-white" aria-label="Verified" /> : null}
           </h3>
-          <p className="mt-0.5 truncate text-[11px] font-medium text-[#565477]">{collaborator.role}</p>
-          <p className="mt-1 flex items-center gap-1 text-[10px] text-[#777497]">
-            <MapPin className="size-3 text-[#5c34df]" /> {collaborator.location}
+          <p className="mt-1 truncate text-[11px] font-medium text-[#565477]">{professions}</p>
+          <p className="mt-1.5 flex items-center gap-1 text-[11px] text-[#777497]">
+            <MapPin className="size-3 text-[#5c34df]" /> {location}
           </p>
         </div>
 
-        <div className="flex min-h-5 gap-1 overflow-hidden">
-          {collaborator.tags.map((tag) => (
-            <Badge key={tag} variant="secondary" className="shrink-0 rounded-md bg-[#f0ebff] px-2 py-1 text-[9px] font-medium text-[#5134aa]">
+        <div className="flex min-h-5 gap-1.5 overflow-hidden">
+          {tags.map((tag) => (
+            <Badge key={tag} variant="secondary" className="shrink-0 rounded-full bg-[#f0ebff] px-2.5 py-1 text-[10px] font-medium text-[#5134aa]">
               {tag}
             </Badge>
           ))}
         </div>
 
-        <div>
-          <div className="flex items-center justify-between text-[10px]">
-            <span className="font-medium text-[#6d6a8c]">RootScore</span>
-            <span className="font-bold text-[#282052]">{collaborator.score}</span>
-          </div>
-          <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-[#ebe7fa]">
-            <span className="block h-full rounded-full bg-gradient-to-r from-[#7834f2] to-[#af38f6]" style={{ width: `${collaborator.score}%` }} />
-          </div>
+        <div className={cn(
+          "flex items-center gap-1.5 text-[10px] font-semibold",
+          collaborator.availability === "available" ? "text-[#12915b]" : "text-[#777497]",
+        )}>
+          <span className={cn("size-2 rounded-full", collaborator.availability === "available" ? "bg-[#19bd70]" : "bg-[#aaa6c0]")} />
+          {collaborator.availability?.replace("_", " ") || "Availability not listed"}
         </div>
+        <p className="line-clamp-2 min-h-8 text-[11px] leading-[1.45] text-[#676483]">{collaborator.headline || collaborator.about || "Creative professional"}</p>
 
-        <div className="flex items-center gap-1.5 text-[10px] font-semibold text-[#12915b]">
-          <span className="size-2 rounded-full bg-[#19bd70]" /> Available
-        </div>
-        <p className="min-h-8 text-[10px] leading-[1.35] text-[#676483]">{collaborator.reason}</p>
+        {portfolioItems.length > 0 ? (
+          <div className="flex gap-2 overflow-hidden">
+            {portfolioItems.map((item) => (
+              <div key={item.id} className="relative aspect-[1.35] min-w-0 flex-1 overflow-hidden rounded-lg bg-[#eeeaff]">
+                <Image src={item.thumbnail_url || item.url} alt={item.title || "Portfolio work"} fill sizes="120px" className="object-cover" />
+              </div>
+            ))}
+          </div>
+        ) : null}
 
-        <div className="grid grid-cols-2 gap-2 pt-0.5">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => toast.info(`Opening ${collaborator.name}'s profile`)}
-            className="h-9 rounded-lg border-[#7138f4] px-2 text-[10px] font-bold text-[#5725dc] hover:bg-[#f5f0ff] hover:text-[#5725dc]"
-          >
-            View Profile
+        <div className="grid grid-cols-2 gap-2 pt-1">
+          <Button asChild variant="outline" size="sm" className="h-10 rounded-xl border-[#7138f4] px-2 text-[10px] font-bold text-[#5725dc] hover:bg-[#f5f0ff] hover:text-[#5725dc]">
+            <Link href={`/talent/${collaborator.username}`}>
+              View Profile <ArrowRight className="size-3.5" />
+            </Link>
           </Button>
-          <Button
-            type="button"
-            size="sm"
-            onClick={onInvite}
-            className="h-9 rounded-lg bg-[#5520e8] px-2 text-[10px] font-bold text-white shadow-[0_5px_12px_rgba(85,32,232,0.22)] hover:bg-[#4513cf]"
-          >
-            {invited ? "Invited" : "Invite"}
-          </Button>
+          {connection.status === "connected" ? (
+            <Button type="button" size="sm" onClick={conversation.start} disabled={conversation.isPending} className="h-10 rounded-xl bg-gradient-to-r from-[#6d2cf1] to-[#5520e8] px-2 text-[10px] font-bold text-white shadow-[0_5px_12px_rgba(85,32,232,0.22)] hover:from-[#5d1ee1] hover:to-[#4513cf]">
+              Message
+            </Button>
+          ) : (
+            <Button type="button" size="sm" onClick={connection.send} disabled={connection.isPending || connection.status === "pending"} className="h-10 rounded-xl bg-gradient-to-r from-[#6d2cf1] to-[#5520e8] px-2 text-[10px] font-bold text-white shadow-[0_5px_12px_rgba(85,32,232,0.22)] hover:from-[#5d1ee1] hover:to-[#4513cf]">
+              {connection.status === "pending" ? "Pending" : "Invite"}
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>
   );
 }
 
-function ProjectCard({ project }: { project: (typeof projects)[number] }) {
+function RecruiterCard({ recruiter }: { recruiter: PublicRecruiterDirectoryItem }) {
+  const save = useSaveRecruiter(recruiter.slug);
+  const conversation = useRecruiterConversation(recruiter.slug, "recruiter");
+  const location = [recruiter.location?.city, recruiter.location?.state].filter(Boolean).join(", ") || "Location not listed";
+  const tags = [...(recruiter.specialties ?? []), ...(recruiter.casting_categories ?? [])]
+    .filter((tag, index, all) => all.indexOf(tag) === index)
+    .slice(0, 3);
+  const visibleProjects = recruiter.projects.filter((project) => project.cover_image_url).slice(0, 4);
+
+  return (
+    <Card className="group gap-0 overflow-hidden rounded-[20px] border-[#e7e2f4] bg-white py-0 shadow-[0_8px_26px_rgba(67,54,132,0.08)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_14px_34px_rgba(67,54,132,0.14)]">
+      <div className="relative aspect-[16/7] overflow-hidden bg-[#eeeaff]">
+        {recruiter.banner_image_url ? <Image src={recruiter.banner_image_url} alt={`${recruiter.company_name} banner`} fill sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 580px" className="object-cover transition duration-500 group-hover:scale-105" /> : <div className="size-full bg-gradient-to-br from-[#eee7ff] via-[#d9caff] to-[#c3b0ff]" />}
+        <Button type="button" variant="ghost" size="icon-sm" onClick={save.toggleSave} disabled={save.isPending} aria-label={save.isSaved ? `Remove ${recruiter.company_name} from saved` : `Save ${recruiter.company_name}`} className="absolute right-3 top-3 rounded-full bg-white/95 text-[#4f20e8] shadow-[0_4px_12px_rgba(31,18,91,0.14)] hover:bg-white hover:text-[#4f20e8]">
+          <Heart className={cn("size-4", save.isSaved && "fill-[#f03368] text-[#f03368]")} />
+        </Button>
+      </div>
+
+      <CardContent className="relative space-y-3 p-4 pt-9 sm:p-5 sm:pt-9">
+        <div className="absolute -top-8 left-4 grid size-16 place-items-center overflow-hidden rounded-full border-4 border-white bg-[#eee7ff] text-lg font-bold text-[#5520e8] shadow-[0_4px_14px_rgba(45,28,125,0.16)] sm:left-5">
+          {recruiter.profile_photo ? <Image src={recruiter.profile_photo} alt={recruiter.company_name} fill sizes="64px" className="object-cover" /> : recruiter.company_name.slice(0, 2).toUpperCase()}
+        </div>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h3 className="flex items-center gap-1 truncate text-[16px] font-bold tracking-[-0.02em] text-[#171737]">
+              <span className="truncate">{recruiter.company_name}</span>
+              {recruiter.is_verified ? <BadgeCheck className="size-4 shrink-0 fill-[#2289e8] text-white" aria-label="Verified" /> : null}
+            </h3>
+            <p className="mt-1 flex items-center gap-1 text-[11px] text-[#777497]"><MapPin className="size-3 text-[#5c34df]" /> {location}</p>
+          </div>
+          {recruiter.average_rating != null ? <span className="flex shrink-0 items-center gap-1 text-sm font-bold text-[#5a5279]"><Star className="size-4 fill-[#f6a914] text-[#f6a914]" /> {recruiter.average_rating.toFixed(1)} <span className="text-[10px] font-medium text-[#8983a4]">({recruiter.total_reviews_count})</span></span> : null}
+        </div>
+
+        <p className="line-clamp-2 min-h-8 text-[11px] leading-[1.45] text-[#676483]">{recruiter.industry || recruiter.position || "Industry professional"}{recruiter.headline ? ` · ${recruiter.headline}` : ""}</p>
+
+        {visibleProjects.length > 0 ? <div className="flex gap-2 overflow-hidden">{visibleProjects.map((project) => <div key={project._id} className="relative aspect-[1.35] min-w-0 flex-1 overflow-hidden rounded-lg bg-[#eeeaff]"><Image src={project.cover_image_url || ""} alt={project.name || "Project"} fill sizes="120px" className="object-cover" /></div>)}</div> : null}
+
+        <div className="flex items-center justify-between gap-2">
+          {recruiter.project_count > 0 ? <span className="rounded-xl bg-[#f0ebff] px-3 py-2 text-center text-[#5520e8]"><strong className="block text-sm">{recruiter.project_count}+</strong><span className="text-[10px]">Projects</span></span> : <span />}
+          <div className="flex min-w-0 flex-1 flex-wrap justify-end gap-1.5">{tags.map((tag) => <Badge key={tag} variant="secondary" className="max-w-[46%] truncate rounded-full bg-[#f0ebff] px-2.5 py-1 text-[10px] font-medium text-[#5134aa]">{tag}</Badge>)}</div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 pt-1">
+          <Button asChild variant="outline" size="sm" className="h-10 rounded-xl border-[#7138f4] px-2 text-[10px] font-bold text-[#5725dc] hover:bg-[#f5f0ff] hover:text-[#5725dc]"><Link href={`/recruiter/${recruiter.slug}`}>View Profile <ArrowRight className="size-3.5" /></Link></Button>
+          <Button type="button" size="sm" onClick={conversation.start} disabled={conversation.isPending} className="h-10 rounded-xl bg-gradient-to-r from-[#6d2cf1] to-[#5520e8] px-2 text-[10px] font-bold text-white shadow-[0_5px_12px_rgba(85,32,232,0.22)] hover:from-[#5d1ee1] hover:to-[#4513cf]">Message</Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ProjectCard({ project }: { project: Campaign }) {
+  const location = project.location?.city || project.location?.state || "Remote";
+  const needs = project.requirements?.skills?.join(", ") || project.specialties?.join(", ") || project.role_type || "Creative collaborators";
+  const budget = project.budget_range?.min || project.budget_range?.max
+    ? `${project.budget_range.currency === "INR" ? "₹" : "$"}${(project.budget_range.min ?? project.budget_range.max)?.toLocaleString()}${project.budget_range.max ? ` - ${project.budget_range.currency === "INR" ? "₹" : "$"}${project.budget_range.max.toLocaleString()}` : ""}`
+    : "Details on project page";
   return (
     <Card className="w-[min(100%,420px)] min-w-[min(100%,420px)] gap-0 rounded-[17px] border-[#e1def2] bg-white p-2.5 shadow-[0_5px_16px_rgba(67,54,132,0.08)] sm:min-w-0">
       <CardContent className="flex gap-3 p-0">
         <div className="relative h-[158px] w-[132px] shrink-0 overflow-hidden rounded-xl bg-[#eceafa]">
-          <Image src={project.image} alt="" fill sizes="132px" className="object-cover" />
+          {project.cover_image_url ? <Image src={project.cover_image_url} alt="" fill sizes="132px" className="object-cover" /> : <div className="grid size-full place-items-center bg-gradient-to-br from-[#eee7ff] to-[#c9baff] text-[#5520e8]"><Clapperboard className="size-10" /></div>}
         </div>
         <div className="min-w-0 flex-1 py-1">
           <div className="flex items-start justify-between gap-2">
             <h3 className="truncate text-[14px] font-bold text-[#19183d]">{project.name}</h3>
-            <Badge className="shrink-0 rounded-full border-0 bg-[#eee8ff] px-2 py-1 text-[9px] font-semibold text-[#5a31c6]">{project.type}</Badge>
+            <Badge className="shrink-0 rounded-full border-0 bg-[#eee8ff] px-2 py-1 text-[9px] font-semibold text-[#5a31c6]">{project.role_type || "Project"}</Badge>
           </div>
           <p className="mt-1 flex items-center gap-1 truncate text-[10px] text-[#6f6b8c]">
-            {project.creator} <span className="text-[#b3afd0]">•</span> <MapPin className="size-3 text-[#5e36d9]" /> {project.location}
+            {project.recruiter?.company_name || "Project creator"} <span className="text-[#b3afd0]">•</span> <MapPin className="size-3 text-[#5e36d9]" /> {location}
           </p>
-          <p className="mt-2 text-[10px] leading-snug text-[#666382]">Needs: {project.needs}</p>
+          <p className="mt-2 text-[10px] leading-snug text-[#666382]">Needs: {needs}</p>
           <div className="mt-2 space-y-1.5 text-[10px] text-[#666382]">
-            <p className="flex items-center gap-1.5"><CalendarDays className="size-3.5 text-[#5630ce]" /> {project.stage}</p>
-            <p className="flex items-center gap-1.5"><UsersRound className="size-3.5 text-[#5630ce]" /> {project.detail}</p>
-            <p className="flex items-center gap-1.5"><FileText className="size-3.5 text-[#5630ce]" /> Deadline: {project.deadline}</p>
+            <p className="flex items-center gap-1.5"><CalendarDays className="size-3.5 text-[#5630ce]" /> {project.status}</p>
+            <p className="flex items-center gap-1.5"><UsersRound className="size-3.5 text-[#5630ce]" /> {budget}</p>
+            <p className="flex items-center gap-1.5"><FileText className="size-3.5 text-[#5630ce]" /> Deadline: {project.deadline ? new Date(project.deadline).toLocaleDateString() : "Open"}</p>
           </div>
           <div className="mt-2 flex items-center justify-between gap-2">
-            <span className="text-[10px] font-semibold text-[#6a668a]">{project.collaborators}</span>
-            <Button type="button" variant="outline" size="xs" onClick={() => toast.info(`Opening ${project.name}`)} className="h-7 rounded-md border-[#7138f4] px-2 text-[9px] font-bold text-[#5725dc] hover:bg-[#f5f0ff] hover:text-[#5725dc]">View Project</Button>
+            <span className="text-[10px] font-semibold text-[#6a668a]">{project.applications_count ?? 0} applications</span>
+            <Button asChild variant="outline" size="xs" className="h-7 rounded-md border-[#7138f4] px-2 text-[9px] font-bold text-[#5725dc] hover:bg-[#f5f0ff] hover:text-[#5725dc]"><Link href={`/talent/opportunities/${project._id}`}>View Project</Link></Button>
           </div>
         </div>
       </CardContent>
@@ -336,11 +368,74 @@ function ProjectCard({ project }: { project: (typeof projects)[number] }) {
   );
 }
 
-function NetworkBottomNav() {
+function NetworkRequestCard({
+  request,
+  currentUserId,
+  incoming,
+}: {
+  request: CollaborationRequest;
+  currentUserId: string;
+  incoming: boolean;
+}) {
+  const accept = useAcceptRequest();
+  const reject = useRejectRequest();
+  const other = currentUserId
+    ? request.requester_id._id === currentUserId
+      ? request.receiver_id
+      : request.requester_id
+    : incoming
+      ? request.requester_id
+      : request.receiver_id;
+  const name = other.full_legal_name || other.username || "Unknown user";
+  const initials = name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase();
+  const profileHref = other.role === "recruiter" ? "/recruiter/profile" : `/talent/${other.username}`;
+  const conversation = useStartConversation(other.username || "", other.role === "recruiter" ? "recruiter" : "talent");
+
+  return (
+    <Card className="gap-0 rounded-[17px] border-[#e1def2] bg-white py-0 shadow-[0_5px_16px_rgba(67,54,132,0.07)]">
+      <CardContent className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:p-4">
+        <div className="flex min-w-0 flex-1 items-start gap-3">
+          <div className="relative grid size-14 shrink-0 place-items-center overflow-hidden rounded-xl bg-[#ede9fb] text-lg font-bold text-[#5520e8]">
+            {other.profile_photo ? <Image src={other.profile_photo} alt={name} fill sizes="56px" className="object-cover" /> : initials}
+          </div>
+          <div className="min-w-0">
+            <h3 className="flex items-center gap-1 text-[14px] font-bold text-[#1c1a3e]">
+              <span className="truncate">{name}</span>
+              {other.verification_status === "enterprise" ? <BadgeCheck className="size-4 shrink-0 fill-[#2387e9] text-white" aria-label="Verified" /> : null}
+            </h3>
+            <p className="mt-0.5 truncate text-[10px] font-medium text-[#5b577a]">{other.position || other.role}</p>
+            {request.message ? <p className="mt-1 text-[11px] leading-snug text-[#545071]">{request.message}</p> : null}
+            <p className="mt-2 flex items-center gap-1 text-[10px] font-semibold text-[#696583]">
+              <FileText className="size-3.5 text-[#5530d3]" /> {request.reason || "collaboration"} <span className="text-[#aaa6c0]">|</span> {new Date(request.created_at).toLocaleDateString()}
+            </p>
+          </div>
+        </div>
+        <div className="flex shrink-0 flex-wrap items-center gap-2 sm:w-[230px] sm:justify-end">
+          {request.status === "pending" && incoming ? (
+            <>
+              <Button type="button" size="sm" onClick={() => accept.mutate(request._id)} disabled={accept.isPending || reject.isPending} className="h-9 rounded-lg bg-[#5520e8] px-5 text-[10px] font-bold hover:bg-[#4513cf]">Accept</Button>
+              <Button type="button" variant="outline" size="sm" onClick={() => reject.mutate(request._id)} disabled={accept.isPending || reject.isPending} className="h-9 rounded-lg border-[#ddd8f0] px-5 text-[10px] font-bold text-[#443e6e] hover:bg-[#f8f6ff]">Decline</Button>
+            </>
+          ) : request.status === "pending" ? (
+            <Badge className="rounded-full border-0 bg-[#eee8ff] px-3 py-2 text-[10px] font-bold text-[#5a31c6]">Pending</Badge>
+          ) : request.status === "accepted" || request.status === "messaging_only" ? (
+            <Badge className="rounded-full border-0 bg-[#c9f6de] px-3 py-2 text-[10px] font-bold text-[#098b51]">Connected</Badge>
+          ) : (
+            <Badge className="rounded-full border-0 bg-[#f8e4ea] px-3 py-2 text-[10px] font-bold text-[#bd3e5b]">Declined</Badge>
+          )}
+          <Button asChild type="button" variant="outline" size="sm" className="h-9 rounded-lg border-[#ddd8f0] px-4 text-[10px] font-bold text-[#443e6e] hover:bg-[#f8f6ff]"><Link href={profileHref}>View Profile</Link></Button>
+          {request.status === "accepted" || request.status === "messaging_only" ? <Button type="button" variant="outline" size="sm" onClick={conversation.start} disabled={conversation.isPending} className="h-9 rounded-lg border-[#ddd8f0] px-4 text-[10px] font-bold text-[#443e6e] hover:bg-[#f8f6ff]">Message</Button> : null}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function NetworkBottomNav({ navigation }: { navigation: typeof networkNavigation }) {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-[#e3e0f2] bg-white/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_26px_rgba(48,39,105,0.08)] backdrop-blur-xl md:hidden">
       <div className="mx-auto grid h-[70px] max-w-md grid-cols-5">
-        {networkNavigation.map((item) => {
+        {navigation.map((item) => {
           const Icon = item.icon;
           return (
             <Button
@@ -368,13 +463,42 @@ function NetworkBottomNav() {
 }
 
 export function TalentNetworkPage() {
+  const router = useRouter();
   const searchRef = useRef<HTMLInputElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("Find Collaborators");
-  const [savedIds, setSavedIds] = useState<string[]>([]);
-  const [invitedIds, setInvitedIds] = useState<string[]>([]);
   const [requestTab, setRequestTab] = useState<RequestTab>("incoming");
-  const [requestStatus, setRequestStatus] = useState<"pending" | "accepted" | "declined">("pending");
+  const [searchParams, setSearchParams] = useState<SearchTalentsParams>({ sort: "newest", limit: 8 });
+  const [directoryParams, setDirectoryParams] = useState<PublicRecruiterDirectoryParams>({ sort: "relevance", limit: 12 });
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  const profileQuery = useTalentProfile();
+  const collaboratorQuery = useTalentSearch(searchParams);
+  const recruiterQuery = useRecruiterDirectory(directoryParams);
+  const projectQuery = useCampaigns({ status: "active", sort: "newest", limit: 4 });
+  const requestQuery = useMyRequests();
+  const unreadMessages = useUnreadMessages();
+  const unreadNotifications = useUnreadNotifications();
+
+  const collaborators = collaboratorQuery.data?.pages.flatMap((page) => page.data) ?? [];
+  const recruiters = recruiterQuery.data?.pages.flatMap((page) => page.data) ?? [];
+  const projects = projectQuery.data ?? [];
+  const receivedRequests = requestQuery.data?.received ?? [];
+  const sentRequests = requestQuery.data?.sent ?? [];
+  const activeRequests = [...receivedRequests, ...sentRequests].filter(
+    (request) => request.status === "accepted" || request.status === "messaging_only",
+  );
+  const visibleRequests = requestTab === "incoming"
+    ? receivedRequests
+    : requestTab === "sent"
+      ? sentRequests
+      : activeRequests;
+  const navigation = networkNavigation.map((item) => item.label === "Messages"
+    ? { ...item, badge: unreadMessages.data?.count ?? 0 }
+    : item);
+  const recruiterFilterCount = [directoryParams.category, directoryParams.location_city, directoryParams.specialization, directoryParams.min_rating, directoryParams.verified_only].filter(Boolean).length;
+  const resultCount = recruiterQuery.data?.pages[0]?.total ?? 0;
+  const collaboratorCount = collaboratorQuery.data?.pages[0]?.total ?? 0;
 
   const filters = [
     { label: "Find Collaborators", icon: UsersRound },
@@ -387,43 +511,79 @@ export function TalentNetworkPage() {
 
   const handleFilter = (label: string) => {
     setActiveFilter(label);
-    if (label === "Find Collaborators" || label === "Recommended for You") {
+    const profession = label.endsWith("s") ? label.slice(0, -1).toLowerCase() : label.toLowerCase();
+    if (["Actors", "Models", "Dancers", "Singers", "Musicians", "Creators", "Photographers", "Filmmakers", "Directors", "Writers", "Editors", "Makeup Artists", "Stylists", "Voice Artists"].includes(label)) {
+      setSearchParams((current) => ({ ...current, profession, sort: "newest", page: undefined, cursor: undefined }));
       document.getElementById("collaborators")?.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
-    toast.info(`${label} is ready for you to explore`);
+    if (label === "Find Collaborators") {
+      setSearchParams((current) => ({ ...current, profession: undefined, location_city: undefined, sort: "newest", page: undefined, cursor: undefined }));
+      document.getElementById("collaborators")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    if (label === "Recommended for You") {
+      setSearchParams((current) => ({ ...current, profession: undefined, location_city: undefined, sort: "relevance", page: undefined, cursor: undefined }));
+      document.getElementById("collaborators")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    if (label === "Nearby Talent") {
+      const city = profileQuery.data?.location?.city;
+      if (!city) {
+        toast.info("Add a city to your profile to find nearby talent");
+        return;
+      }
+      setSearchParams((current) => ({ ...current, location_city: city, profession: undefined, sort: "newest", page: undefined, cursor: undefined }));
+      document.getElementById("collaborators")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    if (label === "Join a Project") {
+      document.getElementById("projects")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    if (label === "Creative Partners") {
+      setSearchParams((current) => ({ ...current, profession: undefined, location_city: undefined, sort: "newest", page: undefined, cursor: undefined }));
+      document.getElementById("collaborators")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    if (label === "Create a Project") {
+      router.push("/talent/opportunities");
+    }
   };
 
   const handleSearch = () => {
     const query = searchQuery.trim();
-    toast.success(query ? `Finding collaborators for “${query}”` : "Tell us what you want to create");
+    setSearchParams((current) => ({ ...current, search: query || undefined, page: undefined, cursor: undefined }));
+    setDirectoryParams((current) => ({ ...current, search: query || undefined, page: undefined }));
   };
 
-  const toggleSaved = (id: string) => {
-    setSavedIds((current) => current.includes(id) ? current.filter((savedId) => savedId !== id) : [...current, id]);
+  const handleDirectoryCategory = (value?: string) => {
+    setDirectoryParams((current) => ({ ...current, category: value, verified_only: undefined, page: undefined }));
+    document.getElementById("recruiters")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const handleInvite = (id: string, name: string) => {
-    setInvitedIds((current) => current.includes(id) ? current : [...current, id]);
-    toast.success(`Invite sent to ${name}`);
+  const clearFilters = () => {
+    setSearchParams((current) => ({
+      ...current,
+      profession: undefined,
+      location_city: undefined,
+      availability: undefined,
+      page: undefined,
+      cursor: undefined,
+    }));
+    setDirectoryParams((current) => ({ ...current, category: undefined, location_city: undefined, specialization: undefined, min_rating: undefined, verified_only: undefined, page: undefined }));
   };
 
   return (
-    <div className="min-h-screen bg-[#fbfaff] pb-20 text-[#171737] md:pb-8">
-      <header className="border-b border-[#e8e4f3] bg-white/90 backdrop-blur-xl">
-        <div className="mx-auto flex h-[78px] max-w-[1440px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-10">
+    <div className="min-h-screen bg-[#f9f8ff] pb-20 text-[#171737] md:pb-8">
+      <header className="border-b border-[#ebe7f5] bg-white/95 backdrop-blur-xl">
+        <div className="mx-auto flex h-[62px] max-w-[1440px] items-center justify-between gap-4 px-4 sm:h-[78px] sm:px-6 lg:px-10">
           <Link href="/talent/network" className="flex min-w-0 items-center gap-2.5" aria-label="Rootin talent network">
-            <span className="grid size-11 shrink-0 place-items-center rounded-[15px] bg-[#f0eaff] text-[#5520e8]">
-              <Waypoints className="size-7" strokeWidth={2.6} />
-            </span>
-            <span className="min-w-0">
-              <span className="block font-display text-[25px] font-bold leading-none tracking-[-0.06em] text-[#15152f]">Rootin</span>
-              <span className="mt-1 block truncate text-[10px] leading-none text-[#696682]">People. Talent. Opportunities.</span>
-            </span>
+            <Image src={logoImage} alt="RootIn" height={36} className="h-8 w-auto sm:h-10" priority />
           </Link>
 
           <nav className="hidden flex-1 items-center justify-center gap-1 md:flex" aria-label="Talent navigation">
-            {networkNavigation.map((item) => {
+            {navigation.map((item) => {
               const Icon = item.icon;
               return (
                 <Button key={item.label} asChild variant="ghost" size="sm" className={cn("relative gap-1.5 rounded-full px-4 text-xs font-semibold text-[#696682] hover:bg-[#f3efff] hover:text-[#4e20e7]", item.active && "bg-[#eee7ff] text-[#4e20e7]")}>
@@ -450,12 +610,12 @@ export function TalentNetworkPage() {
             <Button asChild variant="ghost" size="icon-lg" aria-label="Notifications" className="relative rounded-full bg-[#f8f5ff] text-[#2f1a85] hover:bg-[#eee8ff] hover:text-[#4e20e7]">
               <Link href="/talent/notifications">
                 <Bell className="size-5" />
-                <span className="absolute right-0.5 top-0.5 grid size-[17px] place-items-center rounded-full bg-[#ef3157] text-[9px] font-bold text-white">3</span>
+                {unreadNotifications.data?.count ? <span className="absolute right-0.5 top-0.5 grid size-[17px] place-items-center rounded-full bg-[#ef3157] text-[9px] font-bold text-white">{unreadNotifications.data.count}</span> : null}
               </Link>
             </Button>
             <Button asChild variant="ghost" size="icon-lg" aria-label="Open profile" className="rounded-full p-0 hover:bg-transparent">
               <Link href="/talent/profile" className="relative overflow-hidden rounded-full border-2 border-[#ede8ff]">
-                <Image src="/avatars/avatar-user.jpg" alt="Your profile" fill sizes="40px" className="object-cover" />
+                {profileQuery.data?.profile_photo ? <Image src={profileQuery.data.profile_photo} alt="Your profile" fill sizes="40px" className="object-cover" /> : <span className="grid size-full place-items-center bg-[#eee7ff] text-sm font-bold text-[#5520e8]">{(profileQuery.data?.full_legal_name || profileQuery.data?.username || "U").slice(0, 1).toUpperCase()}</span>}
               </Link>
             </Button>
           </div>
@@ -463,16 +623,13 @@ export function TalentNetworkPage() {
       </header>
 
       <main>
-        <section className="relative overflow-hidden border-b border-[#e6e0fa] bg-[#f5f1ff]">
-          <Image src="/images/collaboration-banner.png" alt="Creative collaborators working together" fill priority sizes="100vw" className="object-cover object-right opacity-90" />
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(249,247,255,0.98)_0%,rgba(249,247,255,0.9)_46%,rgba(249,247,255,0.38)_76%,rgba(249,247,255,0.1)_100%)]" />
-          <div className="relative mx-auto max-w-[1440px] px-4 pb-5 pt-8 sm:px-6 sm:pb-7 sm:pt-12 lg:px-10">
+        <section className="relative overflow-hidden border-b border-[#ece7fb] bg-[#f5f1ff]">
+          <Image src="/images/collaboration-banner.png" alt="Creative collaborators working together" fill priority sizes="100vw" className="object-cover object-right opacity-70" />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(249,247,255,0.99)_0%,rgba(249,247,255,0.94)_48%,rgba(249,247,255,0.56)_100%)]" />
+          <div className="relative mx-auto max-w-[1440px] px-4 pb-5 pt-6 sm:px-6 sm:pb-7 sm:pt-12 lg:px-10">
             <div className="max-w-[700px]">
-              <p className="mb-2 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#6031d4] sm:text-xs">
-                <Sparkles className="size-3.5" /> The creative network
-              </p>
-              <h1 className="font-display text-[32px] font-bold leading-[1.05] tracking-[-0.055em] text-[#101033] sm:text-5xl lg:text-[56px]">Collaborate with Talent</h1>
-              <p className="mt-2 max-w-[520px] text-[14px] leading-relaxed text-[#343158] sm:text-lg">Find the right people to create something great together.</p>
+              <h1 className="font-display text-[28px] font-bold leading-[1.05] tracking-[-0.055em] text-[#101033] sm:text-5xl lg:text-[56px]">Discover Recruiters &amp; Agencies</h1>
+              <p className="mt-2 max-w-[560px] text-[13px] leading-relaxed text-[#68658b] sm:text-lg">Connect with verified industry professionals and organizations.</p>
             </div>
 
             <div className="mt-6 flex max-w-[1080px] items-center gap-2 rounded-[16px] border border-[#cfc0ff] bg-white/95 p-2 shadow-[0_8px_24px_rgba(95,52,213,0.12)] backdrop-blur sm:mt-8 sm:rounded-[18px] sm:p-2.5">
@@ -487,7 +644,7 @@ export function TalentNetworkPage() {
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
                   onKeyDown={(event) => { if (event.key === "Enter") handleSearch(); }}
-                  placeholder="Looking for a female dancer and cinematographer for a music video in Mumbai..."
+                   placeholder="Search recruiters, agencies, production houses..."
                   className="h-6 border-0 bg-transparent p-0 text-[11px] text-[#5c5879] shadow-none placeholder:text-[#777493] focus-visible:ring-0 sm:text-sm"
                 />
               </div>
@@ -495,11 +652,29 @@ export function TalentNetworkPage() {
                 <Search className="size-5" />
               </Button>
             </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setFiltersOpen(true)}
+              className="mt-2 h-10 w-full justify-between rounded-xl border-[#e2daf4] bg-white/90 px-3 text-xs font-medium text-[#514b76] hover:bg-white sm:hidden"
+            >
+              <span className="flex items-center gap-2"><MapPin className="size-4 text-[#5c34df]" /> {directoryParams.location_city || "All locations"}</span>
+              <ChevronRight className="size-4 rotate-90 text-[#817a9e]" />
+            </Button>
           </div>
         </section>
 
         <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10">
           <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto py-4 sm:flex-wrap sm:overflow-visible sm:py-5">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setFiltersOpen(true)}
+              className="relative h-9 shrink-0 gap-1.5 rounded-full border-[#bca7ff] bg-white px-4 text-[11px] font-bold text-[#4e20e7] shadow-[0_3px_10px_rgba(91,70,180,0.06)] hover:bg-[#f7f3ff] hover:text-[#4e20e7]"
+            >
+              <SlidersHorizontal className="size-3.5" /> Filters
+              {recruiterFilterCount > 0 ? <span className="grid size-5 place-items-center rounded-full bg-[#5520e8] text-[10px] text-white">{recruiterFilterCount}</span> : null}
+            </Button>
             {filters.map((filter) => {
               const Icon = filter.icon;
               const active = activeFilter === filter.label;
@@ -521,107 +696,188 @@ export function TalentNetworkPage() {
             })}
           </div>
 
+          <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto pb-3 sm:flex-wrap sm:overflow-visible">
+            {recruiterCategoryOptions.map((category) => {
+              const Icon = category.icon;
+              const active = category.value === directoryParams.category && !directoryParams.verified_only;
+              return <Button key={category.label} type="button" variant={active ? "default" : "secondary"} onClick={() => handleDirectoryCategory(category.value)} className={cn("h-9 shrink-0 gap-1.5 rounded-full border border-[#e6e1f6] bg-white px-4 text-[11px] font-semibold text-[#4c4671] shadow-[0_3px_10px_rgba(91,70,180,0.05)] hover:border-[#b9a3ff] hover:bg-[#f0ebff] hover:text-[#4e20e7]", active && "border-[#8c5afa] bg-gradient-to-r from-[#8b2cf4] to-[#5520e8] text-white shadow-[0_6px_14px_rgba(112,47,240,0.24)] hover:bg-[#5520e8] hover:text-white")}><Icon className="size-3.5" /> {category.label}</Button>;
+            })}
+            <Button type="button" variant={directoryParams.verified_only ? "default" : "secondary"} onClick={() => setDirectoryParams((current) => ({ ...current, verified_only: !current.verified_only, category: undefined, page: undefined }))} className={cn("h-9 shrink-0 gap-1.5 rounded-full border border-[#e6e1f6] bg-white px-4 text-[11px] font-semibold text-[#4c4671] shadow-[0_3px_10px_rgba(91,70,180,0.05)] hover:border-[#b9a3ff] hover:bg-[#f0ebff] hover:text-[#4e20e7]", directoryParams.verified_only && "border-[#8c5afa] bg-gradient-to-r from-[#8b2cf4] to-[#5520e8] text-white hover:bg-[#5520e8] hover:text-white")}><ShieldCheck className="size-3.5" /> Verified Only</Button>
+          </div>
+
           <section className="pt-1 sm:pt-2">
-            <SectionHeading title="Collaboration Categories" onAction={() => toast.info("Showing all collaboration categories")} />
-            <div className="mt-3 grid grid-cols-7 gap-2 sm:grid-cols-7 sm:gap-3 lg:grid-cols-7 xl:grid-cols-8">
-              {categories.slice(0, 7).map((category) => <CategoryTile key={category.label} {...category} onClick={() => handleFilter(category.label)} />)}
+            <SectionHeading title="Collaboration Categories" />
+            <div className="no-scrollbar -mx-1 mt-3 flex snap-x gap-2 overflow-x-auto px-1 pb-2 sm:grid sm:grid-cols-7 sm:gap-3 sm:overflow-visible lg:grid-cols-8">
+              {categories.map((category) => <div key={category.label} className="w-[108px] shrink-0 snap-start sm:w-auto"><CategoryTile {...category} compact onClick={() => handleFilter(category.label)} /></div>)}
             </div>
-            <div className="mt-2 grid grid-cols-7 gap-2 sm:grid-cols-8 sm:gap-3 lg:grid-cols-8">
-              {categories.slice(7).map((category) => <CategoryTile key={category.label} {...category} compact onClick={() => handleFilter(category.label)} />)}
-              <Button type="button" variant="ghost" onClick={() => toast.info("More categories coming soon")} className="h-auto min-w-0 flex-col gap-0 overflow-hidden rounded-lg border border-[#e6e2f8] bg-[#f0ebff] p-0 text-[#4e20e7] shadow-[0_3px_10px_rgba(91,70,180,0.06)] hover:bg-[#e9e0ff]">
-                <span className="flex aspect-[1.65] w-full items-center justify-center gap-0.5 text-lg font-black tracking-[0.2em]"><MoreHorizontal className="size-5" /></span>
-                <span className="w-full truncate px-1 py-1.5 text-center text-[9px] font-semibold">Other</span>
+          </section>
+
+          <Drawer open={filtersOpen} onOpenChange={setFiltersOpen}>
+            <DrawerContent className="max-h-[88vh] bg-white">
+              <DrawerHeader className="border-b border-[#eeeaf7] text-left">
+                <DrawerTitle className="text-[#171737]">Filter discovery</DrawerTitle>
+              </DrawerHeader>
+              <div className="grid gap-4 overflow-y-auto px-4 py-5">
+                <label className="grid gap-2 text-xs font-bold text-[#2c2851]">
+                  Category
+                  <select
+                    value={directoryParams.category ?? ""}
+                    onChange={(event) => setDirectoryParams((current) => ({ ...current, category: event.target.value || undefined, verified_only: undefined, page: undefined }))}
+                    className="h-11 rounded-xl border border-[#e4def2] bg-[#fbfaff] px-3 text-sm font-normal text-[#38335e] outline-none focus:border-[#8b5cf6]"
+                  >
+                    {recruiterCategoryOptions.map((option) => <option key={option.label} value={option.value ?? ""}>{option.label}</option>)}
+                  </select>
+                </label>
+                <label className="grid gap-2 text-xs font-bold text-[#2c2851]">
+                  Location
+                  <Input
+                    value={directoryParams.location_city ?? ""}
+                    onChange={(event) => setDirectoryParams((current) => ({ ...current, location_city: event.target.value || undefined, page: undefined }))}
+                    placeholder="City"
+                    className="h-11 rounded-xl border-[#e4def2] bg-[#fbfaff] text-sm shadow-none focus-visible:ring-[#8b5cf6]"
+                  />
+                </label>
+                <label className="grid gap-2 text-xs font-bold text-[#2c2851]">
+                  Specialization
+                  <Input
+                    value={directoryParams.specialization ?? ""}
+                    onChange={(event) => setDirectoryParams((current) => ({ ...current, specialization: event.target.value || undefined, page: undefined }))}
+                    placeholder="e.g. Feature Films"
+                    className="h-11 rounded-xl border-[#e4def2] bg-[#fbfaff] text-sm shadow-none focus-visible:ring-[#8b5cf6]"
+                  />
+                </label>
+                <label className="grid gap-2 text-xs font-bold text-[#2c2851]">
+                  Minimum rating
+                  <select
+                    value={directoryParams.min_rating?.toString() ?? ""}
+                    onChange={(event) => setDirectoryParams((current) => ({ ...current, min_rating: event.target.value ? Number(event.target.value) : undefined, page: undefined }))}
+                    className="h-11 rounded-xl border border-[#e4def2] bg-[#fbfaff] px-3 text-sm font-normal text-[#38335e] outline-none focus:border-[#8b5cf6]"
+                  >
+                    <option value="">Any rating</option>
+                    <option value="4">4.0 and above</option>
+                    <option value="4.5">4.5 and above</option>
+                  </select>
+                </label>
+                <label className="flex items-center gap-3 rounded-xl bg-[#f8f5ff] px-3 py-3 text-xs font-bold text-[#2c2851]">
+                  <input type="checkbox" checked={directoryParams.verified_only ?? false} onChange={(event) => setDirectoryParams((current) => ({ ...current, verified_only: event.target.checked || undefined, category: event.target.checked ? undefined : current.category, page: undefined }))} className="size-4 accent-[#5520e8]" />
+                  Verified only
+                </label>
+              </div>
+              <DrawerFooter className="flex-row border-t border-[#eeeaf7] bg-[#fbfaff]">
+                <Button type="button" variant="outline" onClick={clearFilters} className="h-11 flex-1 rounded-xl border-[#ded6f1] text-[#4e20e7]">Clear All</Button>
+                <DrawerClose asChild><Button type="button" className="h-11 flex-1 rounded-xl bg-[#5520e8] text-white hover:bg-[#4513cf]">Apply Filters</Button></DrawerClose>
+              </DrawerFooter>
+            </DrawerContent>
+          </Drawer>
+
+          <section id="recruiters" className="scroll-mt-5 pt-7 sm:pt-9">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm font-semibold text-[#39345d]"><span className="text-[#171737]">{resultCount.toLocaleString()}</span> {directoryParams.verified_only ? "verified organizations" : "organizations found"}</p>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setDirectoryParams((current) => ({ ...current, sort: current.sort === "rating" ? "relevance" : "rating", page: undefined }))}
+                className="h-9 rounded-full border-[#ded6f1] bg-white px-3 text-[11px] font-semibold text-[#4e4773] hover:bg-[#f7f3ff]"
+              >
+                Sort: {directoryParams.sort === "rating" ? "Rating" : "Relevance"} <ChevronRight className="size-3.5 rotate-90" />
               </Button>
             </div>
+            <SectionHeading
+              title="Recruiters & agencies"
+              icon={<Badge className="gap-1 rounded-full border-0 bg-[#eee7ff] px-2 py-1 text-[10px] font-bold text-[#6427df]"><ShieldCheck className="size-3" /> Real profiles</Badge>}
+              onAction={() => { if (recruiterQuery.hasNextPage && !recruiterQuery.isFetchingNextPage) void recruiterQuery.fetchNextPage(); }}
+            />
+            {recruiterQuery.isPending ? (
+              <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">{Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} className="h-[420px] rounded-[20px]" />)}</div>
+            ) : recruiterQuery.isError ? (
+              <div className="mt-3 rounded-[20px] border border-[#eadcf2] bg-white px-5 py-10 text-center shadow-[0_8px_26px_rgba(67,54,132,0.06)]"><p className="font-semibold text-[#28234b]">We couldn&apos;t load recruiters right now.</p><p className="mt-1 text-sm text-[#777497]">Please try again in a moment.</p><Button type="button" variant="outline" onClick={() => recruiterQuery.refetch()} className="mt-4 rounded-xl border-[#7138f4] text-[#5725dc]">Try again</Button></div>
+            ) : recruiters.length === 0 ? (
+              <div className="mt-3 rounded-[20px] border border-[#eadcf2] bg-white px-5 py-10 text-center shadow-[0_8px_26px_rgba(67,54,132,0.06)]"><p className="font-semibold text-[#28234b]">No recruiters or agencies match your filters.</p><p className="mt-1 text-sm text-[#777497]">Clear a filter or change your search to see more real profiles.</p><Button type="button" variant="outline" onClick={clearFilters} className="mt-4 rounded-xl border-[#7138f4] text-[#5725dc]">Clear filters</Button></div>
+            ) : (
+              <div className={cn("mt-3 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4", recruiterQuery.isFetching && "opacity-60")}>{recruiters.map((recruiter) => <RecruiterCard key={recruiter.slug} recruiter={recruiter} />)}</div>
+            )}
+            {recruiterQuery.isFetchingNextPage ? <p className="mt-4 text-center text-sm text-[#777497]">Loading more organizations...</p> : null}
           </section>
 
           <section id="collaborators" className="scroll-mt-5 pt-7 sm:pt-9">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm font-semibold text-[#39345d]">
+                <span className="text-[#171737]">{collaboratorCount.toLocaleString()}</span> professionals found
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setSearchParams((current) => ({ ...current, sort: current.sort === "relevance" ? "newest" : "relevance", page: undefined, cursor: undefined }))}
+                className="h-9 rounded-full border-[#ded6f1] bg-white px-3 text-[11px] font-semibold text-[#4e4773] hover:bg-[#f7f3ff]"
+              >
+                Sort: {searchParams.sort === "relevance" ? "Relevance" : "Newest"} <ChevronRight className="size-3.5 rotate-90" />
+              </Button>
+            </div>
             <SectionHeading
               title="People who complement your talent"
-              icon={<Badge className="gap-1 rounded-full border-0 bg-[#eee7ff] px-2 py-1 text-[10px] font-bold text-[#6427df]"><Sparkles className="size-3" /> AI Powered</Badge>}
-              onAction={() => toast.info("Loading more recommendations")}
+              icon={<Badge className="gap-1 rounded-full border-0 bg-[#eee7ff] px-2 py-1 text-[10px] font-bold text-[#6427df]"><Sparkles className="size-3" /> Live Results</Badge>}
+              onAction={() => { if (collaboratorQuery.hasNextPage && !collaboratorQuery.isFetchingNextPage) void collaboratorQuery.fetchNextPage(); }}
             />
-            <div className="no-scrollbar -mx-1 mt-3 flex snap-x gap-3 overflow-x-auto px-1 pb-3 lg:grid lg:grid-cols-4 lg:overflow-visible">
-              {collaborators.map((collaborator) => (
-                <CollaboratorCard
-                  key={collaborator.id}
-                  collaborator={collaborator}
-                  saved={savedIds.includes(collaborator.id)}
-                  invited={invitedIds.includes(collaborator.id)}
-                  onToggleSaved={() => toggleSaved(collaborator.id)}
-                  onInvite={() => handleInvite(collaborator.id, collaborator.name)}
-                />
+            <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {collaboratorQuery.isLoading ? Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} className="h-[390px] rounded-[20px]" />) : collaborators.map((collaborator) => (
+                <CollaboratorCard key={collaborator._id} collaborator={collaborator} />
               ))}
             </div>
+            {!collaboratorQuery.isLoading && collaboratorQuery.isError ? <p className="mt-4 text-sm text-[#bd3e5b]">Unable to load collaborators. Please try again.</p> : null}
+            {!collaboratorQuery.isLoading && !collaboratorQuery.isError && collaborators.length === 0 ? <p className="mt-4 text-sm text-[#696583]">No collaborators match your search.</p> : null}
           </section>
 
-          <section className="pt-5 sm:pt-7">
-            <SectionHeading title="Active Collaboration Projects" onAction={() => toast.info("Showing all active projects")} />
+          <section id="projects" className="scroll-mt-5 pt-5 sm:pt-7">
+            <SectionHeading title="Active Collaboration Projects" onAction={() => router.push("/talent/opportunities")} />
             <div className="no-scrollbar -mx-1 mt-3 flex snap-x gap-3 overflow-x-auto px-1 pb-2 sm:grid sm:grid-cols-2 sm:overflow-visible">
-              {projects.map((project) => <ProjectCard key={project.name} project={project} />)}
+              {projectQuery.isLoading ? Array.from({ length: 2 }).map((_, index) => <Skeleton key={index} className="h-[190px] rounded-[17px]" />) : projects.map((project) => <ProjectCard key={project._id} project={project} />)}
             </div>
-            <Button type="button" onClick={() => toast.success("Project creator opened")} className="mt-3 h-[62px] w-full justify-between rounded-[14px] bg-gradient-to-r from-[#5720ee] to-[#9d2ff4] px-5 text-white shadow-[0_8px_22px_rgba(119,44,235,0.26)] hover:from-[#4514ce] hover:to-[#8e21e4]">
-              <span className="flex items-center gap-2.5 text-left"><Plus className="size-5" /><span><span className="block text-[15px] font-bold">Create a Collaboration</span><span className="block text-[10px] font-medium text-white/80">Post your project, find the right talent and bring your vision to life.</span></span></span>
+            {!projectQuery.isLoading && projectQuery.isError ? <p className="mt-4 text-sm text-[#bd3e5b]">Unable to load active projects.</p> : null}
+            {!projectQuery.isLoading && !projectQuery.isError && projects.length === 0 ? <p className="mt-4 text-sm text-[#696583]">No active projects are available right now.</p> : null}
+            <Button asChild className="mt-3 h-[62px] w-full justify-between rounded-[14px] bg-gradient-to-r from-[#5720ee] to-[#9d2ff4] px-5 text-white shadow-[0_8px_22px_rgba(119,44,235,0.26)] hover:from-[#4514ce] hover:to-[#8e21e4]">
+              <Link href="/talent/opportunities">
+              <span className="flex items-center gap-2.5 text-left"><Plus className="size-5" /><span><span className="block text-[15px] font-bold">Explore More Opportunities</span><span className="block text-[10px] font-medium text-white/80">Find active projects and apply to the right opportunities.</span></span></span>
               <ArrowRight className="size-5" />
+              </Link>
             </Button>
           </section>
 
           <section className="pt-7 sm:pt-9">
-            <SectionHeading title="Collaboration Requests" onAction={() => toast.info("Opening collaboration requests")} />
+            <SectionHeading title="Collaboration Requests" onAction={() => router.push("/talent/requests")} />
             <div className="mt-3 flex w-fit rounded-full bg-[#f0edff] p-0.5">
               {requestTabs.map((tab) => (
                 <Button key={tab.id} type="button" variant="ghost" onClick={() => setRequestTab(tab.id)} className={cn("h-9 rounded-full px-4 text-[11px] font-medium text-[#39335e] hover:bg-[#e5dbff] hover:text-[#4e20e7]", requestTab === tab.id && "bg-gradient-to-r from-[#8c2df4] to-[#5420e9] font-bold text-white shadow-[0_4px_9px_rgba(92,31,229,0.2)] hover:bg-[#5420e9] hover:text-white")}>
-                  {tab.label} ({tab.count})
+                  {tab.label} ({tab.id === "incoming" ? receivedRequests.length : tab.id === "sent" ? sentRequests.length : activeRequests.length})
                 </Button>
               ))}
             </div>
 
-            <Card className="mt-3 gap-0 rounded-[17px] border-[#e1def2] bg-white py-0 shadow-[0_5px_16px_rgba(67,54,132,0.07)]">
-              <CardContent className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:p-4">
-                <div className="flex min-w-0 flex-1 items-start gap-3">
-                  <div className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-[#ede9fb]">
-                    <Image src="/images/avatars/msg-rohit.jpg" alt="Vikram Rao" fill sizes="56px" className="object-cover" />
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="flex items-center gap-1 text-[14px] font-bold text-[#1c1a3e]">{requestTab === "incoming" ? "Vikram Rao" : requestTab === "sent" ? "Meera Shah" : "Ananya Sharma"} <BadgeCheck className="size-4 shrink-0 fill-[#2387e9] text-white" /></h3>
-                    <p className="mt-0.5 truncate text-[10px] font-medium text-[#5b577a]">Actor | Content Creator</p>
-                    <p className="mt-1 text-[11px] leading-snug text-[#545071]">Hey! I&apos;d love to collaborate on your short film project. I think my profile fits well with what you&apos;re looking for.</p>
-                    <p className="mt-2 flex items-center gap-1 text-[10px] font-semibold text-[#696583]"><FileText className="size-3.5 text-[#5530d3]" /> The Silent Frame (Short Film) <span className="text-[#aaa6c0]">|</span> 2 days ago</p>
-                  </div>
-                </div>
-                <div className="flex shrink-0 flex-wrap items-center gap-2 sm:w-[230px] sm:justify-end">
-                  <Badge className="gap-1 rounded-full border-0 bg-[#c9f6de] px-2.5 py-1.5 text-[10px] font-bold text-[#098b51]"><Check className="size-3" /> 88% Match</Badge>
-                  {requestStatus === "pending" ? (
-                    <>
-                      <Button type="button" size="sm" onClick={() => { setRequestStatus("accepted"); toast.success("Collaboration request accepted"); }} className="h-9 rounded-lg bg-[#5520e8] px-5 text-[10px] font-bold hover:bg-[#4513cf]">Accept</Button>
-                      <Button type="button" variant="outline" size="sm" onClick={() => { setRequestStatus("declined"); toast.info("Request declined"); }} className="h-9 rounded-lg border-[#ddd8f0] px-5 text-[10px] font-bold text-[#443e6e] hover:bg-[#f8f6ff]">Decline</Button>
-                    </>
-                  ) : (
-                    <Badge className={cn("rounded-full border-0 px-3 py-2 text-[10px] font-bold", requestStatus === "accepted" ? "bg-[#c9f6de] text-[#098b51]" : "bg-[#f8e4ea] text-[#bd3e5b]")}>{requestStatus === "accepted" ? "Connected" : "Declined"}</Badge>
-                  )}
-                  <Button type="button" variant="outline" size="sm" onClick={() => toast.info("Opening profile")} className="h-9 rounded-lg border-[#ddd8f0] px-4 text-[10px] font-bold text-[#443e6e] hover:bg-[#f8f6ff]">View Profile</Button>
-                  <Button type="button" variant="outline" size="sm" onClick={() => toast.info("Opening message composer")} className="h-9 rounded-lg border-[#ddd8f0] px-4 text-[10px] font-bold text-[#443e6e] hover:bg-[#f8f6ff]">Message</Button>
-                </div>
-              </CardContent>
-            </Card>
+            {requestQuery.isLoading ? <Skeleton className="mt-3 h-32 rounded-[17px]" /> : null}
+            {!requestQuery.isLoading && requestQuery.isError ? <p className="mt-4 text-sm text-[#bd3e5b]">Unable to load collaboration requests.</p> : null}
+            {!requestQuery.isLoading && !requestQuery.isError && visibleRequests.length === 0 ? <p className="mt-4 text-sm text-[#696583]">No requests in this section.</p> : null}
+            <div className="mt-3 space-y-3">
+              {!requestQuery.isLoading && visibleRequests.map((request) => (
+                <NetworkRequestCard key={request._id} request={request} currentUserId={profileQuery.data?.user_id ?? ""} incoming={requestTab === "incoming"} />
+              ))}
+            </div>
           </section>
 
           <Card className="mb-5 mt-7 gap-0 overflow-hidden rounded-[17px] border-[#dcd9f0] bg-white py-0 shadow-[0_5px_16px_rgba(67,54,132,0.06)] sm:mb-7">
             <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:gap-5 sm:p-5">
               <div className="flex items-center gap-3 sm:min-w-[225px]">
                 <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[#cff8e1] text-[#078954]"><ShieldCheck className="size-7" /></span>
-                <div><p className="text-[12px] font-bold text-[#262245]">Trusted Collaboration Community</p><p className="mt-0.5 text-[10px] leading-snug text-[#696583]">Verified Talent Only<br />Safe. Professional. Meaningful Collaborations.</p></div>
+                <div><p className="text-[12px] font-bold text-[#262245]">Safer Collaboration Community</p><p className="mt-0.5 text-[10px] leading-snug text-[#696583]">Profile and safety tools<br />Professional. Meaningful Collaborations.</p></div>
               </div>
               <div className="grid flex-1 grid-cols-5 divide-x divide-[#e6e2f2] border-y border-[#eeeaf7] py-3 sm:border-y-0 sm:border-l sm:py-0">
                 {[{ icon: BadgeCheck, label: "Identity", sub: "Verified" }, { icon: FileText, label: "Professional", sub: "Profile" }, { icon: BriefcaseBusiness, label: "Previous", sub: "Projects" }, { icon: Star, label: "Reputation", sub: "" }, { icon: Waypoints, label: "Collaboration", sub: "History" }].map((item) => { const Icon = item.icon; return <div key={item.label} className="flex flex-col items-center gap-1 px-1 text-center text-[#4f4a7b]"><span className="grid size-8 place-items-center rounded-full bg-[#d9f9e7] text-[#10945b]"><Icon className="size-4" /></span><span className="text-[9px] font-semibold leading-tight">{item.label}<br />{item.sub}</span></div>; })}
               </div>
-              <Button type="button" variant="ghost" onClick={() => toast.info("Report and safety options opened")} className="h-auto shrink-0 flex-col gap-1 rounded-xl px-3 py-2 text-[10px] font-semibold text-[#e3354f] hover:bg-[#fff1f3] hover:text-[#d42744]"><X className="size-5" />Report / Safety</Button>
+              <Button asChild type="button" variant="ghost" className="h-auto shrink-0 flex-col gap-1 rounded-xl px-3 py-2 text-[10px] font-semibold text-[#e3354f] hover:bg-[#fff1f3] hover:text-[#d42744]"><Link href="/talent/safety"><X className="size-5" />Report / Safety</Link></Button>
             </CardContent>
           </Card>
         </div>
       </main>
 
-      <NetworkBottomNav />
+       <NetworkBottomNav navigation={navigation} />
     </div>
   );
 }

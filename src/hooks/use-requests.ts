@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { requestsApi } from "@/lib/api/requests";
+import { queryKeys } from "@/lib/api/query-keys";
 
 export const requestsKeys = {
   all: ["requests"] as const,
@@ -19,6 +20,7 @@ export function useAcceptRequest() {
     mutationFn: (id: string) => requestsApi.acceptRequest(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: requestsKeys.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.collaborationRequests.all() });
     },
   });
 }
@@ -29,6 +31,7 @@ export function useRejectRequest() {
     mutationFn: (id: string) => requestsApi.rejectRequest(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: requestsKeys.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.collaborationRequests.all() });
     },
   });
 }
@@ -40,6 +43,7 @@ export function useCreateRequest() {
       requestsApi.createRequest(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: requestsKeys.all });
+      queryClient.invalidateQueries({ queryKey: queryKeys.collaborationRequests.all() });
     },
   });
 }

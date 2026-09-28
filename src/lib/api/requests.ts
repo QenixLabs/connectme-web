@@ -33,6 +33,12 @@ export interface MyRequestsResponse {
   received: CollaborationRequest[];
 }
 
+export interface CreateRequestResponse {
+  request: CollaborationRequest;
+  wasAccepted: boolean;
+  conversationId?: string;
+}
+
 export const requestsApi = {
   getMyRequests: async () => {
     const response = await apiClient.get("/collaboration-requests");
@@ -45,7 +51,7 @@ export const requestsApi = {
     reason?: string;
   }) => {
     const response = await apiClient.post("/collaboration-requests", data);
-    return response.data as CollaborationRequest;
+    return response.data as CreateRequestResponse;
   },
 
   acceptRequest: async (id: string) => {

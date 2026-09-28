@@ -252,8 +252,10 @@ export function useConnectionRequest(targetUserId: string) {
     enabled: !!targetUserId && isAuthenticated,
     select: (data) => {
       const sent = data.sent.find((r) => r.receiver_id?._id === targetUserId);
-      if (sent?.status === "pending") return "pending" as const;
-      if (sent?.status === "accepted" || sent?.status === "messaging_only")
+      const received = data.received.find((r) => r.requester_id?._id === targetUserId);
+      const request = sent ?? received;
+      if (request?.status === "pending") return "pending" as const;
+      if (request?.status === "accepted" || request?.status === "messaging_only")
         return "connected" as const;
       return "none" as const;
     },

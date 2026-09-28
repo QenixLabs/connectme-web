@@ -131,6 +131,57 @@ export interface TalentProfile {
   updated_at: string;
 }
 
+export type TalentAnalyticsRange = "7d" | "30d" | "3m" | "1y";
+
+export interface TalentAnalytics {
+  range: TalentAnalyticsRange;
+  from: string;
+  to: string;
+  metrics: Array<{
+    key: string;
+    label: string;
+    current: number;
+    previous: number;
+    changePercent: number | null;
+  }>;
+  series: Array<{ date: string; profile_views: number; recruiter_views: number }>;
+  outcomes: Array<{ status: string; count: number; percentage: number }>;
+  categories: Array<{ category: string; count: number }>;
+  locations: Array<{ name: string; count: number; percentage: number }>;
+  countries: Array<{ name: string; count: number; percentage: number }>;
+  viewers: Array<{
+    id: string;
+    name: string;
+    role?: string;
+    avatar?: string;
+    verified: boolean;
+    viewed_at: string;
+  }>;
+  insights: Array<{ type: string; text: string }>;
+  supported: {
+    profile_views: boolean;
+    recruiter_views: boolean;
+    applications: boolean;
+    locations: boolean;
+    viewers: boolean;
+  };
+}
+
+export interface TalentReputation {
+  root_score: number;
+  is_verified: boolean;
+  verified_projects: number;
+  testimonial_count: number;
+  average_rating: number | null;
+  response_rate: number | null;
+  on_time_delivery_rate: number | null;
+  rating_history: Array<{
+    date: string;
+    rating: number;
+    average: number;
+  }>;
+}
+
 export type TalentProfilePreview = Pick<TalentProfile, "user_id" | "username"> &
   Partial<Omit<TalentProfile, "user_id" | "username">>;
 
@@ -311,6 +362,7 @@ export interface Testimonial {
   author_company?: string;
   content?: string;
   rating?: number;
+  verification_status?: "self_reported" | "public_record" | "recruiter_cosigned";
   is_video?: boolean;
   video_url?: string;
   is_approved_by_talent?: boolean;
@@ -353,6 +405,7 @@ export interface SearchTalentsResponse {
   data: (TalentProfile & {
     match_score?: number;
     matched_campaign?: string;
+    is_verified?: boolean;
   })[];
   total: number;
   nextCursor?: string | null;
@@ -419,6 +472,20 @@ export const talentApi = {
       missingFields: string[];
       totalFields: number;
     };
+  },
+
+  getMyAnalytics: async (params: {
+    range: TalentAnalyticsRange;
+    from?: string;
+    to?: string;
+  }) => {
+    const response = await apiClient.get("/talent/analytics", { params });
+    return response.data as TalentAnalytics;
+  },
+
+  getMyReputation: async () => {
+    const response = await apiClient.get("/talent/reputation");
+    return response.data as TalentReputation;
   },
 
   getPublicProfile: async (username: string) => {

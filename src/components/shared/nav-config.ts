@@ -15,6 +15,7 @@ import {
   Flag,
   UsersRound,
   BarChart3,
+  Star,
 } from "lucide-react";
 
 export interface NavItem {
@@ -27,7 +28,9 @@ export const talentNavItems: NavItem[] = [
   { label: "Home", href: "/talent/dashboard", icon: Home },
   { label: "Opportunities", href: "/talent/opportunities", icon: Briefcase },
   { label: "Network", href: "/talent/network", icon: UsersRound },
+  { label: "Analytics", href: "/talent/analytics", icon: BarChart3 },
   { label: "Messages", href: "/talent/messages", icon: MessageSquare },
+  { label: "Reputation", href: "/talent/reputation", icon: Star },
   { label: "Profile", href: "/talent/profile", icon: User },
 ];
 

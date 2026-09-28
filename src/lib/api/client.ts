@@ -45,7 +45,7 @@ const processQueue = (error: Error | null, token: string | null = null) => {
 const isPublicEndpoint = (url: string): boolean => {
   const publicPaths = [
     "/talent/profile/",
-    "/recruiters/public/",
+    "/recruiters/public",
     "/auth/login",
     "/auth/signup",
     "/auth/verify-otp",

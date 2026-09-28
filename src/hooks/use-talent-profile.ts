@@ -7,6 +7,7 @@ export const talentProfileKeys = {
   all: ["talent-profile"] as const,
   myProfile: () => [...talentProfileKeys.all, "my"] as const,
   completeness: () => [...talentProfileKeys.all, "completeness"] as const,
+  reputation: () => [...talentProfileKeys.all, "reputation"] as const,
   publicProfile: (username: string) =>
     [...talentProfileKeys.all, "public", username] as const,
   portfolio: (username: string) =>
@@ -32,6 +33,13 @@ export function useProfileCompleteness() {
   return useQuery({
     queryKey: talentProfileKeys.completeness(),
     queryFn: () => talentApi.getCompleteness(),
+  });
+}
+
+export function useMyReputation() {
+  return useQuery({
+    queryKey: talentProfileKeys.reputation(),
+    queryFn: () => talentApi.getMyReputation(),
   });
 }
 

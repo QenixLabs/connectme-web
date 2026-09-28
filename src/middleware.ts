@@ -8,6 +8,7 @@ const PROTECTED_TALENT_PATHS = [
   "/talent/portfolio",
   "/talent/experience",
   "/talent/opportunities",
+  "/talent/analytics",
   "/talent/applications",
   "/talent/requests",
   "/talent/messages",

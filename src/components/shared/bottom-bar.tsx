@@ -13,11 +13,12 @@ const getServerSnapshot = () => false;
 
 interface BottomBarProps {
   navItems: NavItem[];
+  mobileNavItems?: NavItem[];
   iconOnly?: boolean;
   variant?: "default" | "settings";
 }
 
-export function BottomBar({ navItems, iconOnly, variant = "default" }: BottomBarProps) {
+export function BottomBar({ navItems, mobileNavItems, iconOnly, variant = "default" }: BottomBarProps) {
   const pathname = usePathname();
   const isSettingsVariant = variant === "settings";
   const isMounted = useSyncExternalStore(
@@ -39,7 +40,7 @@ export function BottomBar({ navItems, iconOnly, variant = "default" }: BottomBar
         "grid auto-cols-fr grid-flow-col",
         isSettingsVariant ? "h-[78px]" : "h-16",
       )}>
-        {navItems.map((item) => {
+        {(mobileNavItems ?? navItems).map((item) => {
           const active = isMounted && (
             pathname.startsWith(item.href) ||
             (isSettingsVariant && item.label === "Profile")
