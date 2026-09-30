@@ -26,6 +26,11 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "img.youtube.com" },
       { protocol: "https", hostname: "i.ytimg.com" },
       { protocol: "https", hostname: "images.pexels.com" },
+      {
+        protocol: "https",
+        hostname: "b9310b94-370c-4caa-938f-b1f5f2af54f6.lovableproject.com",
+        pathname: "/__l5e/assets-v1/**",
+      },
     ],
   },
 };

@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
-import { OnboardingFlow } from "@/components/onboarding/onboarding-flow";
+import { RootinLandingPage } from "@/components/landing/rootin-landing-page";
 
-const title = "Rootin — Find Creative Talent";
+const title = "Rootin — People. Talent. Opportunities.";
 const description =
-  "Discover talent, showcase your work, and unlock creative opportunities with Rootin.";
+  "Rootin connects entertainment talent, recruiters, and creative service providers across India.";
 
 export const metadata: Metadata = {
   title,
   description,
   openGraph: {
     title,
-    description: "One platform for creative talent, recruiters, and extraordinary opportunities.",
+    description: "Where talent connects with opportunities in India's entertainment industry.",
     type: "website",
     url: "/",
   },
@@ -20,5 +20,5 @@ export const metadata: Metadata = {
 };
 
 export default function MarketingHomePage() {
-  return <OnboardingFlow />;
+  return <RootinLandingPage />;
 }

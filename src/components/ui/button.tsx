@@ -21,6 +21,11 @@ const buttonVariants = cva(
         link: "text-primary underline-offset-4 hover:underline",
         hero: "border border-hero-line bg-hero-glass text-hero-foreground backdrop-blur-md hover:bg-hero-glass-hover",
         success: "bg-success-soft text-success hover:bg-success-soft/80",
+        rootin: "rootin-button rootin-button-primary",
+        rootinOutline: "rootin-button rootin-button-outline",
+        rootinBlue: "rootin-button rootin-button-blue",
+        rootinOrange: "rootin-button rootin-button-orange",
+        rootinIcon: "rootin-button rootin-button-icon",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
