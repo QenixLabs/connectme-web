@@ -447,16 +447,8 @@ function TrustedBrands() {
 
 function BottomCta() {
   return (
-    <section className="bottom-cta" id="join">
-      <Image
-        src={bannerImage}
-        alt="A filmmaker and performer on a film set"
-        fill
-        sizes="(min-width: 1024px) 1240px, 100vw"
-        className="bottom-cta-art"
-      />
-      <div className="bottom-cta-overlay" aria-hidden="true" />
-      <div className="bottom-cta-copy">
+    <section className="bottom-cta hero-card" id="join">
+      <div className="bottom-cta-copy hero-content">
         <div className="bottom-cta-kicker">JOIN ROOTIN TODAY</div>
         <h2>
           Create. Collaborate.
@@ -474,6 +466,16 @@ function BottomCta() {
             Learn More
           </a>
         </div>
+      </div>
+      <div className="bottom-cta-artwork hero-artwork">
+        <Image
+          src={bannerImage}
+          alt="RootIn creative talent community with an actress, cameras and lights"
+          width={1942}
+          height={809}
+          sizes="(min-width: 640px) 50vw, 100vw"
+          className="bottom-cta-art object-contain object-bottom-right"
+        />
       </div>
     </section>
   );
