@@ -69,6 +69,9 @@ export type {
   PortfolioItem,
   CronJobInfo,
   CronJobExecution,
+  TestOtpChannel,
+  SendTestOtpPayload,
+  SendTestOtpResponse,
 } from "./admin";
 export { queryKeys } from "./query-keys";
 export { campaignsApi } from "./campaigns";

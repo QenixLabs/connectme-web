@@ -423,6 +423,22 @@ export interface CronJobExecution {
   error?: string;
 }
 
+export type TestOtpChannel = 'email' | 'sms';
+
+export interface SendTestOtpPayload {
+  channel: TestOtpChannel;
+  email?: string;
+  phone?: string;
+}
+
+export interface SendTestOtpResponse {
+  message: string;
+  channel: TestOtpChannel;
+  destination: string;
+  expires_in_seconds: number;
+  preview_otp?: string;
+}
+
 export const adminApi = {
   getDashboardStats: async (): Promise<DashboardStats> => {
     const response = await apiClient.get('/admin/dashboard-stats');
@@ -686,6 +702,11 @@ export const adminApi = {
 
   getCronJobHistory: async (name: string): Promise<CronJobExecution[]> => {
     const response = await apiClient.get(`/admin/cron-jobs/${name}/history`);
+    return response.data;
+  },
+
+  sendTestOtp: async (payload: SendTestOtpPayload): Promise<SendTestOtpResponse> => {
+    const response = await apiClient.post('/admin/otp/test', payload);
     return response.data;
   },
 };

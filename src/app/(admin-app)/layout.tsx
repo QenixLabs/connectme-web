@@ -15,6 +15,7 @@ import {
   BarChart3,
   Image as ImageIcon,
   Clock,
+  KeyRound,
   LogOut,
 } from "lucide-react";
 import { useAuthStore } from "@/providers/auth-store-provider";
@@ -72,6 +73,7 @@ const navigation = [
       { label: "Plans", href: "/admin/plans", icon: CreditCard },
       { label: "Subscriptions", href: "/admin/subscriptions", icon: BarChart3 },
       { label: "Cron Jobs", href: "/admin/cron-jobs", icon: Clock },
+      { label: "OTP Test", href: "/admin/otp-test", icon: KeyRound },
     ],
   },
 ];
@@ -87,6 +89,7 @@ const pageTitles: Record<string, string> = {
   "/admin/subscriptions": "Subscriptions",
   "/admin/portfolio": "Portfolio",
   "/admin/cron-jobs": "Cron Jobs",
+  "/admin/otp-test": "OTP Test",
 };
 
 function getPageTitle(pathname: string): string {

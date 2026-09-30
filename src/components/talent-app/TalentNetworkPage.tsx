@@ -3,7 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState, type ReactNode } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import {
   ArrowRight,
   BadgeCheck,
@@ -44,15 +47,45 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Textarea } from "@/components/ui/textarea";
+import { TagInput } from "@/components/ui/tag-input";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCampaigns } from "@/hooks/use-campaigns";
-import { useConnectionRequest, useSaveTalent, useStartConversation } from "@/hooks/use-talent-actions";
+import { useSaveTalent, useStartConversation } from "@/hooks/use-talent-actions";
 import { useTalentProfile } from "@/hooks/use-talent-dashboard";
-import { useTalentSearch } from "@/hooks/use-talent-search";
+import { useTalentSearch, useProfessions } from "@/hooks/use-talent-search";
+import {
+  useCollabPostsFeed,
+  useMyCollabPosts,
+  useCreateCollabPost,
+  useCloseCollabPost,
+  useReopenCollabPost,
+  useDeleteCollabPost,
+  useExpressInterest,
+} from "@/hooks/use-collab-posts";
+import type { CollabPost } from "@/lib/api/collab-posts";
 import { useRecruiterDirectory } from "@/hooks/use-recruiter-directory";
 import { useSaveRecruiter, useStartConversation as useRecruiterConversation } from "@/hooks/use-recruiter-actions";
-import { useMyRequests, useAcceptRequest, useRejectRequest } from "@/hooks/use-requests";
+import { useMyRequests, useAcceptRequest, useRejectRequest, useCreateRequest } from "@/hooks/use-requests";
 import { useUnreadMessages, useUnreadNotifications } from "@/hooks/use-unread-counts";
 import type { CollaborationRequest } from "@/lib/api/requests";
 import type { Campaign } from "@/lib/api/campaigns";
@@ -78,6 +111,14 @@ const categories = [
 ];
 
 type RequestTab = "incoming" | "sent" | "active";
+
+type ConnectionStatus = "none" | "pending" | "connected";
+
+const inviteReasons = [
+  { value: "collaboration", label: "Collaborate", hint: "Work together on a project" },
+  { value: "mentorship", label: "Mentorship", hint: "Learn from each other" },
+  { value: "referral", label: "Referral", hint: "Share work and opportunities" },
+] as const;
 
 const requestTabs: Array<{ id: RequestTab; label: string }> = [
   { id: "incoming", label: "Incoming" },
@@ -162,13 +203,120 @@ function CategoryTile({
   );
 }
 
+function InviteDialog({
+  target,
+  onClose,
+}: {
+  target: { userId: string; name: string };
+  onClose: () => void;
+}) {
+  const createRequest = useCreateRequest();
+  const [message, setMessage] = useState("");
+  const [reason, setReason] = useState<string>("collaboration");
+
+  const handleSubmit = () => {
+    createRequest.mutate(
+      {
+        receiver_id: target.userId,
+        message: message.trim() || undefined,
+        reason,
+      },
+      {
+        onSuccess: (data) => {
+          if (data.wasAccepted) {
+            toast.success(`You and ${target.name} are now connected`);
+          } else {
+            toast.success(`Invite sent to ${target.name}`);
+          }
+          onClose();
+        },
+        onError: (err) => {
+          const serverMessage =
+            (err as { response?: { data?: { message?: string } } }).response?.data
+              ?.message || "Failed to send invite";
+          toast.error(serverMessage);
+        },
+      },
+    );
+  };
+
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="bg-white sm:max-w-[440px]">
+        <DialogHeader className="text-left">
+          <DialogTitle className="text-[#171737]">Invite {target.name}</DialogTitle>
+          <DialogDescription className="text-[#696583]">
+            Say what you want to create together. They can accept, then you can message 1:1.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-2">
+          <div className="grid gap-2">
+            <Label className="text-xs font-bold text-[#2c2851]">Why are you reaching out?</Label>
+            <RadioGroup value={reason} onValueChange={setReason} className="grid gap-2">
+              {inviteReasons.map((option) => (
+                <Label
+                  key={option.value}
+                  htmlFor={`invite-reason-${option.value}`}
+                  className="flex cursor-pointer items-center gap-3 rounded-xl border border-[#e4def2] bg-[#fbfaff] px-3 py-2.5 text-sm font-medium text-[#38335e] transition has-checked:border-[#8b5cf6] has-checked:bg-[#f5f0ff]"
+                >
+                  <RadioGroupItem id={`invite-reason-${option.value}`} value={option.value} />
+                  <span>
+                    <span className="block font-bold text-[#2c2851]">{option.label}</span>
+                    <span className="block text-xs font-normal text-[#777493]">{option.hint}</span>
+                  </span>
+                </Label>
+              ))}
+            </RadioGroup>
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="invite-message" className="text-xs font-bold text-[#2c2851]">
+              Message <span className="font-normal text-[#777493]">(optional)</span>
+            </Label>
+            <Textarea
+              id="invite-message"
+              value={message}
+              onChange={(event) => setMessage(event.target.value.slice(0, 500))}
+              placeholder={`Hi ${target.name}! I'd love to collaborate on…`}
+              rows={4}
+              className="resize-none rounded-xl border-[#e4def2] bg-[#fbfaff] text-sm shadow-none focus-visible:ring-[#8b5cf6]"
+            />
+            <p className="text-right text-[10px] text-[#8983a4]">{message.length}/500</p>
+          </div>
+        </div>
+        <DialogFooter className="flex-row justify-end gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            disabled={createRequest.isPending}
+            className="h-10 rounded-xl border-[#ded6f1] text-[#4e20e7]"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            onClick={handleSubmit}
+            disabled={createRequest.isPending}
+            className="h-10 rounded-xl bg-[#5520e8] px-6 text-white hover:bg-[#4513cf]"
+          >
+            {createRequest.isPending ? "Sending…" : "Send Invite"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function CollaboratorCard({
   collaborator,
+  connectionStatus,
+  onInvite,
 }: {
   collaborator: TalentProfile & { match_score?: number; is_verified?: boolean };
+  connectionStatus: ConnectionStatus;
+  onInvite: () => void;
 }) {
   const save = useSaveTalent(collaborator.username);
-  const connection = useConnectionRequest(collaborator.user_id);
   const conversation = useStartConversation(collaborator.username, "talent");
   const name = collaborator.full_legal_name || collaborator.username;
   const professions = collaborator.professions?.join(" | ") || "Creative professional";
@@ -266,13 +414,13 @@ function CollaboratorCard({
               View Profile <ArrowRight className="size-3.5" />
             </Link>
           </Button>
-          {connection.status === "connected" ? (
+          {connectionStatus === "connected" ? (
             <Button type="button" size="sm" onClick={conversation.start} disabled={conversation.isPending} className="h-10 rounded-xl bg-gradient-to-r from-[#6d2cf1] to-[#5520e8] px-2 text-[10px] font-bold text-white shadow-[0_5px_12px_rgba(85,32,232,0.22)] hover:from-[#5d1ee1] hover:to-[#4513cf]">
               Message
             </Button>
           ) : (
-            <Button type="button" size="sm" onClick={connection.send} disabled={connection.isPending || connection.status === "pending"} className="h-10 rounded-xl bg-gradient-to-r from-[#6d2cf1] to-[#5520e8] px-2 text-[10px] font-bold text-white shadow-[0_5px_12px_rgba(85,32,232,0.22)] hover:from-[#5d1ee1] hover:to-[#4513cf]">
-              {connection.status === "pending" ? "Pending" : "Invite"}
+            <Button type="button" size="sm" onClick={onInvite} disabled={connectionStatus === "pending"} className="h-10 rounded-xl bg-gradient-to-r from-[#6d2cf1] to-[#5520e8] px-2 text-[10px] font-bold text-white shadow-[0_5px_12px_rgba(85,32,232,0.22)] hover:from-[#5d1ee1] hover:to-[#4513cf]">
+              {connectionStatus === "pending" ? "Pending" : "Invite"}
             </Button>
           )}
         </div>
@@ -431,6 +579,317 @@ function NetworkRequestCard({
   );
 }
 
+const composerSchema = z.object({
+  title: z.string().trim().min(1, "Give your collab a title").max(120, "Keep the title under 120 characters"),
+  description: z.string().trim().min(1, "Describe what you want to create").max(2000, "Keep it under 2000 characters"),
+  looking_for: z.array(z.string().trim().min(1).max(60)).max(10, "Up to 10 professions").default([]),
+  location_city: z.string().trim().max(100, "Keep the city under 100 characters").optional(),
+});
+
+type ComposerValues = z.input<typeof composerSchema>;
+
+function CollabPostComposerDialog({ onClose }: { onClose: () => void }) {
+  const createPost = useCreateCollabPost();
+  const professionsQuery = useProfessions();
+  const form = useForm<ComposerValues>({
+    resolver: zodResolver(composerSchema),
+    defaultValues: { title: "", description: "", looking_for: [], location_city: "" },
+  });
+
+  const handleSubmit = (values: ComposerValues) => {
+    createPost.mutate(
+      {
+        title: values.title,
+        description: values.description,
+        looking_for: values.looking_for ?? [],
+        location_city: values.location_city || undefined,
+      },
+      { onSuccess: () => onClose() },
+    );
+  };
+
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto bg-white sm:max-w-[520px]">
+        <DialogHeader className="text-left">
+          <DialogTitle className="text-[#171737]">Post a collaboration</DialogTitle>
+          <DialogDescription className="text-[#696583]">
+            Tell other talents what you want to create and who you need. They can express interest and you chat 1:1.
+          </DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="grid gap-4 py-2">
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs font-bold text-[#2c2851]">Title</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="e.g. Looking for a dancer for a music video"
+                      className="h-11 rounded-xl border-[#e4def2] bg-[#fbfaff] text-sm shadow-none focus-visible:ring-[#8b5cf6]"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs font-bold text-[#2c2851]">Description</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      rows={4}
+                      placeholder="What are you creating? Where, when, what's in it for collaborators?"
+                      className="resize-none rounded-xl border-[#e4def2] bg-[#fbfaff] text-sm shadow-none focus-visible:ring-[#8b5cf6]"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="looking_for"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs font-bold text-[#2c2851]">Who do you need?</FormLabel>
+                  <FormControl>
+                    <TagInput
+                      value={field.value ?? []}
+                      onChange={field.onChange}
+                      suggestions={professionsQuery.data ?? []}
+                      maxTags={10}
+                      placeholder="e.g. Dancer, Photographer…"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="location_city"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs font-bold text-[#2c2851]">
+                    City <span className="font-normal text-[#777493]">(optional)</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      value={field.value ?? ""}
+                      placeholder="e.g. Mumbai"
+                      className="h-11 rounded-xl border-[#e4def2] bg-[#fbfaff] text-sm shadow-none focus-visible:ring-[#8b5cf6]"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <DialogFooter className="flex-row justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                disabled={createPost.isPending}
+                className="h-10 rounded-xl border-[#ded6f1] text-[#4e20e7]"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={createPost.isPending}
+                className="h-10 rounded-xl bg-[#5520e8] px-6 text-white hover:bg-[#4513cf]"
+              >
+                {createPost.isPending ? "Publishing…" : "Publish Post"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function InterestDialog({ post, onClose }: { post: CollabPost; onClose: () => void }) {
+  const expressInterest = useExpressInterest();
+  const [message, setMessage] = useState("");
+
+  const handleSubmit = () => {
+    expressInterest.mutate(
+      { id: post._id, message: message.trim() || undefined },
+      { onSuccess: () => onClose() },
+    );
+  };
+
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="bg-white sm:max-w-[440px]">
+        <DialogHeader className="text-left">
+          <DialogTitle className="text-[#171737]">Express interest</DialogTitle>
+          <DialogDescription className="text-[#696583]">
+            {post.owner.full_legal_name || post.owner.username || "The talent"} will receive your
+            request for “{post.title}”. On accept you can message 1:1.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-2 py-2">
+          <Label htmlFor="interest-message" className="text-xs font-bold text-[#2c2851]">
+            Message <span className="font-normal text-[#777493]">(optional)</span>
+          </Label>
+          <Textarea
+            id="interest-message"
+            value={message}
+            onChange={(event) => setMessage(event.target.value.slice(0, 500))}
+            placeholder="Hi! I'd love to be part of this because…"
+            rows={4}
+            className="resize-none rounded-xl border-[#e4def2] bg-[#fbfaff] text-sm shadow-none focus-visible:ring-[#8b5cf6]"
+          />
+          <p className="text-right text-[10px] text-[#8983a4]">{message.length}/500</p>
+        </div>
+        <DialogFooter className="flex-row justify-end gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            disabled={expressInterest.isPending}
+            className="h-10 rounded-xl border-[#ded6f1] text-[#4e20e7]"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            onClick={handleSubmit}
+            disabled={expressInterest.isPending}
+            className="h-10 rounded-xl bg-[#5520e8] px-6 text-white hover:bg-[#4513cf]"
+          >
+            {expressInterest.isPending ? "Sending…" : "Send Interest"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function CollabPostCard({ post, onInterest }: { post: CollabPost; onInterest: () => void }) {
+  const ownerName = post.owner.full_legal_name || post.owner.username || "Talent";
+  const ownerInitials = ownerName.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase();
+  const professions = post.owner.professions?.join(" | ") || "Creative professional";
+  const visibleTags = post.looking_for.slice(0, 3);
+  const extraTags = post.looking_for.length - visibleTags.length;
+  const conversation = useStartConversation(post.owner.username ?? "", "talent");
+
+  return (
+    <Card className="flex gap-0 rounded-[17px] border-[#e1def2] bg-white py-0 shadow-[0_5px_16px_rgba(67,54,132,0.07)]">
+      <CardContent className="flex flex-1 flex-col gap-3 p-4">
+        <div className="flex items-center gap-2.5">
+          <div className="relative grid size-10 shrink-0 place-items-center overflow-hidden rounded-full bg-[#ede9fb] text-sm font-bold text-[#5520e8]">
+            {post.owner.profile_photo ? <Image src={post.owner.profile_photo} alt={ownerName} fill sizes="40px" className="object-cover" /> : ownerInitials}
+          </div>
+          <div className="min-w-0">
+            <p className="flex items-center gap-1 truncate text-[13px] font-bold text-[#1c1a3e]">
+              <span className="truncate">{ownerName}</span>
+              {post.owner.is_verified ? <BadgeCheck className="size-3.5 shrink-0 fill-[#2387e9] text-white" aria-label="Verified" /> : null}
+            </p>
+            <p className="truncate text-[10px] font-medium text-[#5b577a]">{professions}</p>
+          </div>
+        </div>
+
+        <div className="min-w-0">
+          <h3 className="text-[14px] font-bold leading-snug text-[#19183d]">{post.title}</h3>
+          <p className="mt-1 line-clamp-2 text-[11px] leading-snug text-[#666382]">{post.description}</p>
+        </div>
+
+        {post.looking_for.length > 0 ? (
+          <div className="flex flex-wrap gap-1.5">
+            {visibleTags.map((tag) => (
+              <Badge key={tag} variant="secondary" className="rounded-full bg-[#f0ebff] px-2.5 py-1 text-[10px] font-medium text-[#5134aa]">
+                {tag}
+              </Badge>
+            ))}
+            {extraTags > 0 ? <span className="px-1 py-1 text-[10px] font-semibold text-[#777493]">+{extraTags} more</span> : null}
+          </div>
+        ) : null}
+
+        <div className="mt-auto flex items-center justify-between gap-2 pt-1">
+          <span className="flex items-center gap-1.5 text-[10px] font-semibold text-[#696583]">
+            {post.location?.city ? <><MapPin className="size-3 text-[#5e36d9]" /> {post.location.city}</> : null}
+            <UsersRound className="size-3 text-[#5e36d9]" /> {post.interested_count} interested
+          </span>
+          {post.viewer_interest === "connected" && post.owner.username ? (
+            <Button type="button" size="xs" onClick={conversation.start} disabled={conversation.isPending} className="h-8 rounded-lg bg-[#5520e8] px-4 text-[10px] font-bold hover:bg-[#4513cf]">Message</Button>
+          ) : post.viewer_interest === "pending" ? (
+            <Badge className="rounded-full border-0 bg-[#eee8ff] px-3 py-1.5 text-[10px] font-bold text-[#5a31c6]">Interest sent</Badge>
+          ) : (
+            <Button type="button" size="xs" onClick={onInterest} className="h-8 rounded-lg bg-[#5520e8] px-4 text-[10px] font-bold hover:bg-[#4513cf]">I&apos;m interested</Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function MyCollabPostRow({ post }: { post: CollabPost }) {
+  const closePost = useCloseCollabPost();
+  const reopenPost = useReopenCollabPost();
+  const deletePost = useDeleteCollabPost();
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const busy = closePost.isPending || reopenPost.isPending || deletePost.isPending;
+
+  return (
+    <>
+      <Card className="gap-0 rounded-[17px] border-[#e1def2] bg-white py-0 shadow-[0_5px_16px_rgba(67,54,132,0.07)]">
+        <CardContent className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[13px] font-bold text-[#1c1a3e]">{post.title}</p>
+            <p className="mt-0.5 flex items-center gap-2 text-[10px] font-semibold text-[#696583]">
+              <Badge className={cn("rounded-full border-0 px-2 py-0.5 text-[9px] font-bold", post.status === "open" ? "bg-[#c9f6de] text-[#098b51]" : "bg-[#eee8ff] text-[#5a31c6]")}>
+                {post.status === "open" ? "Open" : "Closed"}
+              </Badge>
+              <span className="flex items-center gap-1"><UsersRound className="size-3 text-[#5e36d9]" /> {post.interested_count} interested</span>
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            {post.status === "open" ? (
+              <Button type="button" variant="outline" size="sm" onClick={() => closePost.mutate(post._id)} disabled={busy} className="h-8 rounded-lg border-[#ddd8f0] px-3 text-[10px] font-bold text-[#443e6e] hover:bg-[#f8f6ff]">Close</Button>
+            ) : (
+              <Button type="button" variant="outline" size="sm" onClick={() => reopenPost.mutate(post._id)} disabled={busy} className="h-8 rounded-lg border-[#ddd8f0] px-3 text-[10px] font-bold text-[#443e6e] hover:bg-[#f8f6ff]">Reopen</Button>
+            )}
+            <Button type="button" variant="ghost" size="sm" onClick={() => setConfirmDelete(true)} disabled={busy} className="h-8 rounded-lg px-3 text-[10px] font-bold text-[#e3354f] hover:bg-[#fff1f3] hover:text-[#d42744]">Delete</Button>
+          </div>
+        </CardContent>
+      </Card>
+      <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <DialogContent className="bg-white sm:max-w-[380px]">
+          <DialogHeader className="text-left">
+            <DialogTitle className="text-[#171737]">Delete this post?</DialogTitle>
+            <DialogDescription className="text-[#696583]">
+              “{post.title}” will be removed. Existing conversations with interested talents are kept.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-row justify-end gap-2">
+            <Button type="button" variant="outline" onClick={() => setConfirmDelete(false)} className="h-10 rounded-xl border-[#ded6f0] text-[#4e20e7]">Keep</Button>
+            <Button
+              type="button"
+              onClick={() => deletePost.mutate(post._id, { onSuccess: () => setConfirmDelete(false) })}
+              disabled={deletePost.isPending}
+              className="h-10 rounded-xl bg-[#e3354f] px-5 text-white hover:bg-[#c22740]"
+            >
+              {deletePost.isPending ? "Deleting…" : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
 function NetworkBottomNav({ navigation }: { navigation: typeof networkNavigation }) {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-[#e3e0f2] bg-white/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_26px_rgba(48,39,105,0.08)] backdrop-blur-xl md:hidden">
@@ -471,16 +930,24 @@ export function TalentNetworkPage() {
   const [searchParams, setSearchParams] = useState<SearchTalentsParams>({ sort: "newest", limit: 8 });
   const [directoryParams, setDirectoryParams] = useState<PublicRecruiterDirectoryParams>({ sort: "relevance", limit: 12 });
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [inviteTarget, setInviteTarget] = useState<{ userId: string; name: string } | null>(null);
+  const [composerOpen, setComposerOpen] = useState(false);
+  const [interestPost, setInterestPost] = useState<CollabPost | null>(null);
 
   const profileQuery = useTalentProfile();
   const collaboratorQuery = useTalentSearch(searchParams);
   const recruiterQuery = useRecruiterDirectory(directoryParams);
   const projectQuery = useCampaigns({ status: "active", sort: "newest", limit: 4 });
+  const feedQuery = useCollabPostsFeed({ search: searchParams.search, limit: 6 });
+  const myPostsQuery = useMyCollabPosts({ limit: 20 });
   const requestQuery = useMyRequests();
   const unreadMessages = useUnreadMessages();
   const unreadNotifications = useUnreadNotifications();
 
   const collaborators = collaboratorQuery.data?.pages.flatMap((page) => page.data) ?? [];
+  const collabPosts = feedQuery.data?.pages.flatMap((page) => page.data) ?? [];
+  const myCollabPosts = myPostsQuery.data?.pages.flatMap((page) => page.data) ?? [];
+  const collabPostTotal = feedQuery.data?.pages[0]?.total ?? 0;
   const recruiters = recruiterQuery.data?.pages.flatMap((page) => page.data) ?? [];
   const projects = projectQuery.data ?? [];
   const receivedRequests = requestQuery.data?.received ?? [];
@@ -493,6 +960,26 @@ export function TalentNetworkPage() {
     : requestTab === "sent"
       ? sentRequests
       : activeRequests;
+  // Single lookup shared by every collaborator card: userId → connection state.
+  // (Previously each card fetched the whole requests list under its own query key.)
+  const connectionByUserId = useMemo(() => {
+    const map = new Map<string, ConnectionStatus>();
+    const classify = (status: CollaborationRequest["status"]): ConnectionStatus =>
+      status === "pending"
+        ? "pending"
+        : status === "accepted" || status === "messaging_only"
+          ? "connected"
+          : "none";
+    for (const request of sentRequests) {
+      const id = request.receiver_id?._id;
+      if (id) map.set(id, classify(request.status));
+    }
+    for (const request of receivedRequests) {
+      const id = request.requester_id?._id;
+      if (id) map.set(id, classify(request.status));
+    }
+    return map;
+  }, [sentRequests, receivedRequests]);
   const navigation = networkNavigation.map((item) => item.label === "Messages"
     ? { ...item, badge: unreadMessages.data?.count ?? 0 }
     : item);
@@ -547,7 +1034,8 @@ export function TalentNetworkPage() {
       return;
     }
     if (label === "Create a Project") {
-      router.push("/talent/opportunities");
+      setComposerOpen(true);
+      return;
     }
   };
 
@@ -628,8 +1116,8 @@ export function TalentNetworkPage() {
           <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(249,247,255,0.99)_0%,rgba(249,247,255,0.94)_48%,rgba(249,247,255,0.56)_100%)]" />
           <div className="relative mx-auto max-w-[1440px] px-4 pb-5 pt-6 sm:px-6 sm:pb-7 sm:pt-12 lg:px-10">
             <div className="max-w-[700px]">
-              <h1 className="font-display text-[28px] font-bold leading-[1.05] tracking-[-0.055em] text-[#101033] sm:text-5xl lg:text-[56px]">Discover Recruiters &amp; Agencies</h1>
-              <p className="mt-2 max-w-[560px] text-[13px] leading-relaxed text-[#68658b] sm:text-lg">Connect with verified industry professionals and organizations.</p>
+              <h1 className="font-display text-[28px] font-bold leading-[1.05] tracking-[-0.055em] text-[#101033] sm:text-5xl lg:text-[56px]">Find your creative collaborators</h1>
+              <p className="mt-2 max-w-[560px] text-[13px] leading-relaxed text-[#68658b] sm:text-lg">Connect with verified talents, start conversations and build work together.</p>
             </div>
 
             <div className="mt-6 flex max-w-[1080px] items-center gap-2 rounded-[16px] border border-[#cfc0ff] bg-white/95 p-2 shadow-[0_8px_24px_rgba(95,52,213,0.12)] backdrop-blur sm:mt-8 sm:rounded-[18px] sm:p-2.5">
@@ -644,7 +1132,7 @@ export function TalentNetworkPage() {
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
                   onKeyDown={(event) => { if (event.key === "Enter") handleSearch(); }}
-                   placeholder="Search recruiters, agencies, production houses..."
+                   placeholder="Search actors, dancers, photographers, collaborators…"
                   className="h-6 border-0 bg-transparent p-0 text-[11px] text-[#5c5879] shadow-none placeholder:text-[#777493] focus-visible:ring-0 sm:text-sm"
                 />
               </div>
@@ -770,6 +1258,84 @@ export function TalentNetworkPage() {
             </DrawerContent>
           </Drawer>
 
+          <section id="collaborators" className="scroll-mt-5 pt-7 sm:pt-9">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm font-semibold text-[#39345d]">
+                <span className="text-[#171737]">{collaboratorCount.toLocaleString()}</span> talents open to collaborate
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setSearchParams((current) => ({ ...current, sort: current.sort === "relevance" ? "newest" : "relevance", page: undefined, cursor: undefined }))}
+                className="h-9 rounded-full border-[#ded6f1] bg-white px-3 text-[11px] font-semibold text-[#4e4773] hover:bg-[#f7f3ff]"
+              >
+                Sort: {searchParams.sort === "relevance" ? "Relevance" : "Newest"} <ChevronRight className="size-3.5 rotate-90" />
+              </Button>
+            </div>
+            <SectionHeading
+              title="Talents you can collaborate with"
+              icon={<Badge className="gap-1 rounded-full border-0 bg-[#eee7ff] px-2 py-1 text-[10px] font-bold text-[#6427df]"><Sparkles className="size-3" /> Live Results</Badge>}
+              onAction={() => { if (collaboratorQuery.hasNextPage && !collaboratorQuery.isFetchingNextPage) void collaboratorQuery.fetchNextPage(); }}
+            />
+            <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {collaboratorQuery.isLoading ? Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} className="h-[390px] rounded-[20px]" />) : collaborators.map((collaborator) => (
+                <CollaboratorCard
+                  key={collaborator._id}
+                  collaborator={collaborator}
+                  connectionStatus={connectionByUserId.get(collaborator.user_id) ?? "none"}
+                  onInvite={() => setInviteTarget({
+                    userId: collaborator.user_id,
+                    name: collaborator.full_legal_name || collaborator.username,
+                  })}
+                />
+              ))}
+            </div>
+            {!collaboratorQuery.isLoading && collaboratorQuery.isError ? <p className="mt-4 text-sm text-[#bd3e5b]">Unable to load collaborators. Please try again.</p> : null}
+            {!collaboratorQuery.isLoading && !collaboratorQuery.isError && collaborators.length === 0 ? <p className="mt-4 text-sm text-[#696583]">No collaborators match your search.</p> : null}
+          </section>
+
+          <section id="collab-posts" className="scroll-mt-5 pt-7 sm:pt-9">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+              <p className="text-sm font-semibold text-[#39345d]">
+                <span className="text-[#171737]">{collabPostTotal.toLocaleString()}</span> open collabs from talents
+              </p>
+              <Button
+                type="button"
+                onClick={() => setComposerOpen(true)}
+                className="h-9 gap-1.5 rounded-full bg-gradient-to-r from-[#8b2cf4] to-[#5520e8] px-4 text-[11px] font-bold text-white shadow-[0_6px_14px_rgba(112,47,240,0.24)] hover:from-[#7a1fe8] hover:to-[#4513cf]"
+              >
+                <Plus className="size-3.5" /> Post a collab
+              </Button>
+            </div>
+            <SectionHeading
+              title="Open collabs from talents"
+              icon={<Badge className="gap-1 rounded-full border-0 bg-[#eee7ff] px-2 py-1 text-[10px] font-bold text-[#6427df]"><Clapperboard className="size-3" /> Talent posted</Badge>}
+              onAction={() => { if (feedQuery.hasNextPage && !feedQuery.isFetchingNextPage) void feedQuery.fetchNextPage(); }}
+            />
+            {myCollabPosts.length > 0 ? (
+              <div className="mt-3 space-y-2">
+                <p className="px-1 text-[11px] font-bold uppercase tracking-wide text-[#777493]">Your posts</p>
+                {myCollabPosts.map((post) => <MyCollabPostRow key={post._id} post={post} />)}
+              </div>
+            ) : null}
+            {feedQuery.isPending ? (
+              <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">{Array.from({ length: 3 }).map((_, index) => <Skeleton key={index} className="h-[240px] rounded-[17px]" />)}</div>
+            ) : feedQuery.isError ? (
+              <div className="mt-3 rounded-[17px] border border-[#eadcf2] bg-white px-5 py-8 text-center shadow-[0_5px_16px_rgba(67,54,132,0.06)]"><p className="font-semibold text-[#28234b]">We couldn&apos;t load collab posts right now.</p><Button type="button" variant="outline" onClick={() => feedQuery.refetch()} className="mt-3 rounded-xl border-[#7138f4] text-[#5725dc]">Try again</Button></div>
+            ) : collabPosts.length === 0 ? (
+              <div className="mt-3 rounded-[17px] border border-dashed border-[#c9bdf0] bg-white/70 px-5 py-8 text-center">
+                <p className="font-semibold text-[#28234b]">No open collabs yet — be the first to post one.</p>
+                <p className="mt-1 text-sm text-[#777497]">Describe what you want to create and who you need.</p>
+                <Button type="button" onClick={() => setComposerOpen(true)} className="mt-4 h-10 rounded-xl bg-[#5520e8] px-6 text-white hover:bg-[#4513cf]">Post a collab</Button>
+              </div>
+            ) : (
+              <div className={cn("mt-3 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3", feedQuery.isFetching && "opacity-60")}>
+                {collabPosts.map((post) => <CollabPostCard key={post._id} post={post} onInterest={() => setInterestPost(post)} />)}
+              </div>
+            )}
+            {feedQuery.isFetchingNextPage ? <p className="mt-4 text-center text-sm text-[#777497]">Loading more collabs...</p> : null}
+          </section>
+
           <section id="recruiters" className="scroll-mt-5 pt-7 sm:pt-9">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
               <p className="text-sm font-semibold text-[#39345d]"><span className="text-[#171737]">{resultCount.toLocaleString()}</span> {directoryParams.verified_only ? "verified organizations" : "organizations found"}</p>
@@ -797,34 +1363,6 @@ export function TalentNetworkPage() {
               <div className={cn("mt-3 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4", recruiterQuery.isFetching && "opacity-60")}>{recruiters.map((recruiter) => <RecruiterCard key={recruiter.slug} recruiter={recruiter} />)}</div>
             )}
             {recruiterQuery.isFetchingNextPage ? <p className="mt-4 text-center text-sm text-[#777497]">Loading more organizations...</p> : null}
-          </section>
-
-          <section id="collaborators" className="scroll-mt-5 pt-7 sm:pt-9">
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-              <p className="text-sm font-semibold text-[#39345d]">
-                <span className="text-[#171737]">{collaboratorCount.toLocaleString()}</span> professionals found
-              </p>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setSearchParams((current) => ({ ...current, sort: current.sort === "relevance" ? "newest" : "relevance", page: undefined, cursor: undefined }))}
-                className="h-9 rounded-full border-[#ded6f1] bg-white px-3 text-[11px] font-semibold text-[#4e4773] hover:bg-[#f7f3ff]"
-              >
-                Sort: {searchParams.sort === "relevance" ? "Relevance" : "Newest"} <ChevronRight className="size-3.5 rotate-90" />
-              </Button>
-            </div>
-            <SectionHeading
-              title="People who complement your talent"
-              icon={<Badge className="gap-1 rounded-full border-0 bg-[#eee7ff] px-2 py-1 text-[10px] font-bold text-[#6427df]"><Sparkles className="size-3" /> Live Results</Badge>}
-              onAction={() => { if (collaboratorQuery.hasNextPage && !collaboratorQuery.isFetchingNextPage) void collaboratorQuery.fetchNextPage(); }}
-            />
-            <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-              {collaboratorQuery.isLoading ? Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} className="h-[390px] rounded-[20px]" />) : collaborators.map((collaborator) => (
-                <CollaboratorCard key={collaborator._id} collaborator={collaborator} />
-              ))}
-            </div>
-            {!collaboratorQuery.isLoading && collaboratorQuery.isError ? <p className="mt-4 text-sm text-[#bd3e5b]">Unable to load collaborators. Please try again.</p> : null}
-            {!collaboratorQuery.isLoading && !collaboratorQuery.isError && collaborators.length === 0 ? <p className="mt-4 text-sm text-[#696583]">No collaborators match your search.</p> : null}
           </section>
 
           <section id="projects" className="scroll-mt-5 pt-5 sm:pt-7">
@@ -876,6 +1414,23 @@ export function TalentNetworkPage() {
           </Card>
         </div>
       </main>
+
+      {inviteTarget ? (
+        <InviteDialog
+          key={inviteTarget.userId}
+          target={inviteTarget}
+          onClose={() => setInviteTarget(null)}
+        />
+      ) : null}
+
+      {composerOpen ? <CollabPostComposerDialog onClose={() => setComposerOpen(false)} /> : null}
+      {interestPost ? (
+        <InterestDialog
+          key={interestPost._id}
+          post={interestPost}
+          onClose={() => setInterestPost(null)}
+        />
+      ) : null}
 
        <NetworkBottomNav navigation={navigation} />
     </div>
