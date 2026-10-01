@@ -34,6 +34,10 @@ function GoogleCallbackContent() {
       return;
     }
 
+    // OAuth callback sets a fresh HTTP-only cookie. Do not let a persisted
+    // bearer token from a previous role win when fetching the authenticated user.
+    authStore.getState().setAccessToken(null);
+
     fetchUser()
       .then(() => {
         const user = authStore.getState().user;
