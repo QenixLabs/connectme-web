@@ -104,14 +104,23 @@ export function ChangePasswordDialog({
   async function onSubmit(data: PasswordForm) {
     setIsSubmitting(true);
     try {
-      await authApi.changePassword(data.current_password, data.new_password);
+      try {
+        await authApi.changePassword(data.current_password, data.new_password);
+      } catch (err: unknown) {
+        const backend = (err as { response?: { data?: { message?: string } } }).response?.data?.message;
+        if (backend === "PASSWORD_NOT_SET") {
+          await authApi.setPassword(data.new_password);
+        } else {
+          throw err;
+        }
+      }
       toast.success("Password updated successfully");
       form.reset();
       onOpenChange(false);
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Failed to update password";
-      toast.error(message);
+      const backend = (err as { response?: { data?: { message?: string } } }).response?.data?.message;
+      const message = backend || (err instanceof Error ? err.message : "Failed to update password");
+      toast.error(message === "PASSWORD_NOT_SET" ? "No password set yet. Setting your password now." : message);
     } finally {
       setIsSubmitting(false);
     }

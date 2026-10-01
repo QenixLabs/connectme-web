@@ -5,11 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
-  BadgeCheck,
-  BarChart3,
   Check,
   Search,
-  Star,
   UsersRound,
 } from "lucide-react";
 import { useState } from "react";
@@ -23,76 +20,26 @@ import logoImage from "@/assets/rootin-logo-orange.png";
  *   - rootin-recruiter-banner.png   (recruiter role card art)
  *   - rootin-talent-banner.png      (talent role card art)
  */
-const collageImage = "/assets/onboarding/rootin-talent-collage.png";
 const recruiterImage = "/assets/onboarding/rootin-recruiter-banner.png";
 const talentImage = "/assets/onboarding/rootin-talent-banner.png";
 
 const imageSizes = "(max-width: 520px) 100vw, 430px";
 
-type Role = "recruiter" | "talent";
+export type OnboardingRole = "recruiter" | "talent";
 
-const benefits = [
-  { label: "Verified\nTalent", icon: BadgeCheck, tone: "violet" },
-  { label: "Real\nOpportunities", icon: UsersRound, tone: "pink" },
-  { label: "Trusted\nNetwork", icon: Star, tone: "blue" },
-  { label: "Growth\nTogether", icon: BarChart3, tone: "green" },
-] as const;
+type Role = OnboardingRole;
 
 function RootinLogo() {
   return (
-    <Image
-      src={logoImage}
-      alt="RootIn"
-      height={32}
-      className="h-10 w-auto"
-      priority
-    />
-  );
-}
-
-function WelcomeScreen({ onContinue }: { onContinue: () => void }) {
-  return (
-    <main className="screen welcome-screen">
-      <header className="flex items-start justify-between px-7 pt-7">
-        <RootinLogo />
-        <button className="skip-button" type="button" onClick={onContinue}>
-          Signup
-        </button>
-      </header>
-
-      <section className="px-7 pt-8">
-        <h1 className="max-w-[20rem] text-[2rem] font-extrabold leading-[0.98] text-foreground sm:text-[2.15rem]">
-          Find the right <span className="text-primary">talent.</span>
-          <br />Create <span className="text-primary">extraordinary</span> work.
-        </h1>
-        <p className="mt-4 max-w-[21rem] text-[0.78rem] font-medium leading-[1.45] text-muted-foreground">
-          Discover verified actors, models, dancers, musicians, creators and entertainment professionals.
-        </p>
-      </section>
-
-      <section className="mt-5 grid grid-cols-4 px-7" aria-label="Platform benefits">
-        {benefits.map(({ label, icon: Icon, tone }) => (
-          <div className="benefit-item" key={label}>
-            <div className={`benefit-icon benefit-${tone}`}>
-              <Icon size={19} strokeWidth={2.6} aria-hidden="true" />
-            </div>
-            <span>{label.split("\n").map((line) => <span key={line}>{line}<br /></span>)}</span>
-          </div>
-        ))}
-      </section>
-
-      <div className="welcome-art" onClick={onContinue} role="presentation">
-        <Image
-          src={collageImage}
-          alt="Actors, dancers, musicians, and production professionals"
-          fill
-          sizes={imageSizes}
-        />
-        <div className="welcome-art-caption">One platform<br />many possibilities</div>
-      </div>
-
-
-    </main>
+    <Link href="/" aria-label="RootIn home">
+      <Image
+        src={logoImage}
+        alt="RootIn"
+        height={32}
+        className="h-10 w-auto"
+        priority
+      />
+    </Link>
   );
 }
 
@@ -146,11 +93,21 @@ function RoleCard({
   );
 }
 
-function RoleScreen() {
+export function RoleScreen({
+  initialRole = "recruiter",
+  onContinue,
+}: {
+  initialRole?: OnboardingRole;
+  onContinue?: (role: OnboardingRole) => void;
+} = {}) {
   const router = useRouter();
-  const [selected, setSelected] = useState<Role>("recruiter");
+  const [selected, setSelected] = useState<Role>(initialRole);
 
   const handleContinue = () => {
+    if (onContinue) {
+      onContinue(selected);
+      return;
+    }
     router.push(selected === "talent" ? "/auth/talent/signup" : "/auth/recruiter/signup");
   };
 
@@ -194,14 +151,9 @@ function RoleScreen() {
 }
 
 export function OnboardingFlow() {
-  const [step, setStep] = useState<"welcome" | "role">("welcome");
   return (
     <div className="app-shell onboarding-theme">
-      {step === "welcome" ? (
-        <WelcomeScreen onContinue={() => setStep("role")} />
-      ) : (
-        <RoleScreen />
-      )}
+      <RoleScreen />
     </div>
   );
 }

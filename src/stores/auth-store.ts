@@ -18,6 +18,11 @@ export interface User {
   subscription_status?: string;
   auth_provider?: string;
   google_id?: string | null;
+  onboarding_completed?: boolean;
+  onboarding_exempted?: boolean;
+  has_password?: boolean;
+  google_name?: string | null;
+  google_picture?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -68,6 +73,7 @@ export const authStore = createStore<AuthState>()(
           const { user } = await authApi.getCurrentUser();
           setCookie("auth_session", "1", 7);
           setCookie("user_role", user.role, 7);
+          setCookie("onboarding_completed", user.onboarding_completed || user.onboarding_exempted ? "1" : "0", 7);
           set({ user, accessToken: access_token, isAuthenticated: true, isLoading: false });
         } catch (error: unknown) {
           const err = error as { response?: { data?: { message?: string } } };
@@ -83,6 +89,7 @@ export const authStore = createStore<AuthState>()(
         } catch {}
         deleteCookie("auth_session");
         deleteCookie("user_role");
+        deleteCookie("onboarding_completed");
         tokenStorage.setToken(null);
         set({ user: null, accessToken: null, isAuthenticated: false, isLoading: false });
       },
@@ -93,10 +100,12 @@ export const authStore = createStore<AuthState>()(
           const { user } = await authApi.getCurrentUser();
           setCookie("auth_session", "1", 7);
           setCookie("user_role", user.role, 7);
+          setCookie("onboarding_completed", user.onboarding_completed || user.onboarding_exempted ? "1" : "0", 7);
           set({ user, isAuthenticated: true, isLoading: false });
         } catch {
           deleteCookie("auth_session");
           deleteCookie("user_role");
+          deleteCookie("onboarding_completed");
           tokenStorage.setToken(null);
           set({ user: null, accessToken: null, isAuthenticated: false, isLoading: false });
         }

@@ -209,7 +209,7 @@ export function StepAccount({
         ) : null}
       </div>
 
-      <SocialAuthButtons />
+      <SocialAuthButtons role="recruiter" mode="signup" />
 
       <label className="flex items-center gap-2 text-[11px] leading-4 text-foreground">
         <input

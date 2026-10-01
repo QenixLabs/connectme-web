@@ -62,6 +62,16 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL(ROLE_HOME[userRole] ?? "/auth/login", req.url));
   }
 
+  const onboarding = req.cookies.get("onboarding_completed")?.value;
+  const effectiveRole = userRole ?? requiredRole;
+  if (onboarding === "0" && (effectiveRole === "talent" || effectiveRole === "recruiter")) {
+    const onboardingPath =
+      effectiveRole === "recruiter" ? "/auth/recruiter/signup?resume=1" : "/auth/talent/signup?resume=1";
+    if (!pathname.startsWith("/auth/")) {
+      return NextResponse.redirect(new URL(onboardingPath, req.url));
+    }
+  }
+
   return NextResponse.next();
 }
 

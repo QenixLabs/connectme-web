@@ -210,6 +210,11 @@ export const recruiterApi = {
     return response.data as RecruiterProfile;
   },
 
+  createProfile: async (payload: UpdateRecruiterProfilePayload & { company_name: string }) => {
+    const response = await apiClient.post("/recruiters/me", payload);
+    return response.data as RecruiterProfile;
+  },
+
   updateProfile: async (payload: UpdateRecruiterProfilePayload) => {
     const response = await apiClient.patch("/recruiters/me", payload);
     return response.data as RecruiterProfile;

@@ -3,6 +3,8 @@
 interface SocialAuthButtonsProps {
   className?: string;
   googleOnly?: boolean;
+  role?: "talent" | "recruiter";
+  mode?: "signup" | "signin";
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1";
@@ -18,9 +20,28 @@ function GoogleIcon() {
   );
 }
 
-export function SocialAuthButtons({ className, googleOnly = false }: SocialAuthButtonsProps) {
+function AppleIcon() {
+  return (
+    <svg className="size-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M17.05 12.5c-.02-2.1 1.72-3.12 1.8-3.17-.98-1.43-2.5-1.63-3.04-1.65-1.29-.14-2.54.77-3.2.77-.67 0-1.68-.75-2.76-.73-1.42.02-2.73.83-3.46 2.09-1.49 2.58-.38 6.37 1.05 8.46.72 1.02 1.55 2.16 2.65 2.12 1.07-.04 1.47-.68 2.75-.68 1.28 0 1.64.68 2.76.65 1.15-.02 1.87-1.03 2.57-2.06.81-1.17 1.15-2.3 1.17-2.36-.03-.01-2.26-.87-2.28-3.44Z"
+        fill="currentColor"
+      />
+      <path d="M15.02 6.43c.57-.69.95-1.64.85-2.59-.82.03-1.81.55-2.4 1.23-.52.6-.98 1.57-.86 2.49.91.07 1.84-.46 2.41-1.13Z" fill="currentColor" />
+    </svg>
+  );
+}
+
+function googleUrl(mode: "signup" | "signin", role?: "talent" | "recruiter") {
+  if (mode === "signup" && role) {
+    return `${API_BASE_URL}/auth/google?intent=signup&role=${role}`;
+  }
+  return `${API_BASE_URL}/auth/google?intent=login`;
+}
+
+export function SocialAuthButtons({ className, googleOnly = false, role, mode = "signin" }: SocialAuthButtonsProps) {
   const handleGoogleLogin = () => {
-    window.location.href = `${API_BASE_URL}/auth/google`;
+    window.location.href = googleUrl(mode, role);
   };
 
   if (googleOnly) {
@@ -33,6 +54,19 @@ export function SocialAuthButtons({ className, googleOnly = false }: SocialAuthB
         >
           <GoogleIcon />
           Continue with Google
+        </button>
+        <button
+          type="button"
+          disabled
+          aria-disabled="true"
+          title="Coming Soon"
+          className="mt-2 flex h-14 w-full cursor-not-allowed items-center justify-center gap-3 rounded-[17px] border border-[#E2E7F0] bg-gray-50 text-[15px] font-semibold text-[#080B2B]/50"
+        >
+          <AppleIcon />
+          Continue with Apple
+          <span className="rounded-full bg-[#7C35FF]/10 px-2 py-0.5 text-[11px] font-bold text-[#7C35FF]">
+            Coming Soon
+          </span>
         </button>
       </div>
     );
@@ -57,7 +91,7 @@ export function SocialAuthButtons({ className, googleOnly = false }: SocialAuthB
           onClick={handleGoogleLogin}
           className="flex h-10 items-center justify-center gap-2 rounded-[11px] border border-border bg-card text-xs font-medium text-foreground/70 transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 active:scale-[0.98]"
         >
-          <svg className="size-4" viewBox="0 0 24 24" fill="none">
+          <svg className="size-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <path
               d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
               fill="#4285F4"
@@ -79,16 +113,16 @@ export function SocialAuthButtons({ className, googleOnly = false }: SocialAuthB
         </button>
         <button
           type="button"
-          className="flex h-10 items-center justify-center gap-2 rounded-[11px] border border-border bg-card text-xs font-medium text-foreground/70 transition-all duration-200 hover:border-primary/30 hover:bg-primary/5 active:scale-[0.98]"
+          disabled
+          aria-disabled="true"
+          title="Coming Soon"
+          className="flex h-10 cursor-not-allowed items-center justify-center gap-2 rounded-[11px] border border-border bg-muted/50 text-xs font-medium text-foreground/40"
         >
-          <svg className="size-4" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M17.05 12.5c-.02-2.1 1.72-3.12 1.8-3.17-.98-1.43-2.5-1.63-3.04-1.65-1.29-.14-2.54.77-3.2.77-.67 0-1.68-.75-2.76-.73-1.42.02-2.73.83-3.46 2.09-1.49 2.58-.38 6.37 1.05 8.46.72 1.02 1.55 2.16 2.65 2.12 1.07-.04 1.47-.68 2.75-.68 1.28 0 1.64.68 2.76.65 1.15-.02 1.87-1.03 2.57-2.06.81-1.17 1.15-2.3 1.17-2.36-.03-.01-2.26-.87-2.28-3.44Z"
-              fill="currentColor"
-            />
-            <path d="M15.02 6.43c.57-.69.95-1.64.85-2.59-.82.03-1.81.55-2.4 1.23-.52.6-.98 1.57-.86 2.49.91.07 1.84-.46 2.41-1.13Z" fill="currentColor" />
-          </svg>
+          <AppleIcon />
           Apple
+          <span className="rounded-full bg-primary/10 px-1.5 py-px text-[10px] font-bold text-primary">
+            Soon
+          </span>
         </button>
       </div>
     </div>

@@ -88,13 +88,28 @@ export const authApi = {
     return response.data;
   },
 
-  sendPhoneOtp: async () => {
-    const response = await apiClient.post("/auth/send-phone-otp");
+  sendPhoneOtp: async (phone?: string) => {
+    const response = await apiClient.post("/auth/send-phone-otp", phone ? { phone } : {});
     return response.data;
   },
 
   verifyPhoneOtp: async (phone: string, otp: string) => {
     const response = await apiClient.post("/auth/verify-phone-otp", { phone, otp });
+    return response.data;
+  },
+
+  getOnboardingStatus: async () => {
+    const response = await apiClient.get("/auth/onboarding/status");
+    return response.data as { eligible: boolean; missing: string[] };
+  },
+
+  completeOnboarding: async () => {
+    const response = await apiClient.post("/auth/onboarding/complete");
+    return response.data;
+  },
+
+  setPassword: async (new_password: string) => {
+    const response = await apiClient.post("/auth/set-password", { new_password });
     return response.data;
   },
 

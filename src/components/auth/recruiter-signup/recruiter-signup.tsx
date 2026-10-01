@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { authApi, recruiterApi } from "@/lib/api";
+import { RecruiterGoogleResume } from "./recruiter-google-resume";
 import { StepHeader, FooterFlourish } from "./brand";
 import { StepAccount, type AccountValues } from "./step-account";
 import { StepRoles } from "./step-roles";
@@ -40,6 +41,7 @@ function parseCityString(city: string): { city?: string; state?: string; country
 }
 
 export function RecruiterSignup() {
+  const [isResume, setIsResume] = useState(false);
   const [step, setStep] = useState(1);
   const [account, setAccount] = useState<AccountValues>({
     fullName: "",
@@ -60,6 +62,10 @@ export function RecruiterSignup() {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [signupError, setSignupError] = useState<string | null>(null);
+  useEffect(() => {
+    setIsResume(new URLSearchParams(window.location.search).get("resume") === "1");
+  }, []);
+  if (isResume) return <RecruiterGoogleResume />;
 
   const goTo = (next: number) => {
     setStep(next);

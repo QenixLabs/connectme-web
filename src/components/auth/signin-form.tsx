@@ -45,16 +45,24 @@ export function SignInForm() {
     resolver: zodResolver(signInSchema),
     defaultValues: { email: "", password: "" },
   });
+  const googleError = searchParams.get("google_error");
 
   useEffect(() => {
     if (isAuthenticated && user) {
+      const done = user.onboarding_completed || user.onboarding_exempted;
+      if (!done) {
+        router.push(user.role === "recruiter" ? "/auth/recruiter/signup?resume=1" : "/auth/talent/signup?resume=1");
+        return;
+      }
       const redirect = searchParams.get("redirect");
+      if (redirect && redirect.startsWith("/") && !redirect.startsWith("/auth/talent/signup") && !redirect.startsWith("/auth/recruiter/signup")) {
+        router.push(redirect);
+        return;
+      }
       const target =
-        redirect && redirect.startsWith("/")
-          ? redirect
-          : user.role === "talent" && user.username
-            ? `/talent/${user.username}`
-            : ROLE_HOME[user.role] ?? "/";
+        user.role === "talent" && user.username
+          ? `/talent/${user.username}`
+          : ROLE_HOME[user.role] ?? "/";
       router.push(target);
     }
   }, [isAuthenticated, user, router, searchParams]);
@@ -109,6 +117,23 @@ export function SignInForm() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          {googleError && (
+            <Alert variant="destructive" className="rounded-2xl border-red-200 bg-red-50 text-red-700">
+              <AlertDescription>
+                Google sign-in failed:{" "}
+                {(
+                  {
+                    GOOGLE_STATE_EXPIRED: "Your Google sign-in session expired. Please try again.",
+                    GOOGLE_EMAIL_NOT_VERIFIED: "Your Google email is not verified.",
+                    ACCOUNT_LINK_FAILED: "Could not link your Google account. Please try again.",
+                    ROLE_INVALID: "Invalid signup role requested.",
+                    SLUG_GENERATION_FAILED: "Could not set up your profile. Please try again.",
+                    GOOGLE_TOKEN_EXCHANGE_FAILED: "Google sign-in failed. Please try again.",
+                  } as Record<string, string>
+                )[googleError] ?? decodeURIComponent(googleError)}
+              </AlertDescription>
+            </Alert>
+          )}
           {error && (
             <Alert variant="destructive" className="rounded-2xl border-red-200 bg-red-50 text-red-700">
               <AlertDescription>{error}</AlertDescription>

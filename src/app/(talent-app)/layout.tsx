@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { TopBar } from "@/components/shared/top-bar";
 import { BottomBar } from "@/components/shared/bottom-bar";
 import { useTalentNavItems } from "@/hooks/use-talent-nav-items";
+import { OnboardingGuard } from "@/components/auth/onboarding-guard";
 
 export default function TalentAppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -16,11 +17,7 @@ export default function TalentAppLayout({ children }: { children: React.ReactNod
     ["Home", "Opportunities", "Analytics", "Messages", "Profile"].includes(item.label),
   );
 
-  if (pathname === "/talent/network") {
-    return <div className="min-h-screen">{children}</div>;
-  }
-
-  return (
+  const content = (
     <div className="flex min-h-screen flex-col">
       {!isSettingsPage && !isProfileVisibilityPage && <TopBar navItems={navItems} role="talent" showUserMenu />}
       <main className="flex-1 pb-10">{children}</main>
@@ -34,4 +31,14 @@ export default function TalentAppLayout({ children }: { children: React.ReactNod
       )}
     </div>
   );
+
+  if (pathname === "/talent/network") {
+    return (
+      <OnboardingGuard role="talent">
+        <div className="min-h-screen">{children}</div>
+      </OnboardingGuard>
+    );
+  }
+
+  return <OnboardingGuard role="talent">{content}</OnboardingGuard>;
 }

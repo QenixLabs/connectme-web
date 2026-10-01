@@ -2,8 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { type FormEvent, useState } from "react";
+import { useState } from "react";
 import {
   ArrowRight,
   BriefcaseBusiness,
@@ -13,9 +12,7 @@ import {
   Film,
   Globe2,
   Image as ImageIcon,
-  Menu,
   Play,
-  Search,
   Send,
   Settings,
   TrendingUp,
@@ -27,6 +24,7 @@ import {
 
 import { RootInLogo } from "@/components/RootInLogo";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const assetBase = "https://b9310b94-370c-4caa-938f-b1f5f2af54f6.lovableproject.com/__l5e/assets-v1";
 const heroImage = `${assetBase}/22cd309f-2dd8-4abb-a810-3cb94df1ff22/rootin-hero.png`;
@@ -133,21 +131,7 @@ function LandingActionLink({
   );
 }
 
-function LandingHeader({ onWatchVideo }: { onWatchVideo: () => void }) {
-  const router = useRouter();
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [query, setQuery] = useState("");
-
-  const submitSearch = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const search = query.trim();
-    setSearchOpen(false);
-    router.push(
-      search ? `/recruiter/find-talent/results?q=${encodeURIComponent(search)}` : "/recruiter/find-talent",
-    );
-  };
-
+function LandingHeader() {
   return (
     <header className="landing-header">
       <Link className="brand" href="#top" aria-label="Rootin home">
@@ -155,73 +139,13 @@ function LandingHeader({ onWatchVideo }: { onWatchVideo: () => void }) {
       </Link>
 
       <div className="nav-actions">
-        <button
-          className="rootin-button rootin-button-icon"
-          type="button"
-          aria-label={searchOpen ? "Close search" : "Search talent and opportunities"}
-          aria-expanded={searchOpen}
-          onClick={() => setSearchOpen((open) => !open)}
-        >
-          {searchOpen ? <X size={25} /> : <Search size={25} />}
-        </button>
         <Button asChild variant="rootinOutline">
           <Link href="/auth/login">Sign In</Link>
         </Button>
         <Button asChild variant="rootin">
           <Link href="/auth">Sign Up</Link>
         </Button>
-        <button
-          className="rootin-button rootin-button-icon"
-          type="button"
-          aria-label={menuOpen ? "Close menu" : "Open menu"}
-          aria-expanded={menuOpen}
-          onClick={() => setMenuOpen((open) => !open)}
-        >
-          {menuOpen ? <X size={26} /> : <Menu size={26} />}
-        </button>
       </div>
-
-      {searchOpen && (
-        <form className="header-search" onSubmit={submitSearch} role="search">
-          <Search size={18} aria-hidden="true" />
-          <input
-            autoFocus
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search talent, jobs and services"
-            aria-label="Search talent, jobs and services"
-          />
-          <button className="search-submit" type="submit" aria-label="Submit search">
-            <ArrowRight size={18} />
-          </button>
-        </form>
-      )}
-
-      {menuOpen && (
-        <nav className="header-menu" aria-label="Main menu">
-          <a href="#opportunities" onClick={() => setMenuOpen(false)}>
-            Opportunities
-          </a>
-          <a href="#talent" onClick={() => setMenuOpen(false)}>
-            Talent
-          </a>
-          <a href="#recruiters" onClick={() => setMenuOpen(false)}>
-            Recruiters
-          </a>
-          <a href="#services" onClick={() => setMenuOpen(false)}>
-            Services
-          </a>
-          <button
-            type="button"
-            onClick={() => {
-              setMenuOpen(false);
-              onWatchVideo();
-            }}
-          >
-            Watch video
-          </button>
-        </nav>
-      )}
     </header>
   );
 }
@@ -355,6 +279,48 @@ function FeatureStrip() {
 function AudienceCard({ card }: { card: AudienceCardData }) {
   const Icon = card.icon;
   const actionTone = card.tone === "purple" ? "primary" : card.tone;
+
+  if (card.id === "services") {
+    return (
+      <article className={`audience-card ${card.tone}`} id={card.id}>
+        <div className="audience-card-image">
+          <Image
+            src={card.image}
+            alt={`${card.title} on RootIn`}
+            fill
+            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+            className="audience-card-art"
+            style={{ objectPosition: card.imagePosition }}
+          />
+          <span className="audience-card-icon">
+            <Icon size={24} fill="currentColor" aria-hidden="true" />
+          </span>
+        </div>
+        <div className="audience-card-content">
+          <div className="audience-card-copy">
+            <span className="audience-card-eyebrow">For</span>
+            <h2>{card.title}</h2>
+            <p>{card.description}</p>
+            <ul>
+              {card.points.map((point) => (
+                <li key={point}>
+                  <Check size={13} strokeWidth={3} aria-hidden="true" />
+                  <span>{point}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <button
+            type="button"
+            onClick={() => toast.info("Service provider onboarding is coming soon")}
+            className={`rootin-button rootin-button-${actionTone} audience-card-cta w-full`}
+          >
+            {card.action} <ArrowRight size={18} />
+          </button>
+        </div>
+      </article>
+    );
+  }
 
   return (
     <article className={`audience-card ${card.tone}`} id={card.id}>
@@ -507,7 +473,7 @@ export function RootinLandingPage() {
   return (
     <main className="rootin-page">
       <div className="landing-container">
-        <LandingHeader onWatchVideo={() => setVideoOpen(true)} />
+        <LandingHeader />
         <HeroSection onWatchVideo={() => setVideoOpen(true)} />
         <FeatureStrip />
         <AudienceCards />
