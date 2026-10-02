@@ -129,11 +129,11 @@ const requestTabs: Array<{ id: RequestTab; label: string }> = [
 ];
 
 const recruiterCategoryOptions = [
-  { label: "All", value: undefined, icon: Waypoints },
-  { label: "Casting Directors", value: "Casting Director", icon: Clapperboard },
-  { label: "Agencies", value: "Agency", icon: UsersRound },
-  { label: "Production Houses", value: "Production", icon: BriefcaseBusiness },
-  { label: "Brands", value: "Brand", icon: Sparkles },
+  { label: "All", value: undefined },
+  { label: "Casting Directors", value: "Casting Director" },
+  { label: "Agencies", value: "Agency" },
+  { label: "Production", value: "Production" },
+  { label: "Brands", value: "Brand" },
 ] as const;
 
 const networkNavigation: Array<{ label: string; href: string; icon: LucideIcon; active?: boolean; badge?: number }> = [
@@ -179,12 +179,10 @@ function SectionHeading({
 function CategoryTile({
   label,
   image,
-  compact = false,
   onClick,
 }: {
   label: string;
   image: string;
-  compact?: boolean;
   onClick: () => void;
 }) {
   return (
@@ -192,15 +190,12 @@ function CategoryTile({
       type="button"
       variant="ghost"
       onClick={onClick}
-      className={cn(
-        "h-auto min-w-0 flex-col gap-0 overflow-hidden rounded-xl border border-[#dbe7f7] bg-white p-0 text-[#193454] shadow-[0_3px_10px_rgba(37,99,235,0.06)] transition duration-200 hover:-translate-y-0.5 hover:border-[#93b9f2] hover:bg-white hover:shadow-[0_8px_18px_rgba(37,99,235,0.14)]",
-        compact ? "rounded-lg" : "rounded-xl",
-      )}
+      className="h-[112px] w-[84px] min-w-0 flex-col gap-3 overflow-hidden rounded-2xl border-0 bg-white p-2 text-[#193454] shadow-[0_3px_12px_rgba(15,23,42,0.05)] transition duration-200 hover:bg-white hover:shadow-[0_6px_16px_rgba(15,23,42,0.08)] sm:w-full"
     >
-      <span className={cn("relative block w-full", compact ? "aspect-[1.65]" : "aspect-[1.42]")}>
-        <Image src={image} alt="" fill sizes="(max-width: 640px) 14vw, 130px" className="object-cover" />
+      <span className="relative block size-[60px] shrink-0 overflow-hidden rounded-xl bg-[#edf4ff]">
+        <Image src={image} alt="" fill sizes="60px" className="object-cover" />
       </span>
-      <span className={cn("w-full truncate px-1 py-1.5 text-center font-semibold", compact ? "text-[9px]" : "text-[10px]")}>{label}</span>
+      <span className="line-clamp-2 min-h-7 w-full overflow-hidden px-0.5 text-center text-[10px] font-semibold leading-3">{label}</span>
     </Button>
   );
 }
@@ -335,8 +330,8 @@ function CollaboratorCard({
     .toUpperCase();
 
   return (
-    <Card className="group gap-0 overflow-hidden rounded-[20px] border-[#dbe7f7] bg-white py-0 shadow-[0_8px_26px_rgba(37,99,235,0.08)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_14px_34px_rgba(37,99,235,0.14)]">
-      <div className="relative aspect-[16/7] overflow-hidden bg-[#edf4ff]">
+    <Card className="group h-full gap-0 overflow-hidden rounded-2xl border-0 bg-white py-0 shadow-[0_4px_16px_rgba(15,23,42,0.06)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_22px_rgba(15,23,42,0.1)]">
+      <div className="relative aspect-[2.25] overflow-hidden bg-[#edf4ff]">
         {collaborator.hero_background || collaborator.profile_photo ? (
           <Image
             src={collaborator.hero_background || collaborator.profile_photo || ""}
@@ -356,19 +351,19 @@ function CollaboratorCard({
           onClick={save.toggleSave}
           disabled={save.isPending}
           aria-label={save.isSaved ? `Remove ${name} from saved` : `Save ${name}`}
-          className="absolute right-3 top-3 rounded-full bg-white/95 text-[#1a5bdb] shadow-[0_4px_12px_rgba(15,65,150,0.14)] hover:bg-white hover:text-[#1a5bdb]"
+          className="absolute right-3 top-3 size-11 rounded-xl bg-white/95 text-[#1a5bdb] shadow-[0_4px_12px_rgba(15,65,150,0.14)] hover:bg-white hover:text-[#1a5bdb]"
         >
           <Heart className={cn("size-4", save.isSaved && "fill-[#f03368] text-[#f03368]")} />
         </Button>
         {collaborator.match_score != null ? (
-          <Badge className="absolute bottom-2 right-2 gap-1 rounded-full border-0 bg-[#c7f7dd] px-2 py-1 text-[10px] font-bold text-[#0b8a52] shadow-sm">
+          <span className="absolute bottom-3 right-3 flex items-center gap-1 text-[10px] font-bold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.55)]">
             <Check className="size-3" strokeWidth={3} /> {Math.round(collaborator.match_score)}% match
-          </Badge>
+          </span>
         ) : null}
       </div>
 
-      <CardContent className="relative space-y-3 p-4 pt-9 sm:p-5 sm:pt-9">
-        <div className="absolute -top-8 left-4 grid size-16 place-items-center overflow-hidden rounded-full border-4 border-white bg-[#edf4ff] text-lg font-bold text-[#1a5bdb] shadow-[0_4px_14px_rgba(15,65,150,0.16)] sm:left-5">
+      <CardContent className="relative flex flex-1 flex-col space-y-3 p-4 pt-9 sm:p-5 sm:pt-9">
+        <div className="absolute -top-8 left-4 grid size-16 place-items-center overflow-hidden rounded-full bg-[#edf4ff] text-lg font-bold text-[#1a5bdb] shadow-[0_4px_14px_rgba(15,65,150,0.16)] ring-4 ring-white sm:left-5">
           {collaborator.profile_photo ? <Image src={collaborator.profile_photo} alt={name} fill sizes="64px" className="object-cover" /> : initials}
         </div>
 
@@ -383,11 +378,9 @@ function CollaboratorCard({
           </p>
         </div>
 
-        <div className="flex min-h-5 gap-1.5 overflow-hidden">
-          {tags.map((tag) => (
-            <Badge key={tag} variant="secondary" className="shrink-0 rounded-full bg-[#eaf2ff] px-2.5 py-1 text-[10px] font-medium text-[#1d4ed8]">
-              {tag}
-            </Badge>
+        <div className="flex min-h-5 gap-2 overflow-hidden whitespace-nowrap text-[10px] font-medium text-[#52677f]">
+          {tags.map((tag, index) => (
+            <span key={tag} className="shrink-0">{index > 0 ? "· " : ""}{tag}</span>
           ))}
         </div>
 
@@ -441,16 +434,16 @@ function RecruiterCard({ recruiter }: { recruiter: PublicRecruiterDirectoryItem 
   const visibleProjects = recruiter.projects.filter((project) => project.cover_image_url).slice(0, 4);
 
   return (
-    <Card className="group gap-0 overflow-hidden rounded-[20px] border-[#dbe7f7] bg-white py-0 shadow-[0_8px_26px_rgba(37,99,235,0.08)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_14px_34px_rgba(37,99,235,0.14)]">
+    <Card className="group h-full gap-0 overflow-hidden rounded-2xl border-0 bg-white py-0 shadow-[0_4px_16px_rgba(15,23,42,0.06)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_22px_rgba(15,23,42,0.1)]">
       <div className="relative aspect-[16/7] overflow-hidden bg-[#edf4ff]">
         {recruiter.banner_image_url ? <Image src={recruiter.banner_image_url} alt={`${recruiter.company_name} banner`} fill sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 580px" className="object-cover transition duration-500 group-hover:scale-105" /> : <div className="size-full bg-gradient-to-br from-[#eaf2ff] via-[#c5dcfa] to-[#b0cef5]" />}
-        <Button type="button" variant="ghost" size="icon-sm" onClick={save.toggleSave} disabled={save.isPending} aria-label={save.isSaved ? `Remove ${recruiter.company_name} from saved` : `Save ${recruiter.company_name}`} className="absolute right-3 top-3 rounded-full bg-white/95 text-[#1a5bdb] shadow-[0_4px_12px_rgba(15,65,150,0.14)] hover:bg-white hover:text-[#1a5bdb]">
+        <Button type="button" variant="ghost" size="icon-sm" onClick={save.toggleSave} disabled={save.isPending} aria-label={save.isSaved ? `Remove ${recruiter.company_name} from saved` : `Save ${recruiter.company_name}`} className="absolute right-3 top-3 size-11 rounded-xl bg-white/95 text-[#1a5bdb] shadow-[0_4px_12px_rgba(15,65,150,0.14)] hover:bg-white hover:text-[#1a5bdb]">
           <Heart className={cn("size-4", save.isSaved && "fill-[#f03368] text-[#f03368]")} />
         </Button>
       </div>
 
-      <CardContent className="relative space-y-3 p-4 pt-9 sm:p-5 sm:pt-9">
-        <div className="absolute -top-8 left-4 grid size-16 place-items-center overflow-hidden rounded-full border-4 border-white bg-[#edf4ff] text-lg font-bold text-[#1a5bdb] shadow-[0_4px_14px_rgba(15,65,150,0.16)] sm:left-5">
+      <CardContent className="relative flex flex-1 flex-col space-y-3 p-4 pt-9 sm:p-5 sm:pt-9">
+        <div className="absolute -top-8 left-4 grid size-16 place-items-center overflow-hidden rounded-full bg-[#edf4ff] text-lg font-bold text-[#1a5bdb] shadow-[0_4px_14px_rgba(15,65,150,0.16)] ring-4 ring-white sm:left-5">
           {recruiter.profile_photo ? <Image src={recruiter.profile_photo} alt={recruiter.company_name} fill sizes="64px" className="object-cover" /> : recruiter.company_name.slice(0, 2).toUpperCase()}
         </div>
         <div className="flex items-start justify-between gap-3">
@@ -469,8 +462,8 @@ function RecruiterCard({ recruiter }: { recruiter: PublicRecruiterDirectoryItem 
         {visibleProjects.length > 0 ? <div className="flex gap-2 overflow-hidden">{visibleProjects.map((project) => <div key={project._id} className="relative aspect-[1.35] min-w-0 flex-1 overflow-hidden rounded-lg bg-[#edf4ff]"><Image src={project.cover_image_url || ""} alt={project.name || "Project"} fill sizes="120px" className="object-cover" /></div>)}</div> : null}
 
         <div className="flex items-center justify-between gap-2">
-          {recruiter.project_count > 0 ? <span className="rounded-xl bg-[#eaf2ff] px-3 py-2 text-center text-[#1a5bdb]"><strong className="block text-sm">{recruiter.project_count}+</strong><span className="text-[10px]">Projects</span></span> : <span />}
-          <div className="flex min-w-0 flex-1 flex-wrap justify-end gap-1.5">{tags.map((tag) => <Badge key={tag} variant="secondary" className="max-w-[46%] truncate rounded-full bg-[#eaf2ff] px-2.5 py-1 text-[10px] font-medium text-[#1d4ed8]">{tag}</Badge>)}</div>
+          {recruiter.project_count > 0 ? <span className="text-center text-[#1a5bdb]"><strong className="block text-sm">{recruiter.project_count}+</strong><span className="text-[10px]">Projects</span></span> : <span />}
+          <div className="flex min-w-0 flex-1 flex-wrap justify-end gap-x-2 text-[10px] font-medium text-[#52677f]">{tags.map((tag, index) => <span key={tag} className="max-w-[46%] truncate">{index > 0 ? "· " : ""}{tag}</span>)}</div>
         </div>
 
         <div className="grid grid-cols-2 gap-2 pt-1">
@@ -902,7 +895,6 @@ export function TalentNetworkPage() {
     },
   );
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeFilter, setActiveFilter] = useState("Find Collaborators");
   const [requestTab, setRequestTab] = useState<RequestTab>("incoming");
   const [searchParams, setSearchParams] = useState<SearchTalentsParams>({ sort: "newest", limit: 8 });
   const [directoryParams, setDirectoryParams] = useState<PublicRecruiterDirectoryParams>({ sort: "relevance", limit: 12 });
@@ -964,17 +956,7 @@ export function TalentNetworkPage() {
   const resultCount = recruiterQuery.data?.pages[0]?.total ?? 0;
   const collaboratorCount = collaboratorQuery.data?.pages[0]?.total ?? 0;
 
-  const filters = [
-    { label: "Find Collaborators", icon: UsersRound },
-    { label: "Join a Project", icon: Clapperboard },
-    { label: "Create a Project", icon: Plus },
-    { label: "Creative Partners", icon: UsersRound },
-    { label: "Nearby Talent", icon: MapPin },
-    { label: "Recommended for You", icon: Star },
-  ];
-
   const handleFilter = (label: string) => {
-    setActiveFilter(label);
     const profession = label.endsWith("s") ? label.slice(0, -1).toLowerCase() : label.toLowerCase();
     if (["Actors", "Models", "Dancers", "Singers", "Musicians", "Creators", "Photographers", "Filmmakers", "Directors", "Writers", "Editors", "Makeup Artists", "Stylists", "Voice Artists"].includes(label)) {
       setSearchParams((current) => ({ ...current, profession, sort: "newest", page: undefined, cursor: undefined }));
@@ -1040,8 +1022,8 @@ export function TalentNetworkPage() {
   };
 
   return (
-    <div className="network-page-theme min-h-screen bg-background pb-20 text-foreground md:pb-8">
-      <header className="border-b border-[#dbe7f7] bg-white/95 backdrop-blur-xl">
+    <div className="network-page-theme min-h-screen bg-[#f7f9fc] pb-20 text-foreground md:pb-8">
+      <header className="bg-white backdrop-blur-xl">
         <div className="mx-auto flex h-[62px] max-w-[1440px] items-center justify-between gap-4 px-4 sm:h-[78px] sm:px-6 lg:px-10">
           <Link href="/talent/network" className="flex min-w-0 items-center gap-2.5" aria-label="Rootin talent network">
             <Image src={logoImage} alt="RootIn" height={36} className="h-8 w-auto sm:h-10" priority />
@@ -1078,91 +1060,77 @@ export function TalentNetworkPage() {
       </header>
 
       <main>
-        <section className="relative overflow-hidden border-b border-[#dbe7f7] bg-[#eff6ff]">
-          <Image src="/images/collaboration-banner.png" alt="Creative collaborators working together" fill priority sizes="100vw" className="object-cover object-right opacity-70" />
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(247,250,255,0.99)_0%,rgba(247,250,255,0.94)_48%,rgba(247,250,255,0.56)_100%)]" />
-          <div className="relative mx-auto max-w-[1440px] px-4 pb-5 pt-6 sm:px-6 sm:pb-7 sm:pt-12 lg:px-10">
+        <section className="relative overflow-hidden bg-[#f7f9fc]">
+          <Image src="/images/collaboration-banner.png" alt="Creative collaborators working together" fill priority sizes="100vw" className="hidden object-cover object-right opacity-70 sm:block" />
+          <div className="absolute inset-0 hidden bg-[linear-gradient(90deg,rgba(247,250,255,0.99)_0%,rgba(247,250,255,0.94)_48%,rgba(247,250,255,0.56)_100%)] sm:block" />
+          <div className="relative mx-auto max-w-[1440px] px-4 pb-1 pt-5 sm:px-6 sm:pb-7 sm:pt-12 lg:px-10">
             <div className="max-w-[700px]">
-              <h1 className="font-display text-[28px] font-bold leading-[1.05] tracking-[-0.055em] text-[#102d55] sm:text-5xl lg:text-[56px]">Find your creative collaborators</h1>
+              <h1 className="font-display text-[24px] font-bold leading-[1.08] tracking-[-0.05em] text-[#102d55] sm:text-5xl lg:text-[56px]">Find your creative collaborators</h1>
               <p className="mt-2 max-w-[560px] text-[13px] leading-relaxed text-[#64748b] sm:text-lg">Connect with verified talents, start conversations and build work together.</p>
             </div>
 
-            <div className="mt-6 flex max-w-[1080px] items-center gap-2 rounded-[16px] border border-[#a9c7f5] bg-white/95 p-2 shadow-[0_8px_24px_rgba(37,99,235,0.12)] backdrop-blur sm:mt-8 sm:rounded-[18px] sm:p-2.5">
-              <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-[#eaf2ff] text-[#1a5bdb] sm:size-12">
-                <Sparkles className="size-5" />
-              </span>
-              <div className="min-w-0 flex-1 px-1">
-                 <label htmlFor="network-search" className="block text-[13px] font-bold text-[#1e3a5f] sm:text-base">What are you looking to create?</label>
-                 <Input
-                   id="network-search"
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  onKeyDown={(event) => { if (event.key === "Enter") handleSearch(); }}
-                   placeholder="Search actors, dancers, photographers, collaborators…"
-                   className="h-6 border-0 bg-transparent p-0 text-[11px] text-[#52677f] shadow-none placeholder:text-[#71809a] focus-visible:ring-0 sm:text-sm"
-                />
-              </div>
-              <Button type="button" size="icon-lg" onClick={handleSearch} aria-label="Search network" className="rounded-xl bg-[#1a5bdb] text-white shadow-[0_6px_15px_rgba(26,91,219,0.3)] hover:bg-[#1246b7]">
-                <Search className="size-5" />
-              </Button>
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setFiltersOpen(true)}
-              className="mt-2 h-10 w-full justify-between rounded-xl border-[#dbe7f7] bg-white/90 px-3 text-xs font-medium text-[#52677f] hover:bg-white sm:hidden"
-            >
-              <span className="flex items-center gap-2"><MapPin className="size-4 text-[#2563eb]" /> {directoryParams.location_city || "All locations"}</span>
-              <ChevronRight className="size-4 rotate-90 text-[#7890ad]" />
-            </Button>
+            <Card className="mt-5 max-w-[1080px] gap-0 rounded-2xl border-0 bg-white py-0 shadow-[0_4px_16px_rgba(15,23,42,0.06)] sm:mt-8">
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex items-center gap-3">
+                  <div className="min-w-0 flex-1">
+                    <label htmlFor="network-search" className="block text-[12px] font-bold text-[#1e3a5f] sm:text-base">Search collaborators</label>
+                    <Input
+                      id="network-search"
+                      value={searchQuery}
+                      onChange={(event) => setSearchQuery(event.target.value)}
+                      onKeyDown={(event) => { if (event.key === "Enter") handleSearch(); }}
+                      placeholder="Actors, dancers, photographers…"
+                      className="h-6 border-0 bg-transparent p-0 text-[11px] text-[#52677f] shadow-none placeholder:text-[#71809a] focus-visible:ring-0 sm:text-sm"
+                    />
+                  </div>
+                  <Button type="button" size="icon-lg" onClick={handleSearch} aria-label="Search network" className="size-11 rounded-xl bg-[#1a5bdb] text-white shadow-[0_5px_12px_rgba(26,91,219,0.22)] hover:bg-[#1246b7]">
+                    <Search className="size-5" />
+                  </Button>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setFiltersOpen(true)}
+                  className="mt-3 h-11 w-full justify-start gap-2 rounded-xl px-1 text-xs font-medium text-[#52677f] hover:bg-[#f7f9fc] hover:text-[#1e3a5f]"
+                >
+                  <MapPin className="size-4 text-[#2563eb]" />
+                  <span className="truncate">{directoryParams.location_city || "All locations"}</span>
+                  <ChevronRight className="ml-auto size-4 rotate-90 text-[#7890ad]" />
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         </section>
 
         <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-10">
-          <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto py-4 sm:flex-wrap sm:overflow-visible sm:py-5">
+          <div className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pt-5 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pt-6">
             <Button
               type="button"
               variant="outline"
               onClick={() => setFiltersOpen(true)}
-              className="relative h-9 shrink-0 gap-1.5 rounded-full border-[#93b9f2] bg-white px-4 text-[11px] font-bold text-[#1a5bdb] shadow-[0_3px_10px_rgba(37,99,235,0.06)] hover:bg-[#eff6ff] hover:text-[#1a5bdb]"
+              className="h-11 shrink-0 gap-1.5 rounded-xl border-[#d6e0ec] bg-white px-4 text-[12px] font-semibold text-[#35516f] hover:border-[#93b9f2] hover:bg-[#f7f9fc] hover:text-[#1a5bdb]"
             >
-              <SlidersHorizontal className="size-3.5" /> Filters
-              {recruiterFilterCount > 0 ? <span className="grid size-5 place-items-center rounded-full bg-[#1a5bdb] text-[10px] text-white">{recruiterFilterCount}</span> : null}
+              <SlidersHorizontal className="size-4" /> Filters{recruiterFilterCount > 0 ? ` (${recruiterFilterCount})` : ""}
             </Button>
-            {filters.map((filter) => {
-              const Icon = filter.icon;
-              const active = activeFilter === filter.label;
-              return (
-                <Button
-                  key={filter.label}
-                  type="button"
-                  variant={active ? "default" : "secondary"}
-                  onClick={() => handleFilter(filter.label)}
-                  aria-pressed={active}
-                  className={cn(
-                    "h-9 shrink-0 rounded-full border border-[#dbe7f7] bg-[#edf4ff] px-4 text-[11px] font-semibold text-[#294b70] hover:border-[#93b9f2] hover:bg-[#dbeafe] hover:text-[#1a5bdb]",
-                    active && "border-[#60a5fa] bg-gradient-to-r from-[#2563eb] to-[#1a5bdb] text-white shadow-[0_6px_14px_rgba(37,99,235,0.24)] hover:border-[#60a5fa] hover:bg-[#1a5bdb] hover:text-white",
-                  )}
-                >
-                  <Icon className="size-4" /> {filter.label}
-                </Button>
-              );
-            })}
+            <Button type="button" onClick={() => handleFilter("Find Collaborators")} className="h-11 shrink-0 gap-1.5 rounded-xl bg-[#1a5bdb] px-4 text-[12px] font-bold text-white shadow-[0_5px_12px_rgba(26,91,219,0.2)] hover:bg-[#1246b7]">
+              <UsersRound className="size-4" /> Find Collaborators
+            </Button>
+            <Button type="button" variant="outline" onClick={() => handleFilter("Join a Project")} className="h-11 shrink-0 gap-1.5 rounded-xl border-[#d6e0ec] bg-white px-4 text-[12px] font-semibold text-[#35516f] hover:border-[#93b9f2] hover:bg-[#f7f9fc] hover:text-[#1a5bdb]">
+              <Clapperboard className="size-4" /> Join a Project
+            </Button>
           </div>
 
-          <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto pb-3 sm:flex-wrap sm:overflow-visible">
+          <div className="no-scrollbar -mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
             {recruiterCategoryOptions.map((category) => {
-              const Icon = category.icon;
               const active = category.value === directoryParams.category && !directoryParams.verified_only;
-              return <Button key={category.label} type="button" variant={active ? "default" : "secondary"} onClick={() => handleDirectoryCategory(category.value)} className={cn("h-9 shrink-0 gap-1.5 rounded-full border border-[#dbe7f7] bg-white px-4 text-[11px] font-semibold text-[#35516f] shadow-[0_3px_10px_rgba(37,99,235,0.05)] hover:border-[#93b9f2] hover:bg-[#eaf2ff] hover:text-[#1a5bdb]", active && "border-[#60a5fa] bg-gradient-to-r from-[#2563eb] to-[#1a5bdb] text-white shadow-[0_6px_14px_rgba(37,99,235,0.24)] hover:bg-[#1a5bdb] hover:text-white")}><Icon className="size-3.5" /> {category.label}</Button>;
+              return <Button key={category.label} type="button" variant="outline" onClick={() => handleDirectoryCategory(category.value)} aria-pressed={active} className={cn("h-9 shrink-0 rounded-full border-[#d6e0ec] bg-white px-3 text-[11px] font-semibold text-[#52677f] hover:border-[#93b9f2] hover:bg-[#f7f9fc] hover:text-[#1a5bdb]", active && "border-[#1a5bdb] bg-[#eef4ff] text-[#1a5bdb] hover:border-[#1a5bdb] hover:bg-[#eef4ff]")}>{category.label}</Button>;
             })}
-            <Button type="button" variant={directoryParams.verified_only ? "default" : "secondary"} onClick={() => setDirectoryParams((current) => ({ ...current, verified_only: !current.verified_only, category: undefined, page: undefined }))} className={cn("h-9 shrink-0 gap-1.5 rounded-full border border-[#dbe7f7] bg-white px-4 text-[11px] font-semibold text-[#35516f] shadow-[0_3px_10px_rgba(37,99,235,0.05)] hover:border-[#93b9f2] hover:bg-[#eaf2ff] hover:text-[#1a5bdb]", directoryParams.verified_only && "border-[#60a5fa] bg-gradient-to-r from-[#2563eb] to-[#1a5bdb] text-white hover:bg-[#1a5bdb] hover:text-white")}><ShieldCheck className="size-3.5" /> Verified Only</Button>
           </div>
 
-          <section className="pt-1 sm:pt-2">
+          <section className="pt-6 sm:pt-7">
             <SectionHeading title="Collaboration Categories" />
-            <div className="no-scrollbar -mx-1 mt-3 flex snap-x gap-2 overflow-x-auto px-1 pb-2 sm:grid sm:grid-cols-7 sm:gap-3 sm:overflow-visible lg:grid-cols-8">
-              {categories.map((category) => <div key={category.label} className="w-[108px] shrink-0 snap-start sm:w-auto"><CategoryTile {...category} compact onClick={() => handleFilter(category.label)} /></div>)}
+            <div className="no-scrollbar -mx-4 mt-3 flex snap-x gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-7 sm:gap-3 sm:overflow-visible sm:px-0 lg:grid-cols-8">
+              {categories.map((category) => <div key={category.label} className="w-[84px] shrink-0 snap-start sm:w-auto"><CategoryTile {...category} onClick={() => handleFilter(category.label)} /></div>)}
             </div>
           </section>
 
@@ -1224,7 +1192,7 @@ export function TalentNetworkPage() {
             </DrawerContent>
           </Drawer>
 
-          <section id="collaborators" className="scroll-mt-5 pt-7 sm:pt-9">
+          <section id="collaborators" className="scroll-mt-5 pt-6 sm:pt-8">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
               <p className="text-sm font-semibold text-[#35516f]">
                 <span className="text-[#172b4d]">{collaboratorCount.toLocaleString()}</span> talents open to collaborate
@@ -1243,7 +1211,7 @@ export function TalentNetworkPage() {
               icon={<Badge className="gap-1 rounded-full border-0 bg-[#eaf2ff] px-2 py-1 text-[10px] font-bold text-[#1d4ed8]"><Sparkles className="size-3" /> Live Results</Badge>}
               onAction={() => { if (collaboratorQuery.hasNextPage && !collaboratorQuery.isFetchingNextPage) void collaboratorQuery.fetchNextPage(); }}
             />
-            <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-4">
               {collaboratorQuery.isLoading ? Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} className="h-[390px] rounded-[20px]" />) : collaborators.map((collaborator) => (
                 <CollaboratorCard
                   key={collaborator._id}
@@ -1260,7 +1228,7 @@ export function TalentNetworkPage() {
             {!collaboratorQuery.isLoading && !collaboratorQuery.isError && collaborators.length === 0 ? <p className="mt-4 text-sm text-[#64748b]">No collaborators match your search.</p> : null}
           </section>
 
-          <section id="collab-posts" className="scroll-mt-5 pt-7 sm:pt-9">
+          <section id="collab-posts" className="scroll-mt-5 pt-6 sm:pt-8">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
               <p className="text-sm font-semibold text-[#35516f]">
                 <span className="text-[#172b4d]">{collabPostTotal.toLocaleString()}</span> open collabs from talents
@@ -1285,7 +1253,7 @@ export function TalentNetworkPage() {
               </div>
             ) : null}
             {feedQuery.isPending ? (
-              <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">{Array.from({ length: 3 }).map((_, index) => <Skeleton key={index} className="h-[240px] rounded-[17px]" />)}</div>
+              <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3">{Array.from({ length: 3 }).map((_, index) => <Skeleton key={index} className="h-[240px] rounded-[17px]" />)}</div>
             ) : feedQuery.isError ? (
               <div className="mt-3 rounded-[17px] border border-[#dbe7f7] bg-white px-5 py-8 text-center shadow-[0_5px_16px_rgba(37,99,235,0.06)]"><p className="font-semibold text-[#294b70]">We couldn&apos;t load collab posts right now.</p><Button type="button" variant="outline" onClick={() => feedQuery.refetch()} className="mt-3 rounded-xl border-[#3b82f6] text-[#1d4ed8]">Try again</Button></div>
             ) : collabPosts.length === 0 ? (
@@ -1295,14 +1263,14 @@ export function TalentNetworkPage() {
                 <Button type="button" onClick={() => setComposerOpen(true)} className="mt-4 h-10 rounded-xl bg-[#1a5bdb] px-6 text-white hover:bg-[#1246b7]">Post a collab</Button>
               </div>
             ) : (
-              <div className={cn("mt-3 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3", feedQuery.isFetching && "opacity-60")}>
+              <div className={cn("mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3", feedQuery.isFetching && "opacity-60")}>
                 {collabPosts.map((post) => <CollabPostCard key={post._id} post={post} onInterest={() => setInterestPost(post)} />)}
               </div>
             )}
             {feedQuery.isFetchingNextPage ? <p className="mt-4 text-center text-sm text-[#71809a]">Loading more collabs...</p> : null}
           </section>
 
-          <section id="recruiters" className="scroll-mt-5 pt-7 sm:pt-9">
+          <section id="recruiters" className="scroll-mt-5 pt-6 sm:pt-8">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
               <p className="text-sm font-semibold text-[#35516f]"><span className="text-[#172b4d]">{resultCount.toLocaleString()}</span> {directoryParams.verified_only ? "verified organizations" : "organizations found"}</p>
               <Button
@@ -1320,13 +1288,13 @@ export function TalentNetworkPage() {
               onAction={() => { if (recruiterQuery.hasNextPage && !recruiterQuery.isFetchingNextPage) void recruiterQuery.fetchNextPage(); }}
             />
             {recruiterQuery.isPending ? (
-              <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">{Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} className="h-[420px] rounded-[20px]" />)}</div>
+              <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-4">{Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} className="h-[420px] rounded-[20px]" />)}</div>
             ) : recruiterQuery.isError ? (
               <div className="mt-3 rounded-[20px] border border-[#dbe7f7] bg-white px-5 py-10 text-center shadow-[0_8px_26px_rgba(37,99,235,0.06)]"><p className="font-semibold text-[#294b70]">We couldn&apos;t load recruiters right now.</p><p className="mt-1 text-sm text-[#71809a]">Please try again in a moment.</p><Button type="button" variant="outline" onClick={() => recruiterQuery.refetch()} className="mt-4 rounded-xl border-[#3b82f6] text-[#1d4ed8]">Try again</Button></div>
             ) : recruiters.length === 0 ? (
               <div className="mt-3 rounded-[20px] border border-[#dbe7f7] bg-white px-5 py-10 text-center shadow-[0_8px_26px_rgba(37,99,235,0.06)]"><p className="font-semibold text-[#294b70]">No recruiters or agencies match your filters.</p><p className="mt-1 text-sm text-[#71809a]">Clear a filter or change your search to see more real profiles.</p><Button type="button" variant="outline" onClick={clearFilters} className="mt-4 rounded-xl border-[#3b82f6] text-[#1d4ed8]">Clear filters</Button></div>
             ) : (
-              <div className={cn("mt-3 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4", recruiterQuery.isFetching && "opacity-60")}>{recruiters.map((recruiter) => <RecruiterCard key={recruiter.slug} recruiter={recruiter} />)}</div>
+              <div className={cn("mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-4", recruiterQuery.isFetching && "opacity-60")}>{recruiters.map((recruiter) => <RecruiterCard key={recruiter.slug} recruiter={recruiter} />)}</div>
             )}
             {recruiterQuery.isFetchingNextPage ? <p className="mt-4 text-center text-sm text-[#71809a]">Loading more organizations...</p> : null}
           </section>
@@ -1346,7 +1314,7 @@ export function TalentNetworkPage() {
             </Button>
           </section>
 
-          <section className="pt-7 sm:pt-9">
+          <section className="pt-6 sm:pt-8">
             <SectionHeading title="Collaboration Requests" onAction={() => router.push("/talent/requests")} />
             <div className="mt-3 flex w-fit rounded-full bg-[#edf4ff] p-0.5">
               {requestTabs.map((tab) => (

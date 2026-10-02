@@ -4764,3 +4764,84 @@ html[data-theme="dark"] .reputation-page-theme svg [stroke="#EEEAF9"] {
 html[data-theme="dark"] .reputation-page-theme svg [stroke="#F1EAFF"] {
   stroke: color-mix(in oklab, var(--primary) 22%, var(--card)) !important;
 }
+
+html[data-theme="dark"] .talent-settings-theme {
+  background-color: var(--background) !important;
+  color: var(--foreground);
+}
+
+html[data-theme="dark"] .talent-settings-theme [class~="bg-white"],
+html[data-theme="dark"] .talent-settings-theme [class*="bg-white/90"],
+html[data-theme="dark"] .talent-settings-theme [class*="bg-white/75"] {
+  background-color: var(--card) !important;
+}
+
+html[data-theme="dark"] .talent-settings-theme [class*="bg-[#e3caff]"],
+html[data-theme="dark"] .talent-settings-theme [class*="bg-[#d9e8ff]"],
+html[data-theme="dark"] .talent-settings-theme [class*="bg-[#e5caff]"],
+html[data-theme="dark"] .talent-settings-theme [class*="bg-[#f1eaff]"],
+html[data-theme="dark"] .talent-settings-theme [class*="bg-[#eee8ff]"],
+html[data-theme="dark"] .talent-settings-theme [class*="bg-[#f3edff]"],
+html[data-theme="dark"] .talent-settings-theme [class*="bg-[#ece3ff]"],
+html[data-theme="dark"] .talent-settings-theme [class*="bg-[#fcfbff]"],
+html[data-theme="dark"] .talent-settings-theme [class*="bg-[#f8f2ff]"] {
+  background-color: var(--surface-2) !important;
+}
+
+html[data-theme="dark"] .talent-settings-theme [class*="bg-[#edfff5]"],
+html[data-theme="dark"] .talent-settings-theme [class*="bg-[#fff8f8]"],
+html[data-theme="dark"] .talent-settings-theme [class*="bg-[#fff0f1]"] {
+  background-color: color-mix(in oklab, var(--destructive) 12%, var(--card)) !important;
+}
+
+html[data-theme="dark"] .talent-settings-theme [class*="border-[#e4ddf8]"],
+html[data-theme="dark"] .talent-settings-theme [class*="border-[#ebe8f6]"],
+html[data-theme="dark"] .talent-settings-theme [class*="border-[#e2dcfa]"],
+html[data-theme="dark"] .talent-settings-theme [class*="border-[#e3d8ff]"],
+html[data-theme="dark"] .talent-settings-theme [class*="border-[#b8efd4]"],
+html[data-theme="dark"] .talent-settings-theme [class*="border-white"] {
+  border-color: var(--border) !important;
+}
+
+html[data-theme="dark"] .talent-settings-theme [class*="border-[#ffb9be]"] {
+  border-color: color-mix(in oklab, var(--destructive) 55%, var(--border)) !important;
+}
+
+html[data-theme="dark"] .talent-settings-theme [class*="text-[#151b4c]"],
+html[data-theme="dark"] .talent-settings-theme [class*="text-[#121846]"],
+html[data-theme="dark"] .talent-settings-theme [class*="text-[#4e2b2b]"] {
+  color: var(--foreground) !important;
+}
+
+html[data-theme="dark"] .talent-settings-theme [class*="text-[#5e5b8c]"],
+html[data-theme="dark"] .talent-settings-theme [class*="text-[#4e4d80]"],
+html[data-theme="dark"] .talent-settings-theme [class*="text-[#595785]"],
+html[data-theme="dark"] .talent-settings-theme [class*="text-[#5b5789]"],
+html[data-theme="dark"] .talent-settings-theme [class*="text-[#5d5988]"] {
+  color: var(--muted-foreground) !important;
+}
+
+html[data-theme="dark"] .talent-settings-theme [class*="text-[#7835ec]"],
+html[data-theme="dark"] .talent-settings-theme [class*="text-[#7434eb]"],
+html[data-theme="dark"] .talent-settings-theme [class*="text-[#7131e9]"],
+html[data-theme="dark"] .talent-settings-theme [class*="text-[#7d35ee]"],
+html[data-theme="dark"] .talent-settings-theme [class*="text-[#1e1792]"] {
+  color: var(--primary) !important;
+}
+
+html[data-theme="dark"] .talent-settings-theme [class*="ring-[#faf9ff]"] {
+  --tw-ring-color: var(--background) !important;
+}
+
+html[data-theme="dark"] .talent-settings-theme [class*="ring-[#7835ec]"] {
+  --tw-ring-color: var(--ring) !important;
+}
+
+html[data-theme="dark"] .talent-settings-theme [class*="border-[#9c63ff]"] {
+  border-color: var(--primary) !important;
+}
+
+html[data-theme="dark"] .talent-settings-theme [class*="hover:bg-[#fcfbff]"]:hover,
+html[data-theme="dark"] .talent-settings-theme [class*="hover:bg-[#f8f2ff]"]:hover {
+  background-color: var(--surface-2) !important;
+}

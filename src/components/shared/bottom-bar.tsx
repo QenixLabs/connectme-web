@@ -16,9 +16,10 @@ interface BottomBarProps {
   mobileNavItems?: NavItem[];
   iconOnly?: boolean;
   variant?: "default" | "settings";
+  activeLabel?: string;
 }
 
-export function BottomBar({ navItems, mobileNavItems, iconOnly, variant = "default" }: BottomBarProps) {
+export function BottomBar({ navItems, mobileNavItems, iconOnly, variant = "default", activeLabel }: BottomBarProps) {
   const pathname = usePathname();
   const isSettingsVariant = variant === "settings";
   const isMounted = useSyncExternalStore(
@@ -43,6 +44,7 @@ export function BottomBar({ navItems, mobileNavItems, iconOnly, variant = "defau
         {(mobileNavItems ?? navItems).map((item) => {
           const active = isMounted && (
             pathname.startsWith(item.href) ||
+            item.label === activeLabel ||
             (isSettingsVariant && item.label === "Profile")
           );
           const Icon = item.icon;

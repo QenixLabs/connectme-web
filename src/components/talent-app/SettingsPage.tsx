@@ -214,7 +214,7 @@ export function SettingsPage() {
   }
 
   return (
-    <div className="talent-settings-theme relative min-h-svh overflow-hidden bg-[#faf9ff] text-[#151b4c]">
+    <div className="talent-settings-theme relative min-h-svh overflow-hidden bg-background text-foreground">
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -left-36 top-24 size-[300px] rounded-full bg-[#e3caff]/35 blur-3xl" />
         <div className="absolute right-[-150px] top-8 size-[360px] rounded-full bg-[#d9e8ff]/45 blur-3xl" />

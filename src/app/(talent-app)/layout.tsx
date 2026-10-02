@@ -28,8 +28,8 @@ export default function TalentAppLayout({ children }: { children: React.ReactNod
         <BottomBar
           navItems={navItems}
           mobileNavItems={mobileNavItems}
-          iconOnly={!isSettingsPage && !isReputationPage && !isAnalyticsPage}
-          variant={isSettingsPage ? "settings" : "default"}
+          iconOnly={!isReputationPage && !isAnalyticsPage}
+          activeLabel={isSettingsPage ? "Profile" : undefined}
         />
       )}
     </div>
