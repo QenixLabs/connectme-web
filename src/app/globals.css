@@ -4564,3 +4564,203 @@ main.signup-shell {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Route-specific surfaces keep fixed light designs readable in dark mode. */
+html[data-theme="dark"] .network-page-theme,
+html[data-theme="dark"] .public-talent-profile,
+html[data-theme="dark"] .reputation-page-theme {
+  background-color: var(--background) !important;
+  color: var(--foreground);
+}
+
+html[data-theme="dark"] .network-page-theme [class~="bg-white"],
+html[data-theme="dark"] .network-page-theme [class*="bg-white/95"],
+html[data-theme="dark"] .network-page-theme [class*="bg-white/90"],
+html[data-theme="dark"] .network-page-theme [class*="bg-white/70"] {
+  background-color: var(--card) !important;
+}
+
+html[data-theme="dark"] .network-page-theme [class*="bg-[#f7faff]"],
+html[data-theme="dark"] .network-page-theme [class*="bg-[#eff6ff]"],
+html[data-theme="dark"] .network-page-theme [class*="bg-[#f8fbff]"],
+html[data-theme="dark"] .network-page-theme [class*="bg-[#f3f7ff]"],
+html[data-theme="dark"] .network-page-theme [class*="bg-[#edf4ff]"],
+html[data-theme="dark"] .network-page-theme [class*="bg-[#dbeafe"]"] {
+  background-color: var(--surface-2) !important;
+}
+
+html[data-theme="dark"] .network-page-theme [class*="bg-[#eaf2ff]"] {
+  background-color: color-mix(in oklab, var(--primary) 14%, var(--card)) !important;
+}
+
+html[data-theme="dark"] .network-page-theme [class*="border-[#dbe7f7]"],
+html[data-theme="dark"] .network-page-theme [class*="border-[#a9c7f5]"],
+html[data-theme="dark"] .network-page-theme [class*="border-[#93b9f2]"],
+html[data-theme="dark"] .network-page-theme [class*="border-[#e6eef9]"],
+html[data-theme="dark"] .network-page-theme [class*="border-[#b9d0ee"]"] {
+  border-color: var(--border) !important;
+}
+
+html[data-theme="dark"] .network-page-theme [class*="text-[#172b4d]"],
+html[data-theme="dark"] .network-page-theme [class*="text-[#193454]"],
+html[data-theme="dark"] .network-page-theme [class*="text-[#203b61]"],
+html[data-theme="dark"] .network-page-theme [class*="text-[#162d52]"],
+html[data-theme="dark"] .network-page-theme [class*="text-[#102d55]"],
+html[data-theme="dark"] .network-page-theme [class*="text-[#1e3a5f]"],
+html[data-theme="dark"] .network-page-theme [class*="text-[#334e68]"] {
+  color: var(--foreground) !important;
+}
+
+html[data-theme="dark"] .network-page-theme [class*="text-[#64748b]"],
+html[data-theme="dark"] .network-page-theme [class*="text-[#71809a]"],
+html[data-theme="dark"] .network-page-theme [class*="text-[#8795aa]"],
+html[data-theme="dark"] .network-page-theme [class*="text-[#52677f]"],
+html[data-theme="dark"] .network-page-theme [class*="text-[#565477]"],
+html[data-theme="dark"] .network-page-theme [class*="text-[#506b88]"],
+html[data-theme="dark"] .network-page-theme [class*="text-[#607b96]"],
+html[data-theme="dark"] .network-page-theme [class*="text-[#35516f]"] {
+  color: var(--muted-foreground) !important;
+}
+
+html[data-theme="dark"] .network-dialog {
+  background-color: var(--card) !important;
+  color: var(--foreground);
+}
+
+html[data-theme="dark"] .network-dialog [class*="bg-[#f8fbff]"],
+html[data-theme="dark"] .network-dialog [class*="bg-[#eff6ff]"],
+html[data-theme="dark"] .network-dialog [class*="bg-[#f1f6ff]"] {
+  background-color: var(--surface-2) !important;
+}
+
+html[data-theme="dark"] .network-dialog [class*="border-[#dbe7f7]"] {
+  border-color: var(--border) !important;
+}
+
+html[data-theme="dark"] .network-dialog [class*="text-[#172b4d]"],
+html[data-theme="dark"] .network-dialog [class*="text-[#1e3a5f]"],
+html[data-theme="dark"] .network-dialog [class*="text-[#334e68]"] {
+  color: var(--foreground) !important;
+}
+
+html[data-theme="dark"] .network-dialog [class*="text-[#64748b]"],
+html[data-theme="dark"] .network-dialog [class*="text-[#71809a]"],
+html[data-theme="dark"] .network-dialog [class*="text-[#8795aa]"] {
+  color: var(--muted-foreground) !important;
+}
+
+html[data-theme="dark"] .public-talent-profile [class~="bg-white"],
+html[data-theme="dark"] .public-talent-profile [class*="bg-white/90"],
+html[data-theme="dark"] .public-talent-profile [class*="bg-white/75"] {
+  background-color: var(--card) !important;
+}
+
+html[data-theme="dark"] .public-talent-profile [class*="bg-amber-50"],
+html[data-theme="dark"] .public-talent-profile [class*="bg-pink-50"],
+html[data-theme="dark"] .public-talent-profile [class*="bg-teal-50"],
+html[data-theme="dark"] .public-talent-profile [class*="bg-violet-50"],
+html[data-theme="dark"] .public-talent-profile [class*="bg-blue-50"],
+html[data-theme="dark"] .public-talent-profile [class*="bg-blue-100"],
+html[data-theme="dark"] .public-talent-profile [class*="bg-purple-50"],
+html[data-theme="dark"] .public-talent-profile [class*="bg-purple-100"],
+html[data-theme="dark"] .public-talent-profile [class*="bg-fuchsia-50"],
+html[data-theme="dark"] .public-talent-profile [class*="bg-[#f8e7f3]"],
+html[data-theme="dark"] .public-talent-profile [class*="bg-[#fde8e8]"],
+html[data-theme="dark"] .public-talent-profile [class*="bg-[#e6f0ff]"],
+html[data-theme="dark"] .public-talent-profile [class*="bg-[#eef0ff]"] {
+  background-color: var(--surface-2) !important;
+}
+
+html[data-theme="dark"] .public-talent-profile .public-profile-surface[style] {
+  background: var(--card) !important;
+}
+
+html[data-theme="dark"] .public-talent-profile [class*="text-[#1c274c]"],
+html[data-theme="dark"] .public-talent-profile [class*="text-[#1d274b]"],
+html[data-theme="dark"] .public-talent-profile [class*="text-slate-600"] {
+  color: var(--foreground) !important;
+}
+
+html[data-theme="dark"] .public-profile-sheet {
+  background-color: var(--card) !important;
+  color: var(--foreground);
+}
+
+html[data-theme="dark"] .public-profile-sheet [class*="bg-[#eef0ff]"],
+html[data-theme="dark"] .public-profile-sheet [class*="bg-[#f8e7f3]"],
+html[data-theme="dark"] .public-profile-sheet [class*="bg-[#fde8e8]"],
+html[data-theme="dark"] .public-profile-sheet [class*="bg-[#e6f0ff]"] {
+  background-color: var(--surface-2) !important;
+}
+
+html[data-theme="dark"] .public-profile-sheet [class*="text-[#1c274c]"] {
+  color: var(--foreground) !important;
+}
+
+html[data-theme="dark"] .reputation-page-theme [class~="bg-white"],
+html[data-theme="dark"] .reputation-page-theme [class*="bg-[#FCFBFF]"],
+html[data-theme="dark"] .reputation-page-theme [class*="bg-[#F8F6FF]"] {
+  background-color: var(--card) !important;
+}
+
+html[data-theme="dark"] .reputation-page-theme [class*="bg-[#F1EAFF]"],
+html[data-theme="dark"] .reputation-page-theme [class*="bg-[#EDE5FF]"],
+html[data-theme="dark"] .reputation-page-theme [class*="bg-[#F5ECFF]"],
+html[data-theme="dark"] .reputation-page-theme [class*="bg-[#EAF2FF]"],
+html[data-theme="dark"] .reputation-page-theme [class*="bg-[#EEEAF9]"],
+html[data-theme="dark"] .reputation-page-theme [class*="bg-[#EDE9F8]"],
+html[data-theme="dark"] .reputation-page-theme [class*="bg-[#F7F3FF]"],
+html[data-theme="dark"] .reputation-page-theme [class*="bg-[#E7FBF7]"],
+html[data-theme="dark"] .reputation-page-theme [class*="bg-[#FFF7DF]"],
+html[data-theme="dark"] .reputation-page-theme [class*="bg-[#FFF0F8]"],
+html[data-theme="dark"] .reputation-page-theme [class*="bg-[#FFF0F3]"] {
+  background-color: var(--surface-2) !important;
+}
+
+html[data-theme="dark"] .reputation-page-theme [class*="bg-[linear-gradient(110deg"],
+html[data-theme="dark"] .reputation-page-theme [class*="bg-[linear-gradient(135deg"],
+html[data-theme="dark"] .reputation-page-theme [class*="bg-[linear-gradient(90deg"] {
+  background: var(--surface-2) !important;
+}
+
+html[data-theme="dark"] .reputation-page-theme [class*="bg-[#D9C7FF]"],
+html[data-theme="dark"] .reputation-page-theme [class*="bg-[#FFD9E8]"],
+html[data-theme="dark"] .reputation-page-theme [class*="bg-[#C6B5F8]"] {
+  background-color: color-mix(in oklab, var(--primary) 14%, var(--card)) !important;
+}
+
+html[data-theme="dark"] .reputation-page-theme [class*="text-[#12143A]"],
+html[data-theme="dark"] .reputation-page-theme [class*="text-[#414565]"] {
+  color: var(--foreground) !important;
+}
+
+html[data-theme="dark"] .reputation-page-theme [class*="text-[#62678A]"],
+html[data-theme="dark"] .reputation-page-theme [class*="text-[#8A8EAC]"] {
+  color: var(--muted-foreground) !important;
+}
+
+html[data-theme="dark"] .reputation-page-theme [class*="text-[#6428F5]"],
+html[data-theme="dark"] .reputation-page-theme [class*="text-[#5420D7]"],
+html[data-theme="dark"] .reputation-page-theme [class*="text-[#8B4DDE]"],
+html[data-theme="dark"] .reputation-page-theme [class*="text-[#C6B5F8]"] {
+  color: var(--primary) !important;
+}
+
+html[data-theme="dark"] .reputation-page-theme [class*="border-[#E7E5F4]"],
+html[data-theme="dark"] .reputation-page-theme [class*="border-[#EEEAF9]"],
+html[data-theme="dark"] .reputation-page-theme [class*="border-[#EDE9F8]"] {
+  border-color: var(--border) !important;
+}
+
+html[data-theme="dark"] .reputation-page-theme svg [stroke="#6428F5"],
+html[data-theme="dark"] .reputation-page-theme svg [stroke="#8A57F6"] {
+  stroke: var(--primary) !important;
+}
+
+html[data-theme="dark"] .reputation-page-theme svg [stroke="#EEEAF9"] {
+  stroke: var(--border) !important;
+}
+
+html[data-theme="dark"] .reputation-page-theme svg [stroke="#F1EAFF"] {
+  stroke: color-mix(in oklab, var(--primary) 22%, var(--card)) !important;
+}

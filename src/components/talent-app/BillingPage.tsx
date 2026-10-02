@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
 import {
   BarChart3,
@@ -316,12 +317,19 @@ export function BillingPage() {
 
   return (
     <div className="mx-auto max-w-[900px] px-5 pb-8 pt-7">
-      <h1 className="font-display text-3xl font-bold tracking-tight">
-        Billing
-      </h1>
-      <p className="mt-1.5 text-sm text-muted-foreground">
-        Manage your plan, usage and payments
-      </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="font-display text-3xl font-bold tracking-tight">
+            Billing
+          </h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            Manage your plan, usage and payments
+          </p>
+        </div>
+        <Button asChild variant="outline" className="shrink-0 rounded-lg border-primary text-primary hover:bg-primary/10">
+          <Link href="/pricing">View Plans</Link>
+        </Button>
+      </div>
 
       {/* Current Plan */}
       <section className="mt-6 rounded-2xl border border-border bg-card p-5">

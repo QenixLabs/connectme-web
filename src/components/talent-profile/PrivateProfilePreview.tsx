@@ -17,7 +17,7 @@ export function PrivateProfilePreview({
 }) {
   const talentNavItems = useTalentNavItems();
   return (
-    <div className="relative min-h-screen bg-bg-page pb-24">
+    <div className="public-talent-profile relative min-h-screen bg-bg-page pb-24 text-foreground">
       <HeroSection profile={profile} viewerRole={viewerRole} />
 
       <main className="relative z-10 mx-auto max-w-5xl px-4 sm:px-6">

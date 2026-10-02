@@ -32,7 +32,7 @@ export function GlassCard({
       <div
         style={style}
         className={cn(
-          "overflow-hidden rounded-[20px] bg-card/95 p-4 shadow-[0_6px_24px_rgba(15,23,42,0.05)]",
+          "public-profile-surface overflow-hidden rounded-[20px] bg-card/95 p-4 shadow-[0_6px_24px_rgba(15,23,42,0.05)]",
           hover && "transition-all duration-200 hover:-translate-y-0.5",
           className,
         )}

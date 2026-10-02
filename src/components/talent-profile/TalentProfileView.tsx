@@ -133,7 +133,7 @@ export function TalentProfileView({
 
   return (
     <>
-      <div className="mx-auto w-full max-w-md bg-[#F7F8FC] pb-24">
+      <div className="public-talent-profile mx-auto w-full max-w-md bg-background pb-24 text-foreground">
         {/* Cover + identity band */}
         <HeroSection
           profile={profile}

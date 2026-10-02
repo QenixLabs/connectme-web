@@ -45,14 +45,14 @@ import {
 import type { Credit, TalentProfile, TalentReputation, Testimonial } from "@/lib/api/talent";
 import { formatLocation, formatRelativeTime } from "@/components/talent-profile/data";
 
-const PAGE_BG = "#FAFAFF";
-const TEXT = "#12143A";
-const MUTED = "#62678A";
-const BORDER = "#E7E5F4";
+const PAGE_BG = "var(--background)";
+const TEXT = "var(--foreground)";
+const MUTED = "var(--muted-foreground)";
+const BORDER = "var(--border)";
 
 function ReputationSkeleton() {
   return (
-    <div className="mx-auto max-w-7xl space-y-5 px-4 pb-28 pt-5 sm:px-6 lg:px-8">
+    <div className="reputation-page-theme mx-auto max-w-7xl space-y-5 px-4 pb-28 pt-5 sm:px-6 lg:px-8">
       <Skeleton className="h-52 rounded-[28px] bg-[#F1EAFF]" />
       <Skeleton className="h-48 rounded-[24px] bg-white" />
       <div className="grid gap-5 lg:grid-cols-[minmax(260px,0.8fr)_minmax(0,1.7fr)]">
@@ -66,7 +66,7 @@ function ReputationSkeleton() {
 
 function ReputationError() {
   return (
-    <main className="mx-auto flex min-h-[70vh] max-w-lg items-center px-4 py-12 text-center">
+    <main className="reputation-page-theme mx-auto flex min-h-[70vh] max-w-lg items-center px-4 py-12 text-center">
       <div className="w-full rounded-[28px] border border-[#E7E5F4] bg-white p-8 shadow-[0_12px_40px_rgba(77,52,155,0.07)]">
         <div className="mx-auto grid size-12 place-items-center rounded-2xl bg-[#FFF0F3] text-[#D94C70]">
           <Info className="size-6" />
@@ -517,7 +517,7 @@ export function TalentReputationPage() {
   if (!reputation) return null;
 
   return (
-    <main className="min-h-full overflow-hidden pb-24" style={{ backgroundColor: PAGE_BG, color: TEXT }}>
+    <main className="reputation-page-theme min-h-full overflow-hidden bg-background pb-24 text-foreground" style={{ backgroundColor: PAGE_BG, color: TEXT }}>
       <div className="mx-auto max-w-7xl space-y-5 px-4 pb-8 pt-4 sm:px-6 sm:pt-6 lg:px-8">
         <Hero />
         <ProfileSummary profile={profile} />

@@ -186,7 +186,7 @@ export function SocialConnectBar({ profile }: { profile: TalentProfile }) {
       </section>
 
       <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
-        <SheetContent side="bottom" className="rounded-t-3xl px-5 pb-8">
+        <SheetContent side="bottom" className="public-profile-sheet rounded-t-3xl px-5 pb-8">
           <SheetHeader className="px-0 pt-5">
             <SheetTitle className="text-left text-base text-[#1c274c]">More social links</SheetTitle>
           </SheetHeader>
