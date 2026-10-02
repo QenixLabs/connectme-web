@@ -178,6 +178,9 @@ function AccountField({
   value,
   onChange,
   right,
+  error,
+  status,
+  onBlur,
 }: {
   id: string;
   label: string;
@@ -188,13 +191,19 @@ function AccountField({
   value: string;
   onChange: (value: string) => void;
   right?: ReactNode;
+  error?: string;
+  status?: "checking" | "available" | "taken";
+  onBlur?: () => void;
 }) {
+  const hasError = Boolean(error) || status === "taken";
+  const statusMessage = error || (status === "checking" ? "Checking username..." : status === "available" ? "Username available" : status === "taken" ? "Username already taken" : null);
   return (
-    <label htmlFor={id} className="flex min-h-[4.4rem] items-center gap-[0.85rem] rounded-xl border border-[oklch(0.87_0.035_288)] bg-[oklch(1_0_0_/_78%)] px-4 py-3 shadow-[0_4px_14px_oklch(0.53_0.31_293_/_7%)] backdrop-blur-[8px] focus-within:border-[oklch(0.53_0.31_293)] focus-within:shadow-[0_0_0_3px_oklch(0.53_0.31_293_/_13%)]">
+    <label htmlFor={id} className={`flex min-h-[4.4rem] items-center gap-[0.85rem] rounded-xl border bg-[oklch(1_0_0_/_78%)] px-4 py-3 shadow-[0_4px_14px_oklch(0.53_0.31_293_/_7%)] backdrop-blur-[8px] focus-within:border-[oklch(0.53_0.31_293)] focus-within:shadow-[0_0_0_3px_oklch(0.53_0.31_293_/_13%)] ${hasError ? "border-red-500" : status === "available" ? "border-green-500" : "border-[oklch(0.87_0.035_288)]"}`}>
       <span className="grid w-8 flex-none place-items-center text-[oklch(0.53_0.31_293)] [&>svg]:size-[1.35rem] [&>svg]:stroke-[2.1]" aria-hidden="true">{icon}</span>
       <span className="min-w-0 flex-1">
         <span className="block text-[0.78rem] font-bold text-[oklch(0.27_0.13_279)]">{label} {optional && <small className="text-[0.72rem] font-normal text-[oklch(0.51_0.08_279)]">(Optional)</small>}</span>
-        <input className="mt-[0.2rem] w-full border-0 bg-transparent text-[0.9rem] text-[oklch(0.27_0.13_279)] outline-0 placeholder:text-[oklch(0.51_0.08_279)]" id={id} name={id} type={type} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} required={!optional} />
+        <input className="mt-[0.2rem] w-full border-0 bg-transparent text-[0.9rem] text-[oklch(0.27_0.13_279)] outline-0 placeholder:text-[oklch(0.51_0.08_279)]" id={id} name={id} type={type} value={value} onChange={(event) => onChange(event.target.value)} onBlur={onBlur} placeholder={placeholder} required={!optional} aria-invalid={hasError} />
+        {statusMessage ? <span className={`mt-1 block text-[0.7rem] font-medium ${hasError ? "text-red-600" : status === "available" ? "text-green-600" : "text-[oklch(0.51_0.08_279)]"}`} role={hasError ? "alert" : undefined}>{statusMessage}</span> : null}
       </span>
       {right}
     </label>
@@ -203,22 +212,67 @@ function AccountField({
 
 function AccountStep({ account, setAccount, onContinue }: { account: Account; setAccount: (account: Account) => void; onContinue: () => void }) {
   const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState<Partial<Record<"fullName" | "username" | "email" | "phone" | "password", string>>>({});
+  const [usernameStatus, setUsernameStatus] = useState<"checking" | "available" | "taken" | undefined>();
+  const [checkingUsername, setCheckingUsername] = useState(false);
+  const [agreed, setAgreed] = useState(true);
+  const [agreementError, setAgreementError] = useState<string | null>(null);
+
   const handleGoogleSignup = () => {
     const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1";
     window.location.href = `${apiBase}/auth/google?intent=signup&role=talent`;
   };
   const checks = passwordRules.map(({ test }) => test(account.password));
-  const canContinue =
-    account.fullName.trim().length > 0 &&
-    /^\S+@\S+\.\S+$/.test(account.email.trim()) &&
-    /^\d{10}$/.test(account.phone) &&
-    /^[a-zA-Z0-9]{6,20}$/.test(account.username) &&
-    checks.every(Boolean);
-  const update = (field: keyof Account, value: string) => setAccount({ ...account, [field]: value });
+  const update = (field: keyof Account, value: string) => {
+    setAccount({ ...account, [field]: value });
+    setErrors((current) => ({ ...current, [field]: undefined }));
+    if (field === "username") setUsernameStatus(undefined);
+  };
+  const checkUsername = async () => {
+    const username = account.username.trim();
+    if (!/^[a-zA-Z0-9]{6,20}$/.test(username)) return false;
+    setCheckingUsername(true);
+    setUsernameStatus("checking");
+    try {
+      const result = await authApi.checkUsername(username);
+      if (!result.available) {
+        setUsernameStatus("taken");
+        setErrors((current) => ({ ...current, username: "Username already taken" }));
+        return false;
+      }
+      setUsernameStatus("available");
+      setErrors((current) => ({ ...current, username: undefined }));
+      return true;
+    } catch {
+      setUsernameStatus(undefined);
+      setErrors((current) => ({ ...current, username: "Could not check username availability" }));
+      return false;
+    } finally {
+      setCheckingUsername(false);
+    }
+  };
+  const handleUsernameBlur = () => {
+    if (/^[a-zA-Z0-9]{6,20}$/.test(account.username.trim())) void checkUsername();
+  };
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const next: Partial<Record<"fullName" | "username" | "email" | "phone" | "password", string>> = {};
+    if (!account.fullName.trim()) next.fullName = "Full name is required";
+    if (!/^[a-zA-Z0-9]{6,20}$/.test(account.username.trim())) next.username = "Use 6-20 letters or numbers";
+    if (!/^\S+@\S+\.\S+$/.test(account.email.trim())) next.email = "Enter a valid email address";
+    if (!/^\d{10}$/.test(account.phone)) next.phone = "Enter a valid 10-digit mobile number";
+    if (!checks.every(Boolean)) next.password = "Complete all password requirements";
+    if (!agreed) setAgreementError("Accept the Terms of Service and Privacy Policy to continue");
+    else setAgreementError(null);
+    setErrors(next);
+    if (Object.keys(next).length > 0 || !agreed) return;
+    if (!(await checkUsername())) return;
+    onContinue();
+  };
   const ctaClasses = "flex min-h-[3.35rem] w-full items-center justify-center gap-3 rounded-xl border-0 bg-[linear-gradient(110deg,oklch(0.49_0.27_288),oklch(0.57_0.27_300))] text-base font-bold text-white shadow-[0_12px_28px_oklch(0.49_0.27_288_/_28%)] hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50";
 
   return (
-    <form className="mt-[2.2rem] w-full max-w-[52rem] max-[700px]:mt-[1.7rem]" onSubmit={(event) => { event.preventDefault(); onContinue(); }}>
+    <form className="mt-[2.2rem] w-full max-w-[52rem] max-[700px]:mt-[1.7rem]" onSubmit={(event) => void handleSubmit(event)} noValidate>
       <div className=" min-w-0 bg-contain bg-center bg-no-repeat grid items-stretch gap-6 grid-cols-[minmax(0,7fr)_minmax(13rem,3fr)] max-[700px]:grid-cols-[minmax(0,7fr)_minmax(6rem,3fr)] max-[700px]:gap-3 max-[420px]:grid-cols-1"
         style={{
     backgroundImage: "url('/assets/onboarding/talent-onboarding.png')",
@@ -232,12 +286,13 @@ function AccountStep({ account, setAccount, onContinue }: { account: Account; se
           </div>
 
           <div className="grid gap-[0.8rem]">
-            <AccountField id="full-name" label="Full Name" placeholder="Enter your full name" icon={<UserRound />} value={account.fullName} onChange={(value) => update("fullName", value)} />
-            <AccountField id="professional-name" label="Professional Name" optional placeholder="How you want to be known" icon={<Sparkles />} value={account.professionalName} onChange={(value) => update("professionalName", value)} />
-            <AccountField id="username" label="Username" placeholder="6-20 letters or numbers" icon={<User />} value={account.username} onChange={(value) => update("username", value.replace(/[^a-zA-Z0-9]/g, "").slice(0, 20))} />
-            <AccountField id="email" label="Email Address" placeholder="you@example.com" type="email" icon={<Mail />} value={account.email} onChange={(value) => update("email", value)} />
+             <AccountField id="full-name" label="Full Name" placeholder="Enter your full name" icon={<UserRound />} value={account.fullName} onChange={(value) => update("fullName", value)} error={errors.fullName} />
+             <AccountField id="professional-name" label="Professional Name" optional placeholder="How you want to be known" icon={<Sparkles />} value={account.professionalName} onChange={(value) => update("professionalName", value)} />
+             <AccountField id="username" label="Username" placeholder="6-20 letters or numbers" icon={<User />} value={account.username} onChange={(value) => update("username", value.replace(/[^a-zA-Z0-9]/g, "").slice(0, 20))} onBlur={handleUsernameBlur} error={errors.username} status={usernameStatus} />
+             <AccountField id="email" label="Email Address" placeholder="you@example.com" type="email" icon={<Mail />} value={account.email} onChange={(value) => update("email", value)} error={errors.email} />
 
-            <label htmlFor="mobile" className="flex min-h-[4.4rem] items-center gap-[0.85rem] rounded-xl border border-[oklch(0.87_0.035_288)] bg-[oklch(1_0_0_/_78%)] px-4 py-3 shadow-[0_4px_14px_oklch(0.53_0.31_293_/_7%)] backdrop-blur-[8px] focus-within:border-[oklch(0.53_0.31_293)] focus-within:shadow-[0_0_0_3px_oklch(0.53_0.31_293_/_13%)]">
+             <div>
+             <label htmlFor="mobile" className={`flex min-h-[4.4rem] items-center gap-[0.85rem] rounded-xl border bg-[oklch(1_0_0_/_78%)] px-4 py-3 shadow-[0_4px_14px_oklch(0.53_0.31_293_/_7%)] backdrop-blur-[8px] focus-within:border-[oklch(0.53_0.31_293)] focus-within:shadow-[0_0_0_3px_oklch(0.53_0.31_293_/_13%)] ${errors.phone ? "border-red-500" : "border-[oklch(0.87_0.035_288)]"}`}>
               <span className="grid w-8 flex-none place-items-center text-[oklch(0.53_0.31_293)] [&>svg]:size-[1.35rem] [&>svg]:stroke-[2.1]" aria-hidden="true"><Phone /></span>
               <span className="min-w-0 flex-1">
                 <span className="block text-[0.78rem] font-bold text-[oklch(0.27_0.13_279)]">Mobile Number</span>
@@ -247,9 +302,11 @@ function AccountStep({ account, setAccount, onContinue }: { account: Account; se
                    <input className="mt-0 min-w-0 w-full border-0 bg-transparent text-[0.9rem] text-[oklch(0.27_0.13_279)] outline-0 placeholder:text-[oklch(0.51_0.08_279)]" id="mobile" name="mobile" type="tel" inputMode="numeric" maxLength={10} value={account.phone} onChange={(event) => update("phone", event.target.value.replace(/\D/g, "").slice(0, 10))} placeholder="Enter mobile number" required />
                 </span>
               </span>
-            </label>
+             </label>
+             {errors.phone ? <p className="mt-1 px-1 text-[0.7rem] font-medium text-red-600" role="alert">{errors.phone}</p> : null}
+             </div>
 
-            <AccountField id="password" label="Password" placeholder="Create a strong password" type={showPassword ? "text" : "password"} icon={<LockKeyhole />} value={account.password} onChange={(value) => update("password", value)} right={<button type="button" className="cursor-pointer border-0 bg-transparent text-[oklch(0.53_0.31_293)]" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? "Hide password" : "Show password"}>{showPassword ? <Eye size={20} /> : <EyeOff size={20} />}</button>} />
+             <AccountField id="password" label="Password" placeholder="Create a strong password" type={showPassword ? "text" : "password"} icon={<LockKeyhole />} value={account.password} onChange={(value) => update("password", value)} error={errors.password} right={<button type="button" className="cursor-pointer border-0 bg-transparent text-[oklch(0.53_0.31_293)]" onClick={() => setShowPassword((visible) => !visible)} aria-label={showPassword ? "Hide password" : "Show password"}>{showPassword ? <Eye size={20} /> : <EyeOff size={20} />}</button>} />
             <div className="grid gap-[0.18rem] px-0 pb-[0.2rem]  pt-[0.2rem] text-[0.75rem] text-[oklch(0.51_0.08_279)]">
               {passwordRules.map(({ label }, index) => <p key={label} className={`m-0 ${checks[index] ? "text-[oklch(0.57_0.16_153)]" : ""}`}><span className="mr-[0.45rem] inline-grid size-[1.15rem] place-items-center rounded-full border border-current align-[-0.25rem]"><Check size={12} /></span>{label}</p>)}
             </div>
@@ -267,8 +324,9 @@ function AccountStep({ account, setAccount, onContinue }: { account: Account; se
           <button type="button" onClick={handleGoogleSignup} className="inline-flex min-h-[2.9rem] min-w-0 flex-1 cursor-pointer items-center justify-center gap-2 rounded-[0.7rem] border border-[oklch(0.87_0.035_288)] bg-[oklch(1_0_0_/_75%)] text-[0.78rem] font-semibold text-[oklch(0.27_0.13_279)] hover:border-[oklch(0.53_0.31_293)]"><GoogleBrandIcon /><span className="max-[420px]:hidden">Continue with Google</span></button>
           <button type="button" disabled aria-disabled="true" title="Coming Soon" className="inline-flex min-h-[2.9rem] min-w-0 flex-1 cursor-not-allowed items-center justify-center gap-2 rounded-[0.7rem] border border-[oklch(0.87_0.035_288)] bg-[oklch(1_0_0_/_40%)] text-[0.78rem] font-semibold text-[oklch(0.27_0.13_279)] opacity-60"><AppleBrandIcon /><span className="max-[420px]:hidden">Continue with Apple</span><span className="rounded-full bg-[oklch(0.53_0.31_293)]/10 px-2 py-0.5 text-[0.65rem] font-bold text-[oklch(0.53_0.31_293)]">Coming Soon</span></button>
         </div>
-        <label className="my-4 flex items-start justify-center gap-[0.6rem] text-[0.75rem] leading-[1.5] text-[oklch(0.27_0.13_279)]"><input className="mt-[0.15rem] size-4 accent-[oklch(0.53_0.31_293)]" type="checkbox" defaultChecked required /><span>I agree to the <a className="font-bold text-[oklch(0.53_0.31_293)] underline" href="/terms">Terms of Service</a> and <a className="font-bold text-[oklch(0.53_0.31_293)] underline" href="/privacy">Privacy Policy</a>.</span></label>
-         <button className={ctaClasses} type="submit" disabled={!canContinue}><span>Continue</span><ArrowRight size={20} /></button>
+        <label className="my-4 flex items-start justify-center gap-[0.6rem] text-[0.75rem] leading-[1.5] text-[oklch(0.27_0.13_279)]"><input className={`mt-[0.15rem] size-4 accent-[oklch(0.53_0.31_293)] ${agreementError ? "ring-2 ring-red-500 ring-offset-1" : ""}`} type="checkbox" checked={agreed} onChange={(event) => { setAgreed(event.target.checked); if (event.target.checked) setAgreementError(null); }} aria-invalid={Boolean(agreementError)} /><span>I agree to the <a className="font-bold text-[oklch(0.53_0.31_293)] underline" href="/terms">Terms of Service</a> and <a className="font-bold text-[oklch(0.53_0.31_293)] underline" href="/privacy">Privacy Policy</a>.</span></label>
+        {agreementError ? <p className="-mt-3 mb-3 text-center text-[0.7rem] font-medium text-red-600" role="alert">{agreementError}</p> : null}
+         <button className={ctaClasses} type="submit" disabled={checkingUsername}><span>{checkingUsername ? "Checking username..." : "Continue"}</span>{checkingUsername ? <Loader2 size={20} className="animate-spin" /> : <ArrowRight size={20} />}</button>
       </div>
 
       <div className="mt-[1.15rem] flex items-center gap-[0.7rem] text-[0.76rem] text-[oklch(0.51_0.08_279)]"><i className="h-px flex-1 bg-[oklch(0.87_0.035_288)]" /><p className="m-0 whitespace-nowrap">Already have an account? <a className="font-bold text-[oklch(0.53_0.31_293)] underline" href="/auth/login">Sign In</a></p><i className="h-px flex-1 bg-[oklch(0.87_0.035_288)]" /></div>
@@ -279,22 +337,30 @@ function AccountStep({ account, setAccount, onContinue }: { account: Account; se
 
 function CategoriesStep({ selected, onToggle, onContinue }: { selected: string[]; onToggle: (id: string) => void; onContinue: () => void }) {
   const [query, setQuery] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const visible = useMemo(() => {
     const value = query.trim().toLowerCase();
     return value ? categories.filter((category) => category.label.toLowerCase().includes(value)) : categories;
   }, [query]);
   const ctaClasses = "mt-[1.2rem] flex min-h-[3.35rem] w-full items-center justify-center gap-3 rounded-xl border-0 bg-[linear-gradient(110deg,oklch(0.49_0.27_288),oklch(0.57_0.27_300))] text-base font-bold text-white shadow-[0_12px_28px_oklch(0.49_0.27_288_/_28%)] hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50";
   const searchClasses = "flex min-h-[3.05rem] items-center gap-3 rounded-xl border border-[oklch(0.87_0.035_288)] bg-[oklch(1_0_0_/_82%)] px-4 shadow-[0_2px_8px_oklch(0.27_0.13_279_/_5%)] focus-within:border-[oklch(0.53_0.31_293)] focus-within:shadow-[0_0_0_3px_oklch(0.53_0.31_293_/_13%)]";
+  const handleContinue = () => {
+    if (selected.length === 0) {
+      setError("Select at least one category to continue");
+      return;
+    }
+    onContinue();
+  };
 
   return (
-    <form className="mt-[2.2rem] w-full max-w-[31rem] max-[700px]:mt-[1.7rem]" onSubmit={(event) => { event.preventDefault(); if (selected.length) onContinue(); }}>
+    <form className="mt-[2.2rem] w-full max-w-[31rem] max-[700px]:mt-[1.7rem]" onSubmit={(event) => { event.preventDefault(); handleContinue(); }} noValidate>
       <div className="mt-[1.4rem]"><p className="m-0 text-[0.72rem] font-bold tracking-[0.16em] text-[oklch(0.51_0.08_279)]">TELL US ABOUT YOUR TALENT</p><h1 className="mt-[0.8rem] text-[clamp(2.5rem,6vw,3.25rem)] font-extrabold leading-[0.98] tracking-[-0.055em] text-[oklch(0.27_0.13_279)]">What do <em className="not-italic text-[oklch(0.53_0.31_293)]">you do?</em></h1><p className="mt-4 max-w-[32rem] text-base font-medium leading-[1.55] text-[oklch(0.51_0.08_279)]">Select one or more categories that best describe you. You can always update this later.</p></div>
       <label className={`${searchClasses} mt-6`}><Search size={20} className="flex-none text-[oklch(0.51_0.08_279)]" /><input className="w-full border-0 bg-transparent text-[0.82rem] text-[oklch(0.27_0.13_279)] outline-0 placeholder:text-[oklch(0.51_0.08_279)]" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search categories (e.g. Actor, Singer, Dancer...)" /></label>
-      <div className="mt-4 grid grid-cols-2 gap-[0.85rem]">
+       <div className="mt-4 grid grid-cols-2 gap-[0.85rem]" aria-invalid={Boolean(error)}>
         {visible.map((category) => {
           const active = selected.includes(category.id);
           const Icon = category.Icon;
-          return <button type="button" key={category.id} onClick={() => onToggle(category.id)} aria-pressed={active} className={`overflow-hidden rounded-[0.85rem] border-2 bg-white pb-[0.8rem] text-left text-[oklch(0.27_0.13_279)] shadow-[0_2px_10px_oklch(0.53_0.27_288_/_15%)] ${active ? "border-[oklch(0.53_0.31_293)] bg-[oklch(0.95_0.03_295)]" : "border-transparent"}`}>
+           return <button type="button" key={category.id} onClick={() => { onToggle(category.id); setError(null); }} aria-pressed={active} className={`overflow-hidden rounded-[0.85rem] border-2 bg-white pb-[0.8rem] text-left text-[oklch(0.27_0.13_279)] shadow-[0_2px_10px_oklch(0.53_0.27_288_/_15%)] ${active ? "border-[oklch(0.53_0.31_293)] bg-[oklch(0.95_0.03_295)]" : "border-transparent"}`}>
             <div className="relative mx-[0.2rem] mt-[0.2rem] h-28 overflow-hidden rounded-[0.7rem] bg-[oklch(0.95_0.035_291)]">
               {category.image ? <Image src={category.image} alt={category.label} fill sizes="(max-width: 700px) 45vw, 240px" className="object-cover" /> : <span className="grid size-full place-items-center bg-[linear-gradient(135deg,oklch(0.53_0.31_293_/_82%),oklch(0.27_0.13_279))] text-white"><MoreHorizontal size={30} /></span>}
               {active && <b className="absolute right-[0.45rem] top-[0.45rem] grid size-7 place-items-center rounded-full bg-[oklch(0.53_0.31_293)] text-white"><Check size={16} /></b>}
@@ -302,10 +368,11 @@ function CategoriesStep({ selected, onToggle, onContinue }: { selected: string[]
             </div>
             <strong className={`mt-4 block text-center text-[0.82rem] ${active ? "text-[oklch(0.53_0.31_293)]" : ""}`}>{category.label}</strong>
           </button>;
-        })}
+       })}
       </div>
+      {error ? <p className="mt-2 text-sm font-medium text-red-600" role="alert">{error}</p> : null}
       <div className="relative mt-5 min-h-20 overflow-hidden rounded-[0.85rem] bg-[oklch(0.95_0.03_295)]"><div className="absolute inset-y-0 right-0 w-[45%]"><Image src="/assets/talent-onboarding/protip-clapper.jpg" alt="Film clapperboard in purple haze" fill sizes="180px" className="object-cover opacity-80" /></div><div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,oklch(0.95_0.03_295),oklch(0.95_0.03_295_/_90%)_45%,transparent)]" /><div className="relative z-10 flex gap-[0.65rem] px-4 py-[0.9rem] pr-28 text-[oklch(0.53_0.31_293)]"><Sparkles size={20} className="flex-none" /><p className="m-0 text-[0.78rem] leading-[1.35] text-[oklch(0.27_0.13_279)]"><strong>Pro Tip</strong><br /><span className="text-[0.68rem] text-[oklch(0.51_0.08_279)]">Showcase all your talents to get more relevant opportunities from top recruiters.</span></p></div></div>
-      <button className={ctaClasses} type="submit" disabled={!selected.length}><span>Continue</span><ArrowRight size={20} /></button>
+       <button className={ctaClasses} type="submit"><span>Continue</span><ArrowRight size={20} /></button>
       <div className="mt-[1.15rem] flex items-center gap-[0.7rem] text-[0.76rem] text-[oklch(0.51_0.08_279)]"><i className="h-px flex-1 bg-[oklch(0.87_0.035_288)]" /><p className="m-0 whitespace-nowrap">Already have an account? <a className="font-bold text-[oklch(0.53_0.31_293)] underline" href="/auth/login">Sign In</a></p><i className="h-px flex-1 bg-[oklch(0.87_0.035_288)]" /></div>
     </form>
   );
@@ -336,8 +403,8 @@ const languageOptions = [
   "Sanskrit",
 ];
 
-function FieldHeading({ Icon, title, description, optional }: { Icon: LucideIcon; title: string; description?: string; optional?: boolean }) {
-  return <div className="mb-[0.65rem] flex items-start gap-3"><Icon className="mt-[0.1rem] size-[1.35rem] flex-none text-[oklch(0.53_0.31_293)]" /><div><h2 className="m-0 text-[0.86rem] font-extrabold text-[oklch(0.27_0.13_279)]">{title} {optional && <small className="text-[0.72rem] font-normal text-[oklch(0.51_0.08_279)]">(Optional)</small>}</h2>{description && <p className="mt-[0.15rem] text-[0.7rem] leading-[1.35] text-[oklch(0.51_0.08_279)]">{description}</p>}</div></div>;
+function FieldHeading({ Icon, title, description, optional, required }: { Icon: LucideIcon; title: string; description?: string; optional?: boolean; required?: boolean }) {
+  return <div className="mb-[0.65rem] flex items-start gap-3"><Icon className="mt-[0.1rem] size-[1.35rem] flex-none text-[oklch(0.53_0.31_293)]" /><div><h2 className="m-0 text-[0.86rem] font-extrabold text-[oklch(0.27_0.13_279)]">{title} {required && <small className="text-red-600">*</small>} {optional && <small className="text-[0.72rem] font-normal text-[oklch(0.51_0.08_279)]">(Optional)</small>}</h2>{description && <p className="mt-[0.15rem] text-[0.7rem] leading-[1.35] text-[oklch(0.51_0.08_279)]">{description}</p>}</div></div>;
 }
 
 function ChipInput({ values, setValues, placeholder }: { values: string[]; setValues: (values: string[]) => void; placeholder: string }) {
@@ -423,6 +490,7 @@ function LocationStep({
   const [languages, setLanguages] = useState<string[]>([]);
   const [nativeLanguage, setNativeLanguage] = useState("");
   const [workingLanguage, setWorkingLanguage] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<{ city?: string; travel?: string }>({});
   // Native / working must be one of Languages Spoken — clear stale selection when list changes.
   const updateLanguages = (next: string[]) => {
     setLanguages(next);
@@ -432,7 +500,6 @@ function LocationStep({
   };
   const searchClasses = "flex min-h-[3.05rem] items-center gap-3 rounded-xl border border-[oklch(0.87_0.035_288)] bg-[oklch(1_0_0_/_82%)] px-4 shadow-[0_2px_8px_oklch(0.27_0.13_279_/_5%)] focus-within:border-[oklch(0.53_0.31_293)] focus-within:shadow-[0_0_0_3px_oklch(0.53_0.31_293_/_13%)]";
   const ctaClasses = "mt-[1.8rem] ml-[2.1rem] flex min-h-[3.35rem] max-w-[39rem] w-[calc(100%-2.1rem)] items-center justify-center gap-3 rounded-xl border-0 bg-[linear-gradient(110deg,oklch(0.49_0.27_288),oklch(0.57_0.27_300))] text-base font-bold text-white shadow-[0_12px_28px_oklch(0.49_0.27_288_/_28%)] hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60 max-[700px]:ml-0 max-[700px]:w-full";
-  const canSubmit = city.trim().length > 0 && travel !== "";
   const proficiencyLanguages = useMemo(() => {
     const names = Array.from(
       new Set([nativeLanguage, workingLanguage, ...languages].map((name) => name.trim()).filter(Boolean))
@@ -444,16 +511,26 @@ function LocationStep({
     }));
   }, [languages, nativeLanguage, workingLanguage]);
 
-  return <form className="mt-[2.2rem] w-full max-w-[50rem] max-[700px]:mt-[1.7rem]" onSubmit={(event) => { event.preventDefault(); if (!canSubmit) return; onComplete({ city: city.trim(), travel, preferredCities: cities, languages, nativeLanguage: nativeLanguage.trim(), workingLanguage: workingLanguage.trim() }); }}>
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    const next: { city?: string; travel?: string } = {};
+    if (!city.trim()) next.city = "Current city is required";
+    if (!travel) next.travel = "Choose how far you are willing to travel";
+    setFieldErrors(next);
+    if (Object.keys(next).length > 0) return;
+    onComplete({ city: city.trim(), travel, preferredCities: cities, languages, nativeLanguage: nativeLanguage.trim(), workingLanguage: workingLanguage.trim() });
+  };
+
+  return <form className="mt-[2.2rem] w-full max-w-[50rem] max-[700px]:mt-[1.7rem]" onSubmit={handleSubmit} noValidate>
     <div className="mt-[2.2rem]"><p className="m-0 text-[0.72rem] font-bold tracking-[0.16em] text-[oklch(0.51_0.08_279)]">LET THE RIGHT OPPORTUNITIES FIND YOU</p><h1 className="mt-[0.8rem] text-[clamp(2.8rem,6vw,3.8rem)] font-extrabold leading-[0.98] tracking-[-0.055em] text-[oklch(0.27_0.13_279)] max-[700px]:text-[2.8rem]">Help opportunities<br /><em className="not-italic text-[oklch(0.53_0.31_293)]">find you.</em></h1><p className="mt-4 max-w-[32rem] text-base font-medium leading-[1.55] text-[oklch(0.51_0.08_279)]">Share your location and language preferences to get better matches.</p></div>
-     <section className="mt-7"><FieldHeading Icon={MapPin} title="Current City" /><label className={`${searchClasses} ml-[2.1rem] max-w-[39rem] max-[700px]:ml-0`}><Search size={20} className="flex-none text-[oklch(0.51_0.08_279)]" /><input className="w-full border-0 bg-transparent text-[0.82rem] text-[oklch(0.27_0.13_279)] outline-0 placeholder:text-[oklch(0.51_0.08_279)]" value={city} onChange={(event) => setCity(event.target.value)} placeholder="e.g. Mumbai, Maharashtra, India" aria-label="Current city" required />{city.length > 0 && <button type="button" onClick={() => setCity("")} className="cursor-pointer border-0 bg-transparent text-[1.2rem] text-[oklch(0.51_0.08_279)]" aria-label="Clear current city">&times;</button>}</label></section>
-    <section className="mt-7"><FieldHeading Icon={Plane} title="Willing to Travel" description="Select how far you are open to travel for work." /><div className="grid grid-cols-3 gap-3 max-[700px]:grid-cols-1">{travelChoices.map(({ id, title, description, Icon }) => <button key={id} type="button" onClick={() => setTravel(id)} className={`relative grid min-h-[4.7rem] grid-cols-[2.2rem_1fr_auto] items-center gap-x-2 gap-y-[0.35rem] rounded-[0.7rem] border bg-[oklch(1_0_0_/_72%)] p-[0.65rem] text-left text-[oklch(0.27_0.13_279)] ${travel === id ? "border-[oklch(0.53_0.31_293)] shadow-[0_0_0_1px_oklch(0.53_0.31_293)]" : "border-[oklch(0.87_0.035_288)]"}`} aria-pressed={travel === id}><span className="row-span-2 grid size-8 place-items-center rounded-[0.55rem] bg-[oklch(0.95_0.03_295)] text-[oklch(0.53_0.31_293)]"><Icon /></span><strong className="text-[0.75rem]">{title}</strong><small className="text-[0.63rem] text-[oklch(0.51_0.08_279)]">{description}</small><i className={`absolute right-[0.6rem] top-[0.65rem] size-[0.7rem] rounded-full ${travel === id ? "bg-[oklch(0.53_0.31_293)] shadow-[inset_0_0_0_2px_white]" : "border border-[oklch(0.87_0.035_288)]"}`} /></button>)}</div></section>
+      <section className="mt-7"><FieldHeading Icon={MapPin} title="Current City" required /><label className={`${searchClasses} ml-[2.1rem] max-w-[39rem] max-[700px]:ml-0 ${fieldErrors.city ? "border-red-500" : ""}`}><Search size={20} className="flex-none text-[oklch(0.51_0.08_279)]" /><input className="w-full border-0 bg-transparent text-[0.82rem] text-[oklch(0.27_0.13_279)] outline-0 placeholder:text-[oklch(0.51_0.08_279)]" value={city} onChange={(event) => { setCity(event.target.value); setFieldErrors((current) => ({ ...current, city: undefined })); }} placeholder="e.g. Mumbai, Maharashtra, India" aria-label="Current city" aria-invalid={Boolean(fieldErrors.city)} />{city.length > 0 && <button type="button" onClick={() => setCity("")} className="cursor-pointer border-0 bg-transparent text-[1.2rem] text-[oklch(0.51_0.08_279)]" aria-label="Clear current city">&times;</button>}</label>{fieldErrors.city ? <p className="mt-1 ml-[2.1rem] text-[0.7rem] font-medium text-red-600 max-[700px]:ml-0" role="alert">{fieldErrors.city}</p> : null}</section>
+     <section className="mt-7"><FieldHeading Icon={Plane} title="Willing to Travel" required description="Select how far you are open to travel for work." /><div className="grid grid-cols-3 gap-3 max-[700px]:grid-cols-1">{travelChoices.map(({ id, title, description, Icon }) => <button key={id} type="button" onClick={() => { setTravel(id); setFieldErrors((current) => ({ ...current, travel: undefined })); }} className={`relative grid min-h-[4.7rem] grid-cols-[2.2rem_1fr_auto] items-center gap-x-2 gap-y-[0.35rem] rounded-[0.7rem] border bg-[oklch(1_0_0_/_72%)] p-[0.65rem] text-left text-[oklch(0.27_0.13_279)] ${travel === id ? "border-[oklch(0.53_0.31_293)] shadow-[0_0_0_1px_oklch(0.53_0.31_293)]" : fieldErrors.travel ? "border-red-500" : "border-[oklch(0.87_0.035_288)]"}`} aria-pressed={travel === id}><span className="row-span-2 grid size-8 place-items-center rounded-[0.55rem] bg-[oklch(0.95_0.03_295)] text-[oklch(0.53_0.31_293)]"><Icon /></span><strong className="text-[0.75rem]">{title}</strong><small className="text-[0.63rem] text-[oklch(0.51_0.08_279)]">{description}</small><i className={`absolute right-[0.6rem] top-[0.65rem] size-[0.7rem] rounded-full ${travel === id ? "bg-[oklch(0.53_0.31_293)] shadow-[inset_0_0_0_2px_white]" : "border border-[oklch(0.87_0.035_288)]"}`} /></button>)}</div>{fieldErrors.travel ? <p className="mt-1 text-[0.7rem] font-medium text-red-600" role="alert">{fieldErrors.travel}</p> : null}</section>
     <section className="mt-7"><FieldHeading Icon={MapPin} title="Preferred Cities" optional description="Select cities where you'd like to work." /><ChipInput values={cities} setValues={setCities} placeholder="Search and add cities" /></section>
     <section className="mt-7"><FieldHeading Icon={Languages} title="Languages Spoken" description="Select all languages you speak." /><LanguageMultiSelect values={languages} setValues={updateLanguages} /></section>
      <section className="mt-7 grid grid-cols-2 gap-6 max-[700px]:grid-cols-1 max-[700px]:gap-5"><div><FieldHeading Icon={Sparkles} title="Native Language" optional description="Choose one of your spoken languages." /><div className="ml-[2.1rem] max-w-[39rem] max-[700px]:ml-0"><Select value={nativeLanguage} onValueChange={setNativeLanguage} disabled={languages.length === 0}><SelectTrigger aria-label="Native language" className="flex min-h-[2.8rem] w-full items-center justify-between gap-3 rounded-xl border border-[oklch(0.87_0.035_288)] bg-[oklch(1_0_0_/_82%)] px-4 text-[0.82rem] text-[oklch(0.27_0.13_279)] shadow-[0_2px_8px_oklch(0.27_0.13_279_/_5%)] data-[placeholder]:text-[oklch(0.51_0.08_279)] disabled:cursor-not-allowed disabled:opacity-60"><SelectValue placeholder={languages.length === 0 ? "Add languages above first" : "Select native language"} /></SelectTrigger><SelectContent>{languages.map((lang) => <SelectItem key={lang} value={lang}>{lang}</SelectItem>)}</SelectContent></Select></div></div><div><FieldHeading Icon={Languages} title="Working Language" optional description="Choose one of your spoken languages." /><div className="ml-[2.1rem] max-w-[39rem] max-[700px]:ml-0"><Select value={workingLanguage} onValueChange={setWorkingLanguage} disabled={languages.length === 0}><SelectTrigger aria-label="Working language" className="flex min-h-[2.8rem] w-full items-center justify-between gap-3 rounded-xl border border-[oklch(0.87_0.035_288)] bg-[oklch(1_0_0_/_82%)] px-4 text-[0.82rem] text-[oklch(0.27_0.13_279)] shadow-[0_2px_8px_oklch(0.27_0.13_279_/_5%)] data-[placeholder]:text-[oklch(0.51_0.08_279)] disabled:cursor-not-allowed disabled:opacity-60"><SelectValue placeholder={languages.length === 0 ? "Add languages above first" : "Select working language"} /></SelectTrigger><SelectContent>{languages.map((lang) => <SelectItem key={lang} value={lang}>{lang}</SelectItem>)}</SelectContent></Select></div></div></section>
     <section className="mt-7"><FieldHeading Icon={Sparkles} title="Language Proficiency" optional description="Set your proficiency level for selected languages." />{proficiencyLanguages.length === 0 ? <p className="rounded-[0.7rem] border border-dashed border-[oklch(0.87_0.035_288)] bg-[oklch(1_0_0_/_72%)] px-4 py-5 text-center text-[0.75rem] text-[oklch(0.51_0.08_279)]">No languages selected yet. Add languages above to see proficiency here.</p> : <div className="overflow-hidden rounded-[0.7rem] border border-[oklch(0.87_0.035_288)] bg-[oklch(1_0_0_/_72%)]">{proficiencyLanguages.map(({ name, label, level }, rowIndex) => <div key={name} className={`grid min-h-[2.7rem] grid-cols-[9rem_8rem_1fr] items-center gap-[0.7rem] px-4 text-[0.7rem] max-[700px]:grid-cols-[5rem_6rem_1fr] max-[700px]:gap-[0.4rem] max-[700px]:px-[0.65rem] ${rowIndex ? "border-t border-[oklch(0.87_0.035_288)]" : ""}`}><strong>{name}</strong><span className="text-right text-[oklch(0.51_0.08_279)]">{label}</span><i className="flex gap-[0.18rem]">{Array.from({ length: 9 }, (_, index) => <b key={index} className={`block h-[0.35rem] w-[0.65rem] rounded-full max-[700px]:w-2 ${index < level ? "bg-[oklch(0.53_0.31_293)]" : "bg-[oklch(0.87_0.035_288)]"}`} />)}</i></div>)}</div>}</section>
      {error && <p className="mt-5 rounded-xl bg-red-500/10 px-4 py-3 text-sm font-medium text-red-700" role="alert">{error}</p>}
-      <button className={ctaClasses} type="submit" disabled={submitting || !canSubmit}><span>{submitting ? submittingLabel : submitLabel}</span>{submitting ? <Loader2 size={20} className="animate-spin" /> : <ArrowRight size={20} />}</button>
+       <button className={ctaClasses} type="submit" disabled={submitting}><span>{submitting ? submittingLabel : submitLabel}</span>{submitting ? <Loader2 size={20} className="animate-spin" /> : <ArrowRight size={20} />}</button>
     <div className="mt-[1.15rem] flex items-center gap-[0.7rem] text-[0.76rem] text-[oklch(0.51_0.08_279)]"><i className="h-px flex-1 bg-[oklch(0.87_0.035_288)]" /><p className="m-0 whitespace-nowrap">Already have an account? <a className="font-bold text-[oklch(0.53_0.31_293)] underline" href="/auth/login">Sign In</a></p><i className="h-px flex-1 bg-[oklch(0.87_0.035_288)]" /></div>
    </form>;
 }
@@ -662,9 +739,14 @@ function GoogleAccountStep({
   const [verifyingOtp, setVerifyingOtp] = useState(false);
   const [checkingUsername, setCheckingUsername] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof GoogleAccount, string>>>({});
+  const [usernameStatus, setUsernameStatus] = useState<"checking" | "available" | "taken" | undefined>();
 
   const update = (field: keyof GoogleAccount, value: string) => {
     setAccount({ ...account, [field]: value });
+    setFieldErrors((current) => ({ ...current, [field]: undefined }));
+    if (field === "username") setUsernameStatus(undefined);
+    setError(null);
   };
 
   const handlePhoneChange = (value: string) => {
@@ -676,7 +758,7 @@ function GoogleAccountStep({
 
   const handleSendOtp = async () => {
     if (account.phone.length !== 10) {
-      setError("Enter a valid 10-digit mobile number first.");
+      setFieldErrors((current) => ({ ...current, phone: "Enter a valid 10-digit mobile number first" }));
       return;
     }
     setError(null);
@@ -709,28 +791,42 @@ function GoogleAccountStep({
     }
   };
 
-  const canContinue =
-    account.fullName.trim().length > 0 &&
-    /^[a-zA-Z0-9]{6,20}$/.test(account.username.trim()) &&
-    account.phone.length === 10 &&
-    phoneVerified;
-
-  const handleContinue = async () => {
-    if (!canContinue) return;
-    setError(null);
+  const checkUsername = async () => {
     setCheckingUsername(true);
+    setUsernameStatus("checking");
     try {
       const result = await authApi.checkUsername(account.username.trim());
       if (!result.available) {
-        throw new Error("That username is not available. Please choose another one.");
+        setUsernameStatus("taken");
+        setFieldErrors((current) => ({ ...current, username: "Username already taken" }));
+        return false;
       }
-      onContinue();
-    } catch (err: unknown) {
-      const response = err as { response?: { data?: { message?: string } } };
-      setError(response.response?.data?.message || (err instanceof Error ? err.message : "Could not check that username."));
+      setUsernameStatus("available");
+      setFieldErrors((current) => ({ ...current, username: undefined }));
+      return true;
+    } catch {
+      setUsernameStatus(undefined);
+      setFieldErrors((current) => ({ ...current, username: "Could not check username availability" }));
+      return false;
     } finally {
       setCheckingUsername(false);
     }
+  };
+
+  const handleUsernameBlur = () => {
+    if (/^[a-zA-Z0-9]{6,20}$/.test(account.username.trim())) void checkUsername();
+  };
+
+  const handleContinue = async () => {
+    const next: Partial<Record<keyof GoogleAccount, string>> = {};
+    if (!account.fullName.trim()) next.fullName = "Full name is required";
+    if (!/^[a-zA-Z0-9]{6,20}$/.test(account.username.trim())) next.username = "Use 6-20 letters or numbers";
+    if (account.phone.length !== 10) next.phone = "Enter a valid 10-digit mobile number";
+    else if (!phoneVerified) next.phone = "Verify your mobile number before continuing";
+    setFieldErrors(next);
+    if (Object.keys(next).length > 0) return;
+    setError(null);
+    if (await checkUsername()) onContinue();
   };
 
   const ctaClasses = "flex min-h-[3.35rem] w-full items-center justify-center gap-3 rounded-xl border-0 bg-[linear-gradient(110deg,oklch(0.49_0.27_288),oklch(0.57_0.27_300))] text-base font-bold text-white shadow-[0_12px_28px_oklch(0.49_0.27_288_/_28%)] hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50";
@@ -742,6 +838,7 @@ function GoogleAccountStep({
         event.preventDefault();
         void handleContinue();
       }}
+      noValidate
     >
       <div
         className="grid min-w-0 items-stretch gap-6 bg-contain bg-center bg-no-repeat grid-cols-[minmax(0,7fr)_minmax(13rem,3fr)] max-[700px]:grid-cols-[minmax(0,7fr)_minmax(6rem,3fr)] max-[700px]:gap-3 max-[420px]:grid-cols-1"
@@ -766,10 +863,10 @@ function GoogleAccountStep({
           </div>
 
           <div className="mt-5 grid gap-[0.8rem]">
-            <AccountField id="google-full-name" label="Your Name" placeholder="Enter your full name" icon={<UserRound />} value={account.fullName} onChange={(value) => update("fullName", value)} />
-            <AccountField id="google-username" label="Choose a Username" placeholder="6-20 letters or numbers" icon={<User />} value={account.username} onChange={(value) => update("username", value.replace(/[^a-zA-Z0-9]/g, "").slice(0, 20))} />
+             <AccountField id="google-full-name" label="Your Name" placeholder="Enter your full name" icon={<UserRound />} value={account.fullName} onChange={(value) => update("fullName", value)} error={fieldErrors.fullName} />
+             <AccountField id="google-username" label="Choose a Username" placeholder="6-20 letters or numbers" icon={<User />} value={account.username} onChange={(value) => update("username", value.replace(/[^a-zA-Z0-9]/g, "").slice(0, 20))} onBlur={handleUsernameBlur} error={fieldErrors.username} status={usernameStatus} />
 
-            <div className="rounded-xl border border-[oklch(0.87_0.035_288)] bg-[oklch(1_0_0_/_78%)] px-4 py-3 shadow-[0_4px_14px_oklch(0.53_0.31_293_/_7%)] backdrop-blur-[8px]">
+             <div className={`rounded-xl border bg-[oklch(1_0_0_/_78%)] px-4 py-3 shadow-[0_4px_14px_oklch(0.53_0.31_293_/_7%)] backdrop-blur-[8px] ${fieldErrors.phone ? "border-red-500" : "border-[oklch(0.87_0.035_288)]"}`}>
               <div className="flex items-center gap-[0.85rem]">
                 <span className="grid w-8 flex-none place-items-center text-[oklch(0.53_0.31_293)] [&>svg]:size-[1.35rem] [&>svg]:stroke-[2.1]" aria-hidden="true"><Phone /></span>
                 <label htmlFor="google-mobile" className="min-w-0 flex-1">
@@ -777,14 +874,15 @@ function GoogleAccountStep({
                   <span className="mt-[0.2rem] flex items-center gap-[0.45rem] text-[0.88rem] text-[oklch(0.27_0.13_279)]">
                     <span className="grid h-[1.1rem] w-[1.4rem] place-items-center rounded-[0.2rem] bg-[oklch(0.9_0.04_285)] text-[0.52rem] font-extrabold text-[oklch(0.53_0.31_293)]" aria-label="India">IN</span>
                     <strong>+91</strong><ChevronDown size={15} className="text-[oklch(0.53_0.31_293)]" /><i className="h-[1.4rem] w-px bg-[oklch(0.87_0.035_288)]" />
-                    <input className="mt-0 min-w-0 w-full border-0 bg-transparent text-[0.9rem] text-[oklch(0.27_0.13_279)] outline-0 placeholder:text-[oklch(0.51_0.08_279)]" id="google-mobile" name="google-mobile" type="tel" inputMode="numeric" maxLength={10} value={account.phone} onChange={(event) => handlePhoneChange(event.target.value)} placeholder="Enter mobile number" required />
+                     <input className="mt-0 min-w-0 w-full border-0 bg-transparent text-[0.9rem] text-[oklch(0.27_0.13_279)] outline-0 placeholder:text-[oklch(0.51_0.08_279)]" id="google-mobile" name="google-mobile" type="tel" inputMode="numeric" maxLength={10} value={account.phone} onChange={(event) => handlePhoneChange(event.target.value)} placeholder="Enter mobile number" required aria-invalid={Boolean(fieldErrors.phone)} />
                   </span>
                 </label>
                 <button type="button" onClick={() => void handleSendOtp()} disabled={sendingOtp || account.phone.length !== 10 || phoneVerified} className="min-h-10 shrink-0 rounded-lg bg-[oklch(0.53_0.31_293)] px-3 text-[0.72rem] font-bold text-white shadow-[0_6px_14px_oklch(0.53_0.31_293_/_22%)] hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50">
                   {sendingOtp ? "Sending..." : phoneVerified ? "Verified" : "Send OTP"}
                 </button>
               </div>
-              {phoneVerified ? <p className="mt-2 pl-[2.85rem] text-[0.72rem] font-semibold text-[oklch(0.57_0.16_153)]"><CheckCircle2 className="mr-1 inline size-3.5 align-[-0.15rem]" />Phone number verified</p> : <p className="mt-2 pl-[2.85rem] text-[0.72rem] text-[oklch(0.51_0.08_279)]"><LockKeyhole className="mr-1 inline size-3.5 align-[-0.15rem]" />We&apos;ll send a verification code to your number</p>}
+               {phoneVerified ? <p className="mt-2 pl-[2.85rem] text-[0.72rem] font-semibold text-[oklch(0.57_0.16_153)]"><CheckCircle2 className="mr-1 inline size-3.5 align-[-0.15rem]" />Phone number verified</p> : <p className="mt-2 pl-[2.85rem] text-[0.72rem] text-[oklch(0.51_0.08_279)]"><LockKeyhole className="mr-1 inline size-3.5 align-[-0.15rem]" />We&apos;ll send a verification code to your number</p>}
+               {fieldErrors.phone ? <p className="mt-1 pl-[2.85rem] text-[0.7rem] font-medium text-red-600" role="alert">{fieldErrors.phone}</p> : null}
             </div>
 
             {otpSent && !phoneVerified && <div className="rounded-xl border border-[oklch(0.87_0.035_288)] bg-white/70 px-4 py-4"><p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.12em] text-[oklch(0.51_0.08_279)]">Enter phone OTP</p><OtpInput value={otp} onChange={setOtp} className="mt-3" /><button type="button" onClick={() => void handleVerifyOtp()} disabled={verifyingOtp || otp.length < 6} className="mt-3 min-h-10 w-full rounded-lg border border-[oklch(0.53_0.31_293)] bg-transparent text-sm font-bold text-[oklch(0.53_0.31_293)] disabled:cursor-not-allowed disabled:opacity-50">{verifyingOtp ? "Verifying..." : "Verify phone number"}</button></div>}
@@ -794,7 +892,7 @@ function GoogleAccountStep({
       </div>
 
       {error && <p className="mt-4 rounded-xl bg-red-500/10 px-4 py-3 text-sm font-medium text-red-700" role="alert">{error}</p>}
-      <button className={`${ctaClasses} mt-5`} type="submit" disabled={!canContinue || checkingUsername}><span>{checkingUsername ? "Checking username..." : "Continue"}</span>{checkingUsername ? <Loader2 size={20} className="animate-spin" /> : <ArrowRight size={20} />}</button>
+      <button className={`${ctaClasses} mt-5`} type="submit" disabled={checkingUsername}><span>{checkingUsername ? "Checking username..." : "Continue"}</span>{checkingUsername ? <Loader2 size={20} className="animate-spin" /> : <ArrowRight size={20} />}</button>
       <div className="mt-[1.15rem] flex items-center gap-[0.7rem] text-[0.76rem] text-[oklch(0.51_0.08_279)]"><i className="h-px flex-1 bg-[oklch(0.87_0.035_288)]" /><p className="m-0 whitespace-nowrap">Your Google email is already verified</p><i className="h-px flex-1 bg-[oklch(0.87_0.035_288)]" /></div>
     </form>
   );

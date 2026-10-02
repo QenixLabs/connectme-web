@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import {
   Eye,
@@ -18,7 +17,6 @@ import {
 } from "lucide-react";
 import { RootInLogo } from "@/components/RootInLogo";
 import { SocialAuthButtons } from "@/components/auth/social-auth-buttons";
-import { ScriptNote } from "./brand";
 import { Field, inputClass } from "./field";
 
 export type AccountValues = {
@@ -55,6 +53,7 @@ export function StepAccount({
   const [showPassword, setShowPassword] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof AccountValues, string>>>({});
+  const [agreementError, setAgreementError] = useState<string | null>(null);
 
   const set = (key: keyof AccountValues) => (value: string) => {
     onChange({ ...values, [key]: value });
@@ -70,8 +69,10 @@ export function StepAccount({
     if (digits.length !== 10) next.phone = "Enter a valid 10-digit mobile number";
     const passwordError = validatePassword(values.password);
     if (passwordError) next.password = passwordError;
+    if (!agreed) setAgreementError("Accept the Terms of Service and Privacy Policy to continue");
+    else setAgreementError(null);
     setErrors(next);
-    if (Object.keys(next).length === 0) onContinue();
+    if (Object.keys(next).length === 0 && agreed) onContinue();
   };
 
   return (
@@ -136,32 +137,32 @@ export function StepAccount({
        </div>
 
       <div className="space-y-2">
-        <Field icon={<User className="size-5" />} label="Full Name">
+         <Field icon={<User className="size-5" />} label="Full Name" required error={errors.fullName}>
           <input
             required
             className={inputClass}
             placeholder="e.g. Karan Mehta"
-            value={values.fullName}
-            onChange={(e) => set("fullName")(e.target.value)}
-          />
-        </Field>
-        {errors.fullName ? (
-            <p className="-mt-1 px-1 text-[11px] text-destructive">{errors.fullName}</p>
-        ) : null}
-        <Field icon={<Mail className="size-5" />} label="Work Email">
+             value={values.fullName}
+             onChange={(e) => set("fullName")(e.target.value)}
+             aria-invalid={Boolean(errors.fullName)}
+           />
+         </Field>
+         <Field icon={<Mail className="size-5" />} label="Work Email" required error={errors.email}>
           <input
             required
             type="email"
             className={inputClass}
             placeholder="e.g. karan@company.com"
-            value={values.email}
-            onChange={(e) => set("email")(e.target.value)}
-          />
-        </Field>
-        {errors.email ? <p className="-mt-1 px-1 text-[11px] text-destructive">{errors.email}</p> : null}
-        <Field
-          icon={<Phone className="size-5" />}
-          label="Mobile Number"
+             value={values.email}
+             onChange={(e) => set("email")(e.target.value)}
+             aria-invalid={Boolean(errors.email)}
+           />
+         </Field>
+         <Field
+           icon={<Phone className="size-5" />}
+           label="Mobile Number"
+           required
+           error={errors.phone}
           trailing={
             <span className="rounded-md border border-border px-2 py-0.5 text-xs font-semibold text-muted-foreground">
               IN
@@ -174,16 +175,16 @@ export function StepAccount({
             maxLength={10}
             className={inputClass}
             placeholder="98765 43210"
-            value={values.phone}
-            onChange={(e) => set("phone")(e.target.value.replace(/\D/g, "").slice(0, 10))}
-          />
-        </Field>
-        {errors.phone ? (
-            <p className="-mt-1 px-1 text-[11px] text-destructive">{errors.phone}</p>
-        ) : null}
-        <Field
-          icon={<Lock className="size-5" />}
-          label="Password"
+             value={values.phone}
+             onChange={(e) => set("phone")(e.target.value.replace(/\D/g, "").slice(0, 10))}
+             aria-invalid={Boolean(errors.phone)}
+           />
+         </Field>
+         <Field
+           icon={<Lock className="size-5" />}
+           label="Password"
+           required
+           error={errors.password}
           trailing={
             <button
               type="button"
@@ -200,14 +201,12 @@ export function StepAccount({
             type={showPassword ? "text" : "password"}
             className={inputClass}
             placeholder="Create a strong password"
-            value={values.password}
-            onChange={(e) => set("password")(e.target.value)}
-          />
-        </Field>
-        {errors.password ? (
-          <p className="-mt-1 px-1 text-[11px] text-destructive">{errors.password}</p>
-        ) : null}
-      </div>
+             value={values.password}
+             onChange={(e) => set("password")(e.target.value)}
+             aria-invalid={Boolean(errors.password)}
+           />
+         </Field>
+       </div>
 
       <SocialAuthButtons role="recruiter" mode="signup" />
 
@@ -215,18 +214,25 @@ export function StepAccount({
         <input
           type="checkbox"
           checked={agreed}
-          onChange={(e) => setAgreed(e.target.checked)}
-          className="size-4 shrink-0 accent-[var(--primary)]"
+          onChange={(e) => {
+            setAgreed(e.target.checked);
+            if (e.target.checked) setAgreementError(null);
+          }}
+          className={`size-4 shrink-0 accent-[var(--primary)] ${agreementError ? "ring-2 ring-destructive ring-offset-1" : ""}`}
         />
         <span>
           I agree to the <span className="font-semibold text-primary">Terms of Service</span> and{" "}
           <span className="font-semibold text-primary">Privacy Policy</span>
         </span>
       </label>
+      {agreementError ? (
+        <p className="-mt-1 text-[11px] font-medium text-destructive" role="alert">
+          {agreementError}
+        </p>
+      ) : null}
 
       <button
         type="submit"
-        disabled={!agreed}
         className="bg-[linear-gradient(100deg,#7c3aed,#a855f7)] shadow-button flex h-[52px] w-full items-center justify-center gap-2 rounded-xl px-6 text-[15px] font-semibold text-primary-foreground transition-opacity disabled:opacity-50"
       >
         Create Account

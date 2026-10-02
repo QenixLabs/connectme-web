@@ -94,10 +94,68 @@ export function SignupWizard({
       if (!ok) return;
 
       const values = form.getValues();
+      let profileFieldsValid = true;
+      if (role === "talent") {
+        if (!values.username.trim()) {
+          form.setError("username", { type: "required", message: "Username is required" });
+          profileFieldsValid = false;
+        } else if (!/^[a-zA-Z0-9]{6,20}$/.test(values.username.trim())) {
+          form.setError("username", { type: "validate", message: "Use 6-20 letters or numbers" });
+          profileFieldsValid = false;
+        } else {
+          form.clearErrors("username");
+        }
+
+        if (!values.profession.trim()) {
+          form.setError("profession", { type: "required", message: "Please select a profession" });
+          profileFieldsValid = false;
+        } else {
+          form.clearErrors("profession");
+        }
+      } else {
+        if (!values.companyName.trim()) {
+          form.setError("companyName", { type: "required", message: "Company name is required" });
+          profileFieldsValid = false;
+        } else {
+          form.clearErrors("companyName");
+        }
+        if (!values.companySize) {
+          form.setError("companySize", { type: "required", message: "Please select company size" });
+          profileFieldsValid = false;
+        } else {
+          form.clearErrors("companySize");
+        }
+        if (values.companyWebsite && !/^https?:\/\//i.test(values.companyWebsite.trim())) {
+          form.setError("companyWebsite", { type: "validate", message: "Enter a valid URL" });
+          profileFieldsValid = false;
+        } else {
+          form.clearErrors("companyWebsite");
+        }
+      }
+      if (!profileFieldsValid) return;
+      if (role === "talent") {
+        try {
+          const usernameResult = await authApi.checkUsername(values.username);
+          if (!usernameResult.available) {
+            form.setError("username", {
+              type: "validate",
+              message: "Username already taken",
+            });
+            return;
+          }
+        } catch {
+          setApiError("Could not check username availability. Please try again.");
+          return;
+        }
+      }
       if (role === "talent" && values.profession === "Influencer" && !values.creator_link) {
-        setApiError("Creator link is required for Influencers.");
+        form.setError("creator_link", {
+          type: "required",
+          message: "Creator link is required for Influencers",
+        });
         return;
       }
+      form.clearErrors("creator_link");
 
       setSignupLoading(true);
       try {

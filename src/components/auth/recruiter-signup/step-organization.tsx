@@ -43,6 +43,7 @@ function OrgDropdown({
   icon,
   label,
   required,
+  error,
   value,
   placeholder,
   options,
@@ -51,13 +52,16 @@ function OrgDropdown({
   icon: ReactNode;
   label: string;
   required?: boolean;
+  error?: string | null;
   value: string;
   placeholder: string;
   options: string[];
   onSelect: (value: string) => void;
 }) {
   return (
-    <div className="flex min-h-[52px] items-center gap-3 rounded-[13px] border border-border bg-card px-3 py-2 shadow-[0_2px_8px_rgba(55,33,110,0.04)] transition-colors focus-within:border-primary">
+    <div
+      className={`flex min-h-[52px] items-center gap-3 rounded-[13px] border bg-card px-3 py-2 shadow-[0_2px_8px_rgba(55,33,110,0.04)] transition-colors focus-within:border-primary ${error ? "border-destructive" : "border-border"}`}
+    >
       <span className="shrink-0 text-muted-foreground [&>svg]:size-[18px]">{icon}</span>
       <span className="min-w-0 flex-1">
         <span className="block text-[10px] leading-3 text-muted-foreground">
@@ -97,10 +101,15 @@ function OrgDropdown({
                 {value === option ? <Check className="size-4 shrink-0" /> : null}
               </DropdownMenuItem>
             ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </span>
-    </div>
+           </DropdownMenuContent>
+         </DropdownMenu>
+         {error ? (
+           <span className="mt-1 block text-[11px] font-medium text-destructive" role="alert">
+             {error}
+           </span>
+         ) : null}
+       </span>
+     </div>
   );
 }
 
@@ -125,11 +134,11 @@ export function StepOrganization({
 }) {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoError, setLogoError] = useState<string | null>(null);
-  const [industryError, setIndustryError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Partial<Record<keyof OrgValues, string>>>({});
 
   const set = <K extends keyof OrgValues>(key: K, value: OrgValues[K]) => {
     onChange({ ...values, [key]: value });
-    if (key === "industry") setIndustryError(null);
+    setErrors((current) => ({ ...current, [key]: undefined }));
   };
 
   const handleLogoChange = (file: File | undefined) => {
@@ -155,12 +164,22 @@ export function StepOrganization({
   return (
     <form
       className="space-y-6"
+      noValidate
       onSubmit={(event) => {
         event.preventDefault();
-        if (!values.industry) {
-          setIndustryError("Please select your industry");
-          return;
+        const next: Partial<Record<keyof OrgValues, string>> = {};
+        if (!values.independent && !values.name.trim()) next.name = "Organization name is required";
+        if (!values.industry) next.industry = "Please select your industry";
+        if (!values.city.trim()) next.city = "City or location is required";
+        if (values.website.trim()) {
+          try {
+            new URL(values.website.trim());
+          } catch {
+            next.website = "Enter a valid website URL";
+          }
         }
+        setErrors(next);
+        if (Object.keys(next).length > 0) return;
         onSubmit();
       }}
     >
@@ -232,7 +251,12 @@ export function StepOrganization({
       </div>
 
       <div className="space-y-3">
-        <Field icon={<Building2 className="size-5" />} label="Organization Name" required>
+          <Field
+            icon={<Building2 className="size-5" />}
+            label="Organization Name"
+            required={!values.independent}
+            error={errors.name}
+          >
           <input
             required={!values.independent}
             disabled={values.independent}
@@ -240,35 +264,36 @@ export function StepOrganization({
             placeholder="e.g. R1 Casting Agency"
             value={values.name}
             onChange={(e) => set("name", e.target.value)}
+            aria-invalid={Boolean(errors.name)}
           />
         </Field>
         <OrgDropdown
-          icon={<Layers className="size-5" />}
-          label="Industry"
-          required
-          value={values.industry}
+           icon={<Layers className="size-5" />}
+           label="Industry"
+           required
+           error={errors.industry}
+           value={values.industry}
           placeholder="Select your industry"
           options={industries}
           onSelect={(value) => set("industry", value)}
         />
-        {industryError ? (
-          <p className="-mt-2 px-1 text-[11px] text-destructive">{industryError}</p>
-        ) : null}
-        <Field icon={<MapPin className="size-5" />} label="City / Location" required>
+        <Field icon={<MapPin className="size-5" />} label="City / Location" required error={errors.city}>
           <input
             required
             className={inputClass}
             placeholder="e.g. Mumbai, India"
             value={values.city}
             onChange={(e) => set("city", e.target.value)}
+            aria-invalid={Boolean(errors.city)}
           />
         </Field>
-        <Field icon={<Globe className="size-5" />} label="Website" hint="(Optional)">
+        <Field icon={<Globe className="size-5" />} label="Website" hint="(Optional)" error={errors.website}>
           <input
             className={inputClass}
             placeholder="https://www.yourwebsite.com"
             value={values.website}
             onChange={(e) => set("website", e.target.value)}
+            aria-invalid={Boolean(errors.website)}
           />
         </Field>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -293,7 +318,11 @@ export function StepOrganization({
 
       <button
         type="button"
-        onClick={() => set("independent", !values.independent)}
+        onClick={() => {
+          const independent = !values.independent;
+          set("independent", independent);
+          if (independent) setErrors((current) => ({ ...current, name: undefined }));
+        }}
         aria-pressed={values.independent}
         className="flex w-full items-center gap-4 rounded-2xl bg-accent/60 p-4 text-left"
       >
@@ -317,7 +346,7 @@ export function StepOrganization({
       </button>
 
       {error ? (
-        <p className="rounded-2xl bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive">
+        <p className="rounded-2xl bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive" role="alert">
           {error}
         </p>
       ) : null}

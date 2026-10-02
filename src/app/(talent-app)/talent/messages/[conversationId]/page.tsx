@@ -165,7 +165,7 @@ export default function TalentConversationPage() {
   const name = participant?.full_legal_name || participant?.company_name || "Unknown";
 
   return (
-    <div className="fixed inset-x-0 top-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-40 flex flex-col bg-background lg:bottom-0">
+    <div className="fixed inset-0 z-40 flex flex-col bg-background">
       <div className="flex h-full flex-col overflow-hidden">
         <ConversationHeader
           participant={participant}

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { ArrowRight, Check, Eye, Search, Sparkles, X } from "lucide-react";
+import { ArrowRight, Check, ChevronDown, Eye, Search, Sparkles, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +12,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import {
@@ -41,6 +46,9 @@ export function SkillsEditor({ profile, onBack, onUpdate }: EditorProps) {
   const [selectedIds, setSelectedIds] = useState<string[]>(() => getInitialSkillIds(profile));
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<FilterCategory>("All");
+  const [expandedCategories, setExpandedCategories] = useState<Set<SkillCategory>>(
+    () => new Set(),
+  );
 
   const selectedSkills = selectedIds
     .map((id) => getSkillById(id))
@@ -52,6 +60,15 @@ export function SkillsEditor({ profile, onBack, onUpdate }: EditorProps) {
     setSelectedIds((current) =>
       current.includes(id) ? current.filter((selectedId) => selectedId !== id) : [...current, id],
     );
+  };
+
+  const setCategoryExpanded = (category: SkillCategory, open: boolean) => {
+    setExpandedCategories((current) => {
+      const next = new Set(current);
+      if (open) next.add(category);
+      else next.delete(category);
+      return next;
+    });
   };
 
   const save = () => {
@@ -223,73 +240,90 @@ export function SkillsEditor({ profile, onBack, onUpdate }: EditorProps) {
             const categoryTone = SKILL_TONE_STYLES[category.tone];
 
             return (
-              <Card
+              <Collapsible
                 key={category.name}
-                className="gap-0 overflow-hidden rounded-[24px] border-[#e8e3fb] bg-[#f8f7ff] shadow-[0_10px_26px_rgba(75,61,157,0.07)]"
+                open={expandedCategories.has(category.name)}
+                onOpenChange={(open) => setCategoryExpanded(category.name, open)}
+                asChild
               >
-                <CardHeader className="flex flex-row items-center gap-3 px-4 pb-3 pt-4">
-                  <span
-                    className="grid size-10 shrink-0 place-items-center rounded-2xl"
-                    style={{
-                      backgroundColor: categoryTone.background,
-                      color: categoryTone.foreground,
-                    }}
-                  >
-                    <CategoryIcon className="size-[19px]" strokeWidth={2.25} aria-hidden="true" />
-                  </span>
-                  <div className="min-w-0">
-                    <CardTitle className="text-[16px] tracking-[-0.025em] text-[#17245b]">
-                      {category.name}
-                    </CardTitle>
-                    <p className="mt-0.5 text-[10.5px] font-medium text-[#817d9f]">
-                      {skills.length} {skills.length === 1 ? "skill" : "skills"}
-                      {query.trim() ? " matched" : " to explore"}
-                    </p>
-                  </div>
-                </CardHeader>
-                <CardContent className="grid grid-cols-2 gap-2.5 px-4 pb-4 min-[360px]:grid-cols-3">
-                  {skills.map((skill) => {
-                    const selected = selectedIdSet.has(skill.id);
-                    const tone = SKILL_TONE_STYLES[skill.tone];
-                    const Icon = skill.icon;
-
-                    return (
-                      <Button
-                        key={skill.id}
+                <Card className="gap-0 overflow-hidden rounded-[24px] border-[#e8e3fb] bg-[#f8f7ff] shadow-[0_10px_26px_rgba(75,61,157,0.07)]">
+                  <CardHeader className="p-0">
+                    <CollapsibleTrigger asChild>
+                      <button
                         type="button"
-                        variant="ghost"
-                        aria-pressed={selected}
-                        onClick={() => toggleSkill(skill.id)}
-                        className={cn(
-                          "group relative flex h-auto min-h-[110px] min-w-0 w-full flex-col items-center justify-center gap-2 rounded-2xl px-2 py-3 text-center transition-all duration-200 focus-visible:ring-[#7754ee]/50 active:scale-[0.98]",
-                          selected
-                            ? "border border-[#7449f3] bg-[#f4f0ff] shadow-[0_7px_16px_rgba(96,63,226,0.12)] hover:bg-[#f4f0ff]"
-                            : "border border-transparent bg-white shadow-[0_5px_14px_rgba(75,61,157,0.07)] hover:-translate-y-0.5 hover:border-[#d6cbfb] hover:bg-white hover:shadow-[0_9px_18px_rgba(75,61,157,0.11)]",
-                        )}
+                        className="group flex w-full items-center gap-3 px-4 pb-3 pt-4 text-left outline-none focus-visible:ring-2 focus-visible:ring-[#7754ee]/40 focus-visible:ring-inset"
                       >
-                        {selected ? (
-                          <span className="absolute right-2 top-2 grid size-5 place-items-center rounded-full bg-gradient-to-br from-[#4f2cf0] to-[#9a2ff1] text-white shadow-sm">
-                            <Check className="size-3" strokeWidth={3} />
-                          </span>
-                        ) : null}
                         <span
-                          className="grid size-12 shrink-0 place-items-center rounded-full transition-transform duration-200 group-hover:scale-105"
+                          className="grid size-10 shrink-0 place-items-center rounded-2xl"
                           style={{
-                            backgroundColor: tone.background,
-                            color: tone.foreground,
-                            boxShadow: `inset 0 0 0 1px ${tone.ring}`,
+                            backgroundColor: categoryTone.background,
+                            color: categoryTone.foreground,
                           }}
                         >
-                          <Icon className="size-[22px]" strokeWidth={2.1} aria-hidden="true" />
+                          <CategoryIcon className="size-[19px]" strokeWidth={2.25} aria-hidden="true" />
                         </span>
-                        <span className="line-clamp-2 text-[11px] font-bold leading-tight text-[#202957]">
-                          {skill.name}
-                        </span>
-                      </Button>
-                    );
-                  })}
-                </CardContent>
-              </Card>
+                        <div className="min-w-0 flex-1">
+                          <span className="block text-[16px] font-semibold leading-none tracking-[-0.025em] text-[#17245b]">
+                            {category.name}
+                          </span>
+                          <p className="mt-0.5 text-[10.5px] font-medium text-[#817d9f]">
+                            {skills.length} {skills.length === 1 ? "skill" : "skills"}
+                            {query.trim() ? " matched" : " to explore"}
+                          </p>
+                        </div>
+                        <ChevronDown
+                          className="size-5 shrink-0 text-[#817d9f] transition-transform duration-200 group-data-[state=open]:rotate-180"
+                          aria-hidden="true"
+                        />
+                      </button>
+                    </CollapsibleTrigger>
+                  </CardHeader>
+                  <CollapsibleContent>
+                    <CardContent className="grid grid-cols-2 gap-2.5 px-4 pb-4 min-[360px]:grid-cols-3">
+                      {skills.map((skill) => {
+                        const selected = selectedIdSet.has(skill.id);
+                        const tone = SKILL_TONE_STYLES[skill.tone];
+                        const Icon = skill.icon;
+
+                        return (
+                          <Button
+                            key={skill.id}
+                            type="button"
+                            variant="ghost"
+                            aria-pressed={selected}
+                            onClick={() => toggleSkill(skill.id)}
+                            className={cn(
+                              "group relative flex h-auto min-h-[110px] min-w-0 w-full flex-col items-center justify-center gap-2 rounded-2xl px-2 py-3 text-center transition-all duration-200 focus-visible:ring-[#7754ee]/50 active:scale-[0.98]",
+                              selected
+                                ? "border border-[#7449f3] bg-[#f4f0ff] shadow-[0_7px_16px_rgba(96,63,226,0.12)] hover:bg-[#f4f0ff]"
+                                : "border border-transparent bg-white shadow-[0_5px_14px_rgba(75,61,157,0.07)] hover:-translate-y-0.5 hover:border-[#d6cbfb] hover:bg-white hover:shadow-[0_9px_18px_rgba(75,61,157,0.11)]",
+                            )}
+                          >
+                            {selected ? (
+                              <span className="absolute right-2 top-2 grid size-5 place-items-center rounded-full bg-gradient-to-br from-[#4f2cf0] to-[#9a2ff1] text-white shadow-sm">
+                                <Check className="size-3" strokeWidth={3} />
+                              </span>
+                            ) : null}
+                            <span
+                              className="grid size-12 shrink-0 place-items-center rounded-full transition-transform duration-200 group-hover:scale-105"
+                              style={{
+                                backgroundColor: tone.background,
+                                color: tone.foreground,
+                                boxShadow: `inset 0 0 0 1px ${tone.ring}`,
+                              }}
+                            >
+                              <Icon className="size-[22px]" strokeWidth={2.1} aria-hidden="true" />
+                            </span>
+                            <span className="line-clamp-2 text-[11px] font-bold leading-tight text-[#202957]">
+                              {skill.name}
+                            </span>
+                          </Button>
+                        );
+                      })}
+                    </CardContent>
+                  </CollapsibleContent>
+                </Card>
+              </Collapsible>
             );
           })
         ) : (

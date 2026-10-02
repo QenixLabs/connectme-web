@@ -5,6 +5,7 @@ export function Field({
   label,
   required,
   hint,
+  error,
   children,
   trailing,
 }: {
@@ -12,11 +13,14 @@ export function Field({
   label: string;
   required?: boolean;
   hint?: string;
+  error?: string | null;
   children: ReactNode;
   trailing?: ReactNode;
 }) {
   return (
-    <label className="flex min-h-[52px] items-center gap-3 rounded-[13px] border border-border bg-card px-3 py-2 shadow-[0_2px_8px_rgba(55,33,110,0.04)] transition-colors focus-within:border-primary">
+    <label
+      className={`flex min-h-[52px] items-center gap-3 rounded-[13px] border bg-card px-3 py-2 shadow-[0_2px_8px_rgba(55,33,110,0.04)] transition-colors focus-within:border-primary ${error ? "border-destructive" : "border-border"}`}
+    >
       <span className="shrink-0 text-muted-foreground [&>svg]:size-[18px]">{icon}</span>
       <span className="min-w-0 flex-1">
         <span className="block text-[10px] leading-3 text-muted-foreground">
@@ -25,6 +29,11 @@ export function Field({
           {hint ? <span className="ml-1 text-muted-foreground/70">{hint}</span> : null}
         </span>
         {children}
+        {error ? (
+          <span className="mt-1 block text-[11px] font-medium text-destructive" role="alert">
+            {error}
+          </span>
+        ) : null}
       </span>
       {trailing}
     </label>

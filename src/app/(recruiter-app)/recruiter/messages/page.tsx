@@ -301,7 +301,7 @@ export default function RecruiterMessagesPage() {
   }
 
   return (
-    <div className="fixed inset-x-0 top-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-40 flex w-full min-w-0 max-w-full flex-col overflow-hidden bg-background lg:bottom-0">
+    <div className="fixed inset-0 z-40 flex w-full min-w-0 max-w-full flex-col overflow-hidden bg-background">
       <div className="flex h-full w-full min-w-0 max-w-full flex-col overflow-hidden lg:grid lg:grid-cols-[380px_1fr] lg:gap-0">
         <ConversationList
           conversations={filtered}

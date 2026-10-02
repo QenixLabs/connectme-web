@@ -232,9 +232,12 @@ function GoogleRecruiterAccountStep({
   const [sendingOtp, setSendingOtp] = useState(false);
   const [verifyingOtp, setVerifyingOtp] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof GoogleRecruiterAccount, string>>>({});
 
   const update = (field: keyof GoogleRecruiterAccount, value: string) => {
     setAccount({ ...account, [field]: value });
+    setFieldErrors((current) => ({ ...current, [field]: undefined }));
+    setError(null);
   };
 
   const handlePhoneChange = (value: string) => {
@@ -246,7 +249,7 @@ function GoogleRecruiterAccountStep({
 
   const handleSendOtp = async () => {
     if (account.phone.length !== 10) {
-      setError("Enter a valid 10-digit mobile number first.");
+      setFieldErrors((current) => ({ ...current, phone: "Enter a valid 10-digit mobile number first" }));
       return;
     }
     setError(null);
@@ -281,14 +284,17 @@ function GoogleRecruiterAccountStep({
 
   const handleContinue = (event: React.FormEvent) => {
     event.preventDefault();
+    const next: Partial<Record<keyof GoogleRecruiterAccount, string>> = {};
     if (!account.contactName.trim()) {
-      setError("Enter your full name.");
-      return;
+      next.contactName = "Contact name is required";
     }
-    if (account.phone.length !== 10 || !phoneVerified) {
-      setError("Verify your mobile number before continuing.");
-      return;
+    if (account.phone.length !== 10) {
+      next.phone = "Enter a valid 10-digit mobile number";
+    } else if (!phoneVerified) {
+      next.phone = "Verify your mobile number before continuing";
     }
+    setFieldErrors(next);
+    if (Object.keys(next).length > 0) return;
     setError(null);
     onContinue();
   };
@@ -324,7 +330,7 @@ function GoogleRecruiterAccountStep({
       </div>
 
       <div className="space-y-3">
-        <Field icon={<User className="size-5" />} label="Contact Name" required>
+        <Field icon={<User className="size-5" />} label="Contact Name" required error={fieldErrors.contactName}>
           <input
             required
             autoComplete="name"
@@ -332,6 +338,7 @@ function GoogleRecruiterAccountStep({
             placeholder="e.g. Karan Mehta"
             value={account.contactName}
             onChange={(event) => update("contactName", event.target.value)}
+            aria-invalid={Boolean(fieldErrors.contactName)}
           />
         </Field>
 
@@ -345,9 +352,10 @@ function GoogleRecruiterAccountStep({
         </Field>
 
         <Field
-          icon={<Phone className="size-5" />}
-          label="Mobile Number"
-          required
+           icon={<Phone className="size-5" />}
+           label="Mobile Number"
+           required
+           error={fieldErrors.phone}
           trailing={
             <button
               type="button"
@@ -368,6 +376,7 @@ function GoogleRecruiterAccountStep({
             placeholder="98765 43210"
             value={account.phone}
             onChange={(event) => handlePhoneChange(event.target.value)}
+            aria-invalid={Boolean(fieldErrors.phone)}
           />
         </Field>
       </div>

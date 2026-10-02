@@ -146,13 +146,17 @@ function Hero() {
           Your reputation opens doors.
         </p>
       </div>
-      <Image
-        src="/assets/talent-edit/talent-rep-header.png"
-        alt="Film set representing talent reputation"
-        width={700}
-        height={400}
-        className="pointer-events-none absolute -right-16 bottom-0 z-0 h-[205px] w-[76%] max-w-[620px] object-contain object-right-bottom sm:-right-5 sm:h-[245px] sm:w-[61%]"
-      />
+      <div className="pointer-events-none absolute inset-0 z-0">
+        <Image
+          src="/assets/talent-edit/talent-rep-header.png"
+          alt=""
+          fill
+          sizes="(max-width: 640px) 100vw, 1200px"
+          className="object-cover object-center"
+          aria-hidden="true"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#F4EEFF]/95 via-[#FBFAFF]/65 to-transparent" />
+      </div>
     </section>
   );
 }

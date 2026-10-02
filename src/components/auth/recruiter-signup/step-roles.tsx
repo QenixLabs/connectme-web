@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 import {
   Megaphone,
   Users,
@@ -85,6 +86,16 @@ export function StepRoles({
   onToggle: (id: string) => void;
   onContinue: () => void;
 }) {
+  const [error, setError] = useState<string | null>(null);
+
+  const handleContinue = () => {
+    if (selected.length === 0) {
+      setError("Select at least one role to continue");
+      return;
+    }
+    onContinue();
+  };
+
   return (
     <div className="space-y-6">
       <div
@@ -111,7 +122,7 @@ export function StepRoles({
       </div>
         </div>
 
-      <div className="grid grid-cols-2 gap-2.5 sm:gap-4">
+      <div className="grid grid-cols-2 gap-2.5 sm:gap-4" aria-invalid={Boolean(error)}>
         {roles.map(({ id, icon: Icon, title, text, image }) => {
           const active = selected.includes(id);
           return (
@@ -119,7 +130,10 @@ export function StepRoles({
               key={id}
               type="button"
               aria-pressed={active}
-              onClick={() => onToggle(id)}
+              onClick={() => {
+                onToggle(id);
+                setError(null);
+              }}
               className={`relative grid min-h-[10.5rem] grid-cols-[minmax(0,1fr)_5.5rem] gap-2 overflow-hidden rounded-2xl border p-2.5 text-left shadow-[var(--shadow-onboarding-card)] transition-colors sm:min-h-44 sm:grid-cols-[minmax(0,1fr)_6rem] sm:p-3 ${
                 active ? "border-primary bg-accent/50" : "border-border bg-card hover:bg-accent/30"
               }`}
@@ -152,6 +166,11 @@ export function StepRoles({
           );
         })}
       </div>
+      {error ? (
+        <p className="-mt-3 text-sm font-medium text-destructive" role="alert">
+          {error}
+        </p>
+      ) : null}
 
       <div className="flex items-start gap-3 rounded-2xl bg-accent/60 p-4">
         <Sparkles className="size-5 shrink-0 text-primary" />
@@ -165,8 +184,7 @@ export function StepRoles({
 
       <button
         type="button"
-        disabled={selected.length === 0}
-        onClick={onContinue}
+        onClick={handleContinue}
         className="gradient-cta shadow-button flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-4 text-lg font-semibold text-primary-foreground transition-opacity disabled:opacity-50"
       >
         Continue

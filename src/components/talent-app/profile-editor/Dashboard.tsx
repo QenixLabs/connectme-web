@@ -162,7 +162,7 @@ export function Dashboard({
       title: "Add your showreel",
       description: "Show recruiters your work immediately.",
       action: "Add Showreel",
-      onClick: () => onOpen("media"),
+      onClick: () => router.push("/talent/portfolio"),
     });
   }
   if (profile.skills.length < 5) {
