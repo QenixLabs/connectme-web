@@ -58,7 +58,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import logoImage from "@/assets/rootin-logo-orange.png";
-import { TalentGoogleResume } from "./talent-google-resume";
 
 type Step = 1 | 2 | 3;
 
@@ -409,10 +408,14 @@ function LocationStep({
   onComplete,
   submitting,
   error,
+  submitLabel = "Create account",
+  submittingLabel = "Creating account...",
 }: {
   onComplete: (preferences: LocationPreferences) => void;
   submitting: boolean;
   error: string | null;
+  submitLabel?: string;
+  submittingLabel?: string;
 }) {
   const [travel, setTravel] = useState("");
   const [city, setCity] = useState("");
@@ -450,7 +453,7 @@ function LocationStep({
      <section className="mt-7 grid grid-cols-2 gap-6 max-[700px]:grid-cols-1 max-[700px]:gap-5"><div><FieldHeading Icon={Sparkles} title="Native Language" optional description="Choose one of your spoken languages." /><div className="ml-[2.1rem] max-w-[39rem] max-[700px]:ml-0"><Select value={nativeLanguage} onValueChange={setNativeLanguage} disabled={languages.length === 0}><SelectTrigger aria-label="Native language" className="flex min-h-[2.8rem] w-full items-center justify-between gap-3 rounded-xl border border-[oklch(0.87_0.035_288)] bg-[oklch(1_0_0_/_82%)] px-4 text-[0.82rem] text-[oklch(0.27_0.13_279)] shadow-[0_2px_8px_oklch(0.27_0.13_279_/_5%)] data-[placeholder]:text-[oklch(0.51_0.08_279)] disabled:cursor-not-allowed disabled:opacity-60"><SelectValue placeholder={languages.length === 0 ? "Add languages above first" : "Select native language"} /></SelectTrigger><SelectContent>{languages.map((lang) => <SelectItem key={lang} value={lang}>{lang}</SelectItem>)}</SelectContent></Select></div></div><div><FieldHeading Icon={Languages} title="Working Language" optional description="Choose one of your spoken languages." /><div className="ml-[2.1rem] max-w-[39rem] max-[700px]:ml-0"><Select value={workingLanguage} onValueChange={setWorkingLanguage} disabled={languages.length === 0}><SelectTrigger aria-label="Working language" className="flex min-h-[2.8rem] w-full items-center justify-between gap-3 rounded-xl border border-[oklch(0.87_0.035_288)] bg-[oklch(1_0_0_/_82%)] px-4 text-[0.82rem] text-[oklch(0.27_0.13_279)] shadow-[0_2px_8px_oklch(0.27_0.13_279_/_5%)] data-[placeholder]:text-[oklch(0.51_0.08_279)] disabled:cursor-not-allowed disabled:opacity-60"><SelectValue placeholder={languages.length === 0 ? "Add languages above first" : "Select working language"} /></SelectTrigger><SelectContent>{languages.map((lang) => <SelectItem key={lang} value={lang}>{lang}</SelectItem>)}</SelectContent></Select></div></div></section>
     <section className="mt-7"><FieldHeading Icon={Sparkles} title="Language Proficiency" optional description="Set your proficiency level for selected languages." />{proficiencyLanguages.length === 0 ? <p className="rounded-[0.7rem] border border-dashed border-[oklch(0.87_0.035_288)] bg-[oklch(1_0_0_/_72%)] px-4 py-5 text-center text-[0.75rem] text-[oklch(0.51_0.08_279)]">No languages selected yet. Add languages above to see proficiency here.</p> : <div className="overflow-hidden rounded-[0.7rem] border border-[oklch(0.87_0.035_288)] bg-[oklch(1_0_0_/_72%)]">{proficiencyLanguages.map(({ name, label, level }, rowIndex) => <div key={name} className={`grid min-h-[2.7rem] grid-cols-[9rem_8rem_1fr] items-center gap-[0.7rem] px-4 text-[0.7rem] max-[700px]:grid-cols-[5rem_6rem_1fr] max-[700px]:gap-[0.4rem] max-[700px]:px-[0.65rem] ${rowIndex ? "border-t border-[oklch(0.87_0.035_288)]" : ""}`}><strong>{name}</strong><span className="text-right text-[oklch(0.51_0.08_279)]">{label}</span><i className="flex gap-[0.18rem]">{Array.from({ length: 9 }, (_, index) => <b key={index} className={`block h-[0.35rem] w-[0.65rem] rounded-full max-[700px]:w-2 ${index < level ? "bg-[oklch(0.53_0.31_293)]" : "bg-[oklch(0.87_0.035_288)]"}`} />)}</i></div>)}</div>}</section>
      {error && <p className="mt-5 rounded-xl bg-red-500/10 px-4 py-3 text-sm font-medium text-red-700" role="alert">{error}</p>}
-     <button className={ctaClasses} type="submit" disabled={submitting || !canSubmit}><span>{submitting ? "Creating account..." : "Create account"}</span>{submitting ? <Loader2 size={20} className="animate-spin" /> : <ArrowRight size={20} />}</button>
+      <button className={ctaClasses} type="submit" disabled={submitting || !canSubmit}><span>{submitting ? submittingLabel : submitLabel}</span>{submitting ? <Loader2 size={20} className="animate-spin" /> : <ArrowRight size={20} />}</button>
     <div className="mt-[1.15rem] flex items-center gap-[0.7rem] text-[0.76rem] text-[oklch(0.51_0.08_279)]"><i className="h-px flex-1 bg-[oklch(0.87_0.035_288)]" /><p className="m-0 whitespace-nowrap">Already have an account? <a className="font-bold text-[oklch(0.53_0.31_293)] underline" href="/auth/login">Sign In</a></p><i className="h-px flex-1 bg-[oklch(0.87_0.035_288)]" /></div>
    </form>;
 }
@@ -522,8 +525,7 @@ function TalentVerificationStep({
   return <div className="mx-auto mt-16 flex w-full max-w-[32rem] flex-col items-center text-center"><div className="mb-4 grid size-14 place-items-center rounded-full border border-[oklch(0.53_0.31_293_/_30%)] bg-[oklch(0.53_0.31_293_/_10%)] text-[oklch(0.53_0.31_293)]"><Mail size={25} /></div><h1 className="text-3xl font-extrabold tracking-tight">Verify your email</h1><p className="mt-2 text-sm text-[oklch(0.51_0.08_279)]">We&apos;ve sent a 6-digit code to</p><p className="mt-1 font-semibold text-[oklch(0.53_0.31_293)]">{email}</p>{error && <p className="mt-5 w-full rounded-xl bg-red-500/10 px-4 py-3 text-sm font-medium text-red-700" role="alert">{error}</p>}<h2 className="mt-8 text-lg font-bold">Enter verification code</h2><p className="mt-1 text-sm text-[oklch(0.51_0.08_279)]">Check your inbox and enter the code</p><OtpInput value={otp} onChange={setOtp} className="mt-5" /><p className="mt-4 text-sm text-[oklch(0.51_0.08_279)]">{cooldown > 0 ? <>Resend code in <strong className="text-[oklch(0.27_0.13_279)]">{String(Math.floor(cooldown / 60)).padStart(2, "0")}:{String(cooldown % 60).padStart(2, "0")}</strong></> : <button type="button" onClick={handleResend} disabled={resendLoading} className="font-semibold text-[oklch(0.53_0.31_293)] hover:underline">{resendLoading ? "Resending..." : "Resend code"}</button>}</p><button type="button" disabled={otp.length < 6 || status === "verifying"} onClick={handleVerify} className="mt-5 flex min-h-[3.35rem] w-full items-center justify-center gap-3 rounded-xl border-0 bg-[linear-gradient(110deg,oklch(0.49_0.27_288),oklch(0.57_0.27_300))] text-base font-bold text-white shadow-[0_12px_28px_oklch(0.49_0.27_288_/_28%)] disabled:cursor-not-allowed disabled:opacity-60">{status === "verifying" ? <><Loader2 size={20} className="animate-spin" />Verifying...</> : <>Verify &amp; continue<ArrowRight size={20} /></>}</button><button type="button" onClick={onBack} className="mt-4 text-sm font-semibold text-[oklch(0.53_0.31_293)] hover:underline">Back to edit details</button></div>;
 }
 
-export function TalentOnboarding() {
-  const [isResume, setIsResume] = useState(false);
+export function TalentOnboarding({ isGoogleResume = false }: { isGoogleResume?: boolean }) {
   const [step, setStep] = useState<Step>(1);
   const [account, setAccount] = useState<Account>({ fullName: "", professionalName: "", username: "", email: "", phone: "", password: "" });
   const [selected, setSelected] = useState<string[]>([]);
@@ -531,10 +533,7 @@ export function TalentOnboarding() {
   const [preferences, setPreferences] = useState<LocationPreferences | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [signupError, setSignupError] = useState<string | null>(null);
-  useEffect(() => {
-    setIsResume(new URLSearchParams(window.location.search).get("resume") === "1");
-  }, []);
-  if (isResume) return <TalentGoogleResume />;
+  if (isGoogleResume) return <GoogleTalentOnboarding />;
 
   const selectedLabels = selected.map((id) => categories.find((category) => category.id === id)?.label).filter((label): label is string => Boolean(label));
 
@@ -624,6 +623,310 @@ export function TalentOnboarding() {
       {step === 1 && <AccountStep account={account} setAccount={setAccount} onContinue={() => setStep(2)} />}
       {step === 2 && <CategoriesStep selected={selected} onToggle={(id) => setSelected((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id])} onContinue={() => setStep(3)} />}
        {step === 3 && <LocationStep onComplete={handleSignup} submitting={submitting} error={signupError} />}
+     </div>
+   </div></main>;
+}
+
+type GoogleAccount = {
+  fullName: string;
+  username: string;
+  phone: string;
+};
+
+function toE164(phone: string) {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length === 10) return `+91${digits}`;
+  if (digits.length === 12 && digits.startsWith("91")) return `+${digits}`;
+  return phone.startsWith("+") ? phone : `+${digits}`;
+}
+
+function GoogleAccountStep({
+  account,
+  setAccount,
+  email,
+  phoneVerified,
+  setPhoneVerified,
+  onContinue,
+}: {
+  account: GoogleAccount;
+  setAccount: (account: GoogleAccount) => void;
+  email: string;
+  phoneVerified: boolean;
+  setPhoneVerified: (verified: boolean) => void;
+  onContinue: () => void;
+}) {
+  const fetchUser = useAuthStore((state) => state.fetchUser);
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const [checkingUsername, setCheckingUsername] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const update = (field: keyof GoogleAccount, value: string) => {
+    setAccount({ ...account, [field]: value });
+  };
+
+  const handlePhoneChange = (value: string) => {
+    update("phone", value.replace(/\D/g, "").slice(0, 10));
+    setPhoneVerified(false);
+    setOtpSent(false);
+    setOtp("");
+  };
+
+  const handleSendOtp = async () => {
+    if (account.phone.length !== 10) {
+      setError("Enter a valid 10-digit mobile number first.");
+      return;
+    }
+    setError(null);
+    setSendingOtp(true);
+    try {
+      await authApi.sendPhoneOtp(toE164(account.phone));
+      setOtpSent(true);
+      setOtp("");
+    } catch (err: unknown) {
+      const response = err as { response?: { data?: { message?: string } } };
+      setError(response.response?.data?.message || "Could not send OTP. Please try again.");
+    } finally {
+      setSendingOtp(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (otp.length < 6) return;
+    setError(null);
+    setVerifyingOtp(true);
+    try {
+      await authApi.verifyPhoneOtp(toE164(account.phone), otp);
+      setPhoneVerified(true);
+      await fetchUser();
+    } catch (err: unknown) {
+      const response = err as { response?: { data?: { message?: string } } };
+      setError(response.response?.data?.message || "Invalid OTP. Please try again.");
+    } finally {
+      setVerifyingOtp(false);
+    }
+  };
+
+  const canContinue =
+    account.fullName.trim().length > 0 &&
+    /^[a-zA-Z0-9]{6,20}$/.test(account.username.trim()) &&
+    account.phone.length === 10 &&
+    phoneVerified;
+
+  const handleContinue = async () => {
+    if (!canContinue) return;
+    setError(null);
+    setCheckingUsername(true);
+    try {
+      const result = await authApi.checkUsername(account.username.trim());
+      if (!result.available) {
+        throw new Error("That username is not available. Please choose another one.");
+      }
+      onContinue();
+    } catch (err: unknown) {
+      const response = err as { response?: { data?: { message?: string } } };
+      setError(response.response?.data?.message || (err instanceof Error ? err.message : "Could not check that username."));
+    } finally {
+      setCheckingUsername(false);
+    }
+  };
+
+  const ctaClasses = "flex min-h-[3.35rem] w-full items-center justify-center gap-3 rounded-xl border-0 bg-[linear-gradient(110deg,oklch(0.49_0.27_288),oklch(0.57_0.27_300))] text-base font-bold text-white shadow-[0_12px_28px_oklch(0.49_0.27_288_/_28%)] hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50";
+
+  return (
+    <form
+      className="mt-[2.2rem] w-full max-w-[52rem] max-[700px]:mt-[1.7rem]"
+      onSubmit={(event) => {
+        event.preventDefault();
+        void handleContinue();
+      }}
+    >
+      <div
+        className="grid min-w-0 items-stretch gap-6 bg-contain bg-center bg-no-repeat grid-cols-[minmax(0,7fr)_minmax(13rem,3fr)] max-[700px]:grid-cols-[minmax(0,7fr)_minmax(6rem,3fr)] max-[700px]:gap-3 max-[420px]:grid-cols-1"
+        style={{ backgroundImage: "url('/assets/onboarding/talent-onboarding.png')" }}
+      >
+        <div className="min-w-0">
+          <div className="mb-7">
+            <p className="m-0 text-[0.72rem] font-bold tracking-[0.16em] text-[oklch(0.51_0.08_279)]">WELCOME TO ROOTIN</p>
+            <h1 className="mt-[0.8rem] text-[clamp(2.7rem,6vw,3.8rem)] font-extrabold leading-[0.98] tracking-[-0.055em] text-[oklch(0.27_0.13_279)]">
+              Great, you&apos;re<br /><em className="not-italic text-[oklch(0.53_0.31_293)]">signed in!</em> <Sparkles className="inline size-8 align-[0.08em] text-[oklch(0.53_0.31_293)]" aria-hidden="true" />
+            </h1>
+            <p className="mt-4 max-w-[32rem] text-base font-medium leading-[1.55] text-[oklch(0.51_0.08_279)]">Let&apos;s finish setting up your talent profile.</p>
+          </div>
+
+          <div className="flex items-center gap-3 rounded-2xl border border-[oklch(0.87_0.035_288)] bg-white/85 px-4 py-4 shadow-[0_8px_24px_oklch(0.53_0.31_293_/_10%)] backdrop-blur-sm">
+            <GoogleBrandIcon />
+            <div className="min-w-0 flex-1">
+              <p className="m-0 text-[0.82rem] font-bold text-[oklch(0.27_0.13_279)]">Signed in with Google</p>
+              <p className="mt-1 truncate text-[0.8rem] text-[oklch(0.51_0.08_279)]">{email}</p>
+            </div>
+            <CheckCircle2 className="size-5 flex-none text-[oklch(0.57_0.16_153)]" aria-label="Google account verified" />
+          </div>
+
+          <div className="mt-5 grid gap-[0.8rem]">
+            <AccountField id="google-full-name" label="Your Name" placeholder="Enter your full name" icon={<UserRound />} value={account.fullName} onChange={(value) => update("fullName", value)} />
+            <AccountField id="google-username" label="Choose a Username" placeholder="6-20 letters or numbers" icon={<User />} value={account.username} onChange={(value) => update("username", value.replace(/[^a-zA-Z0-9]/g, "").slice(0, 20))} />
+
+            <div className="rounded-xl border border-[oklch(0.87_0.035_288)] bg-[oklch(1_0_0_/_78%)] px-4 py-3 shadow-[0_4px_14px_oklch(0.53_0.31_293_/_7%)] backdrop-blur-[8px]">
+              <div className="flex items-center gap-[0.85rem]">
+                <span className="grid w-8 flex-none place-items-center text-[oklch(0.53_0.31_293)] [&>svg]:size-[1.35rem] [&>svg]:stroke-[2.1]" aria-hidden="true"><Phone /></span>
+                <label htmlFor="google-mobile" className="min-w-0 flex-1">
+                  <span className="block text-[0.78rem] font-bold text-[oklch(0.27_0.13_279)]">Mobile Number</span>
+                  <span className="mt-[0.2rem] flex items-center gap-[0.45rem] text-[0.88rem] text-[oklch(0.27_0.13_279)]">
+                    <span className="grid h-[1.1rem] w-[1.4rem] place-items-center rounded-[0.2rem] bg-[oklch(0.9_0.04_285)] text-[0.52rem] font-extrabold text-[oklch(0.53_0.31_293)]" aria-label="India">IN</span>
+                    <strong>+91</strong><ChevronDown size={15} className="text-[oklch(0.53_0.31_293)]" /><i className="h-[1.4rem] w-px bg-[oklch(0.87_0.035_288)]" />
+                    <input className="mt-0 min-w-0 w-full border-0 bg-transparent text-[0.9rem] text-[oklch(0.27_0.13_279)] outline-0 placeholder:text-[oklch(0.51_0.08_279)]" id="google-mobile" name="google-mobile" type="tel" inputMode="numeric" maxLength={10} value={account.phone} onChange={(event) => handlePhoneChange(event.target.value)} placeholder="Enter mobile number" required />
+                  </span>
+                </label>
+                <button type="button" onClick={() => void handleSendOtp()} disabled={sendingOtp || account.phone.length !== 10 || phoneVerified} className="min-h-10 shrink-0 rounded-lg bg-[oklch(0.53_0.31_293)] px-3 text-[0.72rem] font-bold text-white shadow-[0_6px_14px_oklch(0.53_0.31_293_/_22%)] hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50">
+                  {sendingOtp ? "Sending..." : phoneVerified ? "Verified" : "Send OTP"}
+                </button>
+              </div>
+              {phoneVerified ? <p className="mt-2 pl-[2.85rem] text-[0.72rem] font-semibold text-[oklch(0.57_0.16_153)]"><CheckCircle2 className="mr-1 inline size-3.5 align-[-0.15rem]" />Phone number verified</p> : <p className="mt-2 pl-[2.85rem] text-[0.72rem] text-[oklch(0.51_0.08_279)]"><LockKeyhole className="mr-1 inline size-3.5 align-[-0.15rem]" />We&apos;ll send a verification code to your number</p>}
+            </div>
+
+            {otpSent && !phoneVerified && <div className="rounded-xl border border-[oklch(0.87_0.035_288)] bg-white/70 px-4 py-4"><p className="m-0 text-[0.72rem] font-bold uppercase tracking-[0.12em] text-[oklch(0.51_0.08_279)]">Enter phone OTP</p><OtpInput value={otp} onChange={setOtp} className="mt-3" /><button type="button" onClick={() => void handleVerifyOtp()} disabled={verifyingOtp || otp.length < 6} className="mt-3 min-h-10 w-full rounded-lg border border-[oklch(0.53_0.31_293)] bg-transparent text-sm font-bold text-[oklch(0.53_0.31_293)] disabled:cursor-not-allowed disabled:opacity-50">{verifyingOtp ? "Verifying..." : "Verify phone number"}</button></div>}
+          </div>
+        </div>
+        <div className="relative h-full min-h-0 aspect-[0.62/1] overflow-hidden rounded-[1.1rem] max-[420px]:hidden" aria-hidden="true" />
+      </div>
+
+      {error && <p className="mt-4 rounded-xl bg-red-500/10 px-4 py-3 text-sm font-medium text-red-700" role="alert">{error}</p>}
+      <button className={`${ctaClasses} mt-5`} type="submit" disabled={!canContinue || checkingUsername}><span>{checkingUsername ? "Checking username..." : "Continue"}</span>{checkingUsername ? <Loader2 size={20} className="animate-spin" /> : <ArrowRight size={20} />}</button>
+      <div className="mt-[1.15rem] flex items-center gap-[0.7rem] text-[0.76rem] text-[oklch(0.51_0.08_279)]"><i className="h-px flex-1 bg-[oklch(0.87_0.035_288)]" /><p className="m-0 whitespace-nowrap">Your Google email is already verified</p><i className="h-px flex-1 bg-[oklch(0.87_0.035_288)]" /></div>
+    </form>
+  );
+}
+
+function GoogleTalentOnboarding() {
+  const router = useRouter();
+  const fetchUser = useAuthStore((state) => state.fetchUser);
+  const [step, setStep] = useState<Step>(1);
+  const [loading, setLoading] = useState(true);
+  const [email, setEmail] = useState("");
+  const [account, setAccount] = useState<GoogleAccount>({ fullName: "", username: "", phone: "" });
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [signupError, setSignupError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadDraft = async () => {
+      try {
+        const { user } = await authApi.getCurrentUser();
+        if (user.role !== "talent") {
+          router.replace("/recruiter/dashboard");
+          return;
+        }
+        if (user.onboarding_completed || user.onboarding_exempted) {
+          router.replace("/talent/dashboard");
+          return;
+        }
+
+        let profile: Awaited<ReturnType<typeof talentApi.getMyProfile>> | null = null;
+        try {
+          profile = await talentApi.getMyProfile();
+        } catch {
+          // Google signup creates a draft profile; an unavailable draft is safe to ignore.
+        }
+
+        if (cancelled) return;
+        setEmail(user.email ?? "");
+        setAccount({
+          fullName: profile?.full_legal_name || user.google_name || "",
+          username: profile?.username && !/^user[0-9a-f]{4,}$/i.test(profile.username) ? profile.username : "",
+          phone: user.phone?.replace(/\D/g, "").slice(-10) || "",
+        });
+        setPhoneVerified(Boolean(user.is_phone_verified));
+        if (profile?.professions?.length) {
+          setSelected(
+            profile.professions.flatMap((profession) => {
+              const category = categories.find((item) => item.label.toLowerCase() === profession.toLowerCase());
+              return category ? [category.id] : [];
+            }),
+          );
+        }
+      } catch {
+        if (!cancelled) router.replace("/auth?mode=signin");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    void loadDraft();
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
+
+  const selectedLabels = useMemo(
+    () => selected.map((id) => categories.find((category) => category.id === id)?.label).filter((label): label is string => Boolean(label)),
+    [selected],
+  );
+
+  const finishGoogleOnboarding = async (preferences: LocationPreferences) => {
+    setSignupError(null);
+    setSubmitting(true);
+    try {
+      const locationParts = preferences.city.split(",").map((part) => part.trim()).filter(Boolean);
+      const languageNames = Array.from(
+        new Set(
+          [...preferences.languages, preferences.nativeLanguage, preferences.workingLanguage]
+            .map((name) => name.trim())
+            .filter(Boolean),
+        ),
+      );
+
+      await talentApi.updateMyProfile({
+        username: account.username.trim().toLowerCase(),
+        full_legal_name: account.fullName.trim(),
+        professions: selectedLabels,
+        specialties: selectedLabels.slice(1),
+        willing_to_travel: preferences.travel,
+        preferred_cities: preferences.preferredCities.length ? preferences.preferredCities : undefined,
+        location: {
+          city: locationParts[0] || preferences.city.trim(),
+          state: locationParts[1],
+          country: locationParts[2] || "India",
+        },
+        languages: languageNames.length
+          ? languageNames.map((name) => ({
+              name,
+              fluency: name === preferences.nativeLanguage ? "native" : name === preferences.workingLanguage ? "fluent" : "conversational",
+            }))
+          : undefined,
+      });
+      await authApi.completeOnboarding();
+      await fetchUser();
+      router.replace("/talent/dashboard");
+    } catch (err: unknown) {
+      const response = err as { response?: { data?: { message?: string } } };
+      setSignupError(response.response?.data?.message || (err instanceof Error ? err.message : "Could not complete your profile. Please try again."));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const backdrop = step === 3 ? "/assets/talent-onboarding/mumbai-opportunities.jpg" : "/assets/onboarding/rootin-talent-collage.png";
+  const backdropAlt = step === 3 ? "Mumbai skyline and the Gateway of India at sunset" : "Actors, a dancer and a singer pursuing creative careers";
+  const backdropClasses = step === 3 ? "absolute inset-0 h-full w-full object-cover object-right opacity-[0.78]" : "absolute inset-0 h-full w-full object-cover object-center opacity-[0.12]";
+  const washClasses = step === 3 ? "absolute inset-0 bg-[linear-gradient(90deg,oklch(0.985_0.009_288_/_99%),oklch(0.985_0.009_288_/_94%)_52%,oklch(0.985_0.009_288_/_34%)_78%,transparent)]" : "absolute inset-0 bg-[linear-gradient(90deg,oklch(0.985_0.009_288_/_98%),oklch(0.985_0.009_288_/_91%)_55%,oklch(0.985_0.009_288_/_72%))]";
+
+  if (loading) {
+    return <main className="flex min-h-svh items-center justify-center bg-[oklch(0.88_0.055_287)] font-[var(--font-rubik)]"><Loader2 className="size-8 animate-spin text-[oklch(0.53_0.31_293)]" /></main>;
+  }
+
+  return <main className="min-h-svh overflow-x-hidden bg-[oklch(0.88_0.055_287)] font-[var(--font-rubik)] text-[oklch(0.27_0.13_279)]"><div className="relative mx-auto min-h-svh w-full max-w-[56rem] overflow-hidden bg-[oklch(0.985_0.009_288)] shadow-[0_0_80px_oklch(0.28_0.12_280_/_22%)]">
+    {step !== 1 && <><Image className={backdropClasses} src={backdrop} alt={backdropAlt} fill sizes="(max-width: 900px) 100vw, 900px" /><div className={`${washClasses} pointer-events-none`} /></>}
+    <div className="relative z-10 min-h-svh w-full px-[1.25rem] pb-12 pt-8 max-[700px]:pb-8 max-[700px]:pt-5">
+      <TopBar step={step} />
+      {step === 1 && <GoogleAccountStep account={account} setAccount={setAccount} email={email} phoneVerified={phoneVerified} setPhoneVerified={setPhoneVerified} onContinue={() => setStep(2)} />}
+      {step === 2 && <CategoriesStep selected={selected} onToggle={(id) => setSelected((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id])} onContinue={() => setStep(3)} />}
+      {step === 3 && <LocationStep onComplete={finishGoogleOnboarding} submitting={submitting} error={signupError} submitLabel="Finish setup" submittingLabel="Finishing setup..." />}
     </div>
   </div></main>;
 }

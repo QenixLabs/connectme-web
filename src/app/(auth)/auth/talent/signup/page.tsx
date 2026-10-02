@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   description: "Join Rootin's global community of creators and discover new opportunities.",
 };
 
-export default function TalentSignupPage() {
-  return <TalentOnboarding />;
+export default async function TalentSignupPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ resume?: string | string[] | undefined }>;
+}) {
+  const params = await searchParams;
+  return <TalentOnboarding isGoogleResume={params.resume === "1"} />;
 }

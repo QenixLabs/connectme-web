@@ -42,6 +42,7 @@ import logoImage from "@/assets/rootin-logo-orange.png";
 
 import { ChangePasswordDialog } from "./settings/change-password-dialog";
 import { VerifyPhoneDialog } from "./settings/verify-phone-dialog";
+import { AppearanceSetting } from "./settings/appearance-setting";
 
 type SettingTone = "purple" | "red";
 
@@ -461,6 +462,8 @@ export function SettingsPage() {
               action={isVerified ? <VerifiedLabel pill>Verified Talent</VerifiedLabel> : <span className="text-sm text-[#5b5789]">Review status</span>}
             />
           </Card>
+
+          <AppearanceSetting />
 
           <Card className="overflow-hidden rounded-[19px] border-[#e4ddf8] bg-white/90 py-0 shadow-[0_10px_30px_rgba(69,47,160,0.06)] backdrop-blur">
             <SettingRow

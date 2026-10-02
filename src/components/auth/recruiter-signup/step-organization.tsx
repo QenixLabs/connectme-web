@@ -22,7 +22,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ScriptNote } from "./brand";
 import { Field, inputClass } from "./field";
 import { cn } from "@/lib/utils";
 
@@ -112,6 +111,8 @@ export function StepOrganization({
   onSubmit,
   submitting = false,
   error,
+  submitLabel = "Finish Setup",
+  submittingLabel = "Creating your account...",
 }: {
   values: OrgValues;
   onChange: (values: OrgValues) => void;
@@ -119,6 +120,8 @@ export function StepOrganization({
   onSubmit: () => void;
   submitting?: boolean;
   error?: string | null;
+  submitLabel?: string;
+  submittingLabel?: string;
 }) {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoError, setLogoError] = useState<string | null>(null);
@@ -327,11 +330,11 @@ export function StepOrganization({
         {submitting ? (
           <>
             <Loader2 className="size-5 animate-spin" />
-            Creating your account...
+            {submittingLabel}
           </>
         ) : (
           <>
-            Finish Setup
+            {submitLabel}
             <Check className="size-5" />
           </>
         )}
