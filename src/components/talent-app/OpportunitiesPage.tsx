@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   campaignKeys,
   useCampaigns,
@@ -887,6 +888,16 @@ export function OpportunitiesPage() {
 
   return (
     <div className="mx-auto min-h-screen w-full max-w-md bg-background pb-28 font-sans">
+      <div className="flex items-center justify-between gap-3 px-4 pt-4">
+        <h1 className="text-xl font-extrabold tracking-tight">Opportunities</h1>
+        <Button asChild variant="outline" size="sm" className="shrink-0 gap-1.5">
+          <Link href="/talent/applications">
+            <FileText className="size-4" />
+            My Applications
+          </Link>
+        </Button>
+      </div>
+
       {isForYou && (
         <section className="mt-5 px-4">
           <div className="card-soft p-4">

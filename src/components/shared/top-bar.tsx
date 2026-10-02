@@ -5,7 +5,16 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useSyncExternalStore } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { LogOut, Bell, User, CreditCard, Settings } from "lucide-react";
+import {
+  LogOut,
+  Bell,
+  User,
+  CreditCard,
+  Settings,
+  BarChart3,
+  Star,
+  UsersRound,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { talentApi } from "@/lib/api/talent";
@@ -192,6 +201,28 @@ function UserMenu({ role }: { role: TopBarProps["role"] }) {
                 Profile
               </Link>
             </DropdownMenuItem>
+            {role === "talent" && (
+              <>
+                <DropdownMenuItem asChild>
+                  <Link href="/talent/analytics" className="cursor-pointer">
+                    <BarChart3 className="mr-2 size-4" />
+                    Analytics
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/talent/reputation" className="cursor-pointer">
+                    <Star className="mr-2 size-4" />
+                    Reputation
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/talent/requests" className="cursor-pointer">
+                    <UsersRound className="mr-2 size-4" />
+                    Requests
+                  </Link>
+                </DropdownMenuItem>
+              </>
+            )}
             <DropdownMenuItem asChild>
               <Link href={`/${role}/billing`} className="cursor-pointer">
                 <CreditCard className="mr-2 size-4" />

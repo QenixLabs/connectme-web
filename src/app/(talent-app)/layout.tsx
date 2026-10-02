@@ -13,6 +13,7 @@ export default function TalentAppLayout({ children }: { children: React.ReactNod
   const isProfileVisibilityPage = pathname === "/talent/settings/profile-visibility";
   const isReputationPage = pathname === "/talent/reputation";
   const isAnalyticsPage = pathname === "/talent/analytics";
+  const isConversationPage = pathname.startsWith("/talent/messages/");
   const mobileNavItems = ["Home", "Network", "Opportunities", "Messages", "Profile"].flatMap(
     (label) => {
       const item = navItems.find((navItem) => navItem.label === label);
@@ -24,7 +25,7 @@ export default function TalentAppLayout({ children }: { children: React.ReactNod
     <div className="flex min-h-screen flex-col">
       {!isSettingsPage && !isProfileVisibilityPage && <TopBar navItems={navItems} role="talent" showUserMenu />}
       <main className="flex-1 pb-10">{children}</main>
-      {!isProfileVisibilityPage && (
+      {!isProfileVisibilityPage && !isConversationPage && (
         <BottomBar
           navItems={navItems}
           mobileNavItems={mobileNavItems}

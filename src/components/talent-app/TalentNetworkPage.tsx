@@ -532,7 +532,7 @@ function NetworkRequestCard({
   const name = other.full_legal_name || other.username || "Unknown user";
   const initials = name.split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase();
   const profileHref = other.role === "recruiter" ? "/recruiter/profile" : `/talent/${other.username}`;
-  const conversation = useStartConversation(other.username || "", other.role === "recruiter" ? "recruiter" : "talent");
+  const conversation = useStartConversation(other.username || "", "talent");
 
   return (
     <Card className="gap-0 rounded-[17px] border-[#dbe7f7] bg-white py-0 shadow-[0_5px_16px_rgba(37,99,235,0.07)]">

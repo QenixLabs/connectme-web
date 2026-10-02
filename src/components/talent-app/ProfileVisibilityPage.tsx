@@ -234,7 +234,7 @@ export function ProfileVisibilityPage() {
       <div className="mx-auto w-full max-w-[1240px] px-4 pb-32 pt-4 sm:px-6 sm:pt-5 lg:px-8 lg:pb-8">
         <header className="flex items-center justify-between">
           <Link href="/talent/dashboard" className="rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6428f5]" aria-label="Rootin home">
-            <Image src={logoImage} alt="Rootin" priority className="h-10 w-auto object-contain sm:h-12" style={{ filter: "hue-rotate(200deg) saturate(1.35)" }} />
+            <Image src={logoImage} alt="Rootin" priority className="h-10 w-auto object-contain sm:h-12" />
           </Link>
           <div className="flex items-center gap-2 sm:gap-3">
             <Button asChild variant="ghost" size="icon" className="relative size-10 rounded-full text-[#12143a] hover:bg-white sm:size-11" aria-label="Notifications">
@@ -301,11 +301,11 @@ export function ProfileVisibilityPage() {
 
               <section className="rounded-[20px] border border-[#e7e5f4] bg-white p-4 shadow-[0_8px_24px_rgba(81,58,166,0.05)] sm:p-5">
                 <div className="flex items-start gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-full bg-[#fff1d9] text-[#ed971e]"><Lightbulb className="size-5" fill="currentColor" /></span><div><h2 className="text-[17px] font-bold text-[#12143a]">Visibility Presets</h2><p className="mt-1 text-xs leading-5 text-[#62678a]">Quickly apply recommended settings.</p></div></div>
-                <div className="no-scrollbar -mx-1 mt-4 flex snap-x snap-mandatory gap-2 overflow-x-auto px-1 pb-1 lg:grid lg:grid-cols-2 lg:overflow-visible">
+                <div className="mt-4 grid gap-2 sm:grid-cols-2">
                   {presets.map((preset) => {
                     const selected = activePreset === preset.value;
                     const PresetIcon = preset.icon;
-                    return <button key={preset.value} type="button" onClick={() => applyPreset(preset.value)} className={`relative min-w-[142px] snap-start rounded-2xl border p-3 text-left transition-all lg:min-w-0 ${selected ? "border-[#6428f5] bg-[#f4efff] shadow-[0_5px_16px_rgba(100,40,245,0.13)]" : "border-[#e7e5f4] bg-white hover:border-[#c9b6ff]"}`}><span className={`mb-3 grid size-8 place-items-center rounded-xl ${selected ? "bg-[#6428f5] text-white" : "bg-[#f1eaff] text-[#6428f5]"}`}><PresetIcon className="size-4" /></span>{selected && <span className="absolute right-2 top-2 grid size-5 place-items-center rounded-full bg-[#6428f5] text-white"><Check className="size-3.5" strokeWidth={3} /></span>}<span className="block text-[12px] font-bold leading-4 text-[#12143a]">{preset.title}</span><span className="mt-1 block text-[11px] leading-4 text-[#777394]">{preset.description}</span></button>;
+                     return <button key={preset.value} type="button" onClick={() => applyPreset(preset.value)} className={`relative min-w-0 rounded-2xl border p-3 text-left transition-all ${selected ? "border-[#6428f5] bg-[#f4efff] shadow-[0_5px_16px_rgba(100,40,245,0.13)]" : "border-[#e7e5f4] bg-white hover:border-[#c9b6ff]"}`}><span className={`mb-3 grid size-8 place-items-center rounded-xl ${selected ? "bg-[#6428f5] text-white" : "bg-[#f1eaff] text-[#6428f5]"}`}><PresetIcon className="size-4" /></span>{selected && <span className="absolute right-2 top-2 grid size-5 place-items-center rounded-full bg-[#6428f5] text-white"><Check className="size-3.5" strokeWidth={3} /></span>}<span className="block text-[12px] font-bold leading-4 text-[#12143a]">{preset.title}</span><span className="mt-1 block text-[11px] leading-4 text-[#777394]">{preset.description}</span></button>;
                   })}
                 </div>
               </section>

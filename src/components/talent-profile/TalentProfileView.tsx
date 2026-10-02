@@ -84,6 +84,12 @@ export function TalentProfileView({
   const authUser = useAuthStore((s) => s.user);
   const router = useRouter();
   const navItems = useTalentNavItems();
+  const mobileNavItems = ["Home", "Network", "Opportunities", "Messages", "Profile"].flatMap(
+    (label) => {
+      const item = navItems.find((navItem) => navItem.label === label);
+      return item ? [item] : [];
+    },
+  );
   const isOwner =
     viewerRole === "talent" &&
     !!authUser?.username &&
@@ -292,7 +298,7 @@ export function TalentProfileView({
       </div>
       </div>
 
-      {isOwner && <BottomBar navItems={navItems} iconOnly />}
+      {isOwner && <BottomBar navItems={navItems} mobileNavItems={mobileNavItems} iconOnly />}
 
       <MediaLightbox
         items={publicViewerItems}
