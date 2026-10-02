@@ -230,7 +230,6 @@ export function SettingsPage() {
                 alt="Rootin"
                 priority
                 className="h-10 w-auto object-contain sm:h-12"
-                style={{ filter: "hue-rotate(200deg) saturate(1.35)" }}
               />
             </Link>
 

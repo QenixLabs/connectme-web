@@ -136,7 +136,7 @@ const recruiterCategoryOptions = [
 
 const networkNavigation: Array<{ label: string; href: string; icon: LucideIcon; active?: boolean; badge?: number }> = [
   { label: "Home", href: "/talent/dashboard", icon: Home },
-  { label: "Discover", href: "/talent/network", icon: UsersRound, active: true },
+  { label: "Network", href: "/talent/network", icon: UsersRound, active: true },
   { label: "Opportunities", href: "/talent/opportunities", icon: BriefcaseBusiness },
   { label: "Messages", href: "/talent/messages", icon: MessageCircle },
   { label: "Profile", href: "/talent/profile", icon: UserRound },

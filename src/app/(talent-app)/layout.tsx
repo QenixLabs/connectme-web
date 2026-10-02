@@ -13,8 +13,11 @@ export default function TalentAppLayout({ children }: { children: React.ReactNod
   const isProfileVisibilityPage = pathname === "/talent/settings/profile-visibility";
   const isReputationPage = pathname === "/talent/reputation";
   const isAnalyticsPage = pathname === "/talent/analytics";
-  const analyticsMobileNav = navItems.filter((item) =>
-    ["Home", "Opportunities", "Analytics", "Messages", "Profile"].includes(item.label),
+  const mobileNavItems = ["Home", "Network", "Opportunities", "Messages", "Profile"].flatMap(
+    (label) => {
+      const item = navItems.find((navItem) => navItem.label === label);
+      return item ? [item] : [];
+    },
   );
 
   const content = (
@@ -24,7 +27,7 @@ export default function TalentAppLayout({ children }: { children: React.ReactNod
       {!isProfileVisibilityPage && (
         <BottomBar
           navItems={navItems}
-          mobileNavItems={isAnalyticsPage ? analyticsMobileNav : undefined}
+          mobileNavItems={mobileNavItems}
           iconOnly={!isSettingsPage && !isReputationPage && !isAnalyticsPage}
           variant={isSettingsPage ? "settings" : "default"}
         />
