@@ -44,6 +44,14 @@ export const recruiterNavItems: NavItem[] = [
   { label: "Messages", href: "/recruiter/messages", icon: MessageSquare },
 ];
 
+export const recruiterBottomNavItems: NavItem[] = [
+  { label: "Dashboard", href: "/recruiter/dashboard", icon: Home },
+  { label: "Campaigns", href: "/recruiter/campaigns", icon: FolderKanban },
+  { label: "Find Talent", href: "/recruiter/find-talent", icon: Search },
+  { label: "Messages", href: "/recruiter/messages", icon: MessageSquare },
+  { label: "Profile", href: "/recruiter/profile", icon: User },
+];
+
 export const adminNavItems: NavItem[] = [
   { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { label: "Users", href: "/admin/users", icon: Users },

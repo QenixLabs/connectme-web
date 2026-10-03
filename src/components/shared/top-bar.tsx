@@ -14,6 +14,7 @@ import {
   BarChart3,
   Star,
   UsersRound,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/providers/auth-store-provider";
@@ -195,14 +196,14 @@ function UserMenu({ role }: { role: TopBarProps["role"] }) {
         <DropdownMenuSeparator />
         {role !== "admin" && (
           <>
-            <DropdownMenuItem asChild>
-              <Link href={`/${role}/profile`} className="cursor-pointer">
-                <User className="mr-2 size-4" />
-                Profile
-              </Link>
-            </DropdownMenuItem>
             {role === "talent" && (
               <>
+                <DropdownMenuItem asChild>
+                  <Link href="/talent/profile" className="cursor-pointer">
+                    <User className="mr-2 size-4" />
+                    Profile
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/talent/analytics" className="cursor-pointer">
                     <BarChart3 className="mr-2 size-4" />
@@ -219,6 +220,28 @@ function UserMenu({ role }: { role: TopBarProps["role"] }) {
                   <Link href="/talent/requests" className="cursor-pointer">
                     <UsersRound className="mr-2 size-4" />
                     Requests
+                  </Link>
+                </DropdownMenuItem>
+              </>
+            )}
+            {role === "recruiter" && (
+              <>
+                <DropdownMenuItem asChild>
+                  <Link href="/recruiter/analytics" className="cursor-pointer">
+                    <BarChart3 className="mr-2 size-4" />
+                    Analytics
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/recruiter/shortlist" className="cursor-pointer">
+                    <UsersRound className="mr-2 size-4" />
+                    Shortlist
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/recruiter/team" className="cursor-pointer">
+                    <Users className="mr-2 size-4" />
+                    Team
                   </Link>
                 </DropdownMenuItem>
               </>
