@@ -1,4 +1,7 @@
 import { z } from "zod";
+import { SKILL_NAMES } from "@/data/skills";
+
+const allowedSkillNames = new Set(SKILL_NAMES);
 
 export const campaignWizardSchema = z
   .object({
@@ -27,7 +30,15 @@ export const campaignWizardSchema = z
     requirements: z
       .object({
         skills: z
-          .array(z.string().max(50, "Too long"))
+          .array(
+            z
+              .string()
+              .max(50, "Too long")
+              .refine(
+                (skill) => allowedSkillNames.has(skill),
+                "Choose a skill from the talent skill library",
+              ),
+          )
           .max(20, "Max 20 skills")
           .optional(),
         languages: z
@@ -162,7 +173,8 @@ export const campaignWizardSchema = z
           if (deadline > start) {
             ctx.addIssue({
               code: z.ZodIssueCode.custom,
-              message: "Application deadline must be on or before the start date.",
+              message:
+                "Application deadline must be on or before the start date.",
               path: ["deadline"],
             });
           }

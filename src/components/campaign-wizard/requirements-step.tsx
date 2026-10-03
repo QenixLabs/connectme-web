@@ -13,6 +13,7 @@ import { TagInput } from "@/components/ui/tag-input";
 import { CampaignWizardInput } from "@/lib/validations/campaign-wizard.schema";
 import { TaskConfigSection } from "./task-config-section";
 import { cn } from "@/lib/utils";
+import { SKILL_NAMES } from "@/data/skills";
 import { Plus, Trash2 } from "lucide-react";
 
 const GENDERS = ["Any", "Male", "Female", "Non-binary"];
@@ -51,8 +52,7 @@ export function RequirementsStep({
   campaignId?: string | null;
   onPendingDocChange?: (file: File | null) => void;
 }) {
-  const { control, watch, setValue } =
-    useFormContext<CampaignWizardInput>();
+  const { control, watch, setValue } = useFormContext<CampaignWizardInput>();
   const { fields, append, remove } = useFieldArray({
     control,
     name: "questions",
@@ -80,11 +80,15 @@ export function RequirementsStep({
                     shouldValidate: true,
                   })
                 }
-                placeholder="e.g., Classical dance, Guitar..."
+                suggestions={SKILL_NAMES}
+                allowCustom={false}
+                maxTags={20}
+                placeholder="Search talent skills..."
               />
             </FormControl>
             <p className="text-[11px] text-muted-foreground/60">
-              Press Enter to add a skill
+              Choose skills from the talent skill library. Custom skills
+              aren&apos;t available.
             </p>
             <FormMessage />
           </FormItem>
@@ -127,24 +131,21 @@ export function RequirementsStep({
             <FormControl>
               <div className="flex flex-wrap gap-2">
                 {GENDERS.map((g) => {
-                  const selected =
-                    gender === g || (!gender && g === "Any");
+                  const selected = gender === g || (!gender && g === "Any");
                   return (
                     <button
                       key={g}
                       type="button"
                       onClick={() =>
-                        setValue(
-                          "requirements.gender",
-                          g === "Any" ? "" : g,
-                          { shouldValidate: true },
-                        )
+                        setValue("requirements.gender", g === "Any" ? "" : g, {
+                          shouldValidate: true,
+                        })
                       }
                       className={cn(
                         "px-4 py-2 rounded-xl text-sm font-medium border transition-all duration-200",
                         selected
-                           ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                           : "border-border bg-card text-muted-foreground hover:border-border-hover hover:text-foreground",
+                          ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                          : "border-border bg-card text-muted-foreground hover:border-border-hover hover:text-foreground",
                       )}
                     >
                       {g}
@@ -301,8 +302,7 @@ export function RequirementsStep({
 
       <div className="space-y-3">
         {fields.map((field, index) => {
-          const qType =
-            watch(`questions.${index}.question_type`) ?? "text";
+          const qType = watch(`questions.${index}.question_type`) ?? "text";
           const options = watch(`questions.${index}.options`) ?? [];
           return (
             <div
@@ -347,11 +347,9 @@ export function RequirementsStep({
                                   e.target.value !== "select" &&
                                   e.target.value !== "multiselect"
                                 ) {
-                                  setValue(
-                                    `questions.${index}.options`,
-                                    [],
-                                    { shouldValidate: false },
-                                  );
+                                  setValue(`questions.${index}.options`, [], {
+                                    shouldValidate: false,
+                                  });
                                 }
                               }}
                               className="h-10 rounded-xl border-border bg-bg-surface-inset px-3 text-sm text-foreground"
@@ -359,9 +357,7 @@ export function RequirementsStep({
                               <option value="text">Text</option>
                               <option value="number">Number</option>
                               <option value="select">Select</option>
-                              <option value="multiselect">
-                                Multi-select
-                              </option>
+                              <option value="multiselect">Multi-select</option>
                               <option value="boolean">Yes / No</option>
                             </select>
                           </div>
@@ -406,11 +402,9 @@ export function RequirementsStep({
                             <TagInput
                               value={options}
                               onChange={(next) =>
-                                setValue(
-                                  `questions.${index}.options`,
-                                  next,
-                                  { shouldValidate: true },
-                                )
+                                setValue(`questions.${index}.options`, next, {
+                                  shouldValidate: true,
+                                })
                               }
                               placeholder="Add options..."
                             />

@@ -21,7 +21,12 @@ import {
   useUploadCampaignMedia,
   useCampaign,
 } from "@/hooks/use-campaigns";
-import { campaignsApi, type Campaign, type CampaignQuestion } from "@/lib/api/campaigns";
+import {
+  campaignsApi,
+  type Campaign,
+  type CampaignQuestion,
+} from "@/lib/api/campaigns";
+import { getApiErrorMessage } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
 import {
   Check,
@@ -75,7 +80,11 @@ function getStepFields(step: number): string[] {
         "task.deadline_days",
       ];
     case 3:
-      return ["publishOption", "scheduled_publish_at", "auto_close_on_deadline"];
+      return [
+        "publishOption",
+        "scheduled_publish_at",
+        "auto_close_on_deadline",
+      ];
     default:
       return [];
   }
@@ -136,7 +145,8 @@ function mapCampaignToDefaults(campaign: Campaign): CampaignWizardInput {
     questions: (campaign.questions || []).map((q) => ({
       _id: q._id,
       question_text: q.question_text,
-      question_type: (q.question_type || "text") as "text" | "number" | "select" | "multiselect" | "boolean",
+      question_type: (q.question_type || "text") as
+        "text" | "number" | "select" | "multiselect" | "boolean",
       options: q.options || [],
       is_required: q.is_required ?? false,
       order: q.order ?? 0,
@@ -148,7 +158,8 @@ function mapCampaignToDefaults(campaign: Campaign): CampaignWizardInput {
       ? {
           title: campaign.task.title || "",
           description: campaign.task.description || "",
-          task_type: (campaign.task.task_type || "file_upload") as "file_upload" | "text_response",
+          task_type: (campaign.task.task_type || "file_upload") as
+            "file_upload" | "text_response",
           deadline_days: campaign.task.deadline_days || 3,
           nda_enabled: campaign.task.nda_enabled ?? false,
           nda_text: campaign.task.nda_text ?? "",
@@ -165,7 +176,10 @@ interface CampaignWizardProps {
   showHero?: boolean;
 }
 
-export function CampaignWizard({ campaignId, showHero = false }: CampaignWizardProps) {
+export function CampaignWizard({
+  campaignId,
+  showHero = false,
+}: CampaignWizardProps) {
   const router = useRouter();
   const isEdit = !!campaignId;
   const [step, setStep] = useState(1);
@@ -185,7 +199,9 @@ export function CampaignWizard({ campaignId, showHero = false }: CampaignWizardP
   );
 
   const form = useForm<CampaignWizardInput>({
-    resolver: zodResolver(campaignWizardSchema) as unknown as Resolver<CampaignWizardInput>,
+    resolver: zodResolver(
+      campaignWizardSchema,
+    ) as unknown as Resolver<CampaignWizardInput>,
     mode: "onChange",
     defaultValues: {
       name: "",
@@ -272,14 +288,12 @@ export function CampaignWizard({ campaignId, showHero = false }: CampaignWizardP
     deadline: values.deadline || undefined,
     requirements: values.requirements
       ? {
-          skills:
-            values.requirements.skills?.length
-              ? values.requirements.skills
-              : undefined,
-          languages:
-            values.requirements.languages?.length
-              ? values.requirements.languages
-              : undefined,
+          skills: values.requirements.skills?.length
+            ? values.requirements.skills
+            : undefined,
+          languages: values.requirements.languages?.length
+            ? values.requirements.languages
+            : undefined,
           gender: values.requirements.gender || undefined,
           age_range:
             values.requirements.age_range?.min != null ||
@@ -307,8 +321,7 @@ export function CampaignWizard({ campaignId, showHero = false }: CampaignWizardP
           question_type: q.question_type,
           is_required: q.is_required,
           order: i,
-          ...((q.question_type === "select" ||
-          q.question_type === "multiselect"
+          ...((q.question_type === "select" || q.question_type === "multiselect"
             ? { options: q.options }
             : {}) as { options?: string[] }),
         }))
@@ -326,14 +339,11 @@ export function CampaignWizard({ campaignId, showHero = false }: CampaignWizardP
         ? values.specialties
         : undefined,
     needs_influencer: values.needs_influencer || undefined,
-    influencer_speciality:
-      values.influencer_speciality?.length
-        ? values.influencer_speciality
-        : undefined,
+    influencer_speciality: values.influencer_speciality?.length
+      ? values.influencer_speciality
+      : undefined,
     task:
-      values.task?.title ||
-      values.task?.description ||
-      values.task?.nda_enabled
+      values.task?.title || values.task?.description || values.task?.nda_enabled
         ? {
             is_enabled: true,
             title: values.task.title || "",
@@ -384,23 +394,30 @@ export function CampaignWizard({ campaignId, showHero = false }: CampaignWizardP
           );
           setPendingTaskDoc(null);
         } catch {
-          toast.error("Task attachment could not be uploaded. You can retry from the Auditions tab.");
+          toast.error(
+            "Task attachment could not be uploaded. You can retry from the Auditions tab.",
+          );
         }
       }
 
-      toast.success(
-        isEdit ? "Campaign updated" : "Campaign created",
-      );
+      toast.success(isEdit ? "Campaign updated" : "Campaign created");
       router.push("/recruiter/campaigns");
     } catch (err: unknown) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : isEdit
-            ? "Failed to update campaign"
-            : "Failed to create campaign";
+      const message = getApiErrorMessage(
+        err,
+        isEdit
+          ? "We could not update this campaign. Check your campaign permissions and try again."
+          : "We could not create this campaign. Check your recruiter verification, subscription, or campaign limit.",
+      );
       setServerError(message);
-      toast.error(message);
+      toast.error(
+        isEdit
+          ? "Campaign could not be updated"
+          : "Campaign could not be created",
+        {
+          description: message,
+        },
+      );
     }
   };
 
@@ -458,9 +475,7 @@ export function CampaignWizard({ campaignId, showHero = false }: CampaignWizardP
           <h2
             className={cn(
               "text-xl font-semibold tracking-tight",
-              showHero
-                ? "relative z-10 text-white"
-                : "text-foreground",
+              showHero ? "relative z-10 text-white" : "text-foreground",
             )}
           >
             {isEdit ? "Edit campaign" : "New campaign"}
@@ -496,20 +511,20 @@ export function CampaignWizard({ campaignId, showHero = false }: CampaignWizardP
                     className={cn(
                       "flex items-center gap-2 px-3 py-2 rounded-xl transition-all duration-200",
                       isActive
-                         ? "bg-primary text-primary-foreground shadow-sm"
-                         : isDone
-                           ? "bg-accent-green-bg text-accent-green"
-                           : "text-muted-foreground hover:bg-muted",
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : isDone
+                          ? "bg-accent-green-bg text-accent-green"
+                          : "text-muted-foreground hover:bg-muted",
                     )}
                   >
                     <span
                       className={cn(
                         "w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 transition-all",
                         isActive
-                           ? "bg-primary/20"
-                           : isDone
-                             ? "bg-accent-green/20"
-                             : "bg-muted",
+                          ? "bg-primary/20"
+                          : isDone
+                            ? "bg-accent-green/20"
+                            : "bg-muted",
                       )}
                     >
                       {isDone ? (
@@ -524,14 +539,14 @@ export function CampaignWizard({ campaignId, showHero = false }: CampaignWizardP
                     <span
                       className={cn(
                         "text-xs font-semibold hidden sm:inline",
-                         isDone && "text-accent-green",
+                        isDone && "text-accent-green",
                       )}
                     >
                       {s.label}
                     </span>
                   </button>
                   {idx < STEPS.length - 1 && (
-                     <div className="mx-1 h-px flex-1 bg-border" />
+                    <div className="mx-1 h-px flex-1 bg-border" />
                   )}
                 </div>
               );
@@ -627,15 +642,18 @@ export function CampaignWizard({ campaignId, showHero = false }: CampaignWizardP
               type="submit"
               disabled={isNavigating || isPending}
               className={cn(
-                 "ml-auto flex items-center gap-1.5 rounded-xl px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50",
-                 form.watch("publishOption") === "draft"
-                   ? "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                   : "bg-accent-green hover:bg-accent-green/90",
+                "ml-auto flex items-center gap-1.5 rounded-xl px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-md transition-all active:scale-[0.98] disabled:opacity-50",
+                form.watch("publishOption") === "draft"
+                  ? "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                  : "bg-accent-green hover:bg-accent-green/90",
               )}
             >
               {isPending ? (
                 <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" strokeWidth={2} />
+                  <Loader2
+                    className="w-3.5 h-3.5 animate-spin"
+                    strokeWidth={2}
+                  />
                   {form.watch("publishOption") === "draft"
                     ? "Saving..."
                     : "Publishing..."}

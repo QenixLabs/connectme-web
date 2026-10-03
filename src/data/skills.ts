@@ -749,6 +749,8 @@ export const SKILLS: SkillDefinition[] = [
   },
 ];
 
+export const SKILL_NAMES = [...new Set(SKILLS.map((skill) => skill.name))];
+
 const SKILL_BY_ID = new Map(SKILLS.map((skill) => [skill.id, skill]));
 const SKILL_BY_SEARCH_VALUE = new Map(
   SKILLS.flatMap((skill) =>

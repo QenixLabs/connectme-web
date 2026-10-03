@@ -2,7 +2,52 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { redirectToSuspendedPage, redirectToBannedPage } from "@/lib/redirect";
 import { tokenStorage } from "@/lib/token-storage";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1";
+
+export function getApiErrorMessage(error: unknown, fallback: string): string {
+  if (!error || typeof error !== "object") return fallback;
+
+  const errorRecord = error as {
+    backendMessage?: unknown;
+    message?: unknown;
+    response?: {
+      data?: {
+        message?: unknown;
+        data?: { message?: unknown } | null;
+      };
+    };
+  };
+  const responseData = errorRecord.response?.data;
+  const candidates = [
+    errorRecord.backendMessage,
+    responseData?.message,
+    responseData?.data?.message,
+  ];
+
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate)) {
+      const message = candidate
+        .filter((item): item is string => typeof item === "string")
+        .join(" ");
+      if (message) return message;
+    }
+    if (typeof candidate === "string" && candidate.trim()) {
+      return candidate;
+    }
+  }
+
+  if (typeof errorRecord.message === "string") {
+    const isGenericMessage =
+      /^Request failed with status code \d+$/.test(errorRecord.message) ||
+      /^(Forbidden|Unauthorized)$/i.test(errorRecord.message);
+    if (!isGenericMessage && errorRecord.message.trim()) {
+      return errorRecord.message;
+    }
+  }
+
+  return fallback;
+}
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -29,7 +74,10 @@ apiClient.interceptors.request.use(
 
 // Response interceptor: unwrap envelope + handle 401 refresh
 let isRefreshing = false;
-let failedQueue: Array<{ resolve: (value: unknown) => void; reject: (reason?: unknown) => void }> = [];
+let failedQueue: Array<{
+  resolve: (value: unknown) => void;
+  reject: (reason?: unknown) => void;
+}> = [];
 
 const processQueue = (error: Error | null, token: string | null = null) => {
   failedQueue.forEach((prom) => {
@@ -67,7 +115,9 @@ apiClient.interceptors.response.use(
     return response;
   },
   async (error: AxiosError) => {
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+    const originalRequest = error.config as InternalAxiosRequestConfig & {
+      _retry?: boolean;
+    };
 
     if (error.response?.data instanceof Blob) {
       try {
@@ -82,11 +132,19 @@ apiClient.interceptors.response.use(
       const payload = error.response.data as Record<string, unknown>;
       const detail = payload?.data as Record<string, unknown> | undefined;
       if (detail?.suspended) {
-        redirectToSuspendedPage(detail.suspended_until as string, detail.reason as string, detail.moderation_action_id as string);
+        redirectToSuspendedPage(
+          detail.suspended_until as string,
+          detail.reason as string,
+          detail.moderation_action_id as string,
+        );
         return Promise.reject(error);
       }
       if (detail?.banned) {
-        redirectToBannedPage(detail.banned_at as string, detail.reason as string, detail.moderation_action_id as string);
+        redirectToBannedPage(
+          detail.banned_at as string,
+          detail.reason as string,
+          detail.moderation_action_id as string,
+        );
         return Promise.reject(error);
       }
     }
@@ -95,12 +153,18 @@ apiClient.interceptors.response.use(
       const data = error.response.data as Record<string, unknown>;
       const message = data?.message || "Too many requests. Please slow down.";
       if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("api-error", { detail: { status: 429, message } }));
+        window.dispatchEvent(
+          new CustomEvent("api-error", { detail: { status: 429, message } }),
+        );
       }
     }
 
     // 401 with refresh logic
-    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+    if (
+      error.response?.status === 401 &&
+      originalRequest &&
+      !originalRequest._retry
+    ) {
       const requestUrl = originalRequest.url || "";
       if (isPublicEndpoint(requestUrl)) {
         return Promise.reject(error);
@@ -119,9 +183,12 @@ apiClient.interceptors.response.use(
             processQueue(err as Error, null);
             tokenStorage.setToken(null);
             if (typeof window !== "undefined") {
-              document.cookie = "auth_session=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
-              document.cookie = "user_role=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
-              document.cookie = "onboarding_completed=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+              document.cookie =
+                "auth_session=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+              document.cookie =
+                "user_role=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+              document.cookie =
+                "onboarding_completed=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
               localStorage.removeItem("auth-storage");
               window.location.href = "/auth/login";
             }
@@ -155,9 +222,15 @@ apiClient.interceptors.response.use(
       }
     }
 
-    const responseData = error.response?.data as Record<string, unknown> | undefined;
-    if (responseData && typeof responseData === "object" && "message" in responseData) {
-      (error as AxiosError & { backendMessage?: string }).backendMessage = responseData.message as string;
+    const responseData = error.response?.data as
+      Record<string, unknown> | undefined;
+    if (
+      responseData &&
+      typeof responseData === "object" &&
+      "message" in responseData
+    ) {
+      (error as AxiosError & { backendMessage?: string }).backendMessage =
+        responseData.message as string;
     }
 
     return Promise.reject(error);

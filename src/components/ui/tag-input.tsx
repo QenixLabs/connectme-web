@@ -1,6 +1,11 @@
 "use client";
 
-import { useState, useRef, type ComponentProps, type KeyboardEvent } from "react";
+import {
+  useState,
+  useRef,
+  type ComponentProps,
+  type KeyboardEvent,
+} from "react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -8,6 +13,7 @@ interface TagInputProps {
   value: string[];
   onChange: (tags: string[]) => void;
   suggestions?: string[];
+  allowCustom?: boolean;
   placeholder?: string;
   maxTags?: number;
   className?: string;
@@ -17,6 +23,7 @@ export function TagInput({
   value,
   onChange,
   suggestions = [],
+  allowCustom = true,
   placeholder = "Add...",
   maxTags,
   className,
@@ -34,8 +41,15 @@ export function TagInput({
     const trimmed = tag.trim();
     if (!trimmed) return;
     if (maxTags && value.length >= maxTags) return;
-    if (value.includes(trimmed)) return;
-    onChange([...value, trimmed]);
+    const suggestion = suggestions.find(
+      (item) => item.toLowerCase() === trimmed.toLowerCase(),
+    );
+    if (!allowCustom && !suggestion) return;
+
+    const nextTag = suggestion ?? trimmed;
+    if (value.some((item) => item.toLowerCase() === nextTag.toLowerCase()))
+      return;
+    onChange([...value, nextTag]);
     setInput("");
     setShowSuggestions(false);
   };
