@@ -44,7 +44,7 @@ import {
 } from "./achievement-types";
 import { useCreateAchievement, useUpdateAchievement } from "@/hooks/use-experience";
 
-const draftStorageKey = "rootin-achievement-draft";
+const defaultDraftStorageKey = "rootin-achievement-draft";
 
 const optionalYear = z.preprocess(
   (value) => (value === "" || value === null || value === undefined ? undefined : Number(value)),
@@ -77,15 +77,33 @@ interface AchievementFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   achievement?: Achievement;
+  fixedType?: AchievementType;
+  mode?: "default" | "experience" | "credits";
 }
 
-function getDefaultValues(achievement?: Achievement): AchievementFormValues {
+function getDefaultValues(
+  achievement: Achievement | undefined,
+  defaultType: AchievementType,
+  mode: "default" | "experience" | "credits",
+): AchievementFormValues {
+  const isExperience = mode === "experience" && achievement?.type === "credit";
+
   return {
-    type: achievement?.type ?? "award",
-    title: achievement ? getAchievementTitle(achievement) : "",
-    category: achievement?.category ?? "",
-    role_level: achievement?.role_level ?? achievement?.role_played ?? "",
-    organization: achievement ? getAchievementOrganization(achievement) : "",
+    type: achievement?.type ?? defaultType,
+    title: isExperience
+      ? achievement?.role_played ?? achievement?.title ?? achievement?.project_name ?? ""
+      : achievement
+        ? getAchievementTitle(achievement)
+        : "",
+    category: achievement?.category ?? (isExperience ? achievement?.platform : "") ?? "",
+    role_level: isExperience
+      ? achievement?.role_level ?? ""
+      : achievement?.role_level ?? achievement?.role_played ?? "",
+    organization: isExperience
+      ? achievement?.project_name ?? achievement?.organization ?? ""
+      : achievement
+        ? getAchievementOrganization(achievement)
+        : "",
     institution: achievement?.institution ?? "",
     trainer: achievement?.trainer ?? achievement?.director ?? "",
     director: achievement?.director ?? "",
@@ -105,7 +123,17 @@ function getTypeLabel(type: AchievementType) {
   return ACHIEVEMENT_TYPE_CONFIG[type].label;
 }
 
-function getOrganizationLabel(type: AchievementType) {
+function getTitleLabel(type: AchievementType, mode: "default" | "experience" | "credits") {
+  if (type === "credit" && mode === "experience") return "Role / Title *";
+  if (type === "credit") return "Project / Credit *";
+  return "Title / Name *";
+}
+
+function getOrganizationLabel(
+  type: AchievementType,
+  mode: "default" | "experience" | "credits",
+) {
+  if (type === "credit" && mode === "experience") return "Company / Studio *";
   if (type === "credit") return "Production Company *";
   if (type === "training" || type === "workshop" || type === "certification" || type === "institution") {
     return "Institution / Organisation *";
@@ -113,15 +141,43 @@ function getOrganizationLabel(type: AchievementType) {
   return "Organisation / Event *";
 }
 
-function getRoleLabel(type: AchievementType) {
+function getRoleLabel(type: AchievementType, mode: "default" | "experience" | "credits") {
+  if (type === "credit" && mode === "experience") return "Seniority / Level";
   if (type === "credit") return "Role";
   if (type === "training" || type === "workshop" || type === "certification") return "Role / Level";
   return "Category / Role";
 }
 
-function getPayload(data: AchievementFormValues, proofPath?: string) {
+function getPayload(
+  data: AchievementFormValues,
+  proofPath?: string,
+  mode: "default" | "experience" | "credits" = "default",
+) {
   const isCredit = data.type === "credit";
   const isAwardOrNomination = data.type === "award" || data.type === "nomination";
+
+  if (isCredit && mode !== "default") {
+    return {
+      type: data.type,
+      project_name: mode === "experience" ? data.organization.trim() : data.title.trim(),
+      role_played:
+        mode === "experience"
+          ? data.title.trim()
+          : data.role_level?.trim() || undefined,
+      platform:
+        mode === "experience"
+          ? data.category?.trim() || data.platform?.trim() || undefined
+          : data.organization.trim() || undefined,
+      director: data.director?.trim() || undefined,
+      year: data.year || undefined,
+      description: data.description?.trim() || undefined,
+      credit_url: data.media_url || undefined,
+      ...(proofPath ? { proof_url: proofPath } : {}),
+      verification_status: data.verification_status || undefined,
+      verification_method: data.verification_method || undefined,
+    };
+  }
+
   return {
     type: data.type,
     title: data.title.trim(),
@@ -147,7 +203,13 @@ function getPayload(data: AchievementFormValues, proofPath?: string) {
   };
 }
 
-export function AchievementForm({ open, onOpenChange, achievement }: AchievementFormProps) {
+export function AchievementForm({
+  open,
+  onOpenChange,
+  achievement,
+  fixedType,
+  mode = "default",
+}: AchievementFormProps) {
   const isEditing = Boolean(achievement);
   const createMutation = useCreateAchievement();
   const updateMutation = useUpdateAchievement();
@@ -155,10 +217,12 @@ export function AchievementForm({ open, onOpenChange, achievement }: Achievement
   const [proofPath, setProofPath] = useState<string | undefined>();
   const [proofName, setProofName] = useState<string | undefined>();
   const [uploadingProof, setUploadingProof] = useState(false);
+  const draftStorageKey =
+    mode === "default" ? defaultDraftStorageKey : `${defaultDraftStorageKey}-${mode}`;
   const form = useForm<AchievementFormValues>({
     resolver: zodResolver(achievementFormSchema) as unknown as Resolver<AchievementFormValues>,
     mode: "onTouched",
-    defaultValues: getDefaultValues(achievement),
+    defaultValues: getDefaultValues(achievement, fixedType ?? "award", mode),
   });
   const selectedType = form.watch("type");
   const description = form.watch("description") || "";
@@ -170,13 +234,13 @@ export function AchievementForm({ open, onOpenChange, achievement }: Achievement
     setProofPath(undefined);
     setProofName(achievement?.proof_url ? "Existing proof attached" : undefined);
     if (achievement) {
-      form.reset(getDefaultValues(achievement));
+      form.reset(getDefaultValues(achievement, fixedType ?? "award", mode));
       return;
     }
 
     const storedDraft = window.localStorage.getItem(draftStorageKey);
     if (!storedDraft) {
-      form.reset(getDefaultValues());
+      form.reset(getDefaultValues(undefined, fixedType ?? "award", mode));
       return;
     }
 
@@ -186,14 +250,18 @@ export function AchievementForm({ open, onOpenChange, achievement }: Achievement
         proofPath?: string;
         proofName?: string;
       };
-      form.reset({ ...getDefaultValues(), ...draft.values });
+      form.reset({
+        ...getDefaultValues(undefined, fixedType ?? "award", mode),
+        ...draft.values,
+        ...(fixedType ? { type: fixedType } : {}),
+      });
       setProofPath(draft.proofPath);
       setProofName(draft.proofName);
     } catch {
       window.localStorage.removeItem(draftStorageKey);
-      form.reset(getDefaultValues());
+      form.reset(getDefaultValues(undefined, fixedType ?? "award", mode));
     }
-  }, [achievement, form, open]);
+  }, [achievement, draftStorageKey, fixedType, form, mode, open]);
 
   async function validateStep() {
     if (step === 0) return form.trigger(["type", "title"]);
@@ -259,10 +327,11 @@ export function AchievementForm({ open, onOpenChange, achievement }: Achievement
       return;
     }
 
-    const payload = getPayload(data, proofPath);
+    const payload = getPayload(data, proofPath, mode);
     try {
       if (isEditing && achievement) {
-        const { type: _type, ...updateData } = payload;
+        const updateData = { ...payload };
+        delete (updateData as { type?: unknown }).type;
         await updateMutation.mutateAsync({ id: achievement._id, data: updateData });
         toast.success("Achievement updated");
       } else {
@@ -321,36 +390,38 @@ export function AchievementForm({ open, onOpenChange, achievement }: Achievement
             <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-7">
               {step === 0 && (
                 <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="type"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Achievement Type *</FormLabel>
-                        <Select value={field.value} onValueChange={field.onChange} disabled={isEditing}>
-                          <FormControl>
-                            <SelectTrigger className="h-12 rounded-2xl border-[#e1def0] bg-white text-xs">
-                              <SelectValue placeholder="Choose a type" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {ACHIEVEMENT_TYPE_VALUES.map((type) => (
-                              <SelectItem key={type} value={type}>
-                                {getTypeLabel(type)}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  {!fixedType && (
+                    <FormField
+                      control={form.control}
+                      name="type"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Achievement Type *</FormLabel>
+                          <Select value={field.value} onValueChange={field.onChange} disabled={isEditing}>
+                            <FormControl>
+                              <SelectTrigger className="h-12 rounded-2xl border-[#e1def0] bg-white text-xs">
+                                <SelectValue placeholder="Choose a type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {ACHIEVEMENT_TYPE_VALUES.map((type) => (
+                                <SelectItem key={type} value={type}>
+                                  {getTypeLabel(type)}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
                   <FormField
                     control={form.control}
                     name="title"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Title / Name *</FormLabel>
+                        <FormLabel>{getTitleLabel(selectedType, mode)}</FormLabel>
                         <FormControl>
                           <Input {...field} placeholder="Best Actor (Feature Film)" className="h-12 rounded-2xl border-[#e1def0] bg-white text-xs" />
                         </FormControl>
@@ -377,7 +448,7 @@ export function AchievementForm({ open, onOpenChange, achievement }: Achievement
                       name="role_level"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{getRoleLabel(selectedType)}</FormLabel>
+                          <FormLabel>{getRoleLabel(selectedType, mode)}</FormLabel>
                           <FormControl>
                             <Input {...field} placeholder={selectedType === "credit" ? "Lead Actor" : "Advanced Acting"} className="h-12 rounded-2xl border-[#e1def0] bg-white text-xs" />
                           </FormControl>
@@ -396,7 +467,7 @@ export function AchievementForm({ open, onOpenChange, achievement }: Achievement
                     name="organization"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{getOrganizationLabel(selectedType)}</FormLabel>
+                        <FormLabel>{getOrganizationLabel(selectedType, mode)}</FormLabel>
                         <FormControl>
                           <Input {...field} placeholder={selectedType === "credit" ? "Skyline Pictures" : "Mumbai Film Awards"} className="h-12 rounded-2xl border-[#e1def0] bg-white text-xs" />
                         </FormControl>

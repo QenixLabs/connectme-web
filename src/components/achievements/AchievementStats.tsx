@@ -1,7 +1,19 @@
-import { Award, BadgeCheck, Building2, GraduationCap, Star } from "lucide-react";
+import {
+  Award,
+  BadgeCheck,
+  Building2,
+  BriefcaseBusiness,
+  ExternalLink,
+  GraduationCap,
+  Star,
+} from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import type { Achievement } from "@/lib/api/talent";
-import { getAchievementStats } from "./achievement-types";
+import {
+  getAchievementMedia,
+  getAchievementStats,
+  isVerifiedAchievement,
+} from "./achievement-types";
 
 const statItems = [
   { key: "awards", label: "Awards", icon: Award, tone: "text-[#7c3aed]", background: "bg-[#f1edff]" },
@@ -11,13 +23,41 @@ const statItems = [
   { key: "institutions", label: "Institutions", icon: Building2, tone: "text-[#0284c7]", background: "bg-[#f0f9ff]" },
 ] as const;
 
-export function AchievementStats({ achievements }: { achievements: Achievement[] }) {
-  const stats = getAchievementStats(achievements);
+const creditStatItems = [
+  { key: "total", label: "Credits", icon: BriefcaseBusiness, tone: "text-[#2563eb]", background: "bg-[#eff6ff]" },
+  { key: "verified", label: "Verified", icon: BadgeCheck, tone: "text-[#18805a]", background: "bg-[#e9fbf1]" },
+  { key: "linked", label: "With media", icon: ExternalLink, tone: "text-[#7c3aed]", background: "bg-[#f1edff]" },
+] as const;
+
+export function AchievementStats({
+  achievements,
+  variant = "achievements",
+  recordLabel = "Credits",
+}: {
+  achievements: Achievement[];
+  variant?: "achievements" | "credits";
+  recordLabel?: string;
+}) {
+  const stats =
+    variant === "credits"
+      ? {
+          total: achievements.length,
+          verified: achievements.filter(isVerifiedAchievement).length,
+          linked: achievements.filter((achievement) => Boolean(getAchievementMedia(achievement))).length,
+        }
+      : getAchievementStats(achievements);
+  const values = stats as Record<string, number>;
+  const items =
+    variant === "credits"
+      ? creditStatItems.map((item) =>
+          item.key === "total" ? { ...item, label: recordLabel } : item,
+        )
+      : statItems;
 
   return (
     <Card className="rounded-[24px] border-[#e9e6f7] bg-white/95 shadow-[0_10px_28px_rgba(75,61,157,0.08)]">
-      <CardContent className="no-scrollbar flex overflow-x-auto p-2 sm:grid sm:grid-cols-5 sm:overflow-visible sm:p-3">
-        {statItems.map((item, index) => {
+      <CardContent className={`no-scrollbar flex overflow-x-auto p-2 sm:grid sm:overflow-visible sm:p-3 ${variant === "credits" ? "sm:grid-cols-3" : "sm:grid-cols-5"}`}>
+        {items.map((item, index) => {
           const Icon = item.icon;
           return (
             <div
@@ -31,7 +71,7 @@ export function AchievementStats({ achievements }: { achievements: Achievement[]
               </span>
               <span className="min-w-0">
                 <strong className="block text-[19px] font-extrabold leading-none tracking-[-0.04em] text-[#13225c]">
-                  {stats[item.key]}
+                  {values[item.key]}
                 </strong>
                 <span className="mt-1 block truncate text-[10px] font-semibold text-[#737895]">
                   {item.label}

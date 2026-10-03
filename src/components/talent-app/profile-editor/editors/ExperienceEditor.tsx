@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Briefcase, Pencil, Plus, Trash2 } from "lucide-react";
+import { Briefcase, Pencil, Trash2 } from "lucide-react";
 import { EditorShell, AddAction } from "./EditorShell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,11 @@ import {
   SheetFooter,
 } from "@/components/ui/sheet";
 import { toast } from "sonner";
+import {
+  useCreateCredit,
+  useDeleteCredit,
+  useUpdateCredit,
+} from "@/hooks/use-experience";
 import type { Profile, Experience } from "../profile-types";
 
 interface EditorProps {
@@ -24,10 +29,17 @@ interface EditorProps {
   onUpdate: (patch: Partial<Profile>) => void;
 }
 
-const uid = () => Math.random().toString(36).slice(2, 9);
+function getYear(period: string): number | undefined {
+  const match = period.match(/\b(?:19|20)\d{2}\b/);
+  return match ? Number(match[0]) : undefined;
+}
 
-export function ExperienceEditor({ profile, onBack, onUpdate }: EditorProps) {
+export function ExperienceEditor({ profile, onBack }: EditorProps) {
   const [editing, setEditing] = useState<Experience | null>(null);
+  const createCredit = useCreateCredit();
+  const updateCredit = useUpdateCredit();
+  const deleteCredit = useDeleteCredit();
+  const isSaving = createCredit.isPending || updateCredit.isPending;
 
   const startAdd = () => {
     setEditing({ id: "", title: "", company: "", period: "", description: "" });
@@ -37,21 +49,40 @@ export function ExperienceEditor({ profile, onBack, onUpdate }: EditorProps) {
     setEditing({ ...e });
   };
 
-  const save = () => {
-    if (!editing || !editing.title.trim()) return;
+  const save = async () => {
+    if (!editing || !editing.title.trim()) {
+      toast.error("Role / title is required");
+      return;
+    }
+
     const exists = profile.experience.some((e) => e.id === editing.id);
-    onUpdate({
-      experience: exists
-        ? profile.experience.map((e) => (e.id === editing.id ? editing : e))
-        : [...profile.experience, { ...editing, id: uid() }],
-    });
-    setEditing(null);
-    toast.success(exists ? "Experience updated" : "Experience added");
+    const data = {
+      project_name: editing.company.trim() || editing.title.trim(),
+      role_played: editing.title.trim(),
+      year: getYear(editing.period.trim()),
+      description: editing.description.trim() || undefined,
+    };
+
+    try {
+      if (exists) {
+        await updateCredit.mutateAsync({ id: editing.id, data });
+      } else {
+        await createCredit.mutateAsync({ type: "credit", ...data });
+      }
+      setEditing(null);
+      toast.success(exists ? "Experience updated" : "Experience added");
+    } catch {
+      toast.error("Could not save experience. Please try again.");
+    }
   };
 
-  const remove = (id: string) => {
-    onUpdate({ experience: profile.experience.filter((e) => e.id !== id) });
-    toast.success("Experience removed");
+  const remove = async (id: string) => {
+    try {
+      await deleteCredit.mutateAsync(id);
+      toast.success("Experience removed");
+    } catch {
+      toast.error("Could not remove experience. Please try again.");
+    }
   };
 
   return (
@@ -98,6 +129,7 @@ export function ExperienceEditor({ profile, onBack, onUpdate }: EditorProps) {
                   <Button
                     variant="outline"
                     size="sm"
+                    disabled={isSaving || deleteCredit.isPending}
                     onClick={() => startEdit(e)}
                   >
                     <Pencil className="mr-1 size-3.5" /> Edit
@@ -105,6 +137,7 @@ export function ExperienceEditor({ profile, onBack, onUpdate }: EditorProps) {
                   <Button
                     variant="outline"
                     size="sm"
+                    disabled={isSaving || deleteCredit.isPending}
                     className="text-destructive hover:text-destructive"
                     onClick={() => remove(e.id)}
                   >
@@ -184,7 +217,9 @@ export function ExperienceEditor({ profile, onBack, onUpdate }: EditorProps) {
             <Button variant="outline" onClick={() => setEditing(null)}>
               Cancel
             </Button>
-            <Button onClick={save}>Save</Button>
+            <Button onClick={save} disabled={isSaving}>
+              {isSaving ? "Saving..." : "Save"}
+            </Button>
           </SheetFooter>
         </SheetContent>
       </Sheet>

@@ -22,14 +22,24 @@ interface AchievementManageRowProps {
   achievement: Achievement;
   onEdit: () => void;
   onDelete: () => void;
+  mode?: "default" | "experience";
 }
 
 export function AchievementManageRow({
   achievement,
   onEdit,
   onDelete,
+  mode = "default",
 }: AchievementManageRowProps) {
   const config = ACHIEVEMENT_TYPE_CONFIG[achievement.type];
+  const title =
+    mode === "experience"
+      ? achievement.role_played || achievement.project_name || "Untitled experience"
+      : getAchievementTitle(achievement);
+  const organization =
+    mode === "experience"
+      ? achievement.project_name || achievement.platform || "Independent"
+      : getAchievementOrganization(achievement);
 
   return (
     <Card className="rounded-[22px] border-[#e9e6f7] bg-white shadow-[0_8px_22px_rgba(36,43,93,0.06)] transition-shadow hover:shadow-[0_12px_28px_rgba(36,43,93,0.1)]">
@@ -39,10 +49,10 @@ export function AchievementManageRow({
           <div className="flex min-w-0 items-start gap-2">
             <div className="min-w-0 flex-1">
               <h3 className="truncate text-[13px] font-extrabold tracking-[-0.02em] text-[#14225b]">
-                {getAchievementTitle(achievement)}
+                {title}
               </h3>
               <p className="mt-0.5 truncate text-[11px] text-[#687092]">
-                {getAchievementOrganization(achievement)}
+                {organization}
               </p>
             </div>
             <DropdownMenu>
@@ -52,7 +62,7 @@ export function AchievementManageRow({
                   variant="ghost"
                   size="icon-sm"
                   className="-mr-1 -mt-1 size-8 rounded-full text-[#737895] hover:bg-[#f1edff] hover:text-[#5730dc]"
-                  aria-label={`More options for ${getAchievementTitle(achievement)}`}
+                  aria-label={`More options for ${title}`}
                 >
                   <MoreHorizontal className="size-[17px]" />
                 </Button>
@@ -69,7 +79,7 @@ export function AchievementManageRow({
           </div>
           <div className="mt-1.5 flex min-w-0 flex-wrap items-center gap-1.5">
             <Badge className="h-5 rounded-full bg-[#f1edff] px-2 text-[9px] font-bold text-[#5e34d7] hover:bg-[#f1edff]">
-              {config.label}
+              {mode === "experience" ? "Experience" : config.label}
             </Badge>
             {achievement.featured && (
               <Badge className="h-5 rounded-full bg-[#fff4c8] px-2 text-[9px] font-bold text-[#a16207] hover:bg-[#fff4c8]">
@@ -95,7 +105,7 @@ export function AchievementManageRow({
             size="icon-sm"
             onClick={onEdit}
             className="size-9 rounded-full text-[#5e34d7] hover:bg-[#f1edff]"
-            aria-label={`Edit ${getAchievementTitle(achievement)}`}
+            aria-label={`Edit ${title}`}
           >
             <Pencil className="size-4" />
           </Button>
@@ -105,7 +115,7 @@ export function AchievementManageRow({
             size="icon-sm"
             onClick={onDelete}
             className="size-9 rounded-full text-[#d04b66] hover:bg-[#fff0f2]"
-            aria-label={`Delete ${getAchievementTitle(achievement)}`}
+            aria-label={`Delete ${title}`}
           >
             <Trash2 className="size-4" />
           </Button>

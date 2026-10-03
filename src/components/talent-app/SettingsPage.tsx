@@ -44,15 +44,15 @@ import { ChangePasswordDialog } from "./settings/change-password-dialog";
 import { VerifyPhoneDialog } from "./settings/verify-phone-dialog";
 import { AppearanceSetting } from "./settings/appearance-setting";
 
-type SettingTone = "purple" | "red";
+type SettingTone = "blue" | "red";
 
 const toneClasses: Record<SettingTone, string> = {
-  purple: "bg-[#f1eaff] text-[#7635ee]",
+  blue: "bg-primary/10 text-primary",
   red: "bg-[#fff0f0] text-[#e3262e]",
 };
 
 function SettingIcon({
-  tone = "purple",
+  tone = "blue",
   children,
 }: {
   tone?: SettingTone;
@@ -112,21 +112,21 @@ function SettingRow({
     <>
       {icon}
       <span className="min-w-0 flex-1 text-left">
-        <span className="block truncate text-[16px] font-bold leading-5 text-[#151b4c] sm:text-[18px]">
+        <span className="block truncate text-[16px] font-bold leading-5 text-foreground sm:text-[18px]">
           {title}
         </span>
-        <span className="mt-1 block truncate text-[13px] leading-5 text-[#5e5b8c] sm:text-[15px]">
+        <span className="mt-1 block truncate text-[13px] leading-5 text-muted-foreground sm:text-[15px]">
           {description}
         </span>
       </span>
       {action && <span className="hidden shrink-0 items-center sm:flex">{action}</span>}
-      <ChevronRight className="size-6 shrink-0 text-[#7835ec]" strokeWidth={2.25} />
+      <ChevronRight className="size-6 shrink-0 text-primary" strokeWidth={2.25} />
     </>
   );
 
   const rowClassName = cn(
-    "flex min-h-[76px] w-full items-center justify-start gap-3 border-b border-[#ebe8f6] px-4 py-3 transition-colors last:border-b-0 sm:min-h-[84px] sm:gap-4 sm:px-6",
-    "hover:bg-[#fcfbff] focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#7835ec]",
+    "flex min-h-[76px] w-full items-center justify-start gap-3 border-b border-border px-4 py-3 transition-colors last:border-b-0 sm:min-h-[84px] sm:gap-4 sm:px-6",
+    "hover:bg-primary/5 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
     className,
   );
 
@@ -144,7 +144,7 @@ function SettingRow({
         type="button"
         variant="ghost"
         onClick={onClick}
-        className={cn(rowClassName, "h-auto rounded-none p-0 hover:bg-[#fcfbff]")}
+        className={cn(rowClassName, "h-auto rounded-none p-0 hover:bg-primary/5")}
       >
         {content}
       </Button>
@@ -216,15 +216,15 @@ export function SettingsPage() {
   return (
     <div className="talent-settings-theme relative min-h-svh overflow-hidden bg-background text-foreground">
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -left-36 top-24 size-[300px] rounded-full bg-[#e3caff]/35 blur-3xl" />
-        <div className="absolute right-[-150px] top-8 size-[360px] rounded-full bg-[#d9e8ff]/45 blur-3xl" />
-        <div className="absolute -right-32 bottom-36 size-[320px] rounded-full bg-[#e5caff]/30 blur-3xl" />
+        <div className="absolute -left-36 top-24 size-[300px] rounded-full bg-primary/10 blur-3xl" />
+        <div className="absolute right-[-150px] top-8 size-[360px] rounded-full bg-primary/10 blur-3xl" />
+        <div className="absolute -right-32 bottom-36 size-[320px] rounded-full bg-primary/10 blur-3xl" />
       </div>
 
-      <div className="relative mx-auto w-full max-w-[980px] px-4 pb-32 pt-4 sm:px-6 sm:pt-5 lg:px-8">
+      <div className="relative mx-auto w-full max-w-[980px] px-4 pb-16 pt-4 sm:px-6 sm:pt-5 lg:px-8 lg:pb-8">
         <header>
           <div className="flex items-center justify-between gap-4">
-            <Link href="/talent/dashboard" className="inline-flex items-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7835ec]">
+            <Link href="/talent/dashboard" className="inline-flex items-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
               <Image
                 src={logoImage}
                 alt="Rootin"
@@ -238,13 +238,13 @@ export function SettingsPage() {
                 asChild
                 variant="ghost"
                 size="icon"
-                className="relative size-11 rounded-full text-[#151b4c] hover:bg-white/75"
+                className="relative size-11 rounded-full text-foreground hover:bg-primary/5"
                 aria-label="Notifications"
               >
                 <Link href="/talent/notifications">
                   <Bell className="size-6" strokeWidth={1.9} />
                   {notificationCount > 0 && (
-                    <Badge className="absolute right-0 top-0 grid size-5 place-items-center rounded-full border-0 bg-[#f02538] p-0 text-[11px] font-bold text-white ring-2 ring-[#faf9ff]">
+                      <Badge className="absolute right-0 top-0 grid size-5 place-items-center rounded-full border-0 bg-[#f02538] p-0 text-[11px] font-bold text-white ring-2 ring-background">
                       {notificationCount > 9 ? "9+" : notificationCount}
                     </Badge>
                   )}
@@ -252,12 +252,12 @@ export function SettingsPage() {
               </Button>
               <Link
                 href="/talent/profile"
-                className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7835ec]"
+                className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 aria-label="Open profile"
               >
-                <Avatar className="size-11 border-2 border-white bg-[#eee8ff] shadow-[0_5px_18px_rgba(95,66,180,0.13)] sm:size-14">
+                <Avatar className="size-11 border-2 border-white bg-primary/10 shadow-sm sm:size-14">
                   <AvatarImage src={profile?.profile_photo} alt={`${displayName} profile photo`} />
-                  <AvatarFallback className="bg-[#eee8ff] text-sm font-bold text-[#7131e9]">
+                  <AvatarFallback className="bg-primary/10 text-sm font-bold text-primary">
                     {initials || "AK"}
                   </AvatarFallback>
                 </Avatar>
@@ -270,7 +270,7 @@ export function SettingsPage() {
               asChild
               variant="ghost"
               size="icon"
-              className="mt-1 size-12 shrink-0 rounded-full border border-[#e3d8ff] bg-[#f3edff] text-[#7434eb] shadow-[0_4px_14px_rgba(113,55,220,0.08)] hover:bg-[#ece3ff]"
+              className="mt-1 size-12 shrink-0 rounded-full border border-primary/20 bg-primary/10 text-primary shadow-sm hover:bg-primary/20"
               aria-label="Back to profile"
             >
               <Link href="/talent/profile">
@@ -280,14 +280,14 @@ export function SettingsPage() {
             <div className="min-w-0 flex-1">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h1 className="font-display text-[30px] font-bold leading-[1.05] tracking-[-0.04em] text-[#121846] sm:text-[48px]">
+                  <h1 className="font-display text-[30px] font-bold leading-[1.05] tracking-[-0.04em] text-foreground sm:text-[48px]">
                     Account Settings
                   </h1>
-                  <p className="mt-2 text-[15px] leading-6 text-[#4e4d80] sm:text-[22px] sm:leading-7">
+                  <p className="mt-2 text-[15px] leading-6 text-muted-foreground sm:text-[22px] sm:leading-7">
                     Manage your account, security and preferences.
                   </p>
                 </div>
-                <p className="hidden shrink-0 pt-1 text-right font-script text-[27px] leading-[0.9] text-[#1e1792] sm:block sm:text-[34px]">
+                <p className="hidden shrink-0 pt-1 text-right font-script text-[27px] leading-[0.9] text-primary sm:block sm:text-[34px]">
                   Your Talent
                   <br />
                   Your Control.
@@ -298,41 +298,41 @@ export function SettingsPage() {
         </header>
 
         <main className="mt-7 space-y-4 sm:mt-8 sm:space-y-5">
-          <Card className="relative overflow-hidden rounded-[20px] border-[#e4ddf8] bg-white/90 p-4 shadow-[0_10px_30px_rgba(69,47,160,0.08)] backdrop-blur sm:p-5">
+          <Card className="relative overflow-hidden rounded-[20px] border-border bg-card/90 p-4 shadow-sm backdrop-blur sm:p-5">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
               <Link
                 href="/talent/profile"
-                className="relative mx-auto shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7835ec] sm:mx-0"
+                className="relative mx-auto shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:mx-0"
                 aria-label="Edit profile photo"
               >
-                <Avatar className="size-[104px] border-4 border-white bg-[#eee8ff] shadow-[0_6px_22px_rgba(71,42,155,0.16)] sm:size-[132px]">
+                <Avatar className="size-[104px] border-4 border-white bg-primary/10 shadow-sm sm:size-[132px]">
                   <AvatarImage src={profile?.profile_photo} alt={`${displayName} profile photo`} />
                   <AvatarFallback className="bg-gradient-to-br from-[#f0d7c7] via-[#e9c3b1] to-[#8b4b3a] text-2xl font-bold text-[#4e2b2b]">
                     {initials || "AK"}
                   </AvatarFallback>
                 </Avatar>
-                <span className="absolute bottom-0 right-0 grid size-10 place-items-center rounded-full border-2 border-white bg-[#8038ed] text-white shadow-[0_4px_12px_rgba(95,35,220,0.25)] sm:size-11">
+                <span className="absolute bottom-0 right-0 grid size-10 place-items-center rounded-full border-2 border-white bg-primary text-primary-foreground shadow-sm sm:size-11">
                   <Camera className="size-5" strokeWidth={2} />
                 </span>
               </Link>
 
               <div className="min-w-0 flex-1 text-center sm:text-left">
                 <div className="flex items-center justify-center gap-2 sm:justify-start">
-                  <h2 className="truncate text-[22px] font-bold tracking-[-0.02em] text-[#151b4c] sm:text-[29px]">
+                  <h2 className="truncate text-[22px] font-bold tracking-[-0.02em] text-foreground sm:text-[29px]">
                     {displayName}
                   </h2>
                   {isVerified && <BadgeCheck className="size-6 shrink-0 fill-[#1fa6f4] text-white sm:size-7" />}
                 </div>
-                <div className="mt-1 flex flex-wrap items-center justify-center gap-x-2 text-[14px] text-[#595785] sm:justify-start sm:text-[18px]">
+                <div className="mt-1 flex flex-wrap items-center justify-center gap-x-2 text-[14px] text-muted-foreground sm:justify-start sm:text-[18px]">
                   {professions.map((profession, index) => (
                     <span key={profession} className="inline-flex items-center gap-2">
                       {profession}
-                      {index < professions.length - 1 && <span className="text-[#7d35ee]">|</span>}
+                      {index < professions.length - 1 && <span className="text-primary">|</span>}
                     </span>
                   ))}
                 </div>
-                <div className="mt-2 flex items-center justify-center gap-2 text-[14px] text-[#595785] sm:justify-start sm:text-[17px]">
-                  <MapPin className="size-5 text-[#7d35ee]" fill="currentColor" strokeWidth={1.5} />
+                <div className="mt-2 flex items-center justify-center gap-2 text-[14px] text-muted-foreground sm:justify-start sm:text-[17px]">
+                  <MapPin className="size-5 text-primary" fill="currentColor" strokeWidth={1.5} />
                   {location}
                 </div>
               </div>
@@ -340,15 +340,15 @@ export function SettingsPage() {
               <Button
                 asChild
                 variant="outline"
-                className="h-12 rounded-xl border-2 border-[#9c63ff] bg-white px-6 text-[15px] font-bold text-[#7434eb] shadow-none hover:bg-[#f8f2ff] sm:h-14 sm:min-w-[170px] sm:text-[17px]"
+                className="h-12 rounded-xl border-2 border-primary bg-card px-6 text-[15px] font-bold text-primary shadow-none hover:bg-primary/10 sm:h-14 sm:min-w-[170px] sm:text-[17px]"
               >
                 <Link href="/talent/profile">Edit Profile</Link>
               </Button>
             </div>
           </Card>
 
-          <Card className="overflow-hidden rounded-[19px] border-[#e4ddf8] bg-white/90 py-0 shadow-[0_10px_30px_rgba(69,47,160,0.06)] backdrop-blur">
-            <SettingRow
+          <Card className="overflow-hidden rounded-[19px] border-border bg-card/90 py-0 shadow-sm backdrop-blur">
+             <SettingRow
               href="/talent/profile"
               icon={
                 <SettingIcon>
@@ -357,7 +357,7 @@ export function SettingsPage() {
               }
               title="Personal Information"
               description="Name, Date of Birth, Gender, Location, Bio"
-              action={<span className="text-sm text-[#5b5789]">Manage your basic details</span>}
+               action={<span className="text-sm text-muted-foreground">Manage your basic details</span>}
             />
             <SettingRow
               href="/talent/profile"
@@ -394,7 +394,7 @@ export function SettingsPage() {
             />
           </Card>
 
-          <Card className="overflow-hidden rounded-[19px] border-[#e4ddf8] bg-white/90 py-0 shadow-[0_10px_30px_rgba(69,47,160,0.06)] backdrop-blur">
+          <Card className="overflow-hidden rounded-[19px] border-border bg-card/90 py-0 shadow-sm backdrop-blur">
             <SettingRow
               onClick={() => showComingSoon("Login & Security")}
               icon={
@@ -415,7 +415,7 @@ export function SettingsPage() {
               title="Connected Accounts"
               description="Link your social media and professional accounts"
               action={
-                <span className="flex items-center gap-1.5 text-[12px] text-[#5d5988] sm:text-sm">
+                  <span className="flex items-center gap-1.5 text-[12px] text-muted-foreground sm:text-sm">
                   <span className="flex -space-x-1.5">
                     <SocialCircle className="bg-gradient-to-br from-[#f7b34a] via-[#ea3d80] to-[#7038d8]"><Instagram className="size-4" /></SocialCircle>
                     <SocialCircle className="bg-[#f0242c]"><Youtube className="size-4" /></SocialCircle>
@@ -428,8 +428,8 @@ export function SettingsPage() {
             />
           </Card>
 
-          <Card className="overflow-hidden rounded-[19px] border-[#e4ddf8] bg-white/90 py-0 shadow-[0_10px_30px_rgba(69,47,160,0.06)] backdrop-blur">
-            <SettingRow
+          <Card className="overflow-hidden rounded-[19px] border-border bg-card/90 py-0 shadow-sm backdrop-blur">
+             <SettingRow
               href="/talent/profile"
               icon={
                 <SettingIcon>
@@ -456,15 +456,15 @@ export function SettingsPage() {
                   <BadgeCheck className="size-6" strokeWidth={1.8} />
                 </SettingIcon>
               }
-              title="Account Status"
-              description="Verification status, subscription, account health"
-              action={isVerified ? <VerifiedLabel pill>Verified Talent</VerifiedLabel> : <span className="text-sm text-[#5b5789]">Review status</span>}
+              title="Verification"
+              description="Upload identity documents and manage your verified badge"
+              action={isVerified ? <VerifiedLabel pill>Verified</VerifiedLabel> : <span className="text-sm text-muted-foreground">Start verification</span>}
             />
           </Card>
 
           <AppearanceSetting />
 
-          <Card className="overflow-hidden rounded-[19px] border-[#e4ddf8] bg-white/90 py-0 shadow-[0_10px_30px_rgba(69,47,160,0.06)] backdrop-blur">
+          <Card className="overflow-hidden rounded-[19px] border-border bg-card/90 py-0 shadow-sm backdrop-blur">
             <SettingRow
               href="/talent/notifications"
               icon={
@@ -509,12 +509,12 @@ export function SettingsPage() {
             </SettingIcon>
             <span className="min-w-0 flex-1">
               <span className="block text-[17px] font-bold leading-5 text-[#e3262e] sm:text-[19px]">Logout</span>
-              <span className="mt-1 block text-[13px] leading-5 text-[#5e5b8c] sm:text-[15px]">Sign out from your Rootin account</span>
+              <span className="mt-1 block text-[13px] leading-5 text-muted-foreground sm:text-[15px]">Sign out from your Rootin account</span>
             </span>
             <ChevronRight className="size-6 shrink-0 text-[#e3262e]" strokeWidth={2.25} />
           </Button>
 
-          <div className="overflow-hidden rounded-[20px] border border-[#e2dcfa] bg-white shadow-[0_10px_30px_rgba(69,47,160,0.08)]">
+          <div className="overflow-hidden rounded-[20px] border border-border bg-card shadow-sm">
             <Image
               src="/assets/talent-edit/talent-setting-bottom.png"
               alt="Same passion. Bigger opportunities."

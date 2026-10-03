@@ -211,6 +211,13 @@ export function ProfileEditorPage() {
     year: credit.year != null ? String(credit.year) : "",
     description: credit.description ?? "",
   }));
+  profile.experience = (creditsQuery.data ?? []).map((credit) => ({
+    id: credit._id,
+    title: credit.role_played ?? credit.project_name ?? "",
+    company: credit.project_name ?? "",
+    period: credit.year != null ? String(credit.year) : "",
+    description: credit.description ?? "",
+  }));
   profile.testimonials = (testimonialsQuery.data ?? []).map((testimonial) => ({
     id: testimonial._id,
     author: testimonial.author_name,

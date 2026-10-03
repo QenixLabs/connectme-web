@@ -104,6 +104,7 @@ export function Dashboard({
     profile.physicalAttributes.eye_color,
   ].filter(Boolean);
   const approvedTestimonials = profile.testimonials.filter((item) => item.approvedByTalent);
+  const hasWorkExperience = profile.yearsOfExperience > 0 || profile.experience.length > 0;
 
   const navigateToStrengthItem = (key?: string) => {
     if (!key) {
@@ -143,7 +144,7 @@ export function Dashboard({
   const creativeSections = [
     sectionState("skills"),
     portfolioItems.length > 0,
-    profile.yearsOfExperience > 0,
+    hasWorkExperience,
     profile.credits.length > 0,
     profile.awards.length > 0,
   ];
@@ -183,13 +184,13 @@ export function Dashboard({
       onClick: () => router.push("/talent/portfolio"),
     });
   }
-  if (profile.yearsOfExperience === 0 && recommendations.length < 3) {
+  if (!hasWorkExperience && recommendations.length < 3) {
     recommendations.push({
       icon: <BriefcaseBusiness className="size-4" />,
       title: "Add work experience",
       description: "Show recruiters the roles you have worked on.",
       action: "Add Experience",
-      onClick: () => onOpen("experience"),
+      onClick: () => router.push("/talent/profile/experience"),
     });
   }
   const visibleRecommendations = recommendations.slice(0, 3);
@@ -351,13 +352,19 @@ export function Dashboard({
           />
           <SummaryCard
             title="Work Experience"
-            subtitle={profile.yearsOfExperience > 0 ? `${profile.yearsOfExperience} years experience` : "No experience added yet"}
+            subtitle={
+              hasWorkExperience
+                ? profile.experience.length > 0
+                  ? `${profile.experience.length} ${profile.experience.length === 1 ? "role" : "roles"} added`
+                  : `${profile.yearsOfExperience} years experience`
+                : "No experience added yet"
+            }
             icon={<BriefcaseBusiness className="size-[17px]" />}
-            done={profile.yearsOfExperience > 0}
-            actionLabel={profile.yearsOfExperience > 0 ? undefined : "+ Add"}
-            onClick={() => onOpen("experience")}
+            done={hasWorkExperience}
+            actionLabel={hasWorkExperience ? undefined : "+ Add"}
+            onClick={() => router.push("/talent/profile/experience")}
           >
-            {profile.yearsOfExperience > 0 ? (
+            {hasWorkExperience ? (
               <p className="mt-3 truncate text-xs text-muted-foreground">Experience summary available in your profile</p>
             ) : null}
           </SummaryCard>
@@ -367,7 +374,7 @@ export function Dashboard({
             icon={<Clapperboard className="size-[17px]" />}
             done={profile.credits.length > 0}
             actionLabel={profile.credits.length > 0 ? undefined : "+ Add"}
-            onClick={() => onOpen("credits")}
+            onClick={() => router.push("/talent/profile/credits")}
           >
             {profile.credits[0]?.project ? <p className="mt-3 truncate text-xs text-muted-foreground">{profile.credits[0].project}</p> : null}
           </SummaryCard>

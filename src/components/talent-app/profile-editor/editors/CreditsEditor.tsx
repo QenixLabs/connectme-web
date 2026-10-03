@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Clapperboard, Pencil, Plus, Trash2 } from "lucide-react";
+import { Clapperboard, Pencil, Trash2 } from "lucide-react";
 import { EditorShell, AddAction } from "./EditorShell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,11 @@ import {
   SheetFooter,
 } from "@/components/ui/sheet";
 import { toast } from "sonner";
+import {
+  useCreateCredit,
+  useDeleteCredit,
+  useUpdateCredit,
+} from "@/hooks/use-experience";
 import type { Profile, Credit } from "../profile-types";
 
 interface EditorProps {
@@ -25,10 +30,12 @@ interface EditorProps {
   onUpdate: (patch: Partial<Profile>) => void;
 }
 
-const uid = () => Math.random().toString(36).slice(2, 9);
-
-export function CreditsEditor({ profile, onBack, onUpdate }: EditorProps) {
+export function CreditsEditor({ profile, onBack }: EditorProps) {
   const [editing, setEditing] = useState<Credit | null>(null);
+  const createCredit = useCreateCredit();
+  const updateCredit = useUpdateCredit();
+  const deleteCredit = useDeleteCredit();
+  const isSaving = createCredit.isPending || updateCredit.isPending;
 
   const startAdd = () => {
     setEditing({
@@ -45,21 +52,42 @@ export function CreditsEditor({ profile, onBack, onUpdate }: EditorProps) {
     setEditing({ ...c });
   };
 
-  const save = () => {
-    if (!editing || !editing.project.trim()) return;
+  const save = async () => {
+    if (!editing || !editing.project.trim()) {
+      toast.error("Project name is required");
+      return;
+    }
+
     const exists = profile.credits.some((c) => c.id === editing.id);
-    onUpdate({
-      credits: exists
-        ? profile.credits.map((c) => (c.id === editing.id ? editing : c))
-        : [...profile.credits, { ...editing, id: uid() }],
-    });
-    setEditing(null);
-    toast.success(exists ? "Credit updated" : "Credit added");
+    const year = Number(editing.year.trim());
+    const data = {
+      project_name: editing.project.trim(),
+      role_played: editing.role.trim() || undefined,
+      platform: editing.production.trim() || undefined,
+      year: editing.year.trim() && Number.isFinite(year) ? year : undefined,
+      description: editing.description.trim() || undefined,
+    };
+
+    try {
+      if (exists) {
+        await updateCredit.mutateAsync({ id: editing.id, data });
+      } else {
+        await createCredit.mutateAsync({ type: "credit", ...data, role_played: data.role_played ?? "" });
+      }
+      setEditing(null);
+      toast.success(exists ? "Credit updated" : "Credit added");
+    } catch {
+      toast.error("Could not save credit. Please try again.");
+    }
   };
 
-  const remove = (id: string) => {
-    onUpdate({ credits: profile.credits.filter((c) => c.id !== id) });
-    toast.success("Credit removed");
+  const remove = async (id: string) => {
+    try {
+      await deleteCredit.mutateAsync(id);
+      toast.success("Credit removed");
+    } catch {
+      toast.error("Could not remove credit. Please try again.");
+    }
   };
 
   return (
@@ -109,6 +137,7 @@ export function CreditsEditor({ profile, onBack, onUpdate }: EditorProps) {
                   <Button
                     variant="outline"
                     size="sm"
+                    disabled={isSaving || deleteCredit.isPending}
                     onClick={() => startEdit(c)}
                   >
                     <Pencil className="mr-1 size-3.5" /> Edit
@@ -116,6 +145,7 @@ export function CreditsEditor({ profile, onBack, onUpdate }: EditorProps) {
                   <Button
                     variant="outline"
                     size="sm"
+                    disabled={isSaving || deleteCredit.isPending}
                     className="text-destructive hover:text-destructive"
                     onClick={() => remove(c.id)}
                   >
@@ -192,7 +222,9 @@ export function CreditsEditor({ profile, onBack, onUpdate }: EditorProps) {
             <Button variant="outline" onClick={() => setEditing(null)}>
               Cancel
             </Button>
-            <Button onClick={save}>Save</Button>
+            <Button onClick={save} disabled={isSaving}>
+              {isSaving ? "Saving..." : "Save"}
+            </Button>
           </SheetFooter>
         </SheetContent>
       </Sheet>

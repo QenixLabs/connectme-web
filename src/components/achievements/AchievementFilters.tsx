@@ -1,21 +1,33 @@
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { ACHIEVEMENT_FILTERS, type AchievementFilter } from "./achievement-types";
+import type { AchievementType } from "@/lib/api/talent";
+import {
+  ACHIEVEMENT_FILTERS,
+  ACHIEVEMENT_TYPE_CONFIG,
+  type AchievementFilter,
+} from "./achievement-types";
 
 interface AchievementFiltersProps {
   value: AchievementFilter;
   onChange: (value: AchievementFilter) => void;
   showCredits?: boolean;
+  allowedTypes?: AchievementType[];
 }
 
 export function AchievementFilters({
   value,
   onChange,
   showCredits = false,
+  allowedTypes,
 }: AchievementFiltersProps) {
-  const filters = showCredits
-    ? [...ACHIEVEMENT_FILTERS, { value: "credit" as const, label: "Credits" }]
-    : ACHIEVEMENT_FILTERS;
+  const filters = allowedTypes
+    ? allowedTypes.map((type) => ({
+        value: type,
+        label: ACHIEVEMENT_TYPE_CONFIG[type].pluralLabel,
+      }))
+    : showCredits
+      ? [...ACHIEVEMENT_FILTERS, { value: "credit" as const, label: "Credits" }]
+      : ACHIEVEMENT_FILTERS;
 
   return (
     <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">

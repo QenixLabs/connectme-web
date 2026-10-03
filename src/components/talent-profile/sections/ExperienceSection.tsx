@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Briefcase, ExternalLink, ArrowRight, ChevronRight } from "lucide-react";
+import { Briefcase, ExternalLink, ArrowRight } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -69,7 +69,7 @@ export function ExperienceSection({
           </p>
           {isOwner && (
             <Link
-              href="/talent/profile"
+              href="/talent/profile/experience"
               className="mt-1.5 inline-flex items-center gap-1 text-sm font-medium text-brand transition-colors hover:text-brand/80"
             >
               Add your first experience

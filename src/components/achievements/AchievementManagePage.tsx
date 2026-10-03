@@ -19,7 +19,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMyAchievements, useDeleteAchievement } from "@/hooks/use-experience";
 import { useMyProfile } from "@/hooks/use-talent-profile";
-import type { Achievement } from "@/lib/api/talent";
+import type { Achievement, AchievementType } from "@/lib/api/talent";
 import { AchievementFilters } from "./AchievementFilters";
 import { AchievementForm } from "./AchievementForm";
 import { AchievementHero } from "./AchievementHero";
@@ -30,6 +30,55 @@ import {
   isVerifiedAchievement,
   type AchievementFilter,
 } from "./achievement-types";
+
+type AchievementManageScope = "all" | "experience" | "credits";
+const EMPTY_ACHIEVEMENTS: Achievement[] = [];
+
+const scopeConfig: Record<AchievementManageScope, {
+  title: string;
+  subtitle: string;
+  addTitle: string;
+  addDescription: string;
+  addButton: string;
+  listTitle: string;
+  emptyTitle: string;
+  emptyDescription: string;
+  recordLabel: string;
+}> = {
+  all: {
+    title: "Manage Awards & Training",
+    subtitle: "Add, edit and organize your credits, awards, trainings and certifications.",
+    addTitle: "Add New Achievement",
+    addDescription: "Add awards, nominations, trainings, workshops, certifications or institutions to your profile.",
+    addButton: "Add Achievement",
+    listTitle: "Your Achievements",
+    emptyTitle: "Your spotlight is ready",
+    emptyDescription: "Add a milestone to give recruiters a richer view of your journey.",
+    recordLabel: "Credits",
+  },
+  experience: {
+    title: "Manage Work Experience",
+    subtitle: "Show the roles, studios and projects that shaped your professional journey.",
+    addTitle: "Add Work Experience",
+    addDescription: "Add a role or studio project so recruiters can quickly understand your experience.",
+    addButton: "Add Experience",
+    listTitle: "Your Work Experience",
+    emptyTitle: "Your experience story is ready",
+    emptyDescription: "Add your first role or project to make your profile easier to trust.",
+    recordLabel: "Roles",
+  },
+  credits: {
+    title: "Manage Credits",
+    subtitle: "Keep your films, shows, campaigns and productions organized in one place.",
+    addTitle: "Add New Credit",
+    addDescription: "Add a project credit with your role, production details and proof.",
+    addButton: "Add Credit",
+    listTitle: "Your Credits",
+    emptyTitle: "Your credits are ready to shine",
+    emptyDescription: "Add a project to give recruiters a clearer view of your work.",
+    recordLabel: "Credits",
+  },
+};
 
 function ManageSkeleton() {
   return (
@@ -46,17 +95,25 @@ function ManageSkeleton() {
   );
 }
 
-export function AchievementManagePage() {
+export function AchievementManagePage({ scope = "all" }: { scope?: AchievementManageScope }) {
   const achievementsQuery = useMyAchievements();
   const profileQuery = useMyProfile();
   const deleteMutation = useDeleteAchievement();
-  const [activeFilter, setActiveFilter] = useState<AchievementFilter>("all");
+  const [activeFilter, setActiveFilter] = useState<AchievementFilter>(scope === "all" ? "all" : "credit");
   const [search, setSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [editingAchievement, setEditingAchievement] = useState<Achievement | undefined>();
   const [deleteTarget, setDeleteTarget] = useState<Achievement | null>(null);
   const deferredSearch = useDeferredValue(search);
-  const achievements = achievementsQuery.data ?? [];
+  const config = scopeConfig[scope];
+  const achievements = achievementsQuery.data ?? EMPTY_ACHIEVEMENTS;
+  const scopedAchievements = useMemo(
+    () =>
+      scope === "all"
+        ? achievements
+        : achievements.filter((achievement) => achievement.type === "credit"),
+    [achievements, scope],
+  );
   const publicPath = profileQuery.data?.username
     ? `/talent/${encodeURIComponent(profileQuery.data.username)}/achievements`
     : undefined;
@@ -68,7 +125,7 @@ export function AchievementManagePage() {
 
   const filteredAchievements = useMemo(() => {
     const query = deferredSearch.trim().toLowerCase();
-    return [...achievements]
+    return [...scopedAchievements]
       .filter((achievement) => activeFilter === "all" || achievement.type === activeFilter)
       .filter((achievement) => !query || getAchievementSearchText(achievement).includes(query))
       .sort((left, right) => {
@@ -76,9 +133,9 @@ export function AchievementManagePage() {
         if (yearDiff !== 0) return yearDiff;
         return (left.order ?? 0) - (right.order ?? 0);
       });
-  }, [activeFilter, achievements, deferredSearch]);
+  }, [activeFilter, deferredSearch, scopedAchievements]);
 
-  const verifiedCount = achievements.filter(isVerifiedAchievement).length;
+  const verifiedCount = scopedAchievements.filter(isVerifiedAchievement).length;
   const showCredits = achievements.some((achievement) => achievement.type === "credit");
 
   function startAdd() {
@@ -109,8 +166,8 @@ export function AchievementManagePage() {
       <div className="mx-auto w-full max-w-[1100px] space-y-4 px-3 py-4 sm:space-y-5 sm:px-6 sm:py-6 lg:px-8">
         <AchievementHero
           mode="manage"
-          title="Manage Awards & Training"
-          subtitle="Add, edit and organize your credits, awards, trainings and certifications."
+          title={config.title}
+          subtitle={config.subtitle}
           previewHref={publicPath}
           onShare={() => {
             if (typeof navigator !== "undefined" && navigator.share) {
@@ -129,7 +186,11 @@ export function AchievementManagePage() {
           }}
         />
 
-        <AchievementStats achievements={achievements} />
+        <AchievementStats
+          achievements={scopedAchievements}
+          variant={scope === "all" ? "achievements" : "credits"}
+          recordLabel={config.recordLabel}
+        />
 
         <Card className="rounded-[26px] border-[#ded6fb] bg-[linear-gradient(115deg,#f5f0ff_0%,#ffffff_54%,#eef4ff_100%)] shadow-[0_12px_30px_rgba(75,61,157,0.08)]">
           <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
@@ -138,9 +199,9 @@ export function AchievementManagePage() {
                 <Sparkles className="size-5" />
               </span>
               <div className="min-w-0">
-                <h2 className="text-[16px] font-extrabold tracking-[-0.03em] text-[#14225b]">Add New Achievement</h2>
+                <h2 className="text-[16px] font-extrabold tracking-[-0.03em] text-[#14225b]">{config.addTitle}</h2>
                 <p className="mt-1 max-w-xl text-[11px] leading-relaxed text-[#777993]">
-                  Add awards, nominations, trainings, workshops, certifications or institutions to your profile.
+                  {config.addDescription}
                 </p>
               </div>
             </div>
@@ -149,21 +210,26 @@ export function AchievementManagePage() {
               onClick={startAdd}
               className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#4d20ed] via-[#7732ed] to-[#c936ed] px-5 text-xs font-extrabold text-white shadow-[0_9px_22px_rgba(111,45,226,0.24)] transition-all hover:brightness-105 active:scale-[0.98] sm:w-auto"
             >
-              <Plus className="size-4" /> Add Achievement
+              <Plus className="size-4" /> {config.addButton}
             </Button>
           </CardContent>
         </Card>
 
         <div className="space-y-3">
-          <AchievementFilters value={activeFilter} onChange={setActiveFilter} showCredits={showCredits} />
+          <AchievementFilters
+            value={activeFilter}
+            onChange={setActiveFilter}
+            showCredits={scope === "all" && showCredits}
+            allowedTypes={scope === "all" ? undefined : (["credit"] as AchievementType[])}
+          />
           <Card className="rounded-[20px] border-[#e9e6f7] bg-white/90 shadow-[0_8px_20px_rgba(36,43,93,0.05)]">
             <CardContent className="flex items-center gap-2.5 p-2.5">
               <Search className="ml-2 size-4 shrink-0 text-[#8588a5]" />
               <Input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search achievements..."
-                aria-label="Search achievements"
+                placeholder={`Search ${config.listTitle.toLowerCase()}...`}
+                aria-label={`Search ${config.listTitle}`}
                 className="h-10 border-0 bg-transparent px-1 text-xs shadow-none focus-visible:ring-0"
               />
               {search && (
@@ -198,10 +264,10 @@ export function AchievementManagePage() {
           <div className="flex items-end justify-between gap-3 px-1">
             <div>
               <h2 id="your-achievements-heading" className="text-[20px] font-extrabold tracking-[-0.04em] text-[#14225b]">
-                Your Achievements <span className="font-medium text-[#8588a6]">({achievements.length})</span>
+                {config.listTitle} <span className="font-medium text-[#8588a6]">({scopedAchievements.length})</span>
               </h2>
               <p className="mt-1 text-[11px] text-[#8588a6]">
-                {filteredAchievements.length === achievements.length
+                {filteredAchievements.length === scopedAchievements.length
                   ? "Keep your strongest milestones easy to scan."
                   : `${filteredAchievements.length} result${filteredAchievements.length === 1 ? "" : "s"} matching your view.`}
               </p>
@@ -216,10 +282,10 @@ export function AchievementManagePage() {
             <Card className="rounded-[24px] border-dashed border-[#dcd6f2] bg-white/70">
               <CardContent className="flex flex-col items-center p-8 text-center">
                 <span className="grid size-12 place-items-center rounded-[16px] bg-[#f1edff] text-[#6840df]"><Sparkles className="size-5" /></span>
-                <h3 className="mt-3 text-sm font-extrabold text-[#14225b]">{achievements.length ? "No matching achievements" : "Your spotlight is ready"}</h3>
-                <p className="mt-1 max-w-xs text-[11px] leading-relaxed text-[#8588a6]">{achievements.length ? "Try another search or category." : "Add a milestone to give recruiters a richer view of your journey."}</p>
-                {!achievements.length && (
-                  <Button type="button" variant="ghost" onClick={startAdd} className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-full bg-[#f1edff] px-4 text-xs font-bold text-[#5e34d7] hover:bg-[#e8e1ff]"><Plus className="size-4" /> Add Achievement</Button>
+                <h3 className="mt-3 text-sm font-extrabold text-[#14225b]">{scopedAchievements.length ? "No matching achievements" : config.emptyTitle}</h3>
+                <p className="mt-1 max-w-xs text-[11px] leading-relaxed text-[#8588a6]">{scopedAchievements.length ? "Try another search or category." : config.emptyDescription}</p>
+                {!scopedAchievements.length && (
+                  <Button type="button" variant="ghost" onClick={startAdd} className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-full bg-[#f1edff] px-4 text-xs font-bold text-[#5e34d7] hover:bg-[#e8e1ff]"><Plus className="size-4" /> {config.addButton}</Button>
                 )}
               </CardContent>
             </Card>
@@ -231,6 +297,7 @@ export function AchievementManagePage() {
                   achievement={achievement}
                   onEdit={() => startEdit(achievement)}
                   onDelete={() => setDeleteTarget(achievement)}
+                  mode={scope === "experience" ? "experience" : "default"}
                 />
               ))}
             </div>
@@ -245,6 +312,8 @@ export function AchievementManagePage() {
           if (!open) setEditingAchievement(undefined);
         }}
         achievement={editingAchievement}
+        fixedType={scope === "all" ? undefined : "credit"}
+        mode={scope === "all" ? "default" : scope}
       />
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>

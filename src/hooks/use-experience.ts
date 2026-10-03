@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { talentApi, type Credit, type Testimonial, type Award } from "@/lib/api/talent";
+import { talentApi } from "@/lib/api/talent";
 
 // ── Query Key Factory ──────────────────────────────────────
 export const experienceKeys = {
@@ -44,7 +44,11 @@ export function useCreateAchievement() {
   return useMutation({
     mutationFn: (data: Parameters<typeof talentApi.createAchievement>[0]) =>
       talentApi.createAchievement(data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: experienceKeys.achievements() }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: experienceKeys.achievements() });
+      qc.invalidateQueries({ queryKey: experienceKeys.credits() });
+      qc.invalidateQueries({ queryKey: experienceKeys.awards() });
+    },
   });
 }
 
@@ -53,7 +57,11 @@ export function useUpdateAchievement() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Parameters<typeof talentApi.updateAchievement>[1] }) =>
       talentApi.updateAchievement(id, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: experienceKeys.achievements() }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: experienceKeys.achievements() });
+      qc.invalidateQueries({ queryKey: experienceKeys.credits() });
+      qc.invalidateQueries({ queryKey: experienceKeys.awards() });
+    },
   });
 }
 
@@ -61,7 +69,11 @@ export function useDeleteAchievement() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => talentApi.deleteAchievement(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: experienceKeys.achievements() }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: experienceKeys.achievements() });
+      qc.invalidateQueries({ queryKey: experienceKeys.credits() });
+      qc.invalidateQueries({ queryKey: experienceKeys.awards() });
+    },
   });
 }
 
@@ -71,7 +83,10 @@ export function useCreateCredit() {
   return useMutation({
     mutationFn: (data: Parameters<typeof talentApi.createCredit>[0]) =>
       talentApi.createCredit(data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: experienceKeys.credits() }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: experienceKeys.credits() });
+      qc.invalidateQueries({ queryKey: experienceKeys.achievements() });
+    },
   });
 }
 
@@ -80,7 +95,10 @@ export function useUpdateCredit() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Parameters<typeof talentApi.updateCredit>[1] }) =>
       talentApi.updateCredit(id, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: experienceKeys.credits() }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: experienceKeys.credits() });
+      qc.invalidateQueries({ queryKey: experienceKeys.achievements() });
+    },
   });
 }
 
@@ -88,7 +106,10 @@ export function useDeleteCredit() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => talentApi.deleteCredit(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: experienceKeys.credits() }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: experienceKeys.credits() });
+      qc.invalidateQueries({ queryKey: experienceKeys.achievements() });
+    },
   });
 }
 
@@ -133,7 +154,10 @@ export function useCreateAward() {
   return useMutation({
     mutationFn: (data: Parameters<typeof talentApi.createAward>[0]) =>
       talentApi.createAward(data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: experienceKeys.awards() }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: experienceKeys.awards() });
+      qc.invalidateQueries({ queryKey: experienceKeys.achievements() });
+    },
   });
 }
 
@@ -142,7 +166,10 @@ export function useUpdateAward() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Parameters<typeof talentApi.updateAward>[1] }) =>
       talentApi.updateAward(id, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: experienceKeys.awards() }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: experienceKeys.awards() });
+      qc.invalidateQueries({ queryKey: experienceKeys.achievements() });
+    },
   });
 }
 
@@ -150,6 +177,9 @@ export function useDeleteAward() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => talentApi.deleteAward(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: experienceKeys.awards() }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: experienceKeys.awards() });
+      qc.invalidateQueries({ queryKey: experienceKeys.achievements() });
+    },
   });
 }
