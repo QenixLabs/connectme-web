@@ -150,7 +150,7 @@ export function UploadDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="min-w-0 overflow-hidden sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Upload {type === "image" ? "Photo" : type === "video" ? "Video" : "Resume / Document"}</DialogTitle>
           <DialogDescription>
@@ -163,15 +163,15 @@ export function UploadDialog({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="min-w-0 space-y-4">
             <div
               onClick={() => fileInputRef.current?.click()}
               className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-border p-8 text-center transition-colors hover:border-teal/50 hover:bg-teal/5"
             >
               {preview ? (
-                <div className="relative w-full">
+                <div className="relative min-w-0 max-w-full w-full overflow-hidden">
                   {type === "image" ? (
-                    <img src={preview} alt="Preview" className="max-h-48 w-full rounded-lg object-cover" />
+                    <img src={preview} alt="Preview" className="block max-h-48 max-w-full w-full rounded-lg object-cover" />
                   ) : type === "video" ? (
                     <div className="flex h-32 items-center justify-center rounded-lg bg-muted">
                       <Video className="h-8 w-8 text-muted-foreground" />
@@ -181,7 +181,7 @@ export function UploadDialog({
                       <FileText className="h-8 w-8 text-muted-foreground" />
                     </div>
                   )}
-                  <p className="mt-2 text-sm text-muted-foreground">{file?.name}</p>
+                   <p className="mt-2 block max-w-full truncate text-sm text-muted-foreground">{file?.name}</p>
                 </div>
               ) : (
                 <>

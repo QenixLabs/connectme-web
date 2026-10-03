@@ -349,8 +349,8 @@ export function PortfolioPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-7xl">
-        <div className="space-y-4 px-4 pb-[calc(9rem+env(safe-area-inset-bottom))] pt-5 lg:px-6 lg:pb-12">
+    <div className="mx-auto w-full min-w-0 max-w-7xl">
+        <div className="min-w-0 space-y-4 px-4 pb-[calc(9rem+env(safe-area-inset-bottom))] pt-5 lg:px-6 lg:pb-12">
         {/* Header */}
         <PortfolioHeader onAddMedia={openMediaDialog} usage={usage} />
 

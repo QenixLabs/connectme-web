@@ -80,7 +80,7 @@ export function PortfolioGrid({
   }, [items, profileOnly, search, sort]);
 
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3">
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="min-w-0 space-y-3">
       <div className="space-y-3">
         <div className="flex items-end justify-between gap-3">
           <div><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary/75">Your collection</p><h2 className="mt-1 text-[18px] font-bold tracking-tight text-[#172653]">Media Library</h2></div>
@@ -125,7 +125,7 @@ export function PortfolioGrid({
         </div>
        </div>
 
-      <TabsContent value={activeTab} className="mt-0">
+       <TabsContent value={activeTab} className="mt-0 min-w-0">
         {filtered.length === 0 ? (
           <PortfolioEmptyState
              icon={activeTab === "video" ? Video : activeTab === "image" ? ImageIcon : activeTab === "document" ? FileText : activeTab === "link" ? Link2 : Layers}
@@ -148,7 +148,7 @@ export function PortfolioGrid({
              action={<Button size="sm" onClick={onAddMedia}>Add Media</Button>}
           />
         ) : (
-           <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-4">
+            <div className="grid min-w-0 grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-4">
             {filtered.map((item) => (
               <PortfolioItemCard
                 key={item.id}
@@ -167,7 +167,7 @@ export function PortfolioGrid({
       </TabsContent>
 
       {filteredDocuments.length > 0 && (
-        <section className="rounded-[16px] border border-border/70 bg-card p-3 shadow-[0_8px_24px_-22px_rgba(35,43,91,0.7)] sm:p-4">
+        <section className="min-w-0 rounded-[16px] border border-border/70 bg-card p-3 shadow-[0_8px_24px_-22px_rgba(35,43,91,0.7)] sm:p-4">
           <div className="mb-3 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <span className="grid size-8 place-items-center rounded-lg bg-[#f8efff] text-[#a04bc0]"><FileText className="size-4" /></span>
@@ -175,7 +175,7 @@ export function PortfolioGrid({
             </div>
             <span className="text-[11px] font-semibold text-muted-foreground">{filteredDocuments.length}</span>
           </div>
-          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-4">
+          <div className="grid min-w-0 grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-4">
             {filteredDocuments.map((item) => (
               <PortfolioItemCard
                 key={item.id}

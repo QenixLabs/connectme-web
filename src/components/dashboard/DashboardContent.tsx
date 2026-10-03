@@ -25,8 +25,10 @@ import {
   Wallet,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { toast } from "sonner";
 
 import { useAuthStore } from "@/providers/auth-store-provider";
+import { Button } from "@/components/ui/button";
 import { getConversationParticipant } from "@/lib/messages";
 import {
   useTalentProfile,
@@ -136,11 +138,19 @@ function Ring({
   );
 }
 
-function SectionHeader({ title, href }: { title: string; href?: string }) {
+function SectionHeader({
+  title,
+  href,
+  showAction = true,
+}: {
+  title: string;
+  href?: string;
+  showAction?: boolean;
+}) {
   return (
     <div className="flex items-center justify-between">
       <h2 className="text-[15px] font-bold text-foreground">{title}</h2>
-      {href ? (
+      {!showAction ? null : href ? (
         <Link
           href={href}
           className="flex items-center gap-0.5 text-xs font-semibold text-primary"
@@ -209,6 +219,33 @@ export function DashboardContent() {
   const isVerified = profile?.is_verified ?? false;
   const isAvailable = profile?.availability === "available";
   const isPublic = profile?.privacy_mode === "public";
+
+  const handleShareProfile = async () => {
+    const profilePath = profile?.username
+      ? `/talent/${profile.username}`
+      : "/talent/profile";
+    const profileUrl = `${window.location.origin}${profilePath}`;
+
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share({
+          title: `${name} on ConnectMe`,
+          text: "View my ConnectMe profile",
+          url: profileUrl,
+        });
+        return;
+      } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") return;
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(profileUrl);
+      toast.success("Profile link copied");
+    } catch {
+      toast.error("Unable to share profile");
+    }
+  };
 
   const stats = [
     {
@@ -400,7 +437,12 @@ export function DashboardContent() {
           >
             <Pencil className="size-3.5 shrink-0" /> Edit Profile
           </Link>
-          <button className="flex h-10 w-[48px] shrink-0 items-center justify-center rounded-xl border text-muted-foreground">
+          <button
+            type="button"
+            onClick={() => void handleShareProfile()}
+            aria-label="Share profile"
+            className="flex h-10 w-[48px] shrink-0 items-center justify-center rounded-xl border text-muted-foreground"
+          >
             <Share2 className="size-4" />
           </button>
         </div>
@@ -408,7 +450,7 @@ export function DashboardContent() {
 
       {/* Career Performance */}
       <section className="mx-4 mt-4">
-        <SectionHeader title="Career Performance" />
+        <SectionHeader title="Career Performance" href="/talent/analytics" />
         <div className="mt-2 grid grid-cols-6 gap-1 rounded-2xl border bg-card p-3 shadow-sm">
           {stats.map((s) => (
             <div key={s.label} className="flex flex-col items-center gap-1 text-center">
@@ -540,7 +582,7 @@ export function DashboardContent() {
 
       {/* Application Tracker */}
       <section className="mx-4 mt-5">
-        <SectionHeader title="Application Tracker" />
+        <SectionHeader title="Application Tracker" href="/talent/applications" />
         <div className="mt-2 flex items-center justify-between rounded-2xl border bg-card p-4 shadow-sm">
           {[
             {
@@ -590,7 +632,7 @@ export function DashboardContent() {
 
       {/* Action Required */}
       <section className="mx-4 mt-5">
-        <SectionHeader title="Action Required" />
+        <SectionHeader title="Action Required" showAction={false} />
         <div className="mt-2 grid grid-cols-4 gap-2">
           {actions.map((a) => (
             <div
@@ -624,13 +666,23 @@ export function DashboardContent() {
               {(completenessData?.missingFields?.length ?? 0)} steps left to complete
             </p>
           </div>
-          <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+          <Button
+            asChild
+            variant="ghost"
+            size="icon"
+            className="size-8 shrink-0 text-muted-foreground hover:text-foreground"
+            aria-label="Edit profile"
+          >
+            <Link href="/talent/profile">
+              <ChevronRight className="size-4" />
+            </Link>
+          </Button>
         </div>
       </section>
 
       {/* Recent Messages */}
       <section className="mx-4 mt-5">
-        <SectionHeader title="Recent Messages" />
+        <SectionHeader title="Recent Messages" href="/talent/messages" />
         <div className="mt-2 space-y-2">
           {(conversations ?? []).map((m) => {
             const participant = getConversationParticipant(m, user?._id);

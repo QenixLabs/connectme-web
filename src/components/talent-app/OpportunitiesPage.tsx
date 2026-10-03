@@ -688,6 +688,7 @@ export function OpportunitiesPage() {
 
   const [searchInput, setSearchInput] = useState(() => search);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [premiumBannerVisible, setPremiumBannerVisible] = useState(true);
 
   useEffect(() => {
     setFilterSheetOpen(filtersOpen);
@@ -887,7 +888,7 @@ export function OpportunitiesPage() {
   };
 
   return (
-    <div className="mx-auto min-h-screen w-full max-w-md bg-background pb-28 font-sans">
+    <div className="mx-auto min-h-screen w-full max-w-md bg-background pb-24 font-sans">
       <div className="flex items-center justify-between gap-3 px-4 pt-4">
         <h1 className="text-xl font-extrabold tracking-tight">Opportunities</h1>
         <Button asChild variant="outline" size="sm" className="shrink-0 gap-1.5">
@@ -916,7 +917,7 @@ export function OpportunitiesPage() {
                   You&apos;re highly visible to casting directors and production houses.
                 </p>
                 <Link
-                  href="/talent/profile/edit"
+                  href="/talent/profile"
                   className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-brand/40 px-3 py-2 text-sm font-semibold text-brand"
                 >
                   Improve Profile <ArrowRight className="size-4" />
@@ -1172,12 +1173,19 @@ export function OpportunitiesPage() {
       )}
 
       {/* Premium banner */}
-      {isForYou && (
+      {isForYou && premiumBannerVisible && (
         <section className="mt-6 px-4">
           <div className="relative overflow-hidden rounded-2xl gradient-brand p-4 text-brand-foreground">
-            <button className="absolute right-3 top-3 text-brand-foreground/80">
+            <Button
+              type="button"
+              onClick={() => setPremiumBannerVisible(false)}
+              aria-label="Dismiss Premium Talent banner"
+              variant="ghost"
+              size="icon-sm"
+              className="absolute right-3 top-3 text-brand-foreground/80 hover:bg-brand-foreground/10 hover:text-brand-foreground"
+            >
               <X className="size-4" />
-            </button>
+            </Button>
             <div className="flex items-center gap-1.5">
               <h3 className="text-base font-extrabold">Premium Talent</h3>
               <Crown className="size-4" />

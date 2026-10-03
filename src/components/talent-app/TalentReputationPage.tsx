@@ -152,7 +152,7 @@ function Hero() {
           alt=""
           fill
           sizes="(max-width: 640px) 100vw, 1200px"
-          className="object-cover object-center"
+          className="object-cover object-bottom"
           aria-hidden="true"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-[#F4EEFF]/95 via-[#FBFAFF]/65 to-transparent" />
@@ -173,18 +173,30 @@ function ProfileSummary({ profile }: { profile: TalentProfile }) {
 
   const handleShare = async () => {
     const url = `${window.location.origin}/talent/${profile.username}`;
-    const nativeShare = navigator.share as ((data: ShareData) => Promise<void>) | undefined;
-    try {
-      if (nativeShare) {
-        await nativeShare({ title: `${name} on RootIn`, url });
-      } else {
-        await navigator.clipboard.writeText(url);
+
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share({ title: `${name} on RootIn`, url });
+        setShared(true);
+        toast.success("Profile shared");
+        window.setTimeout(() => setShared(false), 2000);
+        return;
+      } catch (error) {
+        // Closing the native share sheet is not an error.
+        if (error instanceof Error && error.name === "AbortError") return;
       }
+    }
+
+    try {
+      if (typeof navigator.clipboard?.writeText !== "function") {
+        throw new Error("Clipboard unavailable");
+      }
+      await navigator.clipboard.writeText(url);
       setShared(true);
-      toast.success(nativeShare ? "Profile shared" : "Profile link copied");
+      toast.success("Profile link copied");
       window.setTimeout(() => setShared(false), 2000);
     } catch {
-      // Closing the native share sheet is not an error.
+      toast.error("Unable to share profile");
     }
   };
 

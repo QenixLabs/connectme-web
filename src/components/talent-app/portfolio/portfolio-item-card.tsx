@@ -51,7 +51,7 @@ export function PortfolioItemCard({
   const isOnProfile = item.onProfile === true;
 
   return (
-    <article className="group overflow-hidden rounded-[14px] border border-[#e8e7f2] bg-card shadow-[0_10px_28px_-25px_rgba(36,42,94,0.7)] transition-all hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md">
+    <article className="group min-w-0 max-w-full overflow-hidden rounded-[14px] border border-[#e8e7f2] bg-card shadow-[0_10px_28px_-25px_rgba(36,42,94,0.7)] transition-all hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-md">
       <div
         onClick={onOpen}
         role="button"
@@ -66,7 +66,7 @@ export function PortfolioItemCard({
          ) : item.kind === "link" && item.type !== "youtube" ? (
            <div className="grid h-full w-full place-items-center bg-secondary/60"><ExternalLink className="size-9 text-primary/70" /><span className="absolute bottom-3 max-w-[80%] truncate text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{item.linkLabel || "External link"}</span></div>
          ) : (
-            <img src={item.image} alt={item.title} width={800} height={600} loading="lazy" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+             <img src={item.image} alt={item.title} width={800} height={600} loading="lazy" className="block h-full w-full max-w-full object-cover transition-transform duration-300 group-hover:scale-105" />
          )}
           {item.kind !== "document" && item.kind !== "link" && <div className="absolute inset-0 bg-gradient-to-t from-background/35 to-transparent" />}
 
