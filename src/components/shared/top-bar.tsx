@@ -227,6 +227,12 @@ function UserMenu({ role }: { role: TopBarProps["role"] }) {
             {role === "recruiter" && (
               <>
                 <DropdownMenuItem asChild>
+                  <Link href="/recruiter/profile" className="cursor-pointer">
+                    <User className="mr-2 size-4" />
+                    Profile
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
                   <Link href="/recruiter/analytics" className="cursor-pointer">
                     <BarChart3 className="mr-2 size-4" />
                     Analytics

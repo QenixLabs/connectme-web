@@ -10,6 +10,9 @@ import {
   Bell,
   CreditCard,
   ShieldCheck,
+  BarChart3,
+  UsersRound,
+  Users,
   MapPin,
   ExternalLink,
   Pencil,
@@ -223,6 +226,21 @@ export default function RecruiterProfilePage() {
       icon: ShieldCheck,
       label: "Verification",
       href: "/recruiter/verify-documents",
+    },
+    {
+      icon: BarChart3,
+      label: "Analytics",
+      href: "/recruiter/analytics",
+    },
+    {
+      icon: UsersRound,
+      label: "Shortlist",
+      href: "/recruiter/shortlist",
+    },
+    {
+      icon: Users,
+      label: "Team",
+      href: "/recruiter/team",
     },
   ];
 
