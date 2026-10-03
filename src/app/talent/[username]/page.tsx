@@ -6,7 +6,11 @@ import {
   PrivateProfilePreview,
   TalentProfileView,
 } from "@/components/talent-profile";
-import { isPrivateTalentProfileResponse } from "@/lib/api/talent";
+import {
+  isPrivateTalentProfileResponse,
+  type Achievement,
+  type Award,
+} from "@/lib/api/talent";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { campaignsApi } from "@/lib/api/campaigns";
 import {
@@ -14,8 +18,25 @@ import {
   useTalentPortfolio,
   useTalentCredits,
   useTalentTestimonials,
-  useTalentAwards,
+  useTalentAchievements,
 } from "@/hooks/use-talent-profile";
+
+function toProfileAwards(achievements: Achievement[]): Award[] {
+  return achievements
+    .filter((achievement) => achievement.type === "award")
+    .map((achievement) => ({
+      _id: achievement._id,
+      user_id: achievement.user_id,
+      type: "award",
+      title: achievement.title ?? achievement.project_name ?? "Untitled award",
+      awarding_body: achievement.awarding_body ?? achievement.organization ?? "",
+      year: achievement.year,
+      description: achievement.description,
+      media_url: achievement.media_url,
+      order: achievement.order,
+      created_at: achievement.created_at,
+    }));
+}
 
 function ProfileSkeleton() {
   return (
@@ -70,17 +91,20 @@ export default function PublicTalentProfilePage() {
   const { data: creditsRaw, isLoading: creditsLoading } = useTalentCredits(username);
   const { data: testimonialsRaw, isLoading: testimonialsLoading } =
     useTalentTestimonials(username);
-  const { data: awardsRaw, isLoading: awardsLoading } = useTalentAwards(username);
+  const { data: achievementsRaw, isLoading: achievementsLoading } =
+    useTalentAchievements(username);
 
   const portfolioItems = Array.isArray(portfolioRaw) ? portfolioRaw : [];
   const credits = Array.isArray(creditsRaw) ? creditsRaw : [];
   const testimonials = Array.isArray(testimonialsRaw) ? testimonialsRaw : [];
-  const awards = Array.isArray(awardsRaw) ? awardsRaw : [];
+  const awards = toProfileAwards(
+    Array.isArray(achievementsRaw) ? (achievementsRaw as Achievement[]) : [],
+  );
 
   const user = useAuthStore((s) => s.user);
   const viewerRole = user?.role ?? null;
 
-  const { data: campaignsData, isLoading: campaignsLoading } = useQuery({
+  const { data: campaignsData } = useQuery({
     queryKey: ["recruiter-campaigns-for-shortlist", viewerRole],
     queryFn: () =>
       campaignsApi.getRecruiterCampaigns({ status: "active", limit: 100 }),
@@ -94,7 +118,7 @@ export default function PublicTalentProfilePage() {
     portfolioLoading ||
     creditsLoading ||
     testimonialsLoading ||
-    awardsLoading;
+    achievementsLoading;
 
   if (isLoading) {
     return <ProfileSkeleton />;

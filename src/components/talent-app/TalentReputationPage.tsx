@@ -152,7 +152,7 @@ function Hero() {
           alt=""
           fill
           sizes="(max-width: 640px) 100vw, 1200px"
-          className="object-cover object-bottom"
+          className="object-cover object-bottom translate-y-5 sm:translate-y-7"
           aria-hidden="true"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-[#F4EEFF]/95 via-[#FBFAFF]/65 to-transparent" />

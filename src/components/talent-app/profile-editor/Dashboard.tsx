@@ -102,6 +102,12 @@ export function Dashboard({
     profile.physicalAttributes.complexion,
     profile.physicalAttributes.hair_color,
     profile.physicalAttributes.eye_color,
+    profile.physicalAttributes.chest,
+    profile.physicalAttributes.waist,
+    profile.physicalAttributes.shoe_size,
+    profile.physicalAttributes.tattoos,
+    profile.physicalAttributes.distinctive_features,
+    ...Object.values(profile.physicalAttributes.custom_fields ?? {}),
   ].filter(Boolean);
   const approvedTestimonials = profile.testimonials.filter((item) => item.approvedByTalent);
   const hasWorkExperience = profile.yearsOfExperience > 0 || profile.experience.length > 0;

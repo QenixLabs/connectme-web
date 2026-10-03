@@ -63,6 +63,11 @@ export interface UpdateTalentProfilePayload {
     hair_length?: string;
     eye_color?: string;
     distinctive_features?: string;
+    chest?: string;
+    waist?: string;
+    shoe_size?: string;
+    tattoos?: string;
+    custom_fields?: Record<string, string>;
   };
   languages?: { name: string; fluency: string }[];
   accents?: string[];
@@ -99,6 +104,11 @@ export interface TalentProfile {
     hair_length?: string;
     eye_color?: string;
     distinctive_features?: string;
+    chest?: string;
+    waist?: string;
+    shoe_size?: string;
+    tattoos?: string;
+    custom_fields?: Record<string, string>;
   };
   languages?: { name: string; fluency: string }[];
   accents?: string[];

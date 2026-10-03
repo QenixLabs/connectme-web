@@ -33,6 +33,7 @@ export interface PhysicalAttributes {
   waist?: string;
   shoe_size?: string;
   tattoos?: string;
+  custom_fields?: Record<string, string>;
 }
 
 export interface LanguageItem {

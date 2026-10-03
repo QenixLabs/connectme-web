@@ -121,6 +121,17 @@ export function getDetailGroups(
   if (pa?.hair_color) physicalFields.push({ label: "Hair Color", value: pa.hair_color });
   if (pa?.hair_length) physicalFields.push({ label: "Hair Length", value: pa.hair_length });
   if (pa?.eye_color) physicalFields.push({ label: "Eye Color", value: pa.eye_color });
+  if (pa?.chest) physicalFields.push({ label: "Chest", value: pa.chest });
+  if (pa?.waist) physicalFields.push({ label: "Waist", value: pa.waist });
+  if (pa?.shoe_size) physicalFields.push({ label: "Shoe Size", value: pa.shoe_size });
+  if (pa?.tattoos) physicalFields.push({ label: "Tattoos / Marks", value: pa.tattoos });
+  Object.entries(pa?.custom_fields ?? {}).forEach(([label, value]) => {
+    const trimmedLabel = label.trim();
+    const trimmedValue = value.trim();
+    if (trimmedLabel && trimmedValue) {
+      physicalFields.push({ label: trimmedLabel, value: trimmedValue });
+    }
+  });
   if (pa?.distinctive_features) {
     physicalFields.push({ label: "Distinctive Features", value: pa.distinctive_features });
   }

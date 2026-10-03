@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { Plus, Trash2 } from "lucide-react";
 import { EditorShell, SaveAction } from "./EditorShell";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -61,9 +63,26 @@ function SelectField({
 
 const TATTOO_OPTIONS = ["None", "Small", "Medium", "Large", "Multiple"];
 
+interface CustomFieldRow {
+  id: string;
+  key: string;
+  value: string;
+}
+
+function toCustomFieldRows(fields?: Record<string, string>): CustomFieldRow[] {
+  return Object.entries(fields ?? {}).map(([key, value], index) => ({
+    id: `custom-${index}-${key}`,
+    key,
+    value,
+  }));
+}
+
 export function PhysicalEditor({ profile, onBack, onUpdate }: EditorProps) {
   const [attrs, setAttrs] = useState<PhysicalAttributes>(
     profile.physicalAttributes,
+  );
+  const [customFields, setCustomFields] = useState<CustomFieldRow[]>(() =>
+    toCustomFieldRows(profile.physicalAttributes.custom_fields),
   );
 
   const set = <K extends keyof PhysicalAttributes>(
@@ -74,8 +93,26 @@ export function PhysicalEditor({ profile, onBack, onUpdate }: EditorProps) {
   };
 
   const save = () => {
-    onUpdate({ physicalAttributes: attrs });
+    const custom_fields = Object.fromEntries(
+      customFields
+        .map(({ key, value }) => [key.trim(), value.trim()] as const)
+        .filter(([key, value]) => key.length > 0 && value.length > 0),
+    );
+
+    onUpdate({
+      physicalAttributes: { ...attrs, custom_fields },
+    });
     onBack();
+  };
+
+  const updateCustomField = (
+    id: string,
+    field: "key" | "value",
+    value: string,
+  ) => {
+    setCustomFields((previous) =>
+      previous.map((item) => (item.id === id ? { ...item, [field]: value } : item)),
+    );
   };
 
   return (
@@ -196,6 +233,78 @@ export function PhysicalEditor({ profile, onBack, onUpdate }: EditorProps) {
               onChange={(e) => set("distinctive_features", e.target.value)}
               placeholder="Freckles, dimples, scars, etc."
             />
+          </div>
+
+          <div className="space-y-3 border-t pt-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <Label>Custom Details</Label>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Add any other casting detail as a label and value.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="shrink-0 gap-1.5"
+                onClick={() =>
+                  setCustomFields((previous) => [
+                    ...previous,
+                    {
+                      id: `custom-${Date.now()}-${previous.length}`,
+                      key: "",
+                      value: "",
+                    },
+                  ])
+                }
+              >
+                <Plus className="size-3.5" />
+                Add field
+              </Button>
+            </div>
+
+            {customFields.length > 0 ? (
+              <div className="space-y-2">
+                {customFields.map((field, index) => (
+                  <div
+                    key={field.id}
+                    className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_auto]"
+                  >
+                    <Input
+                      aria-label={`Custom field ${index + 1} name`}
+                      value={field.key}
+                      onChange={(event) =>
+                        updateCustomField(field.id, "key", event.target.value)
+                      }
+                      placeholder="Label"
+                    />
+                    <Input
+                      className="col-span-2 sm:col-span-1"
+                      aria-label={`Custom field ${index + 1} value`}
+                      value={field.value}
+                      onChange={(event) =>
+                        updateCustomField(field.id, "value", event.target.value)
+                      }
+                      placeholder="Value"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`Remove custom field ${index + 1}`}
+                      onClick={() =>
+                        setCustomFields((previous) =>
+                          previous.filter((item) => item.id !== field.id),
+                        )
+                      }
+                    >
+                      <Trash2 className="size-4 text-muted-foreground" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : null}
           </div>
         </CardContent>
       </Card>
