@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
   BarChart3,
@@ -27,7 +28,12 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
-import { plansApi, subscriptionsApi, type Plan } from "@/lib/api";
+import {
+  plansApi,
+  queryKeys,
+  subscriptionsApi,
+  type Plan,
+} from "@/lib/api";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { toast } from "sonner";
 import rootinLogo from "@/assets/rootin-logo-orange.png";
@@ -151,6 +157,12 @@ export default function PricingPage() {
   const hasHydrated = useAuthStore((s) => s.hasHydrated);
   const targetRole = user?.role === "recruiter" ? "recruiter" : "talent";
   const isRecruiterView = targetRole === "recruiter";
+  const queryClient = useQueryClient();
+  const subscriptionQuery = useQuery({
+    queryKey: queryKeys.subscriptions.me(),
+    queryFn: subscriptionsApi.getMySubscription,
+    enabled: hasHydrated && !!user,
+  });
 
   useEffect(() => {
     if (!hasHydrated) return;
@@ -209,6 +221,9 @@ export default function PricingPage() {
           return;
         }
         // Paid-to-paid change applied without a new checkout.
+        await queryClient.invalidateQueries({
+          queryKey: queryKeys.subscriptions.me(),
+        });
         toast.success("Plan updated successfully.");
         setUpgradingKey(null);
       } catch (err) {
@@ -220,13 +235,18 @@ export default function PricingPage() {
         setUpgradingKey(null);
       }
     },
-    [cycle, user, isRecruiterView],
+    [cycle, user, isRecruiterView, queryClient],
   );
 
-  if (isLoading) return <PricingSkeleton />;
+  if (isLoading || (user && subscriptionQuery.isLoading)) return <PricingSkeleton />;
   if (error) return <PricingError message={error} />;
 
-  const currentPlanKey = user?.active_plan ?? null;
+  const defaultPlanKey = isRecruiterView ? "recruiter_free" : "talent_free";
+  const currentPlanKey = user
+    ? subscriptionQuery.data?.subscription?.plan_key ??
+      (subscriptionQuery.isError ? user.active_plan : undefined) ??
+      defaultPlanKey
+    : null;
   const signupHref = isRecruiterView
     ? "/auth/signup?role=recruiter"
     : "/auth/signup";

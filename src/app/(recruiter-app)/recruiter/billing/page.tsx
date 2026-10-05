@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
 import {
   ArrowUpRight,
   BarChart3,
   ChevronRight,
-  Loader2,
   ReceiptText,
   RefreshCw,
   X,
@@ -20,7 +19,6 @@ import {
   useRecruiterBillingUsage,
   useRecruiterBillingInvoices,
 } from "@/hooks/use-recruiter-billing";
-import { subscriptionsApi } from "@/lib/api/subscriptions";
 import { toast } from "sonner";
 
 function formatPlanName(planKey?: string | null): string {
@@ -116,32 +114,8 @@ export default function RecruiterBillingPage() {
     isLoading: loadingInvoices,
   } = useRecruiterBillingInvoices(1, 20);
 
-  const [isUpgrading, setIsUpgrading] = useState(false);
-
   const subscription = subResponse?.subscription ?? null;
   const plan = subResponse?.plan ?? null;
-
-  const handleUpgrade = async (planKey: string) => {
-    try {
-      setIsUpgrading(true);
-      const result = await subscriptionsApi.upgrade({
-        planKey,
-        interval: "monthly",
-      });
-      const url = result.short_url || result.checkout_url;
-      if (url) {
-        window.location.href = url;
-        return;
-      }
-      // Paid-to-paid change applied without a new checkout.
-      toast.success("Plan updated successfully.");
-      setIsUpgrading(false);
-    } catch (err) {
-      const backendMessage = (err as { backendMessage?: string })?.backendMessage;
-      toast.error(backendMessage || "Failed to initiate upgrade. Please try again.");
-      setIsUpgrading(false);
-    }
-  };
 
   if (loadingSub || loadingUsage || loadingInvoices) {
     return <BillingSkeleton />;
@@ -160,8 +134,9 @@ export default function RecruiterBillingPage() {
     );
   }
 
-  const isPaid = !!subscription?.plan_key;
-  const status = subscription?.status;
+  const currentPlanKey = subscription?.plan_key ?? "recruiter_free";
+  const isPaid = currentPlanKey !== "recruiter_free";
+  const status = subscription?.status ?? "active";
   const isActive =
     status === "active" ||
     status === "trialing" ||
@@ -189,16 +164,14 @@ export default function RecruiterBillingPage() {
           </p>
         </div>
         <Button
+          asChild
           variant="outline"
-         className="border-accent-teal/50 text-accent-teal hover:bg-accent-teal-bg"
-          onClick={() => {
-            // Scroll to plan section or trigger upgrade flow
-            const el = document.getElementById("subscription-card");
-            el?.scrollIntoView({ behavior: "smooth" });
-          }}
+          className="border-accent-teal/50 text-accent-teal hover:bg-accent-teal-bg"
         >
-          <ArrowUpRight className="mr-1 size-4" />
-          Change Plan
+          <Link href="/pricing">
+            <ArrowUpRight className="mr-1 size-4" />
+            Change Plan
+          </Link>
         </Button>
       </div>
 
@@ -213,7 +186,7 @@ export default function RecruiterBillingPage() {
           </h2>
            <span className="rounded-full border border-accent-teal/50 px-4 py-1.5 text-sm font-semibold text-accent-teal">
             {isPaid
-              ? (plan?.display_name ?? formatPlanName(subscription?.plan_key))
+              ? (plan?.display_name ?? formatPlanName(currentPlanKey))
               : "Free"}
           </span>
         </div>
@@ -235,15 +208,14 @@ export default function RecruiterBillingPage() {
 
         <div className="mt-5 flex flex-wrap gap-3">
           <Button
+            asChild
             variant="outline"
-             className="flex-1 border-accent-teal/50 text-accent-teal hover:bg-accent-teal-bg"
-            onClick={() => {
-              // TODO: open plan selector or redirect to plans page
-              toast.info("Plan selection coming soon.");
-            }}
+            className="flex-1 border-accent-teal/50 text-accent-teal hover:bg-accent-teal-bg"
           >
-            <RefreshCw className="mr-2 size-4" />
-            Change plan
+            <Link href="/pricing">
+              <RefreshCw className="mr-2 size-4" />
+              Change plan
+            </Link>
           </Button>
           <Button
             variant="outline"

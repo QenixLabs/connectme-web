@@ -8,6 +8,22 @@ import { authStore } from "@/stores/auth-store";
 
 const SocketContext = createContext<Socket | null>(null);
 
+function getSocketUrl(): string | null {
+  if (process.env.NEXT_PUBLIC_SOCKET_URL) {
+    return process.env.NEXT_PUBLIC_SOCKET_URL;
+  }
+
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    try {
+      return new URL(process.env.NEXT_PUBLIC_API_URL).origin;
+    } catch {
+      return null;
+    }
+  }
+
+  return process.env.NODE_ENV === "development" ? "http://localhost:3001" : null;
+}
+
 export function SocketProvider({ children }: { children: ReactNode }) {
   const [socket, setSocket] = useState<Socket | null>(null);
   const socketRef = useRef<Socket | null>(null);
@@ -25,7 +41,13 @@ export function SocketProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const newSocket = io(process.env.NEXT_PUBLIC_SOCKET_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001", {
+    const socketUrl = getSocketUrl();
+    if (!socketUrl) {
+      setSocket(null);
+      return;
+    }
+
+    const newSocket = io(socketUrl, {
       auth: { token },
       transports: ["websocket"],
       reconnection: true,

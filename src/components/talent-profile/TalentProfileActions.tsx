@@ -115,6 +115,7 @@ export function TalentProfileActions({
 
   const authUser = useAuthStore((s) => s.user);
   const isOwnProfile = !!authUser && authUser._id === profile.user_id;
+  const requiresTier3 = !!authUser && authUser.verification_tier < 3;
 
   const { start: startConversation, isPending: messagePending } =
     useStartConversation(username, viewerRole ?? undefined);
@@ -145,7 +146,13 @@ export function TalentProfileActions({
             disabled={
               connectPending ||
               connectionStatus === "pending" ||
-              connectionStatus === "connected"
+              connectionStatus === "connected" ||
+              requiresTier3
+            }
+            title={
+              requiresTier3
+                ? "Tier 3 verification is required to connect"
+                : undefined
             }
             className="flex h-[52px] shrink-0 items-center justify-center gap-2 rounded-2xl bg-card px-4 text-sm font-semibold text-foreground shadow-[0_6px_24px_rgba(15,23,42,0.05)] transition-all active:scale-95 disabled:opacity-70"
           >
@@ -160,7 +167,9 @@ export function TalentProfileActions({
               ? "Pending"
               : connectionStatus === "connected"
                 ? "Connected"
-                : "Connect"}
+                : requiresTier3
+                  ? "Tier 3 Required"
+                  : "Connect"}
           </button>
         )}
 

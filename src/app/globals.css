@@ -2567,6 +2567,25 @@ main.signup-shell {
 }
 .agency-edit-theme .ae-input-icon > input { padding-left: 2.25rem; }
 
+.agency-edit-theme input[aria-invalid="true"],
+.agency-edit-theme textarea[aria-invalid="true"],
+.agency-edit-theme select[aria-invalid="true"],
+.agency-edit-theme [aria-invalid="true"] {
+  border-color: var(--destructive);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--destructive) 12%, transparent);
+}
+
+.agency-edit-theme input[aria-invalid="true"]:focus,
+.agency-edit-theme textarea[aria-invalid="true"]:focus,
+.agency-edit-theme select[aria-invalid="true"]:focus {
+  border-color: var(--destructive);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--destructive) 16%, transparent);
+}
+
+.agency-edit-theme [data-valid="true"] {
+  border-color: color-mix(in oklab, var(--success) 65%, var(--input));
+}
+
 .agency-edit-theme .ae-logo-mark {
   display: grid;
   place-items: center;

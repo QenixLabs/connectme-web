@@ -48,6 +48,10 @@ import {
 import { fromSavedSearchCriteria, toSavedSearchCriteria } from "@/lib/api/saved-searches";
 
 const LIMIT = 12;
+const ALL_FILTER_VALUE = "__all__";
+
+const normalizeFilterValue = (value: string) =>
+  value === ALL_FILTER_VALUE ? "" : value;
 
 const SORT_OPTIONS = [
   { label: "Best Match", value: "relevance" },
@@ -184,67 +188,105 @@ function FindTalentResultsInner() {
             >
               <SlidersHorizontal className="size-4" /> Filters
             </Button>
-            <Select value={criteria.profession} onValueChange={(value) => set({ profession: value })}>
+            <Select
+              value={criteria.profession || ALL_FILTER_VALUE}
+              onValueChange={(value) => set({ profession: normalizeFilterValue(value) })}
+            >
               <SelectTrigger className="h-10 w-auto shrink-0 gap-2 rounded-xl border-border bg-card px-3 text-sm">
                 <span className="text-muted-foreground">Profession</span>
                 <SelectValue placeholder="All" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All professions</SelectItem>
+                <SelectItem value={ALL_FILTER_VALUE}>All professions</SelectItem>
                 {professions?.map((profession) => <SelectItem key={profession} value={profession}>{profession}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Select value={criteria.gender} onValueChange={(value) => set({ gender: value })}>
+            <Select
+              value={criteria.gender || ALL_FILTER_VALUE}
+              onValueChange={(value) => set({ gender: normalizeFilterValue(value) })}
+            >
               <SelectTrigger className="h-10 w-auto shrink-0 gap-2 rounded-xl border-border bg-card px-3 text-sm">
                 <span className="text-muted-foreground">Gender</span><SelectValue placeholder="All" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All genders</SelectItem>
+                <SelectItem value={ALL_FILTER_VALUE}>All genders</SelectItem>
                 {GENDER_OPTIONS.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Select value={ageBand} onValueChange={(value) => { const [ageMin, ageMax] = bandToRange(value); set({ ageMin, ageMax }); }}>
+            <Select
+              value={ageBand || ALL_FILTER_VALUE}
+              onValueChange={(value) => {
+                const [ageMin, ageMax] = bandToRange(normalizeFilterValue(value));
+                set({ ageMin, ageMax });
+              }}
+            >
               <SelectTrigger className="h-10 w-auto shrink-0 gap-2 rounded-xl border-border bg-card px-3 text-sm">
                 <span className="text-muted-foreground">Age</span><SelectValue placeholder="Any" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Any age</SelectItem>
+                <SelectItem value={ALL_FILTER_VALUE}>Any age</SelectItem>
                 {AGE_BANDS.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Select value={criteria.languages[0] ?? ""} onValueChange={(value) => set({ languages: value ? [value] : [] })}>
+            <Select
+              value={criteria.languages[0] || ALL_FILTER_VALUE}
+              onValueChange={(value) => {
+                const normalized = normalizeFilterValue(value);
+                set({ languages: normalized ? [normalized] : [] });
+              }}
+            >
               <SelectTrigger className="h-10 w-auto shrink-0 gap-2 rounded-xl border-border bg-card px-3 text-sm">
                 <span className="text-muted-foreground">Language</span><SelectValue placeholder="Any" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Any language</SelectItem>
+                <SelectItem value={ALL_FILTER_VALUE}>Any language</SelectItem>
                 {LANGUAGE_OPTIONS.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Select value={experienceBand ?? ""} onValueChange={(value) => { const band = EXPERIENCE_BANDS.find((item) => item.label === value); set({ experienceMin: band?.min ?? null, experienceMax: band?.max ?? null }); }}>
+            <Select
+              value={experienceBand || ALL_FILTER_VALUE}
+              onValueChange={(value) => {
+                const band = EXPERIENCE_BANDS.find(
+                  (item) => item.label === normalizeFilterValue(value),
+                );
+                set({
+                  experienceMin: band?.min ?? null,
+                  experienceMax: band?.max ?? null,
+                });
+              }}
+            >
               <SelectTrigger className="h-10 w-auto shrink-0 gap-2 rounded-xl border-border bg-card px-3 text-sm">
                 <span className="text-muted-foreground">Experience</span><SelectValue placeholder="Any" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Any experience</SelectItem>
+                <SelectItem value={ALL_FILTER_VALUE}>Any experience</SelectItem>
                 {EXPERIENCE_BANDS.map((option) => <SelectItem key={option.label} value={option.label}>{option.label}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Select value={criteria.availability} onValueChange={(value) => set({ availability: value })}>
+            <Select
+              value={criteria.availability || ALL_FILTER_VALUE}
+              onValueChange={(value) => set({ availability: normalizeFilterValue(value) })}
+            >
               <SelectTrigger className="h-10 w-auto shrink-0 gap-2 rounded-xl border-border bg-card px-3 text-sm">
                 <span className="text-muted-foreground">Availability</span><SelectValue placeholder="All" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All availability</SelectItem>
+                <SelectItem value={ALL_FILTER_VALUE}>All availability</SelectItem>
                 {AVAILABILITY_OPTIONS.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Select value={criteria.skills[0] ?? ""} onValueChange={(value) => set({ skills: value ? [value] : [] })}>
+            <Select
+              value={criteria.skills[0] || ALL_FILTER_VALUE}
+              onValueChange={(value) => {
+                const normalized = normalizeFilterValue(value);
+                set({ skills: normalized ? [normalized] : [] });
+              }}
+            >
               <SelectTrigger className="h-10 w-auto shrink-0 gap-2 rounded-xl border-border bg-card px-3 text-sm">
                 <span className="text-muted-foreground">Skills</span><SelectValue placeholder="Any" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Any skill</SelectItem>
+                <SelectItem value={ALL_FILTER_VALUE}>Any skill</SelectItem>
                 {SKILL_OPTIONS.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
               </SelectContent>
             </Select>

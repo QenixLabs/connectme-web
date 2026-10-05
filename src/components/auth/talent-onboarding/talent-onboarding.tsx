@@ -40,6 +40,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { authApi, talentApi } from "@/lib/api";
+import { API_BASE_URL } from "@/lib/api/client";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { OtpInput } from "@/components/ui/otp-input";
 import {
@@ -219,8 +220,7 @@ function AccountStep({ account, setAccount, onContinue }: { account: Account; se
   const [agreementError, setAgreementError] = useState<string | null>(null);
 
   const handleGoogleSignup = () => {
-    const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1";
-    window.location.href = `${apiBase}/auth/google?intent=signup&role=talent`;
+    window.location.href = `${API_BASE_URL}/auth/google?intent=signup&role=talent`;
   };
   const checks = passwordRules.map(({ test }) => test(account.password));
   const update = (field: keyof Account, value: string) => {

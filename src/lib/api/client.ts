@@ -2,8 +2,13 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { redirectToSuspendedPage, redirectToBannedPage } from "@/lib/redirect";
 import { tokenStorage } from "@/lib/token-storage";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1";
+const configuredApiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+if (!configuredApiUrl && process.env.NODE_ENV === "production") {
+  throw new Error("NEXT_PUBLIC_API_URL is required in production");
+}
+
+export const API_BASE_URL = configuredApiUrl || "http://localhost:3001/api/v1";
 
 export function getApiErrorMessage(error: unknown, fallback: string): string {
   if (!error || typeof error !== "object") return fallback;

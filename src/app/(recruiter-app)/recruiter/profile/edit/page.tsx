@@ -1,14 +1,16 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ButtonHTMLAttributes, ComponentType, ReactNode } from "react";
 import {
+  AlertCircle,
   ArrowLeft,
   BadgeCheck,
   Building2,
   Briefcase,
   Camera,
   Check,
+  CheckCircle2,
   ChevronDown,
   Copy,
   Eye,
@@ -48,7 +50,10 @@ import type {
   RecruiterProfile,
   UpdateRecruiterProfilePayload,
 } from "@/lib/api/recruiter";
+import { recruiterProfileSchema } from "@/lib/validations/recruiter-profile.schema";
 import { RecruiterProfileView } from "@/app/recruiter/[slug]/profile-view";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Label } from "@/components/ui/label";
 import {
   Sheet,
   SheetContent,
@@ -173,10 +178,68 @@ type Draft = UpdateRecruiterProfilePayload & {
   slug: string;
 };
 
+type DraftValidation = {
+  errors: Record<string, string>;
+  firstError: string | null;
+};
+
+type SlugCheck = {
+  value: string;
+  status: "idle" | "checking" | "available" | "taken" | "error";
+};
+
+type SaveFeedback =
+  | { type: "success"; message: string }
+  | { type: "error"; message: string }
+  | null;
+
+function validateDraft(draft: Draft): DraftValidation {
+  const result = recruiterProfileSchema.safeParse(draft);
+  if (result.success) {
+    return { errors: {}, firstError: null };
+  }
+
+  const errors: Record<string, string> = {};
+  for (const issue of result.error.issues) {
+    const key = issue.path.map(String).join(".");
+    if (key && !errors[key]) {
+      errors[key] = issue.message;
+    }
+  }
+
+  return {
+    errors,
+    firstError: Object.keys(errors)[0] ?? null,
+  };
+}
+
+function fieldDomId(field: string): string {
+  return `profile-field-${field.replace(/[^a-zA-Z0-9]+/g, "-")}`;
+}
+
+function fieldErrorId(field: string): string {
+  return `${fieldDomId(field)}-error`;
+}
+
+function getErrorMessage(error: unknown, fallback: string): string {
+  if (typeof error === "object" && error !== null && "response" in error) {
+    const response = (error as { response?: { data?: { message?: string | string[] } } }).response;
+    const message = response?.data?.message;
+    if (Array.isArray(message)) return message.join(" ");
+    if (typeof message === "string" && message.trim()) return message;
+  }
+
+  if (error instanceof Error && error.message.trim()) {
+    return error.message;
+  }
+
+  return fallback;
+}
+
 function draftFromProfile(profile: RecruiterProfile): Draft {
   return {
     company_name: profile.company_name ?? "",
-    slug: profile.slug ?? "",
+    slug: sanitizeSlug(profile.slug ?? ""),
     company_website: profile.company_website ?? "",
     linkedin_company_url: profile.linkedin_company_url ?? "",
     instagram_url: profile.instagram_url ?? "",
@@ -196,7 +259,10 @@ function draftFromProfile(profile: RecruiterProfile): Draft {
     banner_tags: [...(profile.banner_tags ?? [])],
     motto: profile.motto ?? "",
     casting_categories: [...(profile.casting_categories ?? [])],
-    team_values: (profile.team_values ?? []).map((v) => ({ ...v })),
+    team_values: (profile.team_values ?? []).map((v) => ({
+      title: v.title ?? "",
+      description: v.description ?? "",
+    })),
     cta_headline: profile.cta_headline ?? "",
     cta_subheadline: profile.cta_subheadline ?? "",
     cta_image_url: profile.cta_image_url ?? "",
@@ -303,21 +369,54 @@ function AeButton({ variant = "primary", className = "", ...props }: ButtonProps
 function Field({
   label,
   required,
+  fieldId,
+  error,
+  hint,
+  valid,
   children,
   className = "",
 }: {
   label: string;
   required?: boolean;
+  fieldId?: string;
+  error?: string;
+  hint?: string;
+  valid?: boolean;
   children: ReactNode;
   className?: string;
 }) {
   return (
-    <label className={`block min-w-0 ${className}`}>
-      <span className="mb-2 block text-xs font-semibold text-foreground">
-        {label} {required && <span className="text-destructive">*</span>}
-      </span>
+    <div className={`block min-w-0 ${className}`} data-error={Boolean(error)}>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        {fieldId ? (
+          <Label htmlFor={fieldId} className="text-xs font-semibold text-foreground">
+            {label} {required && <span className="text-destructive">*</span>}
+          </Label>
+        ) : (
+          <span className="text-xs font-semibold text-foreground">
+            {label} {required && <span className="text-destructive">*</span>}
+          </span>
+        )}
+        {valid && !error && (
+          <CheckCircle2 className="size-4 shrink-0 text-success" aria-label={`${label} is valid`} />
+        )}
+      </div>
       {children}
-    </label>
+      {error ? (
+        <p
+          id={fieldId ? fieldErrorId(fieldId.replace(/^profile-field-/, "")) : undefined}
+          role="alert"
+          className="mt-1.5 flex items-start gap-1 text-xs font-medium text-destructive"
+        >
+          <AlertCircle className="mt-0.5 size-3.5 shrink-0" />
+          <span>{error}</span>
+        </p>
+      ) : hint ? (
+        <p aria-live="polite" className="mt-1.5 text-[11px] text-muted-foreground">
+          {hint}
+        </p>
+      ) : null}
+    </div>
   );
 }
 
@@ -617,6 +716,10 @@ export default function RecruiterProfileEditPage() {
 
   const [draft, setDraft] = useState<Draft | null>(null);
   const [isDirty, setIsDirty] = useState(false);
+  const [touchedFields, setTouchedFields] = useState<Set<string>>(() => new Set());
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [slugCheck, setSlugCheck] = useState<SlugCheck>({ value: "", status: "idle" });
+  const [saveFeedback, setSaveFeedback] = useState<SaveFeedback>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [sheet, setSheet] = useState<null | "size" | "specialties" | "languages">(null);
   // Single-open accordion: null = every section collapsed (default).
@@ -651,10 +754,40 @@ export default function RecruiterProfileEditPage() {
     }
   }
 
+  const validation = useMemo(
+    () => (draft ? validateDraft(draft) : { errors: {}, firstError: null }),
+    [draft],
+  );
+
+  const markTouched = useCallback((field: string) => {
+    setTouchedFields((previous) => {
+      if (previous.has(field)) return previous;
+      const next = new Set(previous);
+      next.add(field);
+      return next;
+    });
+  }, []);
+
   const set = useCallback(<K extends keyof Draft>(field: K, value: Draft[K]) => {
     setDraft((prev) => (prev ? { ...prev, [field]: value } : prev));
+    if (field === "slug") {
+      setSlugCheck({ value: String(value), status: "idle" });
+    }
+    setSaveFeedback(null);
     setIsDirty(true);
   }, []);
+
+  useEffect(() => {
+    if (!isDirty) return;
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isDirty]);
 
   // Link slots (platform picker, max 5) — URLs live in draft fields.
   const [linkSlots, setLinkSlots] = useState<SocialPlatformKey[]>([]);
@@ -720,6 +853,60 @@ export default function RecruiterProfileEditPage() {
         : null,
     [draft, profile, trustScore, verificationTier],
   );
+
+  const getFieldError = (field: string): string | undefined => {
+    const visible = submitAttempted || touchedFields.has(field);
+    if (!visible) return undefined;
+
+    if (field === "slug" && slugCheck.value === draft?.slug && slugCheck.status === "taken") {
+      return "This profile URL is already taken";
+    }
+
+    if (field === "slug" && slugCheck.value === draft?.slug && slugCheck.status === "error") {
+      return "Could not check this profile URL. Try again.";
+    }
+
+    return validation.errors[field];
+  };
+
+  const getFieldProps = (field: string, value: string | number | undefined) => {
+    const error = getFieldError(field);
+    const visible = submitAttempted || touchedFields.has(field);
+    const hasValue = value !== undefined && String(value).trim().length > 0;
+
+    return {
+      id: fieldDomId(field),
+      "aria-invalid": Boolean(error),
+      "aria-describedby": error ? fieldErrorId(field) : undefined,
+      "data-valid": visible && hasValue && !error && !validation.errors[field] ? "true" : undefined,
+      onBlur: () => markTouched(field),
+    };
+  };
+
+  const isFieldValid = (field: string, value: string | number | undefined): boolean => {
+    const visible = submitAttempted || touchedFields.has(field);
+    const hasValue = value !== undefined && String(value).trim().length > 0;
+    return visible && hasValue && !getFieldError(field) && !validation.errors[field];
+  };
+
+  const handleSlugBlur = useCallback(() => {
+    markTouched("slug");
+    if (!draft || !profile) return;
+
+    const slug = sanitizeSlug(draft.slug);
+    const currentSlug = sanitizeSlug(profile.slug);
+    if (slug.length < 3 || slug === currentSlug) {
+      setSlugCheck({ value: slug, status: slug === currentSlug ? "available" : "idle" });
+      return;
+    }
+
+    setSlugCheck({ value: slug, status: "checking" });
+    checkSlug.mutate(slug, {
+      onSuccess: (available) =>
+        setSlugCheck({ value: slug, status: available ? "available" : "taken" }),
+      onError: () => setSlugCheck({ value: slug, status: "error" }),
+    });
+  }, [checkSlug, draft, markTouched, profile]);
 
   const uploadLogoFile = useCallback(
     (file: File) => {
@@ -852,7 +1039,12 @@ export default function RecruiterProfileEditPage() {
   const handleCtaImageUpload = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
+      e.target.value = "";
       if (!file) return;
+      if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+        toast.error("Only JPEG, PNG, and WEBP images are allowed");
+        return;
+      }
       if (file.size > 5 * 1024 * 1024) {
         toast.error("Image must be under 5MB");
         return;
@@ -864,7 +1056,6 @@ export default function RecruiterProfileEditPage() {
         },
         onError: () => toast.error("CTA image upload failed"),
       });
-      e.target.value = "";
     },
     [uploadAsset, set],
   );
@@ -887,72 +1078,129 @@ export default function RecruiterProfileEditPage() {
 
   const handleSave = useCallback(() => {
     if (!draft || !profile) return;
-    const name = draft.company_name.trim();
-    if (!name) {
-      toast.error("Agency name is required");
-      return;
-    }
+    setSubmitAttempted(true);
+
     const slug = sanitizeSlug(draft.slug);
-    if (slug.length < 3) {
-      toast.error("Profile URL must be at least 3 characters");
-      return;
-    }
-    if ((draft.specialties ?? []).length > MAX_SPECIALTIES) {
-      toast.error(`You can select up to ${MAX_SPECIALTIES} specialties`);
+    const candidate = { ...draft, slug };
+    const parsed = recruiterProfileSchema.safeParse(candidate);
+    const candidateValidation = validateDraft(candidate);
+
+    if (!parsed.success || candidateValidation.firstError) {
+      const firstError = candidateValidation.firstError;
+      const sectionByField: Record<string, string> = {
+        company_name: "basic",
+        slug: "basic",
+        company_website: "links",
+        linkedin_company_url: "links",
+        instagram_url: "links",
+        youtube_url: "links",
+        x_url: "links",
+        industry: "basic",
+        headline: "basic",
+        about: "about",
+        founded_year: "basic",
+        location: "location",
+        specialties: "specialties",
+        languages: "company",
+        position: "basic",
+        banner_tags: "company",
+        motto: "about",
+        casting_categories: "company",
+        team_values: "values",
+        cta_headline: "cta",
+        cta_subheadline: "cta",
+        cta_image_url: "cta",
+        company_size: "company",
+        profile_photo: "logo",
+        banner_image_url: "logo",
+      };
+      const section = firstError
+        ? sectionByField[firstError.split(".")[0]] ?? "basic"
+        : "basic";
+      setOpenSection(section);
+      setSaveFeedback({
+        type: "error",
+        message: `Fix ${Object.keys(candidateValidation.errors).length || 1} highlighted field${Object.keys(candidateValidation.errors).length === 1 ? "" : "s"} before saving.`,
+      });
+      toast.error("Review the highlighted fields before saving");
+      window.setTimeout(() => {
+        if (!firstError) return;
+        const element = document.getElementById(fieldDomId(firstError));
+        if (element instanceof HTMLElement) element.focus();
+      }, 0);
       return;
     }
 
+    const normalized = parsed.data;
     const persist = (finalSlug: string) => {
       const payload: UpdateRecruiterProfilePayload = {
         ...draft,
-        company_name: name,
+        ...normalized,
+        company_name: normalized.company_name,
         slug: finalSlug,
-        company_website: draft.company_website?.trim() || "",
-        linkedin_company_url: draft.linkedin_company_url?.trim() || "",
-        instagram_url: draft.instagram_url?.trim() || "",
-        youtube_url: draft.youtube_url?.trim() || "",
-        x_url: draft.x_url?.trim() || "",
-        industry: draft.industry?.trim() || "",
-        headline: draft.headline?.trim() || "",
-        about: draft.about?.trim() || "",
-        position: draft.position?.trim() || "",
-        motto: draft.motto?.trim() || "",
-        company_size: draft.company_size || "",
-        cta_headline: draft.cta_headline?.trim() || "",
-        cta_subheadline: draft.cta_subheadline?.trim() || "",
       };
       updateProfile.mutate(payload, {
         onSuccess: () => {
           toast.success("Profile saved successfully");
+          setSaveFeedback({
+            type: "success",
+            message: "Changes saved. Your live profile preview is up to date.",
+          });
           setIsDirty(false);
         },
-        onError: () => toast.error("Update failed"),
+        onError: (error) => {
+          const message = getErrorMessage(error, "We couldn't save your profile. Try again.");
+          setSaveFeedback({ type: "error", message });
+          toast.error(message);
+        },
       });
     };
 
-    if (slug !== profile.slug) {
+    const currentSlug = sanitizeSlug(profile.slug);
+    if (slug !== currentSlug) {
+      setSlugCheck({ value: slug, status: "checking" });
       checkSlug.mutate(slug, {
         onSuccess: (available) => {
           if (!available) {
+            setSlugCheck({ value: slug, status: "taken" });
+            setSaveFeedback({ type: "error", message: "This profile URL is already taken." });
             toast.error("Profile URL already taken");
             return;
           }
+          setSlugCheck({ value: slug, status: "available" });
           persist(slug);
         },
-        onError: () => toast.error("Could not check profile URL"),
+        onError: (error) => {
+          setSlugCheck({ value: slug, status: "error" });
+          const message = getErrorMessage(error, "Could not check profile URL");
+          setSaveFeedback({ type: "error", message });
+          toast.error(message);
+        },
       });
     } else {
+      setSlugCheck({ value: slug, status: "available" });
       persist(slug);
     }
-  }, [draft, profile, updateProfile, checkSlug]);
+  }, [checkSlug, draft, profile, updateProfile]);
 
   const handleCancel = useCallback(() => {
     if (profile) {
       setDraft(draftFromProfile(profile));
       setLinkSlots(slotsFromProfile(profile));
+      setTouchedFields(new Set());
+      setSubmitAttempted(false);
+      setSlugCheck({ value: sanitizeSlug(profile.slug), status: "available" });
+      setSaveFeedback(null);
       setIsDirty(false);
     }
   }, [profile]);
+
+  const handleBack = useCallback(() => {
+    if (isDirty && !window.confirm("You have unsaved profile changes. Leave without saving?")) {
+      return;
+    }
+    window.history.back();
+  }, [isDirty]);
 
   if (isLoading || !profile || !draft) {
     return (
@@ -1084,6 +1332,7 @@ export default function RecruiterProfileEditPage() {
   ].filter((s) => s === "complete").length;
   const requiredTotal = 9;
   const completenessPct = Math.round((requiredDone / requiredTotal) * 100);
+  const validationErrorCount = Object.keys(validation.errors).length;
 
   return (
     <div className="agency-edit-theme min-h-screen bg-background text-foreground">
@@ -1095,7 +1344,7 @@ export default function RecruiterProfileEditPage() {
               variant="ghost"
               className="size-10 px-0"
               aria-label="Go back"
-              onClick={() => window.history.back()}
+              onClick={handleBack}
             >
               <ArrowLeft className="size-5" />
             </AeButton>
@@ -1117,6 +1366,7 @@ export default function RecruiterProfileEditPage() {
           <div className="grid min-w-0 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_390px]">
             <form
               className="min-w-0 sm:px-1"
+              noValidate
               onSubmit={(e) => {
                 e.preventDefault();
                 handleSave();
@@ -1147,6 +1397,28 @@ export default function RecruiterProfileEditPage() {
                 </div>
               </div>
 
+              {submitAttempted && validationErrorCount > 0 && (
+                <Alert variant="destructive" className="mx-4 mb-3 sm:mx-0">
+                  <AlertCircle />
+                  <AlertTitle>Finish your profile before saving</AlertTitle>
+                  <AlertDescription>
+                    {validationErrorCount} field{validationErrorCount === 1 ? " needs" : "s need"} attention. Review the highlighted fields below.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {saveFeedback && (
+                <Alert
+                  className={`mx-4 mb-3 sm:mx-0 ${saveFeedback.type === "success" ? "border-success/40 bg-success/10 text-success" : "border-destructive/40 bg-destructive/10 text-destructive"}`}
+                >
+                  {saveFeedback.type === "success" ? <CheckCircle2 /> : <AlertCircle />}
+                  <AlertTitle>{saveFeedback.type === "success" ? "Profile saved" : "Could not save profile"}</AlertTitle>
+                  <AlertDescription className={saveFeedback.type === "success" ? "text-success/90" : undefined}>
+                    {saveFeedback.message}
+                  </AlertDescription>
+                </Alert>
+              )}
+
               {/* Single-open accordion — all sections collapsed by default */}
               <div className="overflow-hidden border-y border-border/70 bg-card sm:rounded-xl sm:border">
                 <div className="divide-y divide-border/60">
@@ -1166,7 +1438,8 @@ export default function RecruiterProfileEditPage() {
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="ae-logo-mark aspect-square w-full"
+                      disabled={uploadPhoto.isPending}
+                      className="ae-logo-mark relative aspect-square w-full disabled:cursor-wait disabled:opacity-70"
                       aria-label="Change agency logo"
                     >
                       {draft.profile_photo ? (
@@ -1181,6 +1454,11 @@ export default function RecruiterProfileEditPage() {
                           <small>{(draft.company_name || "AGENCY").slice(0, 12).toUpperCase()}</small>
                         </>
                       )}
+                      {uploadPhoto.isPending && (
+                        <span className="absolute inset-0 grid place-items-center bg-black/45 text-white">
+                          <Loader2 className="size-5 animate-spin" aria-label="Uploading logo" />
+                        </span>
+                      )}
                     </button>
                     <input
                       ref={fileInputRef}
@@ -1192,9 +1470,10 @@ export default function RecruiterProfileEditPage() {
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="mt-2 w-full cursor-pointer text-center text-xs font-semibold text-primary"
+                      disabled={uploadPhoto.isPending}
+                      className="mt-2 w-full cursor-pointer text-center text-xs font-semibold text-primary disabled:cursor-wait disabled:opacity-60"
                     >
-                      Change logo
+                      {uploadPhoto.isPending ? "Uploading…" : "Change logo"}
                     </button>
                     <p className="mt-1 text-center text-[11px] text-muted-foreground">
                       Square 1:1 · crops if needed
@@ -1214,14 +1493,15 @@ export default function RecruiterProfileEditPage() {
                       <p className="relative max-w-32 font-display text-lg font-bold leading-tight text-white">
                         {draft.motto || "Great stories find great people."}
                       </p>
-                      <AeButton
-                        type="button"
-                        variant="outline"
-                        className="relative ml-auto min-h-9 bg-card/95 px-3 text-xs"
-                        onClick={() => bannerInputRef.current?.click()}
-                      >
-                        <Camera className="size-4" />
-                        <span className="hidden sm:inline">Change cover</span>
+                        <AeButton
+                          type="button"
+                          variant="outline"
+                          disabled={uploadBanner.isPending}
+                          className="relative ml-auto min-h-9 bg-card/95 px-3 text-xs"
+                          onClick={() => bannerInputRef.current?.click()}
+                        >
+                          {uploadBanner.isPending ? <Loader2 className="size-4 animate-spin" /> : <Camera className="size-4" />}
+                          <span className="hidden sm:inline">{uploadBanner.isPending ? "Uploading…" : "Change cover"}</span>
                       </AeButton>
                     </div>
                     <input
@@ -1249,35 +1529,75 @@ export default function RecruiterProfileEditPage() {
                 onToggle={() => toggleSection("basic")}
               >
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="Agency name" required>
+                  <Field
+                    label="Agency name"
+                    required
+                    fieldId={fieldDomId("company_name")}
+                    error={getFieldError("company_name")}
+                    valid={isFieldValid("company_name", draft.company_name)}
+                  >
                     <input
+                      {...getFieldProps("company_name", draft.company_name)}
                       value={draft.company_name}
                       onChange={(e) => set("company_name", e.target.value)}
+                      maxLength={100}
                       placeholder="Silver Reel Casting"
                     />
                   </Field>
-                  <Field label="Profile URL" required>
+                  <Field
+                    label="Profile URL"
+                    required
+                    fieldId={fieldDomId("slug")}
+                    error={getFieldError("slug")}
+                    valid={isFieldValid("slug", draft.slug) && slugCheck.status !== "checking"}
+                    hint={
+                      slugCheck.status === "checking"
+                        ? "Checking availability…"
+                        : slugCheck.status === "available"
+                          ? "This profile URL is available"
+                          : slugCheck.status === "error"
+                            ? "Availability check failed"
+                          : "Use lowercase letters, numbers, and hyphens"
+                    }
+                  >
                     <div className="ae-input-icon">
                       <Link2 />
                       <input
+                        {...getFieldProps("slug", draft.slug)}
                         value={draft.slug}
                         onChange={(e) => set("slug", sanitizeSlug(e.target.value))}
+                        maxLength={40}
+                        onBlur={handleSlugBlur}
                         placeholder="your-agency-slug"
                       />
                     </div>
                   </Field>
-                  <Field label="Industry">
+                  <Field
+                    label="Industry"
+                    fieldId={fieldDomId("industry")}
+                    error={getFieldError("industry")}
+                    valid={isFieldValid("industry", draft.industry)}
+                  >
                     <div className="ae-input-icon">
                       <Briefcase />
                       <input
+                        {...getFieldProps("industry", draft.industry)}
                         value={draft.industry ?? ""}
                         onChange={(e) => set("industry", e.target.value)}
+                        maxLength={80}
                         placeholder="e.g. Casting, Entertainment"
                       />
                     </div>
                   </Field>
-                  <Field label="Founded year">
+                  <Field
+                    label="Founded year"
+                    fieldId={fieldDomId("founded_year")}
+                    error={getFieldError("founded_year")}
+                    valid={isFieldValid("founded_year", draft.founded_year)}
+                    hint="Between 1800 and the current year"
+                  >
                     <input
+                      {...getFieldProps("founded_year", draft.founded_year)}
                       inputMode="numeric"
                       value={draft.founded_year ? String(draft.founded_year) : ""}
                       onChange={(e) => {
@@ -1287,17 +1607,33 @@ export default function RecruiterProfileEditPage() {
                       placeholder="e.g. 2016"
                     />
                   </Field>
-                  <Field label="Headline" className="sm:col-span-2">
+                  <Field
+                    label="Headline"
+                    fieldId={fieldDomId("headline")}
+                    error={getFieldError("headline")}
+                    valid={isFieldValid("headline", draft.headline)}
+                    className="sm:col-span-2"
+                  >
                     <input
+                      {...getFieldProps("headline", draft.headline)}
                       value={draft.headline ?? ""}
                       onChange={(e) => set("headline", e.target.value)}
+                      maxLength={120}
                       placeholder="What does your company do?"
                     />
                   </Field>
-                  <Field label="Your position" className="sm:col-span-2">
+                  <Field
+                    label="Your position"
+                    fieldId={fieldDomId("position")}
+                    error={getFieldError("position")}
+                    valid={isFieldValid("position", draft.position)}
+                    className="sm:col-span-2"
+                  >
                     <input
+                      {...getFieldProps("position", draft.position)}
                       value={draft.position ?? ""}
                       onChange={(e) => set("position", e.target.value)}
+                      maxLength={80}
                       placeholder="e.g. Founder, CEO"
                     />
                   </Field>
@@ -1315,22 +1651,38 @@ export default function RecruiterProfileEditPage() {
                 onToggle={() => toggleSection("about")}
               >
                 <div className="grid gap-4">
-                  <Field label="Professional description" required className="sm:col-span-2">
+                  <Field
+                    label="Professional description"
+                    required
+                    fieldId={fieldDomId("about")}
+                    error={getFieldError("about")}
+                    valid={isFieldValid("about", draft.about)}
+                    className="sm:col-span-2"
+                  >
                     <textarea
+                      {...getFieldProps("about", draft.about)}
                       value={draft.about ?? ""}
                       onChange={(e) => set("about", e.target.value.slice(0, 1000))}
                       maxLength={1000}
                       rows={5}
+                      minLength={1}
                       placeholder="Tell clients about your company"
                     />
                     <span className="mt-1 block text-right text-[11px] text-muted-foreground">
                       {aboutLength}/1000
                     </span>
                   </Field>
-                  <Field label="Motto (tagline)">
+                  <Field
+                    label="Motto (tagline)"
+                    fieldId={fieldDomId("motto")}
+                    error={getFieldError("motto")}
+                    valid={isFieldValid("motto", draft.motto)}
+                  >
                     <input
+                      {...getFieldProps("motto", draft.motto)}
                       value={draft.motto ?? ""}
                       onChange={(e) => set("motto", e.target.value)}
+                      maxLength={120}
                       placeholder="Real Talent. Remarkable Stories."
                     />
                   </Field>
@@ -1350,6 +1702,12 @@ export default function RecruiterProfileEditPage() {
                 <p className="mb-3 text-xs text-muted-foreground">
                   {`Select up to ${MAX_SPECIALTIES} specialties`}
                 </p>
+                {getFieldError("specialties") && (
+                  <p role="alert" className="mb-3 flex items-start gap-1 text-xs font-medium text-destructive">
+                    <AlertCircle className="mt-0.5 size-3.5 shrink-0" />
+                    <span>{getFieldError("specialties")}</span>
+                  </p>
+                )}
                 <div className="flex flex-wrap gap-2">
                   {(draft.specialties ?? []).length === 0 && (
                     <p className="text-xs text-muted-foreground">No specialties selected yet</p>
@@ -1375,7 +1733,10 @@ export default function RecruiterProfileEditPage() {
                   type="button"
                   variant="outline"
                   className="mt-3 w-full justify-between font-medium"
-                  onClick={() => setSheet("specialties")}
+                  onClick={() => {
+                    markTouched("specialties");
+                    setSheet("specialties");
+                  }}
                 >
                   <span className="flex items-center gap-2">
                     <Plus className="size-4" /> Add specialty
@@ -1395,33 +1756,55 @@ export default function RecruiterProfileEditPage() {
                 onToggle={() => toggleSection("location")}
               >
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="City">
+                  <Field
+                    label="City"
+                    fieldId={fieldDomId("location.city")}
+                    error={getFieldError("location.city")}
+                    valid={isFieldValid("location.city", draft.location?.city)}
+                  >
                     <div className="ae-input-icon">
                       <MapPin />
                       <input
+                        {...getFieldProps("location.city", draft.location?.city)}
                         value={draft.location?.city ?? ""}
                         onChange={(e) =>
                           set("location", { ...(draft.location ?? {}), city: e.target.value })
                         }
+                        maxLength={80}
                         placeholder="Mumbai"
                       />
                     </div>
                   </Field>
-                  <Field label="State">
+                  <Field
+                    label="State"
+                    fieldId={fieldDomId("location.state")}
+                    error={getFieldError("location.state")}
+                    valid={isFieldValid("location.state", draft.location?.state)}
+                  >
                     <input
+                      {...getFieldProps("location.state", draft.location?.state)}
                       value={draft.location?.state ?? ""}
                       onChange={(e) =>
                         set("location", { ...(draft.location ?? {}), state: e.target.value })
                       }
+                      maxLength={80}
                       placeholder="Maharashtra"
                     />
                   </Field>
-                  <Field label="Country" className="sm:col-span-2">
+                  <Field
+                    label="Country"
+                    fieldId={fieldDomId("location.country")}
+                    error={getFieldError("location.country")}
+                    valid={isFieldValid("location.country", draft.location?.country)}
+                    className="sm:col-span-2"
+                  >
                     <input
+                      {...getFieldProps("location.country", draft.location?.country)}
                       value={draft.location?.country ?? ""}
                       onChange={(e) =>
                         set("location", { ...(draft.location ?? {}), country: e.target.value })
                       }
+                      maxLength={80}
                       placeholder="India"
                     />
                   </Field>
@@ -1490,13 +1873,25 @@ export default function RecruiterProfileEditPage() {
                         <div className="ae-input-icon mt-2">
                           <Link2 />
                           <input
+                            {...getFieldProps(entry.field, (draft[entry.field] ?? "") as string)}
                             type="url"
                             value={(draft[entry.field] ?? "") as string}
                             onChange={(e) => set(entry.field, e.target.value)}
                             placeholder={entry.placeholder}
+                            maxLength={500}
                             aria-label={`${entry.label} URL`}
                           />
                         </div>
+                        {getFieldError(entry.field) && (
+                          <p
+                            id={fieldErrorId(entry.field)}
+                            role="alert"
+                            className="mt-1.5 flex items-start gap-1 text-xs font-medium text-destructive"
+                          >
+                            <AlertCircle className="mt-0.5 size-3.5 shrink-0" />
+                            <span>{getFieldError(entry.field)}</span>
+                          </p>
+                        )}
                       </div>
                     );
                   })}
@@ -1523,8 +1918,14 @@ export default function RecruiterProfileEditPage() {
                 onToggle={() => toggleSection("company")}
               >
                 <div className="grid gap-4">
-                  <Field label="Company size">
+                  <Field
+                    label="Company size"
+                    fieldId={fieldDomId("company_size")}
+                    error={getFieldError("company_size")}
+                    valid={isFieldValid("company_size", draft.company_size)}
+                  >
                     <button
+                      {...getFieldProps("company_size", draft.company_size)}
                       type="button"
                       onClick={() => setSheet("size")}
                       className="flex min-h-11 w-full cursor-pointer items-center justify-between rounded-md border border-input bg-card px-3 text-left text-[0.8125rem]"
@@ -1540,7 +1941,10 @@ export default function RecruiterProfileEditPage() {
                       <span className="text-xs font-semibold">Languages</span>
                       <button
                         type="button"
-                        onClick={() => setSheet("languages")}
+                        onClick={() => {
+                          markTouched("languages");
+                          setSheet("languages");
+                        }}
                         className="flex cursor-pointer items-center gap-1 text-xs font-semibold text-primary"
                       >
                         <Pencil className="size-3.5" /> Edit
@@ -1567,19 +1971,39 @@ export default function RecruiterProfileEditPage() {
                         </span>
                       ))}
                     </div>
+                    {getFieldError("languages") && (
+                      <p role="alert" className="mt-1.5 flex items-start gap-1 text-xs font-medium text-destructive">
+                        <AlertCircle className="mt-0.5 size-3.5 shrink-0" />
+                        <span>{getFieldError("languages")}</span>
+                      </p>
+                    )}
                   </div>
-                  <Field label="Banner tags">
+                  <Field
+                    label="Banner tags"
+                    fieldId={fieldDomId("banner_tags")}
+                    error={getFieldError("banner_tags")}
+                    valid={isFieldValid("banner_tags", draft.banner_tags?.join(","))}
+                  >
                     <TagInput
+                      {...getFieldProps("banner_tags", draft.banner_tags?.join(","))}
                       value={draft.banner_tags ?? []}
                       onChange={(tags) => set("banner_tags", tags)}
                       placeholder="e.g. FILM, OTT, TVC"
+                      maxTags={20}
                     />
                   </Field>
-                  <Field label="Casting categories">
+                  <Field
+                    label="Casting categories"
+                    fieldId={fieldDomId("casting_categories")}
+                    error={getFieldError("casting_categories")}
+                    valid={isFieldValid("casting_categories", draft.casting_categories?.join(","))}
+                  >
                     <TagInput
+                      {...getFieldProps("casting_categories", draft.casting_categories?.join(","))}
                       value={draft.casting_categories ?? []}
                       onChange={(tags) => set("casting_categories", tags)}
                       placeholder="e.g. Actors, Models, Dancers"
+                      maxTags={20}
                     />
                   </Field>
                 </div>
@@ -1598,20 +2022,36 @@ export default function RecruiterProfileEditPage() {
                 <p className="mb-3 text-xs text-muted-foreground">
                   Values shown on the Team tab
                 </p>
+                {getFieldError("team_values") && (
+                  <p role="alert" className="mb-3 flex items-start gap-1 text-xs font-medium text-destructive">
+                    <AlertCircle className="mt-0.5 size-3.5 shrink-0" />
+                    <span>{getFieldError("team_values")}</span>
+                  </p>
+                )}
                 <div className="space-y-3">
                   {(draft.team_values ?? []).map((item, index) => (
                     <div key={index} className="rounded-md border border-border p-3">
                       <div className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          value={item.title}
-                          placeholder="Title"
-                          onChange={(e) => {
-                            const next = [...(draft.team_values ?? [])];
-                            next[index] = { ...next[index], title: e.target.value };
-                            set("team_values", next);
-                          }}
-                        />
+                        <div className="min-w-0 flex-1">
+                          <input
+                            {...getFieldProps(`team_values.${index}.title`, item.title)}
+                            type="text"
+                            value={item.title}
+                            placeholder="Title"
+                            maxLength={80}
+                            aria-label={`Team value ${index + 1} title`}
+                            onChange={(e) => {
+                              const next = [...(draft.team_values ?? [])];
+                              next[index] = { ...next[index], title: e.target.value };
+                              set("team_values", next);
+                            }}
+                          />
+                          {getFieldError(`team_values.${index}.title`) && (
+                            <p role="alert" className="mt-1 text-[11px] font-medium text-destructive">
+                              {getFieldError(`team_values.${index}.title`)}
+                            </p>
+                          )}
+                        </div>
                         <button
                           type="button"
                           onClick={() => {
@@ -1626,9 +2066,12 @@ export default function RecruiterProfileEditPage() {
                         </button>
                       </div>
                       <input
+                        {...getFieldProps(`team_values.${index}.description`, item.description)}
                         type="text"
                         value={item.description}
                         placeholder="Description"
+                        maxLength={160}
+                        aria-label={`Team value ${index + 1} description`}
                         onChange={(e) => {
                           const next = [...(draft.team_values ?? [])];
                           next[index] = { ...next[index], description: e.target.value };
@@ -1636,16 +2079,25 @@ export default function RecruiterProfileEditPage() {
                         }}
                         className="mt-2"
                       />
+                      {getFieldError(`team_values.${index}.description`) && (
+                        <p role="alert" className="mt-1 text-[11px] font-medium text-destructive">
+                          {getFieldError(`team_values.${index}.description`)}
+                        </p>
+                      )}
                     </div>
                   ))}
                   <button
                     type="button"
-                    onClick={() =>
+                    onClick={() => {
+                      if ((draft.team_values ?? []).length >= 10) {
+                        toast.error("You can add up to 10 team values");
+                        return;
+                      }
                       set("team_values", [
                         ...(draft.team_values ?? []),
                         { title: "", description: "" },
-                      ])
-                    }
+                      ]);
+                    }}
                     className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed border-primary/40 py-2.5 text-xs font-semibold text-primary"
                   >
                     <Users className="size-4" /> Add value
@@ -1670,7 +2122,8 @@ export default function RecruiterProfileEditPage() {
                   <button
                     type="button"
                     onClick={() => ctaInputRef.current?.click()}
-                    className="relative flex h-24 w-full cursor-pointer items-center justify-center overflow-hidden rounded-md border border-dashed border-border bg-muted text-muted-foreground"
+                    disabled={uploadAsset.isPending}
+                    className="relative flex h-24 w-full cursor-pointer items-center justify-center overflow-hidden rounded-md border border-dashed border-border bg-muted text-muted-foreground transition-colors hover:border-primary/50 disabled:cursor-wait disabled:opacity-70"
                     aria-label="Upload CTA background image"
                   >
                     {draft.cta_image_url ? (
@@ -1681,7 +2134,8 @@ export default function RecruiterProfileEditPage() {
                       />
                     ) : (
                       <span className="flex flex-col items-center gap-1 text-xs">
-                        <ImageIcon className="size-6" /> Upload CTA image
+                        {uploadAsset.isPending ? <Loader2 className="size-6 animate-spin" /> : <ImageIcon className="size-6" />}
+                        {uploadAsset.isPending ? "Uploading…" : "Upload CTA image"}
                       </span>
                     )}
                     <span className="absolute right-2 bottom-2 flex size-7 items-center justify-center rounded-full border-2 border-card bg-muted">
@@ -1695,17 +2149,31 @@ export default function RecruiterProfileEditPage() {
                     className="hidden"
                     onChange={handleCtaImageUpload}
                   />
-                  <Field label="CTA headline">
+                  <Field
+                    label="CTA headline"
+                    fieldId={fieldDomId("cta_headline")}
+                    error={getFieldError("cta_headline")}
+                    valid={isFieldValid("cta_headline", draft.cta_headline)}
+                  >
                     <input
+                      {...getFieldProps("cta_headline", draft.cta_headline)}
                       value={draft.cta_headline ?? ""}
                       onChange={(e) => set("cta_headline", e.target.value)}
+                      maxLength={120}
                       placeholder="Let's Create Great Stories Together"
                     />
                   </Field>
-                  <Field label="CTA subheadline">
+                  <Field
+                    label="CTA subheadline"
+                    fieldId={fieldDomId("cta_subheadline")}
+                    error={getFieldError("cta_subheadline")}
+                    valid={isFieldValid("cta_subheadline", draft.cta_subheadline)}
+                  >
                     <input
+                      {...getFieldProps("cta_subheadline", draft.cta_subheadline)}
                       value={draft.cta_subheadline ?? ""}
                       onChange={(e) => set("cta_subheadline", e.target.value)}
+                      maxLength={240}
                       placeholder="Get in touch for collaborations and talent requirements."
                     />
                   </Field>
@@ -1807,8 +2275,8 @@ export default function RecruiterProfileEditPage() {
                 <AeButton type="button" variant="outline" className="min-w-32" onClick={handleCancel} disabled={!isDirty || saving}>
                   Cancel
                 </AeButton>
-                <AeButton type="submit" className="min-w-44" disabled={saving}>
-                  <Check className="size-4" />
+                <AeButton type="submit" className="min-w-44" disabled={saving || !isDirty} aria-busy={saving}>
+                  {saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
                   {saving ? "Saving…" : isDirty ? "Save profile" : "Saved"}
                 </AeButton>
               </div>
@@ -1837,8 +2305,9 @@ export default function RecruiterProfileEditPage() {
           <AeButton variant="outline" onClick={() => setPreviewOpen(true)}>
             <Eye className="size-4" /> Preview
           </AeButton>
-          <AeButton onClick={handleSave} disabled={saving}>
-            {saving ? "Saving…" : "Save profile"}
+          <AeButton onClick={handleSave} disabled={saving || !isDirty} aria-busy={saving}>
+            {saving && <Loader2 className="size-4 animate-spin" />}
+            {saving ? "Saving…" : isDirty ? "Save changes" : "Saved"}
           </AeButton>
         </div>
       </div>
@@ -1928,6 +2397,7 @@ export default function RecruiterProfileEditPage() {
           <div className="border-t border-border px-4 pt-4 pb-8">
             <p className="mb-2 text-sm text-muted-foreground">Or add a custom specialty:</p>
             <TagInput
+              {...getFieldProps("specialties", draft.specialties?.join(","))}
               value={draft.specialties ?? []}
               onChange={(tags) => {
                 if (tags.length > MAX_SPECIALTIES) {
@@ -1937,6 +2407,7 @@ export default function RecruiterProfileEditPage() {
                 set("specialties", tags);
               }}
               placeholder="Type and press Enter"
+              maxTags={MAX_SPECIALTIES}
             />
           </div>
         </SheetContent>
@@ -1973,6 +2444,7 @@ export default function RecruiterProfileEditPage() {
               value={draft.languages ?? []}
               onChange={(tags) => set("languages", tags)}
               placeholder="Type and press Enter"
+              maxTags={20}
             />
           </div>
         </SheetContent>

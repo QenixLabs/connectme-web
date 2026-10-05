@@ -1,13 +1,13 @@
 "use client";
 
+import { API_BASE_URL } from "@/lib/api/client";
+
 interface SocialAuthButtonsProps {
   className?: string;
   googleOnly?: boolean;
   role?: "talent" | "recruiter";
   mode?: "signup" | "signin";
 }
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1";
 
 function GoogleIcon() {
   return (
