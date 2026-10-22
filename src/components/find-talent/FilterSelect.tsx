@@ -20,7 +20,7 @@ type Props = {
 
 /**
  * Find-talent filter tile — ported from talent-finder-flow's FilterSelect,
- * re-skinned with connectme-web tokens.
+ * re-skinned with the RootIn design tokens.
  */
 export function FilterSelect({ label, value, options, icon: Icon, onSelect, className }: Props) {
   const active = Boolean(value);

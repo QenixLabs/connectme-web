@@ -135,10 +135,10 @@ export default function PublicRecruiterProfilePage() {
     if (typeof navigator.share === "function") {
       try {
         await navigator.share({
-          title: profile?.company_name ?? "ConnectMe",
+          title: profile?.company_name ?? "RootIn",
           text:
             profile?.headline ??
-            (profile ? `Check out ${profile.company_name} on ConnectMe` : ""),
+            (profile ? `Check out ${profile.company_name} on RootIn` : ""),
           url: window.location.href,
         });
         return;

@@ -42,8 +42,8 @@ type Tab = "active" | "history";
 
 function actorName(notification: Notification): string {
   const actor = notification.actor_id;
-  if (!actor) return "ConnectMe";
-  return actor.full_legal_name || actor.company_name || actor.email || "ConnectMe";
+  if (!actor) return "RootIn";
+  return actor.full_legal_name || actor.company_name || actor.email || "RootIn";
 }
 
 function actorInitial(notification: Notification): string {

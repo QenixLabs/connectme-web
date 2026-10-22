@@ -26,9 +26,12 @@ import { RootInLogo } from "@/components/RootInLogo";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
-const assetBase = "https://b9310b94-370c-4caa-938f-b1f5f2af54f6.lovableproject.com/__l5e/assets-v1";
-const heroImage = `${assetBase}/22cd309f-2dd8-4abb-a810-3cb94df1ff22/rootin-hero.png`;
-const bannerImage = `${assetBase}/a7a5e8db-da0b-4a8f-b21f-481cca4b4c50/rootin-banner.png`;
+// Assets are served from the app's own /public folder. They used to live on an
+// external preview host that was slow enough for the Next.js image optimizer
+// (7s upstream timeout) to abort, which surfaced as TimeoutError in the server
+// logs and broken images on the landing page.
+const heroImage = "/images/landing/rootin-hero.webp";
+const bannerImage = "/images/landing/rootin-banner.webp";
 
 type AudienceTone = "purple" | "blue" | "orange";
 
@@ -49,7 +52,7 @@ const audienceCards: AudienceCardData[] = [
   {
     id: "talent",
     tone: "purple",
-    image: `${assetBase}/d6ae5279-839b-458a-ac53-542760bf2a1b/rootin-talent.png`,
+    image: "/images/landing/rootin-talent.webp",
     imagePosition: "center 30%",
     icon: UsersRound,
     title: "Talent",
@@ -61,7 +64,7 @@ const audienceCards: AudienceCardData[] = [
   {
     id: "recruiters",
     tone: "blue",
-    image: `${assetBase}/514f884d-941d-4c11-8575-e11dccd6d308/rootin-recruiter.png`,
+    image: "/images/landing/rootin-recruiter.webp",
     imagePosition: "center 28%",
     icon: BriefcaseBusiness,
     title: "Recruiters",
@@ -73,7 +76,7 @@ const audienceCards: AudienceCardData[] = [
   {
     id: "services",
     tone: "orange",
-    image: `${assetBase}/03d3e1b3-cb7a-4a01-bc87-7af865fad423/rootin-service.png`,
+    image: "/images/landing/rootin-service.webp",
     imagePosition: "center 32%",
     icon: Settings,
     title: "Services Provider & Marketplace",

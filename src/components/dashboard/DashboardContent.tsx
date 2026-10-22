@@ -229,8 +229,8 @@ export function DashboardContent() {
     if (typeof navigator.share === "function") {
       try {
         await navigator.share({
-          title: `${name} on ConnectMe`,
-          text: "View my ConnectMe profile",
+          title: `${name} on RootIn`,
+          text: "View my RootIn profile",
           url: profileUrl,
         });
         return;

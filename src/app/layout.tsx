@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Caveat, Rubik } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { resolveSiteOrigin } from "@/lib/site";
 import { AuthStoreProvider } from "@/providers/auth-store-provider";
 import { QueryProvider } from "@/providers/query-provider";
 import { SocketProvider } from "@/providers/socket-provider";
@@ -21,7 +22,18 @@ const caveat = Caveat({
   weight: ["400", "500", "600"],
 });
 
+/**
+ * The public origin of the application.
+ *
+ * It is used as the `metadataBase` so every relative social preview URL
+ * resolves to an absolute, publicly reachable address.
+ */
+const siteOrigin = resolveSiteOrigin({
+  configured: process.env.NEXT_PUBLIC_SITE_URL,
+});
+
 export const metadata: Metadata = {
+  metadataBase: siteOrigin ? new URL(siteOrigin) : undefined,
   title: "RootIn – Talent Platform",
   description:
     "RootIn connects verified talent with recruiters: portfolios, campaigns, messaging and opportunities in one platform.",

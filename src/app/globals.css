@@ -4604,7 +4604,7 @@ html[data-theme="dark"] .network-page-theme [class*="bg-[#eff6ff]"],
 html[data-theme="dark"] .network-page-theme [class*="bg-[#f8fbff]"],
 html[data-theme="dark"] .network-page-theme [class*="bg-[#f3f7ff]"],
 html[data-theme="dark"] .network-page-theme [class*="bg-[#edf4ff]"],
-html[data-theme="dark"] .network-page-theme [class*="bg-[#dbeafe"]"] {
+html[data-theme="dark"] .network-page-theme [class*="bg-[#dbeafe]"] {
   background-color: var(--surface-2) !important;
 }
 
@@ -4616,7 +4616,7 @@ html[data-theme="dark"] .network-page-theme [class*="border-[#dbe7f7]"],
 html[data-theme="dark"] .network-page-theme [class*="border-[#a9c7f5]"],
 html[data-theme="dark"] .network-page-theme [class*="border-[#93b9f2]"],
 html[data-theme="dark"] .network-page-theme [class*="border-[#e6eef9]"],
-html[data-theme="dark"] .network-page-theme [class*="border-[#b9d0ee"]"] {
+html[data-theme="dark"] .network-page-theme [class*="border-[#b9d0ee]"] {
   border-color: var(--border) !important;
 }
 

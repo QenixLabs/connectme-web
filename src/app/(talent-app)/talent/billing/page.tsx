@@ -3,13 +3,13 @@ import type { Metadata } from "next";
 import { BillingPage } from "@/components/talent-app/BillingPage";
 
 export const metadata: Metadata = {
-  title: "Billing & Plan | ConnectMe",
+  title: "Billing & Plan | RootIn",
   description:
-    "Manage your ConnectMe plan, track upload usage, add a payment method and review billing history in one place.",
+    "Manage your RootIn plan, track upload usage, add a payment method and review billing history in one place.",
   openGraph: {
-    title: "Billing & Plan | ConnectMe",
+    title: "Billing & Plan | RootIn",
     description:
-      "Manage your ConnectMe plan, usage and payments in one place.",
+      "Manage your RootIn plan, usage and payments in one place.",
   },
 };
 

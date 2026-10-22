@@ -9,9 +9,9 @@ import {
 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Safety Center | ConnectMe",
+  title: "Safety Center | RootIn",
   description:
-    "Learn how ConnectMe keeps your data safe and connection requests secure.",
+    "Learn how RootIn keeps your data safe and connection requests secure.",
 };
 
 const sections = [
@@ -19,7 +19,7 @@ const sections = [
     icon: ShieldCheck,
     title: "Verified Profiles",
     description:
-      "Every profile on ConnectMe is manually reviewed by our team before it can reach your inbox. We verify identity, professional background, and intentions to ensure you only receive genuine connection requests.",
+      "Every profile on RootIn is manually reviewed by our team before it can reach your inbox. We verify identity, professional background, and intentions to ensure you only receive genuine connection requests.",
   },
   {
     icon: Lock,
@@ -49,7 +49,7 @@ const sections = [
     icon: Mail,
     title: "Secure Messaging",
     description:
-      "All messages on ConnectMe are encrypted and stored securely. Your conversations remain private and are never used for advertising or data mining.",
+      "All messages on RootIn are encrypted and stored securely. Your conversations remain private and are never used for advertising or data mining.",
   },
 ];
 
@@ -97,7 +97,7 @@ export default function TalentSafetyPage() {
             support team directly.
           </p>
           <a
-            href="mailto:safety@connectme.app"
+            href="mailto:safety@rootin.app"
             className="mt-3 inline-block text-sm font-medium text-teal transition-colors hover:text-teal/80"
           >
             Contact Safety Team →

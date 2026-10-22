@@ -417,7 +417,7 @@ export function SupportPage() {
           <div className="grid gap-2">
             <Button onClick={() => router.push(messagesHref)}><MessageSquareMore /> Open chat</Button>
             <Button variant="outline" asChild>
-              <a href="mailto:support@connectme.app"><Mail /> Email us</a>
+              <a href="mailto:support@rootin.app"><Mail /> Email us</a>
             </Button>
             <Button variant="outline" onClick={() => { setContactOpen(false); setTicketDialogOpen(true); }}><Plus /> Create a ticket</Button>
           </div>

@@ -50,7 +50,9 @@ import { PortfolioReelOverlay } from "@/components/portfolio/PortfolioReelOverla
 import { AddPortfolioModal } from "@/components/portfolio/AddPortfolioModal";
 import { EditPortfolioModal } from "@/components/portfolio/EditPortfolioModal";
 import { ReorderSheet } from "@/components/portfolio/ReorderSheet";
-import { ShareSheet } from "@/components/portfolio/ShareSheet";
+import { ShareProfileDialog } from "@/components/shared/share-profile-dialog";
+import { useShareProfile } from "@/hooks/use-share-profile";
+import type { ShareProfileTarget } from "@/lib/share";
 import { EmptyPortfolioState } from "@/components/portfolio/EmptyPortfolioState";
 import { PortfolioSkeleton } from "@/components/portfolio/PortfolioSkeleton";
 import { ProfileHighlightsStatus } from "@/components/talent-app/portfolio/profile-highlights-status";
@@ -457,10 +459,6 @@ function PortfolioContent() {
     [reorder],
   );
 
-  const handleShare = useCallback((item: PortfolioItem) => {
-    setShareItem(item);
-  }, []);
-
   const displayName =
     profile?.professional_name?.trim() ||
     profile?.full_legal_name?.trim() ||
@@ -470,10 +468,50 @@ function PortfolioContent() {
     ...(profile?.professions || []),
     ...(profile?.specialties || []),
   ].filter((role, index, allRoles) => allRoles.indexOf(role) === index);
+  const rolesLabel = roles.join(" | ");
   const location = formatLocation(profile?.location);
   const isAvailable = profile?.availability === "available";
   const isOpenToTravel = profile?.willing_to_travel?.toLowerCase() === "yes";
   const showAllSections = activeTab === "Showreel";
+
+  // Portfolio items are shared through the same dialog as the profile, but
+  // with an explicit deep link — the default share always points at the
+  // canonical profile URL.
+  const shareTarget = useMemo<ShareProfileTarget>(
+    () => ({
+      role: "talent",
+      slug: username,
+      name: displayName,
+      headline: rolesLabel || profile?.headline?.trim() || undefined,
+      photoUrl: profile?.profile_photo,
+      isVerified: Boolean(profile?.is_verified),
+      path: shareItem
+        ? `/talent/${encodeURIComponent(username)}/portfolio?item=${encodeURIComponent(shareItem.id)}`
+        : undefined,
+    }),
+    [
+      displayName,
+      rolesLabel,
+      profile?.headline,
+      profile?.profile_photo,
+      profile?.is_verified,
+      shareItem,
+      username,
+    ],
+  );
+
+  const share = useShareProfile({
+    target: shareTarget,
+    source: "portfolio_item",
+  });
+
+  const handleShare = useCallback(
+    (item: PortfolioItem) => {
+      setShareItem(item);
+      share.open();
+    },
+    [share],
+  );
 
   if (isLoading || profileLoading) {
     return <PortfolioSkeleton />;
@@ -818,15 +856,36 @@ function PortfolioContent() {
         </DialogContent>
       </Dialog>
 
-      <ShareSheet
-        url={
-          shareItem
-            ? `${typeof window !== "undefined" ? window.location.origin : ""}/talent/${username}/portfolio?item=${shareItem.id}`
-            : ""
+      <ShareProfileDialog
+        open={share.isOpen}
+        onOpenChange={(next) => {
+          if (next) return;
+          share.close();
+          setShareItem(null);
+        }}
+        heading={shareItem ? "Share work" : "Share profile"}
+        target={shareTarget}
+        canonicalUrl={share.canonicalUrl}
+        copyStatus={share.copyStatus}
+        error={share.error}
+        status={share.status}
+        offerLinkCopy={share.offerLinkCopy}
+        isPreparingCard={share.isPreparingCard}
+        isBusy={share.isBusy}
+        isLocalLink={share.isLocalLink}
+        showInstagramInstructions={share.showInstagramInstructions}
+        instagramPreview={share.instagramPreview}
+        instagramCaption={share.instagramCaption}
+        captionCopied={share.captionCopied}
+        onDismissInstagramInstructions={() =>
+          share.setShowInstagramInstructions(false)
         }
-        title={shareItem?.title || ""}
-        open={!!shareItem}
-        onClose={() => setShareItem(null)}
+        onCopyLink={() => void share.copyLink()}
+        onCopyCaption={() => void share.copyCaption()}
+        onShareDestination={(destination) =>
+          void share.shareDestination(destination)
+        }
+        onDownloadCard={() => void share.downloadCard()}
       />
     </div>
   );

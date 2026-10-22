@@ -32,6 +32,7 @@ import { HeroSection } from "./HeroSection";
 import { StatsBento } from "./StatsBento";
 import { TalentProfileActions } from "./TalentProfileActions";
 import { SocialConnectBar } from "./SocialConnectBar";
+import { SignUpLoginBar } from "./SignUpLoginBar";
 import {
   AboutSection,
   ExperienceSection,
@@ -296,6 +297,9 @@ export function TalentProfileView({
           <FileText className="size-3" /> Profile last updated Aug 2026
         </p>
       </div>
+
+      {/* Guest-only sign-up / log-in bar */}
+      <SignUpLoginBar />
       </div>
 
       {isOwner && <BottomBar navItems={navItems} mobileNavItems={mobileNavItems} iconOnly />}

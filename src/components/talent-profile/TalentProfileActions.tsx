@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import {
   Send,
   Star,
@@ -20,6 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ShareProfileDialog } from "@/components/shared/share-profile-dialog";
 import {
   useStartConversation,
   useSaveTalent,
@@ -27,9 +29,11 @@ import {
   useConnectionRequest,
 } from "@/hooks/use-talent-actions";
 import { useLikeTalent } from "@/hooks/use-talent-profile";
+import { useShareProfile } from "@/hooks/use-share-profile";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import type { TalentProfile, TalentProfilePreview } from "@/lib/api/talent";
 import type { Campaign } from "@/lib/api/campaigns";
+import type { ShareProfileTarget } from "@/lib/share";
 
 interface TalentProfileActionsProps {
   profile: TalentProfile | TalentProfilePreview;
@@ -127,14 +131,39 @@ export function TalentProfileActions({
     send: sendConnectionRequest,
   } = useConnectionRequest(profile.user_id ?? "");
 
-  const handleCopyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      toast.success("Link copied to clipboard");
-    } catch {
-      toast.error("Failed to copy link");
-    }
-  };
+  // The shared profile always points at the canonical public URL — never at
+  // `window.location.href`, which may carry a portfolio deep link such as
+  // `?item=<id>`.
+  const shareTarget = useMemo<ShareProfileTarget>(
+    () => ({
+      role: "talent",
+      slug: username,
+      name:
+        profile.professional_name?.trim() ||
+        profile.full_legal_name?.trim() ||
+        username,
+      headline:
+        profile.headline?.trim() ||
+        profile.professions?.join(" · ") ||
+        undefined,
+      photoUrl: profile.profile_photo,
+      isVerified: profile.is_verified,
+    }),
+    [
+      username,
+      profile.professional_name,
+      profile.full_legal_name,
+      profile.headline,
+      profile.professions,
+      profile.profile_photo,
+      profile.is_verified,
+    ],
+  );
+
+  const share = useShareProfile({
+    target: shareTarget,
+    source: "public_talent_profile",
+  });
 
   return (
     <>
@@ -204,8 +233,9 @@ export function TalentProfileActions({
         </button>
 
         <button
-          onClick={handleCopyLink}
-          aria-label="Share profile link"
+          type="button"
+          onClick={share.open}
+          aria-label="Share profile"
            className="grid h-12 flex-1 place-items-center rounded-2xl bg-card text-foreground shadow-[0_6px_24px_rgba(15,23,42,0.05)] transition-all active:scale-95"
         >
           <Share2 className="size-5" />
@@ -238,7 +268,10 @@ export function TalentProfileActions({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem
-                onSelect={handleCopyLink}
+                onSelect={(event) => {
+                  event.preventDefault();
+                  void share.copyLink();
+                }}
                 className="cursor-pointer"
               >
                 <LinkIcon className="mr-2 size-4" /> Copy link
@@ -247,6 +280,35 @@ export function TalentProfileActions({
           </DropdownMenu>
         </div>
       )}
+
+      <ShareProfileDialog
+        open={share.isOpen}
+        onOpenChange={(next) => {
+          if (!next) share.close();
+        }}
+        target={shareTarget}
+        canonicalUrl={share.canonicalUrl}
+        copyStatus={share.copyStatus}
+        error={share.error}
+        status={share.status}
+        offerLinkCopy={share.offerLinkCopy}
+        isPreparingCard={share.isPreparingCard}
+        isBusy={share.isBusy}
+        isLocalLink={share.isLocalLink}
+        showInstagramInstructions={share.showInstagramInstructions}
+        instagramPreview={share.instagramPreview}
+        instagramCaption={share.instagramCaption}
+        captionCopied={share.captionCopied}
+        onDismissInstagramInstructions={() =>
+          share.setShowInstagramInstructions(false)
+        }
+        onCopyLink={() => void share.copyLink()}
+        onCopyCaption={() => void share.copyCaption()}
+        onShareDestination={(destination) =>
+          void share.shareDestination(destination)
+        }
+        onDownloadCard={() => void share.downloadCard()}
+      />
     </>
   );
 }
