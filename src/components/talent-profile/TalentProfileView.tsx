@@ -161,6 +161,10 @@ export function TalentProfileView({
           profile={profile}
           viewerRole={viewerRole}
           campaigns={campaigns}
+          portfolioItems={portfolioItems}
+          credits={credits}
+          testimonials={testimonials}
+          awards={awards}
         />
 
         {/* Social connect */}

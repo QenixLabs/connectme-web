@@ -508,9 +508,26 @@ function PortfolioContent() {
   const handleShare = useCallback(
     (item: PortfolioItem) => {
       setShareItem(item);
-      share.open();
+      const itemTarget: ShareProfileTarget = {
+        role: "talent",
+        slug: username,
+        name: displayName,
+        headline: rolesLabel || profile?.headline?.trim() || undefined,
+        photoUrl: profile?.profile_photo,
+        isVerified: Boolean(profile?.is_verified),
+        path: `/talent/${encodeURIComponent(username)}/portfolio?item=${encodeURIComponent(item.id)}`,
+      };
+      void share.shareDestination("whatsapp", itemTarget);
     },
-    [share],
+    [
+      displayName,
+      profile?.headline,
+      profile?.is_verified,
+      profile?.profile_photo,
+      rolesLabel,
+      share,
+      username,
+    ],
   );
 
   if (isLoading || profileLoading) {

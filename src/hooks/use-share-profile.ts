@@ -303,15 +303,20 @@ export function useShareProfile({
     return false;
   }, [instagramCaption]);
 
-  const buildCard = useCallback(async () => {
-    const card = await renderShareCard({
-      target: stableTarget,
-      url: canonicalUrl,
-      includeQr: true,
-      origin: detectedOrigin,
-    });
-    return card;
-  }, [canonicalUrl, detectedOrigin, stableTarget]);
+  const buildCard = useCallback(
+    async (customTarget?: ShareProfileTarget, customUrl?: string) => {
+      const activeTarget = customTarget ?? stableTarget;
+      const activeUrl = customUrl ?? canonicalUrl;
+      const card = await renderShareCard({
+        target: activeTarget,
+        url: activeUrl,
+        includeQr: true,
+        origin: detectedOrigin,
+      });
+      return card;
+    },
+    [canonicalUrl, detectedOrigin, stableTarget],
+  );
 
   /**
    * Builds the share card as a real file.
@@ -319,12 +324,16 @@ export function useShareProfile({
    * The card is a PNG blob that travels as an attachment — never as a data
    * URL inside the message and never as a link to an image.
    */
-  const buildCardFile = useCallback(async (): Promise<File> => {
-    const card = await buildCard();
-    return new File([card.blob], shareCardFileName(stableTarget), {
-      type: "image/png",
-    });
-  }, [buildCard, stableTarget]);
+  const buildCardFile = useCallback(
+    async (customTarget?: ShareProfileTarget, customUrl?: string): Promise<File> => {
+      const activeTarget = customTarget ?? stableTarget;
+      const card = await buildCard(activeTarget, customUrl);
+      return new File([card.blob], shareCardFileName(activeTarget), {
+        type: "image/png",
+      });
+    },
+    [buildCard, stableTarget],
+  );
 
   /**
    * Shares the card through the native share sheet.
@@ -333,13 +342,17 @@ export function useShareProfile({
    * and the link — not a link to an image.
    */
   const shareCardFile = useCallback(
-    async (options: {
-      title: string;
-      text: string;
-    }): Promise<CardShareResult> => {
+    async (
+      options: {
+        title: string;
+        text: string;
+      },
+      customTarget?: ShareProfileTarget,
+      customUrl?: string,
+    ): Promise<CardShareResult> => {
       let file: File;
       try {
-        file = await buildCardFile();
+        file = await buildCardFile(customTarget, customUrl);
       } catch {
         // The card could not be rendered — the caller falls back.
         return "failed";
@@ -372,10 +385,12 @@ export function useShareProfile({
    * hand and the canonical link is copied so the user can paste it anywhere.
    */
   const deliverCardFallback = useCallback(
-    async (): Promise<void> => {
+    async (customTarget?: ShareProfileTarget, customUrl?: string): Promise<void> => {
+      const activeTarget = customTarget ?? stableTarget;
+      const activeUrl = customUrl ?? canonicalUrl;
       try {
-        const card = await buildCard();
-        downloadBlob(card.blob, shareCardFileName(stableTarget));
+        const card = await buildCard(activeTarget, activeUrl);
+        downloadBlob(card.blob, shareCardFileName(activeTarget));
       } catch {
         setError("Couldn't create the profile card. Please try again.");
         toast.error("Couldn't create the profile card. Please try again.");
@@ -388,7 +403,7 @@ export function useShareProfile({
       }
 
       // The link is copied as well, so the user can paste it into the chat.
-      const copied = await copyTextToClipboard(canonicalUrl);
+      const copied = await copyTextToClipboard(activeUrl);
       const message = buildWhatsAppFallbackMessage(copied);
 
       setError(null);
@@ -533,8 +548,32 @@ export function useShareProfile({
    * "shares" metric never counts a single user action twice.
    */
   const shareDestination = useCallback(
-    async (destination: ShareDestination): Promise<void> => {
-      if (!hasCanonicalUrl) {
+    async (
+      destination: ShareDestination,
+      targetOverride?: ShareProfileTarget,
+    ): Promise<void> => {
+      const activeTarget = targetOverride
+        ? {
+            role: targetOverride.role,
+            slug: targetOverride.slug,
+            name: targetOverride.name,
+            headline: targetOverride.headline,
+            photoUrl: targetOverride.photoUrl,
+            isVerified: targetOverride.isVerified,
+            path: targetOverride.path,
+            tags: targetOverride.tags,
+            stats: targetOverride.stats,
+            statItems: targetOverride.statItems,
+          }
+        : stableTarget;
+
+      const activeUrl = targetOverride
+        ? buildCanonicalProfileUrl(activeTarget, detectedOrigin)
+        : canonicalUrl;
+
+      const targetHasCanonicalUrl = activeUrl.length > 0;
+
+      if (!targetHasCanonicalUrl) {
         const message =
           unavailableReason ?? "This profile does not have a public link yet.";
         setError(message);
@@ -555,23 +594,27 @@ export function useShareProfile({
             // the click handler — so the fallback can still open WhatsApp
             // before the popup blocker's user gesture expires.
             const plan = planWhatsAppShare({
-              target: stableTarget,
-              url: canonicalUrl,
+              target: activeTarget,
+              url: activeUrl,
               canShareFiles: canShareFilesSync(),
             });
 
             if (plan.mode === "file") {
-              const result = await shareCardFile({
-                title: plan.title,
-                text: plan.text,
-              });
+              const result = await shareCardFile(
+                {
+                  title: plan.title,
+                  text: plan.text,
+                },
+                activeTarget,
+                activeUrl,
+              );
               const feedback = buildWhatsAppShareFeedback(result);
 
               if (feedback.useFallback) {
                 // The browser cannot attach the file after all: open WhatsApp
                 // with the prefilled message and hand over card and link.
                 window.open(plan.link, "_blank", "noopener,noreferrer");
-                await deliverCardFallback();
+                await deliverCardFallback(activeTarget, activeUrl);
                 break;
               }
 
@@ -605,12 +648,12 @@ export function useShareProfile({
             // The browser cannot share files: open WhatsApp with the message
             // and hand the user the card to attach by hand.
             window.open(plan.link, "_blank", "noopener,noreferrer");
-            await deliverCardFallback();
+            await deliverCardFallback(activeTarget, activeUrl);
             break;
           }
           case "linkedin": {
             window.open(
-              buildLinkedInUrl(canonicalUrl),
+              buildLinkedInUrl(activeUrl),
               "_blank",
               "noopener,noreferrer",
             );
@@ -626,9 +669,9 @@ export function useShareProfile({
             // the caption instead of pretending the image is attached.
             setIsPreparingCard(true);
             try {
-              const card = await buildCard();
+              const card = await buildCard(activeTarget, activeUrl);
               setInstagramPreview(card.dataUrl);
-              downloadBlob(card.blob, shareCardFileName(stableTarget));
+              downloadBlob(card.blob, shareCardFileName(activeTarget));
               setShowInstagramInstructions(true);
               void recordEvent({
                 type: SHARE_EVENT_TYPES.destinationSelected,
@@ -668,7 +711,7 @@ export function useShareProfile({
       canonicalUrl,
       copyLink,
       deliverCardFallback,
-      hasCanonicalUrl,
+      detectedOrigin,
       isBusy,
       recordEvent,
       shareCardFile,

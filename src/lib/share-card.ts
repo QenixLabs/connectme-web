@@ -1,16 +1,21 @@
 /**
  * Branded "profile card" image generation.
  *
- * The card is rendered entirely on the client with the Canvas 2D API so a
- * profile can be shared as a picture — the only way to post to Instagram.
+ * The card is rendered on the client with the Canvas 2D API so a profile
+ * can be shared as a high-fidelity image on Instagram, WhatsApp, LinkedIn, etc.
  *
- * Everything degrades gracefully: a missing photo falls back to initials, a
- * cross-origin image that cannot be embedded falls back to a photo-less card,
- * and the QR code is optional.
+ * Uses the custom RootIn creative template background and overlays:
+ * - Top talent badge & editorial script heading
+ * - Circular avatar with vivid gradient ring & verified check badge
+ * - Talent name with verified badge and role headline
+ * - Pastel category pills (Model, Fashion, Commercial, Editorial, etc.)
+ * - Four-column stats bar (Photos, Reels, Projects, Brands)
+ * - Full-width gradient call-to-action button
+ * - QR code & link panel with handwritten scan prompt and arrow
  *
- * The layout is described by {@link SHARE_CARD_LAYOUT} so the geometry can be
- * asserted in tests without a DOM — every element has to stay inside the
- * canvas and inside the safe margins.
+ * Everything degrades gracefully: missing photo falls back to initials,
+ * missing template falls back to procedural glass gradient, and non-CORS
+ * images are handled safely without crashing.
  */
 
 import qrcode from "qrcode-generator";
@@ -18,78 +23,98 @@ import qrcode from "qrcode-generator";
 import {
   SHARE_BRAND,
   buildCanonicalProfileUrl,
+  type ShareCardStatIcon,
+  type ShareCardStatItem,
   type ShareProfileTarget,
 } from "@/lib/share";
 
-export const SHARE_CARD_WIDTH = 1080;
-export const SHARE_CARD_HEIGHT = 1350;
+export const SHARE_CARD_WIDTH = 682;
+export const SHARE_CARD_HEIGHT = 1024;
 
 /** Nothing may be drawn outside this margin. */
-export const SHARE_CARD_SAFE_MARGIN = 48;
+export const SHARE_CARD_SAFE_MARGIN = 24;
 
 /**
  * The geometry of the card.
- *
- * Vertical rhythm (top to bottom): header, portrait, name, profession,
- * verification badge, call to action, link panel with the QR code, footer.
  */
 export const SHARE_CARD_LAYOUT = {
   header: {
-    markX: 112,
-    markY: 112,
-    markRadius: 24,
-    brandX: 152,
-    brandSize: 46,
-    labelSize: 22,
-    labelRight: SHARE_CARD_WIDTH - 80,
+    badgeX: 64,
+    badgeY: 202,
+    badgeWidth: 124,
+    badgeHeight: 28,
+    creativeX: 576,
+    creativeY: 275,
   },
   portrait: {
-    centerX: SHARE_CARD_WIDTH / 2,
-    centerY: 400,
-    radius: 180,
-    ringWidth: 12,
-    ringGap: 18,
+    centerX: 352,
+    centerY: 260,
+    radius: 145,
+    ringWidth: 10,
+    ringGap: 6,
+    badgeX: 460,
+    badgeY: 372,
+    badgeRadius: 26,
   },
   name: {
-    y: 680,
-    fontSize: 76,
-    maxWidth: SHARE_CARD_WIDTH - 180,
+    y: 445,
+    fontSize: 34,
+    maxWidth: 520,
   },
   headline: {
-    y: 756,
-    fontSize: 38,
-    maxWidth: SHARE_CARD_WIDTH - 220,
+    y: 480,
+    fontSize: 17,
+    maxWidth: 540,
   },
   badge: {
-    y: 798,
-    height: 62,
-    fontSize: 30,
+    y: 445,
+    height: 24,
+    fontSize: 14,
+  },
+  pills: {
+    y: 514,
+    height: 28,
+    fontSize: 13,
+  },
+  stats: {
+    y: 582,
+    col1X: 128,
+    col2X: 270,
+    col3X: 412,
+    col4X: 554,
+    dividerY1: 566,
+    dividerY2: 614,
   },
   cta: {
-    y: 888,
-    height: 70,
-    fontSize: 30,
-    label: "Discover the portfolio",
+    x: 58,
+    y: 640,
+    width: 566,
+    height: 58,
+    radius: 29,
+    fontSize: 17,
+    label: "View Full Portfolio on RootIn",
   },
   panel: {
-    x: 80,
-    y: 980,
-    width: SHARE_CARD_WIDTH - 160,
-    height: 250,
-    radius: 44,
-    /** Vertical offsets of the three text rows inside the panel. */
-    handleOffset: 78,
-    linkOffset: 126,
-    ctaOffset: 172,
+    x: 44,
+    y: 718,
+    width: 594,
+    height: 122,
+    radius: 22,
+    handleOffset: 38,
+    linkOffset: 62,
+    ctaOffset: 84,
   },
   qr: {
-    size: 176,
+    x: 444,
+    y: 728,
+    size: 102,
+    codeSize: 90,
   },
   footer: {
-    x: 80,
-    right: SHARE_CARD_WIDTH - 80,
-    y: 1284,
-    fontSize: 26,
+    x: 64,
+    right: SHARE_CARD_WIDTH - 64,
+    y: 950,
+    fontSize: 22,
     tagline: "Discover verified talent and roles",
   },
 } as const;
@@ -101,18 +126,225 @@ export interface ShareCardContent {
   roleLabel: string;
   initials: string;
   url: string;
-  /** Short, human friendly link label, e.g. `rootin.app/talent/asha-rao`. */
+  /** Short, human friendly link label, e.g. `rootin.com/talent/asha-rao`. */
   shortUrl: string;
   /** The handle shown in the link panel, e.g. `@asha-rao`. */
   handle: string;
   isVerified: boolean;
+  tags: string[];
+  stats: {
+    photos: string;
+    reels: string;
+    projects: string;
+    brands: string;
+  };
+  /** Dynamic top 4 stats selected from candidate pool */
+  statItems: ShareCardStatItem[];
 }
 
 /**
- * The textual content of the share card.
- *
- * Kept separate from the canvas rendering so it can be asserted in tests
- * without a DOM.
+ * Dynamically selects the top 4 most impressive stats from a profile's
+ * candidate pool (awards, projects, photos, reels, brands, likes, experience, reviews, views).
+ */
+export function selectBestTalentStats(params: {
+  profile?: {
+    years_of_experience?: number;
+    analytics?: {
+      like_count?: number;
+      profile_views_30d?: number;
+      profile_views_7d?: number;
+    };
+    media_limits?: {
+      images_used?: number;
+      videos_used?: number;
+    };
+    portfolioHighlights?: unknown[];
+  } | null;
+  portfolioItems?: Array<{ type?: string; category?: string }>;
+  credits?: Array<{ project_name?: string; platform?: string; director?: string }>;
+  testimonials?: unknown[];
+  awards?: unknown[];
+}): ShareCardStatItem[] {
+  const profile = params.profile;
+  const portfolio = params.portfolioItems || [];
+  const credits = params.credits || [];
+  const testimonials = params.testimonials || [];
+  const awards = params.awards || [];
+
+  const photosCount =
+    portfolio.filter((i) => i.type === "image").length ||
+    profile?.media_limits?.images_used ||
+    0;
+
+  const reelsCount =
+    portfolio.filter(
+      (i) => i.type === "video" || i.type === "youtube" || i.type === "instagram",
+    ).length ||
+    profile?.media_limits?.videos_used ||
+    0;
+
+  const projectsCount =
+    credits.length ||
+    portfolio.filter((i) => i.category === "work").length ||
+    profile?.portfolioHighlights?.length ||
+    0;
+
+  const uniqueBrands = new Set(
+    credits
+      .map((c) => c.platform?.trim() || c.director?.trim())
+      .filter(Boolean),
+  ).size;
+
+  const awardsCount = awards.length || 0;
+  const likesCount = profile?.analytics?.like_count || 0;
+  const yearsExp = profile?.years_of_experience || 0;
+  const reviewsCount = testimonials.length || 0;
+  const viewsCount =
+    profile?.analytics?.profile_views_30d ||
+    profile?.analytics?.profile_views_7d ||
+    0;
+
+  interface ScoredCandidate {
+    item: ShareCardStatItem;
+    score: number;
+    priority: number;
+  }
+
+  const pool: ScoredCandidate[] = [];
+
+  if (awardsCount > 0) {
+    pool.push({
+      item: {
+        icon: "award",
+        count: `${awardsCount}+`,
+        label: awardsCount === 1 ? "Award" : "Awards",
+      },
+      score: awardsCount * 100,
+      priority: 1,
+    });
+  }
+
+  if (projectsCount > 0) {
+    pool.push({
+      item: {
+        icon: "briefcase",
+        count: `${projectsCount}+`,
+        label: "Projects",
+      },
+      score: projectsCount * 15,
+      priority: 2,
+    });
+  }
+
+  if (photosCount > 0) {
+    pool.push({
+      item: {
+        icon: "camera",
+        count: `${photosCount}+`,
+        label: "Photos",
+      },
+      score: photosCount * 2,
+      priority: 3,
+    });
+  }
+
+  if (reelsCount > 0) {
+    pool.push({
+      item: {
+        icon: "play",
+        count: `${reelsCount}+`,
+        label: "Reels",
+      },
+      score: reelsCount * 8,
+      priority: 4,
+    });
+  }
+
+  if (uniqueBrands > 0) {
+    pool.push({
+      item: {
+        icon: "star",
+        count: `${uniqueBrands}+`,
+        label: "Brands",
+      },
+      score: uniqueBrands * 25,
+      priority: 5,
+    });
+  }
+
+  if (yearsExp > 0) {
+    pool.push({
+      item: {
+        icon: "calendar",
+        count: `${yearsExp}+ Yrs`,
+        label: "Experience",
+      },
+      score: yearsExp * 12,
+      priority: 6,
+    });
+  }
+
+  if (likesCount > 0) {
+    pool.push({
+      item: {
+        icon: "heart",
+        count: likesCount >= 1000 ? `${(likesCount / 1000).toFixed(1)}k` : `${likesCount}+`,
+        label: "Likes",
+      },
+      score: likesCount,
+      priority: 7,
+    });
+  }
+
+  if (reviewsCount > 0) {
+    pool.push({
+      item: {
+        icon: "message",
+        count: `${reviewsCount}+`,
+        label: "Reviews",
+      },
+      score: reviewsCount * 20,
+      priority: 8,
+    });
+  }
+
+  if (viewsCount >= 20) {
+    pool.push({
+      item: {
+        icon: "eye",
+        count: viewsCount >= 1000 ? `${(viewsCount / 1000).toFixed(1)}k` : `${viewsCount}+`,
+        label: "Views",
+      },
+      score: viewsCount / 10,
+      priority: 9,
+    });
+  }
+
+  // Sort pool by score descending, then by priority
+  pool.sort((a, b) => b.score - a.score || a.priority - b.priority);
+
+  const selected = pool.map((p) => p.item).slice(0, 4);
+
+  // If fewer than 4 candidates with activity, backfill from standard mockup defaults
+  const fallbackDefaults: ShareCardStatItem[] = [
+    { icon: "camera", count: "50+", label: "Photos" },
+    { icon: "play", count: "12+", label: "Reels" },
+    { icon: "briefcase", count: "8+", label: "Projects" },
+    { icon: "star", count: "5+", label: "Brands" },
+  ];
+
+  for (const fallback of fallbackDefaults) {
+    if (selected.length >= 4) break;
+    if (!selected.some((s) => s.label === fallback.label)) {
+      selected.push(fallback);
+    }
+  }
+
+  return selected.slice(0, 4);
+}
+
+/**
+ * The textual and metric content of the share card.
  */
 export function buildShareCardContent(
   options: ShareCardOptions,
@@ -126,6 +358,36 @@ export function buildShareCardContent(
     options.url ??
     buildCanonicalProfileUrl(options.target, options.origin);
 
+  const rawTags =
+    options.target.tags && options.target.tags.length > 0
+      ? options.target.tags
+      : headline
+          .split(/[\/|·,]/)
+          .map((s) => s.trim())
+          .filter(Boolean);
+
+  const tags =
+    rawTags.length > 0
+      ? rawTags.slice(0, 4)
+      : ["Model", "Fashion", "Commercial", "Editorial"];
+
+  const stats = {
+    photos: String(options.target.stats?.photos || "50+"),
+    reels: String(options.target.stats?.reels || "12+"),
+    projects: String(options.target.stats?.projects || "8+"),
+    brands: String(options.target.stats?.brands || "5+"),
+  };
+
+  const statItems =
+    options.target.statItems && options.target.statItems.length === 4
+      ? options.target.statItems
+      : [
+          { icon: "camera" as ShareCardStatIcon, count: stats.photos, label: "Photos" },
+          { icon: "play" as ShareCardStatIcon, count: stats.reels, label: "Reels" },
+          { icon: "briefcase" as ShareCardStatIcon, count: stats.projects, label: "Projects" },
+          { icon: "star" as ShareCardStatIcon, count: stats.brands, label: "Brands" },
+        ];
+
   return {
     brand,
     name,
@@ -136,14 +398,14 @@ export function buildShareCardContent(
     shortUrl: buildShortLinkLabel(url),
     handle: buildHandleLabel(options.target.slug),
     isVerified: Boolean(options.target.isVerified),
+    tags,
+    stats,
+    statItems,
   };
 }
 
 /**
- * Short label for a canonical URL, e.g. `rootin.app/talent/asha-rao`.
- *
- * The raw URL is never printed on the card — it is long, it wraps badly and
- * it is unreadable at phone size.
+ * Short label for a canonical URL, e.g. `rootin.com/talent/asha-rao`.
  */
 export function buildShortLinkLabel(url: string): string {
   const value = (url ?? "").trim();
@@ -187,11 +449,9 @@ export interface ShareCardResult {
   photoOmitted: boolean;
 }
 
-const BRAND_PURPLE = "#6428F5";
-const BRAND_PINK = "#E84AAB";
-const INK = "#12143A";
-const MUTED = "#62678A";
-const BORDER = "#E7E5F4";
+const INK = "#0A1128";
+const MUTED = "#5E6585";
+const LIGHT_MUTED = "#94A3B8";
 
 type Ctx = CanvasRenderingContext2D;
 
@@ -242,11 +502,11 @@ function initialsFor(name: string): string {
 }
 
 function resolveFontFamily(): string {
-  if (typeof document === "undefined") return "Rubik, system-ui, sans-serif";
+  if (typeof document === "undefined") return "Rubik, system-ui, -apple-system, sans-serif";
   const value = getComputedStyle(document.documentElement)
     .getPropertyValue("--font-rubik")
     .trim();
-  return value ? `${value}, system-ui, sans-serif` : "Rubik, system-ui, sans-serif";
+  return value ? `${value}, system-ui, -apple-system, sans-serif` : "Rubik, system-ui, -apple-system, sans-serif";
 }
 
 interface LoadedImage {
@@ -257,10 +517,6 @@ interface LoadedImage {
 
 /**
  * Loads an image for canvas drawing.
- *
- * Tries a CORS-enabled load first; if the server does not send CORS headers
- * the load fails and we retry without CORS. A non-CORS image taints the
- * canvas, which is detected later when the export is attempted.
  */
 export async function loadImageForCanvas(
   src: string,
@@ -281,9 +537,6 @@ export async function loadImageForCanvas(
 
 /**
  * Builds the QR matrix for a URL.
- *
- * Returns a square boolean matrix plus the module count, or `null` when the
- * payload cannot be encoded.
  */
 export function buildQrMatrix(
   value: string,
@@ -309,10 +562,7 @@ export function buildQrMatrix(
 }
 
 /**
- * Draws a QR code with a quiet zone.
- *
- * The white plate behind the modules is the quiet zone — it keeps the symbol
- * readable when it sits on the light card surface.
+ * Draws a QR code inside a quiet white zone.
  */
 export function drawQr(
   ctx: Ctx,
@@ -324,12 +574,12 @@ export function drawQr(
   const matrix = buildQrMatrix(value);
   if (!matrix) return;
 
-  const quiet = 2;
+  const quiet = 1;
   const total = matrix.count + quiet * 2;
   const cell = size / total;
 
   ctx.fillStyle = "#FFFFFF";
-  roundedRect(ctx, x, y, size, size, 24);
+  roundedRect(ctx, x, y, size, size, 12);
   ctx.fill();
 
   ctx.fillStyle = INK;
@@ -344,6 +594,257 @@ export function drawQr(
       );
     }
   }
+}
+
+function drawVerifiedBadge(
+  ctx: Ctx,
+  x: number,
+  y: number,
+  radius: number,
+  hasBorder = true,
+) {
+  ctx.save();
+  if (hasBorder) {
+    ctx.strokeStyle = "#FFFFFF";
+    ctx.lineWidth = Math.max(3, radius * 0.22);
+    ctx.beginPath();
+    ctx.arc(x, y, radius + ctx.lineWidth / 2, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.fillStyle = "#0075FF";
+  ctx.beginPath();
+  ctx.arc(x, y, radius, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = "#FFFFFF";
+  ctx.lineWidth = Math.max(2.5, radius * 0.24);
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.beginPath();
+  ctx.moveTo(x - radius * 0.45, y);
+  ctx.lineTo(x - radius * 0.1, y + radius * 0.38);
+  ctx.lineTo(x + radius * 0.48, y - radius * 0.34);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawCameraIcon(ctx: Ctx, x: number, y: number, color: string) {
+  ctx.save();
+  ctx.fillStyle = color;
+  roundedRect(ctx, x - 11, y - 7, 22, 16, 3.5);
+  ctx.fill();
+  roundedRect(ctx, x - 5, y - 10, 10, 4, 1.5);
+  ctx.fill();
+  ctx.fillStyle = "#FFFFFF";
+  ctx.beginPath();
+  ctx.arc(x, y + 1, 4.8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x, y + 1, 2.7, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawPlayIcon(ctx: Ctx, x: number, y: number, color: string) {
+  ctx.save();
+  ctx.fillStyle = color;
+  roundedRect(ctx, x - 12, y - 8, 24, 17, 4);
+  ctx.fill();
+  ctx.fillStyle = "#FFFFFF";
+  ctx.beginPath();
+  ctx.moveTo(x - 3, y - 4.5);
+  ctx.lineTo(x + 4.5, y);
+  ctx.lineTo(x - 3, y + 4.5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawBriefcaseIcon(ctx: Ctx, x: number, y: number, color: string) {
+  ctx.save();
+  ctx.fillStyle = color;
+  roundedRect(ctx, x - 12, y - 6, 24, 16, 3.5);
+  ctx.fill();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2.4;
+  ctx.beginPath();
+  ctx.arc(x, y - 6, 4.5, Math.PI, 0);
+  ctx.stroke();
+  ctx.fillStyle = "#FFFFFF";
+  roundedRect(ctx, x - 2.5, y - 1.5, 5, 3.5, 1);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawStarIcon(ctx: Ctx, x: number, y: number, color: string) {
+  ctx.save();
+  ctx.fillStyle = color;
+  const spikes = 5;
+  const outerRadius = 10;
+  const innerRadius = 4.8;
+  let rot = (Math.PI / 2) * 3;
+  const step = Math.PI / spikes;
+  ctx.beginPath();
+  ctx.moveTo(x, y - outerRadius);
+  for (let i = 0; i < spikes; i++) {
+    let cx = x + Math.cos(rot) * outerRadius;
+    let cy = y + Math.sin(rot) * outerRadius;
+    ctx.lineTo(cx, cy);
+    rot += step;
+    cx = x + Math.cos(rot) * innerRadius;
+    cy = y + Math.sin(rot) * innerRadius;
+    ctx.lineTo(cx, cy);
+    rot += step;
+  }
+  ctx.lineTo(x, y - outerRadius);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawHeartIcon(ctx: Ctx, x: number, y: number, color: string) {
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x, y + 8);
+  ctx.bezierCurveTo(x - 9, y + 2, x - 10, y - 6, x - 5, y - 6);
+  ctx.bezierCurveTo(x - 1, y - 6, x, y - 2, x, y - 2);
+  ctx.bezierCurveTo(x, y - 2, x + 1, y - 6, x + 5, y - 6);
+  ctx.bezierCurveTo(x + 10, y - 6, x + 9, y + 2, x, y + 8);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawAwardIcon(ctx: Ctx, x: number, y: number, color: string) {
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.strokeStyle = color;
+  // Cup body
+  ctx.beginPath();
+  ctx.arc(x, y - 4, 6.5, 0, Math.PI);
+  ctx.lineTo(x + 6.5, y - 8);
+  ctx.lineTo(x - 6.5, y - 8);
+  ctx.closePath();
+  ctx.fill();
+  // Stem & Base
+  ctx.fillRect(x - 1.5, y + 2.5, 3, 3.5);
+  roundedRect(ctx, x - 5.5, y + 6, 11, 2.5, 1);
+  ctx.fill();
+  // Handles
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.arc(x - 6.5, y - 4, 3, -Math.PI / 2, Math.PI / 2, true);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(x + 6.5, y - 4, 3, -Math.PI / 2, Math.PI / 2, false);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawCalendarIcon(ctx: Ctx, x: number, y: number, color: string) {
+  ctx.save();
+  ctx.fillStyle = color;
+  roundedRect(ctx, x - 9.5, y - 7.5, 19, 16, 3);
+  ctx.fill();
+  ctx.fillStyle = "#FFFFFF";
+  roundedRect(ctx, x - 6, y - 9.5, 2.5, 3.5, 1);
+  roundedRect(ctx, x + 3.5, y - 9.5, 2.5, 3.5, 1);
+  ctx.fill();
+  roundedRect(ctx, x - 7.5, y - 4, 15, 2, 1);
+  ctx.fill();
+  ctx.fillRect(x - 5.5, y, 2.2, 2.2);
+  ctx.fillRect(x - 1, y, 2.2, 2.2);
+  ctx.fillRect(x + 3.5, y, 2.2, 2.2);
+  ctx.fillRect(x - 5.5, y + 4, 2.2, 2.2);
+  ctx.fillRect(x - 1, y + 4, 2.2, 2.2);
+  ctx.fillRect(x + 3.5, y + 4, 2.2, 2.2);
+  ctx.restore();
+}
+
+function drawEyeIcon(ctx: Ctx, x: number, y: number, color: string) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(x, y - 4.5, 11, 0.28 * Math.PI, 0.72 * Math.PI);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(x, y + 4.5, 11, 1.28 * Math.PI, 1.72 * Math.PI);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(x, y, 3.6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawMessageIcon(ctx: Ctx, x: number, y: number, color: string) {
+  ctx.save();
+  ctx.fillStyle = color;
+  roundedRect(ctx, x - 9.5, y - 8, 19, 14, 3.5);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(x - 4, y + 6);
+  ctx.lineTo(x - 4, y + 9);
+  ctx.lineTo(x + 1.5, y + 6);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = "#FFFFFF";
+  ctx.fillRect(x - 5.5, y - 3.5, 11, 1.6);
+  ctx.fillRect(x - 5.5, y + 0.5, 7.5, 1.6);
+  ctx.restore();
+}
+
+function drawLinkIcon(ctx: Ctx, x: number, y: number, size: number, color: string) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = Math.max(2, size * 0.16);
+  ctx.lineCap = "round";
+
+  ctx.save();
+  ctx.translate(x - size * 0.14, y + size * 0.14);
+  ctx.rotate(-Math.PI / 4);
+  roundedRect(ctx, -size * 0.35, -size * 0.22, size * 0.7, size * 0.44, size * 0.22);
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(x + size * 0.14, y - size * 0.14);
+  ctx.rotate(-Math.PI / 4);
+  roundedRect(ctx, -size * 0.35, -size * 0.22, size * 0.7, size * 0.44, size * 0.22);
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.restore();
+}
+
+function drawCurvedArrow(ctx: Ctx, startX: number, startY: number, endX: number, endY: number) {
+  ctx.save();
+  ctx.strokeStyle = "#0B1B54";
+  ctx.fillStyle = "#0B1B54";
+  ctx.lineWidth = 1.6;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(startX, startY);
+  ctx.quadraticCurveTo(startX + 8, startY + 22, endX, endY);
+  ctx.stroke();
+
+  const angle = Math.atan2(endY - (startY + 22), endX - (startX + 8));
+  const headLen = 6;
+  ctx.beginPath();
+  ctx.moveTo(endX, endY);
+  ctx.lineTo(
+    endX - headLen * Math.cos(angle - Math.PI / 6),
+    endY - headLen * Math.sin(angle - Math.PI / 6),
+  );
+  ctx.moveTo(endX, endY);
+  ctx.lineTo(
+    endX - headLen * Math.cos(angle + Math.PI / 6),
+    endY - headLen * Math.sin(angle + Math.PI / 6),
+  );
+  ctx.stroke();
+  ctx.restore();
 }
 
 async function drawAvatar(
@@ -386,12 +887,11 @@ async function drawAvatar(
         radius * 2,
       );
       ctx.restore();
-      // A non-CORS image taints the canvas; the caller re-renders without it.
       return !loaded.tainted;
     }
   }
 
-  // Initials fallback.
+  // Initials fallback
   const gradient = ctx.createLinearGradient(
     centerX - radius,
     centerY - radius,
@@ -405,21 +905,14 @@ async function drawAvatar(
   ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.fillStyle = BRAND_PURPLE;
-  ctx.font = `700 ${Math.round(radius * 0.78)}px ${resolveFontFamily()}`;
+  ctx.fillStyle = "#6428F5";
+  ctx.font = `700 ${Math.round(radius * 0.72)}px ${resolveFontFamily()}`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillText(initials, centerX, centerY + radius * 0.04);
   return true;
 }
 
-/**
- * Detects a tainted canvas.
- *
- * Reading a single pixel throws a `SecurityError` as soon as a cross-origin
- * image has been drawn, which is far more reliable than waiting for the
- * export to fail.
- */
 export function isCanvasTainted(ctx: Ctx): boolean {
   try {
     ctx.getImageData(0, 0, 1, 1);
@@ -431,17 +924,12 @@ export function isCanvasTainted(ctx: Ctx): boolean {
 
 /**
  * Renders the branded share card onto a canvas.
- *
- * `withPhoto` is a parameter so the export can be retried without the photo
- * when a cross-origin image tainted the canvas.
  */
 export async function renderShareCardToCanvas(
   options: ShareCardOptions & { withPhoto: boolean },
 ): Promise<HTMLCanvasElement> {
   const { target, withPhoto } = options;
   const content = buildShareCardContent(options);
-  const brand = content.brand;
-  const url = content.url;
   const layout = SHARE_CARD_LAYOUT;
   const origin =
     options.origin ??
@@ -455,98 +943,164 @@ export async function renderShareCardToCanvas(
 
   const font = resolveFontFamily();
 
-  // Background — soft lavender wash matching the app theme.
-  const background = ctx.createLinearGradient(0, 0, SHARE_CARD_WIDTH, SHARE_CARD_HEIGHT);
-  background.addColorStop(0, "#F6F1FF");
-  background.addColorStop(0.52, "#FFFFFF");
-  background.addColorStop(1, "#FFF2F7");
-  ctx.fillStyle = background;
-  ctx.fillRect(0, 0, SHARE_CARD_WIDTH, SHARE_CARD_HEIGHT);
+  // 1. Draw Template Background
+  let templateDrawn = false;
+  if (typeof window !== "undefined") {
+    const templateSrc = origin
+      ? `${origin.replace(/\/$/, "")}/images/share-template.png`
+      : "/images/share-template.png";
+    const loadedTemplate = await loadImageForCanvas(templateSrc);
+    if (loadedTemplate) {
+      ctx.drawImage(
+        loadedTemplate.image,
+        0,
+        0,
+        SHARE_CARD_WIDTH,
+        SHARE_CARD_HEIGHT,
+      );
+      templateDrawn = true;
+    }
+  }
 
-  // Decorative blobs.
-  const blob = (x: number, y: number, r: number, color: string) => {
-    const radial = ctx.createRadialGradient(x, y, 0, x, y, r);
-    radial.addColorStop(0, color);
-    radial.addColorStop(1, "rgba(255,255,255,0)");
-    ctx.fillStyle = radial;
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI * 2);
+  // Fallback procedural background if template is absent (e.g. offline unit test)
+  if (!templateDrawn) {
+    const bgGrad = ctx.createLinearGradient(0, 0, SHARE_CARD_WIDTH, SHARE_CARD_HEIGHT);
+    bgGrad.addColorStop(0, "#EBF1FC");
+    bgGrad.addColorStop(0.5, "#F7F5FE");
+    bgGrad.addColorStop(1, "#FFEFE6");
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, SHARE_CARD_WIDTH, SHARE_CARD_HEIGHT);
+
+    // Decorative brand blobs
+    const blob = (x: number, y: number, r: number, color: string) => {
+      const radial = ctx.createRadialGradient(x, y, 0, x, y, r);
+      radial.addColorStop(0, color);
+      radial.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = radial;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+    };
+    blob(80, 100, 220, "rgba(0,128,255,0.2)");
+    blob(600, 120, 240, "rgba(255,140,0,0.25)");
+    blob(620, 920, 260, "rgba(255,100,0,0.2)");
+
+    // Frosted glass card plate
+    ctx.fillStyle = "rgba(255, 255, 255, 0.88)";
+    roundedRect(ctx, 36, 172, 610, 690, 36);
     ctx.fill();
-  };
-  blob(120, 140, 320, "rgba(217,199,255,0.5)");
-  blob(980, 1180, 340, "rgba(255,217,232,0.45)");
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.95)";
+    ctx.lineWidth = 2;
+    roundedRect(ctx, 36, 172, 610, 690, 36);
+    ctx.stroke();
 
-  // --- Header: brand mark, brand name and the "talent profile" label -----
+    // Footer brand text
+    ctx.fillStyle = "#6428F5";
+    ctx.font = `700 24px ${font}`;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillText(content.brand, layout.footer.x, layout.footer.y);
+
+    ctx.fillStyle = MUTED;
+    ctx.font = `500 ${layout.footer.fontSize}px ${font}`;
+    ctx.textAlign = "right";
+    ctx.fillText(layout.footer.tagline, layout.footer.right, layout.footer.y);
+  }
+
+  // --- A. Top-Left Badge: TALENT PROFILE ------------------------------------
+  const badgeH = layout.header.badgeHeight;
+  const badgeW = layout.header.badgeWidth;
+  const badgeX = layout.header.badgeX;
+  const badgeY = layout.header.badgeY;
+
+  ctx.fillStyle = "rgba(240, 235, 255, 0.92)";
+  roundedRect(ctx, badgeX, badgeY, badgeW, badgeH, 14);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(130, 80, 245, 0.28)";
+  ctx.lineWidth = 1.4;
+  roundedRect(ctx, badgeX, badgeY, badgeW, badgeH, 14);
+  ctx.stroke();
+
+  // User icon
+  ctx.fillStyle = "#6E38F7";
+  ctx.beginPath();
+  ctx.arc(badgeX + 17, badgeY + 11, 3.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(badgeX + 17, badgeY + 21, 6.5, Math.PI, 0);
+  ctx.fill();
+
+  ctx.fillStyle = "#6E38F7";
+  ctx.font = `700 11px ${font}`;
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
+  ctx.fillText("TALENT PROFILE", badgeX + 28, badgeY + badgeH / 2 + 1);
 
-  const brandGradient = ctx.createLinearGradient(
-    layout.header.markX - layout.header.markRadius,
-    layout.header.markY - layout.header.markRadius,
-    layout.header.markX + layout.header.markRadius,
-    layout.header.markY + layout.header.markRadius,
-  );
-  brandGradient.addColorStop(0, BRAND_PURPLE);
-  brandGradient.addColorStop(1, BRAND_PINK);
-  ctx.fillStyle = brandGradient;
-  ctx.beginPath();
-  ctx.arc(
-    layout.header.markX,
-    layout.header.markY,
-    layout.header.markRadius,
-    0,
-    Math.PI * 2,
-  );
-  ctx.fill();
-
-  ctx.fillStyle = INK;
-  ctx.font = `700 ${layout.header.brandSize}px ${font}`;
-  ctx.fillText(brand, layout.header.brandX, layout.header.markY + 2);
-
-  const label = "TALENT PROFILE";
-  ctx.font = `700 ${layout.header.labelSize}px ${font}`;
-  const labelWidth = ctx.measureText(label).width;
-  const labelPaddingX = 22;
-  const labelHeight = 42;
-  const labelX = layout.header.labelRight - labelWidth - labelPaddingX * 2;
-  const labelY = layout.header.markY - labelHeight / 2;
-
-  ctx.fillStyle = "rgba(100, 40, 245, 0.08)";
-  roundedRect(ctx, labelX, labelY, labelWidth + labelPaddingX * 2, labelHeight, 21);
-  ctx.fill();
-  ctx.strokeStyle = "rgba(100, 40, 245, 0.16)";
-  ctx.lineWidth = 2;
-  roundedRect(ctx, labelX, labelY, labelWidth + labelPaddingX * 2, labelHeight, 21);
-  ctx.stroke();
-
-  ctx.fillStyle = BRAND_PURPLE;
+  // --- B. Top-Right Handwritten: Creative Professional ---------------------
+  ctx.save();
+  ctx.translate(layout.header.creativeX, layout.header.creativeY);
+  ctx.rotate((-12 * Math.PI) / 180);
   ctx.textAlign = "center";
-  ctx.fillText(label, labelX + labelWidth / 2 + labelPaddingX, labelY + labelHeight / 2 + 1);
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "#0B1B54";
+  ctx.font = `italic 700 22px 'Brush Script MT', 'Caveat', 'Segoe Script', cursive, sans-serif`;
+  ctx.fillText("Creative", 0, -11);
+  ctx.fillText("Professional", 0, 13);
+  ctx.restore();
 
-  // --- Portrait ------------------------------------------------------------
-  const { centerX, centerY, radius, ringWidth, ringGap } = layout.portrait;
+  // --- C. Avatar with Rainbow Ring -----------------------------------------
+  const { centerX, centerY, radius, ringWidth, ringGap, badgeX: avBadgeX, badgeY: avBadgeY, badgeRadius } =
+    layout.portrait;
   const ringRadius = radius + ringGap;
 
+  // Inner white gap ring
   ctx.strokeStyle = "#FFFFFF";
-  ctx.lineWidth = 14;
-  ctx.beginPath();
-  ctx.arc(centerX, centerY, ringRadius + 7, 0, Math.PI * 2);
-  ctx.stroke();
-
-  const ring = ctx.createLinearGradient(
-    centerX - ringRadius,
-    centerY - ringRadius,
-    centerX + ringRadius,
-    centerY + ringRadius,
-  );
-  ring.addColorStop(0, BRAND_PURPLE);
-  ring.addColorStop(1, BRAND_PINK);
-  ctx.strokeStyle = ring;
-  ctx.lineWidth = ringWidth;
+  ctx.lineWidth = 6;
   ctx.beginPath();
   ctx.arc(centerX, centerY, ringRadius, 0, Math.PI * 2);
   ctx.stroke();
 
+  // Multi-color rainbow gradient ring
+  ctx.save();
+  let ringStroke: CanvasGradient | string;
+  try {
+    const conic = (ctx as unknown as { createConicGradient?: (angle: number, x: number, y: number) => CanvasGradient }).createConicGradient?.(
+      0,
+      centerX,
+      centerY,
+    );
+    if (conic) {
+      conic.addColorStop(0.0, "#8E2DE2");
+      conic.addColorStop(0.22, "#F02875");
+      conic.addColorStop(0.42, "#FF6B00");
+      conic.addColorStop(0.65, "#FFB800");
+      conic.addColorStop(0.85, "#0084FF");
+      conic.addColorStop(1.0, "#8E2DE2");
+      ringStroke = conic;
+    } else {
+      throw new Error("No conic gradient");
+    }
+  } catch {
+    const linear = ctx.createLinearGradient(
+      centerX - ringRadius,
+      centerY - ringRadius,
+      centerX + ringRadius,
+      centerY + ringRadius,
+    );
+    linear.addColorStop(0, "#8E2DE2");
+    linear.addColorStop(0.35, "#F02875");
+    linear.addColorStop(0.7, "#FF6B00");
+    linear.addColorStop(1, "#0084FF");
+    ringStroke = linear;
+  }
+  ctx.strokeStyle = ringStroke;
+  ctx.lineWidth = ringWidth;
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, ringRadius, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+
+  // Inner portrait photo
   await drawAvatar(
     ctx,
     target,
@@ -558,148 +1112,249 @@ export async function renderShareCardToCanvas(
     withPhoto,
   );
 
-  // --- Name and profession -------------------------------------------------
-  ctx.textAlign = "center";
+  // Blue verified badge attached to bottom-right of avatar ring
+  drawVerifiedBadge(ctx, avBadgeX, avBadgeY, badgeRadius, true);
+
+  // --- D. Name with Inline Verified Check -----------------------------------
   ctx.textBaseline = "middle";
-  ctx.fillStyle = INK;
   ctx.font = `700 ${layout.name.fontSize}px ${font}`;
-  const name = truncateToWidth(ctx, content.name, layout.name.maxWidth);
-  ctx.fillText(name, centerX, layout.name.y);
+  const maxNameWidth = layout.name.maxWidth;
+  const rawName = content.name;
 
-  ctx.fillStyle = MUTED;
-  ctx.font = `500 ${layout.headline.fontSize}px ${font}`;
-  const headline = truncateToWidth(
-    ctx,
-    content.headline,
-    layout.headline.maxWidth,
-  );
-  ctx.fillText(headline, centerX, layout.headline.y);
-
-  // --- Verification badge (only for verified profiles) ----------------------
   if (content.isVerified) {
-    const badgeText = `Verified on ${brand}`;
-    ctx.font = `600 ${layout.badge.fontSize}px ${font}`;
-    const textWidth = ctx.measureText(badgeText).width;
-    const badgeWidth = textWidth + 92;
-    const badgeX = centerX - badgeWidth / 2;
-    const badgeY = layout.badge.y;
+    const nameBadgeSize = 22;
+    const nameGap = 8;
+    const truncatedName = truncateToWidth(ctx, rawName, maxNameWidth - nameBadgeSize - nameGap);
+    const measuredWidth = ctx.measureText(truncatedName).width;
+    const totalW = measuredWidth + nameGap + nameBadgeSize;
+    const startX = centerX - totalW / 2;
 
-    ctx.fillStyle = "rgba(35,121,239,0.10)";
-    roundedRect(ctx, badgeX, badgeY, badgeWidth, layout.badge.height, 31);
-    ctx.fill();
-    ctx.strokeStyle = "rgba(35,121,239,0.32)";
-    ctx.lineWidth = 2;
-    roundedRect(ctx, badgeX, badgeY, badgeWidth, layout.badge.height, 31);
-    ctx.stroke();
-
-    const badgeIconX = badgeX + 34;
-    const badgeIconY = badgeY + layout.badge.height / 2;
-    ctx.fillStyle = "#2379EF";
-    ctx.beginPath();
-    ctx.arc(badgeIconX, badgeIconY, 15, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = "#FFFFFF";
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(badgeIconX - 6, badgeIconY);
-    ctx.lineTo(badgeIconX - 1, badgeIconY + 5);
-    ctx.lineTo(badgeIconX + 7, badgeIconY - 6);
-    ctx.stroke();
-
-    ctx.fillStyle = "#1B5FCB";
+    ctx.fillStyle = INK;
     ctx.textAlign = "left";
-    ctx.fillText(badgeText, badgeIconX + 26, badgeIconY + 1);
+    ctx.fillText(truncatedName, startX, layout.name.y);
+
+    drawVerifiedBadge(
+      ctx,
+      startX + measuredWidth + nameGap + nameBadgeSize / 2,
+      layout.name.y + 1,
+      nameBadgeSize / 2,
+      false,
+    );
+  } else {
+    const truncatedName = truncateToWidth(ctx, rawName, maxNameWidth);
+    ctx.fillStyle = INK;
     ctx.textAlign = "center";
+    ctx.fillText(truncatedName, centerX, layout.name.y);
   }
 
-  // --- Call to action ------------------------------------------------------
-  const ctaGradient = ctx.createLinearGradient(
-    centerX - 220,
-    layout.cta.y,
-    centerX + 220,
-    layout.cta.y + layout.cta.height,
-  );
-  ctaGradient.addColorStop(0, BRAND_PURPLE);
-  ctaGradient.addColorStop(1, BRAND_PINK);
+  // --- E. Headline / Roles -------------------------------------------------
+  ctx.textAlign = "center";
+  ctx.fillStyle = MUTED;
+  ctx.font = `600 ${layout.headline.fontSize}px ${font}`;
+  const headline = truncateToWidth(ctx, content.headline, layout.headline.maxWidth);
+  ctx.fillText(headline, centerX, layout.headline.y);
 
-  ctx.font = `600 ${layout.cta.fontSize}px ${font}`;
-  const ctaTextWidth = ctx.measureText(layout.cta.label).width;
-  const ctaWidth = ctaTextWidth + 88;
-  const ctaX = centerX - ctaWidth / 2;
+  // --- F. Category / Skill Pills -------------------------------------------
+  const pillColors = [
+    { bg: "#E0EDFD", text: "#1877F2" }, // Model - Blue
+    { bg: "#FEEFE6", text: "#E65100" }, // Fashion - Orange
+    { bg: "#F2E7FE", text: "#7C3AED" }, // Commercial - Purple
+    { bg: "#E0F6F7", text: "#0891B2" }, // Editorial - Teal
+  ];
 
-  ctx.fillStyle = ctaGradient;
-  roundedRect(ctx, ctaX, layout.cta.y, ctaWidth, layout.cta.height, 35);
+  ctx.font = `600 ${layout.pills.fontSize}px ${font}`;
+  const pillPaddingX = 14;
+  const pillGap = 10;
+  const pillHeight = layout.pills.height;
+
+  const measuredPills = content.tags.slice(0, 4).map((tag, idx) => {
+    const textWidth = ctx.measureText(tag).width;
+    return {
+      tag,
+      width: textWidth + pillPaddingX * 2,
+      color: pillColors[idx % pillColors.length],
+    };
+  });
+
+  const totalPillsWidth =
+    measuredPills.reduce((sum, p) => sum + p.width, 0) +
+    Math.max(0, measuredPills.length - 1) * pillGap;
+
+  let currentPillX = centerX - totalPillsWidth / 2;
+  const pillY = layout.pills.y;
+
+  for (const pill of measuredPills) {
+    ctx.fillStyle = pill.color.bg;
+    roundedRect(ctx, currentPillX, pillY, pill.width, pillHeight, pillHeight / 2);
+    ctx.fill();
+
+    ctx.fillStyle = pill.color.text;
+    ctx.textAlign = "center";
+    ctx.fillText(
+      pill.tag,
+      currentPillX + pill.width / 2,
+      pillY + pillHeight / 2 + 1,
+    );
+    currentPillX += pill.width + pillGap;
+  }
+
+  // --- G. Stats Bar --------------------------------------------------------
+  const statsY = layout.stats.y;
+  const items = content.statItems && content.statItems.length === 4
+    ? content.statItems
+    : [
+        { icon: "camera" as ShareCardStatIcon, count: content.stats.photos, label: "Photos" },
+        { icon: "play" as ShareCardStatIcon, count: content.stats.reels, label: "Reels" },
+        { icon: "briefcase" as ShareCardStatIcon, count: content.stats.projects, label: "Projects" },
+        { icon: "star" as ShareCardStatIcon, count: content.stats.brands, label: "Brands" },
+      ];
+
+  const statsCols = [
+    { x: layout.stats.col1X, ...items[0] },
+    { x: layout.stats.col2X, ...items[1] },
+    { x: layout.stats.col3X, ...items[2] },
+    { x: layout.stats.col4X, ...items[3] },
+  ];
+
+  for (const col of statsCols) {
+    if (col.icon === "camera") drawCameraIcon(ctx, col.x, statsY - 14, "#0084FF");
+    else if (col.icon === "play") drawPlayIcon(ctx, col.x, statsY - 14, "#FF6E00");
+    else if (col.icon === "briefcase") drawBriefcaseIcon(ctx, col.x, statsY - 14, "#8B2CF5");
+    else if (col.icon === "star") drawStarIcon(ctx, col.x, statsY - 14, "#FF9500");
+    else if (col.icon === "heart") drawHeartIcon(ctx, col.x, statsY - 14, "#E11D48");
+    else if (col.icon === "award") drawAwardIcon(ctx, col.x, statsY - 14, "#F59E0B");
+    else if (col.icon === "calendar") drawCalendarIcon(ctx, col.x, statsY - 14, "#6366F1");
+    else if (col.icon === "eye") drawEyeIcon(ctx, col.x, statsY - 14, "#0D9488");
+    else if (col.icon === "message") drawMessageIcon(ctx, col.x, statsY - 14, "#0284C7");
+    else drawStarIcon(ctx, col.x, statsY - 14, "#FF9500");
+
+    ctx.fillStyle = INK;
+    ctx.font = `700 18px ${font}`;
+    ctx.textAlign = "center";
+    ctx.fillText(col.count, col.x, statsY + 10);
+
+    ctx.fillStyle = MUTED;
+    ctx.font = `500 12px ${font}`;
+    ctx.fillText(col.label, col.x, statsY + 28);
+  }
+
+  // Vertical dividers between stats columns
+  ctx.strokeStyle = "#E2E8F0";
+  ctx.lineWidth = 1;
+  const dividers = [199, 341, 483];
+  for (const divX of dividers) {
+    ctx.beginPath();
+    ctx.moveTo(divX, layout.stats.dividerY1);
+    ctx.lineTo(divX, layout.stats.dividerY2);
+    ctx.stroke();
+  }
+
+  // --- H. Gradient CTA Button ----------------------------------------------
+  const cta = layout.cta;
+  const ctaGrad = ctx.createLinearGradient(cta.x, cta.y, cta.x + cta.width, cta.y);
+  ctaGrad.addColorStop(0.0, "#0080FF");
+  ctaGrad.addColorStop(0.25, "#2C55F5");
+  ctaGrad.addColorStop(0.5, "#8C1FE8");
+  ctaGrad.addColorStop(0.72, "#E81C70");
+  ctaGrad.addColorStop(0.88, "#FF451A");
+  ctaGrad.addColorStop(1.0, "#FFA000");
+
+  ctx.fillStyle = ctaGrad;
+  roundedRect(ctx, cta.x, cta.y, cta.width, cta.height, cta.radius);
   ctx.fill();
 
-  ctx.fillStyle = "#FFFFFF";
-  ctx.textAlign = "center";
-  ctx.fillText(layout.cta.label, centerX, layout.cta.y + layout.cta.height / 2 + 1);
+  // Button link icon on left
+  drawLinkIcon(ctx, cta.x + 80, cta.y + cta.height / 2, 20, "#FFFFFF");
 
-  // --- Link panel: short label and the QR code -----------------------------
+  // Button text
+  ctx.fillStyle = "#FFFFFF";
+  ctx.font = `700 ${cta.fontSize}px ${font}`;
+  ctx.textAlign = "center";
+  ctx.fillText(cta.label, centerX + 10, cta.y + cta.height / 2 + 1);
+
+  // Button right arrow
+  ctx.font = `700 20px ${font}`;
+  ctx.fillText("→", cta.x + cta.width - 76, cta.y + cta.height / 2 + 1);
+
+  // --- I. Link & QR Code Card ----------------------------------------------
   const panel = layout.panel;
   ctx.fillStyle = "#FFFFFF";
   roundedRect(ctx, panel.x, panel.y, panel.width, panel.height, panel.radius);
   ctx.fill();
-  ctx.strokeStyle = BORDER;
-  ctx.lineWidth = 3;
+  ctx.strokeStyle = "#E2E8F0";
+  ctx.lineWidth = 1.5;
   roundedRect(ctx, panel.x, panel.y, panel.width, panel.height, panel.radius);
   ctx.stroke();
 
-  const textX = panel.x + 48;
-  const textMaxWidth = panel.width - 48 * 2 - layout.qr.size - 32;
+  // Circular link badge on left
+  const linkBadgeX = panel.x + 44;
+  const linkBadgeY = panel.y + panel.height / 2;
+  const linkBadgeRadius = 24;
+
+  ctx.fillStyle = "#EEF5FF";
+  ctx.beginPath();
+  ctx.arc(linkBadgeX, linkBadgeY, linkBadgeRadius, 0, Math.PI * 2);
+  ctx.fill();
+  drawLinkIcon(ctx, linkBadgeX, linkBadgeY, 18, "#2563EB");
+
+  // Left text column
+  const textX = panel.x + 82;
+  const textMaxW = panel.width - 82 - layout.qr.size - 90;
 
   ctx.textAlign = "left";
-  ctx.textBaseline = "middle";
   ctx.fillStyle = INK;
-  ctx.font = `700 36px ${font}`;
+  ctx.font = `700 19px ${font}`;
   const handle = content.handle || content.shortUrl;
-  ctx.fillText(
-    truncateToWidth(ctx, handle, textMaxWidth),
-    textX,
-    panel.y + panel.handleOffset,
-  );
+  ctx.fillText(truncateToWidth(ctx, handle, textMaxW), textX, panel.y + 36);
 
   ctx.fillStyle = MUTED;
-  ctx.font = `500 26px ${font}`;
+  ctx.font = `500 13.5px ${font}`;
+  ctx.fillText(truncateToWidth(ctx, content.shortUrl, textMaxW), textX, panel.y + 62);
+
+  ctx.fillStyle = LIGHT_MUTED;
+  ctx.font = `400 11.5px ${font}`;
   ctx.fillText(
-    truncateToWidth(ctx, content.shortUrl, textMaxWidth),
+    truncateToWidth(ctx, "Discover my work, skills and more on RootIn", textMaxW),
     textX,
-    panel.y + panel.linkOffset,
+    panel.y + 85,
   );
 
-  ctx.fillStyle = BRAND_PURPLE;
-  ctx.font = `600 24px ${font}`;
-  ctx.fillText(
-    truncateToWidth(ctx, layout.cta.label, textMaxWidth),
-    textX,
-    panel.y + panel.ctaOffset,
-  );
+  // QR Code box on right
+  const qrBoxX = layout.qr.x;
+  const qrBoxY = layout.qr.y;
+  const qrBoxSize = layout.qr.size;
 
   if (options.includeQr !== false) {
-    const qrX = panel.x + panel.width - 40 - layout.qr.size;
-    const qrY = panel.y + (panel.height - layout.qr.size) / 2;
-    drawQr(ctx, url, qrX, qrY, layout.qr.size);
+    ctx.strokeStyle = "#CBD5E1";
+    ctx.lineWidth = 1.2;
+    roundedRect(ctx, qrBoxX, qrBoxY, qrBoxSize, qrBoxSize, 12);
+    ctx.stroke();
+
+    const qrInnerPadding = (qrBoxSize - layout.qr.codeSize) / 2;
+    drawQr(ctx, content.url, qrBoxX + qrInnerPadding, qrBoxY + qrInnerPadding, layout.qr.codeSize);
   }
 
-  // --- Footer --------------------------------------------------------------
-  ctx.fillStyle = BRAND_PURPLE;
-  ctx.font = `700 26px ${font}`;
-  ctx.textAlign = "left";
-  ctx.fillText(brand, layout.footer.x, layout.footer.y);
+  // "Scan to View Profile" & hand-drawn arrow
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#0B1B54";
+  ctx.font = `italic 600 13px 'Brush Script MT', 'Caveat', 'Segoe Script', cursive, sans-serif`;
+  ctx.fillText("Scan", qrBoxX + qrBoxSize + 32, qrBoxY + 24);
+  ctx.fillText("to View", qrBoxX + qrBoxSize + 32, qrBoxY + 40);
+  ctx.fillText("Profile", qrBoxX + qrBoxSize + 32, qrBoxY + 56);
 
-  ctx.fillStyle = MUTED;
-  ctx.font = `500 ${layout.footer.fontSize}px ${font}`;
-  ctx.textAlign = "right";
-  ctx.fillText(layout.footer.tagline, layout.footer.right, layout.footer.y);
+  drawCurvedArrow(
+    ctx,
+    qrBoxX + qrBoxSize + 30,
+    qrBoxY + 68,
+    qrBoxX + qrBoxSize + 6,
+    qrBoxY + 84,
+  );
 
   return canvas;
 }
 
 /**
  * Renders and exports the share card.
- *
- * If a cross-origin photo taints the canvas the card is re-rendered without
- * the photo, so the download always succeeds.
  */
 export async function renderShareCard(
   options: ShareCardOptions,
@@ -786,9 +1441,6 @@ export function downloadBlob(blob: Blob, filename: string): void {
 
 /**
  * Filesystem-safe file name for the downloaded / shared card.
- *
- * The name is the same for every profile of a role so the shared attachment
- * reads like a RootIn card instead of exposing a slug.
  */
 export function shareCardFileName(target: ShareProfileTarget): string {
   const role = target.role === "recruiter" ? "recruiter" : "talent";

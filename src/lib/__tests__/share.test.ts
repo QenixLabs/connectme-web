@@ -161,19 +161,19 @@ describe("normalizeOrigin", () => {
 describe("share messages", () => {
   it("mentions the name, the role and the brand", () => {
     expect(buildShareText(talent)).toBe(
-      "Check out Asha Rao — Actor & Voice Artist on RootIn.",
+      "Check out Asha Rao · Actor & Voice Artist on RootIn ✨",
     );
   });
 
   it("omits the headline when there is none", () => {
     expect(buildShareText({ role: "talent", slug: "x", name: "Sam" })).toBe(
-      "Check out Sam on RootIn.",
+      "Check out Sam's portfolio on RootIn ✨",
     );
   });
 
   it("uses a generic name when the profile has no display name", () => {
     expect(buildShareText({ role: "recruiter", slug: "x", name: "" })).toBe(
-      "Check out a recruiter on RootIn.",
+      "Check out a recruiter's portfolio on RootIn ✨",
     );
   });
 
@@ -182,11 +182,11 @@ describe("share messages", () => {
       buildShareMessage(talent, "https://rootin.app/talent/asha-rao"),
     ).toBe(
       [
-        "Hey! Check out Asha Rao's profile on RootIn.",
+        "Hey! Check out Asha Rao's creative portfolio on RootIn ✨",
         "",
         "Actor & Voice Artist",
         "",
-        "Explore the profile and portfolio:",
+        "View full portfolio, verified work & credits:",
         "https://rootin.app/talent/asha-rao",
       ].join("\n"),
     );
@@ -200,14 +200,14 @@ describe("share messages", () => {
 
     expect(message).not.toContain("undefined");
     expect(message).not.toContain("null");
-    expect(message).toContain("Hey! Check out this profile on RootIn.");
+    expect(message).toContain("Hey! Check out this creative portfolio on RootIn ✨");
     expect(message).not.toContain("\n\n\n");
   });
 
   it("omits the link block when there is no URL", () => {
     const message = buildShareMessage(talent, "");
-    expect(message).toContain("Hey! Check out Asha Rao's profile on RootIn.");
-    expect(message).not.toContain("Explore the profile and portfolio:");
+    expect(message).toContain("Hey! Check out Asha Rao's creative portfolio on RootIn ✨");
+    expect(message).not.toContain("View full portfolio, verified work & credits:");
   });
 });
 
@@ -361,13 +361,13 @@ describe("card share text", () => {
     const lines = text.split("\n");
 
     expect(lines).toHaveLength(2);
-    expect(lines[0]).toBe("Check out Asha Rao — Actor & Voice Artist on RootIn.");
+    expect(lines[0]).toBe("Check out Asha Rao · Actor & Voice Artist on RootIn ✨");
     expect(lines[1]).toBe("https://rootin.app/talent/asha-rao");
   });
 
   it("omits the link when there is no canonical URL", () => {
     expect(buildCardShareText(talent, "")).toBe(
-      "Check out Asha Rao — Actor & Voice Artist on RootIn.",
+      "Check out Asha Rao · Actor & Voice Artist on RootIn ✨",
     );
   });
 

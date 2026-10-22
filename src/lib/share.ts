@@ -15,6 +15,23 @@ export const SHARE_BRAND = "RootIn";
 
 export type ShareProfileRole = "talent" | "recruiter";
 
+export type ShareCardStatIcon =
+  | "camera"
+  | "play"
+  | "briefcase"
+  | "star"
+  | "heart"
+  | "award"
+  | "calendar"
+  | "eye"
+  | "message";
+
+export interface ShareCardStatItem {
+  icon: ShareCardStatIcon;
+  count: string;
+  label: string;
+}
+
 /** The profile a user is sharing. */
 export interface ShareProfileTarget {
   role: ShareProfileRole;
@@ -36,6 +53,17 @@ export interface ShareProfileTarget {
    * profile share always uses the canonical profile path.
    */
   path?: string;
+  /** Category or skill tags rendered on the share card. */
+  tags?: string[];
+  /** Portfolio metrics shown in the share card stats bar. */
+  stats?: {
+    photos?: string | number;
+    reels?: string | number;
+    projects?: string | number;
+    brands?: string | number;
+  };
+  /** Dynamically chosen top 4 stats rendered on the share card. */
+  statItems?: ShareCardStatItem[];
 }
 
 /** Destinations the share sheet can hand off to. */
@@ -140,9 +168,9 @@ export function buildShareText(target: ShareProfileTarget): string {
   const name = (target.name ?? "").trim() || defaultNameFor(target.role);
   const headline = (target.headline ?? "").trim();
   if (headline) {
-    return `Check out ${name} — ${headline} on ${SHARE_BRAND}.`;
+    return `Check out ${name} · ${headline} on ${SHARE_BRAND} ✨`;
   }
-  return `Check out ${name} on ${SHARE_BRAND}.`;
+  return `Check out ${name}'s portfolio on ${SHARE_BRAND} ✨`;
 }
 
 /**
@@ -162,12 +190,12 @@ export function buildShareMessage(
 
   const lines: string[] = [
     name
-      ? `Hey! Check out ${name}'s profile on ${SHARE_BRAND}.`
-      : `Hey! Check out this profile on ${SHARE_BRAND}.`,
+      ? `Hey! Check out ${name}'s creative portfolio on ${SHARE_BRAND} ✨`
+      : `Hey! Check out this creative portfolio on ${SHARE_BRAND} ✨`,
   ];
 
   if (headline) lines.push("", headline);
-  if (url) lines.push("", "Explore the profile and portfolio:", url);
+  if (url) lines.push("", "View full portfolio, verified work & credits:", url);
 
   return lines.join("\n");
 }
@@ -208,10 +236,10 @@ export function buildInstagramCaption(
 
   lines.push(
     "",
-    `Explore the portfolio and connect with verified talent on ${SHARE_BRAND}.`,
+    `Explore the full portfolio, verified work and connect on ${SHARE_BRAND}.`,
   );
   if (url) lines.push("", `Discover more: ${url}`);
-  lines.push("", "#RootIn #TalentPortfolio");
+  lines.push("", "#RootIn #TalentPortfolio #ConnectAndCreate");
 
   return dedupeHashtags(lines.join("\n"));
 }

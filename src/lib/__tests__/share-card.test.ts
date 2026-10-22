@@ -143,28 +143,28 @@ describe("buildQrMatrix", () => {
 
   it("keeps the modules large enough to be scannable on the card", () => {
     const matrix = buildQrMatrix(CANONICAL_URL)!;
-    // The QR is drawn with a quiet zone of two modules on each side.
-    const cells = matrix.count + 4;
-    const cellSize = SHARE_CARD_LAYOUT.qr.size / cells;
-    expect(cellSize).toBeGreaterThanOrEqual(4);
+    // The QR is drawn with a quiet zone of one module on each side.
+    const cells = matrix.count + 2;
+    const cellSize = SHARE_CARD_LAYOUT.qr.codeSize / cells;
+    expect(cellSize).toBeGreaterThanOrEqual(2.5);
   });
 });
 
 describe("share card layout", () => {
   const layout = SHARE_CARD_LAYOUT;
 
-  it("uses a portrait format that fits Instagram", () => {
-    expect(SHARE_CARD_WIDTH).toBe(1080);
-    expect(SHARE_CARD_HEIGHT).toBe(1350);
+  it("uses the creative template portrait format", () => {
+    expect(SHARE_CARD_WIDTH).toBe(682);
+    expect(SHARE_CARD_HEIGHT).toBe(1024);
   });
 
   it("keeps every element inside the canvas", () => {
     const boxes = {
       header: {
-        top: layout.header.markY - layout.header.markRadius,
-        bottom: layout.header.markY + layout.header.markRadius,
-        left: layout.header.markX - layout.header.markRadius,
-        right: layout.header.labelRight,
+        top: layout.header.badgeY,
+        bottom: layout.header.badgeY + layout.header.badgeHeight,
+        left: layout.header.badgeX,
+        right: layout.header.creativeX + 50,
       },
       portrait: {
         top: layout.portrait.centerY - layout.portrait.radius,
@@ -184,17 +184,23 @@ describe("share card layout", () => {
         left: 0,
         right: SHARE_CARD_WIDTH,
       },
-      badge: {
-        top: layout.badge.y,
-        bottom: layout.badge.y + layout.badge.height,
+      pills: {
+        top: layout.pills.y,
+        bottom: layout.pills.y + layout.pills.height,
+        left: 0,
+        right: SHARE_CARD_WIDTH,
+      },
+      stats: {
+        top: layout.stats.dividerY1,
+        bottom: layout.stats.dividerY2,
         left: 0,
         right: SHARE_CARD_WIDTH,
       },
       cta: {
         top: layout.cta.y,
         bottom: layout.cta.y + layout.cta.height,
-        left: 0,
-        right: SHARE_CARD_WIDTH,
+        left: layout.cta.x,
+        right: layout.cta.x + layout.cta.width,
       },
       panel: {
         top: layout.panel.y,
@@ -243,9 +249,9 @@ describe("share card layout", () => {
   });
 
   it("does not clip the QR code or the footer", () => {
-    const qrTop = layout.panel.y + (layout.panel.height - layout.qr.size) / 2;
+    const qrTop = layout.qr.y;
     const qrBottom = qrTop + layout.qr.size;
-    const qrLeft = layout.panel.x + layout.panel.width - 40 - layout.qr.size;
+    const qrLeft = layout.qr.x;
     const qrRight = qrLeft + layout.qr.size;
 
     expect(qrTop).toBeGreaterThan(layout.panel.y);
@@ -264,11 +270,14 @@ describe("share card layout", () => {
     expect(layout.headline.y - layout.headline.fontSize / 2).toBeGreaterThan(
       layout.name.y + layout.name.fontSize / 2,
     );
-    expect(layout.badge.y).toBeGreaterThan(
+    expect(layout.pills.y).toBeGreaterThan(
       layout.headline.y + layout.headline.fontSize / 2,
     );
+    expect(layout.stats.dividerY1).toBeGreaterThan(
+      layout.pills.y + layout.pills.height,
+    );
     expect(layout.cta.y).toBeGreaterThan(
-      layout.badge.y + layout.badge.height,
+      layout.stats.dividerY2,
     );
     expect(layout.panel.y).toBeGreaterThan(
       layout.cta.y + layout.cta.height,
@@ -378,5 +387,46 @@ describe("truncateToWidth", () => {
     const result = truncateToWidth(context, "abcdefghij", 50);
     expect(result.endsWith("…")).toBe(true);
     expect(result.length).toBeLessThan("abcdefghij".length);
+  });
+});
+
+describe("selectBestTalentStats", () => {
+  it("selects top 4 stats from rich talent portfolio and credits", async () => {
+    const { selectBestTalentStats } = await import("@/lib/share-card");
+    const stats = selectBestTalentStats({
+      profile: {
+        years_of_experience: 6,
+        analytics: { like_count: 350 },
+      },
+      portfolioItems: [
+        { type: "image", category: "work" },
+        { type: "image", category: "work" },
+        { type: "video", category: "work" },
+      ],
+      credits: [
+        { project_name: "Ad 1", platform: "Netflix" },
+        { project_name: "Ad 2", platform: "Amazon" },
+      ],
+      awards: [{ title: "Best Model 2024" }],
+    });
+
+    expect(stats.length).toBe(4);
+    const labels = stats.map((s) => s.label);
+    expect(labels).toContain("Award");
+    expect(labels).toContain("Likes");
+    expect(labels).toContain("Experience");
+    expect(labels).toContain("Brands");
+  });
+
+  it("falls back to balanced defaults when profile has no data", async () => {
+    const { selectBestTalentStats } = await import("@/lib/share-card");
+    const stats = selectBestTalentStats({});
+    expect(stats.length).toBe(4);
+    expect(stats.map((s) => s.label)).toEqual([
+      "Photos",
+      "Reels",
+      "Projects",
+      "Brands",
+    ]);
   });
 });

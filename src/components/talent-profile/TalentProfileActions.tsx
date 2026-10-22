@@ -31,14 +31,26 @@ import {
 import { useLikeTalent } from "@/hooks/use-talent-profile";
 import { useShareProfile } from "@/hooks/use-share-profile";
 import { useAuthStore } from "@/providers/auth-store-provider";
-import type { TalentProfile, TalentProfilePreview } from "@/lib/api/talent";
+import type {
+  TalentProfile,
+  TalentProfilePreview,
+  PortfolioApiResponse,
+  Credit,
+  Testimonial,
+  Award as AwardType,
+} from "@/lib/api/talent";
 import type { Campaign } from "@/lib/api/campaigns";
 import type { ShareProfileTarget } from "@/lib/share";
+import { selectBestTalentStats } from "@/lib/share-card";
 
 interface TalentProfileActionsProps {
   profile: TalentProfile | TalentProfilePreview;
   viewerRole: "talent" | "recruiter" | "admin" | null;
   campaigns?: Campaign[];
+  portfolioItems?: PortfolioApiResponse[];
+  credits?: Credit[];
+  testimonials?: Testimonial[];
+  awards?: AwardType[];
 }
 
 function CampaignShortlistItem({
@@ -113,6 +125,10 @@ export function TalentProfileActions({
   profile,
   viewerRole,
   campaigns = [],
+  portfolioItems = [],
+  credits = [],
+  testimonials = [],
+  awards = [],
 }: TalentProfileActionsProps) {
   const username = profile.username ?? "";
   const isRecruiter = viewerRole === "recruiter" || viewerRole === "admin";
@@ -120,6 +136,18 @@ export function TalentProfileActions({
   const authUser = useAuthStore((s) => s.user);
   const isOwnProfile = !!authUser && authUser._id === profile.user_id;
   const requiresTier3 = !!authUser && authUser.verification_tier < 3;
+
+  const statItems = useMemo(
+    () =>
+      selectBestTalentStats({
+        profile: profile as TalentProfile,
+        portfolioItems,
+        credits,
+        testimonials,
+        awards,
+      }),
+    [profile, portfolioItems, credits, testimonials, awards],
+  );
 
   const { start: startConversation, isPending: messagePending } =
     useStartConversation(username, viewerRole ?? undefined);
@@ -148,6 +176,11 @@ export function TalentProfileActions({
         undefined,
       photoUrl: profile.profile_photo,
       isVerified: profile.is_verified,
+      tags:
+        profile.professions && profile.professions.length > 0
+          ? profile.professions.slice(0, 4)
+          : undefined,
+      statItems,
     }),
     [
       username,
@@ -157,6 +190,7 @@ export function TalentProfileActions({
       profile.professions,
       profile.profile_photo,
       profile.is_verified,
+      statItems,
     ],
   );
 
@@ -234,11 +268,16 @@ export function TalentProfileActions({
 
         <button
           type="button"
-          onClick={share.open}
+          onClick={() => void share.shareDestination("whatsapp")}
+          disabled={share.isBusy}
           aria-label="Share profile"
-           className="grid h-12 flex-1 place-items-center rounded-2xl bg-card text-foreground shadow-[0_6px_24px_rgba(15,23,42,0.05)] transition-all active:scale-95"
+          className="grid h-12 flex-1 place-items-center rounded-2xl bg-card text-foreground shadow-[0_6px_24px_rgba(15,23,42,0.05)] transition-all active:scale-95 disabled:opacity-70"
         >
-          <Share2 className="size-5" />
+          {share.isBusy ? (
+            <Loader2 className="size-5 animate-spin" />
+          ) : (
+            <Share2 className="size-5" />
+          )}
         </button>
       </div>
 

@@ -1,19 +1,16 @@
-import type { Metadata } from "next";
-
-export const metadata: Metadata = {
-  title: "Talent Profile | RootIn",
-  description:
-    "RootIn talent profile: portfolio reels, experience timeline, skills, reviews and awards.",
-  openGraph: {
-    title: "Talent Profile | RootIn",
-    description:
-      "RootIn talent profile: portfolio reels, experience timeline, skills, reviews and awards.",
-    type: "profile",
-  },
-  twitter: {
-    card: "summary_large_image",
-  },
-};
+/**
+ * Layout for public talent profile pages.
+ *
+ * Metadata is intentionally **not** exported here. The page-level
+ * `generateMetadata` in `page.tsx` produces dynamic, per-profile Open Graph
+ * and Twitter card tags. A static `metadata` export in the layout would merge
+ * with the page metadata and could override the dynamic title, description and
+ * images with stale fallback values — breaking the social preview for every
+ * profile.
+ *
+ * Next.js merges metadata bottom-up (layout → page), and the page's dynamic
+ * metadata already supplies every field a crawler needs.
+ */
 
 export default async function PublicTalentProfileLayout({
   children,
