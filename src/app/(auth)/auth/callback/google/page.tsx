@@ -47,17 +47,21 @@ function GoogleCallbackContent() {
         }
         setCookie("auth_session", "1", 7);
         setCookie("user_role", user.role, 7);
-        setCookie(
-          "onboarding_completed",
-          user.onboarding_completed || user.onboarding_exempted ? "1" : "0",
-          7,
-        );
+        const onboardingDone =
+          user.role === "provider"
+            ? Boolean(user.provider_onboarding_completed)
+            : Boolean(user.onboarding_completed || user.onboarding_exempted);
+        setCookie("onboarding_completed", onboardingDone ? "1" : "0", 7);
+        setCookie("user_capabilities", (user.account_capabilities ?? []).join(","), 7);
 
-        const done = user.onboarding_completed || user.onboarding_exempted;
         if (user.role === "recruiter") {
-          router.replace(done ? "/recruiter/dashboard" : "/auth/recruiter/signup?resume=1");
+          router.replace(
+            onboardingDone ? "/recruiter/dashboard" : "/auth/recruiter/signup?resume=1",
+          );
         } else if (user.role === "talent") {
-          router.replace(done ? "/talent/dashboard" : "/auth/talent/signup?resume=1");
+          router.replace(onboardingDone ? "/talent/dashboard" : "/auth/talent/signup?resume=1");
+        } else if (user.role === "provider") {
+          router.replace("/provider/onboarding");
         } else {
           router.replace("/auth?mode=signin&google_error=GOOGLE_TOKEN_EXCHANGE_FAILED");
         }

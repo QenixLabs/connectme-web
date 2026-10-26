@@ -97,7 +97,13 @@ export const ConversationRow = memo(function ConversationRow({
 }: ConversationRowProps) {
   const router = useRouter();
   const p = getConversationParticipant(conversation, currentUserId);
-  const name = p?.full_legal_name || p?.company_name || p?.username || "Unknown";
+  const name =
+    p?.full_legal_name ||
+    p?.display_name ||
+    p?.business_name ||
+    p?.company_name ||
+    p?.username ||
+    "Unknown";
   const initials =
     name
       .split(" ")

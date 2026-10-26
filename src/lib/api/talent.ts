@@ -444,7 +444,17 @@ export const talentApi = {
   },
 
   updateMyProfile: async (data: UpdateTalentProfilePayload) => {
-    const response = await apiClient.patch("/talent", data);
+    const payload =
+      data.languages === undefined
+        ? data
+        : {
+            ...data,
+            languages: data.languages.map(({ name, fluency }) => ({
+              name,
+              fluency,
+            })),
+          };
+    const response = await apiClient.patch("/talent", payload);
     return response.data as TalentProfile;
   },
 

@@ -128,6 +128,28 @@ export type {
   DashboardTalentRecommendation,
   DashboardTalentRecommendationsResponse,
 } from "./recommendations";
+export { providersApi, servicesApi } from "./marketplace";
+export type {
+  ProviderProfile,
+  PublicProviderProfile,
+  PublicProviderSummary,
+  ProviderDirectoryQuery,
+  ProviderFacets,
+  ProviderPortfolioItem,
+  ProviderLocation,
+  IndicativePrice,
+  ServiceStatus,
+  ServiceListing,
+  ServiceListingPayload,
+  PublicServiceSummary,
+  PublicServiceDetail,
+  PublicServiceProviderSummary,
+  ServiceQuery,
+  MyServicesQuery,
+  ServiceFacets,
+  UpdateProviderProfilePayload,
+  Paginated,
+} from "./marketplace";
 export { requestsApi } from "./requests";
 export type {
   CollaborationRequest,

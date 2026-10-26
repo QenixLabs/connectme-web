@@ -39,7 +39,12 @@ export const MessageBubble = memo(function MessageBubble({
   participant,
   index = 0,
 }: MessageBubbleProps) {
-  const name = participant?.full_legal_name || participant?.company_name || "Unknown";
+  const name =
+    participant?.full_legal_name ||
+    participant?.display_name ||
+    participant?.business_name ||
+    participant?.company_name ||
+    "Unknown";
   const initials = name
     .split(" ")
     .map((n) => n[0])

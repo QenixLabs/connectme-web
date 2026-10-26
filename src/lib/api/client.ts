@@ -99,6 +99,8 @@ const isPublicEndpoint = (url: string): boolean => {
   const publicPaths = [
     "/talent/profile/",
     "/recruiters/public",
+    "/providers",
+    "/services",
     "/auth/login",
     "/auth/signup",
     "/auth/verify-otp",

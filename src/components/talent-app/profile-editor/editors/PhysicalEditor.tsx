@@ -201,7 +201,7 @@ export function PhysicalEditor({ profile, onBack, onUpdate }: EditorProps) {
             onChange={(v) => set("eye_color", v)}
           />
           <SelectField
-            label="Complexion"
+            label="Skin Complexion"
             value={attrs.complexion}
             options={COMPLEXION_OPTIONS}
             onChange={(v) => set("complexion", v)}

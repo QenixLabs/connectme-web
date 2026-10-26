@@ -363,10 +363,19 @@ export function useShareProfile({
       }
 
       try {
+        const activeUrl = customUrl ?? canonicalUrl;
+        
+        // FIX: Ensure text and URL are combined into a single caption.
+        // If the URL isn't already inside the text payload, we append it.
+        const captionText = options.text.includes(activeUrl)
+          ? options.text
+          : `${options.text}\n${activeUrl}`;
+
         await navigator.share({
           files: [file],
-          title: options.title,
-          text: options.text,
+          text: captionText,
+          // FIX: Intentionally omit `title` and `url`. When sharing files, 
+          // passing multiple intent fields confuses Android/WhatsApp into splitting messages.
         });
         return "shared";
       } catch (error) {
@@ -375,7 +384,7 @@ export function useShareProfile({
         return "failed";
       }
     },
-    [buildCardFile],
+    [buildCardFile, canonicalUrl],
   );
 
   /**
@@ -449,11 +458,17 @@ export function useShareProfile({
             type: "image/png",
           });
           if (canShareFiles([file])) {
+            // FIX: Combine link with text and exclude `title` to enforce single WhatsApp message 
+            const captionText = shareText.includes(canonicalUrl)
+              ? shareText
+              : `${shareText}\n${canonicalUrl}`;
+
             await navigator.share({
               files: [file],
-              title: `${stableTarget.name} on ${SHARE_BRAND}`,
-              text: shareText,
+              text: captionText,
+              // Omitted: `title` and `url` to prevent intent splitting
             });
+            
             toast.success("Shared");
             void recordEvent({
               type: SHARE_EVENT_TYPES.nativeShare,
@@ -469,6 +484,8 @@ export function useShareProfile({
       }
 
       try {
+        // Fallback for non-file native sharing (e.g. basic web links)
+        // Here, it is safe to keep title and url because no files are attached.
         await navigator.share({
           title: `${stableTarget.name} on ${SHARE_BRAND}`,
           text: shareText,

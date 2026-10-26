@@ -3,6 +3,7 @@ import { ImageResponse } from "next/og";
 import {
   fetchImageAsDataUrl,
   fetchPublicTalentProfile,
+  fetchPublicTalentStats,
 } from "@/lib/server/public-talent-profile";
 
 /**
@@ -12,6 +13,11 @@ import {
  * reachable, always 1200 × 630 and never points at an internal API host.
  * The profile photo is embedded when it can be fetched; otherwise the brand
  * monogram is used.
+ *
+ * A proof-point row carries the four numbers a recruiter scans first:
+ * RootScore, testimonial rating, portfolio size and credit count. Each row
+ * cell degrades to an em dash, so a partial API failure still renders a
+ * complete image.
  */
 
 export const alt = "Talent profile on RootIn";
@@ -31,6 +37,21 @@ function initialsFor(name: string): string {
     .slice(0, 2);
   if (parts.length === 0) return "T";
   return parts.map((part) => part[0]?.toUpperCase() ?? "").join("");
+}
+
+/** RootScore band, matching the wording used by `StatsBento`. */
+function trustBand(score: number): string {
+  if (score >= 80) return "Excellent";
+  if (score >= 60) return "Good";
+  return "Average";
+}
+
+function plural(
+  count: number,
+  singular: string,
+  pluralWord = `${singular}s`,
+): string {
+  return `${count} ${count === 1 ? singular : pluralWord}`;
 }
 
 export default async function OpengraphImage({
@@ -55,6 +76,52 @@ export default async function OpengraphImage({
   const photo = profile?.profile_photo
     ? await fetchImageAsDataUrl(profile.profile_photo)
     : null;
+
+  const stats = await fetchPublicTalentStats(username, profile);
+  const mediaCount = stats.photoCount + stats.videoCount;
+
+  const statCards = [
+    {
+      value: stats.rootScore != null ? String(stats.rootScore) : "—",
+      label: "RootScore",
+      note: stats.rootScore != null ? trustBand(stats.rootScore) : "Not scored",
+      color: "#2563EB",
+    },
+    {
+      value: stats.rating != null ? stats.rating.toFixed(1) : "—",
+      label: "Rating",
+      note:
+        stats.reviewCount > 0
+          ? plural(stats.reviewCount, "review")
+          : "No reviews",
+      color: "#D97706",
+    },
+    {
+      value: mediaCount > 0 ? String(mediaCount) : "—",
+      label: "Portfolio",
+      note:
+        mediaCount > 0
+          ? [
+              stats.photoCount > 0 ? plural(stats.photoCount, "photo") : null,
+              stats.videoCount > 0 ? plural(stats.videoCount, "video") : null,
+            ]
+              .filter((part): part is string => part !== null)
+              .join(" · ")
+          : "No media yet",
+      color: "#7C3AED",
+    },
+    {
+      value: stats.projectCount > 0 ? String(stats.projectCount) : "—",
+      label: "Projects",
+      note:
+        stats.projectCount > 0
+          ? plural(stats.projectCount, "credit")
+          : "No credits yet",
+      color: "#0F9F92",
+    },
+  ];
+
+  const hasStats = statCards.some((card) => card.value !== "—");
 
   return new ImageResponse(
     (
@@ -202,6 +269,62 @@ export default async function OpengraphImage({
             ) : null}
           </div>
         </div>
+
+        {/* Proof points */}
+        {hasStats ? (
+          <div style={{ display: "flex", width: "100%" }}>
+            {statCards.map((card, index) => (
+              <div
+                key={card.label}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  flexGrow: 1,
+                  flexBasis: 0,
+                  marginLeft: index === 0 ? 0 : 16,
+                  padding: "18px 24px",
+                  borderRadius: 22,
+                  backgroundColor: "#FFFFFF",
+                  border: "2px solid rgba(18, 20, 58, 0.07)",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    fontSize: 46,
+                    fontWeight: 700,
+                    lineHeight: 1,
+                    color: card.color,
+                  }}
+                >
+                  {card.value}
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    marginTop: 9,
+                    fontSize: 16,
+                    fontWeight: 700,
+                    letterSpacing: 1.2,
+                    color: INK,
+                  }}
+                >
+                  {card.label.toUpperCase()}
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    marginTop: 4,
+                    fontSize: 16,
+                    color: MUTED,
+                  }}
+                >
+                  {card.note}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : null}
 
         {/* Footer */}
         <div

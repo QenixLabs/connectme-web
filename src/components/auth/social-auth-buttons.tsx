@@ -5,7 +5,7 @@ import { API_BASE_URL } from "@/lib/api/client";
 interface SocialAuthButtonsProps {
   className?: string;
   googleOnly?: boolean;
-  role?: "talent" | "recruiter";
+  role?: "talent" | "recruiter" | "provider";
   mode?: "signup" | "signin";
 }
 
@@ -32,7 +32,7 @@ function AppleIcon() {
   );
 }
 
-function googleUrl(mode: "signup" | "signin", role?: "talent" | "recruiter") {
+function googleUrl(mode: "signup" | "signin", role?: "talent" | "recruiter" | "provider") {
   if (mode === "signup" && role) {
     return `${API_BASE_URL}/auth/google?intent=signup&role=${role}`;
   }

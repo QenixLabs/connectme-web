@@ -33,8 +33,8 @@ function PublicPageSkeleton() {
 }
 
 function RecruiterActions({ profile }: { profile: TalentProfile }) {
-  const viewerRole = useAuthStore((state) => state.user?.role ?? null);
-  const { start: startConversation, isPending: messagePending } = useStartConversation(profile.username, viewerRole);
+  const viewerRole = (useAuthStore((state) => state.user?.role) as "talent" | "recruiter" | "admin" | null) ?? null;
+  const { start: startConversation, isPending: messagePending } = useStartConversation(profile.username, viewerRole as any);
   const { status: inviteStatus, isPending: invitePending, send: sendInvite } = useConnectionRequest(profile.user_id);
   const { isSaved, isPending: savePending, toggleSave } = useSaveTalent(profile.username);
 
@@ -76,14 +76,14 @@ function RecruiterActions({ profile }: { profile: TalentProfile }) {
   );
 }
 
-function PrivateAchievements({ profile, viewerRole }: { profile: PrivateTalentProfileResponse; viewerRole: "talent" | "recruiter" | "admin" | null }) {
+function PrivateAchievements({ profile, viewerRole }: { profile: PrivateTalentProfileResponse; viewerRole: "talent" | "recruiter" | "admin" | "provider" | null }) {
   return (
     <PrivateProfilePreview
       profile={{
         ...profile.preview,
         is_verified: profile.is_verified ?? profile.preview.is_verified,
       }}
-      viewerRole={viewerRole}
+      viewerRole={viewerRole as any}
     />
   );
 }
@@ -91,7 +91,7 @@ function PrivateAchievements({ profile, viewerRole }: { profile: PrivateTalentPr
 export function AchievementPublicPage({ username }: { username: string }) {
   const profileQuery = usePublicTalentProfile(username);
   const achievementsQuery = useTalentAchievements(username);
-  const viewerRole = useAuthStore((state) => state.user?.role ?? null);
+  const viewerRole = (useAuthStore((state) => state.user?.role) as "talent" | "recruiter" | "admin" | null) ?? null;
   const authUser = useAuthStore((state) => state.user);
   const profile = profileQuery.data;
   const achievements = Array.isArray(achievementsQuery.data) ? achievementsQuery.data : [];

@@ -291,7 +291,7 @@ export function useConnectionRequest(targetUserId: string) {
 
 export function useStartConversation(
   username: string,
-  role?: "talent" | "recruiter" | "admin" | null,
+  role?: "talent" | "recruiter" | "admin" | "provider" | null,
 ) {
   const router = useRouter();
   const requireAuth = useRequireAuth();

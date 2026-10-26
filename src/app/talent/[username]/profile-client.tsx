@@ -103,7 +103,7 @@ export function PublicTalentProfileClient({
   );
 
   const user = useAuthStore((s) => s.user);
-  const viewerRole = user?.role ?? null;
+  const viewerRole = (user?.role as "talent" | "recruiter" | "admin" | null) ?? null;
 
   const { data: campaignsData } = useQuery({
     queryKey: ["recruiter-campaigns-for-shortlist", viewerRole],

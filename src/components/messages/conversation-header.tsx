@@ -31,7 +31,12 @@ export function ConversationHeader({
   className,
 }: ConversationHeaderProps) {
   const router = useRouter();
-  const name = participant?.full_legal_name || participant?.company_name || "Unknown";
+  const name =
+    participant?.full_legal_name ||
+    participant?.display_name ||
+    participant?.business_name ||
+    participant?.company_name ||
+    "Unknown";
   const avatar = participant?.profile_photo;
   const initials = name
     .split(" ")
@@ -43,11 +48,16 @@ export function ConversationHeader({
   const city = participant?.location?.city;
   const verified = (participant?.verification_tier ?? 0) >= 2;
   const username = participant?.username;
+  const providerSlug = participant?.provider_slug;
   const role = participant?.role;
 
-  const canViewProfile = Boolean(username);
+  const canViewProfile = Boolean(username || providerSlug);
 
   function handleViewProfile() {
+    if (providerSlug) {
+      router.push(`/providers/${providerSlug}`);
+      return;
+    }
     if (!username) return;
     const path = role === "recruiter" ? `/recruiter/${username}` : `/talent/${username}`;
     router.push(path);
