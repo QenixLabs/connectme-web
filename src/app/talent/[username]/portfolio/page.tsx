@@ -188,8 +188,11 @@ function PortfolioContent() {
   const isOwner =
     !!user?.username &&
     user.username.toLowerCase() === username.toLowerCase();
-  const viewerRole = user?.role ?? null;
-  const { start: startConversation, isPending: messagePending } = useStartConversation(username, viewerRole);
+  const viewerRole = (user?.role as "talent" | "recruiter" | "admin" | null) ?? null;
+  const { start: startConversation, isPending: messagePending } = useStartConversation(
+    username,
+    viewerRole as any,
+  );
   const { isSaved, isPending: savePending, toggleSave } = useSaveTalent(username);
 
   const {

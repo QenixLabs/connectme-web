@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type Resolver } from "react-hook-form";
 import { z } from "zod";
@@ -345,6 +345,14 @@ export function AchievementForm({
     }
   }
 
+  function handleFormSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+  }
+
+  function handleSaveClick() {
+    void form.handleSubmit(handleSave)();
+  }
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
@@ -386,7 +394,7 @@ export function AchievementForm({
         </SheetHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSave)} className="flex min-h-0 flex-1 flex-col">
+          <form onSubmit={handleFormSubmit} className="flex min-h-0 flex-1 flex-col">
             <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-7">
               {step === 0 && (
                 <div className="space-y-4">
@@ -685,7 +693,7 @@ export function AchievementForm({
                     Continue
                   </Button>
                 ) : (
-                  <Button type="submit" disabled={isPending} className="h-11 flex-[1.35] rounded-full bg-gradient-to-r from-[#4d20ed] via-[#7732ed] to-[#c936ed] text-xs font-bold text-white shadow-[0_8px_20px_rgba(111,45,226,0.24)] hover:brightness-105">
+                  <Button type="button" onClick={handleSaveClick} disabled={isPending} className="h-11 flex-[1.35] rounded-full bg-gradient-to-r from-[#4d20ed] via-[#7732ed] to-[#c936ed] text-xs font-bold text-white shadow-[0_8px_20px_rgba(111,45,226,0.24)] hover:brightness-105">
                     {isPending && <Loader2 className="size-4 animate-spin" />}
                     {isEditing ? "Save Changes" : "Save Achievement"}
                   </Button>

@@ -19,13 +19,14 @@ export interface DetailGroup {
 
 export interface ExperienceItem {
   id: string;
-  years: string;
+  year?: number;
   role: string;
-  platform: string;
+  platform?: string;
   company: string;
   projectName?: string;
   director?: string;
   creditUrl?: string;
+  mediaUrl?: string;
   description: string;
 }
 
@@ -214,13 +215,14 @@ export function toExperienceItems(credits: Credit[]): ExperienceItem[] {
     })
     .map((c) => ({
       id: c._id,
-      years: c.year ? String(c.year) : "N/A",
+      year: c.year,
       role: c.role_played || "",
-      platform: c.platform || "Film",
+      platform: c.platform,
       company: [c.project_name, c.director].filter(Boolean).join(" • "),
       projectName: c.project_name,
       director: c.director,
       creditUrl: c.credit_url,
+      mediaUrl: c.media_url,
       description: c.description || "",
     }));
 }

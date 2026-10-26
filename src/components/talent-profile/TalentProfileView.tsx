@@ -9,6 +9,7 @@ import {
   Briefcase,
   Gem,
   Award,
+  Clapperboard,
   MessageSquare,
   FileText,
   User,
@@ -36,6 +37,7 @@ import { SignUpLoginBar } from "./SignUpLoginBar";
 import {
   AboutSection,
   ExperienceSection,
+  CreditsSection,
   SkillsSection,
   ReviewsSection,
   AwardsSection,
@@ -60,6 +62,7 @@ const tabItems = [
   { id: "skills", icon: Gem, label: "Skills" },
   { id: "details", icon: User, label: "Details" },
   { id: "awards", icon: Award, label: "Awards" },
+  { id: "credits", icon: Clapperboard, label: "Credits" },
   { id: "reviews", icon: MessageSquare, label: "Reviews" },
   { id: "media", icon: FolderOpen, label: "Media Kit" },
   { id: "analytics", icon: BarChart3, label: "Analytics" },
@@ -96,6 +99,7 @@ export function TalentProfileView({
     !!authUser?.username &&
     profile.username === authUser.username;
   const achievementsHref = `/talent/${encodeURIComponent(profile.username)}/achievements`;
+  const creditsHref = `/talent/${encodeURIComponent(profile.username)}/credits`;
 
   const experience = useMemo(() => toExperienceItems(credits), [credits]);
   const awardItems = useMemo(() => toAwardItems(awards), [awards]);
@@ -226,6 +230,10 @@ export function TalentProfileView({
                action="View All"
                onAction={() => router.push(achievementsHref)}
              />
+            <CreditsSection
+              data={experience}
+              onViewAll={() => router.push(creditsHref)}
+            />
             <ReviewsSection data={reviewItems} />
           </div>
         )}
@@ -269,6 +277,15 @@ export function TalentProfileView({
                action="View All"
                onAction={() => router.push(achievementsHref)}
              />
+          </div>
+        )}
+
+        {activeTab === "credits" && (
+         <div className="space-y-2.5">
+            <CreditsSection
+              data={experience}
+              onViewAll={() => router.push(creditsHref)}
+            />
           </div>
         )}
 

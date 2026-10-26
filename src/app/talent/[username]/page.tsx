@@ -2,6 +2,13 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 
 import { PublicTalentProfileClient } from "./profile-client";
+import {
+  OG_IMAGE_CONTENT_TYPE,
+  OG_IMAGE_HEIGHT,
+  OG_IMAGE_WIDTH,
+  buildTalentOgImageUrl,
+  buildTalentOgImageVersion,
+} from "@/lib/og-image";
 import { buildCanonicalProfileUrl } from "@/lib/share";
 import { buildProfileMetadata } from "@/lib/share-metadata";
 import { fetchPublicTalentProfile } from "@/lib/server/public-talent-profile";
@@ -60,15 +67,33 @@ export async function generateMetadata({
   const url = slug
     ? buildCanonicalProfileUrl({ role: "talent", slug }, origin)
     : "";
-  const imageUrl = origin
-    ? `${origin}/talent/${encodeURIComponent(slug)}/opengraph-image`
-    : "";
+
+  // The preview is the raw profile picture rendered by our own route handler,
+  // not the generated profile card. The hash changes whenever the photo (or
+  // the profile that owns it) changes, which is what makes WhatsApp drop its
+  // cached preview.
+  const profilePhoto = profile?.profile_photo?.trim() ?? "";
+  const imageUrl =
+    origin && slug && profilePhoto
+      ? buildTalentOgImageUrl({
+          origin,
+          slug,
+          version: buildTalentOgImageVersion({
+            profilePhoto,
+            updatedAt: profile?.updated_at,
+          }),
+        })
+      : "";
 
   return buildProfileMetadata({
     name,
     headline,
     url,
     imageUrl,
+    imageWidth: OG_IMAGE_WIDTH,
+    imageHeight: OG_IMAGE_HEIGHT,
+    imageType: OG_IMAGE_CONTENT_TYPE,
+    isVerified: profile?.is_verified,
   });
 }
 

@@ -3,12 +3,15 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import { authApi } from "@/lib/api";
 import { tokenStorage } from "@/lib/token-storage";
 
+export type UserCapability = "talent" | "recruiter" | "provider";
+
 export interface User {
   _id: string;
   username?: string;
   email: string;
   phone?: string;
-  role: "talent" | "recruiter" | "admin";
+  role: "talent" | "recruiter" | "provider" | "admin";
+  account_capabilities?: UserCapability[];
   is_email_verified: boolean;
   is_phone_verified: boolean;
   verification_tier: number;
@@ -20,6 +23,8 @@ export interface User {
   google_id?: string | null;
   onboarding_completed?: boolean;
   onboarding_exempted?: boolean;
+  provider_onboarding_completed?: boolean;
+  provider_profile?: Record<string, unknown> | null;
   has_password?: boolean;
   google_name?: string | null;
   google_picture?: string | null;
@@ -54,6 +59,27 @@ function deleteCookie(name: string) {
   document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
 }
 
+function isOnboardingComplete(user: User): boolean {
+  if (user.role === "provider") {
+    return Boolean(user.provider_onboarding_completed);
+  }
+  return Boolean(user.onboarding_completed || user.onboarding_exempted);
+}
+
+function setSessionCookies(user: User) {
+  setCookie("auth_session", "1", 7);
+  setCookie("user_role", user.role, 7);
+  setCookie("onboarding_completed", isOnboardingComplete(user) ? "1" : "0", 7);
+  setCookie("user_capabilities", (user.account_capabilities ?? []).join(","), 7);
+}
+
+function clearSessionCookies() {
+  deleteCookie("auth_session");
+  deleteCookie("user_role");
+  deleteCookie("onboarding_completed");
+  deleteCookie("user_capabilities");
+}
+
 export const authStore = createStore<AuthState>()(
   persist(
     (set) => ({
@@ -71,9 +97,7 @@ export const authStore = createStore<AuthState>()(
           tokenStorage.setToken(access_token);
           set({ accessToken: access_token });
           const { user } = await authApi.getCurrentUser();
-          setCookie("auth_session", "1", 7);
-          setCookie("user_role", user.role, 7);
-          setCookie("onboarding_completed", user.onboarding_completed || user.onboarding_exempted ? "1" : "0", 7);
+          setSessionCookies(user);
           set({ user, accessToken: access_token, isAuthenticated: true, isLoading: false });
         } catch (error: unknown) {
           const err = error as { response?: { data?: { message?: string } } };
@@ -90,6 +114,7 @@ export const authStore = createStore<AuthState>()(
         deleteCookie("auth_session");
         deleteCookie("user_role");
         deleteCookie("onboarding_completed");
+        deleteCookie("user_capabilities");
         tokenStorage.setToken(null);
         set({ user: null, accessToken: null, isAuthenticated: false, isLoading: false });
       },
@@ -98,14 +123,10 @@ export const authStore = createStore<AuthState>()(
         set({ isLoading: true });
         try {
           const { user } = await authApi.getCurrentUser();
-          setCookie("auth_session", "1", 7);
-          setCookie("user_role", user.role, 7);
-          setCookie("onboarding_completed", user.onboarding_completed || user.onboarding_exempted ? "1" : "0", 7);
+          setSessionCookies(user);
           set({ user, isAuthenticated: true, isLoading: false });
         } catch {
-          deleteCookie("auth_session");
-          deleteCookie("user_role");
-          deleteCookie("onboarding_completed");
+          clearSessionCookies();
           tokenStorage.setToken(null);
           set({ user: null, accessToken: null, isAuthenticated: false, isLoading: false });
         }

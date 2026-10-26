@@ -10,7 +10,12 @@
  * unreachable API must never break the page.
  */
 
-import type { PublicTalentProfileResponse } from "@/lib/api/talent";
+import type {
+  Credit,
+  PortfolioApiResponse,
+  PublicTalentProfileResponse,
+  Testimonial,
+} from "@/lib/api/talent";
 import { isPrivateTalentProfileResponse } from "@/lib/api/talent";
 
 /** How long the metadata may be cached before it is refreshed. */
@@ -29,26 +34,21 @@ function apiBaseUrl(): string {
 }
 
 /**
- * Reads the public profile of a talent.
+ * Reads a public API path and returns the unwrapped `data` payload.
  *
- * Returns `null` for a missing profile, a private profile and for every
- * error — the caller falls back to generic metadata.
+ * The public API answers with `{ success: true, data: ... }`; anything else is
+ * returned as-is. Every failure resolves to `null` so one broken request can
+ * never break a render.
  */
-export async function fetchPublicTalentProfile(
-  username: string,
-): Promise<PublicTalentProfile | null> {
-  const slug = (username ?? "").trim();
+async function fetchPublicJson<T>(path: string): Promise<T | null> {
   const base = apiBaseUrl();
-  if (!slug || !base) return null;
+  if (!base) return null;
 
   try {
-    const response = await fetch(
-      `${base}/talent/profile/${encodeURIComponent(slug)}`,
-      {
-        headers: { Accept: "application/json" },
-        next: { revalidate: PUBLIC_PROFILE_REVALIDATE_SECONDS },
-      },
-    );
+    const response = await fetch(`${base}${path}`, {
+      headers: { Accept: "application/json" },
+      next: { revalidate: PUBLIC_PROFILE_REVALIDATE_SECONDS },
+    });
 
     if (!response.ok) return null;
 
@@ -61,15 +61,34 @@ export async function fetchPublicTalentProfile(
         ? (payload as { data?: unknown }).data
         : payload;
 
-    if (!data || typeof data !== "object") return null;
-    if (isPrivateTalentProfileResponse(data as PublicTalentProfileResponse)) {
-      return null;
-    }
-
-    return data as PublicTalentProfile;
+    return (data ?? null) as T | null;
   } catch {
     return null;
   }
+}
+
+/**
+ * Reads the public profile of a talent.
+ *
+ * Returns `null` for a missing profile, a private profile and for every
+ * error — the caller falls back to generic metadata.
+ */
+export async function fetchPublicTalentProfile(
+  username: string,
+): Promise<PublicTalentProfile | null> {
+  const slug = (username ?? "").trim();
+  if (!slug) return null;
+
+  const data = await fetchPublicJson<unknown>(
+    `/talent/profile/${encodeURIComponent(slug)}`,
+  );
+
+  if (!data || typeof data !== "object") return null;
+  if (isPrivateTalentProfileResponse(data as PublicTalentProfileResponse)) {
+    return null;
+  }
+
+  return data as PublicTalentProfile;
 }
 
 /**
@@ -117,4 +136,95 @@ export async function fetchImageAsDataUrl(
   } finally {
     clearTimeout(timer);
   }
+}
+
+/**
+ * Headline numbers shown on the Open Graph image.
+ *
+ * Every field is `null`/`0` when the matching request fails, so the renderer
+ * can fall back to an em dash without losing the whole preview.
+ */
+export interface PublicTalentStats {
+  /** RootScore, 0–100, from `profile.trust_score`. */
+  rootScore: number | null;
+  /** Average testimonial rating, one decimal. */
+  rating: number | null;
+  /** Number of approved testimonials behind the rating. */
+  reviewCount: number;
+  /** Portfolio items of type `image`. */
+  photoCount: number;
+  /** Portfolio items of type `video` or `youtube`. */
+  videoCount: number;
+  /** Credits of type `credit`. */
+  projectCount: number;
+}
+
+const EMPTY_TALENT_STATS: PublicTalentStats = {
+  rootScore: null,
+  rating: null,
+  reviewCount: 0,
+  photoCount: 0,
+  videoCount: 0,
+  projectCount: 0,
+};
+
+function asArray<T>(value: unknown): T[] {
+  return Array.isArray(value) ? (value as T[]) : [];
+}
+
+/**
+ * Collects the numbers rendered in the stats row of the OG image.
+ *
+ * Takes the profile the caller already fetched so the profile endpoint is not
+ * requested twice. The remaining three requests run in parallel and each one
+ * degrades to empty data on failure.
+ */
+export async function fetchPublicTalentStats(
+  username: string,
+  profile: PublicTalentProfile | null,
+): Promise<PublicTalentStats> {
+  const slug = (username ?? "").trim();
+  if (!slug) return { ...EMPTY_TALENT_STATS };
+
+  const encoded = encodeURIComponent(slug);
+
+  const [testimonials, portfolio, credits] = await Promise.all([
+    fetchPublicJson<Testimonial[]>(`/talent/profile/${encoded}/testimonials`),
+    fetchPublicJson<
+      | { items?: PortfolioApiResponse[] }
+      | PortfolioApiResponse[]
+    >(`/talent/portfolio/${encoded}`),
+    fetchPublicJson<Credit[]>(`/talent/profile/${encoded}/credits`),
+  ]);
+
+  const reviewList = asArray<Testimonial>(testimonials);
+  const ratingSum = reviewList.reduce(
+    (total, review) => total + (review.rating ?? 5),
+    0,
+  );
+
+  const portfolioItems = Array.isArray(portfolio)
+    ? portfolio
+    : asArray<PortfolioApiResponse>(portfolio?.items);
+
+  const creditList = asArray<Credit>(credits);
+
+  const trustScore = profile?.trust_score;
+
+  return {
+    rootScore:
+      typeof trustScore === "number" && trustScore > 0
+        ? Math.round(trustScore)
+        : null,
+    rating:
+      reviewList.length > 0
+        ? Number((ratingSum / reviewList.length).toFixed(1))
+        : null,
+    reviewCount: reviewList.length,
+    photoCount: portfolioItems.filter((item) => item.type === "image").length,
+    videoCount: portfolioItems.filter(
+      (item) => item.type === "video" || item.type === "youtube",
+    ).length,
+    projectCount: creditList.filter((credit) => credit.type === "credit").length,
+  };
 }

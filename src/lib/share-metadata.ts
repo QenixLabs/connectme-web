@@ -18,6 +18,18 @@ export interface ProfileMetadataInput {
   url: string;
   /** Absolute URL of the preview image. */
   imageUrl: string;
+  /**
+   * Pixel dimensions of the served image.
+   *
+   * Crawlers use these to reserve the card before the image downloads.
+   * Defaults to 1200 × 630, the size WhatsApp needs for a large preview.
+   */
+  imageWidth?: number;
+  imageHeight?: number;
+  /** MIME type of the served image. Defaults to `image/png`. */
+  imageType?: string;
+  /** Alt text for crawlers that expose it. Defaults to the preview title. */
+  imageAlt?: string;
   /** Site name shown next to the title. */
   siteName?: string;
   /** Whether the profile carries a verification badge. */
@@ -101,7 +113,9 @@ export function buildProfileDescription(
  * Builds the Open Graph and Twitter/X card metadata for a profile.
  *
  * The preview image is always absolute — a relative URL is ignored by most
- * crawlers and would leave the preview empty.
+ * crawlers and would leave the preview empty. Width, height and MIME type are
+ * emitted alongside the URL because WhatsApp uses them to decide between a
+ * full landscape card and a small square thumbnail.
  */
 export function buildProfileMetadata(
   input: ProfileMetadataInput,
@@ -111,14 +125,25 @@ export function buildProfileMetadata(
   const description = buildProfileDescription(input);
   const image = input.imageUrl?.trim() ?? "";
 
+  const width =
+    typeof input.imageWidth === "number" && input.imageWidth > 0
+      ? input.imageWidth
+      : 1200;
+  const height =
+    typeof input.imageHeight === "number" && input.imageHeight > 0
+      ? input.imageHeight
+      : 630;
+  const type = input.imageType?.trim() || "image/png";
+  const alt = input.imageAlt?.trim() || title;
+
   const images = image
     ? [
         {
           url: image,
-          width: 1200,
-          height: 630,
-          type: "image/png",
-          alt: title,
+          width,
+          height,
+          type,
+          alt,
         },
       ]
     : [];

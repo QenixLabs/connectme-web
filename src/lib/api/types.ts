@@ -4,9 +4,12 @@ export interface ConversationParticipant {
   username?: string;
   full_legal_name?: string;
   company_name?: string;
+  display_name?: string;
+  business_name?: string;
+  provider_slug?: string;
   profile_photo?: string;
   professions?: string[];
-  role: "talent" | "recruiter" | "admin";
+  role: "talent" | "recruiter" | "provider" | "admin";
   verification_tier: number;
   location?: { country?: string; state?: string; city?: string };
 }

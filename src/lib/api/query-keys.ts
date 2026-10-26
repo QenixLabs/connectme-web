@@ -51,6 +51,22 @@ export const queryKeys = {
   messages: {
     unreadCount: () => ['messages', 'unread-count'] as const,
   },
+  provider: {
+    me: () => ['provider', 'me'] as const,
+    publicProfile: (slug: string) => ['provider', 'public', slug] as const,
+    directory: (filters: Record<string, unknown>) =>
+      ['provider', 'directory', filters] as const,
+    facets: () => ['provider', 'facets'] as const,
+  },
+  services: {
+    publicList: (filters: Record<string, unknown>) =>
+      ['services', 'public', filters] as const,
+    publicDetail: (id: string) => ['services', 'public', id] as const,
+    facets: () => ['services', 'facets'] as const,
+    mine: (filters: Record<string, unknown>) =>
+      ['services', 'mine', filters] as const,
+    mineDetail: (id: string) => ['services', 'mine', id] as const,
+  },
   subscriptions: {
     me: () => ['subscriptions', 'me'] as const,
     invoices: (page: number, limit: number) => ['subscriptions', 'invoices', page, limit] as const,

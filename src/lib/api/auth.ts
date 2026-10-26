@@ -11,7 +11,7 @@ export const authApi = {
     email: string;
     password: string;
     phone: string;
-    role: "talent" | "recruiter";
+    role: "talent" | "recruiter" | "provider";
     verification_method: "email" | "phone";
     auth_provider?: string;
     company_name?: string;
@@ -98,9 +98,37 @@ export const authApi = {
     return response.data;
   },
 
+  activateProvider: async () => {
+    const response = await apiClient.post("/provider/activate");
+    return response.data;
+  },
+
+  getProviderProfile: async () => {
+    const response = await apiClient.get("/provider/profile");
+    return response.data as { profile: any };
+  },
+
+  updateProviderProfile: async (data: {
+    display_name?: string;
+    business_name?: string;
+    phone?: string;
+    city?: string;
+    categories?: string[];
+    about?: string;
+    profile_photo?: string;
+  }) => {
+    const response = await apiClient.patch("/provider/profile", data);
+    return response.data as { profile: any };
+  },
+
+  completeProviderOnboarding: async () => {
+    const response = await apiClient.post("/provider/onboarding/complete");
+    return response.data;
+  },
+
   getOnboardingStatus: async () => {
     const response = await apiClient.get("/auth/onboarding/status");
-    return response.data as { eligible: boolean; missing: string[] };
+    return response.data as { eligible: boolean; missing: string[]; profile?: any };
   },
 
   completeOnboarding: async () => {

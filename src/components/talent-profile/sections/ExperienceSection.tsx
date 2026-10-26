@@ -24,14 +24,18 @@ function ExperienceCard({
       onClick={onClick}
       className="relative w-full text-left"
     >
-      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/50">
-        {item.years}
-      </p>
+      {item.year && (
+        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/50">
+          {item.year}
+        </p>
+      )}
       <div className="mt-1.5 flex flex-wrap items-center gap-2">
         <h3 className="text-sm font-semibold text-foreground/90">{item.role}</h3>
-        <span className="rounded-full bg-brand-soft px-2 py-0.5 text-[10px] font-medium text-brand">
-          {item.platform}
-        </span>
+        {item.platform && (
+          <span className="rounded-full bg-brand-soft px-2 py-0.5 text-[10px] font-medium text-brand">
+            {item.platform}
+          </span>
+        )}
       </div>
       <p className="mt-0.5 text-xs text-muted-foreground/60">{item.company}</p>
       {item.description && (
@@ -64,9 +68,7 @@ export function ExperienceSection({
     >
       {data.length === 0 ? (
         <div className="py-4 text-center sm:py-5">
-          <p className="text-sm text-muted-foreground/60">
-            No experience added yet.
-          </p>
+          <p className="text-sm text-muted-foreground/60">No experience added yet.</p>
           {isOwner && (
             <Link
               href="/talent/profile/experience"
@@ -100,9 +102,11 @@ export function ExperienceSection({
           {selected && (
             <div className="space-y-5 py-2">
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/50">
-                  {selected.years}
-                </p>
+                {selected.year && (
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/50">
+                    {selected.year}
+                  </p>
+                )}
                 <h3 className="mt-1 text-lg font-semibold text-foreground">{selected.role}</h3>
                 <p className="text-sm text-muted-foreground">{selected.company}</p>
               </div>
