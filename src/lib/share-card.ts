@@ -9,7 +9,7 @@
  * - Circular avatar with vivid gradient ring & verified check badge
  * - Talent name with verified badge and role headline
  * - Pastel category pills (Model, Fashion, Commercial, Editorial, etc.)
- * - Four-column stats bar (Photos, Reels, Projects, Brands)
+ * - Four-column stats bar (RootScore, Rating, Photos, Projects)
  * - Full-width gradient call-to-action button
  * - QR code & profile link panel
  *
@@ -23,7 +23,6 @@ import qrcode from "qrcode-generator";
 import {
   SHARE_BRAND,
   buildCanonicalProfileUrl,
-  type ShareCardStatIcon,
   type ShareCardStatItem,
   type ShareProfileTarget,
 } from "@/lib/share";
@@ -127,215 +126,53 @@ export interface ShareCardContent {
   handle: string;
   isVerified: boolean;
   tags: string[];
-  stats: {
-    photos: string;
-    reels: string;
-    projects: string;
-    brands: string;
-  };
-  /** Dynamic top 4 stats selected from candidate pool */
+  /** RootScore, rating, portfolio photos and projects in display order. */
   statItems: ShareCardStatItem[];
 }
 
 /**
- * Dynamically selects the top 4 most impressive stats from a profile's
- * candidate pool (awards, projects, photos, reels, brands, likes, experience, reviews, views).
+ * Builds the four profile proof points shown on every talent share card.
  */
 export function selectBestTalentStats(params: {
   profile?: {
-    years_of_experience?: number;
-    analytics?: {
-      like_count?: number;
-      profile_views_30d?: number;
-      profile_views_7d?: number;
-    };
+    trust_score?: number;
     media_limits?: {
       images_used?: number;
-      videos_used?: number;
     };
     portfolioHighlights?: unknown[];
   } | null;
   portfolioItems?: Array<{ type?: string; category?: string }>;
   credits?: Array<{ project_name?: string; platform?: string; director?: string }>;
-  testimonials?: unknown[];
-  awards?: unknown[];
+  testimonials?: Array<{ rating?: number }>;
 }): ShareCardStatItem[] {
   const profile = params.profile;
-  const portfolio = params.portfolioItems || [];
-  const credits = params.credits || [];
-  const testimonials = params.testimonials || [];
-  const awards = params.awards || [];
-
-  const photosCount =
-    portfolio.filter((i) => i.type === "image").length ||
-    profile?.media_limits?.images_used ||
-    0;
-
-  const reelsCount =
-    portfolio.filter(
-      (i) => i.type === "video" || i.type === "youtube" || i.type === "instagram",
-    ).length ||
-    profile?.media_limits?.videos_used ||
-    0;
-
+  const portfolio = params.portfolioItems ?? [];
+  const credits = params.credits ?? [];
+  const testimonials = params.testimonials ?? [];
+  const photosCount = params.portfolioItems
+    ? portfolio.filter((item) => item.type === "image").length
+    : profile?.media_limits?.images_used ?? 0;
   const projectsCount =
     credits.length ||
-    portfolio.filter((i) => i.category === "work").length ||
+    portfolio.filter((item) => item.category === "work").length ||
     profile?.portfolioHighlights?.length ||
     0;
+  const rating =
+    testimonials.length > 0
+      ? testimonials.reduce((sum, testimonial) => sum + (testimonial.rating ?? 5), 0) /
+        testimonials.length
+      : null;
+  const rootScore =
+    typeof profile?.trust_score === "number" && profile.trust_score > 0
+      ? String(Math.round(profile.trust_score))
+      : "—";
 
-  const uniqueBrands = new Set(
-    credits
-      .map((c) => c.platform?.trim() || c.director?.trim())
-      .filter(Boolean),
-  ).size;
-
-  const awardsCount = awards.length || 0;
-  const likesCount = profile?.analytics?.like_count || 0;
-  const yearsExp = profile?.years_of_experience || 0;
-  const reviewsCount = testimonials.length || 0;
-  const viewsCount =
-    profile?.analytics?.profile_views_30d ||
-    profile?.analytics?.profile_views_7d ||
-    0;
-
-  interface ScoredCandidate {
-    item: ShareCardStatItem;
-    score: number;
-    priority: number;
-  }
-
-  const pool: ScoredCandidate[] = [];
-
-  if (awardsCount > 0) {
-    pool.push({
-      item: {
-        icon: "award",
-        count: `${awardsCount}+`,
-        label: awardsCount === 1 ? "Award" : "Awards",
-      },
-      score: awardsCount * 100,
-      priority: 1,
-    });
-  }
-
-  if (projectsCount > 0) {
-    pool.push({
-      item: {
-        icon: "briefcase",
-        count: `${projectsCount}+`,
-        label: "Projects",
-      },
-      score: projectsCount * 15,
-      priority: 2,
-    });
-  }
-
-  if (photosCount > 0) {
-    pool.push({
-      item: {
-        icon: "camera",
-        count: `${photosCount}+`,
-        label: "Photos",
-      },
-      score: photosCount * 2,
-      priority: 3,
-    });
-  }
-
-  if (reelsCount > 0) {
-    pool.push({
-      item: {
-        icon: "play",
-        count: `${reelsCount}+`,
-        label: "Reels",
-      },
-      score: reelsCount * 8,
-      priority: 4,
-    });
-  }
-
-  if (uniqueBrands > 0) {
-    pool.push({
-      item: {
-        icon: "star",
-        count: `${uniqueBrands}+`,
-        label: "Brands",
-      },
-      score: uniqueBrands * 25,
-      priority: 5,
-    });
-  }
-
-  if (yearsExp > 0) {
-    pool.push({
-      item: {
-        icon: "calendar",
-        count: `${yearsExp}+ Yrs`,
-        label: "Experience",
-      },
-      score: yearsExp * 12,
-      priority: 6,
-    });
-  }
-
-  if (likesCount > 0) {
-    pool.push({
-      item: {
-        icon: "heart",
-        count: likesCount >= 1000 ? `${(likesCount / 1000).toFixed(1)}k` : `${likesCount}+`,
-        label: "Likes",
-      },
-      score: likesCount,
-      priority: 7,
-    });
-  }
-
-  if (reviewsCount > 0) {
-    pool.push({
-      item: {
-        icon: "message",
-        count: `${reviewsCount}+`,
-        label: "Reviews",
-      },
-      score: reviewsCount * 20,
-      priority: 8,
-    });
-  }
-
-  if (viewsCount >= 20) {
-    pool.push({
-      item: {
-        icon: "eye",
-        count: viewsCount >= 1000 ? `${(viewsCount / 1000).toFixed(1)}k` : `${viewsCount}+`,
-        label: "Views",
-      },
-      score: viewsCount / 10,
-      priority: 9,
-    });
-  }
-
-  // Sort pool by score descending, then by priority
-  pool.sort((a, b) => b.score - a.score || a.priority - b.priority);
-
-  const selected = pool.map((p) => p.item).slice(0, 4);
-
-  // If fewer than 4 candidates with activity, backfill from standard mockup defaults
-  const fallbackDefaults: ShareCardStatItem[] = [
-    { icon: "camera", count: "50+", label: "Photos" },
-    { icon: "play", count: "12+", label: "Reels" },
-    { icon: "briefcase", count: "8+", label: "Projects" },
-    { icon: "star", count: "5+", label: "Brands" },
+  return [
+    { icon: "award", count: rootScore, label: "RootScore" },
+    { icon: "star", count: rating === null ? "—" : rating.toFixed(1), label: "Rating" },
+    { icon: "camera", count: String(photosCount), label: "Photos" },
+    { icon: "briefcase", count: String(projectsCount), label: "Projects" },
   ];
-
-  for (const fallback of fallbackDefaults) {
-    if (selected.length >= 4) break;
-    if (!selected.some((s) => s.label === fallback.label)) {
-      selected.push(fallback);
-    }
-  }
-
-  return selected.slice(0, 4);
 }
 
 /**
@@ -366,22 +203,10 @@ export function buildShareCardContent(
       ? rawTags.slice(0, 4)
       : ["Model", "Fashion", "Commercial", "Editorial"];
 
-  const stats = {
-    photos: String(options.target.stats?.photos || "50+"),
-    reels: String(options.target.stats?.reels || "12+"),
-    projects: String(options.target.stats?.projects || "8+"),
-    brands: String(options.target.stats?.brands || "5+"),
-  };
-
   const statItems =
     options.target.statItems && options.target.statItems.length === 4
       ? options.target.statItems
-      : [
-          { icon: "camera" as ShareCardStatIcon, count: stats.photos, label: "Photos" },
-          { icon: "play" as ShareCardStatIcon, count: stats.reels, label: "Reels" },
-          { icon: "briefcase" as ShareCardStatIcon, count: stats.projects, label: "Projects" },
-          { icon: "star" as ShareCardStatIcon, count: stats.brands, label: "Brands" },
-        ];
+      : selectBestTalentStats({});
 
   return {
     brand,
@@ -394,7 +219,6 @@ export function buildShareCardContent(
     handle: buildHandleLabel(options.target.slug),
     isVerified: Boolean(options.target.isVerified),
     tags,
-    stats,
     statItems,
   };
 }
@@ -1162,14 +986,7 @@ export async function renderShareCardToCanvas(
 
   // --- F. Stats Bar --------------------------------------------------------
   const statsY = layout.stats.y;
-  const items = content.statItems && content.statItems.length === 4
-    ? content.statItems
-    : [
-        { icon: "camera" as ShareCardStatIcon, count: content.stats.photos, label: "Photos" },
-        { icon: "play" as ShareCardStatIcon, count: content.stats.reels, label: "Reels" },
-        { icon: "briefcase" as ShareCardStatIcon, count: content.stats.projects, label: "Projects" },
-        { icon: "star" as ShareCardStatIcon, count: content.stats.brands, label: "Brands" },
-      ];
+  const items = content.statItems;
 
   const statsCols = [
     { x: layout.stats.col1X, ...items[0] },

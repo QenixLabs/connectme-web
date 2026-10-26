@@ -579,7 +579,6 @@ export function useShareProfile({
             isVerified: targetOverride.isVerified,
             path: targetOverride.path,
             tags: targetOverride.tags,
-            stats: targetOverride.stats,
             statItems: targetOverride.statItems,
           }
         : stableTarget;

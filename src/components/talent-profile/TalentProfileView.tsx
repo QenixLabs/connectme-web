@@ -168,7 +168,6 @@ export function TalentProfileView({
           portfolioItems={portfolioItems}
           credits={credits}
           testimonials={testimonials}
-          awards={awards}
         />
 
         {/* Social connect */}

@@ -55,14 +55,7 @@ export interface ShareProfileTarget {
   path?: string;
   /** Category or skill tags rendered on the share card. */
   tags?: string[];
-  /** Portfolio metrics shown in the share card stats bar. */
-  stats?: {
-    photos?: string | number;
-    reels?: string | number;
-    projects?: string | number;
-    brands?: string | number;
-  };
-  /** Dynamically chosen top 4 stats rendered on the share card. */
+  /** RootScore, rating, portfolio photos and projects shown on talent cards. */
   statItems?: ShareCardStatItem[];
 }
 

@@ -37,7 +37,6 @@ import type {
   PortfolioApiResponse,
   Credit,
   Testimonial,
-  Award as AwardType,
 } from "@/lib/api/talent";
 import type { Campaign } from "@/lib/api/campaigns";
 import type { ShareProfileTarget } from "@/lib/share";
@@ -50,7 +49,6 @@ interface TalentProfileActionsProps {
   portfolioItems?: PortfolioApiResponse[];
   credits?: Credit[];
   testimonials?: Testimonial[];
-  awards?: AwardType[];
 }
 
 function CampaignShortlistItem({
@@ -128,7 +126,6 @@ export function TalentProfileActions({
   portfolioItems = [],
   credits = [],
   testimonials = [],
-  awards = [],
 }: TalentProfileActionsProps) {
   const username = profile.username ?? "";
   const isRecruiter = viewerRole === "recruiter" || viewerRole === "admin";
@@ -140,13 +137,12 @@ export function TalentProfileActions({
   const statItems = useMemo(
     () =>
       selectBestTalentStats({
-        profile: profile as TalentProfile,
+        profile,
         portfolioItems,
         credits,
         testimonials,
-        awards,
       }),
-    [profile, portfolioItems, credits, testimonials, awards],
+    [profile, portfolioItems, credits, testimonials],
   );
 
   const { start: startConversation, isPending: messagePending } =

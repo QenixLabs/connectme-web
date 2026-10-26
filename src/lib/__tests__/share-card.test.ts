@@ -400,42 +400,51 @@ describe("truncateToWidth", () => {
 });
 
 describe("selectBestTalentStats", () => {
-  it("selects top 4 stats from rich talent portfolio and credits", async () => {
+  it("shows RootScore, rating, portfolio photos and projects in order", async () => {
     const { selectBestTalentStats } = await import("@/lib/share-card");
     const stats = selectBestTalentStats({
       profile: {
-        years_of_experience: 6,
-        analytics: { like_count: 350 },
+        trust_score: 84.6,
       },
       portfolioItems: [
         { type: "image", category: "work" },
         { type: "image", category: "work" },
         { type: "video", category: "work" },
       ],
-      credits: [
-        { project_name: "Ad 1", platform: "Netflix" },
-        { project_name: "Ad 2", platform: "Amazon" },
-      ],
-      awards: [{ title: "Best Model 2024" }],
+      credits: [{ project_name: "Ad 1" }, { project_name: "Ad 2" }],
+      testimonials: [{ rating: 4 }, { rating: 5 }],
     });
 
     expect(stats.length).toBe(4);
-    const labels = stats.map((s) => s.label);
-    expect(labels).toContain("Award");
-    expect(labels).toContain("Likes");
-    expect(labels).toContain("Experience");
-    expect(labels).toContain("Brands");
+    expect(stats.map((stat) => stat.label)).toEqual([
+      "RootScore",
+      "Rating",
+      "Photos",
+      "Projects",
+    ]);
+    expect(stats.map((stat) => stat.count)).toEqual(["85", "4.5", "2", "2"]);
   });
 
-  it("falls back to balanced defaults when profile has no data", async () => {
+  it("does not substitute mock stats when profile data is missing", async () => {
     const { selectBestTalentStats } = await import("@/lib/share-card");
     const stats = selectBestTalentStats({});
     expect(stats.length).toBe(4);
     expect(stats.map((s) => s.label)).toEqual([
+      "RootScore",
+      "Rating",
       "Photos",
-      "Reels",
       "Projects",
-      "Brands",
     ]);
+    expect(stats.map((stat) => stat.count)).toEqual(["—", "—", "0", "0"]);
+  });
+
+  it("uses actual zero portfolio counts instead of profile media limits", async () => {
+    const { selectBestTalentStats } = await import("@/lib/share-card");
+    const stats = selectBestTalentStats({
+      profile: { media_limits: { images_used: 12 } },
+      portfolioItems: [],
+    });
+
+    expect(stats[2].count).toBe("0");
   });
 });
