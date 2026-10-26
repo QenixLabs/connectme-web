@@ -10,7 +10,6 @@
  * - Talent name with verified badge and role headline
  * - Pastel category pills (Model, Fashion, Commercial, Editorial, etc.)
  * - Four-column stats bar (RootScore, Rating, Photos, Projects)
- * - Full-width gradient call-to-action button
  * - QR code & profile link panel
  *
  * Everything degrades gracefully: missing photo falls back to initials,
@@ -82,25 +81,16 @@ export const SHARE_CARD_LAYOUT = {
     dividerY1: 579,
     dividerY2: 634,
   },
-  cta: {
-    x: 58,
-    y: 642,
-    width: 566,
-    height: 54,
-    radius: 29,
-    fontSize: 17,
-    label: "View Full Portfolio on RootIn",
-  },
   panel: {
     x: 44,
-    y: 704,
+    y: 650,
     width: 594,
     height: 140,
     radius: 20,
   },
   qr: {
     x: 488,
-    y: 706,
+    y: 652,
     size: 136,
     codeSize: 128,
   },
@@ -615,29 +605,6 @@ function drawMessageIcon(ctx: Ctx, x: number, y: number, color: string) {
   ctx.restore();
 }
 
-function drawLinkIcon(ctx: Ctx, x: number, y: number, size: number, color: string) {
-  ctx.save();
-  ctx.strokeStyle = color;
-  ctx.lineWidth = Math.max(2, size * 0.16);
-  ctx.lineCap = "round";
-
-  ctx.save();
-  ctx.translate(x - size * 0.14, y + size * 0.14);
-  ctx.rotate(-Math.PI / 4);
-  roundedRect(ctx, -size * 0.35, -size * 0.22, size * 0.7, size * 0.44, size * 0.22);
-  ctx.stroke();
-  ctx.restore();
-
-  ctx.save();
-  ctx.translate(x + size * 0.14, y - size * 0.14);
-  ctx.rotate(-Math.PI / 4);
-  roundedRect(ctx, -size * 0.35, -size * 0.22, size * 0.7, size * 0.44, size * 0.22);
-  ctx.stroke();
-  ctx.restore();
-
-  ctx.restore();
-}
-
 async function drawAvatar(
   ctx: Ctx,
   target: ShareProfileTarget,
@@ -1028,34 +995,7 @@ export async function renderShareCardToCanvas(
     ctx.stroke();
   }
 
-  // --- G. Gradient CTA Button ----------------------------------------------
-  const cta = layout.cta;
-  const ctaGrad = ctx.createLinearGradient(cta.x, cta.y, cta.x + cta.width, cta.y);
-  ctaGrad.addColorStop(0.0, "#0080FF");
-  ctaGrad.addColorStop(0.25, "#2C55F5");
-  ctaGrad.addColorStop(0.5, "#8C1FE8");
-  ctaGrad.addColorStop(0.72, "#E81C70");
-  ctaGrad.addColorStop(0.88, "#FF451A");
-  ctaGrad.addColorStop(1.0, "#FFA000");
-
-  ctx.fillStyle = ctaGrad;
-  roundedRect(ctx, cta.x, cta.y, cta.width, cta.height, cta.radius);
-  ctx.fill();
-
-  // Button link icon on left
-  drawLinkIcon(ctx, cta.x + 80, cta.y + cta.height / 2, 20, "#FFFFFF");
-
-  // Button text
-  ctx.fillStyle = "#FFFFFF";
-  ctx.font = `700 ${cta.fontSize}px ${font}`;
-  ctx.textAlign = "center";
-  ctx.fillText(cta.label, centerX + 10, cta.y + cta.height / 2 + 1);
-
-  // Button right arrow
-  ctx.font = `700 20px ${font}`;
-  ctx.fillText("→", cta.x + cta.width - 76, cta.y + cta.height / 2 + 1);
-
-  // --- H. Link & QR Code Card ----------------------------------------------
+  // --- G. Link & QR Code Card ----------------------------------------------
   const panel = layout.panel;
   ctx.fillStyle = "#FFFFFF";
   roundedRect(ctx, panel.x, panel.y, panel.width, panel.height, panel.radius);

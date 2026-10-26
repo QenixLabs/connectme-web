@@ -205,12 +205,6 @@ describe("share card layout", () => {
         left: 0,
         right: SHARE_CARD_WIDTH,
       },
-      cta: {
-        top: layout.cta.y,
-        bottom: layout.cta.y + layout.cta.height,
-        left: layout.cta.x,
-        right: layout.cta.x + layout.cta.width,
-      },
       panel: {
         top: layout.panel.y,
         bottom: layout.panel.y + layout.panel.height,
@@ -285,12 +279,7 @@ describe("share card layout", () => {
     expect(layout.stats.dividerY1).toBeGreaterThan(
       layout.pills.y + layout.pills.height,
     );
-    expect(layout.cta.y).toBeGreaterThan(
-      layout.stats.dividerY2,
-    );
-    expect(layout.panel.y).toBeGreaterThan(
-      layout.cta.y + layout.cta.height,
-    );
+    expect(layout.panel.y).toBeGreaterThan(layout.stats.dividerY2);
     expect(layout.footer.y - layout.footer.fontSize / 2).toBeGreaterThan(
       layout.panel.y + layout.panel.height,
     );
