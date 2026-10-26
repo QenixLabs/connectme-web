@@ -5,13 +5,13 @@
  * can be shared as a high-fidelity image on Instagram, WhatsApp, LinkedIn, etc.
  *
  * Uses the custom RootIn creative template background and overlays:
- * - Top talent badge & editorial script heading
+ * - Top talent badge
  * - Circular avatar with vivid gradient ring & verified check badge
  * - Talent name with verified badge and role headline
  * - Pastel category pills (Model, Fashion, Commercial, Editorial, etc.)
  * - Four-column stats bar (Photos, Reels, Projects, Brands)
  * - Full-width gradient call-to-action button
- * - QR code & link panel with handwritten scan prompt and arrow
+ * - QR code & profile link panel
  *
  * Everything degrades gracefully: missing photo falls back to initials,
  * missing template falls back to procedural glass gradient, and non-CORS
@@ -39,76 +39,71 @@ export const SHARE_CARD_SAFE_MARGIN = 24;
  */
 export const SHARE_CARD_LAYOUT = {
   header: {
-    badgeX: 64,
+    badgeX: 50,
     badgeY: 202,
-    badgeWidth: 124,
+    badgeWidth: 118,
     badgeHeight: 28,
-    creativeX: 576,
-    creativeY: 275,
   },
   portrait: {
     centerX: 352,
-    centerY: 260,
-    radius: 145,
+    centerY: 286,
+    radius: 174,
     ringWidth: 10,
     ringGap: 6,
-    badgeX: 460,
-    badgeY: 372,
+    badgeX: 477,
+    badgeY: 411,
     badgeRadius: 26,
   },
   name: {
-    y: 445,
-    fontSize: 34,
-    maxWidth: 520,
+    y: 493,
+    fontSize: 38,
+    maxWidth: 540,
   },
   headline: {
-    y: 480,
+    y: 523,
     fontSize: 17,
     maxWidth: 540,
   },
   badge: {
-    y: 445,
+    y: 493,
     height: 24,
     fontSize: 14,
   },
   pills: {
-    y: 514,
-    height: 28,
+    y: 543,
+    height: 27,
     fontSize: 13,
   },
   stats: {
-    y: 582,
+    y: 603,
     col1X: 128,
     col2X: 270,
     col3X: 412,
     col4X: 554,
-    dividerY1: 566,
-    dividerY2: 614,
+    dividerY1: 579,
+    dividerY2: 634,
   },
   cta: {
     x: 58,
-    y: 640,
+    y: 642,
     width: 566,
-    height: 58,
+    height: 54,
     radius: 29,
     fontSize: 17,
     label: "View Full Portfolio on RootIn",
   },
   panel: {
     x: 44,
-    y: 718,
+    y: 704,
     width: 594,
-    height: 122,
-    radius: 22,
-    handleOffset: 38,
-    linkOffset: 62,
-    ctaOffset: 84,
+    height: 140,
+    radius: 20,
   },
   qr: {
-    x: 444,
-    y: 728,
-    size: 102,
-    codeSize: 90,
+    x: 488,
+    y: 706,
+    size: 136,
+    codeSize: 128,
   },
   footer: {
     x: 64,
@@ -574,7 +569,7 @@ export function drawQr(
   const matrix = buildQrMatrix(value);
   if (!matrix) return;
 
-  const quiet = 1;
+  const quiet = 4;
   const total = matrix.count + quiet * 2;
   const cell = size / total;
 
@@ -819,34 +814,6 @@ function drawLinkIcon(ctx: Ctx, x: number, y: number, size: number, color: strin
   ctx.restore();
 }
 
-function drawCurvedArrow(ctx: Ctx, startX: number, startY: number, endX: number, endY: number) {
-  ctx.save();
-  ctx.strokeStyle = "#0B1B54";
-  ctx.fillStyle = "#0B1B54";
-  ctx.lineWidth = 1.6;
-  ctx.lineCap = "round";
-  ctx.beginPath();
-  ctx.moveTo(startX, startY);
-  ctx.quadraticCurveTo(startX + 8, startY + 22, endX, endY);
-  ctx.stroke();
-
-  const angle = Math.atan2(endY - (startY + 22), endX - (startX + 8));
-  const headLen = 6;
-  ctx.beginPath();
-  ctx.moveTo(endX, endY);
-  ctx.lineTo(
-    endX - headLen * Math.cos(angle - Math.PI / 6),
-    endY - headLen * Math.sin(angle - Math.PI / 6),
-  );
-  ctx.moveTo(endX, endY);
-  ctx.lineTo(
-    endX - headLen * Math.cos(angle + Math.PI / 6),
-    endY - headLen * Math.sin(angle + Math.PI / 6),
-  );
-  ctx.stroke();
-  ctx.restore();
-}
-
 async function drawAvatar(
   ctx: Ctx,
   target: ShareProfileTarget,
@@ -946,10 +913,7 @@ export async function renderShareCardToCanvas(
   // 1. Draw Template Background
   let templateDrawn = false;
   if (typeof window !== "undefined") {
-    const templateSrc = origin
-      ? `${origin.replace(/\/$/, "")}/images/share-template.png`
-      : "/images/share-template.png";
-    const loadedTemplate = await loadImageForCanvas(templateSrc);
+    const loadedTemplate = await loadImageForCanvas("/share-template.png");
     if (loadedTemplate) {
       ctx.drawImage(
         loadedTemplate.image,
@@ -981,9 +945,9 @@ export async function renderShareCardToCanvas(
       ctx.arc(x, y, r, 0, Math.PI * 2);
       ctx.fill();
     };
-    blob(80, 100, 220, "rgba(0,128,255,0.2)");
-    blob(600, 120, 240, "rgba(255,140,0,0.25)");
-    blob(620, 920, 260, "rgba(255,100,0,0.2)");
+    blob(80, 100, 220, "rgba(0,128,255,0.08)");
+    blob(600, 120, 240, "rgba(255,140,0,0.1)");
+    blob(620, 920, 260, "rgba(255,100,0,0.08)");
 
     // Frosted glass card plate
     ctx.fillStyle = "rgba(255, 255, 255, 0.88)";
@@ -1005,6 +969,16 @@ export async function renderShareCardToCanvas(
     ctx.font = `500 ${layout.footer.fontSize}px ${font}`;
     ctx.textAlign = "right";
     ctx.fillText(layout.footer.tagline, layout.footer.right, layout.footer.y);
+  }
+
+  if (templateDrawn) {
+    ctx.fillStyle = "rgba(255, 255, 255, 0.12)";
+    roundedRect(ctx, 34, 180, 614, 674, 30);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.35)";
+    ctx.lineWidth = 1.5;
+    roundedRect(ctx, 34, 180, 614, 674, 30);
+    ctx.stroke();
   }
 
   // --- A. Top-Left Badge: TALENT PROFILE ------------------------------------
@@ -1036,19 +1010,7 @@ export async function renderShareCardToCanvas(
   ctx.textBaseline = "middle";
   ctx.fillText("TALENT PROFILE", badgeX + 28, badgeY + badgeH / 2 + 1);
 
-  // --- B. Top-Right Handwritten: Creative Professional ---------------------
-  ctx.save();
-  ctx.translate(layout.header.creativeX, layout.header.creativeY);
-  ctx.rotate((-12 * Math.PI) / 180);
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillStyle = "#0B1B54";
-  ctx.font = `italic 700 22px 'Brush Script MT', 'Caveat', 'Segoe Script', cursive, sans-serif`;
-  ctx.fillText("Creative", 0, -11);
-  ctx.fillText("Professional", 0, 13);
-  ctx.restore();
-
-  // --- C. Avatar with Rainbow Ring -----------------------------------------
+  // --- B. Avatar with Rainbow Ring -----------------------------------------
   const { centerX, centerY, radius, ringWidth, ringGap, badgeX: avBadgeX, badgeY: avBadgeY, badgeRadius } =
     layout.portrait;
   const ringRadius = radius + ringGap;
@@ -1115,7 +1077,7 @@ export async function renderShareCardToCanvas(
   // Blue verified badge attached to bottom-right of avatar ring
   drawVerifiedBadge(ctx, avBadgeX, avBadgeY, badgeRadius, true);
 
-  // --- D. Name with Inline Verified Check -----------------------------------
+  // --- C. Name with Inline Verified Check -----------------------------------
   ctx.textBaseline = "middle";
   ctx.font = `700 ${layout.name.fontSize}px ${font}`;
   const maxNameWidth = layout.name.maxWidth;
@@ -1147,14 +1109,14 @@ export async function renderShareCardToCanvas(
     ctx.fillText(truncatedName, centerX, layout.name.y);
   }
 
-  // --- E. Headline / Roles -------------------------------------------------
+  // --- D. Headline / Roles -------------------------------------------------
   ctx.textAlign = "center";
   ctx.fillStyle = MUTED;
   ctx.font = `600 ${layout.headline.fontSize}px ${font}`;
   const headline = truncateToWidth(ctx, content.headline, layout.headline.maxWidth);
   ctx.fillText(headline, centerX, layout.headline.y);
 
-  // --- F. Category / Skill Pills -------------------------------------------
+  // --- E. Category / Skill Pills -------------------------------------------
   const pillColors = [
     { bg: "#E0EDFD", text: "#1877F2" }, // Model - Blue
     { bg: "#FEEFE6", text: "#E65100" }, // Fashion - Orange
@@ -1198,7 +1160,7 @@ export async function renderShareCardToCanvas(
     currentPillX += pill.width + pillGap;
   }
 
-  // --- G. Stats Bar --------------------------------------------------------
+  // --- F. Stats Bar --------------------------------------------------------
   const statsY = layout.stats.y;
   const items = content.statItems && content.statItems.length === 4
     ? content.statItems
@@ -1249,7 +1211,7 @@ export async function renderShareCardToCanvas(
     ctx.stroke();
   }
 
-  // --- H. Gradient CTA Button ----------------------------------------------
+  // --- G. Gradient CTA Button ----------------------------------------------
   const cta = layout.cta;
   const ctaGrad = ctx.createLinearGradient(cta.x, cta.y, cta.x + cta.width, cta.y);
   ctaGrad.addColorStop(0.0, "#0080FF");
@@ -1276,7 +1238,7 @@ export async function renderShareCardToCanvas(
   ctx.font = `700 20px ${font}`;
   ctx.fillText("→", cta.x + cta.width - 76, cta.y + cta.height / 2 + 1);
 
-  // --- I. Link & QR Code Card ----------------------------------------------
+  // --- H. Link & QR Code Card ----------------------------------------------
   const panel = layout.panel;
   ctx.fillStyle = "#FFFFFF";
   roundedRect(ctx, panel.x, panel.y, panel.width, panel.height, panel.radius);
@@ -1286,37 +1248,22 @@ export async function renderShareCardToCanvas(
   roundedRect(ctx, panel.x, panel.y, panel.width, panel.height, panel.radius);
   ctx.stroke();
 
-  // Circular link badge on left
-  const linkBadgeX = panel.x + 44;
-  const linkBadgeY = panel.y + panel.height / 2;
-  const linkBadgeRadius = 24;
-
-  ctx.fillStyle = "#EEF5FF";
-  ctx.beginPath();
-  ctx.arc(linkBadgeX, linkBadgeY, linkBadgeRadius, 0, Math.PI * 2);
-  ctx.fill();
-  drawLinkIcon(ctx, linkBadgeX, linkBadgeY, 18, "#2563EB");
-
   // Left text column
-  const textX = panel.x + 82;
-  const textMaxW = panel.width - 82 - layout.qr.size - 90;
+  const textX = panel.x + 32;
+  const textMaxW = layout.qr.x - textX - 26;
 
   ctx.textAlign = "left";
   ctx.fillStyle = INK;
-  ctx.font = `700 19px ${font}`;
+  ctx.font = `700 20px ${font}`;
   const handle = content.handle || content.shortUrl;
-  ctx.fillText(truncateToWidth(ctx, handle, textMaxW), textX, panel.y + 36);
-
-  ctx.fillStyle = MUTED;
-  ctx.font = `500 13.5px ${font}`;
-  ctx.fillText(truncateToWidth(ctx, content.shortUrl, textMaxW), textX, panel.y + 62);
+  ctx.fillText(truncateToWidth(ctx, handle, textMaxW), textX, panel.y + 58);
 
   ctx.fillStyle = LIGHT_MUTED;
-  ctx.font = `400 11.5px ${font}`;
+  ctx.font = `400 13px ${font}`;
   ctx.fillText(
     truncateToWidth(ctx, "Discover my work, skills and more on RootIn", textMaxW),
     textX,
-    panel.y + 85,
+    panel.y + 84,
   );
 
   // QR Code box on right
@@ -1325,30 +1272,17 @@ export async function renderShareCardToCanvas(
   const qrBoxSize = layout.qr.size;
 
   if (options.includeQr !== false) {
+    ctx.fillStyle = "#FFFFFF";
+    roundedRect(ctx, qrBoxX, qrBoxY, qrBoxSize, qrBoxSize, 12);
+    ctx.fill();
     ctx.strokeStyle = "#CBD5E1";
-    ctx.lineWidth = 1.2;
+    ctx.lineWidth = 1;
     roundedRect(ctx, qrBoxX, qrBoxY, qrBoxSize, qrBoxSize, 12);
     ctx.stroke();
 
     const qrInnerPadding = (qrBoxSize - layout.qr.codeSize) / 2;
     drawQr(ctx, content.url, qrBoxX + qrInnerPadding, qrBoxY + qrInnerPadding, layout.qr.codeSize);
   }
-
-  // "Scan to View Profile" & hand-drawn arrow
-  ctx.textAlign = "center";
-  ctx.fillStyle = "#0B1B54";
-  ctx.font = `italic 600 13px 'Brush Script MT', 'Caveat', 'Segoe Script', cursive, sans-serif`;
-  ctx.fillText("Scan", qrBoxX + qrBoxSize + 32, qrBoxY + 24);
-  ctx.fillText("to View", qrBoxX + qrBoxSize + 32, qrBoxY + 40);
-  ctx.fillText("Profile", qrBoxX + qrBoxSize + 32, qrBoxY + 56);
-
-  drawCurvedArrow(
-    ctx,
-    qrBoxX + qrBoxSize + 30,
-    qrBoxY + 68,
-    qrBoxX + qrBoxSize + 6,
-    qrBoxY + 84,
-  );
 
   return canvas;
 }
@@ -1359,7 +1293,7 @@ export async function renderShareCardToCanvas(
 export async function renderShareCard(
   options: ShareCardOptions,
 ): Promise<ShareCardResult> {
-  if (typeof document === "undefined") {
+  if (typeof document === "undefined") {  
     throw new Error("Share cards can only be rendered in the browser");
   }
 

@@ -94,16 +94,23 @@ export function AchievementPublicPage({ username }: { username: string }) {
   const viewerRole = (useAuthStore((state) => state.user?.role) as "talent" | "recruiter" | "admin" | null) ?? null;
   const authUser = useAuthStore((state) => state.user);
   const profile = profileQuery.data;
-  const achievements = Array.isArray(achievementsQuery.data) ? achievementsQuery.data : [];
+  const achievements = useMemo(
+    () => (Array.isArray(achievementsQuery.data) ? achievementsQuery.data : []),
+    [achievementsQuery.data],
+  );
+  const publicAchievements = useMemo(
+    () => achievements.filter((achievement) => PUBLIC_ACHIEVEMENT_TYPES.includes(achievement.type)),
+    [achievements],
+  );
   const [activeFilter, setActiveFilter] = usePublicFilter();
 
   const grouped = useMemo(
     () =>
       PUBLIC_ACHIEVEMENT_TYPES.reduce<Record<string, typeof achievements>>((result, type) => {
-        result[type] = achievements.filter((achievement) => achievement.type === type);
+        result[type] = publicAchievements.filter((achievement) => achievement.type === type);
         return result;
       }, {}),
-    [achievements],
+    [publicAchievements],
   );
   const filteredGrouped = useMemo(
     () =>
@@ -115,13 +122,9 @@ export function AchievementPublicPage({ username }: { username: string }) {
       ) as Record<string, typeof achievements>,
     [activeFilter, grouped],
   );
-  const filteredAchievements =
-    activeFilter === "credit"
-      ? achievements.filter((achievement) => achievement.type === "credit")
-      : Object.values(filteredGrouped).flat();
-  const verifiedCount = achievements.filter(isVerifiedAchievement).length;
+  const filteredAchievements = Object.values(filteredGrouped).flat();
+  const verifiedCount = publicAchievements.filter(isVerifiedAchievement).length;
   const isOwner = Boolean(authUser?.username && profile && "username" in profile && profile.username === authUser.username);
-  const hasCreditSection = achievements.some((achievement) => achievement.type === "credit");
 
   if (profileQuery.isLoading || achievementsQuery.isLoading) return <PublicPageSkeleton />;
   if (!profile || profileQuery.error) {
@@ -169,9 +172,9 @@ export function AchievementPublicPage({ username }: { username: string }) {
 
         {!isOwner && <RecruiterActions profile={publicProfile} />}
 
-        <AchievementStats achievements={achievements} />
+        <AchievementStats achievements={publicAchievements} />
 
-        <AchievementFilters value={activeFilter} onChange={setActiveFilter} showCredits={hasCreditSection} />
+        <AchievementFilters value={activeFilter} onChange={setActiveFilter} />
 
         {verifiedCount > 0 && (
           <Card className="rounded-[22px] border-[#d9cef9] bg-[linear-gradient(105deg,#f8f4ff,#ffffff)] shadow-[0_8px_22px_rgba(111,76,207,0.07)]">
@@ -189,9 +192,6 @@ export function AchievementPublicPage({ username }: { username: string }) {
           {PUBLIC_ACHIEVEMENT_TYPES.map((type) => (
             <AchievementSection key={type} type={type} achievements={filteredGrouped[type] ?? []} />
           ))}
-          {hasCreditSection && activeFilter === "credit" && (
-            <AchievementSection type="credit" achievements={achievements.filter((achievement) => achievement.type === "credit")} />
-          )}
         </div>
 
         {filteredAchievements.length === 0 && (

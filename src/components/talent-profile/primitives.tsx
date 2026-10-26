@@ -102,7 +102,9 @@ export function SectionHeader({
       )}
       {action && (
         <button
+          type="button"
           onClick={onAction}
+          aria-label={`${action} ${title}`}
           className="flex shrink-0 items-center gap-0.5 text-xs font-semibold text-brand transition-colors hover:text-brand/80"
         >
           {action} <ChevronRight className="size-3.5" />

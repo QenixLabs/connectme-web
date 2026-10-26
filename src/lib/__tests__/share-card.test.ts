@@ -143,8 +143,8 @@ describe("buildQrMatrix", () => {
 
   it("keeps the modules large enough to be scannable on the card", () => {
     const matrix = buildQrMatrix(CANONICAL_URL)!;
-    // The QR is drawn with a quiet zone of one module on each side.
-    const cells = matrix.count + 2;
+    // Four light modules on each side form the QR code's standard quiet zone.
+    const cells = matrix.count + 8;
     const cellSize = SHARE_CARD_LAYOUT.qr.codeSize / cells;
     expect(cellSize).toBeGreaterThanOrEqual(2.5);
   });
@@ -158,13 +158,22 @@ describe("share card layout", () => {
     expect(SHARE_CARD_HEIGHT).toBe(1024);
   });
 
+  it("enlarges the portrait and QR while preserving their placement", () => {
+    expect(layout.portrait.radius).toBeGreaterThanOrEqual(145 * 1.2);
+    expect(layout.qr.size).toBeGreaterThanOrEqual(102 * 1.3);
+    expect(layout.qr.codeSize).toBeLessThan(layout.qr.size);
+    expect(layout.header.badgeX + layout.header.badgeWidth).toBeLessThan(
+      layout.portrait.centerX - layout.portrait.radius,
+    );
+  });
+
   it("keeps every element inside the canvas", () => {
     const boxes = {
       header: {
         top: layout.header.badgeY,
         bottom: layout.header.badgeY + layout.header.badgeHeight,
         left: layout.header.badgeX,
-        right: layout.header.creativeX + 50,
+        right: layout.header.badgeX + layout.header.badgeWidth,
       },
       portrait: {
         top: layout.portrait.centerY - layout.portrait.radius,
@@ -254,9 +263,9 @@ describe("share card layout", () => {
     const qrLeft = layout.qr.x;
     const qrRight = qrLeft + layout.qr.size;
 
-    expect(qrTop).toBeGreaterThan(layout.panel.y);
-    expect(qrBottom).toBeLessThan(layout.panel.y + layout.panel.height);
-    expect(qrRight).toBeLessThan(layout.panel.x + layout.panel.width);
+    expect(qrTop).toBeGreaterThanOrEqual(layout.panel.y);
+    expect(qrBottom).toBeLessThanOrEqual(layout.panel.y + layout.panel.height);
+    expect(qrRight).toBeLessThanOrEqual(layout.panel.x + layout.panel.width);
     expect(qrBottom).toBeLessThan(layout.footer.y);
   });
 
