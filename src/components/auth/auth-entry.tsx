@@ -10,13 +10,14 @@ function AuthEntryContent() {
   const searchParams = useSearchParams();
   const mode = searchParams.get("mode");
   const role = searchParams.get("role");
+  const googleSignup = searchParams.get("google_signup") === "1";
   const recruiterSignup = mode === "signup" && role === "recruiter";
 
   if (recruiterSignup) return <RecruiterSignup isGoogleResume={searchParams.get("resume") === "1"} />;
   if (mode === "signup" && role !== "talent" && role !== "recruiter") {
     return (
       <div className="app-shell onboarding-theme">
-        <RoleScreen />
+        <RoleScreen googleSignup={googleSignup} />
       </div>
     );
   }

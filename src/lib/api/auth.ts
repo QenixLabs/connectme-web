@@ -1,6 +1,11 @@
 import { apiClient } from "./client";
 
 export const authApi = {
+  completeGoogleSignup: async (role: "talent" | "recruiter") => {
+    const response = await apiClient.post("/auth/google/complete-signup", { role });
+    return response.data;
+  },
+
   login: async (email: string, password: string) => {
     const response = await apiClient.post("/auth/login", { email, password });
     return response.data;

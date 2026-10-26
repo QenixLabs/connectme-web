@@ -6,11 +6,14 @@ import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   Check,
+  Loader2,
   Search,
   UsersRound,
 } from "lucide-react";
 import { useState } from "react";
 import logoImage from "@/assets/rootin-logo-orange.png";
+import { authApi } from "@/lib/api";
+import { authStore } from "@/stores/auth-store";
 
 /**
  * Migrated from design-pixel-perfect/src/routes/index.tsx.
@@ -96,16 +99,46 @@ function RoleCard({
 export function RoleScreen({
   initialRole = "recruiter",
   onContinue,
+  googleSignup = false,
 }: {
   initialRole?: OnboardingRole;
   onContinue?: (role: OnboardingRole) => void;
+  googleSignup?: boolean;
 } = {}) {
   const router = useRouter();
   const [selected, setSelected] = useState<Role>(initialRole);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (onContinue) {
       onContinue(selected);
+      return;
+    }
+    if (googleSignup) {
+      setSubmitting(true);
+      setError(null);
+      try {
+        authStore.getState().setAccessToken(null);
+        await authApi.completeGoogleSignup(selected);
+        router.replace(
+          selected === "talent"
+            ? "/auth/talent/signup?resume=1"
+            : "/auth/recruiter/signup?resume=1",
+        );
+      } catch (err: unknown) {
+        const response = err as { response?: { data?: { message?: string | string[] } } };
+        const message = response.response?.data?.message;
+        setError(
+          message === "GOOGLE_SIGNUP_SESSION_EXPIRED"
+            ? "Your Google signup session expired. Please start Google sign-in again."
+            : Array.isArray(message)
+              ? message.join(" ")
+              : message || "Could not continue Google signup. Please try again.",
+        );
+      } finally {
+        setSubmitting(false);
+      }
       return;
     }
     router.push(selected === "talent" ? "/auth/talent/signup" : "/auth/recruiter/signup");
@@ -122,10 +155,16 @@ export function RoleScreen({
 
       <section className="px-6 pt-6">
         <h1 className="text-[1.65rem] font-extrabold leading-[1.08] text-foreground">
-          How do you want to<br />be a part of <span className="text-primary">Rootin?</span>
+          {googleSignup ? (
+            <>Choose your role<br />on <span className="text-primary">Rootin.</span></>
+          ) : (
+            <>How do you want to<br />be a part of <span className="text-primary">Rootin?</span></>
+          )}
         </h1>
         <p className="mt-2 text-[0.78rem] font-medium text-muted-foreground">
-          Choose your role to get a personalized experience.
+          {googleSignup
+            ? "Your Google account is verified. Choose Talent or Recruiter to continue signup."
+            : "Choose your role to get a personalized experience."}
         </p>
       </section>
 
@@ -135,9 +174,18 @@ export function RoleScreen({
       </section>
 
       <div className="mt-auto px-5 pb-6 pt-5">
-        <button className="continue-button" type="button" onClick={handleContinue}>
-          <span>Continue as {selected === "recruiter" ? "Recruiter" : "Talent"}</span>
-          <ArrowRight size={21} />
+        {error && (
+          <p className="mb-3 rounded-xl bg-red-500/10 px-4 py-3 text-sm font-medium text-red-700" role="alert">
+            {error}
+          </p>
+        )}
+        <button className="continue-button" type="button" onClick={handleContinue} disabled={submitting}>
+          <span>
+            {submitting
+              ? "Preparing your signup..."
+              : `Continue as ${selected === "recruiter" ? "Recruiter" : "Talent"}`}
+          </span>
+          {submitting ? <Loader2 size={21} className="animate-spin" /> : <ArrowRight size={21} />}
         </button>
         <p className="mt-6 text-center text-[0.72rem] font-medium text-muted-foreground">
           Already have an account?{" "}
