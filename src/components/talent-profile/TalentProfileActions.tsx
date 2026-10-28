@@ -34,8 +34,6 @@ import { useAuthStore } from "@/providers/auth-store-provider";
 import type {
   TalentProfile,
   TalentProfilePreview,
-  PortfolioApiResponse,
-  Credit,
   Testimonial,
 } from "@/lib/api/talent";
 import type { Campaign } from "@/lib/api/campaigns";
@@ -46,8 +44,6 @@ interface TalentProfileActionsProps {
   profile: TalentProfile | TalentProfilePreview;
   viewerRole: "talent" | "recruiter" | "admin" | null;
   campaigns?: Campaign[];
-  portfolioItems?: PortfolioApiResponse[];
-  credits?: Credit[];
   testimonials?: Testimonial[];
 }
 
@@ -123,8 +119,6 @@ export function TalentProfileActions({
   profile,
   viewerRole,
   campaigns = [],
-  portfolioItems = [],
-  credits = [],
   testimonials = [],
 }: TalentProfileActionsProps) {
   const username = profile.username ?? "";
@@ -138,11 +132,9 @@ export function TalentProfileActions({
     () =>
       selectBestTalentStats({
         profile,
-        portfolioItems,
-        credits,
         testimonials,
       }),
-    [profile, portfolioItems, credits, testimonials],
+    [profile, testimonials],
   );
 
   const { start: startConversation, isPending: messagePending } =

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Briefcase,
+  ClipboardList,
   LayoutDashboard,
   LogOut,
   MessageSquare,
@@ -15,11 +16,13 @@ import { authStore } from "@/stores/auth-store";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { MarketplaceNotificationBell } from "@/components/marketplace/marketplace-notification-bell";
 
 const NAV_ITEMS = [
   { href: "/provider/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/provider/profile", label: "Profile", icon: UserRound },
   { href: "/provider/services", label: "Services", icon: Briefcase },
+  { href: "/provider/inquiries", label: "Inquiries", icon: ClipboardList },
   { href: "/provider/messages", label: "Messages", icon: MessageSquare },
 ];
 
@@ -80,6 +83,7 @@ export function ProviderShell({ children }: { children: React.ReactNode }) {
           </nav>
 
           <div className="ml-auto flex items-center gap-2">
+            {user && <MarketplaceNotificationBell />}
             <Link
               href="/services"
               className="hidden text-sm font-medium text-muted-foreground hover:text-foreground sm:inline"
@@ -106,7 +110,7 @@ export function ProviderShell({ children }: { children: React.ReactNode }) {
       <main className="mx-auto w-full max-w-6xl px-4 py-6 pb-24 md:pb-10">{children}</main>
 
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border/60 bg-background/95 backdrop-blur md:hidden">
-        <div className="grid grid-cols-4">
+        <div className="grid grid-cols-5">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const active = pathname.startsWith(item.href);

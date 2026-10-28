@@ -8,6 +8,10 @@ import { servicesApi } from "@/lib/api/marketplace";
 import type { ServiceQuery } from "@/lib/api/marketplace";
 import { getApiErrorMessage } from "@/lib/api/client";
 import { queryKeys } from "@/lib/api/query-keys";
+import {
+  readServiceSearchFilters,
+  updateMarketplaceSearchParams,
+} from "@/lib/marketplace-search";
 import { ServiceCard } from "@/components/marketplace/service-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,24 +35,8 @@ const SORT_OPTIONS: { value: NonNullable<ServiceQuery["sort"]>; label: string }[
   { value: "oldest", label: "Oldest" },
   { value: "price_low", label: "Price: low to high" },
   { value: "price_high", label: "Price: high to low" },
+  { value: "highest_rating", label: "Highest rated" },
 ];
-
-function readFilters(params: URLSearchParams): ServiceQuery {
-  const page = Number(params.get("page") ?? "1");
-  const sortParam = params.get("sort") ?? "relevance";
-  const sort = SORT_OPTIONS.some((option) => option.value === sortParam)
-    ? (sortParam as NonNullable<ServiceQuery["sort"]>)
-    : "relevance";
-
-  return {
-    search: params.get("search")?.trim() || undefined,
-    category: params.get("category")?.trim() || undefined,
-    location: params.get("location")?.trim() || undefined,
-    sort,
-    page: Number.isFinite(page) && page > 0 ? Math.floor(page) : 1,
-    limit: PAGE_SIZE,
-  };
-}
 
 function ServicesBrowser() {
   const router = useRouter();
@@ -56,7 +44,7 @@ function ServicesBrowser() {
   const searchParams = useSearchParams();
 
   const filters = useMemo(
-    () => readFilters(new URLSearchParams(searchParams.toString())),
+    () => readServiceSearchFilters(new URLSearchParams(searchParams.toString())),
     [searchParams],
   );
 
@@ -72,14 +60,13 @@ function ServicesBrowser() {
   }
 
   function pushParams(patch: Record<string, string | undefined>, resetPage = true) {
-    const next = new URLSearchParams(searchParams.toString());
-    for (const [key, value] of Object.entries(patch)) {
-      if (value) next.set(key, value);
-      else next.delete(key);
-    }
-    if (resetPage) next.delete("page");
+    const next = updateMarketplaceSearchParams(
+      new URLSearchParams(searchParams.toString()),
+      patch,
+      resetPage,
+    );
     const query = next.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    router.push(query ? `${pathname}?${query}` : pathname, { scroll: false });
   }
 
   useEffect(() => {
@@ -94,7 +81,7 @@ function ServicesBrowser() {
 
   const listingsQuery = useQuery({
     queryKey: queryKeys.services.publicList(filters as Record<string, unknown>),
-    queryFn: () => servicesApi.getPublicListings(filters),
+    queryFn: ({ signal }) => servicesApi.getPublicListings(filters, signal),
   });
 
   const facetsQuery = useQuery({
@@ -107,7 +94,15 @@ function ServicesBrowser() {
   const services = data?.data ?? [];
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const activeFilters = [filters.search, filters.category, filters.location].filter(Boolean);
+  const activeFilters = [
+    filters.search,
+    filters.category,
+    filters.location,
+    filters.currency,
+    filters.min_price !== undefined,
+    filters.max_price !== undefined,
+    filters.min_rating !== undefined,
+  ].filter(Boolean);
 
   return (
     <div className="space-y-6">
@@ -126,6 +121,12 @@ function ServicesBrowser() {
             <Input
               value={searchInput}
               onChange={(event) => setSearchInput(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  pushParams({ search: searchInput.trim() || undefined });
+                }
+              }}
               placeholder="Search services, categories, or locations"
               className="pl-9"
               aria-label="Search services"
@@ -142,7 +143,7 @@ function ServicesBrowser() {
             )}
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">Category</label>
               <Select
@@ -188,10 +189,103 @@ function ServicesBrowser() {
             </div>
 
             <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">Price currency</label>
+              <Select
+                value={filters.currency ?? "INR"}
+                onValueChange={(value) => pushParams({ currency: value })}
+              >
+                <SelectTrigger aria-label="Price currency">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {(facetsQuery.data?.currencies ?? ["INR"]).map((currency) => (
+                    <SelectItem key={currency} value={currency}>
+                      {currency}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label htmlFor="minimum-price" className="text-xs font-medium text-muted-foreground">
+                Minimum price ({filters.currency ?? "INR"})
+              </label>
+              <Input
+                id="minimum-price"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                value={filters.min_price?.toString() ?? ""}
+                onChange={(event) =>
+                  pushParams({
+                    min_price:
+                      event.target.value && Number(event.target.value) >= 0
+                        ? event.target.value
+                        : undefined,
+                    currency: filters.currency ?? "INR",
+                  })
+                }
+                placeholder="No minimum"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label htmlFor="maximum-price" className="text-xs font-medium text-muted-foreground">
+                Maximum price ({filters.currency ?? "INR"})
+              </label>
+              <Input
+                id="maximum-price"
+                type="number"
+                inputMode="decimal"
+                min={0}
+                value={filters.max_price?.toString() ?? ""}
+                onChange={(event) =>
+                  pushParams({
+                    max_price:
+                      event.target.value && Number(event.target.value) >= 0
+                        ? event.target.value
+                        : undefined,
+                    currency: filters.currency ?? "INR",
+                  })
+                }
+                placeholder="No maximum"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">Minimum rating</label>
+              <Select
+                value={filters.min_rating?.toString() ?? "any"}
+                onValueChange={(value) =>
+                  pushParams({ min_rating: value === "any" ? undefined : value })
+                }
+              >
+                <SelectTrigger aria-label="Minimum rating">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="any">Any rating</SelectItem>
+                  <SelectItem value="4">4 stars and up</SelectItem>
+                  <SelectItem value="3">3 stars and up</SelectItem>
+                  <SelectItem value="2">2 stars and up</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">Sort by</label>
               <Select
                 value={filters.sort ?? "relevance"}
-                onValueChange={(value) => pushParams({ sort: value === "relevance" ? undefined : value })}
+                onValueChange={(value) =>
+                  pushParams({
+                    sort: value === "relevance" ? undefined : value,
+                    currency:
+                      value === "price_low" || value === "price_high"
+                        ? filters.currency ?? "INR"
+                        : filters.currency || undefined,
+                  })
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -231,6 +325,30 @@ function ServicesBrowser() {
                   onRemove={() => pushParams({ location: undefined })}
                 />
               )}
+              {filters.currency && (
+                <FilterChip
+                  label={`Currency: ${filters.currency}`}
+                  onRemove={() => pushParams({ currency: undefined })}
+                />
+              )}
+              {filters.min_price !== undefined && (
+                <FilterChip
+                  label={`Min price: ${filters.min_price}`}
+                  onRemove={() => pushParams({ min_price: undefined })}
+                />
+              )}
+              {filters.max_price !== undefined && (
+                <FilterChip
+                  label={`Max price: ${filters.max_price}`}
+                  onRemove={() => pushParams({ max_price: undefined })}
+                />
+              )}
+              {filters.min_rating !== undefined && (
+                <FilterChip
+                  label={`${filters.min_rating}+ stars`}
+                  onRemove={() => pushParams({ min_rating: undefined })}
+                />
+              )}
               <Button
                 type="button"
                 variant="link"
@@ -242,6 +360,10 @@ function ServicesBrowser() {
                     search: undefined,
                     category: undefined,
                     location: undefined,
+                    currency: undefined,
+                    min_price: undefined,
+                    max_price: undefined,
+                    min_rating: undefined,
                     sort: undefined,
                   });
                 }}
@@ -300,6 +422,10 @@ function ServicesBrowser() {
                   search: undefined,
                   category: undefined,
                   location: undefined,
+                  currency: undefined,
+                  min_price: undefined,
+                  max_price: undefined,
+                  min_rating: undefined,
                   sort: undefined,
                 });
               }}

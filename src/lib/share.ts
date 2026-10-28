@@ -24,12 +24,14 @@ export type ShareCardStatIcon =
   | "award"
   | "calendar"
   | "eye"
-  | "message";
+  | "message"
+  | "bookmark";
 
 export interface ShareCardStatItem {
   icon: ShareCardStatIcon;
   count: string;
   label: string;
+  note?: string;
 }
 
 /** The profile a user is sharing. */
@@ -55,7 +57,7 @@ export interface ShareProfileTarget {
   path?: string;
   /** Category or skill tags rendered on the share card. */
   tags?: string[];
-  /** RootScore, rating, portfolio photos and projects shown on talent cards. */
+  /** RootScore, response rate, rating and shortlist count shown on talent cards. */
   statItems?: ShareCardStatItem[];
 }
 

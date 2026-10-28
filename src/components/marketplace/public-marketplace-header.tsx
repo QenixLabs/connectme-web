@@ -8,6 +8,7 @@ import { useStore } from "zustand/react";
 import { authStore } from "@/stores/auth-store";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { MarketplaceNotificationBell } from "@/components/marketplace/marketplace-notification-bell";
 
 function dashboardFor(role?: string, capabilities?: string[]) {
   if (capabilities?.includes("provider")) return "/provider/dashboard";
@@ -25,6 +26,9 @@ export function PublicMarketplaceHeader() {
     { href: "/services", label: "Services", icon: Briefcase },
     { href: "/providers", label: "Providers", icon: Users },
   ];
+  const accountLinks = user
+    ? [{ href: "/inquiries", label: "My inquiries" }]
+    : [];
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/90 backdrop-blur-xl">
@@ -54,16 +58,33 @@ export function PublicMarketplaceHeader() {
               </Link>
             );
           })}
+          {accountLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={cn(
+                "rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                pathname.startsWith(link.href)
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground",
+              )}
+            >
+              {link.label}
+            </Link>
+          ))}
         </nav>
 
         <div className="ml-auto hidden items-center gap-2 md:flex">
           {user ? (
-            <Button asChild variant="outline">
-              <Link href={dashboardFor(user.role, user.account_capabilities)}>
-                <LayoutDashboard className="mr-2 size-4" />
-                Dashboard
-              </Link>
-            </Button>
+            <>
+              <MarketplaceNotificationBell />
+              <Button asChild variant="outline">
+                <Link href={dashboardFor(user.role, user.account_capabilities)}>
+                  <LayoutDashboard className="mr-2 size-4" />
+                  Dashboard
+                </Link>
+              </Button>
+            </>
           ) : (
             <>
               <Button asChild variant="ghost">
@@ -76,21 +97,33 @@ export function PublicMarketplaceHeader() {
           )}
         </div>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          className="ml-auto md:hidden"
-          aria-label="Toggle menu"
-          onClick={() => setOpen((value) => !value)}
-        >
-          {open ? <X className="size-5" /> : <Menu className="size-5" />}
-        </Button>
+        <div className="ml-auto flex items-center gap-1 md:hidden">
+          {user && <MarketplaceNotificationBell />}
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Toggle menu"
+            onClick={() => setOpen((value) => !value)}
+          >
+            {open ? <X className="size-5" /> : <Menu className="size-5" />}
+          </Button>
+        </div>
       </div>
 
       {open && (
         <div className="border-t px-4 py-3 md:hidden">
           <div className="flex flex-col gap-1">
             {links.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setOpen(false)}
+                className="rounded-lg px-3 py-2 text-sm font-medium hover:bg-muted"
+              >
+                {link.label}
+              </Link>
+            ))}
+            {accountLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}

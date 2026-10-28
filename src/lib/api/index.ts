@@ -101,6 +101,14 @@ export type {
   RecruiterDashboardStats,
 } from "./campaigns";
 export { conversationsApi } from "./conversations";
+export { serviceInquiriesApi } from "./inquiries";
+export type {
+  ServiceInquiry,
+  ServiceInquiryStatus,
+  ServiceInquiriesResponse,
+  ServiceInquiryQuery,
+  CreateServiceInquiryPayload,
+} from "./inquiries";
 export type {
   Conversation,
   ConversationParticipant,
@@ -133,6 +141,11 @@ export type {
   ProviderProfile,
   PublicProviderProfile,
   PublicProviderSummary,
+  ProviderReview,
+  ProviderReviewDraft,
+  ProviderReviewsResponse,
+  ProviderRatingSummary,
+  ProviderReviewEligibility,
   ProviderDirectoryQuery,
   ProviderFacets,
   ProviderPortfolioItem,

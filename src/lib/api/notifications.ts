@@ -19,7 +19,12 @@ export type NotificationType =
   | "campaign_recommendation"
   | "task_assigned"
   | "task_submitted"
-  | "task_reviewed";
+  | "task_reviewed"
+  | "marketplace_inquiry_received"
+  | "marketplace_inquiry_responded"
+  | "marketplace_inquiry_closed"
+  | "marketplace_review_moderated"
+  | "marketplace_review_reported";
 
 export type NotificationStatus = "unread" | "read";
 
@@ -48,6 +53,8 @@ export interface Notification {
   title: string;
   body: string;
   data: Record<string, unknown>;
+  resource_type?: "service_inquiry" | "provider_review";
+  resource_id?: string;
   status: NotificationStatus;
   action_status?: NotificationActionStatus | null;
   is_history: boolean;
@@ -75,6 +82,7 @@ export type NotificationSettings = {
 
 export interface QueryNotificationsParams {
   history?: boolean;
+  unreadOnly?: boolean;
   page?: number;
   limit?: number;
   before?: string;
@@ -187,6 +195,11 @@ export function notificationTypeLabel(type: NotificationType): string {
     task_assigned: "Task Assigned",
     task_submitted: "Task Submitted",
     task_reviewed: "Task Reviewed",
+    marketplace_inquiry_received: "New inquiry",
+    marketplace_inquiry_responded: "Inquiry response",
+    marketplace_inquiry_closed: "Inquiry closed",
+    marketplace_review_moderated: "Review update",
+    marketplace_review_reported: "Review report",
   };
   return labels[type] ?? "Notification";
 }

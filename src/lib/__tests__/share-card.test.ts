@@ -389,51 +389,69 @@ describe("truncateToWidth", () => {
 });
 
 describe("selectBestTalentStats", () => {
-  it("shows RootScore, rating, portfolio photos and projects in order", async () => {
+  it("shows current RootScore, response rate, rating and shortlist data", async () => {
     const { selectBestTalentStats } = await import("@/lib/share-card");
     const stats = selectBestTalentStats({
       profile: {
         trust_score: 84.6,
+        response_rate: 92,
+        analytics: { shortlist_count: 7 },
       },
-      portfolioItems: [
-        { type: "image", category: "work" },
-        { type: "image", category: "work" },
-        { type: "video", category: "work" },
-      ],
-      credits: [{ project_name: "Ad 1" }, { project_name: "Ad 2" }],
       testimonials: [{ rating: 4 }, { rating: 5 }],
     });
 
     expect(stats.length).toBe(4);
     expect(stats.map((stat) => stat.label)).toEqual([
       "RootScore",
+      "Response Rate",
       "Rating",
-      "Photos",
-      "Projects",
+      "Shortlists",
     ]);
-    expect(stats.map((stat) => stat.count)).toEqual(["85", "4.5", "2", "2"]);
+    expect(stats.map((stat) => stat.count)).toEqual(["85", "92%", "4.5", "7"]);
+    expect(stats.map((stat) => stat.note)).toEqual([
+      "Excellent",
+      "Very Responsive",
+      "2 Reviews",
+      "Saved by recruiters",
+    ]);
   });
 
-  it("does not substitute mock stats when profile data is missing", async () => {
+  it("shows explicit empty states when profile stats are missing", async () => {
     const { selectBestTalentStats } = await import("@/lib/share-card");
     const stats = selectBestTalentStats({});
     expect(stats.length).toBe(4);
     expect(stats.map((s) => s.label)).toEqual([
       "RootScore",
+      "Response Rate",
       "Rating",
-      "Photos",
-      "Projects",
+      "Shortlists",
     ]);
-    expect(stats.map((stat) => stat.count)).toEqual(["—", "—", "0", "0"]);
+    expect(stats.map((stat) => stat.count)).toEqual(["—", "—", "—", "—"]);
+    expect(stats.map((stat) => stat.note)).toEqual([
+      "Not scored",
+      "Not shared",
+      "No reviews",
+      "None yet",
+    ]);
   });
 
-  it("uses actual zero portfolio counts instead of profile media limits", async () => {
+  it("updates the displayed profile metrics when the source data changes", async () => {
     const { selectBestTalentStats } = await import("@/lib/share-card");
     const stats = selectBestTalentStats({
-      profile: { media_limits: { images_used: 12 } },
-      portfolioItems: [],
+      profile: {
+        trust_score: 40,
+        response_rate: 0,
+        analytics: { shortlist_count: 0 },
+      },
+      testimonials: [],
     });
 
-    expect(stats[2].count).toBe("0");
+    expect(stats.map((stat) => stat.count)).toEqual(["40", "0%", "—", "—"]);
+    expect(stats.map((stat) => stat.note)).toEqual([
+      "Average",
+      "Responsive",
+      "No reviews",
+      "None yet",
+    ]);
   });
 });

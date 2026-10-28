@@ -19,10 +19,14 @@ export const notificationKeys = {
   settings: () => [...notificationKeys.all, "settings"] as const,
 };
 
-export function useNotifications(params: QueryNotificationsParams = {}) {
+export function useNotifications(
+  params: QueryNotificationsParams = {},
+  refetchInterval?: number,
+) {
   return useQuery({
     queryKey: notificationKeys.list(params),
     queryFn: () => notificationsApi.getNotifications(params),
+    refetchInterval,
   });
 }
 
@@ -42,6 +46,7 @@ export function useUnreadNotifications() {
     queryKey: notificationKeys.unread(),
     queryFn: () => notificationsApi.getUnreadCount(),
     staleTime: 30_000,
+    refetchInterval: 60_000,
   });
 }
 

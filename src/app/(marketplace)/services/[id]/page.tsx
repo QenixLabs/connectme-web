@@ -18,6 +18,7 @@ import { getApiErrorMessage } from "@/lib/api/client";
 import { queryKeys } from "@/lib/api/query-keys";
 import { formatIndicativePrice } from "@/components/marketplace/format";
 import { ContactProviderButton } from "@/components/marketplace/contact-provider-button";
+import { ServiceInquiryForm } from "@/components/marketplace/service-inquiry-form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -288,6 +289,13 @@ export default function ServiceDetailPage() {
               )}
             </CardContent>
           </Card>
+          {provider?.slug && (
+            <ServiceInquiryForm
+              providerSlug={provider.slug}
+              providerName={providerName}
+              serviceId={service.id}
+            />
+          )}
         </aside>
       </div>
     </div>

@@ -16,7 +16,9 @@ import { providersApi } from "@/lib/api/marketplace";
 import { getApiErrorMessage } from "@/lib/api/client";
 import { queryKeys } from "@/lib/api/query-keys";
 import { ContactProviderButton } from "@/components/marketplace/contact-provider-button";
+import { ServiceInquiryForm } from "@/components/marketplace/service-inquiry-form";
 import { ServiceCard } from "@/components/marketplace/service-card";
+import { ProviderReviewsSection } from "@/components/marketplace/provider-reviews-section";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -231,6 +233,8 @@ export default function PublicProviderProfilePage() {
             </Card>
           )}
 
+          <ProviderReviewsSection providerSlug={profile.slug} providerName={name} />
+
           <div className="space-y-4">
             <div className="flex items-end justify-between gap-2">
               <h2 className="text-xl font-semibold tracking-tight">Services</h2>
@@ -266,6 +270,7 @@ export default function PublicProviderProfilePage() {
         </div>
 
         <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
+          <ServiceInquiryForm providerSlug={profile.slug} providerName={name} />
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Work with {name.split(" ")[0]}</CardTitle>

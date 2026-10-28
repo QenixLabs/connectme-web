@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MapPin, Star } from "lucide-react";
+import { Briefcase, MapPin, Star } from "lucide-react";
 import type { PublicProviderSummary } from "@/lib/api/marketplace";
 import { formatAmount } from "@/components/marketplace/format";
 import { Card, CardContent } from "@/components/ui/card";
@@ -61,7 +61,22 @@ export function ProviderCard({ provider }: { provider: PublicProviderSummary }) 
 
           <div className="mt-auto flex items-center justify-between gap-2 pt-4 text-sm">
             <span className="flex items-center gap-1 text-muted-foreground">
-              <Star className="size-4 text-amber-500" />
+              {provider.average_rating !== null && provider.review_count > 0 ? (
+                <>
+                  <Star className="size-4 fill-amber-500 text-amber-500" />
+                  <span className="font-medium text-foreground">
+                    {provider.average_rating.toFixed(1)}
+                  </span>
+                  <span>
+                    ({provider.review_count})
+                  </span>
+                </>
+              ) : (
+                <span>No reviews yet</span>
+              )}
+            </span>
+            <span className="flex items-center gap-1 text-muted-foreground">
+              <Briefcase className="size-4" />
               {provider.services_count} service{provider.services_count === 1 ? "" : "s"}
             </span>
             <span className="font-medium">

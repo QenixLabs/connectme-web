@@ -54,6 +54,11 @@ export const queryKeys = {
   provider: {
     me: () => ['provider', 'me'] as const,
     publicProfile: (slug: string) => ['provider', 'public', slug] as const,
+    reviews: (slug: string, page = 1) =>
+      ['provider', 'reviews', slug, page] as const,
+    ratingSummary: (slug: string) => ['provider', 'rating-summary', slug] as const,
+    reviewEligibility: (slug: string) =>
+      ['provider', 'review-eligibility', slug] as const,
     directory: (filters: Record<string, unknown>) =>
       ['provider', 'directory', filters] as const,
     facets: () => ['provider', 'facets'] as const,
@@ -66,6 +71,13 @@ export const queryKeys = {
     mine: (filters: Record<string, unknown>) =>
       ['services', 'mine', filters] as const,
     mineDetail: (id: string) => ['services', 'mine', id] as const,
+  },
+  serviceInquiries: {
+    mine: (filters: Record<string, unknown>) =>
+      ['service-inquiries', 'mine', filters] as const,
+    incoming: (filters: Record<string, unknown>) =>
+      ['service-inquiries', 'incoming', filters] as const,
+    detail: (id: string) => ['service-inquiries', 'detail', id] as const,
   },
   subscriptions: {
     me: () => ['subscriptions', 'me'] as const,

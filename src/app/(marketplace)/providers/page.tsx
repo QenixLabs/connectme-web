@@ -8,6 +8,10 @@ import { providersApi } from "@/lib/api/marketplace";
 import type { ProviderDirectoryQuery } from "@/lib/api/marketplace";
 import { getApiErrorMessage } from "@/lib/api/client";
 import { queryKeys } from "@/lib/api/query-keys";
+import {
+  readProviderDirectoryFilters,
+  updateMarketplaceSearchParams,
+} from "@/lib/marketplace-search";
 import { ProviderCard } from "@/components/marketplace/provider-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,26 +32,10 @@ const PAGE_SIZE = 12;
 const SORT_OPTIONS: { value: NonNullable<ProviderDirectoryQuery["sort"]>; label: string }[] = [
   { value: "relevance", label: "Best match" },
   { value: "newest", label: "Newest" },
+  { value: "highest_rating", label: "Highest rated" },
   { value: "name_asc", label: "Name: A to Z" },
   { value: "name_desc", label: "Name: Z to A" },
 ];
-
-function readFilters(params: URLSearchParams): ProviderDirectoryQuery {
-  const page = Number(params.get("page") ?? "1");
-  const sortParam = params.get("sort") ?? "relevance";
-  const sort = SORT_OPTIONS.some((option) => option.value === sortParam)
-    ? (sortParam as NonNullable<ProviderDirectoryQuery["sort"]>)
-    : "relevance";
-
-  return {
-    search: params.get("search")?.trim() || undefined,
-    category: params.get("category")?.trim() || undefined,
-    location: params.get("location")?.trim() || undefined,
-    sort,
-    page: Number.isFinite(page) && page > 0 ? Math.floor(page) : 1,
-    limit: PAGE_SIZE,
-  };
-}
 
 function ProvidersBrowser() {
   const router = useRouter();
@@ -55,7 +43,7 @@ function ProvidersBrowser() {
   const searchParams = useSearchParams();
 
   const filters = useMemo(
-    () => readFilters(new URLSearchParams(searchParams.toString())),
+    () => readProviderDirectoryFilters(new URLSearchParams(searchParams.toString())),
     [searchParams],
   );
   const [searchInput, setSearchInput] = useState(filters.search ?? "");
@@ -69,14 +57,13 @@ function ProvidersBrowser() {
   }
 
   function pushParams(patch: Record<string, string | undefined>, resetPage = true) {
-    const next = new URLSearchParams(searchParams.toString());
-    for (const [key, value] of Object.entries(patch)) {
-      if (value) next.set(key, value);
-      else next.delete(key);
-    }
-    if (resetPage) next.delete("page");
+    const next = updateMarketplaceSearchParams(
+      new URLSearchParams(searchParams.toString()),
+      patch,
+      resetPage,
+    );
     const query = next.toString();
-    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    router.push(query ? `${pathname}?${query}` : pathname, { scroll: false });
   }
 
   useEffect(() => {
@@ -91,7 +78,7 @@ function ProvidersBrowser() {
 
   const directoryQuery = useQuery({
     queryKey: queryKeys.provider.directory(filters as Record<string, unknown>),
-    queryFn: () => providersApi.getDirectory(filters),
+    queryFn: ({ signal }) => providersApi.getDirectory(filters, signal),
   });
   const facetsQuery = useQuery({
     queryKey: queryKeys.provider.facets(),
@@ -103,7 +90,12 @@ function ProvidersBrowser() {
   const providers = data?.data ?? [];
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const activeFilters = [filters.search, filters.category, filters.location].filter(Boolean);
+  const activeFilters = [
+    filters.search,
+    filters.category,
+    filters.location,
+    filters.min_rating,
+  ].filter(Boolean);
 
   return (
     <div className="space-y-6">
@@ -122,6 +114,12 @@ function ProvidersBrowser() {
             <Input
               value={searchInput}
               onChange={(event) => setSearchInput(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  pushParams({ search: searchInput.trim() || undefined });
+                }
+              }}
               placeholder="Search providers, skills, or locations"
               className="pl-9"
               aria-label="Search providers"
@@ -138,7 +136,7 @@ function ProvidersBrowser() {
             )}
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">Category</label>
               <Select
@@ -179,6 +177,26 @@ function ProvidersBrowser() {
                       {location}
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">Minimum rating</label>
+              <Select
+                value={filters.min_rating?.toString() ?? "any"}
+                onValueChange={(value) =>
+                  pushParams({ min_rating: value === "any" ? undefined : value })
+                }
+              >
+                <SelectTrigger aria-label="Minimum rating">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="any">Any rating</SelectItem>
+                  <SelectItem value="4">4 stars and up</SelectItem>
+                  <SelectItem value="3">3 stars and up</SelectItem>
+                  <SelectItem value="2">2 stars and up</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -229,6 +247,12 @@ function ProvidersBrowser() {
                   onRemove={() => pushParams({ location: undefined })}
                 />
               )}
+              {filters.min_rating && (
+                <FilterChip
+                  label={`${filters.min_rating}+ stars`}
+                  onRemove={() => pushParams({ min_rating: undefined })}
+                />
+              )}
               <Button
                 type="button"
                 variant="link"
@@ -240,6 +264,7 @@ function ProvidersBrowser() {
                     search: undefined,
                     category: undefined,
                     location: undefined,
+                    min_rating: undefined,
                     sort: undefined,
                   });
                 }}
@@ -297,6 +322,7 @@ function ProvidersBrowser() {
                   search: undefined,
                   category: undefined,
                   location: undefined,
+                  min_rating: undefined,
                   sort: undefined,
                 });
               }}

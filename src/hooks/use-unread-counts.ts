@@ -4,9 +4,10 @@ import { conversationsApi } from "@/lib/api/conversations";
 
 export function useUnreadNotifications(enabled = true) {
   return useQuery({
-    queryKey: ["unread-notifications"],
+    queryKey: ["notifications", "unread"],
     queryFn: () => notificationsApi.getUnreadCount(),
     staleTime: 30_000,
+    refetchInterval: 60_000,
     enabled,
   });
 }

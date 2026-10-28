@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ImageIcon, MapPin } from "lucide-react";
+import { ImageIcon, MapPin, Star } from "lucide-react";
 import type { PublicServiceSummary } from "@/lib/api/marketplace";
 import { formatIndicativePrice } from "@/components/marketplace/format";
 import { Card, CardContent } from "@/components/ui/card";
@@ -79,6 +79,18 @@ export function ServiceCard({
                     {name}
                   </span>
                 </div>
+              )}
+              {service.provider?.average_rating != null &&
+              service.provider.review_count > 0 ? (
+                <span className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                  <Star className="size-3 fill-amber-500 text-amber-500" />
+                  <span className="font-medium text-foreground">
+                    {service.provider.average_rating.toFixed(1)}
+                  </span>
+                  ({service.provider.review_count})
+                </span>
+              ) : (
+                <span className="mt-1 block text-xs text-muted-foreground">No reviews yet</span>
               )}
             </div>
             <p className="shrink-0 text-right text-sm font-semibold">

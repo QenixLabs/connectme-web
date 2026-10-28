@@ -58,6 +58,8 @@ export interface PublicProviderSummary {
   about?: string;
   services_count: number;
   starting_price: number | null;
+  average_rating: number | null;
+  review_count: number;
   created_at?: string;
 }
 
@@ -71,6 +73,8 @@ export interface PublicServiceProviderSummary {
   service_areas: string[];
   skills: string[];
   about?: string;
+  average_rating: number | null;
+  review_count: number;
 }
 
 export interface PublicServiceSummary {
@@ -100,6 +104,33 @@ export interface PublicProviderProfile {
   services: PublicServiceSummary[];
   services_count: number;
   member_since?: string | null;
+}
+
+export interface ProviderReview {
+  id: string;
+  rating: number;
+  text: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProviderReviewDraft extends ProviderReview {
+  inquiry_id: string;
+  moderation_state: "pending" | "approved" | "hidden" | "removed";
+}
+
+export type ProviderReviewsResponse = Paginated<ProviderReview>;
+
+export interface ProviderRatingSummary {
+  average_rating: number | null;
+  review_count: number;
+}
+
+export interface ProviderReviewEligibility {
+  can_review: boolean;
+  reason?: string;
+  inquiry_id?: string;
+  my_review?: ProviderReviewDraft;
 }
 
 export interface ServiceListing {
@@ -137,6 +168,7 @@ export interface ProviderFacets {
 export interface ServiceFacets {
   categories: string[];
   locations: string[];
+  currencies: string[];
   price_range: { min: number | null; max: number | null };
   providers_count: number;
 }
@@ -145,7 +177,8 @@ export interface ProviderDirectoryQuery {
   search?: string;
   category?: string;
   location?: string;
-  sort?: "relevance" | "newest" | "name_asc" | "name_desc";
+  sort?: "relevance" | "newest" | "highest_rating" | "name_asc" | "name_desc";
+  min_rating?: number;
   page?: number;
   limit?: number;
 }
@@ -155,7 +188,11 @@ export interface ServiceQuery {
   category?: string;
   location?: string;
   provider_slug?: string;
-  sort?: "relevance" | "newest" | "oldest" | "price_low" | "price_high";
+  currency?: string;
+  sort?: "relevance" | "newest" | "oldest" | "price_low" | "price_high" | "highest_rating";
+  min_price?: number;
+  max_price?: number;
+  min_rating?: number;
   page?: number;
   limit?: number;
 }
@@ -193,8 +230,8 @@ export interface ServiceListingPayload {
 }
 
 export const providersApi = {
-  getDirectory: async (params?: ProviderDirectoryQuery) => {
-    const response = await apiClient.get("/providers", { params });
+  getDirectory: async (params?: ProviderDirectoryQuery, signal?: AbortSignal) => {
+    const response = await apiClient.get("/providers", { params, signal });
     return response.data as Paginated<PublicProviderSummary>;
   },
 
@@ -204,8 +241,69 @@ export const providersApi = {
   },
 
   getPublicProfile: async (slugOrId: string) => {
-    const response = await apiClient.get(`/providers/${encodeURIComponent(slugOrId)}`);
+    const response = await apiClient.get(
+      `/providers/${encodeURIComponent(slugOrId)}`,
+    );
     return response.data as PublicProviderProfile;
+  },
+
+  getPublicReviews: async (slug: string, page = 1, limit = 10) => {
+    const response = await apiClient.get(
+      `/providers/${encodeURIComponent(slug)}/reviews`,
+      { params: { page, limit } },
+    );
+    return response.data as ProviderReviewsResponse;
+  },
+
+  getRatingSummary: async (slug: string) => {
+    const response = await apiClient.get(
+      `/providers/${encodeURIComponent(slug)}/reviews/rating-summary`,
+    );
+    return response.data as ProviderRatingSummary;
+  },
+
+  getReviewEligibility: async (slug: string) => {
+    const response = await apiClient.get(
+      `/provider-reviews/eligibility/${encodeURIComponent(slug)}`,
+    );
+    return response.data as ProviderReviewEligibility;
+  },
+
+  createReview: async (
+    slug: string,
+    payload: { inquiry_id: string; rating: number; text: string },
+  ) => {
+    const response = await apiClient.post(
+      `/provider-reviews/${encodeURIComponent(slug)}`,
+      payload,
+    );
+    return response.data as { review: ProviderReviewDraft };
+  },
+
+  updateReview: async (
+    id: string,
+    payload: { rating?: number; text?: string },
+  ) => {
+    const response = await apiClient.patch(
+      `/provider-reviews/${encodeURIComponent(id)}`,
+      payload,
+    );
+    return response.data as { review: ProviderReviewDraft };
+  },
+
+  deleteReview: async (id: string) => {
+    const response = await apiClient.delete(
+      `/provider-reviews/${encodeURIComponent(id)}`,
+    );
+    return response.data as { deleted: boolean };
+  },
+
+  reportReview: async (id: string, reason: string) => {
+    const response = await apiClient.post(
+      `/provider-reviews/${encodeURIComponent(id)}/reports`,
+      { reason },
+    );
+    return response.data as { report: { id: string; status: string } };
   },
 
   checkSlugAvailability: async (slug: string) => {
@@ -232,31 +330,42 @@ export const providersApi = {
 
   completeOnboarding: async () => {
     const response = await apiClient.post("/provider/onboarding/complete");
-    return response.data as { profile: ProviderProfile; onboarding_completed: boolean };
+    return response.data as {
+      profile: ProviderProfile;
+      onboarding_completed: boolean;
+    };
   },
 
   uploadProfilePhoto: async (file: File) => {
     const body = new FormData();
     body.append("file", file);
-    const response = await apiClient.post("/provider/upload/profile-photo", body, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    const response = await apiClient.post(
+      "/provider/upload/profile-photo",
+      body,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      },
+    );
     return response.data as { relativePath: string; signedUrl: string };
   },
 
   uploadPortfolioImage: async (file: File) => {
     const body = new FormData();
     body.append("file", file);
-    const response = await apiClient.post("/provider/upload/portfolio-image", body, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    const response = await apiClient.post(
+      "/provider/upload/portfolio-image",
+      body,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      },
+    );
     return response.data as { relativePath: string; signedUrl: string };
   },
 };
 
 export const servicesApi = {
-  getPublicListings: async (params?: ServiceQuery) => {
-    const response = await apiClient.get("/services", { params });
+  getPublicListings: async (params?: ServiceQuery, signal?: AbortSignal) => {
+    const response = await apiClient.get("/services", { params, signal });
     return response.data as Paginated<PublicServiceSummary>;
   },
 
@@ -276,7 +385,9 @@ export const servicesApi = {
   },
 
   getMineById: async (id: string) => {
-    const response = await apiClient.get(`/provider/services/${encodeURIComponent(id)}`);
+    const response = await apiClient.get(
+      `/provider/services/${encodeURIComponent(id)}`,
+    );
     return response.data as { service: ServiceListing };
   },
 
@@ -294,7 +405,9 @@ export const servicesApi = {
   },
 
   remove: async (id: string) => {
-    const response = await apiClient.delete(`/provider/services/${encodeURIComponent(id)}`);
+    const response = await apiClient.delete(
+      `/provider/services/${encodeURIComponent(id)}`,
+    );
     return response.data as { deleted: boolean };
   },
 
@@ -315,9 +428,13 @@ export const servicesApi = {
   uploadImage: async (file: File) => {
     const body = new FormData();
     body.append("file", file);
-    const response = await apiClient.post("/provider/services/upload/image", body, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    const response = await apiClient.post(
+      "/provider/services/upload/image",
+      body,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      },
+    );
     return response.data as { relativePath: string; signedUrl: string };
   },
 };

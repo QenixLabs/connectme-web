@@ -9,7 +9,7 @@
  * - Circular avatar with vivid gradient ring & verified check badge
  * - Talent name with verified badge and role headline
  * - Pastel category pills (Model, Fashion, Commercial, Editorial, etc.)
- * - Four-column stats bar (RootScore, Rating, Photos, Projects)
+ * - Four-column stats bar (RootScore, Response Rate, Rating, Shortlists)
  * - QR code & profile link panel
  *
  * Everything degrades gracefully: missing photo falls back to initials,
@@ -73,13 +73,13 @@ export const SHARE_CARD_LAYOUT = {
     fontSize: 13,
   },
   stats: {
-    y: 603,
+    y: 598,
     col1X: 128,
     col2X: 270,
     col3X: 412,
     col4X: 554,
-    dividerY1: 579,
-    dividerY2: 634,
+    dividerY1: 574,
+    dividerY2: 646,
   },
   panel: {
     x: 44,
@@ -116,7 +116,7 @@ export interface ShareCardContent {
   handle: string;
   isVerified: boolean;
   tags: string[];
-  /** RootScore, rating, portfolio photos and projects in display order. */
+  /** RootScore, response rate, rating and shortlists in display order. */
   statItems: ShareCardStatItem[];
 }
 
@@ -126,27 +126,15 @@ export interface ShareCardContent {
 export function selectBestTalentStats(params: {
   profile?: {
     trust_score?: number;
-    media_limits?: {
-      images_used?: number;
+    response_rate?: number;
+    analytics?: {
+      shortlist_count?: number;
     };
-    portfolioHighlights?: unknown[];
   } | null;
-  portfolioItems?: Array<{ type?: string; category?: string }>;
-  credits?: Array<{ project_name?: string; platform?: string; director?: string }>;
   testimonials?: Array<{ rating?: number }>;
 }): ShareCardStatItem[] {
   const profile = params.profile;
-  const portfolio = params.portfolioItems ?? [];
-  const credits = params.credits ?? [];
   const testimonials = params.testimonials ?? [];
-  const photosCount = params.portfolioItems
-    ? portfolio.filter((item) => item.type === "image").length
-    : profile?.media_limits?.images_used ?? 0;
-  const projectsCount =
-    credits.length ||
-    portfolio.filter((item) => item.category === "work").length ||
-    profile?.portfolioHighlights?.length ||
-    0;
   const rating =
     testimonials.length > 0
       ? testimonials.reduce((sum, testimonial) => sum + (testimonial.rating ?? 5), 0) /
@@ -156,12 +144,53 @@ export function selectBestTalentStats(params: {
     typeof profile?.trust_score === "number" && profile.trust_score > 0
       ? String(Math.round(profile.trust_score))
       : "—";
+  const responseRate =
+    typeof profile?.response_rate === "number"
+      ? `${Math.round(profile.response_rate)}%`
+      : "—";
+  const shortlistCount = profile?.analytics?.shortlist_count ?? 0;
+  const trustScoreValue = profile?.trust_score;
+  const responseRateValue = profile?.response_rate;
 
   return [
-    { icon: "award", count: rootScore, label: "RootScore" },
-    { icon: "star", count: rating === null ? "—" : rating.toFixed(1), label: "Rating" },
-    { icon: "camera", count: String(photosCount), label: "Photos" },
-    { icon: "briefcase", count: String(projectsCount), label: "Projects" },
+    {
+      icon: "award",
+      count: rootScore,
+      label: "RootScore",
+      note:
+        typeof trustScoreValue !== "number" || trustScoreValue <= 0
+          ? "Not scored"
+          : trustScoreValue >= 80
+            ? "Excellent"
+            : trustScoreValue >= 60
+              ? "Good"
+              : "Average",
+    },
+    {
+      icon: "message",
+      count: responseRate,
+      label: "Response Rate",
+      note:
+        typeof responseRateValue !== "number"
+          ? "Not shared"
+          : responseRateValue >= 80
+            ? "Very Responsive"
+            : "Responsive",
+    },
+    {
+      icon: "star",
+      count: rating === null ? "—" : rating.toFixed(1),
+      label: "Rating",
+      note: testimonials.length
+        ? `${testimonials.length} Review${testimonials.length === 1 ? "" : "s"}`
+        : "No reviews",
+    },
+    {
+      icon: "bookmark",
+      count: shortlistCount > 0 ? String(shortlistCount) : "—",
+      label: "Shortlists",
+      note: shortlistCount > 0 ? "Saved by recruiters" : "None yet",
+    },
   ];
 }
 
@@ -260,7 +289,6 @@ export interface ShareCardResult {
 
 const INK = "#0A1128";
 const MUTED = "#5E6585";
-const LIGHT_MUTED = "#94A3B8";
 
 type Ctx = CanvasRenderingContext2D;
 
@@ -605,6 +633,22 @@ function drawMessageIcon(ctx: Ctx, x: number, y: number, color: string) {
   ctx.restore();
 }
 
+function drawBookmarkIcon(ctx: Ctx, x: number, y: number, color: string) {
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x - 7, y - 10);
+  ctx.quadraticCurveTo(x - 9, y - 10, x - 9, y - 8);
+  ctx.lineTo(x - 9, y + 9);
+  ctx.lineTo(x, y + 4);
+  ctx.lineTo(x + 9, y + 9);
+  ctx.lineTo(x + 9, y - 8);
+  ctx.quadraticCurveTo(x + 9, y - 10, x + 7, y - 10);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
 async function drawAvatar(
   ctx: Ctx,
   target: ShareProfileTarget,
@@ -656,14 +700,14 @@ async function drawAvatar(
     centerX + radius,
     centerY + radius,
   );
-  gradient.addColorStop(0, "#F1EAFF");
-  gradient.addColorStop(1, "#FFE3F0");
+  gradient.addColorStop(0, "#D13B08");
+  gradient.addColorStop(1, "#A92A00");
   ctx.fillStyle = gradient;
   ctx.beginPath();
   ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
   ctx.fill();
 
-  ctx.fillStyle = "#6428F5";
+  ctx.fillStyle = "#FFFFFF";
   ctx.font = `700 ${Math.round(radius * 0.72)}px ${resolveFontFamily()}`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
@@ -963,25 +1007,34 @@ export async function renderShareCardToCanvas(
   ];
 
   for (const col of statsCols) {
-    if (col.icon === "camera") drawCameraIcon(ctx, col.x, statsY - 14, "#0084FF");
-    else if (col.icon === "play") drawPlayIcon(ctx, col.x, statsY - 14, "#FF6E00");
-    else if (col.icon === "briefcase") drawBriefcaseIcon(ctx, col.x, statsY - 14, "#8B2CF5");
-    else if (col.icon === "star") drawStarIcon(ctx, col.x, statsY - 14, "#FF9500");
-    else if (col.icon === "heart") drawHeartIcon(ctx, col.x, statsY - 14, "#E11D48");
-    else if (col.icon === "award") drawAwardIcon(ctx, col.x, statsY - 14, "#F59E0B");
-    else if (col.icon === "calendar") drawCalendarIcon(ctx, col.x, statsY - 14, "#6366F1");
-    else if (col.icon === "eye") drawEyeIcon(ctx, col.x, statsY - 14, "#0D9488");
-    else if (col.icon === "message") drawMessageIcon(ctx, col.x, statsY - 14, "#0284C7");
-    else drawStarIcon(ctx, col.x, statsY - 14, "#FF9500");
+    ctx.save();
+    ctx.translate(col.x, statsY - 14);
+    ctx.scale(1.35, 1.35);
+    if (col.icon === "camera") drawCameraIcon(ctx, 0, 0, "#0084FF");
+    else if (col.icon === "play") drawPlayIcon(ctx, 0, 0, "#FF6E00");
+    else if (col.icon === "briefcase") drawBriefcaseIcon(ctx, 0, 0, "#8B2CF5");
+    else if (col.icon === "star") drawStarIcon(ctx, 0, 0, "#FF9500");
+    else if (col.icon === "heart") drawHeartIcon(ctx, 0, 0, "#E11D48");
+    else if (col.icon === "award") drawAwardIcon(ctx, 0, 0, "#F59E0B");
+    else if (col.icon === "calendar") drawCalendarIcon(ctx, 0, 0, "#6366F1");
+    else if (col.icon === "eye") drawEyeIcon(ctx, 0, 0, "#0D9488");
+    else if (col.icon === "message") drawMessageIcon(ctx, 0, 0, "#0284C7");
+    else if (col.icon === "bookmark") drawBookmarkIcon(ctx, 0, 0, "#C026D3");
+    else drawStarIcon(ctx, 0, 0, "#FF9500");
+    ctx.restore();
 
     ctx.fillStyle = INK;
-    ctx.font = `700 18px ${font}`;
+    ctx.font = `700 22px ${font}`;
     ctx.textAlign = "center";
-    ctx.fillText(col.count, col.x, statsY + 10);
+    ctx.fillText(col.count, col.x, statsY + 8);
 
     ctx.fillStyle = MUTED;
-    ctx.font = `500 12px ${font}`;
-    ctx.fillText(col.label, col.x, statsY + 28);
+    ctx.font = `600 14px ${font}`;
+    ctx.fillText(col.label, col.x, statsY + 25);
+
+    ctx.fillStyle = "#64748B";
+    ctx.font = `500 11px ${font}`;
+    ctx.fillText(col.note ?? "", col.x, statsY + 41);
   }
 
   // Vertical dividers between stats columns
@@ -997,11 +1050,21 @@ export async function renderShareCardToCanvas(
 
   // --- G. Link & QR Code Card ----------------------------------------------
   const panel = layout.panel;
-  ctx.fillStyle = "#FFFFFF";
+  const panelGradient = ctx.createLinearGradient(
+    panel.x,
+    panel.y,
+    panel.x + panel.width,
+    panel.y,
+  );
+  panelGradient.addColorStop(0, "#0878F9");
+  panelGradient.addColorStop(0.48, "#7C18D8");
+  panelGradient.addColorStop(0.72, "#E50059");
+  panelGradient.addColorStop(1, "#FF9A00");
+  ctx.fillStyle = panelGradient;
   roundedRect(ctx, panel.x, panel.y, panel.width, panel.height, panel.radius);
   ctx.fill();
-  ctx.strokeStyle = "#E2E8F0";
-  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.55)";
+  ctx.lineWidth = 1;
   roundedRect(ctx, panel.x, panel.y, panel.width, panel.height, panel.radius);
   ctx.stroke();
 
@@ -1010,13 +1073,13 @@ export async function renderShareCardToCanvas(
   const textMaxW = layout.qr.x - textX - 26;
 
   ctx.textAlign = "left";
-  ctx.fillStyle = INK;
-  ctx.font = `700 20px ${font}`;
+  ctx.fillStyle = "#FFFFFF";
+  ctx.font = `700 30px ${font}`;
   const handle = content.handle || content.shortUrl;
   ctx.fillText(truncateToWidth(ctx, handle, textMaxW), textX, panel.y + 58);
 
-  ctx.fillStyle = LIGHT_MUTED;
-  ctx.font = `400 13px ${font}`;
+  ctx.fillStyle = "rgba(255, 255, 255, 0.88)";
+  ctx.font = `400 18px ${font}`;
   ctx.fillText(
     truncateToWidth(ctx, "Discover my work, skills and more on RootIn", textMaxW),
     textX,
@@ -1029,11 +1092,11 @@ export async function renderShareCardToCanvas(
   const qrBoxSize = layout.qr.size;
 
   if (options.includeQr !== false) {
-    ctx.fillStyle = "#FFFFFF";
+    ctx.fillStyle = "rgba(255, 255, 255, 0.28)";
     roundedRect(ctx, qrBoxX, qrBoxY, qrBoxSize, qrBoxSize, 12);
     ctx.fill();
-    ctx.strokeStyle = "#CBD5E1";
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+    ctx.lineWidth = 1.5;
     roundedRect(ctx, qrBoxX, qrBoxY, qrBoxSize, qrBoxSize, 12);
     ctx.stroke();
 
