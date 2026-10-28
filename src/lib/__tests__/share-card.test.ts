@@ -276,13 +276,19 @@ describe("share card layout", () => {
     expect(layout.pills.y).toBeGreaterThan(
       layout.headline.y + layout.headline.fontSize / 2,
     );
-    expect(layout.stats.dividerY1).toBeGreaterThan(
-      layout.pills.y + layout.pills.height,
-    );
+    expect(layout.stats.dividerY1 - (layout.pills.y + layout.pills.height)).toBeGreaterThanOrEqual(16);
     expect(layout.panel.y).toBeGreaterThan(layout.stats.dividerY2);
     expect(layout.footer.y - layout.footer.fontSize / 2).toBeGreaterThan(
       layout.panel.y + layout.panel.height,
     );
+  });
+
+  it("keeps the QR panel close to the template footer", () => {
+    const panelBottom = layout.panel.y + layout.panel.height;
+    const templateFooterStart = 856;
+
+    expect(layout.qr.y).toBe(layout.panel.y + 2);
+    expect(templateFooterStart - panelBottom).toBeLessThanOrEqual(48);
   });
 });
 
