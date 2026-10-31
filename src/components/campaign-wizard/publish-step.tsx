@@ -5,7 +5,17 @@ import { useFormContext } from "react-hook-form";
 import { FormField, FormItem } from "@/components/ui/form";
 import { CampaignWizardInput } from "@/lib/validations/campaign-wizard.schema";
 import { cn } from "@/lib/utils";
-import { Lock, Globe, UserPlus, Calendar, Clock, Tag, ClipboardList, Image as ImageIcon } from "lucide-react";
+import {
+  Lock,
+  Globe,
+  UserPlus,
+  Calendar,
+  Clock,
+  Tag,
+  ClipboardList,
+  Image as ImageIcon,
+  Pencil,
+} from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 const OPTIONS = [
@@ -47,19 +57,34 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 function RevCard({
   title,
   icon: Icon,
+  onEdit,
   children,
 }: {
   title: string;
   icon: LucideIcon;
+  onEdit?: () => void;
   children: React.ReactNode;
 }) {
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-card">
-      <div className="flex items-center gap-2 border-b border-border bg-muted px-4 py-2.5">
-        <Icon className="size-3.5 text-muted-foreground" strokeWidth={1.5} />
-        <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
-          {title}
-        </span>
+      <div className="flex items-center justify-between border-b border-border bg-muted px-4 py-2.5">
+        <div className="flex items-center gap-2">
+          <Icon className="size-3.5 text-muted-foreground" strokeWidth={1.5} />
+          <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">
+            {title}
+          </span>
+        </div>
+        {onEdit && (
+          <button
+            type="button"
+            onClick={onEdit}
+            aria-label={`Edit ${title}`}
+            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-accent-teal transition-colors hover:bg-accent-teal/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-teal"
+          >
+            <Pencil className="size-3" />
+            Edit
+          </button>
+        )}
       </div>
       <div className="px-4 py-2">{children}</div>
     </div>
@@ -80,9 +105,11 @@ function RevRow({ label, value }: { label: string; value: string }) {
 export function PublishStep({
   mediaFile,
   existingCoverUrl,
+  onEditSection,
 }: {
   mediaFile?: File | null;
   existingCoverUrl?: string | null;
+  onEditSection?: (step: number) => void;
 } = {}) {
   const { control, watch, setValue } =
     useFormContext<CampaignWizardInput>();
@@ -132,7 +159,11 @@ export function PublishStep({
       <SectionLabel>Review your campaign</SectionLabel>
 
       {coverUrl && (
-        <RevCard title="Cover media" icon={ImageIcon}>
+        <RevCard
+          title="Cover media"
+          icon={ImageIcon}
+          onEdit={() => onEditSection?.(1)}
+        >
           <div className="py-2">
             <div className="relative aspect-square w-full max-w-[320px] overflow-hidden rounded-xl border border-border">
               <img
@@ -146,11 +177,21 @@ export function PublishStep({
       )}
 
       <div className="space-y-3">
-        <RevCard title="Basic Info" icon={ClipboardList}>
+        <RevCard
+          title="Basic Info"
+          icon={ClipboardList}
+          onEdit={() => onEditSection?.(1)}
+        >
           <RevRow
             label="Campaign name"
             value={values.name || "\u2014"}
           />
+          {values.description && (
+            <div className="border-b border-border/60 py-2 text-sm leading-relaxed text-muted-foreground last:border-b-0">
+              <span className="mb-1 block text-xs">Description</span>
+              <p className="whitespace-pre-wrap">{values.description}</p>
+            </div>
+          )}
           <RevRow label="Role / specialties" value={roleLine} />
           <RevRow label="Location" value={loc} />
           <RevRow
@@ -165,7 +206,11 @@ export function PublishStep({
           )}
         </RevCard>
 
-        <RevCard title="Requirements" icon={Tag}>
+        <RevCard
+          title="Requirements"
+          icon={Tag}
+          onEdit={() => onEditSection?.(2)}
+        >
           <RevRow
             label="Skills"
             value={
@@ -183,6 +228,16 @@ export function PublishStep({
             }
           />
           <RevRow label="Gender / age" value={genderAge} />
+          {values.needs_influencer && (
+            <RevRow
+              label="Influencer specialties"
+              value={
+                values.influencer_speciality?.length
+                  ? values.influencer_speciality.join(", ")
+                  : "Any"
+              }
+            />
+          )}
           <RevRow label="Budget" value={budget} />
           {values.requirements?.attributes && (
             <RevRow
@@ -193,7 +248,11 @@ export function PublishStep({
         </RevCard>
 
         {values.specialties && values.specialties.length > 0 && (
-          <RevCard title="Specialties" icon={Tag}>
+          <RevCard
+            title="Specialties"
+            icon={Tag}
+            onEdit={() => onEditSection?.(1)}
+          >
             <RevRow
               label="Required"
               value={values.specialties.join(", ")}
@@ -202,7 +261,11 @@ export function PublishStep({
         )}
 
         {values.questions && values.questions.length > 0 && (
-          <RevCard title="Questions" icon={ClipboardList}>
+          <RevCard
+            title="Questions"
+            icon={ClipboardList}
+            onEdit={() => onEditSection?.(2)}
+          >
             {values.questions.map((q, i) => (
               <div
                 key={i}
@@ -228,7 +291,11 @@ export function PublishStep({
         )}
 
         {values.task?.title && (
-          <RevCard title="Assignment Task" icon={ClipboardList}>
+          <RevCard
+            title="Assignment Task"
+            icon={ClipboardList}
+            onEdit={() => onEditSection?.(2)}
+          >
             <RevRow label="Title" value={values.task.title} />
             <RevRow
               label="Type"

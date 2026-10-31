@@ -28,7 +28,7 @@ import type { User } from "@/stores/auth-store";
 const SECTION_LABELS: Record<keyof SectionVisibility, string> = {
   bio: "About / Bio",
   skills: "Skills",
-  experience: "Experience & Credits",
+  experience: "Credits",
   portfolio: "Portfolio",
   availability: "Availability badge",
   location: "Location",

@@ -7,7 +7,6 @@ import type {
   Profile,
   PortfolioProject,
   Credit,
-  Experience,
   MediaItem,
   Award,
   Testimonial,
@@ -74,7 +73,6 @@ export function mapServerToView(server: TalentProfile): Profile {
 
     portfolio: [],
     credits: [],
-    experience: [],
     media: [],
     awards: [],
     testimonials: [],

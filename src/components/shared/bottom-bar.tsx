@@ -2,9 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { useSyncExternalStore } from "react";
 import { cn } from "@/lib/utils";
 import { useFilterSheetOpen } from "@/hooks/use-filter-sheet";
+import { talentApi } from "@/lib/api/talent";
+import { recruiterApi } from "@/lib/api/recruiter";
+import { useAuthStore } from "@/providers/auth-store-provider";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { NavItem } from "./nav-config";
 
 const subscribe = () => () => {};
@@ -21,6 +26,18 @@ interface BottomBarProps {
 
 export function BottomBar({ navItems, mobileNavItems, iconOnly, variant = "default", activeLabel }: BottomBarProps) {
   const pathname = usePathname();
+  const user = useAuthStore((state) => state.user);
+  const visibleNavItems = mobileNavItems ?? navItems;
+  const profileItem = visibleNavItems.find((item) => item.label === "Profile");
+  const isRecruiter = profileItem?.href.startsWith("/recruiter") ?? false;
+  const { data: profile } = useQuery<{ profile_photo?: string }>({
+    queryKey: isRecruiter
+      ? ["recruiter-profile", "profile"]
+      : ["talent-profile", "my"],
+    queryFn: () =>
+      isRecruiter ? recruiterApi.getMyProfile() : talentApi.getMyProfile(),
+    enabled: !!user && !!profileItem,
+  });
   const isSettingsVariant = variant === "settings";
   const isMounted = useSyncExternalStore(
     subscribe,
@@ -41,7 +58,7 @@ export function BottomBar({ navItems, mobileNavItems, iconOnly, variant = "defau
         "grid auto-cols-fr grid-flow-col",
         isSettingsVariant ? "h-[78px]" : "h-16",
       )}>
-        {(mobileNavItems ?? navItems).map((item) => {
+        {visibleNavItems.map((item) => {
           const active = isMounted && (
             pathname.startsWith(item.href) ||
             item.label === activeLabel ||
@@ -73,7 +90,19 @@ export function BottomBar({ navItems, mobileNavItems, iconOnly, variant = "defau
                     : isSettingsVariant ? "group-hover:bg-[#f7f3ff]" : "group-hover:bg-surface"
                 )}
               >
-                <Icon className={isSettingsVariant ? "size-6" : "size-5"} />
+                {item.label === "Profile" && profile?.profile_photo ? (
+                  <Avatar className="size-6 border border-background">
+                    <AvatarImage
+                      src={profile.profile_photo}
+                      alt="Profile photo"
+                    />
+                    <AvatarFallback>
+                      <Icon className={isSettingsVariant ? "size-6" : "size-5"} />
+                    </AvatarFallback>
+                  </Avatar>
+                ) : (
+                  <Icon className={isSettingsVariant ? "size-6" : "size-5"} />
+                )}
               </span>
               {(!iconOnly || isSettingsVariant) && (
                 <span className={cn(

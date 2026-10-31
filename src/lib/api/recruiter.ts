@@ -16,6 +16,7 @@ export interface RecruiterProfile {
   x_url?: string;
   company_size?: string;
   industry?: string;
+  industries?: string[];
   headline?: string;
   about?: string;
   founded_year?: number;
@@ -54,6 +55,7 @@ export interface UpdateRecruiterProfilePayload {
   x_url?: string;
   company_size?: string;
   industry?: string;
+  industries?: string[];
   headline?: string;
   about?: string;
   location?: { country?: string; state?: string; city?: string };
@@ -83,6 +85,7 @@ export interface PublicRecruiterProfile {
   x_url?: string;
   company_size?: string;
   industry?: string;
+  industries?: string[];
   headline?: string;
   about?: string;
   founded_year?: number;
@@ -159,6 +162,7 @@ export interface PublicRecruiterDirectoryItem {
   headline?: string;
   about?: string;
   industry?: string;
+  industries?: string[];
   position?: string;
   location?: { country?: string; state?: string; city?: string };
   specialties?: string[];

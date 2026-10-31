@@ -135,6 +135,19 @@ describe("MarketplaceNotificationBell", () => {
     expect(screen.getByRole("button", { name: "Try again" })).toBeTruthy();
   });
 
+  it("loads the list only when opened and keeps the badge on one count query", async () => {
+    renderBell();
+    await screen.findByRole("button", { name: "Notifications, 1 unread" });
+
+    expect(notificationsApi.getUnreadCount).toHaveBeenCalledTimes(1);
+    expect(notificationsApi.getNotifications).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Notifications, 1 unread" }));
+
+    expect(await screen.findByText("New service inquiry")).toBeTruthy();
+    expect(notificationsApi.getNotifications).toHaveBeenCalledTimes(2);
+  });
+
   it("marks one item as read, refreshes the list and unread count, and retains it in history", async () => {
     const { client } = renderBell();
     fireEvent.click(await screen.findByRole("button", { name: "Notifications, 1 unread" }));

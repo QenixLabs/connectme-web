@@ -220,9 +220,15 @@ function PortfolioContent() {
     [items],
   );
 
-  const [activeTab, setActiveTab] = useState<ShowcaseTab>("Showreel");
-
   const searchParams = useSearchParams();
+  const initialMediaType = searchParams.get("type");
+  const [activeTab, setActiveTab] = useState<ShowcaseTab>(() =>
+    initialMediaType === "image"
+      ? "Photos"
+      : initialMediaType === "video"
+        ? "Videos"
+        : "Showreel",
+  );
   const initialItemIdFromUrl = searchParams.get("item");
   const [reelOpen, setReelOpen] = useState(() => !!initialItemIdFromUrl);
   const [reelInitialItemId, setReelInitialItemId] = useState<string | null>(
@@ -741,14 +747,16 @@ function PortfolioContent() {
               <section className="rounded-[24px] border border-white/90 bg-white/70 p-3.5 shadow-[0_10px_30px_rgba(81,111,194,0.08)] sm:p-4">
                 <ShowcaseSectionHeader icon={Images} title="Photos" count={photoItems.length} tone="blue" onViewAll={() => setActiveTab("Photos")} />
                 {photoItems.length > 0 ? (
-                  <div className="grid grid-cols-4 gap-2">
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                     {(showAllSections ? photoItems.slice(0, 3) : photoItems).map((item) => (
-                      <button key={item.id} type="button" onClick={() => handleItemClick(item)} className="group relative aspect-square overflow-hidden rounded-[13px] bg-slate-200">
+                      <button key={item.id} type="button" onClick={() => handleItemClick(item)} className="group relative aspect-[4/3] overflow-hidden rounded-[18px] bg-slate-200 text-left shadow-[0_8px_20px_rgba(27,48,99,0.12)] ring-1 ring-white/80">
                         <MediaThumbnail item={item} className="transition-transform duration-500 group-hover:scale-105" />
-                        {isOwner && <span className="absolute right-1.5 top-1.5" onClick={(event) => event.stopPropagation()}><PortfolioActions item={item} username={username} onEdit={setEditItem} onToggleFeatured={handleToggleFeatured} onDelete={handleDelete} onShare={handleShare} /></span>}
+                        <span className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-transparent opacity-80 transition-opacity group-hover:opacity-100" />
+                        <span className="absolute bottom-2.5 left-3 right-3 truncate text-sm font-bold text-white drop-shadow">{item.title}</span>
+                        {isOwner && <span className="absolute right-2 top-2" onClick={(event) => event.stopPropagation()}><PortfolioActions item={item} username={username} onEdit={setEditItem} onToggleFeatured={handleToggleFeatured} onDelete={handleDelete} onShare={handleShare} /></span>}
                       </button>
                     ))}
-                    {showAllSections && photoItems.length > 3 && <button type="button" onClick={() => setActiveTab("Photos")} className="grid aspect-square place-items-center rounded-[13px] bg-gradient-to-br from-[#182d5b] to-[#213f7a] text-white"><span className="text-2xl font-black">+{photoItems.length - 3}</span><span className="text-xs font-semibold">More</span></button>}
+                    {showAllSections && photoItems.length > 3 && <button type="button" onClick={() => setActiveTab("Photos")} className="grid aspect-[4/3] place-items-center rounded-[18px] bg-gradient-to-br from-[#182d5b] via-[#284b8c] to-[#4930ad] text-white shadow-[0_8px_20px_rgba(27,48,99,0.16)] transition-transform hover:scale-[1.02]"><span className="text-3xl font-black">+{photoItems.length - 3}</span><span className="text-xs font-semibold">More photos</span></button>}
                   </div>
                 ) : <p className="py-5 text-center text-sm text-slate-500">No photos yet.</p>}
               </section>

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useFormContext } from "react-hook-form";
 import { Mail, Phone, ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { toast } from "sonner";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { authApi } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -63,7 +64,9 @@ export function VerificationStep({ signupEmail, onBack, onVerified }: Verificati
       onVerified?.();
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
-      setApiError(e.response?.data?.message || "Invalid OTP. Please try again.");
+      const message = e.response?.data?.message || "Invalid OTP. Please try again.";
+      setApiError(message);
+      toast.error(message);
       setStatus("entering");
     }
   }, [signupEmail, otp, login, form, onVerified]);
@@ -77,7 +80,9 @@ export function VerificationStep({ signupEmail, onBack, onVerified }: Verificati
       setOtp("");
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
-      setApiError(e.response?.data?.message || "Could not resend OTP.");
+      const message = e.response?.data?.message || "Could not resend OTP.";
+      setApiError(message);
+      toast.error(message);
     } finally {
       setResendLoading(false);
     }

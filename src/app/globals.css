@@ -2100,6 +2100,7 @@ main.signup-shell {
 @utility role-screen {
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
 }
 
 @utility skip-button {

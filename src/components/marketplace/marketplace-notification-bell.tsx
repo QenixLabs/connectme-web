@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { Bell, Check, CheckCheck } from "lucide-react";
@@ -52,14 +53,20 @@ function newest(items: Notification[]) {
 }
 
 export function MarketplaceNotificationBell() {
+  const [open, setOpen] = useState(false);
   const unreadQuery = useUnreadNotifications();
+  // The list is only needed while the popover is open. Polling it in the
+  // background tripled notification traffic every 60 seconds; the unread count
+  // poll above is enough to keep the badge live.
   const unreadList = useNotifications(
     { history: false, page: 1, limit: 8, unreadOnly: true },
-    60_000,
+    undefined,
+    open,
   );
   const readList = useNotifications(
     { history: true, page: 1, limit: 8 },
-    60_000,
+    undefined,
+    open,
   );
   const markRead = useMarkNotificationRead();
   const markAllRead = useMarkAllNotificationsRead();
@@ -72,7 +79,7 @@ export function MarketplaceNotificationBell() {
   const isError = unreadList.isError || readList.isError;
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="ghost"

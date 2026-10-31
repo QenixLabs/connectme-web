@@ -27,6 +27,7 @@ try {
 
 const nextConfig: NextConfig = {
   images: {
+    unoptimized: process.env.NODE_ENV === "development",
     remotePatterns: [
       ...(backendPattern ? [backendPattern] : []),
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
@@ -36,6 +37,50 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "i.ytimg.com" },
       { protocol: "https", hostname: "images.pexels.com" },
     ],
+  },
+  async redirects() {
+    return [
+      {
+        source: "/talent/profile/experience",
+        destination: "/talent/profile/credits",
+        permanent: true,
+      },
+    ];
+  },
+  async headers() {
+    return [
+      // Only emitted by production builds. Browsers ignore HSTS over plain
+      // HTTP, so local `next start` checks are unaffected.
+      ...(process.env.NODE_ENV === "production"
+        ? [
+            {
+              source: "/:path*",
+              headers: [
+                {
+                  key: "Strict-Transport-Security",
+                  value: "max-age=31536000",
+                },
+              ],
+            },
+          ]
+        : []),
+      {
+        // Always revalidate the worker so a deployment can publish a new
+        // version immediately. The worker is served from the origin root.
+        source: "/sw.js",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
+          { key: "Service-Worker-Allowed", value: "/" },
+        ],
+      },
+      {
+        // Let browsers pick up manifest edits on the next visit.
+        source: "/manifest.webmanifest",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
+        ],
+      },
+    ];
   },
 };
 

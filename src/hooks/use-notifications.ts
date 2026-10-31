@@ -22,11 +22,13 @@ export const notificationKeys = {
 export function useNotifications(
   params: QueryNotificationsParams = {},
   refetchInterval?: number,
+  enabled = true,
 ) {
   return useQuery({
     queryKey: notificationKeys.list(params),
     queryFn: () => notificationsApi.getNotifications(params),
     refetchInterval,
+    enabled,
   });
 }
 
@@ -41,12 +43,13 @@ export function useNotificationsInfinite(history = false, limit = 20) {
   });
 }
 
-export function useUnreadNotifications() {
+export function useUnreadNotifications(enabled = true) {
   return useQuery({
     queryKey: notificationKeys.unread(),
     queryFn: () => notificationsApi.getUnreadCount(),
     staleTime: 30_000,
     refetchInterval: 60_000,
+    enabled,
   });
 }
 

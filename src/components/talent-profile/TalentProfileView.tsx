@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 import {
   Home,
   Image as ImageIcon,
-  Briefcase,
   Gem,
   Award,
   Clapperboard,
@@ -36,7 +35,6 @@ import { SocialConnectBar } from "./SocialConnectBar";
 import { SignUpLoginBar } from "./SignUpLoginBar";
 import {
   AboutSection,
-  ExperienceSection,
   CreditsSection,
   SkillsSection,
   ReviewsSection,
@@ -58,7 +56,6 @@ import { MediaLightbox } from "@/components/portfolio/MediaLightbox";
 const tabItems = [
   { id: "overview", icon: Home, label: "Overview" },
   { id: "portfolio", icon: ImageIcon, label: "Portfolio" },
-  { id: "experience", icon: Briefcase, label: "Experience" },
   { id: "skills", icon: Gem, label: "Skills" },
   { id: "details", icon: User, label: "Details" },
   { id: "awards", icon: Award, label: "Awards" },
@@ -101,7 +98,7 @@ export function TalentProfileView({
   const achievementsHref = `/talent/${encodeURIComponent(profile.username)}/achievements`;
   const creditsHref = `/talent/${encodeURIComponent(profile.username)}/credits`;
 
-  const experience = useMemo(() => toExperienceItems(credits), [credits]);
+  const creditItems = useMemo(() => toExperienceItems(credits), [credits]);
   const awardItems = useMemo(() => toAwardItems(awards), [awards]);
   const reviewItems = useMemo(() => toReviewItems(testimonials), [testimonials]);
   const skills = useMemo<TalentSkill[]>(
@@ -228,7 +225,7 @@ export function TalentProfileView({
                onAction={() => router.push(achievementsHref)}
              />
             <CreditsSection
-              data={experience}
+              data={creditItems}
               onViewAll={() => router.push(creditsHref)}
             />
             <ReviewsSection data={reviewItems} />
@@ -255,12 +252,6 @@ export function TalentProfileView({
            </div>
         )}
 
-        {activeTab === "experience" && (
-         <div className="space-y-2.5">
-            <ExperienceSection data={experience} isOwner={isOwner} />
-          </div>
-        )}
-
         {activeTab === "skills" && (
          <div className="space-y-2.5">
             <SkillsSection skills={skills} />
@@ -280,7 +271,7 @@ export function TalentProfileView({
         {activeTab === "credits" && (
          <div className="space-y-2.5">
             <CreditsSection
-              data={experience}
+              data={creditItems}
               onViewAll={() => router.push(creditsHref)}
             />
           </div>

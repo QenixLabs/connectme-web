@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import {
   Eye,
   EyeOff,
@@ -69,10 +70,17 @@ export function StepAccount({
     if (digits.length !== 10) next.phone = "Enter a valid 10-digit mobile number";
     const passwordError = validatePassword(values.password);
     if (passwordError) next.password = passwordError;
-    if (!agreed) setAgreementError("Accept the Terms of Service and Privacy Policy to continue");
-    else setAgreementError(null);
+    const agreementMessage = agreed
+      ? null
+      : "Accept the Terms of Service and Privacy Policy to continue";
+    setAgreementError(agreementMessage);
     setErrors(next);
-    if (Object.keys(next).length === 0 && agreed) onContinue();
+    const firstMessage = Object.values(next).find(Boolean) ?? agreementMessage;
+    if (firstMessage) {
+      toast.error(firstMessage);
+      return;
+    }
+    onContinue();
   };
 
   return (

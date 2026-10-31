@@ -187,13 +187,18 @@ export default function RecruiterProfilePage() {
 
   const companyName = profile?.company_name ?? "Your Company";
   const specialties = profile?.specialties ?? [];
-  const industry = profile?.industry;
+  const industries = profile?.industries?.length
+    ? profile.industries
+    : profile?.industry
+      ? [profile.industry]
+      : [];
   const profilePhoto = profile?.profile_photo;
   const website = getWebsiteInfo(profile?.company_website);
 
   const categoryTags = [...specialties.slice(0, 2)];
-  if (industry && !categoryTags.includes(industry) && categoryTags.length < 2) {
-    categoryTags.push(industry);
+  for (const industry of industries) {
+    if (categoryTags.length >= 2) break;
+    if (!categoryTags.includes(industry)) categoryTags.push(industry);
   }
   const categoryLine = categoryTags.join(" • ");
 

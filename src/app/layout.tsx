@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Caveat, Rubik } from "next/font/google";
+import { ServiceWorkerRegistration } from "@/components/pwa/service-worker-registration";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { resolveSiteOrigin } from "@/lib/site";
 import { AuthStoreProvider } from "@/providers/auth-store-provider";
@@ -34,9 +35,28 @@ const siteOrigin = resolveSiteOrigin({
 
 export const metadata: Metadata = {
   metadataBase: siteOrigin ? new URL(siteOrigin) : undefined,
+  applicationName: "RootIn",
   title: "RootIn – Talent Platform",
   description:
     "RootIn connects verified talent with recruiters: portfolios, campaigns, messaging and opportunities in one platform.",
+  icons: {
+    icon: [
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
+  appleWebApp: {
+    capable: true,
+    title: "RootIn",
+    statusBarStyle: "black-translucent",
+  },
+  other: {
+    "apple-mobile-web-app-capable": "yes",
+    "mobile-web-app-capable": "yes",
+  },
   openGraph: {
     title: "RootIn – Talent Platform",
     description:
@@ -46,6 +66,10 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#1A5BDB",
 };
 
 export default function RootLayout({
@@ -62,6 +86,7 @@ export default function RootLayout({
     >
       <head />
       <body className="min-h-screen antialiased">
+        <ServiceWorkerRegistration />
         {/**
          * Password-manager / form-filling browser extensions sometimes inject an
          * `fdprocessedid` attribute into buttons and inputs before React hydrates,

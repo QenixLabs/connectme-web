@@ -302,6 +302,7 @@ export interface Credit {
   director?: string;
   year?: number;
   credit_url?: string;
+  proof_url?: string;
   verification_status?: "self_reported" | "public_record" | "recruiter_cosigned";
   description?: string;
   media_url?: string;
@@ -389,6 +390,7 @@ export interface Award {
   year?: number;
   description?: string;
   media_url?: string;
+  proof_url?: string;
   order?: number;
   created_at: string;
 }

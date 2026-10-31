@@ -8,7 +8,6 @@ export type ScreenKey =
   | "portfolio"
   | "media"
   | "awards"
-  | "experience"
   | "credits"
   | "physical"
   | "languages"
@@ -89,14 +88,6 @@ export interface Credit {
   description: string;
 }
 
-export interface Experience {
-  id: string;
-  title: string;
-  company: string;
-  period: string;
-  description: string;
-}
-
 export interface MediaItem {
   id: string;
   name: string;
@@ -148,7 +139,6 @@ export interface Profile {
 
   portfolio: PortfolioProject[];
   credits: Credit[];
-  experience: Experience[];
   media: MediaItem[];
   awards: Award[];
   testimonials: Testimonial[];

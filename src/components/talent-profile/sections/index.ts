@@ -1,7 +1,6 @@
 export { AboutSection } from "./AboutSection";
 export { ShowReelSection } from "./ShowReelSection";
 export { PortfolioSection } from "./PortfolioSection";
-export { ExperienceSection } from "./ExperienceSection";
 export { CreditsSection } from "./CreditsSection";
 export { SkillsSection } from "./SkillsSection";
 export { ReviewsSection } from "./ReviewsSection";

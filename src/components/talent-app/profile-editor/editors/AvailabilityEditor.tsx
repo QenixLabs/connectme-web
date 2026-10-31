@@ -79,6 +79,7 @@ export function AvailabilityEditor({ profile, onBack, onUpdate }: EditorProps) {
       title="Availability"
       onBack={onBack}
       action={<SaveAction onClick={save} />}
+      onSave={save}
     >
       <div className="space-y-2.5">
         {OPTIONS.map((option) => {

@@ -39,6 +39,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { toast } from "sonner";
 import { authApi, talentApi } from "@/lib/api";
 import { API_BASE_URL } from "@/lib/api/client";
 import { useAuthStore } from "@/providers/auth-store-provider";
@@ -228,9 +229,9 @@ function AccountStep({ account, setAccount, onContinue }: { account: Account; se
     setErrors((current) => ({ ...current, [field]: undefined }));
     if (field === "username") setUsernameStatus(undefined);
   };
-  const checkUsername = async () => {
+  const checkUsername = async (): Promise<string | null> => {
     const username = account.username.trim();
-    if (!/^[a-zA-Z0-9]{6,20}$/.test(username)) return false;
+    if (!/^[a-zA-Z0-9]{6,20}$/.test(username)) return "Use 6-20 letters or numbers";
     setCheckingUsername(true);
     setUsernameStatus("checking");
     try {
@@ -238,15 +239,15 @@ function AccountStep({ account, setAccount, onContinue }: { account: Account; se
       if (!result.available) {
         setUsernameStatus("taken");
         setErrors((current) => ({ ...current, username: "Username already taken" }));
-        return false;
+        return "Username already taken";
       }
       setUsernameStatus("available");
       setErrors((current) => ({ ...current, username: undefined }));
-      return true;
+      return null;
     } catch {
       setUsernameStatus(undefined);
       setErrors((current) => ({ ...current, username: "Could not check username availability" }));
-      return false;
+      return "Could not check username availability. Please try again.";
     } finally {
       setCheckingUsername(false);
     }
@@ -262,11 +263,21 @@ function AccountStep({ account, setAccount, onContinue }: { account: Account; se
     if (!/^\S+@\S+\.\S+$/.test(account.email.trim())) next.email = "Enter a valid email address";
     if (!/^\d{10}$/.test(account.phone)) next.phone = "Enter a valid 10-digit mobile number";
     if (!checks.every(Boolean)) next.password = "Complete all password requirements";
-    if (!agreed) setAgreementError("Accept the Terms of Service and Privacy Policy to continue");
-    else setAgreementError(null);
+    const agreementMessage = agreed
+      ? null
+      : "Accept the Terms of Service and Privacy Policy to continue";
+    setAgreementError(agreementMessage);
     setErrors(next);
-    if (Object.keys(next).length > 0 || !agreed) return;
-    if (!(await checkUsername())) return;
+    const firstMessage = Object.values(next).find(Boolean) ?? agreementMessage;
+    if (firstMessage) {
+      toast.error(firstMessage);
+      return;
+    }
+    const usernameError = await checkUsername();
+    if (usernameError) {
+      toast.error(usernameError);
+      return;
+    }
     onContinue();
   };
   const ctaClasses = "flex min-h-[3.35rem] w-full items-center justify-center gap-3 rounded-xl border-0 bg-[linear-gradient(110deg,oklch(0.49_0.27_288),oklch(0.57_0.27_300))] text-base font-bold text-white shadow-[0_12px_28px_oklch(0.49_0.27_288_/_28%)] hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50";
@@ -346,7 +357,9 @@ function CategoriesStep({ selected, onToggle, onContinue }: { selected: string[]
   const searchClasses = "flex min-h-[3.05rem] items-center gap-3 rounded-xl border border-[oklch(0.87_0.035_288)] bg-[oklch(1_0_0_/_82%)] px-4 shadow-[0_2px_8px_oklch(0.27_0.13_279_/_5%)] focus-within:border-[oklch(0.53_0.31_293)] focus-within:shadow-[0_0_0_3px_oklch(0.53_0.31_293_/_13%)]";
   const handleContinue = () => {
     if (selected.length === 0) {
-      setError("Select at least one category to continue");
+      const message = "Select at least one category to continue";
+      setError(message);
+      toast.error(message);
       return;
     }
     onContinue();
@@ -517,7 +530,11 @@ function LocationStep({
     if (!city.trim()) next.city = "Current city is required";
     if (!travel) next.travel = "Choose how far you are willing to travel";
     setFieldErrors(next);
-    if (Object.keys(next).length > 0) return;
+    const firstMessage = Object.values(next).find(Boolean);
+    if (firstMessage) {
+      toast.error(firstMessage);
+      return;
+    }
     onComplete({ city: city.trim(), travel, preferredCities: cities, languages, nativeLanguage: nativeLanguage.trim(), workingLanguage: workingLanguage.trim() });
   };
 
@@ -575,7 +592,9 @@ function TalentVerificationStep({
       setStatus("verified");
     } catch (err: unknown) {
       const response = err as { response?: { data?: { message?: string } } };
-      setError(response.response?.data?.message || "Invalid OTP. Please try again.");
+      const message = response.response?.data?.message || "Invalid OTP. Please try again.";
+      setError(message);
+      toast.error(message);
       setStatus("entering");
     }
   };
@@ -589,7 +608,10 @@ function TalentVerificationStep({
       setCooldown(60);
     } catch (err: unknown) {
       const response = err as { response?: { data?: { message?: string } } };
-      setError(response.response?.data?.message || "Could not resend the verification code.");
+      const message =
+        response.response?.data?.message || "Could not resend the verification code.";
+      setError(message);
+      toast.error(message);
     } finally {
       setResendLoading(false);
     }
@@ -610,6 +632,11 @@ export function TalentOnboarding({ isGoogleResume = false }: { isGoogleResume?: 
   const [preferences, setPreferences] = useState<LocationPreferences | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [signupError, setSignupError] = useState<string | null>(null);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, [step, signupEmail]);
+
   if (isGoogleResume) return <GoogleTalentOnboarding />;
 
   const selectedLabels = selected.map((id) => categories.find((category) => category.id === id)?.label).filter((label): label is string => Boolean(label));
@@ -644,7 +671,11 @@ export function TalentOnboarding({ isGoogleResume = false }: { isGoogleResume?: 
       setSignupEmail(account.email.trim().toLowerCase());
     } catch (err: unknown) {
       const response = err as { response?: { data?: { message?: string } } };
-      setSignupError(response.response?.data?.message || (err instanceof Error ? err.message : "Could not create your account. Please try again."));
+      const message =
+        response.response?.data?.message ||
+        (err instanceof Error ? err.message : "Could not create your account. Please try again.");
+      setSignupError(message);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }
@@ -759,6 +790,7 @@ function GoogleAccountStep({
   const handleSendOtp = async () => {
     if (account.phone.length !== 10) {
       setFieldErrors((current) => ({ ...current, phone: "Enter a valid 10-digit mobile number first" }));
+      toast.error("Enter a valid 10-digit mobile number first");
       return;
     }
     setError(null);
@@ -769,7 +801,9 @@ function GoogleAccountStep({
       setOtp("");
     } catch (err: unknown) {
       const response = err as { response?: { data?: { message?: string } } };
-      setError(response.response?.data?.message || "Could not send OTP. Please try again.");
+      const message = response.response?.data?.message || "Could not send OTP. Please try again.";
+      setError(message);
+      toast.error(message);
     } finally {
       setSendingOtp(false);
     }
@@ -785,13 +819,15 @@ function GoogleAccountStep({
       await fetchUser();
     } catch (err: unknown) {
       const response = err as { response?: { data?: { message?: string } } };
-      setError(response.response?.data?.message || "Invalid OTP. Please try again.");
+      const message = response.response?.data?.message || "Invalid OTP. Please try again.";
+      setError(message);
+      toast.error(message);
     } finally {
       setVerifyingOtp(false);
     }
   };
 
-  const checkUsername = async () => {
+  const checkUsername = async (): Promise<string | null> => {
     setCheckingUsername(true);
     setUsernameStatus("checking");
     try {
@@ -799,15 +835,15 @@ function GoogleAccountStep({
       if (!result.available) {
         setUsernameStatus("taken");
         setFieldErrors((current) => ({ ...current, username: "Username already taken" }));
-        return false;
+        return "Username already taken";
       }
       setUsernameStatus("available");
       setFieldErrors((current) => ({ ...current, username: undefined }));
-      return true;
+      return null;
     } catch {
       setUsernameStatus(undefined);
       setFieldErrors((current) => ({ ...current, username: "Could not check username availability" }));
-      return false;
+      return "Could not check username availability. Please try again.";
     } finally {
       setCheckingUsername(false);
     }
@@ -824,9 +860,18 @@ function GoogleAccountStep({
     if (account.phone.length !== 10) next.phone = "Enter a valid 10-digit mobile number";
     else if (!phoneVerified) next.phone = "Verify your mobile number before continuing";
     setFieldErrors(next);
-    if (Object.keys(next).length > 0) return;
+    const firstMessage = Object.values(next).find(Boolean);
+    if (firstMessage) {
+      toast.error(firstMessage);
+      return;
+    }
     setError(null);
-    if (await checkUsername()) onContinue();
+    const usernameError = await checkUsername();
+    if (usernameError) {
+      toast.error(usernameError);
+      return;
+    }
+    onContinue();
   };
 
   const ctaClasses = "flex min-h-[3.35rem] w-full items-center justify-center gap-3 rounded-xl border-0 bg-[linear-gradient(110deg,oklch(0.49_0.27_288),oklch(0.57_0.27_300))] text-base font-bold text-white shadow-[0_12px_28px_oklch(0.49_0.27_288_/_28%)] hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50";
@@ -909,6 +954,10 @@ function GoogleTalentOnboarding() {
   const [selected, setSelected] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [signupError, setSignupError] = useState<string | null>(null);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, [step]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1003,7 +1052,11 @@ function GoogleTalentOnboarding() {
       router.replace("/talent/dashboard");
     } catch (err: unknown) {
       const response = err as { response?: { data?: { message?: string } } };
-      setSignupError(response.response?.data?.message || (err instanceof Error ? err.message : "Could not complete your profile. Please try again."));
+      const message =
+        response.response?.data?.message ||
+        (err instanceof Error ? err.message : "Could not complete your profile. Please try again.");
+      setSignupError(message);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }

@@ -2,7 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { X, Share2, Play, FileText, ExternalLink } from "lucide-react";
 import {
   Dialog,
@@ -46,13 +46,38 @@ export function MediaLightbox({
   onClose,
 }: MediaLightboxProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const visibleItems = useMemo(() => {
+    const selectedItem = items.find((item) => item.id === initialItemId);
+    if (!selectedItem) return items;
 
-  useEffect(() => {
-    if (!open || !initialItemId) return;
-    const idx = items.findIndex((i) => i.id === initialItemId);
-    if (idx >= 0) setActiveIndex(idx);
-  }, [open, initialItemId, items]);
+    if (selectedItem.type === "image") {
+      return items.filter((item) => item.type === "image");
+    }
+
+    if (selectedItem.type === "video" || selectedItem.type === "youtube") {
+      return items.filter(
+        (item) => item.type === "video" || item.type === "youtube",
+      );
+    }
+
+    return items.filter((item) => item.type === selectedItem.type);
+  }, [items, initialItemId]);
+  const initialIndex = Math.max(
+    visibleItems.findIndex((item) => item.id === initialItemId),
+    0,
+  );
+  const [activePosition, setActivePosition] = useState<{
+    initialItemId: string | null;
+    index: number;
+  }>({ initialItemId: null, index: 0 });
+  const activeIndex =
+    activePosition.initialItemId === initialItemId
+      ? activePosition.index
+      : initialIndex;
+  const handleClose = useCallback(() => {
+    setActivePosition({ initialItemId: null, index: 0 });
+    onClose();
+  }, [onClose]);
 
   useEffect(() => {
     if (open) {
@@ -78,7 +103,7 @@ export function MediaLightbox({
 
   useEffect(() => {
     const container = containerRef.current;
-    if (!container || items.length === 0 || !open) return;
+    if (!container || visibleItems.length === 0 || !open) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -89,7 +114,9 @@ export function MediaLightbox({
         );
         if (best.intersectionRatio > 0) {
           const index = Number(best.target.getAttribute("data-index"));
-          if (!Number.isNaN(index)) setActiveIndex(index);
+          if (!Number.isNaN(index)) {
+            setActivePosition({ initialItemId, index });
+          }
         }
       },
       { root: container, threshold: [0.45, 0.5, 0.55, 0.6, 0.65, 0.7] },
@@ -99,7 +126,7 @@ export function MediaLightbox({
       observer.observe(child),
     );
     return () => observer.disconnect();
-  }, [items, open]);
+  }, [visibleItems, open, initialItemId]);
 
   useEffect(() => {
     if (!open) return;
@@ -107,29 +134,29 @@ export function MediaLightbox({
       scrollToIndex(activeIndex, "auto");
     });
     return () => cancelAnimationFrame(raf);
-  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open, initialItemId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === "ArrowDown" || e.key === "PageDown") {
         e.preventDefault();
-        if (activeIndex < items.length - 1) scrollToIndex(activeIndex + 1);
+        if (activeIndex < visibleItems.length - 1) scrollToIndex(activeIndex + 1);
       } else if (e.key === "ArrowUp" || e.key === "PageUp") {
         e.preventDefault();
         if (activeIndex > 0) scrollToIndex(activeIndex - 1);
       } else if (e.key === "Escape") {
-        onClose();
+        handleClose();
       }
     },
-    [activeIndex, items.length, scrollToIndex, onClose],
+    [activeIndex, visibleItems.length, scrollToIndex, handleClose],
   );
 
-  if (items.length === 0) return null;
+  if (visibleItems.length === 0) return null;
 
-  const currentItem = items[activeIndex];
+  const currentItem = visibleItems[activeIndex];
 
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+    <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
       <DialogContent
         showCloseButton={false}
         className="fixed inset-0 top-0 left-0 z-50 m-0 h-[100dvh] w-full max-w-none translate-x-0 translate-y-0 rounded-none border-none bg-black p-0"
@@ -142,7 +169,7 @@ export function MediaLightbox({
         <Button
           variant="ghost"
           size="icon"
-          onClick={onClose}
+          onClick={handleClose}
           className="absolute right-4 top-4 z-50 rounded-full bg-white/10 text-white hover:bg-white/20 hover:text-white"
           aria-label="Close"
         >
@@ -150,9 +177,9 @@ export function MediaLightbox({
         </Button>
 
         {/* Counter */}
-        {items.length > 1 && (
+        {visibleItems.length > 1 && (
           <div className="absolute left-4 top-4 z-50 rounded-full bg-black/40 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm">
-            {activeIndex + 1} / {items.length}
+            {activeIndex + 1} / {visibleItems.length}
           </div>
         )}
 
@@ -163,7 +190,7 @@ export function MediaLightbox({
           onKeyDown={handleKeyDown}
           className="h-full w-full overflow-y-scroll snap-y snap-mandatory no-scrollbar outline-none"
         >
-          {items.map((item, index) => (
+          {visibleItems.map((item, index) => (
             <ReelSlide
               key={item.id}
               item={item}

@@ -428,6 +428,11 @@ function RecruiterCard({ recruiter }: { recruiter: PublicRecruiterDirectoryItem 
   const save = useSaveRecruiter(recruiter.slug);
   const conversation = useRecruiterConversation(recruiter.slug, "recruiter");
   const location = [recruiter.location?.city, recruiter.location?.state].filter(Boolean).join(", ") || "Location not listed";
+  const industries = recruiter.industries?.length
+    ? recruiter.industries
+    : recruiter.industry
+      ? [recruiter.industry]
+      : [];
   const tags = [...(recruiter.specialties ?? []), ...(recruiter.casting_categories ?? [])]
     .filter((tag, index, all) => all.indexOf(tag) === index)
     .slice(0, 3);
@@ -457,7 +462,7 @@ function RecruiterCard({ recruiter }: { recruiter: PublicRecruiterDirectoryItem 
           {recruiter.average_rating != null ? <span className="flex shrink-0 items-center gap-1 text-sm font-bold text-[#506b88]"><Star className="size-4 fill-[#f6a914] text-[#f6a914]" /> {recruiter.average_rating.toFixed(1)} <span className="text-[10px] font-medium text-[#8795aa]">({recruiter.total_reviews_count})</span></span> : null}
         </div>
 
-        <p className="line-clamp-2 min-h-8 text-[11px] leading-[1.45] text-[#64748b]">{recruiter.industry || recruiter.position || "Industry professional"}{recruiter.headline ? ` · ${recruiter.headline}` : ""}</p>
+        <p className="line-clamp-2 min-h-8 text-[11px] leading-[1.45] text-[#64748b]">{industries.join(", ") || recruiter.position || "Industry professional"}{recruiter.headline ? ` · ${recruiter.headline}` : ""}</p>
 
         {visibleProjects.length > 0 ? <div className="flex gap-2 overflow-hidden">{visibleProjects.map((project) => <div key={project._id} className="relative aspect-[1.35] min-w-0 flex-1 overflow-hidden rounded-lg bg-[#edf4ff]"><Image src={project.cover_image_url || ""} alt={project.name || "Project"} fill sizes="120px" className="object-cover" /></div>)}</div> : null}
 

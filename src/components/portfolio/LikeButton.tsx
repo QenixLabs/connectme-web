@@ -28,7 +28,7 @@ export function LikeButton({
   className,
 }: LikeButtonProps) {
   const isAuthenticated = useStore(authStore, (s) => s.isAuthenticated);
-  const { data: status } = usePortfolioItemLikeStatus(itemId);
+  const { data: status } = usePortfolioItemLikeStatus(itemId, isAuthenticated);
   const like = useLikePortfolioItem();
   const unlike = useUnlikePortfolioItem();
 

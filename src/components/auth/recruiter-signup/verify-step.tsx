@@ -56,7 +56,9 @@ export function VerifyStep({
       });
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
-      setApiError(e.response?.data?.message || "Invalid OTP. Please try again.");
+      const message = e.response?.data?.message || "Invalid OTP. Please try again.";
+      setApiError(message);
+      toast.error(message);
       setStatus("entering");
     }
   }, [email, otp, password, login, onVerified]);
@@ -70,7 +72,9 @@ export function VerifyStep({
       setOtp("");
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
-      setApiError(e.response?.data?.message || "Could not resend OTP.");
+      const message = e.response?.data?.message || "Could not resend OTP.";
+      setApiError(message);
+      toast.error(message);
     } finally {
       setResendLoading(false);
     }

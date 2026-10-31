@@ -57,6 +57,7 @@ import type {
 } from "@/lib/api/campaigns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { OpportunityFiltersSheet } from "./OpportunityFiltersSheet";
+import { RecruiterSearchPanel } from "./RecruiterSearchPanel";
 
 /* -------------------------------------------------------------------------- */
 /*                                    TYPES                                   */
@@ -669,6 +670,9 @@ export function OpportunitiesPage() {
     return "For You";
   }, [searchParams]);
 
+  const view = searchParams?.get("view");
+  const isRecruiterView = view === "recruiters";
+
   const search = searchParams?.get("search") ?? "";
   const sort = (searchParams?.get("sort") ?? "relevance") as QueryCampaignsParams["sort"];
   const gender = searchParams?.get("gender") ?? undefined;
@@ -677,7 +681,7 @@ export function OpportunitiesPage() {
   const languages = searchParams?.get("languages") ?? undefined;
   const bookmarked = searchParams?.get("bookmarked") === "true";
 
-  const isForYou = tab === "For You";
+  const isForYou = tab === "For You" && !isRecruiterView;
 
   const { data: profile } = useTalentProfile();
   const { data: appStats } = useTalentApplicationStats();
@@ -691,8 +695,8 @@ export function OpportunitiesPage() {
   const [premiumBannerVisible, setPremiumBannerVisible] = useState(true);
 
   useEffect(() => {
-    setFilterSheetOpen(filtersOpen);
-  }, [filtersOpen]);
+    setFilterSheetOpen(filtersOpen && !isRecruiterView);
+  }, [filtersOpen, isRecruiterView]);
 
   useEffect(() => {
     if (!searchParams) return;
@@ -887,10 +891,20 @@ export function OpportunitiesPage() {
     return `?${params.toString()}`;
   };
 
+  const viewHref = (nextView: "opportunities" | "recruiters") => {
+    const params = new URLSearchParams(searchParams?.toString() ?? "");
+    if (nextView === "recruiters") params.set("view", "recruiters");
+    else params.delete("view");
+    const query = params.toString();
+    return query ? `${pathname}?${query}` : pathname;
+  };
+
   return (
     <div className="mx-auto min-h-screen w-full max-w-md bg-background pb-24 font-sans">
       <div className="flex items-center justify-between gap-3 px-4 pt-4">
-        <h1 className="text-xl font-extrabold tracking-tight">Opportunities</h1>
+        <h1 className="text-xl font-extrabold tracking-tight">
+          {isRecruiterView ? "Find Recruiters" : "Opportunities"}
+        </h1>
         <Button asChild variant="outline" size="sm" className="shrink-0 gap-1.5">
           <Link href="/talent/applications">
             <FileText className="size-4" />
@@ -898,6 +912,37 @@ export function OpportunitiesPage() {
           </Link>
         </Button>
       </div>
+
+      <div className="mt-4 px-4">
+        <div className="grid grid-cols-2 gap-1 rounded-2xl bg-surface-2 p-1">
+          <Link
+            href={viewHref("opportunities")}
+            aria-current={!isRecruiterView ? "page" : undefined}
+            className={cn(
+              "flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-semibold transition-colors",
+              !isRecruiterView
+                ? "bg-card text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            <Briefcase className="size-4" /> Opportunities
+          </Link>
+          <Link
+            href={viewHref("recruiters")}
+            aria-current={isRecruiterView ? "page" : undefined}
+            className={cn(
+              "flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-semibold transition-colors",
+              isRecruiterView
+                ? "bg-card text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            <Users className="size-4" /> Find Recruiters
+          </Link>
+        </div>
+      </div>
+
+      {isRecruiterView && <RecruiterSearchPanel />}
 
       {isForYou && (
         <section className="mt-5 px-4">
@@ -1008,7 +1053,7 @@ export function OpportunitiesPage() {
       )}
 
       {/* Filtered search/list layout */}
-      {!isForYou && (
+      {!isForYou && !isRecruiterView && (
         <section className="mt-2 px-4">
           {/* Sticky tabs + search */}
           <div className="sticky top-16 z-40 -mx-4 border-b border-border bg-background/95 px-4 pb-3 pt-3 backdrop-blur-xl">
@@ -1152,7 +1197,7 @@ export function OpportunitiesPage() {
 
       <OpportunityFiltersSheet
         key={searchParams?.toString() ?? "filters"}
-        open={filtersOpen}
+        open={filtersOpen && !isRecruiterView}
         onClose={() => setFiltersOpen(false)}
       />
 

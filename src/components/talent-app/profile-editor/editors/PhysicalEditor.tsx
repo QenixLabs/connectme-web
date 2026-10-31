@@ -120,6 +120,7 @@ export function PhysicalEditor({ profile, onBack, onUpdate }: EditorProps) {
       title="Physical Attributes"
       onBack={onBack}
       action={<SaveAction onClick={save} />}
+      onSave={save}
     >
       <Card>
         <CardContent className="space-y-4">

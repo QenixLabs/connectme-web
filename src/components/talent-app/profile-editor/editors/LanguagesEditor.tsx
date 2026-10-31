@@ -110,6 +110,7 @@ export function LanguagesEditor({ profile, onBack, onUpdate }: EditorProps) {
       title="Languages & Accents"
       onBack={onBack}
       action={<SaveAction onClick={save} />}
+      onSave={save}
     >
       <Card>
         <CardContent className="space-y-4">

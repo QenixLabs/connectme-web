@@ -31,7 +31,7 @@ import {
   type AchievementFilter,
 } from "./achievement-types";
 
-type AchievementManageScope = "all" | "experience" | "credits";
+type AchievementManageScope = "all" | "credits";
 const EMPTY_ACHIEVEMENTS: Achievement[] = [];
 
 const scopeConfig: Record<AchievementManageScope, {
@@ -55,17 +55,6 @@ const scopeConfig: Record<AchievementManageScope, {
     emptyTitle: "Your spotlight is ready",
     emptyDescription: "Add a milestone to give recruiters a richer view of your journey.",
     recordLabel: "Credits",
-  },
-  experience: {
-    title: "Manage Work Experience",
-    subtitle: "Show the roles, studios and projects that shaped your professional journey.",
-    addTitle: "Add Work Experience",
-    addDescription: "Add a role or studio project so recruiters can quickly understand your experience.",
-    addButton: "Add Experience",
-    listTitle: "Your Work Experience",
-    emptyTitle: "Your experience story is ready",
-    emptyDescription: "Add your first role or project to make your profile easier to trust.",
-    recordLabel: "Roles",
   },
   credits: {
     title: "Manage Credits",
@@ -297,7 +286,6 @@ export function AchievementManagePage({ scope = "all" }: { scope?: AchievementMa
                   achievement={achievement}
                   onEdit={() => startEdit(achievement)}
                   onDelete={() => setDeleteTarget(achievement)}
-                  mode={scope === "experience" ? "experience" : "default"}
                 />
               ))}
             </div>
@@ -313,7 +301,7 @@ export function AchievementManagePage({ scope = "all" }: { scope?: AchievementMa
         }}
         achievement={editingAchievement}
         fixedType={scope === "all" ? undefined : "credit"}
-        mode={scope === "all" ? "default" : scope}
+        mode={scope === "all" ? "default" : "credits"}
       />
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>

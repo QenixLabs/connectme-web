@@ -1,16 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { notificationsApi } from "@/lib/api/notifications";
 import { conversationsApi } from "@/lib/api/conversations";
 
-export function useUnreadNotifications(enabled = true) {
-  return useQuery({
-    queryKey: ["notifications", "unread"],
-    queryFn: () => notificationsApi.getUnreadCount(),
-    staleTime: 30_000,
-    refetchInterval: 60_000,
-    enabled,
-  });
-}
+export { useUnreadNotifications } from "@/hooks/use-notifications";
 
 export function useUnreadMessages() {
   return useQuery({

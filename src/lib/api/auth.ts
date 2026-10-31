@@ -1,7 +1,7 @@
 import { apiClient } from "./client";
 
 export const authApi = {
-  completeGoogleSignup: async (role: "talent" | "recruiter") => {
+  completeGoogleSignup: async (role: "talent" | "recruiter" | "provider") => {
     const response = await apiClient.post("/auth/google/complete-signup", { role });
     return response.data;
   },
@@ -33,6 +33,7 @@ export const authApi = {
     preferred_cities?: string[];
     contact_name?: string;
     industry?: string;
+    industries?: string[];
     city?: string;
     years_in_business?: string;
     is_independent?: boolean;

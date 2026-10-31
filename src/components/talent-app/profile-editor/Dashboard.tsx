@@ -5,7 +5,6 @@ import {
   Award,
   ArrowRight,
   BadgeCheck,
-  BriefcaseBusiness,
   CalendarDays,
   Camera,
   Check,
@@ -110,7 +109,6 @@ export function Dashboard({
     ...Object.values(profile.physicalAttributes.custom_fields ?? {}),
   ].filter(Boolean);
   const approvedTestimonials = profile.testimonials.filter((item) => item.approvedByTalent);
-  const hasWorkExperience = profile.yearsOfExperience > 0 || profile.experience.length > 0;
 
   const navigateToStrengthItem = (key?: string) => {
     if (!key) {
@@ -150,7 +148,6 @@ export function Dashboard({
   const creativeSections = [
     sectionState("skills"),
     portfolioItems.length > 0,
-    hasWorkExperience,
     profile.credits.length > 0,
     profile.awards.length > 0,
   ];
@@ -190,13 +187,13 @@ export function Dashboard({
       onClick: () => router.push("/talent/portfolio"),
     });
   }
-  if (!hasWorkExperience && recommendations.length < 3) {
+  if (profile.credits.length === 0 && recommendations.length < 3) {
     recommendations.push({
-      icon: <BriefcaseBusiness className="size-4" />,
-      title: "Add work experience",
-      description: "Show recruiters the roles you have worked on.",
-      action: "Add Experience",
-      onClick: () => router.push("/talent/profile/experience"),
+      icon: <Clapperboard className="size-4" />,
+      title: "Add your first credit",
+      description: "Show recruiters the projects you have worked on.",
+      action: "Add Credit",
+      onClick: () => router.push("/talent/profile/credits"),
     });
   }
   const visibleRecommendations = recommendations.slice(0, 3);
@@ -356,24 +353,6 @@ export function Dashboard({
             profileHighlights={profileHighlights}
             onClick={() => router.push("/talent/portfolio")}
           />
-          <SummaryCard
-            title="Work Experience"
-            subtitle={
-              hasWorkExperience
-                ? profile.experience.length > 0
-                  ? `${profile.experience.length} ${profile.experience.length === 1 ? "role" : "roles"} added`
-                  : `${profile.yearsOfExperience} years experience`
-                : "No experience added yet"
-            }
-            icon={<BriefcaseBusiness className="size-[17px]" />}
-            done={hasWorkExperience}
-            actionLabel={hasWorkExperience ? undefined : "+ Add"}
-            onClick={() => router.push("/talent/profile/experience")}
-          >
-            {hasWorkExperience ? (
-              <p className="mt-3 truncate text-xs text-muted-foreground">Experience summary available in your profile</p>
-            ) : null}
-          </SummaryCard>
           <SummaryCard
             title="Credits"
             subtitle={profile.credits.length > 0 ? `${profile.credits.length} ${profile.credits.length === 1 ? "credit" : "credits"}` : "No credits added"}
@@ -538,10 +517,82 @@ function SummaryCard({ title, subtitle, icon, done, actionLabel, children, class
 function PortfolioCard({ items, profileHighlights, onClick }: { items: PortfolioApiResponse[]; profileHighlights?: ProfileHighlightsResponse; onClick: () => void }) {
   const counts = portfolioCounts(items);
   const showcaseCount = profileHighlights ? Number(Boolean(profileHighlights.showreel_id)) + profileHighlights.video_ids.length + profileHighlights.image_ids.length : null;
+  const previews = items.filter((item) => thumbnailFor(item)).slice(0, 3);
+
   return (
-    <button onClick={onClick} className="group relative min-h-[120px] overflow-hidden rounded-[18px] border border-[#d8dcf5] bg-[linear-gradient(135deg,#ffffff_0%,#f3f2ff_100%)] p-3.5 text-left shadow-[0_8px_22px_rgba(58,62,154,0.07)] transition hover:-translate-y-0.5">
-      <div className="relative z-10 flex items-start gap-3"><span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#e9e8ff] text-primary"><ImageIcon className="size-[17px]" /></span><span className="min-w-0 flex-1"><span className="flex items-center gap-1.5 text-[13.5px] font-bold text-[#17245b]">Portfolio<span className="grid size-4 place-items-center rounded-full bg-[#e0f5ea] text-[#21925a]"><Check className="size-2.5" strokeWidth={3} /></span></span><span className="mt-0.5 block text-[11.5px] text-muted-foreground">{items.length > 0 ? `${items.length} ${items.length === 1 ? "item" : "items"}` : "No portfolio items yet"}</span>{items.length > 0 ? <span className="mt-1 block truncate text-[10.5px] font-medium text-primary/80">{counts.join(" · ")}</span> : null}{showcaseCount !== null ? <span className="mt-1 block text-[10px] text-muted-foreground">Featured on profile · {showcaseCount} of 8 slots used</span> : null}</span><ChevronRight className="mt-1 size-4 shrink-0 text-muted-foreground/60 group-hover:text-primary" /></div>
-      {items.length > 0 ? <div className="absolute bottom-3 right-3 flex -space-x-2">{items.filter((item) => thumbnailFor(item)).slice(0, 3).map((item) => <span key={item.id} className="grid size-12 overflow-hidden rounded-xl border-2 border-white bg-[#e4e6f4] shadow-sm"><img src={thumbnailFor(item)} alt="" className="h-full w-full object-cover" /></span>)}</div> : <span className="absolute bottom-3 right-3 rounded-lg bg-white/80 px-2 py-1 text-[10px] font-bold text-primary shadow-sm">+ Add Portfolio</span>}
+    <button
+      onClick={onClick}
+      className="group w-full rounded-[18px] border border-[#d8dcf5] bg-[linear-gradient(135deg,#ffffff_0%,#f3f2ff_100%)] p-3.5 text-left shadow-[0_8px_22px_rgba(58,62,154,0.07)] transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[0_12px_26px_rgba(58,62,154,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+    >
+      <span className="flex items-start gap-3">
+        <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#e9e8ff] text-primary">
+          <ImageIcon className="size-[18px]" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center gap-1.5 text-[13.5px] font-bold text-[#17245b]">
+            Portfolio
+            {items.length > 0 ? (
+              <span className="grid size-4 place-items-center rounded-full bg-[#e0f5ea] text-[#21925a]">
+                <Check className="size-2.5" strokeWidth={3} />
+              </span>
+            ) : null}
+          </span>
+          <span className="mt-0.5 block text-[11.5px] text-muted-foreground">
+            {items.length > 0
+              ? `${items.length} ${items.length === 1 ? "item" : "items"} added`
+              : "Showcase your work to recruiters"}
+          </span>
+        </span>
+        <ChevronRight className="mt-1 size-4 shrink-0 text-muted-foreground/60 transition group-hover:translate-x-0.5 group-hover:text-primary" />
+      </span>
+
+      {items.length > 0 ? (
+        <span className="mt-3 flex items-center gap-3 border-t border-primary/10 pt-3">
+          {previews.length > 0 ? (
+            <span className="flex shrink-0 -space-x-2">
+              {previews.map((item) => (
+                <span
+                  key={item.id}
+                  className="grid size-10 overflow-hidden rounded-xl border-2 border-white bg-[#e4e6f4] shadow-sm"
+                >
+                  <img src={thumbnailFor(item)} alt="" className="h-full w-full object-cover" />
+                </span>
+              ))}
+              {items.length > previews.length ? (
+                <span className="grid size-10 place-items-center rounded-xl border-2 border-white bg-primary/10 text-[10px] font-bold text-primary shadow-sm">
+                  +{items.length - previews.length}
+                </span>
+              ) : null}
+            </span>
+          ) : null}
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[10.5px] font-medium text-primary/80">
+              {counts.join(" · ")}
+            </span>
+            {showcaseCount !== null ? (
+              <span className="mt-1 block truncate text-[10px] text-muted-foreground">
+                {showcaseCount > 0
+                  ? `Featured on profile · ${showcaseCount} of 8 slots`
+                  : "Choose items to feature on your profile"}
+              </span>
+            ) : null}
+          </span>
+        </span>
+      ) : (
+        <span className="mt-3 flex items-center gap-2 rounded-xl border border-dashed border-primary/20 bg-white/65 px-3 py-2.5">
+          <span className="grid size-7 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
+            <Plus className="size-4" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[11px] font-bold text-[#17245b]">
+              Add your first work sample
+            </span>
+            <span className="mt-0.5 block text-[10px] text-muted-foreground">
+              Photos, videos or links
+            </span>
+          </span>
+        </span>
+      )}
     </button>
   );
 }

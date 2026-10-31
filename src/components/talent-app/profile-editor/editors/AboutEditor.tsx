@@ -26,6 +26,7 @@ export function AboutEditor({ profile, onBack, onUpdate }: EditorProps) {
       title="About Me"
       onBack={onBack}
       action={<SaveAction onClick={save} />}
+      onSave={save}
     >
       <Card>
         <CardContent className="space-y-3">

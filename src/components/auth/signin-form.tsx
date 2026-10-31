@@ -2,12 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { z } from "zod";
-import { useForm } from "react-hook-form";
+import { useForm, type FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRight, Eye, EyeOff, Loader2, LockKeyhole, Mail } from "lucide-react";
+import { toast } from "sonner";
+import { toastFormError } from "@/lib/form-feedback";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { SocialAuthButtons } from "@/components/auth/social-auth-buttons";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -32,6 +34,7 @@ type SignInValues = z.infer<typeof signInSchema>;
 const ROLE_HOME: Record<string, string> = {
   talent: "/talent/dashboard",
   recruiter: "/recruiter/dashboard",
+  provider: "/provider/dashboard",
   admin: "/admin/dashboard",
 };
 
@@ -46,12 +49,27 @@ export function SignInForm() {
     defaultValues: { email: "", password: "" },
   });
   const googleError = searchParams.get("google_error");
+  const lastErrorRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (error && error !== lastErrorRef.current) {
+      lastErrorRef.current = error;
+      toast.error(error);
+    }
+    if (!error) lastErrorRef.current = null;
+  }, [error]);
 
   useEffect(() => {
     if (isAuthenticated && user) {
       const done = user.onboarding_completed || user.onboarding_exempted;
       if (!done) {
-        router.push(user.role === "recruiter" ? "/auth/recruiter/signup?resume=1" : "/auth/talent/signup?resume=1");
+        const onboardingTarget =
+          user.role === "provider"
+            ? "/provider/onboarding"
+            : user.role === "recruiter"
+              ? "/auth/recruiter/signup?resume=1"
+              : "/auth/talent/signup?resume=1";
+        router.push(onboardingTarget);
         return;
       }
       const redirect = searchParams.get("redirect");
@@ -73,6 +91,12 @@ export function SignInForm() {
     } catch {
       // error handled by store
     }
+  };
+
+  const onInvalid = (errors: FieldErrors<SignInValues>) => {
+    toastFormError(errors);
+    const firstField = Object.keys(errors)[0] as keyof SignInValues | undefined;
+    if (firstField) form.setFocus(firstField);
   };
 
   return (
@@ -116,7 +140,7 @@ export function SignInForm() {
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-4">
           {googleError && (
             <Alert variant="destructive" className="rounded-2xl border-red-200 bg-red-50 text-red-700">
               <AlertDescription>

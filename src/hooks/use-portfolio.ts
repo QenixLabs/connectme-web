@@ -85,11 +85,14 @@ export function useMyPortfolio() {
   });
 }
 
-export function usePortfolioItemLikeStatus(itemId: string) {
+export function usePortfolioItemLikeStatus(
+  itemId: string,
+  isAuthenticated = true,
+) {
   return useQuery({
     queryKey: portfolioKeys.like(itemId),
     queryFn: () => talentApi.getPortfolioItemLikeStatus(itemId),
-    enabled: !!itemId,
+    enabled: !!itemId && isAuthenticated,
   });
 }
 

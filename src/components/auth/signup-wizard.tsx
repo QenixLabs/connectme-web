@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, AnimatePresence } from "motion/react";
 import { ArrowRight, ArrowLeft, BriefcaseBusiness, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { authApi } from "@/lib/api";
+import { toastFormError } from "@/lib/form-feedback";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { StepIndicator } from "@/components/ui/step-indicator";
@@ -43,6 +45,10 @@ export function SignupWizard({
   const [signupEmail, setSignupEmail] = useState("");
   const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, [step, showOtp]);
+
   const form = useForm<SignupFormValues>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(credentialsSchema) as any,
@@ -79,11 +85,17 @@ export function SignupWizard({
 
     if (step === 1) {
       const ok = await form.trigger(["role"]);
-      if (!ok) return;
+      if (!ok) {
+        toastFormError(form.formState.errors);
+        return;
+      }
       goTo(2);
     } else if (step === 2) {
       const ok = await form.trigger(["name", "email", "phone", "password", "confirmPassword"]);
-      if (!ok) return;
+      if (!ok) {
+        toastFormError(form.formState.errors);
+        return;
+      }
       goTo(3);
     } else if (step === 3) {
       const fields =
@@ -91,16 +103,22 @@ export function SignupWizard({
           ? (["username", "profession"] as const)
           : (["companyName", "companySize"] as const);
       const ok = await form.trigger(fields as Parameters<typeof form.trigger>[0]);
-      if (!ok) return;
+      if (!ok) {
+        toastFormError(form.formState.errors);
+        return;
+      }
 
       const values = form.getValues();
       let profileFieldsValid = true;
+      const profileErrors: string[] = [];
       if (role === "talent") {
         if (!values.username.trim()) {
           form.setError("username", { type: "required", message: "Username is required" });
+          profileErrors.push("Username is required");
           profileFieldsValid = false;
         } else if (!/^[a-zA-Z0-9]{6,20}$/.test(values.username.trim())) {
           form.setError("username", { type: "validate", message: "Use 6-20 letters or numbers" });
+          profileErrors.push("Use 6-20 letters or numbers for your username");
           profileFieldsValid = false;
         } else {
           form.clearErrors("username");
@@ -108,6 +126,7 @@ export function SignupWizard({
 
         if (!values.profession.trim()) {
           form.setError("profession", { type: "required", message: "Please select a profession" });
+          profileErrors.push("Please select a profession");
           profileFieldsValid = false;
         } else {
           form.clearErrors("profession");
@@ -115,24 +134,30 @@ export function SignupWizard({
       } else {
         if (!values.companyName.trim()) {
           form.setError("companyName", { type: "required", message: "Company name is required" });
+          profileErrors.push("Company name is required");
           profileFieldsValid = false;
         } else {
           form.clearErrors("companyName");
         }
         if (!values.companySize) {
           form.setError("companySize", { type: "required", message: "Please select company size" });
+          profileErrors.push("Please select your company size");
           profileFieldsValid = false;
         } else {
           form.clearErrors("companySize");
         }
         if (values.companyWebsite && !/^https?:\/\//i.test(values.companyWebsite.trim())) {
           form.setError("companyWebsite", { type: "validate", message: "Enter a valid URL" });
+          profileErrors.push("Enter a valid company website URL");
           profileFieldsValid = false;
         } else {
           form.clearErrors("companyWebsite");
         }
       }
-      if (!profileFieldsValid) return;
+      if (!profileFieldsValid) {
+        toast.error(profileErrors[0] ?? "Please complete the highlighted fields.");
+        return;
+      }
       if (role === "talent") {
         try {
           const usernameResult = await authApi.checkUsername(values.username);
@@ -141,10 +166,13 @@ export function SignupWizard({
               type: "validate",
               message: "Username already taken",
             });
+            toast.error("Username already taken");
             return;
           }
         } catch {
-          setApiError("Could not check username availability. Please try again.");
+          const message = "Could not check username availability. Please try again.";
+          setApiError(message);
+          toast.error(message);
           return;
         }
       }
@@ -153,6 +181,7 @@ export function SignupWizard({
           type: "required",
           message: "Creator link is required for Influencers",
         });
+        toast.error("Creator link is required for Influencers");
         return;
       }
       form.clearErrors("creator_link");
@@ -180,9 +209,9 @@ export function SignupWizard({
         setShowOtp(true);
       } catch (err: unknown) {
         const e = err as { response?: { data?: { message?: string } } };
-        setApiError(
-          e.response?.data?.message || "Signup failed. Please try again.",
-        );
+        const message = e.response?.data?.message || "Signup failed. Please try again.";
+        setApiError(message);
+        toast.error(message);
       } finally {
         setSignupLoading(false);
       }

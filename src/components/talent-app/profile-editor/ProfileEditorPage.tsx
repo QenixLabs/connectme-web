@@ -27,7 +27,6 @@ import { StrengthScreen } from "./editors/StrengthScreen";
 import { PortfolioEditor } from "./editors/PortfolioEditor";
 import { MediaEditor } from "./editors/MediaEditor";
 import { AwardsEditor } from "./editors/AwardsEditor";
-import { ExperienceEditor } from "./editors/ExperienceEditor";
 import { CreditsEditor } from "./editors/CreditsEditor";
 import { TestimonialsEditor } from "./editors/TestimonialsEditor";
 import { mapServerToView, mapApiAwardsToView, mapViewToPayload } from "./profile-mapper";
@@ -211,13 +210,6 @@ export function ProfileEditorPage() {
     year: credit.year != null ? String(credit.year) : "",
     description: credit.description ?? "",
   }));
-  profile.experience = (creditsQuery.data ?? []).map((credit) => ({
-    id: credit._id,
-    title: credit.role_played ?? credit.project_name ?? "",
-    company: credit.project_name ?? "",
-    period: credit.year != null ? String(credit.year) : "",
-    description: credit.description ?? "",
-  }));
   profile.testimonials = (testimonialsQuery.data ?? []).map((testimonial) => ({
     id: testimonial._id,
     author: testimonial.author_name,
@@ -274,7 +266,6 @@ export function ProfileEditorPage() {
       {current === "portfolio" ? <PortfolioEditor {...editorProps} /> : null}
       {current === "media" ? <MediaEditor {...editorProps} /> : null}
       {current === "awards" ? <AwardsEditor {...editorProps} /> : null}
-      {current === "experience" ? <ExperienceEditor {...editorProps} /> : null}
       {current === "credits" ? <CreditsEditor {...editorProps} /> : null}
       {current === "social" ? <SocialLinksEditor {...editorProps} /> : null}
       {current === "documents" ? <DocumentsEditor {...editorProps} /> : null}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { ArrowLeft } from "lucide-react";
 import {
   Dialog,
@@ -35,8 +36,24 @@ export function PortfolioReelOverlay({
   onDelete,
   onShare,
 }: PortfolioReelOverlayProps) {
+  const reelItems = useMemo(() => {
+    const selectedItem = items.find((item) => item.id === initialItemId);
+    if (!selectedItem) return items;
+
+    if (selectedItem.type === "image") {
+      return items.filter((item) => item.type === "image");
+    }
+
+    if (selectedItem.type === "video" || selectedItem.type === "youtube") {
+      return items.filter(
+        (item) => item.type === "video" || item.type === "youtube",
+      );
+    }
+
+    return items.filter((item) => item.type === selectedItem.type);
+  }, [items, initialItemId]);
   const initialIndex = initialItemId
-    ? Math.max(items.findIndex((item) => item.id === initialItemId), 0)
+    ? Math.max(reelItems.findIndex((item) => item.id === initialItemId), 0)
     : 0;
 
   return (
@@ -62,7 +79,8 @@ export function PortfolioReelOverlay({
         </div>
 
         <PortfolioReel
-          items={items}
+          key={`${open ? "open" : "closed"}-${initialItemId ?? ""}`}
+          items={reelItems}
           username={username}
           isOwner={isOwner}
           initialIndex={initialIndex}

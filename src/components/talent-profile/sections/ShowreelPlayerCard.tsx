@@ -29,7 +29,7 @@ export function ShowreelPlayerCard({
          </span>
          <h2 className="text-[15px] font-bold text-foreground">Showreel</h2>
          <Link
-           href={`/talent/${encodeURIComponent(username)}/portfolio`}
+           href={`/talent/${encodeURIComponent(username)}/portfolio?type=video`}
            className="ml-auto shrink-0 text-xs font-semibold text-brand transition-colors hover:text-brand/80"
          >
            View All

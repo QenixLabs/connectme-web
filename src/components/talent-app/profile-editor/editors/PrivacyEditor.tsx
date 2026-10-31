@@ -37,7 +37,7 @@ const SECTIONS: { key: keyof SectionVisibility; label: string }[] = [
   { key: "bio", label: "About Me" },
   { key: "skills", label: "Skills" },
   { key: "portfolio", label: "Portfolio" },
-  { key: "experience", label: "Experience" },
+  { key: "experience", label: "Credits" },
   { key: "availability", label: "Availability" },
   { key: "location", label: "Location" },
   { key: "physical_attributes", label: "Physical Attributes" },
@@ -67,6 +67,7 @@ export function PrivacyEditor({ profile, onBack, onUpdate }: EditorProps) {
       title="Privacy & Visibility"
       onBack={onBack}
       action={<SaveAction onClick={save} />}
+      onSave={save}
     >
       <div className="space-y-2">
         {MODES.map((m) => {

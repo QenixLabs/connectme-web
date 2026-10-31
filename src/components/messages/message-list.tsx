@@ -47,7 +47,11 @@ export function MessageList({
   className,
 }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
-  const groups = groupMessagesByDay(messages);
+  const groups = groupMessagesByDay(
+    [...messages].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    ),
+  );
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });

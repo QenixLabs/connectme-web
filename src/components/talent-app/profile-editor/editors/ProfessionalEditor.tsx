@@ -39,6 +39,7 @@ export function ProfessionalEditor({ profile, onBack, onUpdate }: EditorProps) {
       title="Professional Profile"
       onBack={onBack}
       action={<SaveAction onClick={save} />}
+      onSave={save}
     >
       <Card>
         <CardContent className="space-y-5">

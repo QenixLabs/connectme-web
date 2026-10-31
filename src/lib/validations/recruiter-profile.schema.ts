@@ -36,6 +36,7 @@ export const recruiterProfileSchema = z.object({
   x_url: optionalUrl,
   company_size: optionalText(50, "Company size must be 50 characters or fewer"),
   industry: optionalText(80, "Industry must be 80 characters or fewer"),
+  industries: tagList.max(10, "Select up to 10 industries"),
   headline: optionalText(120, "Headline must be 120 characters or fewer"),
   about: z
     .string()

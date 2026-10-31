@@ -109,6 +109,15 @@ const SIZE_OPTIONS = [
   "500+ employees",
 ];
 
+const INDUSTRY_OPTIONS = [
+  "Film",
+  "Television",
+  "OTT / Digital",
+  "Advertising",
+  "Events",
+  "Music",
+];
+
 const SPECIALTY_OPTIONS = [
   "Talent Management",
   "Recruitment",
@@ -247,6 +256,12 @@ function draftFromProfile(profile: RecruiterProfile): Draft {
     x_url: profile.x_url ?? "",
     company_size: profile.company_size ?? "",
     industry: profile.industry ?? "",
+    industries:
+      profile.industries?.length
+        ? [...profile.industries]
+        : profile.industry
+          ? [profile.industry]
+          : [],
     headline: profile.headline ?? "",
     about: profile.about ?? "",
     founded_year: profile.founded_year,
@@ -314,6 +329,7 @@ function draftToPublicPreview(
     x_url: text(draft.x_url),
     company_size: text(draft.company_size),
     industry: text(draft.industry),
+    industries: draft.industries ?? [],
     headline: text(draft.headline),
     about: text(draft.about),
     founded_year: draft.founded_year,
@@ -1061,7 +1077,7 @@ export default function RecruiterProfileEditPage() {
   );
 
   const toggleInList = useCallback(
-    (field: "specialties" | "languages", tag: string) => {
+    (field: "industries" | "specialties" | "languages", tag: string) => {
       if (!draft) return;
       const current = draft[field] ?? [];
       const next = current.includes(tag)
@@ -1072,8 +1088,12 @@ export default function RecruiterProfileEditPage() {
         return;
       }
       set(field, next);
+      if (field === "industries") {
+        set("industry", next[0] ?? "");
+        markTouched("industries");
+      }
     },
-    [draft, set],
+    [draft, set, markTouched],
   );
 
   const handleSave = useCallback(() => {
@@ -1096,6 +1116,7 @@ export default function RecruiterProfileEditPage() {
         youtube_url: "links",
         x_url: "links",
         industry: "basic",
+        industries: "basic",
         headline: "basic",
         about: "about",
         founded_year: "basic",
@@ -1233,7 +1254,7 @@ export default function RecruiterProfileEditPage() {
   const basicFields = [
     draft.company_name.trim(),
     draft.slug.trim().length >= 3 ? "x" : "",
-    draft.industry?.trim() ?? "",
+    draft.industries?.length ? "x" : "",
     draft.founded_year ? "x" : "",
     draft.headline?.trim() ?? "",
     draft.position?.trim() ?? "",
@@ -1573,20 +1594,39 @@ export default function RecruiterProfileEditPage() {
                     </div>
                   </Field>
                   <Field
-                    label="Industry"
-                    fieldId={fieldDomId("industry")}
-                    error={getFieldError("industry")}
-                    valid={isFieldValid("industry", draft.industry)}
+                    label="Industries"
+                    fieldId={fieldDomId("industries")}
+                    error={getFieldError("industries")}
+                    valid={isFieldValid("industries", draft.industries?.join(","))}
+                    hint="Select all that apply"
                   >
-                    <div className="ae-input-icon">
-                      <Briefcase />
-                      <input
-                        {...getFieldProps("industry", draft.industry)}
-                        value={draft.industry ?? ""}
-                        onChange={(e) => set("industry", e.target.value)}
-                        maxLength={80}
-                        placeholder="e.g. Casting, Entertainment"
-                      />
+                    <div
+                      id={fieldDomId("industries")}
+                      className="flex flex-wrap gap-2"
+                      role="group"
+                      aria-label="Industries"
+                    >
+                      {Array.from(new Set([...INDUSTRY_OPTIONS, ...(draft.industries ?? [])])).map(
+                        (option) => {
+                          const active = draft.industries?.includes(option) ?? false;
+                          return (
+                            <button
+                              key={option}
+                              type="button"
+                              aria-pressed={active}
+                              onClick={() => toggleInList("industries", option)}
+                              className={`inline-flex min-h-9 cursor-pointer items-center gap-1 rounded-full border px-3 text-xs font-medium transition-colors ${
+                                active
+                                  ? "border-primary bg-accent text-accent-foreground"
+                                  : "border-border bg-card text-muted-foreground hover:bg-muted"
+                              }`}
+                            >
+                              {active ? <Check className="size-3" /> : <Plus className="size-3" />}
+                              {option}
+                            </button>
+                          );
+                        },
+                      )}
                     </div>
                   </Field>
                   <Field

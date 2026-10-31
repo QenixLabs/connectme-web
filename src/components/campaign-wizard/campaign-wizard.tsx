@@ -243,15 +243,34 @@ export function CampaignWizard({
 
   const onNext = async () => {
     setServerError(null);
+    if (step === 2 && !form.getValues("requirements.skills")?.length) {
+      const message = "Select at least one skill to continue.";
+      form.setError("requirements.skills", {
+        type: "manual",
+        message,
+      });
+      toast.error("Add at least one skill", {
+        description:
+          "Choose one or more skills from the talent skill library before continuing.",
+      });
+      return;
+    }
+
     const fields = getStepFields(step);
     const valid = await form.trigger(
       fields as unknown as Parameters<typeof form.trigger>[0],
     );
-    if (valid) {
-      setIsNavigating(true);
-      setStep((s) => Math.min(s + 1, 3));
-      setTimeout(() => setIsNavigating(false), 100);
+    if (!valid) {
+      toast.error("Please fix the highlighted errors", {
+        description:
+          "Complete required fields and correct invalid values before continuing.",
+      });
+      return;
     }
+
+    setIsNavigating(true);
+    setStep((s) => Math.min(s + 1, 3));
+    setTimeout(() => setIsNavigating(false), 100);
   };
 
   const onBack = () => {
@@ -360,6 +379,23 @@ export function CampaignWizard({
 
   const onSubmit = async (values: CampaignWizardInput) => {
     setServerError(null);
+    if (
+      values.publishOption === "public" &&
+      !values.requirements?.skills?.length
+    ) {
+      const message =
+        "Public campaigns require at least one skill. Add a skill in Requirements before publishing.";
+      form.setError("requirements.skills", {
+        type: "manual",
+        message,
+      });
+      setStep(2);
+      toast.error("Skills required to publish", {
+        description: message,
+      });
+      return;
+    }
+
     const payload = buildPayload(values);
 
     try {
@@ -409,13 +445,26 @@ export function CampaignWizard({
           ? "We could not update this campaign. Check your campaign permissions and try again."
           : "We could not create this campaign. Check your recruiter verification, subscription, or campaign limit.",
       );
-      setServerError(message);
+      const missingPublicSkills =
+        message.toLowerCase().includes("public campaign requires") &&
+        message.includes("requirements.skills");
+      const displayMessage = missingPublicSkills
+        ? "Public campaigns require at least one skill. Add a skill in Requirements before publishing."
+        : message;
+      if (missingPublicSkills) {
+        form.setError("requirements.skills", {
+          type: "manual",
+          message: displayMessage,
+        });
+        setStep(2);
+      }
+      setServerError(displayMessage);
       toast.error(
         isEdit
           ? "Campaign could not be updated"
           : "Campaign could not be created",
         {
-          description: message,
+          description: displayMessage,
         },
       );
     }
@@ -594,6 +643,7 @@ export function CampaignWizard({
             <PublishStep
               mediaFile={pendingMediaFile}
               existingCoverUrl={existingCampaign?.cover_image_url ?? null}
+              onEditSection={goToStep}
             />
           </div>
 

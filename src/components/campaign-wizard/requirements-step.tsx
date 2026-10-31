@@ -14,7 +14,7 @@ import { CampaignWizardInput } from "@/lib/validations/campaign-wizard.schema";
 import { TaskConfigSection } from "./task-config-section";
 import { cn } from "@/lib/utils";
 import { SKILL_NAMES } from "@/data/skills";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Sparkles, Trash2 } from "lucide-react";
 
 const GENDERS = ["Any", "Male", "Female", "Non-binary"];
 
@@ -52,7 +52,8 @@ export function RequirementsStep({
   campaignId?: string | null;
   onPendingDocChange?: (file: File | null) => void;
 }) {
-  const { control, watch, setValue } = useFormContext<CampaignWizardInput>();
+  const { control, watch, setValue, clearErrors } =
+    useFormContext<CampaignWizardInput>();
   const { fields, append, remove } = useFieldArray({
     control,
     name: "questions",
@@ -64,31 +65,55 @@ export function RequirementsStep({
 
   return (
     <div className="flex flex-col gap-4">
+      <div className="flex items-start gap-3 rounded-2xl border border-accent-teal/20 bg-gradient-to-br from-accent-teal-bg/70 via-card to-card p-4 shadow-sm sm:p-5">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent-teal text-accent-foreground shadow-sm">
+          <Sparkles className="size-5" strokeWidth={1.75} />
+        </div>
+        <div>
+          <h3 className="text-sm font-semibold text-foreground">
+            Find the right talent
+          </h3>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            Add at least one skill so talent can discover and match with your
+            campaign. You can refine the rest of the requirements below.
+          </p>
+        </div>
+      </div>
+
       <SectionLabel>Skills & languages</SectionLabel>
 
       <FormField
         control={control}
         name="requirements.skills"
         render={() => (
-          <FormItem className="flex flex-col gap-1.5">
-            <FieldLabel>Skills</FieldLabel>
+          <FormItem className="flex flex-col gap-2 rounded-2xl border border-accent-teal/20 bg-accent-teal-bg/20 p-4 shadow-sm sm:p-5">
+            <div className="flex items-center justify-between gap-3">
+              <FieldLabel required>Skills</FieldLabel>
+              <span className="rounded-full bg-accent-teal/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-accent-teal">
+                Required
+              </span>
+            </div>
             <FormControl>
               <TagInput
                 value={skills}
-                onChange={(next) =>
+                onChange={(next) => {
+                  if (next.length > 0) {
+                    clearErrors("requirements.skills");
+                  }
                   setValue("requirements.skills", next, {
                     shouldValidate: true,
-                  })
-                }
+                  });
+                }}
                 suggestions={SKILL_NAMES}
                 allowCustom={false}
                 maxTags={20}
-                placeholder="Search talent skills..."
+                placeholder="Search and select skills..."
+                className="rounded-xl bg-card"
               />
             </FormControl>
-            <p className="text-[11px] text-muted-foreground/60">
-              Choose skills from the talent skill library. Custom skills
-              aren&apos;t available.
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              Choose from the talent skill library. Select up to 20 skills;
+              custom skills aren&apos;t available.
             </p>
             <FormMessage />
           </FormItem>

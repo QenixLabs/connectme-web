@@ -8,6 +8,7 @@ interface EditorShellProps {
   title: string;
   onBack: () => void;
   action?: React.ReactNode;
+  onSave?: () => void;
   children: React.ReactNode;
   className?: string;
 }
@@ -16,6 +17,7 @@ export function EditorShell({
   title,
   onBack,
   action,
+  onSave,
   children,
   className,
 }: EditorShellProps) {
@@ -33,7 +35,14 @@ export function EditorShell({
         </div>
       </header>
 
-      <div className="flex-1 space-y-5 px-4 py-5">{children}</div>
+      <div className="flex-1 space-y-5 px-4 py-5">
+        {children}
+        {onSave && (
+          <Button className="w-full" onClick={onSave}>
+            Save
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

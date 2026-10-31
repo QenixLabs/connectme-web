@@ -21,6 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 interface ContactProviderButtonProps {
   providerSlug: string;
   providerName: string;
+  serviceTitle?: string;
   className?: string;
   variant?: "default" | "outline" | "secondary";
 }
@@ -36,6 +37,7 @@ function inboxFor(role?: string, capabilities?: string[]) {
 export function ContactProviderButton({
   providerSlug,
   providerName,
+  serviceTitle,
   className,
   variant = "default",
 }: ContactProviderButtonProps) {
@@ -63,7 +65,12 @@ export function ContactProviderButton({
     try {
       const { conversation_id } = await conversationsApi.startByUsername(providerSlug);
       const inbox = inboxFor(user?.role, user?.account_capabilities);
-      const content = message.trim();
+      const messageContent = message.trim();
+      const content = serviceTitle
+        ? `I'm contacting you about the service "${serviceTitle}".${
+            messageContent ? `\n\n${messageContent}` : ""
+          }`
+        : messageContent;
 
       if (content) {
         try {
@@ -105,8 +112,9 @@ export function ContactProviderButton({
           <DialogHeader>
             <DialogTitle>Contact {providerName}</DialogTitle>
             <DialogDescription>
-              Introduce your project and what you need. You can continue the conversation in your
-              inbox.
+              {serviceTitle
+                ? `Your message will include that you're contacting them about ${serviceTitle}. Add any details below.`
+                : "Introduce your project and what you need. You can continue the conversation in your inbox."}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-3">
@@ -124,7 +132,7 @@ export function ContactProviderButton({
               </Button>
               <Button type="submit" disabled={sending}>
                 {sending && <Loader2 className="mr-2 size-4 animate-spin" />}
-                {message.trim() ? "Send message" : "Start conversation"}
+                {message.trim() || serviceTitle ? "Send message" : "Start conversation"}
               </Button>
             </DialogFooter>
           </form>

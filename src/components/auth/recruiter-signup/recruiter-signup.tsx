@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, Loader2, Mail, Phone, User } from "lucide-react";
+import { toast } from "sonner";
 import { authApi, recruiterApi } from "@/lib/api";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { OtpInput } from "@/components/ui/otp-input";
@@ -62,7 +63,7 @@ export function RecruiterSignup({ isGoogleResume = false }: { isGoogleResume?: b
   const [roles, setRoles] = useState<string[]>([]);
   const [org, setOrg] = useState<OrgValues>({
     name: "",
-    industry: "",
+    industries: [],
     city: "",
     website: "",
     years: "",
@@ -72,11 +73,15 @@ export function RecruiterSignup({ isGoogleResume = false }: { isGoogleResume?: b
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [signupError, setSignupError] = useState<string | null>(null);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, [step]);
+
   if (isGoogleResume) return <GoogleRecruiterOnboarding />;
 
   const goTo = (next: number) => {
     setStep(next);
-    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleFinish = async () => {
@@ -101,7 +106,8 @@ export function RecruiterSignup({ isGoogleResume = false }: { isGoogleResume?: b
         company_website: org.website.trim() || undefined,
         company_size: org.teamSize ? (COMPANY_SIZE_MAP[org.teamSize] ?? org.teamSize) : undefined,
         contact_name: contactName || undefined,
-        industry: org.industry || undefined,
+        industry: org.industries[0] || undefined,
+        industries: org.industries.length > 0 ? org.industries : undefined,
         city: org.city.trim() || undefined,
         years_in_business: org.years || undefined,
         founded_year: org.years ? yearsBucketToFoundedYear(org.years) : undefined,
@@ -110,9 +116,10 @@ export function RecruiterSignup({ isGoogleResume = false }: { isGoogleResume?: b
       goTo(4);
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
-      setSignupError(
-        e.response?.data?.message || "Could not create your account. Please try again.",
-      );
+      const message =
+        e.response?.data?.message || "Could not create your account. Please try again.";
+      setSignupError(message);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }
@@ -124,7 +131,8 @@ export function RecruiterSignup({ isGoogleResume = false }: { isGoogleResume?: b
       const contactName = account.fullName.trim();
       await recruiterApi.updateProfile({
         contact_name: contactName || undefined,
-        industry: org.industry || undefined,
+        industry: org.industries[0] || undefined,
+        industries: org.industries.length > 0 ? org.industries : undefined,
         location: org.city ? parseCityString(org.city) : undefined,
         specialties: roles.length > 0 ? roles : undefined,
         profile_photo: uploadedLogo?.signedUrl,
@@ -250,6 +258,7 @@ function GoogleRecruiterAccountStep({
   const handleSendOtp = async () => {
     if (account.phone.length !== 10) {
       setFieldErrors((current) => ({ ...current, phone: "Enter a valid 10-digit mobile number first" }));
+      toast.error("Enter a valid 10-digit mobile number first");
       return;
     }
     setError(null);
@@ -260,7 +269,9 @@ function GoogleRecruiterAccountStep({
       setOtp("");
     } catch (err: unknown) {
       const response = err as { response?: { data?: { message?: string } } };
-      setError(response.response?.data?.message || "Could not send OTP. Please try again.");
+      const message = response.response?.data?.message || "Could not send OTP. Please try again.";
+      setError(message);
+      toast.error(message);
     } finally {
       setSendingOtp(false);
     }
@@ -276,7 +287,9 @@ function GoogleRecruiterAccountStep({
       await fetchUser();
     } catch (err: unknown) {
       const response = err as { response?: { data?: { message?: string } } };
-      setError(response.response?.data?.message || "Invalid OTP. Please try again.");
+      const message = response.response?.data?.message || "Invalid OTP. Please try again.";
+      setError(message);
+      toast.error(message);
     } finally {
       setVerifyingOtp(false);
     }
@@ -294,7 +307,11 @@ function GoogleRecruiterAccountStep({
       next.phone = "Verify your mobile number before continuing";
     }
     setFieldErrors(next);
-    if (Object.keys(next).length > 0) return;
+    const firstMessage = Object.values(next).find(Boolean);
+    if (firstMessage) {
+      toast.error(firstMessage);
+      return;
+    }
     setError(null);
     onContinue();
   };
@@ -432,7 +449,7 @@ function GoogleRecruiterOnboarding() {
   const [roles, setRoles] = useState<string[]>([]);
   const [org, setOrg] = useState<OrgValues>({
     name: "",
-    industry: "",
+    industries: [],
     city: "",
     website: "",
     years: "",
@@ -443,6 +460,10 @@ function GoogleRecruiterOnboarding() {
   const [hasProfile, setHasProfile] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, [step]);
 
   useEffect(() => {
     let cancelled = false;
@@ -477,7 +498,12 @@ function GoogleRecruiterOnboarding() {
         setRoles(profile?.specialties ?? []);
         setOrg({
           name: profile?.company_name || "",
-          industry: profile?.industry || "",
+          industries:
+            profile?.industries?.length
+              ? profile.industries
+              : profile?.industry
+                ? [profile.industry]
+                : [],
           city: [profile?.location?.city, profile?.location?.state, profile?.location?.country]
             .filter(Boolean)
             .join(", "),
@@ -512,7 +538,8 @@ function GoogleRecruiterOnboarding() {
       const payload = {
         company_name: companyName,
         contact_name: contactName,
-        industry: org.industry || undefined,
+        industry: org.industries[0] || undefined,
+        industries: org.industries.length > 0 ? org.industries : undefined,
         location: parseCityString(org.city),
         specialties: roles,
         company_website: org.website.trim() || undefined,
@@ -538,10 +565,11 @@ function GoogleRecruiterOnboarding() {
       router.replace("/recruiter/welcome");
     } catch (err: unknown) {
       const response = err as { response?: { data?: { message?: string } } };
-      setError(
+      const message =
         response.response?.data?.message ||
-          (err instanceof Error ? err.message : "Could not complete your profile. Please try again."),
-      );
+        (err instanceof Error ? err.message : "Could not complete your profile. Please try again.");
+      setError(message);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }

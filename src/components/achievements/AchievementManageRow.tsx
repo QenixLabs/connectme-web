@@ -22,24 +22,16 @@ interface AchievementManageRowProps {
   achievement: Achievement;
   onEdit: () => void;
   onDelete: () => void;
-  mode?: "default" | "experience";
 }
 
 export function AchievementManageRow({
   achievement,
   onEdit,
   onDelete,
-  mode = "default",
 }: AchievementManageRowProps) {
   const config = ACHIEVEMENT_TYPE_CONFIG[achievement.type];
-  const title =
-    mode === "experience"
-      ? achievement.role_played || achievement.project_name || "Untitled experience"
-      : getAchievementTitle(achievement);
-  const organization =
-    mode === "experience"
-      ? achievement.project_name || achievement.platform || "Independent"
-      : getAchievementOrganization(achievement);
+  const title = getAchievementTitle(achievement);
+  const organization = getAchievementOrganization(achievement);
 
   return (
     <Card className="rounded-[22px] border-[#e9e6f7] bg-white shadow-[0_8px_22px_rgba(36,43,93,0.06)] transition-shadow hover:shadow-[0_12px_28px_rgba(36,43,93,0.1)]">
@@ -79,7 +71,7 @@ export function AchievementManageRow({
           </div>
           <div className="mt-1.5 flex min-w-0 flex-wrap items-center gap-1.5">
             <Badge className="h-5 rounded-full bg-[#f1edff] px-2 text-[9px] font-bold text-[#5e34d7] hover:bg-[#f1edff]">
-              {mode === "experience" ? "Experience" : config.label}
+              {config.label}
             </Badge>
             {achievement.featured && (
               <Badge className="h-5 rounded-full bg-[#fff4c8] px-2 text-[9px] font-bold text-[#a16207] hover:bg-[#fff4c8]">

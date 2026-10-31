@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { useState, type ReactNode } from "react";
 import Image from "next/image";
+import { toast } from "sonner";
 import {
   Building2,
   Layers,
@@ -18,6 +19,7 @@ import {
 } from "lucide-react";
 import {
   DropdownMenu,
+  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
@@ -27,7 +29,7 @@ import { cn } from "@/lib/utils";
 
 export type OrgValues = {
   name: string;
-  industry: string;
+  industries: string[];
   city: string;
   website: string;
   years: string;
@@ -113,6 +115,82 @@ function OrgDropdown({
   );
 }
 
+function OrgMultiDropdown({
+  icon,
+  label,
+  required,
+  error,
+  values,
+  placeholder,
+  options,
+  onToggle,
+}: {
+  icon: ReactNode;
+  label: string;
+  required?: boolean;
+  error?: string | null;
+  values: string[];
+  placeholder: string;
+  options: string[];
+  onToggle: (value: string) => void;
+}) {
+  return (
+    <div
+      className={`flex min-h-[52px] items-center gap-3 rounded-[13px] border bg-card px-3 py-2 shadow-[0_2px_8px_rgba(55,33,110,0.04)] transition-colors focus-within:border-primary ${error ? "border-destructive" : "border-border"}`}
+    >
+      <span className="shrink-0 text-muted-foreground [&>svg]:size-[18px]">{icon}</span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[10px] leading-3 text-muted-foreground">
+          {label}
+          {required ? <span className="ml-0.5 text-destructive">*</span> : null}
+        </span>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            type="button"
+            aria-label={label}
+            className={cn(
+              inputClass,
+              "flex w-full cursor-pointer items-center justify-between gap-2 text-left",
+            )}
+          >
+            <span
+              className={cn(
+                "truncate",
+                values.length === 0 && "font-normal text-muted-foreground/70",
+              )}
+            >
+              {values.length > 0 ? values.join(", ") : placeholder}
+            </span>
+            <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="start"
+            className="max-h-72 w-[var(--radix-dropdown-menu-trigger-width)] overflow-auto"
+          >
+            {options.map((option) => (
+              <DropdownMenuCheckboxItem
+                key={option}
+                checked={values.includes(option)}
+                onSelect={(event) => {
+                  event.preventDefault();
+                  onToggle(option);
+                }}
+              >
+                <span className="truncate">{option}</span>
+              </DropdownMenuCheckboxItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+        {error ? (
+          <span className="mt-1 block text-[11px] font-medium text-destructive" role="alert">
+            {error}
+          </span>
+        ) : null}
+      </span>
+    </div>
+  );
+}
+
 export function StepOrganization({
   values,
   onChange,
@@ -149,11 +227,13 @@ export function StepOrganization({
     }
     if (!["image/jpeg", "image/png", "image/svg+xml"].includes(file.type)) {
       setLogoError("Use a PNG, JPG or SVG image.");
+      toast.error("Use a PNG, JPG or SVG image for your logo.");
       onLogoChange?.(null);
       return;
     }
     if (file.size > 2 * 1024 * 1024) {
       setLogoError("Logo must be under 2 MB.");
+      toast.error("Logo must be under 2 MB.");
       onLogoChange?.(null);
       return;
     }
@@ -169,7 +249,7 @@ export function StepOrganization({
         event.preventDefault();
         const next: Partial<Record<keyof OrgValues, string>> = {};
         if (!values.independent && !values.name.trim()) next.name = "Organization name is required";
-        if (!values.industry) next.industry = "Please select your industry";
+        if (values.industries.length === 0) next.industries = "Please select at least one industry";
         if (!values.city.trim()) next.city = "City or location is required";
         if (values.website.trim()) {
           try {
@@ -179,7 +259,11 @@ export function StepOrganization({
           }
         }
         setErrors(next);
-        if (Object.keys(next).length > 0) return;
+        const firstMessage = Object.values(next).find(Boolean);
+        if (firstMessage) {
+          toast.error(firstMessage);
+          return;
+        }
         onSubmit();
       }}
     >
@@ -267,15 +351,22 @@ export function StepOrganization({
             aria-invalid={Boolean(errors.name)}
           />
         </Field>
-        <OrgDropdown
-           icon={<Layers className="size-5" />}
-           label="Industry"
-           required
-           error={errors.industry}
-           value={values.industry}
-          placeholder="Select your industry"
+        <OrgMultiDropdown
+          icon={<Layers className="size-5" />}
+          label="Industries"
+          required
+          error={errors.industries}
+          values={values.industries}
+          placeholder="Select one or more industries"
           options={industries}
-          onSelect={(value) => set("industry", value)}
+          onToggle={(value) =>
+            set(
+              "industries",
+              values.industries.includes(value)
+                ? values.industries.filter((industry) => industry !== value)
+                : [...values.industries, value],
+            )
+          }
         />
         <Field icon={<MapPin className="size-5" />} label="City / Location" required error={errors.city}>
           <input

@@ -44,7 +44,7 @@ export function HighlightRow({
         </span>
         <h2 className="text-[15px] font-bold text-foreground">{title}</h2>
         <Link
-          href={`/talent/${encodeURIComponent(username)}/portfolio`}
+          href={`/talent/${encodeURIComponent(username)}/portfolio?type=${variant}`}
           className="ml-auto shrink-0 text-xs font-semibold text-brand transition-colors hover:text-brand/80"
         >
           View All

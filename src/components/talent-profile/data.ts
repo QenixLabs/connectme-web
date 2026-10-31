@@ -43,6 +43,9 @@ export interface AwardItem {
   id: string;
   name: string;
   issuer: string;
+  year?: number;
+  description?: string;
+  mediaUrl?: string;
 }
 
 export function formatLocation(
@@ -222,7 +225,7 @@ export function toExperienceItems(credits: Credit[]): ExperienceItem[] {
       projectName: c.project_name,
       director: c.director,
       creditUrl: c.credit_url,
-      mediaUrl: c.media_url,
+      mediaUrl: c.media_url || c.proof_url || c.credit_url,
       description: c.description || "",
     }));
 }
@@ -234,6 +237,9 @@ export function toAwardItems(awards: Award[]): AwardItem[] {
     issuer: [a.awarding_body, a.year ? String(a.year) : ""]
       .filter(Boolean)
       .join(" • "),
+    year: a.year,
+    description: a.description,
+    mediaUrl: a.media_url || a.proof_url,
   }));
 }
 

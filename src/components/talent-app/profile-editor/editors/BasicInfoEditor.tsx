@@ -79,6 +79,7 @@ export function BasicInfoEditor({ profile, onBack, onUpdate }: EditorProps) {
       title="Basic Information"
       onBack={onBack}
       action={<SaveAction onClick={save} />}
+      onSave={save}
     >
       <Card>
         <CardContent className="space-y-4">

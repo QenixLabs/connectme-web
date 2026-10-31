@@ -8,12 +8,22 @@ import {
   Check,
   Loader2,
   Search,
+  Store,
   UsersRound,
 } from "lucide-react";
 import { useState } from "react";
 import logoImage from "@/assets/rootin-logo-orange.png";
 import { authApi } from "@/lib/api";
 import { authStore } from "@/stores/auth-store";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 /**
  * Migrated from design-pixel-perfect/src/routes/index.tsx.
@@ -28,7 +38,7 @@ const talentImage = "/assets/onboarding/rootin-talent-banner.png";
 
 const imageSizes = "(max-width: 520px) 100vw, 430px";
 
-export type OnboardingRole = "recruiter" | "talent";
+export type OnboardingRole = "recruiter" | "talent" | "provider";
 
 type Role = OnboardingRole;
 
@@ -48,6 +58,7 @@ function RootinLogo() {
 
 const recruiterTags = ["Casting Directors", "Agencies", "Production Houses", "Brands & Advertisers", "Event Companies"];
 const talentTags = ["Actors", "Models", "Dancers", "Musicians", "Creators", "Technicians", "Voice Artists", "and more..."];
+const providerTags = ["Photographers", "Studios", "Makeup Artists", "Event Services", "and more..."];
 
 function RoleCard({
   role,
@@ -59,7 +70,16 @@ function RoleCard({
   onSelect: () => void;
 }) {
   const recruiter = role === "recruiter";
-  const tags = recruiter ? recruiterTags : talentTags;
+  const provider = role === "provider";
+  const tags = recruiter ? recruiterTags : provider ? providerTags : talentTags;
+  const image = recruiter ? recruiterImage : provider ? "/provider-signup-hero.png" : talentImage;
+  const roleLabel = recruiter ? "recruiters" : provider ? "service providers" : "talent";
+  const title = recruiter ? "Recruiter" : provider ? "Service Provider" : "Talent Professional";
+  const description = recruiter
+    ? "Find exceptional talent, create opportunities and bring stories to life."
+    : provider
+      ? "Showcase your services, connect with clients and grow your business."
+      : "Showcase your work, get discovered and unlock new opportunities.";
   return (
     <button
       type="button"
@@ -69,7 +89,7 @@ function RoleCard({
     >
       <Image
         className="role-art"
-        src={recruiter ? recruiterImage : talentImage}
+        src={image}
         alt=""
         aria-hidden="true"
         fill
@@ -77,18 +97,18 @@ function RoleCard({
       />
       <span className="role-shade" />
       <span className="relative z-10 block max-w-[48%] text-left">
-        <span className="role-eyebrow">For {recruiter ? "recruiters" : "talent"}</span>
+        <span className="role-eyebrow">For {roleLabel}</span>
         <span className="mt-2 block text-[1.16rem] font-extrabold leading-tight text-foreground">
-          I’m a {recruiter ? "Recruiter" : "Talent Professional"}
+          I’m a {title}
         </span>
         <span className="mt-2 block text-[0.7rem] font-medium leading-[1.45] text-muted-foreground">
-          {recruiter
-            ? "Find exceptional talent, create opportunities and bring stories to life."
-            : "Showcase your work, get discovered and unlock new opportunities."}
+          {description}
         </span>
       </span>
       {selected && <span className="select-check"><Check size={15} strokeWidth={3} /></span>}
-      <span className="role-symbol">{recruiter ? <Search size={17} /> : <UsersRound size={17} />}</span>
+      <span className="role-symbol">
+        {recruiter ? <Search size={17} /> : provider ? <Store size={17} /> : <UsersRound size={17} />}
+      </span>
       <span className="tag-list">
         {tags.map((tag) => <span className="tag" key={tag}>{tag}</span>)}
       </span>
@@ -109,8 +129,13 @@ export function RoleScreen({
   const [selected, setSelected] = useState<Role>(initialRole);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [providerSoonOpen, setProviderSoonOpen] = useState(false);
 
   const handleContinue = async () => {
+    if (selected === "provider") {
+      setProviderSoonOpen(true);
+      return;
+    }
     if (onContinue) {
       onContinue(selected);
       return;
@@ -121,11 +146,9 @@ export function RoleScreen({
       try {
         authStore.getState().setAccessToken(null);
         await authApi.completeGoogleSignup(selected);
-        router.replace(
-          selected === "talent"
-            ? "/auth/talent/signup?resume=1"
-            : "/auth/recruiter/signup?resume=1",
-        );
+        router.replace(selected === "talent"
+          ? "/auth/talent/signup?resume=1"
+          : "/auth/recruiter/signup?resume=1");
       } catch (err: unknown) {
         const response = err as { response?: { data?: { message?: string | string[] } } };
         const message = response.response?.data?.message;
@@ -141,7 +164,11 @@ export function RoleScreen({
       }
       return;
     }
-    router.push(selected === "talent" ? "/auth/talent/signup" : "/auth/recruiter/signup");
+    router.push(
+      selected === "talent"
+        ? "/auth/talent/signup"
+        : "/auth/recruiter/signup",
+    );
   };
 
   return (
@@ -163,7 +190,7 @@ export function RoleScreen({
         </h1>
         <p className="mt-2 text-[0.78rem] font-medium text-muted-foreground">
           {googleSignup
-            ? "Your Google account is verified. Choose Talent or Recruiter to continue signup."
+            ? "Your Google account is verified. Choose a role to continue signup."
             : "Choose your role to get a personalized experience."}
         </p>
       </section>
@@ -171,6 +198,7 @@ export function RoleScreen({
       <section className="mt-5 grid gap-4 px-5">
         <RoleCard role="recruiter" selected={selected === "recruiter"} onSelect={() => setSelected("recruiter")} />
         <RoleCard role="talent" selected={selected === "talent"} onSelect={() => setSelected("talent")} />
+        <RoleCard role="provider" selected={selected === "provider"} onSelect={() => { setSelected("provider"); setProviderSoonOpen(true); }} />
       </section>
 
       <div className="mt-auto px-5 pb-6 pt-5">
@@ -183,7 +211,13 @@ export function RoleScreen({
           <span>
             {submitting
               ? "Preparing your signup..."
-              : `Continue as ${selected === "recruiter" ? "Recruiter" : "Talent"}`}
+              : `Continue as ${
+                  selected === "provider"
+                    ? "Service Provider"
+                    : selected === "recruiter"
+                      ? "Recruiter"
+                      : "Talent"
+                }`}
           </span>
           {submitting ? <Loader2 size={21} className="animate-spin" /> : <ArrowRight size={21} />}
         </button>
@@ -194,6 +228,27 @@ export function RoleScreen({
           </Link>
         </p>
       </div>
+
+      <Dialog open={providerSoonOpen} onOpenChange={setProviderSoonOpen}>
+        <DialogContent className="max-w-[22rem] rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-extrabold">Coming soon</DialogTitle>
+            <DialogDescription className="text-sm leading-6">
+              Service Provider accounts are coming soon. We&apos;re putting the finishing touches
+              on this experience.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              className="w-full rounded-xl font-bold"
+              onClick={() => setProviderSoonOpen(false)}
+            >
+              Got it
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }

@@ -8,6 +8,7 @@ import {
   ExternalLink,
   Megaphone,
   Music2,
+  Play,
   Theater,
   Trophy,
   Tv,
@@ -20,6 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { getYouTubeEmbedUrl, getYouTubeThumbnail } from "@/hooks/use-portfolio";
 import { CollapsibleSection } from "../primitives";
 import type { ExperienceItem } from "../data";
 
@@ -54,28 +56,12 @@ function getCategoryIcon(platform?: string, size = "size-5"): ReactNode {
 function getMediaSource(mediaUrl?: string): string | undefined {
   const value = mediaUrl?.trim();
   if (!value) return undefined;
+  const youtubeThumbnail = getYouTubeThumbnail(value);
+  if (youtubeThumbnail) return youtubeThumbnail;
 
   try {
     const url = new URL(value);
     if (url.protocol !== "https:" && url.protocol !== "http:") return undefined;
-
-    const hostname = url.hostname.replace(/^www\./, "").toLowerCase();
-    if (
-      hostname === "youtu.be" ||
-      hostname === "youtube.com" ||
-      hostname.endsWith(".youtube.com") ||
-      hostname === "youtube-nocookie.com" ||
-      hostname.endsWith(".youtube-nocookie.com")
-    ) {
-      const videoId =
-        hostname === "youtu.be"
-          ? url.pathname.split("/").filter(Boolean)[0]
-          : url.searchParams.get("v") ??
-            url.pathname.match(/\/(?:embed|shorts|live)\/([^/]+)/)?.[1];
-      if (videoId && /^[\w-]{11}$/.test(videoId)) {
-        return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
-      }
-    }
 
     return url.toString();
   } catch {
@@ -92,6 +78,7 @@ function CreditMedia({
 }) {
   const [failed, setFailed] = useState(false);
   const src = getMediaSource(item.mediaUrl);
+  const isYouTube = Boolean(item.mediaUrl && getYouTubeEmbedUrl(item.mediaUrl));
   const alt = `${item.projectName || "Project"}${item.platform ? ` ${item.platform}` : ""} media`;
 
   if (src && !failed) {
@@ -107,6 +94,11 @@ function CreditMedia({
           onError={() => setFailed(true)}
           className="object-cover"
         />
+        {isYouTube && (
+          <span className="absolute inset-0 grid place-items-center bg-black/10 text-white">
+            <Play aria-hidden="true" className="size-6 fill-current drop-shadow" />
+          </span>
+        )}
       </span>
     );
   }
@@ -236,10 +228,21 @@ export function CreditsSection({
           {selected && (
             <div className="space-y-4 py-2">
               {selected.mediaUrl && (
-                <CreditMedia
-                  item={selected}
-                  className="h-44 w-full max-w-xs object-cover"
-                />
+                <div className="overflow-hidden rounded-xl bg-black">
+                  {getYouTubeEmbedUrl(selected.mediaUrl) ? (
+                    <iframe
+                      src={`${getYouTubeEmbedUrl(selected.mediaUrl)}?autoplay=1&rel=0`}
+                      title={`${selected.projectName || "Credit"} video`}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                      className="aspect-video w-full"
+                    />
+                  ) : /\.(?:mp4|webm|mov)(?:[?#].*)?$/i.test(selected.mediaUrl) ? (
+                    <video src={selected.mediaUrl} controls className="max-h-[60svh] w-full" />
+                  ) : (
+                    <CreditMedia item={selected} className="h-52 w-full" />
+                  )}
+                </div>
               )}
               <div className="min-w-0">
                 {selected.year && (
