@@ -57,6 +57,12 @@ describe("buildProfilePath", () => {
     expect(buildProfilePath(recruiter)).toBe("/recruiter/northlight-casting");
   });
 
+  it("uses the provider route for provider profiles", () => {
+    expect(
+      buildProfilePath({ role: "provider", slug: "silver-frame" }),
+    ).toBe("/providers/silver-frame");
+  });
+
   it("returns an empty path when the slug is missing", () => {
     expect(buildProfilePath({ role: "talent", slug: "" })).toBe("");
     expect(buildProfilePath({ role: "talent", slug: "   " })).toBe("");
@@ -173,8 +179,17 @@ describe("share messages", () => {
 
   it("uses a generic name when the profile has no display name", () => {
     expect(buildShareText({ role: "recruiter", slug: "x", name: "" })).toBe(
-      "Check out a recruiter's portfolio on RootIn ✨",
+      "Check out a recruiter on RootIn ✨",
     );
+  });
+
+  it("uses provider-specific fallback copy and route", () => {
+    const target = { role: "provider" as const, slug: "silver-frame", name: "" };
+    expect(buildShareText(target)).toBe(
+      "Check out a service provider on RootIn ✨",
+    );
+    expect(buildShareMessage(target, "https://rootin.app/providers/silver-frame"))
+      .toContain("View profile:\nhttps://rootin.app/providers/silver-frame");
   });
 
   it("builds a professional WhatsApp message with the name, the profession and the link", () => {
@@ -235,6 +250,16 @@ describe("instagram caption", () => {
     expect(caption).not.toContain("null");
     expect(caption).toContain("Meet this talent ✨");
     expect(caption).not.toContain("Discover more:");
+  });
+
+  it("uses a provider-specific hashtag instead of a talent portfolio hashtag", () => {
+    const caption = buildInstagramCaption(
+      { role: "provider", slug: "silver-frame", name: "Silver Frame" },
+      "https://rootin.app/providers/silver-frame",
+    );
+
+    expect(caption).toContain("#ServiceProvider");
+    expect(caption).not.toContain("#TalentPortfolio");
   });
 
   it("does not repeat a hashtag that already appears in the caption", () => {
@@ -556,6 +581,7 @@ describe("helpers", () => {
   it("labels the roles", () => {
     expect(roleLabel("talent")).toBe("Talent");
     expect(roleLabel("recruiter")).toBe("Recruiter");
+    expect(roleLabel("provider")).toBe("Service Provider");
   });
 
   it("makes relative image URLs absolute", () => {

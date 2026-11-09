@@ -74,8 +74,8 @@ export function RequirementsStep({
             Find the right talent
           </h3>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-            Add at least one skill so talent can discover and match with your
-            campaign. You can refine the rest of the requirements below.
+            Add skills to help talent discover and match with your campaign.
+            You can refine the rest of the requirements below.
           </p>
         </div>
       </div>
@@ -88,9 +88,9 @@ export function RequirementsStep({
         render={() => (
           <FormItem className="flex flex-col gap-2 rounded-2xl border border-accent-teal/20 bg-accent-teal-bg/20 p-4 shadow-sm sm:p-5">
             <div className="flex items-center justify-between gap-3">
-              <FieldLabel required>Skills</FieldLabel>
+              <FieldLabel>Skills</FieldLabel>
               <span className="rounded-full bg-accent-teal/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-accent-teal">
-                Required
+                Optional
               </span>
             </div>
             <FormControl>

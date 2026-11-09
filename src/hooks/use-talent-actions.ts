@@ -8,6 +8,7 @@ import { conversationsApi } from "@/lib/api/conversations";
 import { requestsApi } from "@/lib/api/requests";
 import { queryKeys } from "@/lib/api/query-keys";
 import { useAuthStore } from "@/providers/auth-store-provider";
+import { talentProfileKeys } from "@/hooks/use-talent-profile";
 
 const savedTalentKeys = {
   all: ["saved-talent"] as const,
@@ -183,6 +184,9 @@ export function useShortlistTalent(username: string, campaignId: string) {
       queryClient.invalidateQueries({
         queryKey: shortlistKeys.status(username, campaignId),
       });
+      queryClient.invalidateQueries({
+        queryKey: talentProfileKeys.publicProfile(username),
+      });
     },
   });
 
@@ -218,6 +222,9 @@ export function useShortlistTalent(username: string, campaignId: string) {
     onSettled: () => {
       queryClient.invalidateQueries({
         queryKey: shortlistKeys.status(username, campaignId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: talentProfileKeys.publicProfile(username),
       });
     },
   });

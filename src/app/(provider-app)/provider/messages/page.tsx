@@ -14,6 +14,7 @@ import {
   ConversationHeader,
   MessageList,
   MessageComposer,
+  ServiceConversationPreview,
   EmptyState,
   matchesConversationFilter,
 } from "@/components/messages";
@@ -107,6 +108,14 @@ export default function ProviderMessagesPage() {
             c._id === payload.conversation_id ? { ...c, last_message_status: "read" } : c,
           ),
         );
+      },
+      onMessageFailed: (payload) => {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.client_message_id === payload.client_message_id ? { ...m, status: "failed" } : m,
+          ),
+        );
+        toast.error(payload.error || "Failed to send message.");
       },
     },
   );
@@ -357,6 +366,10 @@ export default function ProviderMessagesPage() {
               <ConversationHeader
                 participant={activeParticipant}
                 onMarkAllRead={handleMarkAllRead}
+              />
+              <ServiceConversationPreview
+                conversationId={active._id}
+                resolveInquiry
               />
               <MessageList
                 messages={messages}

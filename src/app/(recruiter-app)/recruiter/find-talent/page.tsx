@@ -322,7 +322,10 @@ function TalentPreviewDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto border-border bg-card p-0 sm:max-w-lg">
+      <DialogContent
+        onClick={(event) => event.stopPropagation()}
+        className="max-h-[85vh] overflow-y-auto border-border bg-card p-0 sm:max-w-lg"
+      >
         <DialogTitle className="sr-only">{name} quick preview</DialogTitle>
         <DialogDescription className="sr-only">
           Key details about {name} — experience, languages, skills and

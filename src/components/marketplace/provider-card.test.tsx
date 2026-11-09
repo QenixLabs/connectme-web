@@ -34,5 +34,6 @@ describe("ProviderCard", () => {
     );
     expect(markup).toContain("4.7");
     expect(markup).toContain("(12)");
+    expect(markup).toContain("Customer reviews");
   });
 });

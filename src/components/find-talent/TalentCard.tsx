@@ -196,7 +196,10 @@ export function TalentCard({ talent }: TalentCardProps) {
       </div>
 
       <Dialog open={summaryOpen} onOpenChange={setSummaryOpen}>
-        <DialogContent className="max-h-[90vh] max-w-[calc(100%-2.5rem)] overflow-y-auto border-border bg-card p-0 sm:max-w-2xl">
+        <DialogContent
+          onClick={(event) => event.stopPropagation()}
+          className="max-h-[90vh] max-w-[calc(100%-2.5rem)] overflow-y-auto border-border bg-card p-0 sm:max-w-2xl"
+        >
           <div className="grid sm:grid-cols-[180px_1fr]">
             <div className="relative aspect-[4/3] overflow-hidden bg-muted sm:aspect-auto sm:min-h-[220px]">
               {talent.profile_photo ? (

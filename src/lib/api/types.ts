@@ -61,6 +61,7 @@ export interface SendMessagePayload {
   content: string;
   client_message_id: string;
   attachments?: Attachment[];
+  service_id?: string;
 }
 
 export interface SendFirstMessagePayload {

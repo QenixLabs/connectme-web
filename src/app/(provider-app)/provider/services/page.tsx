@@ -1,41 +1,46 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
-  Briefcase,
+  ArrowRight,
+  BriefcaseBusiness,
   CheckCircle2,
+  CirclePause,
+  Copy,
   Eye,
-  ImagePlus,
+  FilePenLine,
+  Image as ImageIcon,
   Loader2,
+  MoreHorizontal,
+  PauseCircle,
   Pencil,
+  PlayCircle,
   Plus,
   Search,
-  Send,
+  Sparkles,
   Trash2,
-  Undo2,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
-import { servicesApi } from "@/lib/api/marketplace";
+import { providersApi, servicesApi } from "@/lib/api/marketplace";
 import type {
   IndicativePrice,
+  MyServicesQuery,
   ServiceListing,
   ServiceListingPayload,
   ServiceStatus,
 } from "@/lib/api/marketplace";
 import { getApiErrorMessage } from "@/lib/api/client";
 import { queryKeys } from "@/lib/api/query-keys";
+import { MARKETPLACE_CATEGORIES } from "@/lib/marketplace-categories";
+import { formatAmount } from "@/components/marketplace/format";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { TagInput } from "@/components/ui/tag-input";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Dialog,
   DialogContent,
@@ -45,465 +50,538 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 12;
 
 type StatusFilter = "all" | ServiceStatus;
+type SortOption = NonNullable<MyServicesQuery["sort"]>;
 
-interface ImageItem {
-  path: string;
-  url: string;
-}
+const STATUS_TABS: Array<{ value: StatusFilter; label: string }> = [
+  { value: "all", label: "All" },
+  { value: "published", label: "Published" },
+  { value: "draft", label: "Draft" },
+  { value: "unpublished", label: "Paused" },
+];
 
-interface ServiceForm {
+const SORT_OPTIONS: Array<{ value: SortOption; label: string }> = [
+  { value: "recent", label: "Recently updated" },
+  { value: "newest", label: "Newest first" },
+  { value: "oldest", label: "Oldest first" },
+];
+
+interface BannerState {
+  tone: "success" | "error";
   title: string;
-  description: string;
-  category: string;
-  service_areas: string[];
-  amount: string;
-  currency: string;
-  unit: NonNullable<IndicativePrice["unit"]>;
-  price_note: string;
-  images: ImageItem[];
-}
-
-const EMPTY_FORM: ServiceForm = {
-  title: "",
-  description: "",
-  category: "",
-  service_areas: [],
-  amount: "",
-  currency: "INR",
-  unit: "project",
-  price_note: "",
-  images: [],
-};
-
-function toForm(service: ServiceListing): ServiceForm {
-  return {
-    title: service.title,
-    description: service.description,
-    category: service.category,
-    service_areas: service.service_areas ?? [],
-    amount:
-      service.indicative_price?.amount !== undefined
-        ? String(service.indicative_price.amount)
-        : "",
-    currency: service.indicative_price?.currency ?? "INR",
-    unit: service.indicative_price?.unit ?? "project",
-    price_note: service.indicative_price?.note ?? "",
-    images: (service.images ?? []).map((path, index) => ({
-      path,
-      url: service.image_urls?.[index] ?? path,
-    })),
-  };
+  message: string;
 }
 
 export default function ProviderServicesPage() {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const [status, setStatus] = useState<StatusFilter>("all");
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [category, setCategory] = useState("all");
+  const [sort, setSort] = useState<SortOption>("recent");
   const [page, setPage] = useState(1);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editing, setEditing] = useState<ServiceListing | null>(null);
-  const [form, setForm] = useState<ServiceForm>(EMPTY_FORM);
-  const [formError, setFormError] = useState("");
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
-  const [actionId, setActionId] = useState<string | null>(null);
-  const [banner, setBanner] = useState("");
+  const [banner, setBanner] = useState<BannerState | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ServiceListing | null>(null);
+  const [duplicateTarget, setDuplicateTarget] = useState<ServiceListing | null>(null);
 
-  const filters = useMemo(
-    () => ({ status, search: search.trim(), page, limit: PAGE_SIZE }),
-    [status, search, page],
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => window.clearTimeout(timer);
+  }, [search]);
+
+  const filters = useMemo<MyServicesQuery>(
+    () => ({
+      status,
+      search: debouncedSearch || undefined,
+      category: category === "all" ? undefined : category,
+      sort,
+      page,
+      limit: PAGE_SIZE,
+    }),
+    [status, debouncedSearch, category, sort, page],
   );
+
   const servicesQuery = useQuery({
-    queryKey: queryKeys.services.mine(filters),
+    queryKey: queryKeys.services.mine(filters as Record<string, unknown>),
     queryFn: () => servicesApi.getMine(filters),
+    placeholderData: (previous) => previous,
+  });
+
+  const profileQuery = useQuery({
+    queryKey: queryKeys.provider.me(),
+    queryFn: providersApi.getMyProfile,
+    retry: false,
+    staleTime: 5 * 60 * 1000,
   });
 
   const services = servicesQuery.data?.data ?? [];
   const total = servicesQuery.data?.total ?? 0;
+  const summary = servicesQuery.data?.summary;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const profileNeedsOnboarding = Boolean(
+    profileQuery.data?.profile && profileQuery.data.profile.onboarding_completed === false,
+  );
+  const hasActiveFilters =
+    Boolean(debouncedSearch) || category !== "all" || status !== "all";
+
+  async function refreshServices() {
+    await queryClient.invalidateQueries({ queryKey: ["services", "mine"] });
+  }
+
+  function showError(message: string) {
+    setBanner({ tone: "error", title: "Something went wrong", message });
+    toast.error(message);
+  }
+
+  function showSuccess(title: string, message: string) {
+    setBanner({ tone: "success", title, message });
+    toast.success(title);
+  }
 
   function openCreate() {
-    setEditing(null);
-    setForm(EMPTY_FORM);
-    setFieldErrors({});
-    setFormError("");
-    setDialogOpen(true);
+    router.push("/provider/services/new");
   }
 
   function openEdit(service: ServiceListing) {
-    setEditing(service);
-    setForm(toForm(service));
-    setFieldErrors({});
-    setFormError("");
-    setDialogOpen(true);
+    router.push(`/provider/services/${encodeURIComponent(service.id)}/edit`);
   }
 
-  function validate(): boolean {
-    const errors: Record<string, string> = {};
-    if (form.title.trim().length < 3) {
-      errors.title = "Title must be at least 3 characters";
-    }
-    if (form.description.trim().length < 20) {
-      errors.description = "Description must be at least 20 characters";
-    }
-    if (!form.category.trim()) {
-      errors.category = "Category is required";
-    }
-    if (form.amount && Number.isNaN(Number(form.amount))) {
-      errors.amount = "Enter a valid amount";
-    }
-    if (form.amount && Number(form.amount) < 0) {
-      errors.amount = "Amount cannot be negative";
-    }
-    setFieldErrors(errors);
-    return Object.keys(errors).length === 0;
+  function clearFilters() {
+    setSearch("");
+    setDebouncedSearch("");
+    setStatus("all");
+    setCategory("all");
+    setPage(1);
   }
 
-  async function handleSave(event: React.FormEvent) {
-    event.preventDefault();
-    setFormError("");
-    if (!validate()) return;
-
-    const payload: ServiceListingPayload = {
-      title: form.title.trim(),
-      description: form.description.trim(),
-      category: form.category.trim(),
-      service_areas: form.service_areas,
-      images: form.images.map((image) => image.path),
-      indicative_price: form.amount
-        ? {
-            amount: Number(form.amount),
-            currency: form.currency.trim().toUpperCase() || "INR",
-            unit: form.unit,
-            note: form.price_note.trim() || undefined,
-          }
-        : undefined,
-    };
-
-    setSaving(true);
-    try {
-      if (editing) {
-        await servicesApi.update(editing.id, payload);
-        setBanner("Service updated.");
-        toast.success("Service updated");
+  const statusMutation = useMutation({
+    mutationFn: ({
+      id,
+      action,
+    }: {
+      id: string;
+      action: "publish" | "unpublish";
+    }) =>
+      action === "publish" ? servicesApi.publish(id) : servicesApi.unpublish(id),
+    onSuccess: async (_, variables) => {
+      await refreshServices();
+      if (variables.action === "publish") {
+        showSuccess("Service published", "Your service is now visible in the marketplace.");
       } else {
-        await servicesApi.create(payload);
-        setBanner("Service created as a draft. Publish it when you are ready.");
-        toast.success("Service created");
+        showSuccess("Service paused", "Your service is hidden from the marketplace until you publish it again.");
       }
-      setDialogOpen(false);
-      await queryClient.invalidateQueries({ queryKey: ["services", "mine"] });
-    } catch (err) {
-      setFormError(getApiErrorMessage(err, "Could not save service"));
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function handleUpload(file: File | undefined) {
-    if (!file) return;
-    setUploading(true);
-    try {
-      const uploaded = await servicesApi.uploadImage(file);
-      setForm((current) => ({
-        ...current,
-        images: [...current.images, { path: uploaded.relativePath, url: uploaded.signedUrl }],
-      }));
-    } catch (err) {
-      setFormError(getApiErrorMessage(err, "Could not upload image"));
-    } finally {
-      setUploading(false);
-    }
-  }
-
-  const publishMutation = useMutation({
-    mutationFn: (id: string) => servicesApi.publish(id),
-    onSuccess: async () => {
-      setBanner("Service published and now visible in the marketplace.");
-      toast.success("Service published");
-      await queryClient.invalidateQueries({ queryKey: ["services", "mine"] });
     },
-    onError: (err) => {
-      setBanner(getApiErrorMessage(err, "Could not publish service"));
-      toast.error(getApiErrorMessage(err, "Could not publish service"));
-    },
-  });
-
-  const unpublishMutation = useMutation({
-    mutationFn: (id: string) => servicesApi.unpublish(id),
-    onSuccess: async () => {
-      setBanner("Service unpublished and hidden from the marketplace.");
-      toast.success("Service unpublished");
-      await queryClient.invalidateQueries({ queryKey: ["services", "mine"] });
-    },
-    onError: (err) => {
-      setBanner(getApiErrorMessage(err, "Could not unpublish service"));
+    onError: (error, variables) => {
+      showError(
+        getApiErrorMessage(
+          error,
+          variables.action === "publish"
+            ? "Could not publish this service. Complete your provider onboarding and try again."
+            : "Could not pause this service.",
+        ),
+      );
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => servicesApi.remove(id),
     onSuccess: async () => {
-      setBanner("Service deleted.");
-      toast.success("Service deleted");
-      await queryClient.invalidateQueries({ queryKey: ["services", "mine"] });
+      setDeleteTarget(null);
+      await refreshServices();
+      showSuccess("Service deleted", "The listing has been permanently removed.");
     },
-    onError: (err) => {
-      setBanner(getApiErrorMessage(err, "Could not delete service"));
+    onError: (error) => {
+      showError(getApiErrorMessage(error, "Could not delete this service."));
     },
   });
 
-  function handleDelete(service: ServiceListing) {
-    if (
-      typeof window !== "undefined" &&
-      !window.confirm(`Delete "${service.title}"? This cannot be undone.`)
-    ) {
-      return;
-    }
-    setActionId(service.id);
-    deleteMutation.mutate(service.id, { onSettled: () => setActionId(null) });
-  }
+  const duplicateMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await servicesApi.getMineById(id);
+      const source = response.service;
+      const payload: ServiceListingPayload = {
+        title: `${source.title} (Copy)`.slice(0, 140),
+        description: source.description,
+        short_description: source.short_description,
+        category: source.category,
+        subcategory: source.subcategory,
+        service_type: source.service_type,
+        images: source.images,
+        service_areas: source.service_areas,
+        delivery_time: source.delivery_time,
+        team_size: source.team_size,
+        equipment: source.equipment,
+        indicative_price: source.indicative_price ?? null,
+      };
+      return servicesApi.create(payload);
+    },
+    onSuccess: async () => {
+      setDuplicateTarget(null);
+      await refreshServices();
+      showSuccess(
+        "Draft created",
+        "A copy of this service was saved as a draft. Review it before publishing.",
+      );
+    },
+    onError: (error) => {
+      showError(getApiErrorMessage(error, "Could not duplicate this service."));
+    },
+  });
 
-  function runAction(service: ServiceListing, action: "publish" | "unpublish") {
-    setActionId(service.id);
-    const mutation = action === "publish" ? publishMutation : unpublishMutation;
-    mutation.mutate(service.id, { onSettled: () => setActionId(null) });
-  }
+  const isStatusPending = statusMutation.isPending;
+  const pendingStatusId = statusMutation.isPending ? statusMutation.variables?.id : null;
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-sm font-medium text-primary">Service catalogue</p>
-          <h1 className="text-3xl font-bold tracking-tight">Your services</h1>
-          <p className="mt-1 text-muted-foreground">
-            Create, publish, and manage the services clients can discover.
-          </p>
+    <div className="space-y-4 pb-4 sm:space-y-6">
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#2b0b72] via-[#5b21b6] to-[#7c3aed] p-5 text-white shadow-[0_24px_50px_-32px_rgba(76,29,149,0.85)] sm:p-8">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-16 -top-24 size-56 rounded-full bg-white/10 blur-2xl"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -bottom-24 left-1/3 size-48 rounded-full bg-fuchsia-400/20 blur-3xl"
+        />
+        <div className="relative flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0">
+            <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-white/70">
+              <Sparkles className="size-3.5" />
+              Your business
+            </p>
+            <h1 className="mt-2 text-2xl font-extrabold tracking-tight sm:text-4xl">My Services</h1>
+            <p className="mt-2 max-w-xl text-sm leading-6 text-white/80">
+              Create, publish, and manage the services clients can discover.
+            </p>
+          </div>
+          <Button
+            onClick={openCreate}
+            className="h-11 w-full shrink-0 rounded-xl bg-white px-5 font-semibold text-[#4c1d95] shadow-sm hover:bg-white/90 sm:w-auto"
+          >
+            <Plus className="mr-2 size-4" />
+            Add New Service
+          </Button>
         </div>
-        <Button onClick={openCreate}>
-          <Plus className="mr-2 size-4" />
-          New service
-        </Button>
-      </div>
+      </section>
+
+      {profileNeedsOnboarding && (
+        <div className="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-950 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-amber-100 text-amber-700">
+              <AlertCircle className="size-4" />
+            </span>
+            <div>
+              <p className="text-sm font-semibold">Finish onboarding before you publish</p>
+              <p className="mt-0.5 text-xs leading-5 text-amber-800">
+                You can save drafts now. Publishing requires a completed provider profile.
+              </p>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="w-full border-amber-300 bg-white text-amber-900 hover:bg-amber-100 sm:w-auto"
+            asChild
+          >
+            <Link href="/provider/onboarding">
+              Complete onboarding
+              <ArrowRight className="ml-2 size-4" />
+            </Link>
+          </Button>
+        </div>
+      )}
 
       {banner && (
         <Alert
           className={cn(
-            banner.toLowerCase().includes("could not") || banner.toLowerCase().includes("before publishing")
-              ? "border-amber-300 bg-amber-50 text-amber-900"
-              : "border-emerald-300 bg-emerald-50 text-emerald-900",
+            "relative pr-10",
+            banner.tone === "error"
+              ? "border-rose-200 bg-rose-50 text-rose-950"
+              : "border-emerald-200 bg-emerald-50 text-emerald-950",
           )}
         >
-          {banner.toLowerCase().includes("could not") ? (
+          {banner.tone === "error" ? (
             <AlertCircle className="size-4" />
           ) : (
             <CheckCircle2 className="size-4" />
           )}
-          <AlertTitle>{banner.toLowerCase().includes("could not") ? "Action failed" : "Saved"}</AlertTitle>
-          <AlertDescription>{banner}</AlertDescription>
+          <AlertTitle>{banner.title}</AlertTitle>
+          <AlertDescription>{banner.message}</AlertDescription>
+          <button
+            type="button"
+            onClick={() => setBanner(null)}
+            aria-label="Dismiss message"
+            className="absolute right-3 top-3 rounded-md p-1 text-current/60 transition-colors hover:bg-black/5 hover:text-current"
+          >
+            <X className="size-4" />
+          </button>
         </Alert>
       )}
 
-      <div className="flex flex-col gap-3 rounded-xl border bg-background p-3 sm:flex-row sm:items-center">
-        <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(event) => {
-              setSearch(event.target.value);
-              setPage(1);
-            }}
-            placeholder="Search your services"
-            className="pl-9"
-          />
-        </div>
-        <div className="flex flex-wrap gap-1">
-          {(["all", "draft", "published", "unpublished"] as StatusFilter[]).map((value) => (
-            <Button
-              key={value}
-              type="button"
-              size="sm"
-              variant={status === value ? "default" : "outline"}
-              onClick={() => {
-                setStatus(value);
+      <section aria-label="Service totals" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatCard
+          label="Total services"
+          value={summary?.total ?? 0}
+          icon={BriefcaseBusiness}
+          iconClassName="bg-violet-50 text-violet-600"
+        />
+        <StatCard
+          label="Published"
+          value={summary?.published ?? 0}
+          icon={CheckCircle2}
+          iconClassName="bg-emerald-50 text-emerald-600"
+        />
+        <StatCard
+          label="Drafts"
+          value={summary?.draft ?? 0}
+          icon={FilePenLine}
+          iconClassName="bg-sky-50 text-sky-600"
+        />
+        <StatCard
+          label="Paused"
+          value={summary?.paused ?? 0}
+          icon={CirclePause}
+          iconClassName="bg-amber-50 text-amber-600"
+        />
+      </section>
+
+      <section className="space-y-3 rounded-2xl border border-[#e8e6f4] bg-white p-3 shadow-[0_14px_36px_-32px_rgba(37,20,89,0.55)] sm:p-4">
+        <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center">
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+            <Input
+              value={search}
+              onChange={(event) => {
+                setSearch(event.target.value);
                 setPage(1);
               }}
-              className="capitalize"
+              placeholder="Search your services"
+              aria-label="Search your services"
+              className="h-11 rounded-xl border-[#e7e5f2] bg-[#fbfaff] pl-10 text-[#171b45] placeholder:text-slate-400 focus-visible:ring-violet-400"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch("");
+                  setPage(1);
+                }}
+                aria-label="Clear search"
+                className="absolute right-2.5 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+              >
+                <X className="size-4" />
+              </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 sm:flex">
+            <Select
+              value={category}
+              onValueChange={(value) => {
+                setCategory(value);
+                setPage(1);
+              }}
             >
-              {value}
-            </Button>
-          ))}
+              <SelectTrigger
+                aria-label="Filter by category"
+                className="h-11 w-full min-w-0 rounded-xl border-[#e7e5f2] bg-[#fbfaff] text-[#171b45] sm:w-[180px]"
+              >
+                <SelectValue placeholder="All categories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All categories</SelectItem>
+                {MARKETPLACE_CATEGORIES.map((item) => (
+                  <SelectItem key={item} value={item}>
+                    {item}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={sort}
+              onValueChange={(value) => {
+                setSort(value as SortOption);
+                setPage(1);
+              }}
+            >
+              <SelectTrigger
+                aria-label="Sort services"
+                className="h-11 w-full min-w-0 rounded-xl border-[#e7e5f2] bg-[#fbfaff] text-[#171b45] sm:w-[172px]"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SORT_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-      </div>
+
+        <div className="-mx-1 overflow-x-auto px-1 pb-0.5">
+          <div
+            role="tablist"
+            aria-label="Filter services by status"
+            className="flex min-w-max items-center gap-1.5 rounded-xl bg-[#f7f6fc] p-1.5"
+          >
+            {STATUS_TABS.map((tab) => {
+              const count =
+                tab.value === "all"
+                  ? summary?.total ?? 0
+                  : tab.value === "published"
+                    ? summary?.published ?? 0
+                    : tab.value === "draft"
+                      ? summary?.draft ?? 0
+                      : summary?.paused ?? 0;
+              const active = status === tab.value;
+              return (
+                <button
+                  key={tab.value}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => {
+                    setStatus(tab.value);
+                    setPage(1);
+                  }}
+                  className={cn(
+                    "flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all sm:px-4",
+                    active
+                      ? "bg-white text-[#4c1d95] shadow-sm ring-1 ring-[#ded8fb]"
+                      : "text-slate-500 hover:bg-white/60 hover:text-[#4c1d95]",
+                  )}
+                >
+                  {tab.label}
+                  <span
+                    className={cn(
+                      "rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none",
+                      active ? "bg-violet-100 text-violet-700" : "bg-slate-200/70 text-slate-500",
+                    )}
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </section>
 
       {servicesQuery.isLoading ? (
-        <div className="grid gap-4 md:grid-cols-2">
-          <Skeleton className="h-44" />
-          <Skeleton className="h-44" />
-          <Skeleton className="h-44" />
-          <Skeleton className="h-44" />
+        <div className="grid gap-3 md:grid-cols-2 sm:gap-4">
+          {[0, 1, 2, 3].map((item) => (
+            <Skeleton key={item} className="h-40 rounded-2xl sm:h-44" />
+          ))}
         </div>
       ) : servicesQuery.isError ? (
         <Alert variant="destructive">
           <AlertCircle className="size-4" />
           <AlertTitle>Could not load services</AlertTitle>
-          <AlertDescription>
-            {getApiErrorMessage(servicesQuery.error, "Please try again.")}
+          <AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <span>{getApiErrorMessage(servicesQuery.error, "Please try again.")}</span>
+            <Button size="sm" variant="outline" onClick={() => servicesQuery.refetch()}>
+              Try again
+            </Button>
           </AlertDescription>
         </Alert>
       ) : services.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center p-10 text-center">
-            <span className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <Briefcase className="size-6" />
-            </span>
-            <h2 className="mt-4 text-xl font-semibold">
-              {search || status !== "all" ? "No matching services" : "No services yet"}
-            </h2>
-            <p className="mt-1 max-w-md text-sm text-muted-foreground">
-              {search || status !== "all"
-                ? "Try a different search or status filter."
-                : "Create your first listing, add clear pricing, then publish it to the marketplace."}
-            </p>
-            {search || status !== "all" ? (
-              <Button
-                variant="outline"
-                className="mt-4"
-                onClick={() => {
-                  setSearch("");
-                  setStatus("all");
-                }}
-              >
+        hasActiveFilters ? (
+          <EmptyState
+            icon={Search}
+            title={
+              status === "all"
+                ? "No matching services"
+                : `No ${status === "unpublished" ? "paused" : status} services`
+            }
+            description="Try a different search, category, or status filter."
+            action={
+              <Button variant="outline" onClick={clearFilters}>
                 Clear filters
               </Button>
-            ) : (
-              <Button className="mt-4" onClick={openCreate}>
+            }
+          />
+        ) : (
+          <EmptyState
+            icon={BriefcaseBusiness}
+            title="No services yet"
+            description="Create your first listing, add clear pricing, then publish it to the marketplace."
+            action={
+              <Button onClick={openCreate}>
                 <Plus className="mr-2 size-4" />
                 Create a service
               </Button>
-            )}
-          </CardContent>
-        </Card>
+            }
+          />
+        )
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-3 md:grid-cols-2 sm:gap-4">
           {services.map((service) => (
-            <Card key={service.id} className="overflow-hidden">
-              <CardContent className="p-0">
-                <div className="flex gap-4 p-4">
-                  <div className="h-24 w-28 shrink-0 overflow-hidden rounded-lg bg-muted">
-                    {service.image_urls?.[0] ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={service.image_urls[0]}
-                        alt={service.title}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center">
-                        <ImagePlus className="size-6 text-muted-foreground" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <h3 className="line-clamp-2 font-semibold">{service.title}</h3>
-                      <StatusBadge status={service.status} />
-                    </div>
-                    <p className="mt-1 text-xs text-muted-foreground">{service.category}</p>
-                    <p className="mt-1 text-sm font-medium">
-                      {service.indicative_price
-                        ? `${service.indicative_price.currency ?? "INR"} ${service.indicative_price.amount.toLocaleString()} / ${service.indicative_price.unit ?? "project"}`
-                        : "Price on request"}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex flex-wrap items-center gap-2 border-t bg-muted/30 px-4 py-3">
-                  <Button size="sm" variant="outline" onClick={() => openEdit(service)}>
-                    <Pencil className="mr-2 size-4" />
-                    Edit
-                  </Button>
-                  {service.status === "published" ? (
-                    <>
-                      <Button size="sm" variant="outline" asChild>
-                        <a href={`/services/${service.id}`} target="_blank" rel="noreferrer">
-                          <Eye className="mr-2 size-4" />
-                          View
-                        </a>
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => runAction(service, "unpublish")}
-                        disabled={actionId === service.id}
-                      >
-                        {actionId === service.id ? (
-                          <Loader2 className="mr-2 size-4 animate-spin" />
-                        ) : (
-                          <Undo2 className="mr-2 size-4" />
-                        )}
-                        Unpublish
-                      </Button>
-                    </>
-                  ) : (
-                    <Button
-                      size="sm"
-                      onClick={() => runAction(service, "publish")}
-                      disabled={actionId === service.id}
-                    >
-                      {actionId === service.id ? (
-                        <Loader2 className="mr-2 size-4 animate-spin" />
-                      ) : (
-                        <Send className="mr-2 size-4" />
-                      )}
-                      Publish
-                    </Button>
-                  )}
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="ml-auto text-destructive hover:text-destructive"
-                    onClick={() => handleDelete(service)}
-                    disabled={actionId === service.id}
-                  >
-                    <Trash2 className="size-4" />
-                    <span className="sr-only">Delete</span>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <ServiceCard
+              key={service.id}
+              service={service}
+              statusPending={isStatusPending && pendingStatusId === service.id}
+              deletePending={deleteMutation.isPending && deleteMutation.variables === service.id}
+              onEdit={() => openEdit(service)}
+              onToggleStatus={() =>
+                statusMutation.mutate({
+                  id: service.id,
+                  action: service.status === "published" ? "unpublish" : "publish",
+                })
+              }
+              onDuplicate={() => setDuplicateTarget(service)}
+              onDelete={() => setDeleteTarget(service)}
+            />
           ))}
         </div>
       )}
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Page {page} of {totalPages} · {total} services
+      {!servicesQuery.isLoading && !servicesQuery.isError && total > 0 && (
+        <div className="flex flex-col gap-3 rounded-2xl border border-[#e8e6f4] bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-slate-500">
+            Showing <span className="font-semibold text-[#171b45]">{services.length}</span> of{" "}
+            <span className="font-semibold text-[#171b45]">{total}</span> services
           </p>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
+              className="rounded-lg"
               disabled={page <= 1}
               onClick={() => setPage((current) => Math.max(1, current - 1))}
             >
               Previous
             </Button>
+            <span className="min-w-20 text-center text-xs font-medium text-slate-500">
+              Page {page} of {totalPages}
+            </span>
             <Button
               variant="outline"
               size="sm"
+              className="rounded-lg"
               disabled={page >= totalPages}
               onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
             >
@@ -513,250 +591,376 @@ export default function ProviderServicesPage() {
         </div>
       )}
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+      <Dialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => {
+          if (!open && !deleteMutation.isPending) setDeleteTarget(null);
+        }}
+      >
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editing ? "Edit service" : "New service"}</DialogTitle>
+            <DialogTitle>Delete service?</DialogTitle>
             <DialogDescription>
-              {editing
-                ? "Update the details clients see on your public listing."
-                : "Draft a service now. You can publish it when onboarding is complete."}
+              &ldquo;{deleteTarget?.title}&rdquo; will be permanently removed. This action cannot
+              be undone.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSave} className="space-y-4">
-            {formError && (
-              <Alert variant="destructive">
-                <AlertCircle className="size-4" />
-                <AlertDescription>{formError}</AlertDescription>
-              </Alert>
-            )}
-
-            <div className="space-y-1.5">
-              <Label htmlFor="service-title">Title *</Label>
-              <Input
-                id="service-title"
-                value={form.title}
-                maxLength={140}
-                aria-invalid={Boolean(fieldErrors.title)}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, title: event.target.value }))
-                }
-                placeholder="Brand identity package"
-              />
-              {fieldErrors.title && (
-                <p className="text-xs text-destructive">{fieldErrors.title}</p>
-              )}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="service-description">Description *</Label>
-              <Textarea
-                id="service-description"
-                value={form.description}
-                rows={5}
-                maxLength={5000}
-                aria-invalid={Boolean(fieldErrors.description)}
-                onChange={(event) =>
-                  setForm((current) => ({ ...current, description: event.target.value }))
-                }
-                placeholder="What is included, who it is for, and what clients receive."
-              />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>{fieldErrors.description ?? "Minimum 20 characters"}</span>
-                <span>{form.description.length}/5000</span>
-              </div>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="service-category">Category *</Label>
-                <Input
-                  id="service-category"
-                  value={form.category}
-                  maxLength={80}
-                  aria-invalid={Boolean(fieldErrors.category)}
-                  onChange={(event) =>
-                    setForm((current) => ({ ...current, category: event.target.value }))
-                  }
-                  placeholder="Design"
-                />
-                {fieldErrors.category && (
-                  <p className="text-xs text-destructive">{fieldErrors.category}</p>
-                )}
-              </div>
-              <div className="space-y-1.5">
-                <Label>Service areas</Label>
-                <TagInput
-                  value={form.service_areas}
-                  onChange={(service_areas) =>
-                    setForm((current) => ({ ...current, service_areas }))
-                  }
-                  placeholder="Mumbai, Remote"
-                  maxTags={30}
-                />
-              </div>
-            </div>
-
-            <div className="rounded-lg border p-4">
-              <p className="mb-3 text-sm font-medium">Indicative price (optional)</p>
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="service-amount">Amount</Label>
-                  <Input
-                    id="service-amount"
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    value={form.amount}
-                    aria-invalid={Boolean(fieldErrors.amount)}
-                    onChange={(event) =>
-                      setForm((current) => ({ ...current, amount: event.target.value }))
-                    }
-                    placeholder="25000"
-                  />
-                  {fieldErrors.amount && (
-                    <p className="text-xs text-destructive">{fieldErrors.amount}</p>
-                  )}
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Currency</Label>
-                  <Input
-                    value={form.currency}
-                    maxLength={3}
-                    onChange={(event) =>
-                      setForm((current) => ({ ...current, currency: event.target.value }))
-                    }
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Unit</Label>
-                  <Select
-                    value={form.unit}
-                    onValueChange={(unit) =>
-                      setForm((current) => ({
-                        ...current,
-                        unit: unit as ServiceForm["unit"],
-                      }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="hour">Per hour</SelectItem>
-                      <SelectItem value="day">Per day</SelectItem>
-                      <SelectItem value="project">Per project</SelectItem>
-                      <SelectItem value="session">Per session</SelectItem>
-                      <SelectItem value="custom">Custom</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="mt-3 space-y-1.5">
-                <Label htmlFor="price-note">Pricing note</Label>
-                <Input
-                  id="price-note"
-                  value={form.price_note}
-                  maxLength={120}
-                  onChange={(event) =>
-                    setForm((current) => ({ ...current, price_note: event.target.value }))
-                  }
-                  placeholder="Starting price; final quote after brief"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Images</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => document.getElementById("service-image-input")?.click()}
-                  disabled={uploading || form.images.length >= 10}
-                >
-                  {uploading ? (
-                    <Loader2 className="mr-2 size-4 animate-spin" />
-                  ) : (
-                    <ImagePlus className="mr-2 size-4" />
-                  )}
-                  Upload
-                </Button>
-                <input
-                  id="service-image-input"
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  className="hidden"
-                  onChange={(event) => {
-                    void handleUpload(event.target.files?.[0]);
-                    event.target.value = "";
-                  }}
-                />
-              </div>
-              {form.images.length === 0 ? (
-                <div className="rounded-lg border border-dashed p-4 text-center text-xs text-muted-foreground">
-                  Add up to 10 images. The first image is used on cards.
-                </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteTarget(null)}
+              disabled={deleteMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (deleteTarget) deleteMutation.mutate(deleteTarget.id);
+              }}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? (
+                <Loader2 className="mr-2 size-4 animate-spin" />
               ) : (
-                <div className="flex flex-wrap gap-2">
-                  {form.images.map((image, index) => (
-                    <div
-                      key={`${image.path}-${index}`}
-                      className="group relative h-20 w-24 overflow-hidden rounded-md border"
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={image.url}
-                        alt={`Service image ${index + 1}`}
-                        className="h-full w-full object-cover"
-                      />
-                      <button
-                        type="button"
-                        aria-label="Remove image"
-                        onClick={() =>
-                          setForm((current) => ({
-                            ...current,
-                            images: current.images.filter((_, i) => i !== index),
-                          }))
-                        }
-                        className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white opacity-0 transition-opacity group-hover:opacity-100"
-                      >
-                        <X className="size-3" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                <Trash2 className="mr-2 size-4" />
               )}
-            </div>
+              Delete service
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setDialogOpen(false)}
-                disabled={saving}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={saving}>
-                {saving && <Loader2 className="mr-2 size-4 animate-spin" />}
-                {editing ? "Save changes" : "Create draft"}
-              </Button>
-            </DialogFooter>
-          </form>
+      <Dialog
+        open={Boolean(duplicateTarget)}
+        onOpenChange={(open) => {
+          if (!open && !duplicateMutation.isPending) setDuplicateTarget(null);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Duplicate this service?</DialogTitle>
+            <DialogDescription>
+              We&apos;ll create a draft copy of &ldquo;{duplicateTarget?.title}&rdquo; with the same
+              details, images, and pricing. You can edit it before publishing.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDuplicateTarget(null)}
+              disabled={duplicateMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (duplicateTarget) duplicateMutation.mutate(duplicateTarget.id);
+              }}
+              disabled={duplicateMutation.isPending}
+            >
+              {duplicateMutation.isPending ? (
+                <Loader2 className="mr-2 size-4 animate-spin" />
+              ) : (
+                <Copy className="mr-2 size-4" />
+              )}
+              Create draft copy
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   );
 }
 
+function StatCard({
+  label,
+  value,
+  icon: Icon,
+  iconClassName,
+}: {
+  label: string;
+  value: number;
+  icon: React.ComponentType<{ className?: string }>;
+  iconClassName: string;
+}) {
+  return (
+    <Card className="rounded-2xl border-[#e8e6f4] bg-white shadow-[0_10px_28px_-26px_rgba(37,20,89,0.5)]">
+      <CardContent className="flex items-center gap-3 p-3.5 sm:p-5">
+        <span className={cn("grid size-10 shrink-0 place-items-center rounded-xl", iconClassName)}>
+          <Icon className="size-5" />
+        </span>
+        <div className="min-w-0">
+          <p className="text-2xl font-extrabold leading-none text-[#171b45]">{value}</p>
+          <p className="mt-1 truncate text-xs font-medium text-slate-500">{label}</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ServiceCard({
+  service,
+  statusPending,
+  deletePending,
+  onEdit,
+  onToggleStatus,
+  onDuplicate,
+  onDelete,
+}: {
+  service: ServiceListing;
+  statusPending: boolean;
+  deletePending: boolean;
+  onEdit: () => void;
+  onToggleStatus: () => void;
+  onDuplicate: () => void;
+  onDelete: () => void;
+}) {
+  const isPublished = service.status === "published";
+  const isBusy = statusPending || deletePending;
+
+  return (
+    <Card className="group overflow-hidden rounded-2xl border-[#e8e6f4] bg-white text-[#171b45] shadow-[0_10px_30px_-28px_rgba(37,20,89,0.55)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#d9d0fb] hover:shadow-[0_20px_40px_-28px_rgba(76,29,149,0.35)]">
+      <CardContent className="p-0">
+        <div className="flex gap-3 p-3 sm:gap-4 sm:p-4">
+          <div className="size-24 shrink-0 overflow-hidden rounded-xl border border-[#efedf7] bg-gradient-to-br from-[#f1ecff] to-[#faf9ff] sm:h-32 sm:w-36">
+            {service.image_urls?.[0] ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={service.image_urls[0]}
+                alt={service.title}
+                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+            ) : (
+              <div className="flex h-full flex-col items-center justify-center gap-1 text-[#8b7ae2]">
+                <ImageIcon className="size-6" />
+                <span className="text-[10px] font-medium">No image</span>
+              </div>
+            )}
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <StatusBadge status={service.status} />
+                <h2 className="mt-1.5 line-clamp-2 [overflow-wrap:anywhere] text-[15px] font-bold leading-snug text-[#171b45] sm:text-base">
+                  {service.title}
+                </h2>
+              </div>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Actions for ${service.title}`}
+                    className="-mr-1 -mt-1 size-8 shrink-0 rounded-lg text-slate-500 hover:bg-violet-50 hover:text-violet-700"
+                  >
+                    <MoreHorizontal className="size-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-52">
+                  <DropdownMenuLabel>Manage service</DropdownMenuLabel>
+                  <DropdownMenuItem onSelect={onEdit}>
+                    <Pencil className="size-4" />
+                    Edit service
+                  </DropdownMenuItem>
+                  {isPublished && (
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href={`/services/${encodeURIComponent(service.id)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        <Eye className="size-4" />
+                        View public listing
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem disabled={statusPending} onSelect={onToggleStatus}>
+                    {statusPending ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : isPublished ? (
+                      <PauseCircle className="size-4" />
+                    ) : (
+                      <PlayCircle className="size-4" />
+                    )}
+                    {isPublished ? "Pause service" : "Publish service"}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem disabled={isBusy} onSelect={onDuplicate}>
+                    <Copy className="size-4" />
+                    Duplicate as draft
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    variant="destructive"
+                    disabled={isBusy}
+                    onSelect={onDelete}
+                  >
+                    <Trash2 className="size-4" />
+                    Delete service
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            <p className="mt-1 flex items-center gap-1.5 text-xs font-medium text-slate-500">
+              <span className="truncate">{service.category}</span>
+              {service.service_type && (
+                <>
+                  <span className="text-slate-300">•</span>
+                  <span className="shrink-0 capitalize">{service.service_type.replaceAll("_", " ")}</span>
+                </>
+              )}
+            </p>
+
+            {service.short_description && (
+              <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">
+                {service.short_description}
+              </p>
+            )}
+
+            <p className="mt-2 text-sm font-bold text-[#4c1d95]">{formatServicePrice(service.indicative_price)}</p>
+            {service.updated_at && (
+              <p className="mt-1 text-[11px] text-slate-400">Updated {formatDate(service.updated_at)}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 border-t border-[#f0eef8] bg-[#fbfaff] px-3 py-2.5 sm:px-4">
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-9 rounded-lg border-[#e4e0f3] bg-white text-[#3f2b7a] hover:bg-violet-50 hover:text-[#4c1d95]"
+            onClick={onEdit}
+          >
+            <Pencil className="mr-2 size-3.5" />
+            Edit
+          </Button>
+
+          {isPublished ? (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-9 rounded-lg border-[#e4e0f3] bg-white text-[#3f2b7a] hover:bg-violet-50 hover:text-[#4c1d95]"
+              onClick={onToggleStatus}
+              disabled={statusPending}
+            >
+              {statusPending ? (
+                <Loader2 className="mr-2 size-3.5 animate-spin" />
+              ) : (
+                <PauseCircle className="mr-2 size-3.5" />
+              )}
+              Pause
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              className="h-9 rounded-lg bg-[#5b21b6] text-white shadow-sm hover:bg-[#4c1d95]"
+              onClick={onToggleStatus}
+              disabled={statusPending}
+            >
+              {statusPending ? (
+                <Loader2 className="mr-2 size-3.5 animate-spin" />
+              ) : (
+                <PlayCircle className="mr-2 size-3.5" />
+              )}
+              Publish
+            </Button>
+          )}
+
+          {isPublished && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="ml-auto h-9 rounded-lg text-slate-500 hover:bg-white hover:text-[#4c1d95]"
+              asChild
+            >
+              <Link
+                href={`/services/${encodeURIComponent(service.id)}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <Eye className="mr-1.5 size-3.5" />
+                View
+              </Link>
+            </Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function StatusBadge({ status }: { status: ServiceStatus }) {
-  if (status === "published") {
-    return <Badge className="bg-emerald-600 hover:bg-emerald-600">Published</Badge>;
-  }
-  if (status === "unpublished") {
-    return <Badge variant="secondary">Unpublished</Badge>;
-  }
-  return <Badge variant="outline">Draft</Badge>;
+  const config =
+    status === "published"
+      ? {
+          label: "Published",
+          className: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+          dotClassName: "bg-emerald-500",
+        }
+      : status === "unpublished"
+        ? {
+            label: "Paused",
+            className: "bg-amber-50 text-amber-700 ring-amber-200",
+            dotClassName: "bg-amber-500",
+          }
+        : {
+            label: "Draft",
+            className: "bg-slate-100 text-slate-600 ring-slate-200",
+            dotClassName: "bg-slate-400",
+          };
+
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ring-1 ring-inset",
+        config.className,
+      )}
+    >
+      <span className={cn("size-1.5 rounded-full", config.dotClassName)} aria-hidden />
+      {config.label}
+    </span>
+  );
+}
+
+function EmptyState({
+  icon: Icon,
+  title,
+  description,
+  action,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  description: string;
+  action: React.ReactNode;
+}) {
+  return (
+    <Card className="rounded-3xl border border-dashed border-[#ded8f3] bg-white shadow-sm">
+      <CardContent className="flex flex-col items-center px-5 py-12 text-center">
+        <span className="grid size-14 place-items-center rounded-2xl bg-violet-50 text-violet-600">
+          <Icon className="size-7" />
+        </span>
+        <h2 className="mt-4 text-lg font-semibold text-[#171b45]">{title}</h2>
+        <p className="mt-1 max-w-md text-sm leading-6 text-slate-500">{description}</p>
+        <div className="mt-4">{action}</div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function formatServicePrice(price?: IndicativePrice | null) {
+  if (!price) return "Contact for Pricing";
+  return `${formatAmount(price.amount, price.currency)} / ${price.unit ?? "project"}`;
+}
+
+function formatDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }

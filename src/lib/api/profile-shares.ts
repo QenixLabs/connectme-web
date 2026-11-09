@@ -10,7 +10,7 @@ export type ProfileShareEventType =
   | "attempt_failed"
   | "profile_visit";
 
-export type ProfileShareTargetType = "talent" | "recruiter";
+export type ProfileShareTargetType = "talent" | "recruiter" | "provider";
 
 export type ProfileShareDestinationType =
   | "whatsapp"

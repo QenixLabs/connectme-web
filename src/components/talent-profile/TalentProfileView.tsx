@@ -311,7 +311,14 @@ export function TalentProfileView({
       <SignUpLoginBar />
       </div>
 
-      {isOwner && <BottomBar navItems={navItems} mobileNavItems={mobileNavItems} iconOnly />}
+      {viewerRole === "talent" && (
+        <BottomBar
+          navItems={navItems}
+          mobileNavItems={mobileNavItems}
+          iconOnly
+          activeLabel="Profile"
+        />
+      )}
 
       <MediaLightbox
         items={publicViewerItems}

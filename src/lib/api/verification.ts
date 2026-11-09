@@ -10,7 +10,7 @@ export interface VerificationDoc {
 export interface Verification {
   _id: string;
   user_id: string;
-  type: "talent_id" | "recruiter_company";
+  type: "talent_id" | "recruiter_company" | "provider_identity";
   status: "pending" | "auto_approved" | "manual_review" | "approved" | "rejected";
   submitted_docs: VerificationDoc[];
   ocr_data?: Record<string, unknown>;
@@ -41,7 +41,9 @@ export const verificationApi = {
     } as Verification;
   },
 
-  create: async (type: "talent_id" | "recruiter_company" = "talent_id") => {
+  create: async (
+    type: "talent_id" | "recruiter_company" | "provider_identity" = "talent_id",
+  ) => {
     const response = await apiClient.post("/verifications", { type });
     return response.data as Verification;
   },

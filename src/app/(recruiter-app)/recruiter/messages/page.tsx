@@ -9,7 +9,15 @@ import { authStore } from "@/stores/auth-store";
 import { conversationsApi } from "@/lib/api";
 import { getConversationParticipant, getMessageSenderId } from "@/lib/messages";
 import { useConversationSocket } from "@/hooks/use-conversation-socket";
-import { ConversationList, ConversationHeader, MessageList, MessageComposer, EmptyState, matchesConversationFilter } from "@/components/messages";
+import {
+  ConversationList,
+  ConversationHeader,
+  MessageList,
+  MessageComposer,
+  ServiceConversationPreview,
+  EmptyState,
+  matchesConversationFilter,
+} from "@/components/messages";
 import type { ConversationFilter } from "@/components/messages";
 import type { Conversation, Message } from "@/lib/api/types";
 
@@ -87,6 +95,16 @@ export default function RecruiterMessagesPage() {
               : c
           )
         );
+      },
+      onMessageFailed: (payload) => {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.client_message_id === payload.client_message_id
+              ? { ...m, status: "failed" }
+              : m
+          )
+        );
+        toast.error(payload.error || "Failed to send message.");
       },
     }
   );
@@ -331,6 +349,10 @@ export default function RecruiterMessagesPage() {
               <ConversationHeader
                 participant={activeParticipant}
                 onMarkAllRead={handleMarkAllRead}
+              />
+              <ServiceConversationPreview
+                conversationId={active._id}
+                resolveInquiry
               />
               <MessageList
                 messages={messages}

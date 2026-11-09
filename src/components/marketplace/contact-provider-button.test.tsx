@@ -38,6 +38,7 @@ function renderButton() {
       <ContactProviderButton
         providerSlug="jane-doe"
         providerName="Jane Doe"
+        serviceId="service-1"
         serviceTitle="Logo design"
       />
     </AuthStoreProvider>,
@@ -52,8 +53,8 @@ describe("ContactProviderButton", () => {
         email: "requester@example.com",
         role: "talent",
         is_email_verified: true,
-        is_phone_verified: false,
-        verification_tier: 1,
+        is_phone_verified: true,
+        verification_tier: 3,
         trust_score: 0,
         status: "active",
         created_at: "2026-01-01T00:00:00.000Z",
@@ -73,16 +74,85 @@ describe("ContactProviderButton", () => {
   it("includes the service title when starting a conversation without extra details", async () => {
     renderButton();
     fireEvent.click(screen.getByRole("button", { name: "Contact provider" }));
-    fireEvent.click(await screen.findByRole("button", { name: "Send message" }));
+
+    const textarea = (await screen.findByRole("textbox")) as HTMLTextAreaElement;
+    expect(textarea.value).toBe(
+      'I\'m contacting you about the service "Logo design".',
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
 
     await waitFor(() => expect(sendMessage).toHaveBeenCalledTimes(1));
-    expect(startByUsername).toHaveBeenCalledWith("jane-doe");
+    expect(startByUsername).toHaveBeenCalledWith("jane-doe", "service-1");
     expect(sendMessage).toHaveBeenCalledWith(
       expect.objectContaining({
         conversation_id: "conversation-1",
         content: 'I\'m contacting you about the service "Logo design".',
+        service_id: "service-1",
       }),
     );
-    expect(push).toHaveBeenCalledWith("/talent/messages/conversation-1");
+    expect(push).toHaveBeenCalledWith(
+      "/talent/messages/conversation-1?serviceId=service-1",
+    );
+  });
+
+  it("sends the edited pre-filled message as-is", async () => {
+    renderButton();
+    fireEvent.click(screen.getByRole("button", { name: "Contact provider" }));
+
+    const textarea = (await screen.findByRole("textbox")) as HTMLTextAreaElement;
+    fireEvent.change(textarea, {
+      target: {
+        value:
+          'I\'m contacting you about the service "Logo design".\n\nMy budget is 5000 INR.',
+      },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Send message" }));
+
+    await waitFor(() => expect(sendMessage).toHaveBeenCalledTimes(1));
+    expect(sendMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content:
+          'I\'m contacting you about the service "Logo design".\n\nMy budget is 5000 INR.',
+      }),
+    );
+  });
+
+  it("redirects to document verification before opening a conversation", () => {
+    authStore.setState({
+      user: {
+        ...authStore.getState().user!,
+        is_phone_verified: true,
+        verification_tier: 2,
+      },
+      isAuthenticated: true,
+    });
+
+    renderButton();
+    fireEvent.click(screen.getByRole("button", { name: "Contact provider" }));
+
+    expect(push).toHaveBeenCalledWith("/talent/verify-documents");
+    expect(startByUsername).not.toHaveBeenCalled();
+  });
+
+  it("supports multiple contact buttons on the same page", () => {
+    render(
+      <AuthStoreProvider>
+        <ContactProviderButton
+          providerSlug="jane-doe"
+          providerName="Jane Doe"
+          serviceId="service-1"
+          serviceTitle="Logo design"
+        />
+        <ContactProviderButton
+          providerSlug="jane-doe"
+          providerName="Jane Doe"
+          serviceId="service-1"
+          serviceTitle="Logo design"
+        />
+      </AuthStoreProvider>,
+    );
+
+    expect(screen.getAllByRole("button", { name: "Contact provider" })).toHaveLength(2);
   });
 });

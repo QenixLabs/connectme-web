@@ -4,6 +4,7 @@ import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Loader2, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
+import { getVerificationPath } from "@/lib/verification-path";
 import { conversationsApi } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/api/client";
 import { useAuthStore } from "@/providers/auth-store-provider";
@@ -21,9 +22,17 @@ import { Textarea } from "@/components/ui/textarea";
 interface ContactProviderButtonProps {
   providerSlug: string;
   providerName: string;
+  serviceId?: string;
   serviceTitle?: string;
+  buttonLabel?: string;
   className?: string;
   variant?: "default" | "outline" | "secondary";
+}
+
+function defaultMessageFor(serviceTitle?: string) {
+  return serviceTitle
+    ? `I'm contacting you about the service "${serviceTitle}".`
+    : "";
 }
 
 function inboxFor(role?: string, capabilities?: string[]) {
@@ -37,7 +46,9 @@ function inboxFor(role?: string, capabilities?: string[]) {
 export function ContactProviderButton({
   providerSlug,
   providerName,
+  serviceId,
   serviceTitle,
+  buttonLabel = "Contact provider",
   className,
   variant = "default",
 }: ContactProviderButtonProps) {
@@ -54,7 +65,13 @@ export function ContactProviderButton({
       router.push(`/auth/login?redirect=${encodeURIComponent(pathname)}`);
       return;
     }
+    if (user.verification_tier < 3) {
+      toast.error("Complete Tier 3 verification to contact service providers.");
+      router.push(getVerificationPath(user));
+      return;
+    }
     setError("");
+    setMessage(defaultMessageFor(serviceTitle));
     setOpen(true);
   }
 
@@ -63,14 +80,12 @@ export function ContactProviderButton({
     setSending(true);
     setError("");
     try {
-      const { conversation_id } = await conversationsApi.startByUsername(providerSlug);
+      const { conversation_id } = await conversationsApi.startByUsername(
+        providerSlug,
+        serviceId,
+      );
       const inbox = inboxFor(user?.role, user?.account_capabilities);
-      const messageContent = message.trim();
-      const content = serviceTitle
-        ? `I'm contacting you about the service "${serviceTitle}".${
-            messageContent ? `\n\n${messageContent}` : ""
-          }`
-        : messageContent;
+      const content = message.trim();
 
       if (content) {
         try {
@@ -78,6 +93,7 @@ export function ContactProviderButton({
             conversation_id,
             content,
             client_message_id: `marketplace-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+            ...(serviceId ? { service_id: serviceId } : {}),
           });
           toast.success("Message sent");
         } catch (sendError) {
@@ -92,7 +108,10 @@ export function ContactProviderButton({
 
       setOpen(false);
       setMessage("");
-      router.push(`${inbox}/${conversation_id}`);
+      const serviceQuery = serviceId
+        ? `?serviceId=${encodeURIComponent(serviceId)}`
+        : "";
+      router.push(`${inbox}/${conversation_id}${serviceQuery}`);
     } catch (err) {
       setError(getApiErrorMessage(err, "Could not contact this provider"));
     } finally {
@@ -104,7 +123,7 @@ export function ContactProviderButton({
     <>
       <Button type="button" className={className} variant={variant} onClick={handleOpen}>
         <MessageSquare className="mr-2 size-4" />
-        Contact provider
+        {buttonLabel}
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -113,7 +132,7 @@ export function ContactProviderButton({
             <DialogTitle>Contact {providerName}</DialogTitle>
             <DialogDescription>
               {serviceTitle
-                ? `Your message will include that you're contacting them about ${serviceTitle}. Add any details below.`
+                ? `We've drafted a message about ${serviceTitle}. Edit it before sending.`
                 : "Introduce your project and what you need. You can continue the conversation in your inbox."}
             </DialogDescription>
           </DialogHeader>

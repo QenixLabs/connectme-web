@@ -12,12 +12,14 @@ import { providersApi } from "@/lib/api/marketplace";
 import type { ProviderProfile } from "@/lib/api/marketplace";
 import { getApiErrorMessage } from "@/lib/api/client";
 import { queryKeys } from "@/lib/api/query-keys";
+import { MARKETPLACE_CATEGORIES } from "@/lib/marketplace-categories";
+import { TagInput } from "@/components/ui/tag-input";
 
 interface OnboardingForm {
   display_name: string;
   business_name: string;
   city: string;
-  categories: string;
+  categories: string[];
   about: string;
 }
 
@@ -25,7 +27,7 @@ const EMPTY_FORM: OnboardingForm = {
   display_name: "",
   business_name: "",
   city: "",
-  categories: "",
+  categories: [],
   about: "",
 };
 
@@ -34,7 +36,9 @@ function toForm(profile: ProviderProfile): OnboardingForm {
     display_name: profile.display_name ?? "",
     business_name: profile.business_name ?? "",
     city: profile.location?.city ?? "",
-    categories: (profile.categories ?? []).join(", "),
+    categories: (profile.categories ?? []).filter((category) =>
+      MARKETPLACE_CATEGORIES.some((option) => option === category),
+    ),
     about: profile.about ?? "",
   };
 }
@@ -70,7 +74,7 @@ function OnboardingLayout({
       <main className="relative z-10 mx-auto grid max-w-7xl gap-6 px-4 pb-8 sm:px-8 lg:min-h-[calc(100vh-76px)] lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:gap-10 lg:pb-12">
         <aside className="group relative isolate flex min-h-[360px] flex-col justify-end overflow-hidden rounded-[2rem] border border-white/10 bg-card shadow-2xl shadow-black/30 sm:min-h-[440px] lg:min-h-[640px]">
           <Image
-            src="/heroimage.jfif"
+            src="/provider-hero.png"
             alt=""
             fill
             priority
@@ -178,15 +182,11 @@ export default function ProviderOnboardingPage() {
     setError("");
     setMessage("");
     try {
-      const categories = form.categories
-        .split(",")
-        .map((value) => value.trim())
-        .filter(Boolean);
       await providersApi.updateMyProfile({
         display_name: form.display_name.trim(),
         business_name: form.business_name.trim() || undefined,
         city: form.city.trim() || undefined,
-        categories: categories.length > 0 ? categories : undefined,
+        categories: form.categories,
         about: form.about.trim() || undefined,
       });
       const result = await providersApi.completeOnboarding();
@@ -353,20 +353,25 @@ export default function ProviderOnboardingPage() {
               />
             </span>
           </label>
-          <label className="block space-y-2 sm:col-span-2">
-            <span className="text-sm font-semibold">What do you do? <span className="text-xs font-normal text-muted-foreground">Optional</span></span>
-            <input
-              type="text"
+          <div className="space-y-2 sm:col-span-2">
+            <label className="text-sm font-semibold">
+              Service categories{" "}
+              <span className="text-xs font-normal text-muted-foreground">
+                Optional
+              </span>
+            </label>
+            <TagInput
               value={form.categories}
-              onChange={(event) => setForm({ ...form, categories: event.target.value })}
-              className="w-full rounded-xl border border-border bg-background/70 px-4 py-3 text-sm outline-none transition placeholder:text-muted-foreground/60 focus:border-primary focus:ring-4 focus:ring-primary/10"
-              placeholder="Photography, video production, makeup…"
+              onChange={(categories) => setForm({ ...form, categories })}
+              suggestions={[...MARKETPLACE_CATEGORIES]}
+              allowCustom={false}
+              placeholder="Choose from the category list"
               aria-describedby="categories-hint"
             />
             <span id="categories-hint" className="block text-xs text-muted-foreground">
-              Add a few services, separated by commas.
+              Select one or more categories from the list.
             </span>
-          </label>
+          </div>
           <label className="block space-y-2 sm:col-span-2">
             <span className="text-sm font-semibold">A little about your work <span className="text-xs font-normal text-muted-foreground">Optional</span></span>
             <textarea

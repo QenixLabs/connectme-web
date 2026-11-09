@@ -6,6 +6,8 @@ import {
   LayoutDashboard,
   User,
   Briefcase,
+  Package,
+  ShoppingBag,
   MessageSquare,
   FolderKanban,
   Search,
@@ -16,6 +18,7 @@ import {
   UsersRound,
   BarChart3,
   Star,
+  ClipboardList,
 } from "lucide-react";
 
 export interface NavItem {
@@ -27,6 +30,7 @@ export interface NavItem {
 export const talentNavItems: NavItem[] = [
   { label: "Home", href: "/talent/dashboard", icon: Home },
   { label: "Opportunities", href: "/talent/opportunities", icon: Briefcase },
+  { label: "Services", href: "/services", icon: ShoppingBag },
   { label: "Network", href: "/talent/network", icon: UsersRound },
   { label: "Analytics", href: "/talent/analytics", icon: BarChart3 },
   { label: "Messages", href: "/talent/messages", icon: MessageSquare },
@@ -50,6 +54,25 @@ export const recruiterBottomNavItems: NavItem[] = [
   { label: "Find Talent", href: "/recruiter/find-talent", icon: Search },
   { label: "Messages", href: "/recruiter/messages", icon: MessageSquare },
   { label: "Profile", href: "/recruiter/profile", icon: User },
+];
+
+export const providerNavItems: NavItem[] = [
+  { label: "Dashboard", href: "/provider/dashboard", icon: LayoutDashboard },
+  { label: "My Profile", href: "/provider/profile", icon: User },
+  { label: "Publish", href: "/publish", icon: Package },
+  { label: "Services", href: "/provider/services", icon: Briefcase },
+  { label: "Products", href: "/provider/products", icon: Package },
+  { label: "Inquiries", href: "/provider/inquiries", icon: ClipboardList },
+  { label: "Messages", href: "/provider/messages", icon: MessageSquare },
+  { label: "Verification", href: "/provider/verify-documents", icon: ShieldCheck },
+];
+
+export const providerBottomNavItems: NavItem[] = [
+  { label: "Dashboard", href: "/provider/dashboard", icon: Home },
+  { label: "Inquiries", href: "/provider/inquiries", icon: ClipboardList },
+  { label: "Publish", href: "/publish", icon: Package },
+  { label: "Messages", href: "/provider/messages", icon: MessageSquare },
+  { label: "Profile", href: "/provider/profile", icon: User },
 ];
 
 export const adminNavItems: NavItem[] = [

@@ -79,9 +79,13 @@ function getGreeting() {
   return "Good evening";
 }
 
-function firstNameOf(user: { username?: string; email?: string } | null, fallback: string) {
-  const raw = user?.username || user?.email?.split("@")[0] || fallback;
-  const first = raw.split(" ")[0] || fallback;
+function firstNameOf(
+  user: { username?: string; email?: string } | null,
+  fallback: string,
+  contactName?: string,
+) {
+  const raw = contactName || user?.username || user?.email?.split("@")[0] || fallback;
+  const first = raw.trim().split(/\s+/)[0] || fallback;
   return first.charAt(0).toUpperCase() + first.slice(1);
 }
 
@@ -311,6 +315,7 @@ export default function RecruiterDashboardPage() {
   const displayName = firstNameOf(
     user,
     profile?.contact_name || profile?.company_name || "Recruiter",
+    profile?.contact_name,
   );
 
   const activeCampaigns = stats?.active_campaigns ?? 0;
@@ -435,11 +440,11 @@ export default function RecruiterDashboardPage() {
     <div className="recruiter-dashboard-theme min-h-full bg-background">
       <main className="mx-auto min-h-screen w-full max-w-md overflow-x-hidden bg-background pb-8 shadow-app">
         <div className="px-4">
-          <section className="relative -mx-4 h-40 overflow-hidden">
-            <div className="relative z-10 w-[56%] px-4 pt-3">
+          <section className="relative -mx-4 min-h-40 overflow-hidden">
+            <div className="relative z-10 w-[56%] px-4 pt-3 pb-4">
               <p className="text-sm font-medium">{getGreeting()},</p>
-              <h1 className="mt-0.5 flex items-center gap-1.5 text-[28px] font-extrabold leading-none text-brand-ink">
-                {displayName}{" "}
+              <h1 className="mt-0.5 flex max-w-full flex-wrap items-center gap-1.5 text-[28px] font-extrabold leading-none text-brand-ink">
+                <span className="line-clamp-2 min-w-0 [overflow-wrap:anywhere]">{displayName}</span>
                 <Hand className="size-6 rotate-[-18deg] fill-warning text-warning" aria-label="Waving" />
               </h1>
               <p className="mt-2 text-xs font-medium leading-snug text-muted-foreground">

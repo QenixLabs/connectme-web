@@ -70,6 +70,19 @@
   --color-accent-green-bg: var(--accent-green-bg);
   --color-badge-red: var(--badge-red);
   --color-profile-section-icon: var(--profile-section-icon);
+  --color-provider-canvas: var(--provider-canvas);
+  --color-provider-surface: var(--provider-surface);
+  --color-provider-foreground: var(--provider-foreground);
+  --color-provider-muted: var(--provider-muted);
+  --color-provider-border: var(--provider-border);
+  --color-provider-primary: var(--provider-primary);
+  --color-provider-primary-strong: var(--provider-primary-strong);
+  --color-provider-tint: var(--provider-tint);
+  --color-provider-star: var(--provider-star);
+  --radius-provider-card: var(--provider-radius-card);
+  --shadow-provider-card: var(--provider-shadow-card);
+  --shadow-provider-action: var(--provider-shadow-action);
+  --font-provider: var(--provider-font);
   --color-rootin: var(--rootin-blue);
   --color-info: var(--info);
   --color-violet: var(--violet);
@@ -2781,6 +2794,48 @@ main.signup-shell {
    the page. Classes with no app-wide equivalent (bg-tint-*, bg-gradient-*,
    text-gradient-primary, script) are defined as plain scoped classes below.
 --------------------------------------------------------------------------- */
+.provider-profile-theme {
+  color-scheme: light;
+  --provider-canvas: #f7f8fc;
+  --provider-surface: #ffffff;
+  --provider-foreground: #181827;
+  --provider-muted: #707085;
+  --provider-border: #e9e9f1;
+  --provider-primary: #7518e8;
+  --provider-primary-strong: #5600cc;
+  --provider-tint: #f3eaff;
+  --provider-star: #f5ad16;
+  --provider-radius-card: 1.25rem;
+  --provider-shadow-card: 0 10px 28px rgba(37, 19, 70, 0.08);
+  --provider-shadow-action: 0 8px 18px rgba(100, 19, 214, 0.22);
+  --provider-font: "Rubik", var(--font-rubik), ui-sans-serif, system-ui, sans-serif;
+  --provider-hero-gradient: linear-gradient(135deg, #6b18db, #a21caf);
+
+  --background: var(--provider-canvas);
+  --foreground: var(--provider-foreground);
+  --card: var(--provider-surface);
+  --card-foreground: var(--provider-foreground);
+  --popover: var(--provider-surface);
+  --popover-foreground: var(--provider-foreground);
+  --primary: var(--provider-primary);
+  --primary-foreground: #ffffff;
+  --secondary: var(--provider-tint);
+  --secondary-foreground: var(--provider-primary-strong);
+  --muted: var(--provider-canvas);
+  --muted-foreground: var(--provider-muted);
+  --accent: var(--provider-tint);
+  --accent-foreground: var(--provider-primary-strong);
+  --border: var(--provider-border);
+  --input: var(--provider-border);
+  --ring: var(--provider-primary);
+  --star: var(--provider-star);
+  --radius: var(--provider-radius-card);
+
+  background-color: var(--provider-canvas);
+  color: var(--provider-foreground);
+  font-family: var(--provider-font);
+}
+
 .recruiter-welcome-theme {
   color-scheme: light;
   --radius: 1.125rem;

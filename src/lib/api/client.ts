@@ -96,6 +96,7 @@ const processQueue = (error: Error | null, token: string | null = null) => {
 };
 
 const isPublicEndpoint = (url: string): boolean => {
+  if (url === "/products" || url.startsWith("/products/")) return true;
   const publicPaths = [
     "/talent/profile/",
     "/recruiters/public",

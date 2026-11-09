@@ -23,6 +23,8 @@ import { useSaveRecruiter, useStartConversation } from "@/hooks/use-recruiter-ac
 import { useConnectionRequest } from "@/hooks/use-talent-actions";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import type { SubmitRecruiterReviewPayload } from "@/lib/api/recruiter";
+import type { ShareProfileTarget } from "@/lib/share";
+import { ShareProfileButton } from "@/components/shared/share-profile-button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RecruiterProfileView } from "./profile-view";
 import styles from "./page.module.css";
@@ -131,24 +133,6 @@ export default function PublicRecruiterProfilePage() {
     }
   };
 
-  const handleShare = async () => {
-    if (typeof navigator.share === "function") {
-      try {
-        await navigator.share({
-          title: profile?.company_name ?? "RootIn",
-          text:
-            profile?.headline ??
-            (profile ? `Check out ${profile.company_name} on RootIn` : ""),
-          url: window.location.href,
-        });
-        return;
-      } catch (err) {
-        if (err instanceof Error && err.name === "AbortError") return;
-      }
-    }
-    await copyProfileLink();
-  };
-
   const isLoading = profileLoading || campaignsLoading;
 
   if (isLoading) {
@@ -165,6 +149,47 @@ export default function PublicRecruiterProfilePage() {
   const totalReviews = firstReviewsPage?.total ?? profile.total_reviews_count ?? 0;
   const verifiedReviews = firstReviewsPage?.verified_total ?? 0;
   const averageRating = profile.average_rating ?? 0;
+  const shareTarget: ShareProfileTarget = {
+    role: "recruiter",
+    slug: profile.slug,
+    name: profile.company_name,
+    headline: profile.headline || profile.position || profile.industry,
+    photoUrl: profile.profile_photo,
+    isVerified: profile.verification_tier > 0,
+    tags: (profile.casting_categories?.length
+      ? profile.casting_categories
+      : profile.specialties
+    )?.slice(0, 4),
+    statItems: [
+      {
+        icon: "briefcase",
+        count:
+          profile.active_campaigns_count + profile.completed_campaigns_count > 0
+            ? String(profile.active_campaigns_count + profile.completed_campaigns_count)
+            : "—",
+        label: "Projects",
+        note: "On RootIn",
+      },
+      {
+        icon: "heart",
+        count:
+          profile.total_talents_count > 0
+            ? String(profile.total_talents_count)
+            : "—",
+        label: "Talent Hired",
+        note: "On RootIn",
+      },
+      {
+        icon: "star",
+        count: profile.average_rating > 0 ? profile.average_rating.toFixed(1) : "—",
+        label: "Rating",
+        note:
+          profile.total_reviews_count > 0
+            ? `${profile.total_reviews_count} Reviews`
+            : "No reviews",
+      },
+    ],
+  };
   const reviewCampaigns = (applicationsData ?? [])
     .filter((campaign) => campaign.my_application)
     .map((campaign) => ({ _id: campaign._id, name: campaign.name }));
@@ -218,10 +243,15 @@ export default function PublicRecruiterProfilePage() {
           <Heart size={14} fill={followed ? "currentColor" : "none"} />
           {followed ? "Following" : "Follow"}
         </button>
-        <button className={styles.ghostAction} onClick={() => void handleShare()}>
+        <ShareProfileButton
+          target={shareTarget}
+          source="public_recruiter_profile"
+          directDestination="whatsapp"
+          className={styles.ghostAction}
+        >
           <Share2 size={14} />
           Share
-        </button>
+        </ShareProfileButton>
         <div className={styles.moreWrap} ref={moreWrapRef}>
           <button
             className={styles.moreAction}

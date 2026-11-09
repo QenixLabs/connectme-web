@@ -117,6 +117,8 @@ export function useShareProfile({
       photoUrl: target.photoUrl,
       isVerified: target.isVerified,
       path: target.path,
+      tags: target.tags,
+      statItems: target.statItems,
     }),
     [
       target.role,
@@ -126,6 +128,8 @@ export function useShareProfile({
       target.photoUrl,
       target.isVerified,
       target.path,
+      target.tags,
+      target.statItems,
     ],
   );
 

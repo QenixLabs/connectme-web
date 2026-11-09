@@ -248,6 +248,7 @@ function getErrorMessage(error: unknown, fallback: string): string {
 function draftFromProfile(profile: RecruiterProfile): Draft {
   return {
     company_name: profile.company_name ?? "",
+    contact_name: profile.contact_name ?? "",
     slug: sanitizeSlug(profile.slug ?? ""),
     company_website: profile.company_website ?? "",
     linkedin_company_url: profile.linkedin_company_url ?? "",
@@ -1109,6 +1110,7 @@ export default function RecruiterProfileEditPage() {
       const firstError = candidateValidation.firstError;
       const sectionByField: Record<string, string> = {
         company_name: "basic",
+        contact_name: "basic",
         slug: "basic",
         company_website: "links",
         linkedin_company_url: "links",
@@ -1502,7 +1504,7 @@ export default function RecruiterProfileEditPage() {
                   </div>
                   <div className="min-w-0">
                     <span className="mb-2 block text-xs font-semibold">Cover image</span>
-                    <div className="ae-cover-art relative flex aspect-[16/8] items-end overflow-hidden rounded-md p-3 sm:aspect-[16/6]">
+                    <div className="ae-cover-art relative flex aspect-[16/5] items-end overflow-hidden rounded-md p-3">
                       {draft.banner_image_url && (
                         <img
                           src={draft.banner_image_url}
@@ -1563,6 +1565,21 @@ export default function RecruiterProfileEditPage() {
                       onChange={(e) => set("company_name", e.target.value)}
                       maxLength={100}
                       placeholder="Silver Reel Casting"
+                    />
+                  </Field>
+                  <Field
+                    label="Contact name"
+                    fieldId={fieldDomId("contact_name")}
+                    error={getFieldError("contact_name")}
+                    valid={isFieldValid("contact_name", draft.contact_name)}
+                    hint="Used for your dashboard greeting"
+                  >
+                    <input
+                      {...getFieldProps("contact_name", draft.contact_name)}
+                      value={draft.contact_name ?? ""}
+                      onChange={(e) => set("contact_name", e.target.value)}
+                      maxLength={100}
+                      placeholder="Your name"
                     />
                   </Field>
                   <Field
@@ -2528,7 +2545,5 @@ export default function RecruiterProfileEditPage() {
     </div>
   );
 }
-
-
 
 

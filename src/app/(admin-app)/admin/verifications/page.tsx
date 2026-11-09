@@ -113,6 +113,7 @@ export default function AdminVerificationsPage() {
 
   const artists = pending.filter((p) => p.user_role === "talent");
   const brands = pending.filter((p) => p.user_role === "recruiter");
+  const serviceProviders = pending.filter((p) => p.user_role === "provider");
 
   const renderTable = (items: PendingVerificationItem[], title: string) => {
     if (items.length === 0) return null;
@@ -170,7 +171,7 @@ export default function AdminVerificationsPage() {
                   <td className="px-4 py-3">
                     <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-warning/10 text-warning border border-warning/20">
                       <Clock className="w-3 h-3" strokeWidth={1.5} />
-                      Pending
+                      Under review
                     </span>
                   </td>
                   <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
@@ -243,7 +244,7 @@ export default function AdminVerificationsPage() {
 
       <Card className="border-border">
         <CardHeader>
-          <CardTitle className="text-lg">Pending Profiles</CardTitle>
+          <CardTitle className="text-lg">Verification Review Queue</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           {actionError && (
@@ -266,6 +267,7 @@ export default function AdminVerificationsPage() {
             <>
               {renderTable(artists, "Artists")}
               {renderTable(brands, "Brands")}
+              {renderTable(serviceProviders, "Service Providers")}
             </>
           )}
         </CardContent>

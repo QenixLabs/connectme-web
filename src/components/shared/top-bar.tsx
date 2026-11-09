@@ -15,11 +15,18 @@ import {
   Star,
   UsersRound,
   Users,
+  Store,
+  Briefcase,
+  ClipboardList,
+  ArrowUpRight,
+  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { talentApi } from "@/lib/api/talent";
 import { recruiterApi } from "@/lib/api/recruiter";
+import { providersApi } from "@/lib/api/marketplace";
+import { MarketplaceNotificationBell } from "@/components/marketplace/marketplace-notification-bell";
 import { useUnreadNotifications } from "@/hooks/use-unread-counts";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,7 +48,7 @@ const getServerSnapshot = () => false;
 
 interface TopBarProps {
   navItems: NavItem[];
-  role: "talent" | "recruiter" | "admin";
+  role: "talent" | "recruiter" | "provider" | "admin";
   showUserMenu?: boolean;
 }
 
@@ -77,36 +84,44 @@ export function TopBar({ navItems, role, showUserMenu = false }: TopBarProps) {
             src={logoImage}
             alt="RootIn"
             height={32}
-            className="h-10 w-auto"
+            className="h-8 w-auto sm:h-10"
             priority
           />
         </Link>
 
-        <nav className="hidden items-center gap-1 rounded-full border border-border bg-bg-surface p-1 md:flex">
-          {navItems.map((item) => {
-            const active = isMounted && pathname.startsWith(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "relative rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-200",
-                  active
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
+          <nav className="hidden items-center gap-1 rounded-full border border-border bg-bg-surface p-1 md:flex">
+            {navItems.map((item) => {
+              const active = isMounted && pathname.startsWith(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "relative rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-200",
+                    active
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
 
-        <div className="flex items-center gap-1">
-          {showUserMenu && <NotificationBell role={role} />}
-          {showUserMenu && <UserMenu role={role} />}
+          <div className="flex items-center gap-1">
+            {role === "provider" && (
+              <Link
+                href="/services"
+                className="hidden items-center gap-1 text-sm font-medium text-muted-foreground transition hover:text-foreground sm:flex"
+              >
+                Browse marketplace <ArrowUpRight className="size-3.5" />
+              </Link>
+            )}
+            {showUserMenu && (role === "provider" ? <MarketplaceNotificationBell /> : <NotificationBell role={role} />)}
+            {showUserMenu && <UserMenu role={role} />}
+          </div>
         </div>
-      </div>
     </header>
   );
 }
@@ -140,13 +155,19 @@ function UserMenu({ role }: { role: TopBarProps["role"] }) {
   const logout = useAuthStore((s) => s.logout);
   const router = useRouter();
   const [isPending, setIsPending] = useState(false);
-  const { data: profile } = useQuery<{ profile_photo?: string }>({
+  const { data: profile } = useQuery<{ profile_photo?: string; slug?: string }>({
     queryKey:
       role === "talent"
         ? ["talent-profile", "my"]
-        : ["recruiter-profile", "profile"],
+        : role === "provider"
+          ? ["provider-profile", "my"]
+          : ["recruiter-profile", "profile"],
     queryFn: async () =>
-      role === "talent" ? talentApi.getMyProfile() : recruiterApi.getMyProfile(),
+      role === "talent"
+        ? talentApi.getMyProfile()
+        : role === "provider"
+          ? (await providersApi.getMyProfile()).profile
+          : recruiterApi.getMyProfile(),
     enabled: role !== "admin" && !!user,
   });
 
@@ -163,6 +184,16 @@ function UserMenu({ role }: { role: TopBarProps["role"] }) {
     user?.username?.slice(0, 2).toUpperCase() ||
     user?.email?.slice(0, 2).toUpperCase() ||
     "ME";
+  const hasProviderAccess =
+    user?.role === "provider" || user?.account_capabilities?.includes("provider") === true;
+  const profileHref =
+    role === "recruiter"
+      ? profile?.slug
+        ? `/recruiter/${profile.slug}`
+        : "/recruiter/profile/edit"
+      : role === "provider"
+        ? "/provider/profile"
+        : "/talent/profile";
 
   return (
     <DropdownMenu>
@@ -227,7 +258,7 @@ function UserMenu({ role }: { role: TopBarProps["role"] }) {
             {role === "recruiter" && (
               <>
                 <DropdownMenuItem asChild>
-                  <Link href="/recruiter/profile" className="cursor-pointer">
+                  <Link href={profileHref} className="cursor-pointer">
                     <User className="mr-2 size-4" />
                     Profile
                   </Link>
@@ -252,12 +283,42 @@ function UserMenu({ role }: { role: TopBarProps["role"] }) {
                 </DropdownMenuItem>
               </>
             )}
-            <DropdownMenuItem asChild>
-              <Link href={`/${role}/billing`} className="cursor-pointer">
-                <CreditCard className="mr-2 size-4" />
-                Billing
-              </Link>
-            </DropdownMenuItem>
+            {role === "provider" && (
+              <>
+                <DropdownMenuItem asChild>
+                  <Link href={profileHref} className="cursor-pointer">
+                    <User className="mr-2 size-4" />
+                    Profile
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/provider/services" className="cursor-pointer">
+                    <Briefcase className="mr-2 size-4" />
+                    Services
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/provider/inquiries" className="cursor-pointer">
+                    <ClipboardList className="mr-2 size-4" />
+                    Inquiries
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/provider/verify-documents" className="cursor-pointer">
+                    <ShieldCheck className="mr-2 size-4" />
+                    Verification
+                  </Link>
+                </DropdownMenuItem>
+              </>
+            )}
+            {role !== "provider" && (
+              <DropdownMenuItem asChild>
+                <Link href={`/${role}/billing`} className="cursor-pointer">
+                  <CreditCard className="mr-2 size-4" />
+                  Billing
+                </Link>
+              </DropdownMenuItem>
+            )}
             {role === "talent" && (
               <DropdownMenuItem asChild>
                 <Link href="/talent/settings" className="cursor-pointer">
@@ -267,6 +328,27 @@ function UserMenu({ role }: { role: TopBarProps["role"] }) {
               </DropdownMenuItem>
             )}
             <DropdownMenuSeparator />
+            {(role === "talent" || role === "recruiter") && (
+              <DropdownMenuItem asChild>
+                <Link
+                  href={hasProviderAccess ? "/provider/dashboard" : "/provider/onboarding"}
+                  className="cursor-pointer"
+                >
+                  <Store className="mr-2 size-4" />
+                  {hasProviderAccess ? "Provider Studio" : "Become a service provider"}
+                </Link>
+              </DropdownMenuItem>
+            )}
+            {(role === "talent" || role === "recruiter") && <DropdownMenuSeparator />}
+            {role === "provider" &&
+              (user?.role === "talent" || user?.role === "recruiter") && (
+                <DropdownMenuItem asChild>
+                  <Link href={`/${user.role}/dashboard`} className="cursor-pointer">
+                    <Store className="mr-2 size-4" />
+                    {user.role === "recruiter" ? "Recruiter workspace" : "Talent workspace"}
+                  </Link>
+                </DropdownMenuItem>
+              )}
           </>
         )}
         <DropdownMenuItem

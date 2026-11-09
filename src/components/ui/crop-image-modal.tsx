@@ -30,6 +30,7 @@ export function CropImageModal({ open, onOpenChange, imageSrc, onCropped, aspect
   } | null>(null);
   const [isCropping, setIsCropping] = useState(false);
   const [imageReady, setImageReady] = useState(false);
+  const [cropError, setCropError] = useState("");
   const imageRef = useRef<HTMLImageElement | null>(null);
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -74,12 +75,13 @@ export function CropImageModal({ open, onOpenChange, imageSrc, onCropped, aspect
   const handleCrop = useCallback(async () => {
     if (!croppedAreaPixels) return;
     setIsCropping(true);
+    setCropError("");
     try {
       const croppedFile = await getCroppedImg(imageSrc, croppedAreaPixels);
       onCropped(croppedFile);
       onOpenChange(false);
     } catch {
-      // silently fail
+      setCropError("Could not crop the image. Please try again.");
     } finally {
       setIsCropping(false);
     }
@@ -117,6 +119,8 @@ export function CropImageModal({ open, onOpenChange, imageSrc, onCropped, aspect
             className="w-full"
           />
         </div>
+
+        {cropError && <p role="alert" className="text-sm text-destructive">{cropError}</p>}
 
         {preview && (
           <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/40 p-3">

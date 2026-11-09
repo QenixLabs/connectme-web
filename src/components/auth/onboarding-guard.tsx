@@ -3,6 +3,21 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/providers/auth-store-provider";
+import type { User } from "@/stores/auth-store";
+
+function hasWorkspaceAccess(user: User, role: "talent" | "recruiter") {
+  return user.role === role || user.account_capabilities?.includes(role) === true;
+}
+
+function getDefaultWorkspace(user: User) {
+  if (user.role === "talent" || user.role === "recruiter") {
+    return `/${user.role}/dashboard`;
+  }
+  if (user.role === "provider" || user.account_capabilities?.includes("provider")) {
+    return "/provider/dashboard";
+  }
+  return "/talent/dashboard";
+}
 
 export function OnboardingGuard({
   role,
@@ -29,8 +44,8 @@ export function OnboardingGuard({
       router.replace("/auth/login");
       return;
     }
-    if (current.role !== role) {
-      router.replace(current.role === "recruiter" ? "/recruiter/dashboard" : "/talent/dashboard");
+    if (!hasWorkspaceAccess(current, role)) {
+      router.replace(getDefaultWorkspace(current));
       return;
     }
     const done = current.onboarding_completed || current.onboarding_exempted;
@@ -48,7 +63,7 @@ export function OnboardingGuard({
   }
 
   const done = user?.onboarding_completed || user?.onboarding_exempted;
-  if (!user || user.role !== role || !done) return null;
+  if (!user || !hasWorkspaceAccess(user, role) || !done) return null;
 
   return <>{children}</>;
 }

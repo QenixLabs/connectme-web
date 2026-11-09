@@ -5,7 +5,7 @@ import { Share2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { ShareProfileTarget } from "@/lib/share";
+import type { ShareDestination, ShareProfileTarget } from "@/lib/share";
 import { useShareProfile } from "@/hooks/use-share-profile";
 import { ShareProfileDialog } from "@/components/shared/share-profile-dialog";
 
@@ -20,6 +20,8 @@ export interface ShareProfileButtonProps {
   variant?: "button" | "icon";
   /** Accessible label for the icon-only trigger. */
   label?: string;
+  /** Skip the dialog and hand off directly to this destination. */
+  directDestination?: ShareDestination;
   className?: string;
   /** Notified whenever the overlay opens or closes. */
   onOpenChange?: (open: boolean) => void;
@@ -38,6 +40,7 @@ export function ShareProfileButton({
   children,
   variant = "button",
   label = "Share profile",
+  directDestination,
   className,
   onOpenChange,
 }: ShareProfileButtonProps) {
@@ -46,11 +49,18 @@ export function ShareProfileButton({
     source,
     onOpenChange,
   });
+  const handleClick = () => {
+    if (directDestination) {
+      void share.shareDestination(directDestination);
+      return;
+    }
+    share.open();
+  };
 
   return (
     <>
       {children ? (
-        <button type="button" onClick={share.open} className={className}>
+        <button type="button" onClick={handleClick} className={className}>
           {children}
         </button>
       ) : variant === "icon" ? (
@@ -58,7 +68,7 @@ export function ShareProfileButton({
           type="button"
           variant="outline"
           size="icon"
-          onClick={share.open}
+          onClick={handleClick}
           aria-label={label}
           title={label}
           className={className}
@@ -68,7 +78,7 @@ export function ShareProfileButton({
       ) : (
         <Button
           type="button"
-          onClick={share.open}
+          onClick={handleClick}
           aria-label={label}
           className={cn("gap-2", className)}
         >
@@ -77,34 +87,36 @@ export function ShareProfileButton({
         </Button>
       )}
 
-      <ShareProfileDialog
-        open={share.isOpen}
-        onOpenChange={(next) => {
-          if (!next) share.close();
-        }}
-        target={target}
-        canonicalUrl={share.canonicalUrl}
-        copyStatus={share.copyStatus}
-        error={share.error}
-        status={share.status}
-        offerLinkCopy={share.offerLinkCopy}
-        isPreparingCard={share.isPreparingCard}
-        isBusy={share.isBusy}
-        isLocalLink={share.isLocalLink}
-        showInstagramInstructions={share.showInstagramInstructions}
-        instagramPreview={share.instagramPreview}
-        instagramCaption={share.instagramCaption}
-        captionCopied={share.captionCopied}
-        onDismissInstagramInstructions={() =>
-          share.setShowInstagramInstructions(false)
-        }
-        onCopyLink={() => void share.copyLink()}
-        onCopyCaption={() => void share.copyCaption()}
-        onShareDestination={(destination) =>
-          void share.shareDestination(destination)
-        }
-        onDownloadCard={() => void share.downloadCard()}
-      />
+      {!directDestination && (
+        <ShareProfileDialog
+          open={share.isOpen}
+          onOpenChange={(next) => {
+            if (!next) share.close();
+          }}
+          target={target}
+          canonicalUrl={share.canonicalUrl}
+          copyStatus={share.copyStatus}
+          error={share.error}
+          status={share.status}
+          offerLinkCopy={share.offerLinkCopy}
+          isPreparingCard={share.isPreparingCard}
+          isBusy={share.isBusy}
+          isLocalLink={share.isLocalLink}
+          showInstagramInstructions={share.showInstagramInstructions}
+          instagramPreview={share.instagramPreview}
+          instagramCaption={share.instagramCaption}
+          captionCopied={share.captionCopied}
+          onDismissInstagramInstructions={() =>
+            share.setShowInstagramInstructions(false)
+          }
+          onCopyLink={() => void share.copyLink()}
+          onCopyCaption={() => void share.copyCaption()}
+          onShareDestination={(destination) =>
+            void share.shareDestination(destination)
+          }
+          onDownloadCard={() => void share.downloadCard()}
+        />
+      )}
     </>
   );
 }

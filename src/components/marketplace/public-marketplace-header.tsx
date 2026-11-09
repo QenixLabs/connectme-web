@@ -2,13 +2,22 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Briefcase, LayoutDashboard, LogIn, Menu, Store, Users, X } from "lucide-react";
+import {
+  BriefcaseBusiness,
+  LayoutDashboard,
+  LogIn,
+  Menu,
+  Search,
+  ShoppingBag,
+  X,
+} from "lucide-react";
 import { useState } from "react";
 import { useStore } from "zustand/react";
 import { authStore } from "@/stores/auth-store";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { MarketplaceNotificationBell } from "@/components/marketplace/marketplace-notification-bell";
+import { RootInLogo } from "@/components/RootInLogo";
 
 function dashboardFor(role?: string, capabilities?: string[]) {
   if (capabilities?.includes("provider")) return "/provider/dashboard";
@@ -22,9 +31,18 @@ export function PublicMarketplaceHeader() {
   const user = useStore(authStore, (state) => state.user);
   const [open, setOpen] = useState(false);
 
+  if (/^\/providers\/[^/]+$/.test(pathname)) return null;
+  if (/^\/services\/[^/]+$/.test(pathname)) return null;
+
   const links = [
-    { href: "/services", label: "Services", icon: Briefcase },
-    { href: "/providers", label: "Providers", icon: Users },
+    { href: "/discover", label: "Discover", icon: Search },
+    {
+      href: "/talent/opportunities",
+      label: "Opportunities",
+      icon: BriefcaseBusiness,
+    },
+    { href: "/services", label: "Services", icon: BriefcaseBusiness },
+    { href: "/products", label: "Products", icon: ShoppingBag },
   ];
   const accountLinks = user
     ? [{ href: "/inquiries", label: "My inquiries" }]
@@ -33,16 +51,19 @@ export function PublicMarketplaceHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/90 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4">
-        <Link href="/" className="flex items-center gap-2 font-bold">
-          <span className="flex size-8 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <Store className="size-4" />
-          </span>
-          <span>RootIn Marketplace</span>
+        <Link
+          href="/"
+          className="flex shrink-0 items-center"
+          aria-label="RootIn Marketplace home"
+        >
+          <RootInLogo className="w-28" />
         </Link>
 
         <nav className="ml-4 hidden items-center gap-1 md:flex">
           {links.map((link) => {
-            const active = pathname.startsWith(link.href);
+            const active =
+              pathname.startsWith(link.href) ||
+              (link.href === "/services" && pathname.startsWith("/providers"));
             return (
               <Link
                 key={link.href}

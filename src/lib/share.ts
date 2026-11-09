@@ -13,7 +13,7 @@ export { normalizeOrigin };
 
 export const SHARE_BRAND = "RootIn";
 
-export type ShareProfileRole = "talent" | "recruiter";
+export type ShareProfileRole = "talent" | "recruiter" | "provider";
 
 export type ShareCardStatIcon =
   | "camera"
@@ -37,7 +37,7 @@ export interface ShareCardStatItem {
 /** The profile a user is sharing. */
 export interface ShareProfileTarget {
   role: ShareProfileRole;
-  /** Canonical username (talent) or slug (recruiter). */
+  /** Canonical username (talent) or slug (recruiter/provider). */
   slug: string;
   /** Display name shown in the share sheet and on the share card. */
   name: string;
@@ -57,7 +57,7 @@ export interface ShareProfileTarget {
   path?: string;
   /** Category or skill tags rendered on the share card. */
   tags?: string[];
-  /** RootScore, response rate, rating and shortlist count shown on talent cards. */
+  /** Role-specific metrics rendered on the share card. */
   statItems?: ShareCardStatItem[];
 }
 
@@ -117,9 +117,9 @@ export function normalizePublicPath(path?: string | null): string {
 /**
  * Canonical public path for a profile.
  *
- * `talent` profiles live at `/talent/<username>`, recruiter / agency
- * profiles at `/recruiter/<slug>`. An explicit `path` (a portfolio item deep
- * link the user explicitly asked to share) takes precedence.
+ * Talent profiles live at `/talent/<username>`, recruiter profiles at
+ * `/recruiter/<slug>`, and provider profiles at `/providers/<slug>`.
+ * An explicit `path` takes precedence.
  */
 export function buildProfilePath(target: {
   role: ShareProfileRole;
@@ -131,9 +131,13 @@ export function buildProfilePath(target: {
 
   const slug = (target.slug ?? "").trim();
   if (!slug) return "";
-  return target.role === "recruiter"
-    ? `/recruiter/${encodeURIComponent(slug)}`
-    : `/talent/${encodeURIComponent(slug)}`;
+  if (target.role === "recruiter") {
+    return `/recruiter/${encodeURIComponent(slug)}`;
+  }
+  if (target.role === "provider") {
+    return `/providers/${encodeURIComponent(slug)}`;
+  }
+  return `/talent/${encodeURIComponent(slug)}`;
 }
 
 /**
@@ -165,7 +169,10 @@ export function buildShareText(target: ShareProfileTarget): string {
   if (headline) {
     return `Check out ${name} · ${headline} on ${SHARE_BRAND} ✨`;
   }
-  return `Check out ${name}'s portfolio on ${SHARE_BRAND} ✨`;
+  if (target.role === "talent") {
+    return `Check out ${name}'s portfolio on ${SHARE_BRAND} ✨`;
+  }
+  return `Check out ${defaultNameFor(target.role)} on ${SHARE_BRAND} ✨`;
 }
 
 /**
@@ -183,14 +190,24 @@ export function buildShareMessage(
   const name = (target.name ?? "").trim();
   const headline = (target.headline ?? "").trim();
 
+  const profileType =
+    target.role === "talent"
+      ? "creative portfolio"
+      : `${roleLabel(target.role).toLowerCase()} profile`;
   const lines: string[] = [
     name
-      ? `Hey! Check out ${name}'s creative portfolio on ${SHARE_BRAND} ✨`
-      : `Hey! Check out this creative portfolio on ${SHARE_BRAND} ✨`,
+      ? `Hey! Check out ${name}'s ${profileType} on ${SHARE_BRAND} ✨`
+      : `Hey! Check out this ${profileType} on ${SHARE_BRAND} ✨`,
   ];
 
   if (headline) lines.push("", headline);
-  if (url) lines.push("", "View full portfolio, verified work & credits:", url);
+  if (url) {
+    const linkLabel =
+      target.role === "talent"
+        ? "View full portfolio, verified work & credits:"
+        : "View profile:";
+    lines.push("", linkLabel, url);
+  }
 
   return lines.join("\n");
 }
@@ -226,15 +243,26 @@ export function buildInstagramCaption(
   const name = (target.name ?? "").trim();
   const headline = (target.headline ?? "").trim();
 
-  const lines: string[] = [name ? `Meet ${name} ✨` : "Meet this talent ✨"];
+  const roleName = roleLabel(target.role).toLowerCase();
+  const lines: string[] = [
+    name ? `Meet ${name} ✨` : `Meet this ${roleName} ✨`,
+  ];
   if (headline) lines.push("", headline);
 
   lines.push(
     "",
-    `Explore the full portfolio, verified work and connect on ${SHARE_BRAND}.`,
+    target.role === "talent"
+      ? `Explore the full portfolio, verified work and connect on ${SHARE_BRAND}.`
+      : `Discover this ${roleName} profile on ${SHARE_BRAND}.`,
   );
   if (url) lines.push("", `Discover more: ${url}`);
-  lines.push("", "#RootIn #TalentPortfolio #ConnectAndCreate");
+  const profileHashtag =
+    target.role === "talent"
+      ? "#TalentPortfolio"
+      : target.role === "provider"
+        ? "#ServiceProvider"
+        : "#RecruiterProfile";
+  lines.push("", `#RootIn ${profileHashtag} #ConnectAndCreate`);
 
   return dedupeHashtags(lines.join("\n"));
 }
@@ -265,7 +293,9 @@ export function dedupeHashtags(text: string): string {
 }
 
 export function defaultNameFor(role: ShareProfileRole): string {
-  return role === "recruiter" ? "a recruiter" : "a talent";
+  if (role === "recruiter") return "a recruiter";
+  if (role === "provider") return "a service provider";
+  return "a talent";
 }
 
 /** WhatsApp deep link with a prefilled message. */
@@ -444,7 +474,9 @@ export function buildWhatsAppUrlForUrl(url: string, text?: string): string {
 
 /** Friendly label for the role shown in the share sheet. */
 export function roleLabel(role: ShareProfileRole): string {
-  return role === "recruiter" ? "Recruiter" : "Talent";
+  if (role === "recruiter") return "Recruiter";
+  if (role === "provider") return "Service Provider";
+  return "Talent";
 }
 
 /**

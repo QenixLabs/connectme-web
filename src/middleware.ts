@@ -32,7 +32,7 @@ const PROTECTED_RECRUITER_PATHS = [
   "/recruiter/verify-documents",
 ];
 
-const PROTECTED_PROVIDER_PATHS = ["/provider"];
+const PROTECTED_PROVIDER_PATHS = ["/provider", "/publish"];
 
 const ROLE_HOME: Record<Role, string> = {
   talent: "/talent/dashboard",
@@ -96,5 +96,11 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/talent/:path*", "/recruiter/:path*", "/admin/:path*", "/provider/:path*"],
+  matcher: [
+    "/talent/:path*",
+    "/recruiter/:path*",
+    "/admin/:path*",
+    "/provider/:path*",
+    "/publish",
+  ],
 };

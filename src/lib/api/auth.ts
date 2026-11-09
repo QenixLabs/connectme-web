@@ -38,6 +38,11 @@ export const authApi = {
     years_in_business?: string;
     is_independent?: boolean;
     founded_year?: number;
+    business_name?: string;
+    provider_type?: string;
+    tagline?: string;
+    about?: string;
+    categories?: string[];
   }) => {
     const response = await apiClient.post("/auth/signup", data);
     return response.data;

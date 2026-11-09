@@ -50,6 +50,9 @@ export const queryKeys = {
   },
   messages: {
     unreadCount: () => ['messages', 'unread-count'] as const,
+    conversations: () => ['messages', 'conversations'] as const,
+    conversation: (id: string) => ['messages', 'conversation', id] as const,
+    thread: (id: string) => ['messages', 'thread', id] as const,
   },
   provider: {
     me: () => ['provider', 'me'] as const,
@@ -71,6 +74,15 @@ export const queryKeys = {
     mine: (filters: Record<string, unknown>) =>
       ['services', 'mine', filters] as const,
     mineDetail: (id: string) => ['services', 'mine', id] as const,
+  },
+  products: {
+    categories: () => ['products', 'categories'] as const,
+    publicList: (filters: Record<string, unknown>) =>
+      ['products', 'public', filters] as const,
+    publicDetail: (id: string) => ['products', 'public', id] as const,
+    mine: (filters: Record<string, unknown>) =>
+      ['products', 'mine', filters] as const,
+    mineDetail: (id: string) => ['products', 'mine', id] as const,
   },
   serviceInquiries: {
     mine: (filters: Record<string, unknown>) =>

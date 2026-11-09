@@ -13,7 +13,7 @@
 
 .heroPanel {
   position: relative;
-  height: 245px;
+  aspect-ratio: 16 / 5;
   overflow: hidden;
   background: var(--foreground);
 }
@@ -1187,10 +1187,6 @@
     border: 1px solid var(--border);
     border-radius: 28px;
     box-shadow: 0 20px 65px color-mix(in oklab, var(--foreground) 15%, transparent);
-  }
-
-  .heroPanel {
-    height: 275px;
   }
 }
 

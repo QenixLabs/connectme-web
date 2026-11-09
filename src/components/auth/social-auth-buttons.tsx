@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { Loader2 } from "lucide-react";
 import { API_BASE_URL } from "@/lib/api/client";
 
 interface SocialAuthButtonsProps {
@@ -40,8 +42,16 @@ function googleUrl(mode: "signup" | "signin", role?: "talent" | "recruiter" | "p
 }
 
 export function SocialAuthButtons({ className, googleOnly = false, role, mode = "signin" }: SocialAuthButtonsProps) {
+  const [redirecting, setRedirecting] = useState(false);
+
   const handleGoogleLogin = () => {
-    window.location.href = googleUrl(mode, role);
+    if (redirecting) return;
+    setRedirecting(true);
+    const url = googleUrl(mode, role);
+    // Give the button a frame to show its loading state before navigating.
+    window.setTimeout(() => {
+      window.location.href = url;
+    }, 60);
   };
 
   if (googleOnly) {
@@ -50,21 +60,33 @@ export function SocialAuthButtons({ className, googleOnly = false, role, mode = 
         <button
           type="button"
           onClick={handleGoogleLogin}
-          className="flex h-14 w-full items-center justify-center gap-3 rounded-[17px] border border-[#E2E7F0] bg-white text-[15px] font-semibold text-[#080B2B] shadow-[0_5px_16px_rgba(40,48,90,0.05)] transition-colors hover:border-[#7C35FF]/35 hover:bg-[#FCFBFF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7C35FF]/10 active:scale-[0.99]"
+          disabled={redirecting}
+          aria-busy={redirecting}
+          className="flex h-12 w-full items-center justify-center gap-2.5 rounded-xl border border-[#E1E7F2] bg-white text-[13px] font-semibold text-[#101333] shadow-[0_4px_14px_-8px_rgba(16,19,51,0.22)] transition-all duration-200 hover:border-[#C9B8EF] hover:bg-[#FCFBFF] hover:shadow-[0_8px_20px_-12px_rgba(16,19,51,0.25)] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8738FF] focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-70 motion-reduce:transition-none"
         >
-          <GoogleIcon />
-          Continue with Google
+          {redirecting ? (
+            <>
+              <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+              Connecting to Google…
+            </>
+          ) : (
+            <>
+              <GoogleIcon />
+              Continue with Google
+            </>
+          )}
         </button>
         <button
           type="button"
           disabled
           aria-disabled="true"
+          aria-label="Continue with Apple — coming soon"
           title="Coming Soon"
-          className="mt-2 flex h-14 w-full cursor-not-allowed items-center justify-center gap-3 rounded-[17px] border border-[#E2E7F0] bg-gray-50 text-[15px] font-semibold text-[#080B2B]/50"
+          className="mt-2 flex h-12 w-full cursor-not-allowed items-center justify-center gap-2.5 rounded-xl border border-[#EDF1F8] bg-[#F7F8FC] text-[13px] font-semibold text-[#101333]/40"
         >
           <AppleIcon />
           Continue with Apple
-          <span className="rounded-full bg-[#7C35FF]/10 px-2 py-0.5 text-[11px] font-bold text-[#7C35FF]">
+          <span className="rounded-full bg-white px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#8738FF]/80 ring-1 ring-[#E7DDFB]">
             Coming Soon
           </span>
         </button>

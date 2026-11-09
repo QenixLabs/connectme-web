@@ -53,6 +53,29 @@ describe("buildShareCardContent", () => {
     expect(content.roleLabel).toBe("Recruiter");
   });
 
+  it("builds a provider card with the provider role, tags and metrics", () => {
+    const content = buildShareCardContent({
+      target: {
+        role: "provider",
+        slug: "silver-frame",
+        name: "Silver Frame Productions",
+        headline: "Creative Production",
+        tags: ["Video", "Photography"],
+        statItems: [
+          { icon: "briefcase", count: "12", label: "Services" },
+          { icon: "star", count: "4.8", label: "Rating" },
+          { icon: "play", count: "200+", label: "Projects" },
+        ],
+      },
+      origin: "https://rootin.app",
+    });
+
+    expect(content.roleLabel).toBe("Service Provider");
+    expect(content.url).toBe("https://rootin.app/providers/silver-frame");
+    expect(content.tags).toEqual(["Video", "Photography"]);
+    expect(content.statItems.map(({ count }) => count)).toEqual(["12", "4.8", "200+"]);
+  });
+
   it("derives the URL from the target when none is given", () => {
     const content = buildShareCardContent({
       target: talent,
@@ -301,6 +324,12 @@ describe("shareCardFileName", () => {
     expect(
       shareCardFileName({ role: "recruiter", slug: "north-talent", name: "" }),
     ).toBe("rootin-recruiter-profile.png");
+  });
+
+  it("uses the provider variant for a provider profile", () => {
+    expect(
+      shareCardFileName({ role: "provider", slug: "silver-frame", name: "" }),
+    ).toBe("rootin-provider-profile.png");
   });
 
   it("never leaks the slug or an unsafe character into the file name", () => {

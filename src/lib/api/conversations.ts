@@ -58,8 +58,11 @@ export const conversationsApi = {
     return response.data;
   },
 
-  startByUsername: async (username: string) => {
-    const response = await apiClient.post('/conversations/start-by-username', { username });
+  startByUsername: async (username: string, serviceId?: string) => {
+    const response = await apiClient.post('/conversations/start-by-username', {
+      username,
+      ...(serviceId ? { service_id: serviceId } : {}),
+    });
     return response.data as { conversation_id: string };
   },
 };

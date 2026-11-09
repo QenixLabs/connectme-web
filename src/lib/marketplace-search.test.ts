@@ -10,12 +10,12 @@ describe("marketplace search URL state", () => {
     expect(
       readProviderDirectoryFilters(
         new URLSearchParams(
-          "search=%20designer%20&category=Design&location=Pune&min_rating=4&sort=highest_rating&page=50000",
+          "search=%20designer%20&category=Photography+%26+Video&location=Pune&min_rating=4&sort=highest_rating&page=50000",
         ),
       ),
     ).toEqual({
       search: "designer",
-      category: "Design",
+      category: "Photography & Video",
       location: "Pune",
       min_rating: 4,
       sort: "highest_rating",
@@ -34,6 +34,19 @@ describe("marketplace search URL state", () => {
       min_rating: undefined,
       page: 1,
     });
+  });
+
+  it("only accepts categories from the marketplace category list", () => {
+    expect(
+      readServiceSearchFilters(
+        new URLSearchParams("category=Photography+%26+Video"),
+      ).category,
+    ).toBe("Photography & Video");
+    expect(
+      readProviderDirectoryFilters(
+        new URLSearchParams("category=Unlisted+Category"),
+      ).category,
+    ).toBeUndefined();
   });
 
   it("parses service price, currency, rating, and sort filters", () => {

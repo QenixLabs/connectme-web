@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ServiceInquiryForm } from "@/components/marketplace/service-inquiry-form";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { serviceInquiriesApi } from "@/lib/api";
 import { AuthStoreProvider } from "@/providers/auth-store-provider";
 import { authStore } from "@/stores/auth-store";
@@ -28,21 +29,44 @@ vi.mock("@/lib/api", () => ({
 
 const createInquiry = vi.mocked(serviceInquiriesApi.create);
 
-function renderForm() {
+function renderForm(
+  props: Partial<Parameters<typeof ServiceInquiryForm>[0]> = {},
+  inSheet = true,
+) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: 0 } },
   });
+  const form = (
+    <ServiceInquiryForm
+      providerSlug="jane-doe"
+      providerName="Jane Doe"
+      inSheet={inSheet}
+      {...props}
+    />
+  );
   return render(
     <QueryClientProvider client={client}>
       <AuthStoreProvider>
-        <ServiceInquiryForm providerSlug="jane-doe" providerName="Jane Doe" />
+        {inSheet ? (
+          <Sheet open>
+            <SheetContent>{form}</SheetContent>
+          </Sheet>
+        ) : (
+          form
+        )}
       </AuthStoreProvider>
     </QueryClientProvider>,
   );
 }
 
 function fillDescription(value = "Need a brand refresh") {
-  fireEvent.change(screen.getByLabelText("What service do you need?"), {
+  fireEvent.change(screen.getByLabelText(/Brief description/), {
+    target: { value },
+  });
+}
+
+function fillProjectName(value = "Spring brand refresh") {
+  fireEvent.change(screen.getByLabelText(/Project name/), {
     target: { value },
   });
 }
@@ -55,8 +79,8 @@ describe("ServiceInquiryForm", () => {
         email: "requester@example.com",
         role: "talent",
         is_email_verified: true,
-        is_phone_verified: false,
-        verification_tier: 1,
+        is_phone_verified: true,
+        verification_tier: 3,
         trust_score: 0,
         status: "active",
         created_at: "2026-01-01T00:00:00.000Z",
@@ -88,35 +112,43 @@ describe("ServiceInquiryForm", () => {
     vi.clearAllMocks();
   });
 
-  it("blocks an invalid budget before calling the API", async () => {
-    const { container } = renderForm();
-    fillDescription();
-    fireEvent.change(screen.getByLabelText("Indicative budget in INR (optional)"), {
-      target: { value: "-5" },
-    });
-    // Submit directly so the assertion covers the component guard rather than
-    // the browser's native `min` constraint validation.
-    fireEvent.submit(container.querySelector("form")!);
+  it("renders outside a sheet", () => {
+    renderForm({}, false);
+
+    expect(screen.getByRole("heading", { name: "Request Quote" })).toBeTruthy();
+    expect(
+      screen.getByText(/Share a few project details with Jane Doe/),
+    ).toBeTruthy();
+  });
+
+  it("requires a project description before calling the API", async () => {
+    renderForm();
+    fillProjectName();
+    fireEvent.submit(
+      screen.getByLabelText(/Brief description/).closest("form")!,
+    );
 
     expect((await screen.findByRole("alert")).textContent).toBe(
-      "Enter a valid budget amount.",
+      "Add a brief description of your project.",
     );
     expect(createInquiry).not.toHaveBeenCalled();
   });
 
   it("submits the inquiry and navigates to its detail page", async () => {
     renderForm();
+    fillProjectName();
     fillDescription();
-    fireEvent.change(screen.getByLabelText("Indicative budget in INR (optional)"), {
-      target: { value: "25000" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Send inquiry" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Up to ₹25k" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Send Request" }));
 
     await waitFor(() => expect(createInquiry).toHaveBeenCalledTimes(1));
     expect(createInquiry).toHaveBeenCalledWith(
       expect.objectContaining({
         provider_slug: "jane-doe",
-        description: "Need a brand refresh",
+        description: expect.stringContaining(
+          "Project name: Spring brand refresh\n\nBudget range: Up to ₹25k\n\nNeed a brand refresh",
+        ),
         budget: { amount: 25000, currency: "INR" },
         idempotency_key: expect.any(String),
       }),
@@ -125,21 +157,39 @@ describe("ServiceInquiryForm", () => {
     expect(toastSuccess).toHaveBeenCalledWith("Inquiry sent");
   });
 
+  it("includes the selected package in the inquiry", async () => {
+    renderForm({ serviceId: "service-1", packageTitle: "Starter Package" });
+    fillProjectName();
+    fillDescription();
+    fireEvent.click(screen.getByRole("button", { name: "Send Request" }));
+
+    await waitFor(() => expect(createInquiry).toHaveBeenCalledTimes(1));
+    expect(createInquiry).toHaveBeenCalledWith(
+      expect.objectContaining({
+        service_id: "service-1",
+        description: expect.stringContaining(
+          "Selected package: Starter Package\n\nProject name: Spring brand refresh\n\nNeed a brand refresh",
+        ),
+      }),
+    );
+  });
+
   it("reuses the idempotency key after a failed retry and rotates it after edits", async () => {
     createInquiry.mockRejectedValueOnce(new Error("network"));
     renderForm();
+    fillProjectName();
     fillDescription();
-    fireEvent.click(screen.getByRole("button", { name: "Send inquiry" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send Request" }));
 
     await waitFor(() => expect(createInquiry).toHaveBeenCalledTimes(1));
     const firstKey = createInquiry.mock.calls[0][0].idempotency_key;
 
-    fireEvent.click(screen.getByRole("button", { name: "Send inquiry" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send Request" }));
     await waitFor(() => expect(createInquiry).toHaveBeenCalledTimes(2));
     expect(createInquiry.mock.calls[1][0].idempotency_key).toBe(firstKey);
 
     fillDescription("Need a different scope");
-    fireEvent.click(screen.getByRole("button", { name: "Send inquiry" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send Request" }));
     await waitFor(() => expect(createInquiry).toHaveBeenCalledTimes(3));
     expect(createInquiry.mock.calls[2][0].idempotency_key).not.toBe(firstKey);
   });
@@ -147,12 +197,30 @@ describe("ServiceInquiryForm", () => {
   it("redirects unauthenticated visitors to login with a return path", async () => {
     authStore.setState({ user: null, isAuthenticated: false });
     renderForm();
+    fillProjectName();
     fillDescription();
-    fireEvent.click(screen.getByRole("button", { name: "Send inquiry" }));
+    fireEvent.click(screen.getByRole("button", { name: "Send Request" }));
 
     expect(push).toHaveBeenCalledWith(
       `/auth/login?redirect=${encodeURIComponent("/providers/jane-doe")}`,
     );
     expect(createInquiry).not.toHaveBeenCalled();
+  });
+
+  it("requires tier 3 before displaying the inquiry form", () => {
+    authStore.setState({
+      user: {
+        ...authStore.getState().user!,
+        is_phone_verified: true,
+        verification_tier: 2,
+      },
+      isAuthenticated: true,
+    });
+    renderForm();
+
+    expect(screen.getByText("Verify your account to contact providers")).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Continue verification" }).getAttribute("href"))
+      .toBe("/talent/verify-documents");
+    expect(screen.queryByRole("button", { name: "Send Request" })).toBeNull();
   });
 });

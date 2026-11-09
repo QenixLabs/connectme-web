@@ -15,15 +15,6 @@ import { useState } from "react";
 import logoImage from "@/assets/rootin-logo-orange.png";
 import { authApi } from "@/lib/api";
 import { authStore } from "@/stores/auth-store";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 
 /**
  * Migrated from design-pixel-perfect/src/routes/index.tsx.
@@ -129,13 +120,8 @@ export function RoleScreen({
   const [selected, setSelected] = useState<Role>(initialRole);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [providerSoonOpen, setProviderSoonOpen] = useState(false);
 
   const handleContinue = async () => {
-    if (selected === "provider") {
-      setProviderSoonOpen(true);
-      return;
-    }
     if (onContinue) {
       onContinue(selected);
       return;
@@ -146,9 +132,7 @@ export function RoleScreen({
       try {
         authStore.getState().setAccessToken(null);
         await authApi.completeGoogleSignup(selected);
-        router.replace(selected === "talent"
-          ? "/auth/talent/signup?resume=1"
-          : "/auth/recruiter/signup?resume=1");
+        router.replace("/auth/callback/google");
       } catch (err: unknown) {
         const response = err as { response?: { data?: { message?: string | string[] } } };
         const message = response.response?.data?.message;
@@ -165,9 +149,11 @@ export function RoleScreen({
       return;
     }
     router.push(
-      selected === "talent"
-        ? "/auth/talent/signup"
-        : "/auth/recruiter/signup",
+      selected === "provider"
+        ? "/auth/provider"
+        : selected === "talent"
+          ? "/auth/talent/signup"
+          : "/auth/recruiter/signup",
     );
   };
 
@@ -198,7 +184,7 @@ export function RoleScreen({
       <section className="mt-5 grid gap-4 px-5">
         <RoleCard role="recruiter" selected={selected === "recruiter"} onSelect={() => setSelected("recruiter")} />
         <RoleCard role="talent" selected={selected === "talent"} onSelect={() => setSelected("talent")} />
-        <RoleCard role="provider" selected={selected === "provider"} onSelect={() => { setSelected("provider"); setProviderSoonOpen(true); }} />
+        <RoleCard role="provider" selected={selected === "provider"} onSelect={() => setSelected("provider")} />
       </section>
 
       <div className="mt-auto px-5 pb-6 pt-5">
@@ -228,27 +214,6 @@ export function RoleScreen({
           </Link>
         </p>
       </div>
-
-      <Dialog open={providerSoonOpen} onOpenChange={setProviderSoonOpen}>
-        <DialogContent className="max-w-[22rem] rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-extrabold">Coming soon</DialogTitle>
-            <DialogDescription className="text-sm leading-6">
-              Service Provider accounts are coming soon. We&apos;re putting the finishing touches
-              on this experience.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              type="button"
-              className="w-full rounded-xl font-bold"
-              onClick={() => setProviderSoonOpen(false)}
-            >
-              Got it
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </main>
   );
 }

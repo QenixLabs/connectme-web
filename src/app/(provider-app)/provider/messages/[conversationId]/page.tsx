@@ -8,7 +8,12 @@ import { authStore } from "@/stores/auth-store";
 import { conversationsApi } from "@/lib/api";
 import { getConversationParticipant, getMessageSenderId } from "@/lib/messages";
 import { useConversationSocket } from "@/hooks/use-conversation-socket";
-import { ConversationHeader, MessageList, MessageComposer } from "@/components/messages";
+import {
+  ConversationHeader,
+  MessageList,
+  MessageComposer,
+  ServiceConversationPreview,
+} from "@/components/messages";
 import type { Conversation, Message } from "@/lib/api/types";
 
 function participantName(participant?: {
@@ -68,6 +73,14 @@ export default function ProviderConversationPage() {
         setMessages((prev) =>
           prev.map((m) => (m._id === payload.message_id ? { ...m, status: "read" } : m)),
         );
+      },
+      onMessageFailed: (payload) => {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.client_message_id === payload.client_message_id ? { ...m, status: "failed" } : m,
+          ),
+        );
+        toast.error(payload.error || "Failed to send message.");
       },
     },
   );
@@ -192,6 +205,10 @@ export default function ProviderConversationPage() {
           showBack
           onBack={() => router.push("/provider/messages")}
           onMarkAllRead={handleMarkAllRead}
+        />
+        <ServiceConversationPreview
+          conversationId={conversationId}
+          resolveInquiry
         />
         <MessageList
           messages={messages}

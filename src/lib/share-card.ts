@@ -5,11 +5,11 @@
  * can be shared as a high-fidelity image on Instagram, WhatsApp, LinkedIn, etc.
  *
  * Uses the custom RootIn creative template background and overlays:
- * - Top talent badge
+ * - Role badge
  * - Circular avatar with vivid gradient ring & verified check badge
  * - Talent name with verified badge and role headline
  * - Pastel category pills (Model, Fashion, Commercial, Editorial, etc.)
- * - Four-column stats bar (RootScore, Response Rate, Rating, Shortlists)
+ * - Four-column role-specific stats bar
  * - QR code & profile link panel
  *
  * Everything degrades gracefully: missing photo falls back to initials,
@@ -203,7 +203,12 @@ export function buildShareCardContent(
   const brand = options.brand ?? SHARE_BRAND;
   const name =
     options.name?.trim() || options.target.name?.trim() || "Unnamed profile";
-  const roleLabel = options.target.role === "recruiter" ? "Recruiter" : "Talent";
+  const roleLabel =
+    options.target.role === "recruiter"
+      ? "Recruiter"
+      : options.target.role === "provider"
+        ? "Service Provider"
+        : "Talent";
   const headline = options.headline?.trim() || options.target.headline?.trim() || roleLabel;
   const url =
     options.url ??
@@ -220,12 +225,31 @@ export function buildShareCardContent(
   const tags =
     rawTags.length > 0
       ? rawTags.slice(0, 4)
-      : ["Model", "Fashion", "Commercial", "Editorial"];
+      : options.target.role === "talent"
+        ? ["Model", "Fashion", "Commercial", "Editorial"]
+        : options.target.role === "provider"
+          ? ["Creative Services", "Production", "Photography", "Events"]
+          : ["Casting", "Creative Projects", "Talent", "Production"];
 
+  const defaultStatItems: ShareCardStatItem[] =
+    options.target.role === "talent"
+      ? selectBestTalentStats({})
+      : options.target.role === "provider"
+        ? [
+            { icon: "briefcase", count: "—", label: "Services", note: "Listed" },
+            { icon: "star", count: "—", label: "Rating", note: "No reviews" },
+            { icon: "play", count: "—", label: "Projects", note: "Completed" },
+          ]
+        : [
+            { icon: "briefcase", count: "—", label: "Projects", note: "On RootIn" },
+            { icon: "heart", count: "—", label: "Talent Hired", note: "On RootIn" },
+            { icon: "star", count: "—", label: "Rating", note: "No reviews" },
+          ];
   const statItems =
-    options.target.statItems && options.target.statItems.length === 4
+    options.target.statItems?.length === 3 ||
+    options.target.statItems?.length === 4
       ? options.target.statItems
-      : selectBestTalentStats({});
+      : defaultStatItems;
 
   return {
     brand,
@@ -818,7 +842,13 @@ export async function renderShareCardToCanvas(
 
   // --- A. Top-Left Badge: TALENT PROFILE ------------------------------------
   const badgeH = layout.header.badgeHeight;
-  const badgeW = layout.header.badgeWidth;
+  const badgeText =
+    `${content.roleLabel.toUpperCase()} PROFILE`;
+  ctx.font = `700 11px ${font}`;
+  const badgeW = Math.max(
+    layout.header.badgeWidth,
+    ctx.measureText(badgeText).width + 42,
+  );
   const badgeX = layout.header.badgeX;
   const badgeY = layout.header.badgeY;
 
@@ -840,10 +870,9 @@ export async function renderShareCardToCanvas(
   ctx.fill();
 
   ctx.fillStyle = "#6E38F7";
-  ctx.font = `700 11px ${font}`;
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
-  ctx.fillText("TALENT PROFILE", badgeX + 28, badgeY + badgeH / 2 + 1);
+  ctx.fillText(badgeText, badgeX + 28, badgeY + badgeH / 2 + 1);
 
   // --- B. Avatar with Rainbow Ring -----------------------------------------
   const { centerX, centerY, radius, ringWidth, ringGap, badgeX: avBadgeX, badgeY: avBadgeY, badgeRadius } =
@@ -910,7 +939,9 @@ export async function renderShareCardToCanvas(
   );
 
   // Blue verified badge attached to bottom-right of avatar ring
-  drawVerifiedBadge(ctx, avBadgeX, avBadgeY, badgeRadius, true);
+  if (content.isVerified) {
+    drawVerifiedBadge(ctx, avBadgeX, avBadgeY, badgeRadius, true);
+  }
 
   // --- C. Name with Inline Verified Check -----------------------------------
   ctx.textBaseline = "middle";
@@ -996,19 +1027,27 @@ export async function renderShareCardToCanvas(
   }
 
   // --- F. Stats Bar --------------------------------------------------------
-  const statsY = layout.stats.y;
+  const statsOffset = target.role === "provider" ? 2 : 0;
+  const statsY = layout.stats.y + statsOffset;
   const items = content.statItems;
 
-  const statsCols = [
-    { x: layout.stats.col1X, ...items[0] },
-    { x: layout.stats.col2X, ...items[1] },
-    { x: layout.stats.col3X, ...items[2] },
-    { x: layout.stats.col4X, ...items[3] },
-  ];
+  const statsX =
+    items.length === 3
+      ? [layout.stats.col1X, SHARE_CARD_WIDTH / 2, layout.stats.col4X]
+      : [
+          layout.stats.col1X,
+          layout.stats.col2X,
+          layout.stats.col3X,
+          layout.stats.col4X,
+        ];
+  const statsCols = items.map((item, index) => ({
+    x: statsX[index],
+    ...item,
+  }));
 
   for (const col of statsCols) {
     ctx.save();
-    ctx.translate(col.x, statsY - 14);
+    ctx.translate(col.x, statsY - 24);
     ctx.scale(1.35, 1.35);
     if (col.icon === "camera") drawCameraIcon(ctx, 0, 0, "#0084FF");
     else if (col.icon === "play") drawPlayIcon(ctx, 0, 0, "#FF6E00");
@@ -1040,11 +1079,11 @@ export async function renderShareCardToCanvas(
   // Vertical dividers between stats columns
   ctx.strokeStyle = "#E2E8F0";
   ctx.lineWidth = 1;
-  const dividers = [199, 341, 483];
-  for (const divX of dividers) {
+  for (let index = 0; index < statsCols.length - 1; index += 1) {
+    const divX = (statsCols[index].x + statsCols[index + 1].x) / 2;
     ctx.beginPath();
-    ctx.moveTo(divX, layout.stats.dividerY1);
-    ctx.lineTo(divX, layout.stats.dividerY2);
+    ctx.moveTo(divX, layout.stats.dividerY1 + statsOffset);
+    ctx.lineTo(divX, layout.stats.dividerY2 + statsOffset);
     ctx.stroke();
   }
 
@@ -1197,6 +1236,6 @@ export function downloadBlob(blob: Blob, filename: string): void {
  * Filesystem-safe file name for the downloaded / shared card.
  */
 export function shareCardFileName(target: ShareProfileTarget): string {
-  const role = target.role === "recruiter" ? "recruiter" : "talent";
+  const role = target.role;
   return `rootin-${role}-profile.png`;
 }

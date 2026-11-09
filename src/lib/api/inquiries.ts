@@ -70,6 +70,16 @@ export const serviceInquiriesApi = {
     };
   },
 
+  getForConversation: async (conversationId: string) => {
+    const response = await apiClient.get(
+      `/service-inquiries/conversation/${encodeURIComponent(conversationId)}`,
+    );
+    return response.data as {
+      inquiry: ServiceInquiry | null;
+      service_id: string | null;
+    };
+  },
+
   update: async (
     id: string,
     payload: {

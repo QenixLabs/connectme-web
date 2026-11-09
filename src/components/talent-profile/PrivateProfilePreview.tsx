@@ -16,6 +16,12 @@ export function PrivateProfilePreview({
   viewerRole?: "talent" | "recruiter" | "admin" | null;
 }) {
   const talentNavItems = useTalentNavItems();
+  const talentMobileNavItems = ["Home", "Network", "Opportunities", "Messages", "Profile"].flatMap(
+    (label) => {
+      const item = talentNavItems.find((navItem) => navItem.label === label);
+      return item ? [item] : [];
+    },
+  );
   return (
     <div className="public-talent-profile relative min-h-screen bg-bg-page pb-24 text-foreground">
       <HeroSection profile={profile} viewerRole={viewerRole} />
@@ -29,7 +35,14 @@ export function PrivateProfilePreview({
         </GlassCard>
       </main>
 
-      {viewerRole === "talent" && <BottomBar navItems={talentNavItems} iconOnly />}
+      {viewerRole === "talent" && (
+        <BottomBar
+          navItems={talentNavItems}
+          mobileNavItems={talentMobileNavItems}
+          iconOnly
+          activeLabel="Profile"
+        />
+      )}
       {viewerRole === "recruiter" && <BottomBar navItems={recruiterNavItems} iconOnly />}
 
       {/* Guest-only sign-up / log-in bar */}

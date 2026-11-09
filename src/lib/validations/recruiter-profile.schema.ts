@@ -23,6 +23,7 @@ export const recruiterProfileSchema = z.object({
     .trim()
     .min(2, "Agency name must be at least 2 characters")
     .max(100, "Agency name must be 100 characters or fewer"),
+  contact_name: optionalText(100, "Contact name must be 100 characters or fewer"),
   slug: z
     .string()
     .trim()

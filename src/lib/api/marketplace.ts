@@ -1,6 +1,15 @@
 import { apiClient } from "./client";
 
 export type ServiceStatus = "draft" | "published" | "unpublished";
+export type ServiceType = "one_time" | "package" | "custom";
+export type ServiceDeliveryTime =
+  | "1-3_days"
+  | "5-10_days"
+  | "2-4_weeks"
+  | "1_month_or_more"
+  | "custom";
+export type ServiceTeamSize = "1-10" | "11-50" | "51+";
+export type ServiceEquipment = "provider" | "client" | "both";
 
 export interface ProviderLocation {
   country?: string;
@@ -14,6 +23,19 @@ export interface ProviderPortfolioItem {
   image_url?: string;
   link_url?: string;
   image_path?: string;
+}
+
+export interface PublicProviderPackage {
+  id?: string;
+  service_id?: string;
+  name?: string;
+  subtitle?: string;
+  image_url?: string;
+  price?: IndicativePrice;
+  original_price?: IndicativePrice;
+  savings_percent?: number;
+  badge?: "Most Popular" | "Best Value";
+  inclusions?: string[];
 }
 
 export interface IndicativePrice {
@@ -30,11 +52,15 @@ export interface ProviderProfile {
   slug?: string;
   display_name?: string;
   business_name?: string;
+  provider_type?: string;
+  tagline?: string;
   email?: string;
   phone?: string;
   about?: string;
   profile_photo?: string;
   profile_photo_path?: string;
+  banner_image?: string;
+  banner_image_path?: string;
   location?: ProviderLocation;
   categories: string[];
   service_areas: string[];
@@ -50,6 +76,8 @@ export interface PublicProviderSummary {
   slug: string;
   display_name?: string;
   business_name?: string;
+  provider_type?: string;
+  tagline?: string;
   profile_photo?: string;
   location?: ProviderLocation;
   categories: string[];
@@ -67,6 +95,8 @@ export interface PublicServiceProviderSummary {
   slug?: string;
   display_name?: string;
   business_name?: string;
+  provider_type?: string;
+  tagline?: string;
   profile_photo?: string;
   location?: ProviderLocation;
   categories: string[];
@@ -81,9 +111,15 @@ export interface PublicServiceSummary {
   id: string;
   title: string;
   description: string;
+  short_description?: string;
   category: string;
+  subcategory?: string;
+  service_type?: ServiceType;
   images: string[];
   service_areas: string[];
+  delivery_time?: ServiceDeliveryTime;
+  team_size?: ServiceTeamSize;
+  equipment?: ServiceEquipment;
   indicative_price?: IndicativePrice | null;
   published_at?: string | null;
   provider?: PublicServiceProviderSummary | null;
@@ -94,7 +130,48 @@ export interface PublicProviderProfile {
   slug: string;
   display_name?: string;
   business_name?: string;
+  provider_type?: string;
+  tagline?: string;
   profile_photo?: string;
+  banner_image?: string;
+  gallery_images?: string[];
+  is_verified?: boolean;
+  project_count?: number;
+  experience_years?: number;
+  team_size?: number;
+  equipment_summary?: string;
+  pan_verified?: boolean;
+  gst_verified?: boolean;
+  public_phone?: string;
+  public_email?: string;
+  website_url?: string;
+  map_image_url?: string;
+  coordinates?: {
+    latitude?: number;
+    longitude?: number;
+  };
+  business_hours?: {
+    day?: string;
+    open?: string;
+    close?: string;
+    is_closed?: boolean;
+  }[];
+  is_open_now?: boolean;
+  established_year?: number;
+  languages?: string[];
+  certifications?: string[];
+  social_links?: {
+    platform?: string;
+    url?: string;
+  }[];
+  choose_us_reasons?: string[];
+  team_members?: {
+    name?: string;
+    avatar_url?: string;
+    title?: string;
+  }[];
+  team_members_count?: number;
+  packages?: PublicProviderPackage[];
   about?: string;
   location?: ProviderLocation;
   categories: string[];
@@ -103,6 +180,7 @@ export interface PublicProviderProfile {
   portfolio: ProviderPortfolioItem[];
   services: PublicServiceSummary[];
   services_count: number;
+  products_count?: number;
   member_since?: string | null;
 }
 
@@ -112,6 +190,15 @@ export interface ProviderReview {
   text: string;
   created_at: string;
   updated_at: string;
+  reviewer?: {
+    display_name?: string;
+    avatar_url?: string;
+  };
+  media?: {
+    type?: "image" | "video";
+    url?: string;
+    alt_text?: string;
+  }[];
 }
 
 export interface ProviderReviewDraft extends ProviderReview {
@@ -124,6 +211,7 @@ export type ProviderReviewsResponse = Paginated<ProviderReview>;
 export interface ProviderRatingSummary {
   average_rating: number | null;
   review_count: number;
+  rating_distribution?: Partial<Record<1 | 2 | 3 | 4 | 5, number>>;
 }
 
 export interface ProviderReviewEligibility {
@@ -137,10 +225,16 @@ export interface ServiceListing {
   id: string;
   title: string;
   description: string;
+  short_description?: string;
   category: string;
+  subcategory?: string;
+  service_type?: ServiceType;
   images: string[];
   image_urls: string[];
   service_areas: string[];
+  delivery_time?: ServiceDeliveryTime;
+  team_size?: ServiceTeamSize;
+  equipment?: ServiceEquipment;
   indicative_price?: IndicativePrice | null;
   status: ServiceStatus;
   published_at?: string | null;
@@ -200,6 +294,8 @@ export interface ServiceQuery {
 export interface MyServicesQuery {
   status?: "all" | ServiceStatus;
   search?: string;
+  category?: string;
+  sort?: "recent" | "newest" | "oldest";
   page?: number;
   limit?: number;
 }
@@ -208,6 +304,8 @@ export interface UpdateProviderProfilePayload {
   slug?: string;
   display_name?: string;
   business_name?: string;
+  provider_type?: string;
+  tagline?: string;
   phone?: string;
   country?: string;
   state?: string;
@@ -223,10 +321,27 @@ export interface UpdateProviderProfilePayload {
 export interface ServiceListingPayload {
   title: string;
   description: string;
+  short_description?: string;
   category: string;
+  subcategory?: string;
+  service_type?: ServiceType;
   images?: string[];
   service_areas?: string[];
-  indicative_price?: IndicativePrice;
+  delivery_time?: ServiceDeliveryTime;
+  team_size?: ServiceTeamSize;
+  equipment?: ServiceEquipment;
+  indicative_price?: IndicativePrice | null;
+}
+
+export interface MyServiceSummary {
+  total: number;
+  draft: number;
+  published: number;
+  paused: number;
+}
+
+export interface MyServicesResponse extends Paginated<ServiceListing> {
+  summary: MyServiceSummary;
 }
 
 export const providersApi = {
@@ -349,6 +464,19 @@ export const providersApi = {
     return response.data as { relativePath: string; signedUrl: string };
   },
 
+  uploadBannerImage: async (file: File) => {
+    const body = new FormData();
+    body.append("file", file);
+    const response = await apiClient.post(
+      "/provider/upload/banner-image",
+      body,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      },
+    );
+    return response.data as { relativePath: string; signedUrl: string };
+  },
+
   uploadPortfolioImage: async (file: File) => {
     const body = new FormData();
     body.append("file", file);
@@ -381,7 +509,7 @@ export const servicesApi = {
 
   getMine: async (params?: MyServicesQuery) => {
     const response = await apiClient.get("/provider/services", { params });
-    return response.data as Paginated<ServiceListing>;
+    return response.data as MyServicesResponse;
   },
 
   getMineById: async (id: string) => {
@@ -425,7 +553,7 @@ export const servicesApi = {
     return response.data as { service: ServiceListing };
   },
 
-  uploadImage: async (file: File) => {
+  uploadImage: async (file: File, onProgress?: (percent: number) => void) => {
     const body = new FormData();
     body.append("file", file);
     const response = await apiClient.post(
@@ -433,6 +561,10 @@ export const servicesApi = {
       body,
       {
         headers: { "Content-Type": "multipart/form-data" },
+        onUploadProgress: (event) => {
+          if (!onProgress || !event.total) return;
+          onProgress(Math.min(100, Math.round((event.loaded / event.total) * 100)));
+        },
       },
     );
     return response.data as { relativePath: string; signedUrl: string };

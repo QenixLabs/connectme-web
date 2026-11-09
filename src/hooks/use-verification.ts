@@ -17,7 +17,7 @@ export function useVerification(userId: string | undefined) {
 export function useCreateVerification() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (type: "talent_id" | "recruiter_company") =>
+    mutationFn: (type: "talent_id" | "recruiter_company" | "provider_identity") =>
       verificationApi.create(type),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: verificationKeys.all });

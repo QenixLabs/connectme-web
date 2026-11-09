@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { useFilterSheetOpen } from "@/hooks/use-filter-sheet";
 import { talentApi } from "@/lib/api/talent";
 import { recruiterApi } from "@/lib/api/recruiter";
+import { providersApi } from "@/lib/api/marketplace";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { NavItem } from "./nav-config";
@@ -30,12 +31,19 @@ export function BottomBar({ navItems, mobileNavItems, iconOnly, variant = "defau
   const visibleNavItems = mobileNavItems ?? navItems;
   const profileItem = visibleNavItems.find((item) => item.label === "Profile");
   const isRecruiter = profileItem?.href.startsWith("/recruiter") ?? false;
+  const isProvider = profileItem?.href.startsWith("/provider") ?? false;
   const { data: profile } = useQuery<{ profile_photo?: string }>({
     queryKey: isRecruiter
       ? ["recruiter-profile", "profile"]
-      : ["talent-profile", "my"],
-    queryFn: () =>
-      isRecruiter ? recruiterApi.getMyProfile() : talentApi.getMyProfile(),
+      : isProvider
+        ? ["provider-profile", "my"]
+        : ["talent-profile", "my"],
+    queryFn: async () =>
+      isRecruiter
+        ? recruiterApi.getMyProfile()
+        : isProvider
+          ? (await providersApi.getMyProfile()).profile
+          : talentApi.getMyProfile(),
     enabled: !!user && !!profileItem,
   });
   const isSettingsVariant = variant === "settings";

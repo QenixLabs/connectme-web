@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable @next/next/no-img-element */
+
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch, type Resolver } from "react-hook-form";
@@ -184,6 +186,7 @@ export function AchievementForm({
   const createMutation = useCreateAchievement();
   const updateMutation = useUpdateAchievement();
   const [uploadingProof, setUploadingProof] = useState(false);
+  const [localProofPreview, setLocalProofPreview] = useState<string | null>(null);
   const draftStorageKey =
     mode === "default" ? defaultDraftStorageKey : `${defaultDraftStorageKey}-${mode}`;
   const form = useForm<AchievementFormValues>({
@@ -194,12 +197,19 @@ export function AchievementForm({
   const selectedType = useWatch({ control: form.control, name: "type" });
   const description = useWatch({ control: form.control, name: "description" }) || "";
   const uploadedProof = useWatch({ control: form.control, name: "proof_url" });
+  const proofPreview = localProofPreview || achievement?.proof_url;
   const proofName = uploadedProof
     ? "Image ready to save"
     : achievement?.proof_url
       ? "Existing image attached"
       : undefined;
   const isPending = createMutation.isPending || updateMutation.isPending || uploadingProof;
+
+  useEffect(() => {
+    return () => {
+      if (localProofPreview) URL.revokeObjectURL(localProofPreview);
+    };
+  }, [localProofPreview]);
 
   useEffect(() => {
     if (!open) return;
@@ -242,6 +252,7 @@ export function AchievementForm({
       return;
     }
 
+    setLocalProofPreview(URL.createObjectURL(file));
     setUploadingProof(true);
     try {
       const response = await talentApi.uploadAchievementProof(file);
@@ -287,8 +298,13 @@ export function AchievementForm({
     void form.handleSubmit(handleSave)();
   }
 
+  function handleOpenChange(nextOpen: boolean) {
+    if (!nextOpen) setLocalProofPreview(null);
+    onOpenChange(nextOpen);
+  }
+
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetContent
         side="bottom"
         className="max-h-[94svh] gap-0 overflow-hidden rounded-t-[28px] border-[#e9e5f8] bg-[#fbfaff] p-0 sm:inset-y-0 sm:inset-x-auto sm:right-0 sm:h-full sm:w-full sm:max-w-xl sm:rounded-none sm:border-l sm:border-t-0"
@@ -446,6 +462,16 @@ export function AchievementForm({
                 </label>
                 {uploadedProof && (
                   <p className="mt-2 flex items-center gap-1 text-[10px] font-semibold text-[#18805a]"><Upload className="size-3.5" /> Image ready to save</p>
+                )}
+                {proofPreview && (
+                  <div className="mt-3 overflow-hidden rounded-xl border border-[#e1def0] bg-white p-2">
+                    <p className="mb-2 text-[10px] font-semibold text-[#777993]">Image preview</p>
+                    <img
+                      src={proofPreview}
+                      alt="Uploaded achievement image preview"
+                      className="max-h-48 w-full rounded-lg object-contain"
+                    />
+                  </div>
                 )}
               </div>
             </div>

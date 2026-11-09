@@ -8,6 +8,7 @@ export interface ConversationSocketHandlers {
   onMessageNew?: (message: Message) => void;
   onMessageDelivered?: (payload: { message_id: string; conversation_id: string }) => void;
   onMessageRead?: (payload: { message_id: string; conversation_id: string; user_id: string }) => void;
+  onMessageFailed?: (payload: { client_message_id: string; error: string }) => void;
 }
 
 export function useConversationSocket(
@@ -47,16 +48,21 @@ export function useConversationSocket(
     }) => {
       handlersRef.current.onMessageRead?.(payload);
     };
+    const onMessageFailed = (payload: { client_message_id: string; error: string }) => {
+      handlersRef.current.onMessageFailed?.(payload);
+    };
 
     socket.on("message:new", onMessageNew);
     socket.on("message:delivered", onMessageDelivered);
     socket.on("message:read_receipt", onMessageRead);
+    socket.on("message:failed", onMessageFailed);
 
     return () => {
       socket.emit("conversation:leave", { conversation_id: conversationId });
       socket.off("message:new", onMessageNew);
       socket.off("message:delivered", onMessageDelivered);
       socket.off("message:read_receipt", onMessageRead);
+      socket.off("message:failed", onMessageFailed);
     };
   }, [socket, connected, conversationId]);
 

@@ -7,37 +7,36 @@ import { useQueryClient } from "@tanstack/react-query";
 import { setFilterSheetOpen } from "@/hooks/use-filter-sheet";
 import { motion } from "motion/react";
 import {
-  Bell,
-  MessageCircle,
-  Info,
   ArrowRight,
   FileText,
-  CalendarDays,
   Bookmark,
-  Briefcase,
-  Eye,
   MapPin,
   Calendar,
   Clock,
   Drama,
-  Mic,
-  Handshake,
   Users,
-  Clapperboard,
   Crown,
   X,
   Film,
   Search,
   SlidersHorizontal,
-  Target,
-  Timer,
-  Sparkles,
-  Navigation,
-  ChevronDown,
+  Grid2X2,
+  Camera,
+  Music2,
+  Megaphone,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   campaignKeys,
   useCampaigns,
@@ -46,16 +45,13 @@ import {
   useBookmarks,
   useBookmarkCampaign,
 } from "@/hooks/use-campaigns";
-import {
-  useTalentProfile,
-  useTalentApplicationStats,
-} from "@/hooks/use-talent-dashboard";
 import type {
   Campaign,
   CampaignRecommendation,
   QueryCampaignsParams,
 } from "@/lib/api/campaigns";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DiscoveryTabs } from "@/components/marketplace/discovery-tabs";
 import { OpportunityFiltersSheet } from "./OpportunityFiltersSheet";
 import { RecruiterSearchPanel } from "./RecruiterSearchPanel";
 
@@ -111,13 +107,14 @@ const ROLE_TAB_MAP: Partial<Record<TabKey, string>> = {
   Musician: "musician",
 };
 
-const categories = [
-  { icon: Drama, label: "Casting Calls", tone: "bg-brand-soft text-brand", href: "?tab=Casting" },
-  { icon: Briefcase, label: "Jobs", tone: "bg-info/12 text-info", href: "?tab=All" },
-  { icon: Mic, label: "Auditions", tone: "bg-accent-pink/10 text-accent-pink", href: "?tab=Actor" },
-  { icon: Handshake, label: "Brand Deals", tone: "bg-warning/15 text-warning", href: "?tab=Influencer" },
-  { icon: Users, label: "Collab", tone: "bg-success/12 text-success", href: "?tab=All" },
-  { icon: Clapperboard, label: "Projects", tone: "bg-brand-soft text-brand", href: "?tab=All" },
+const OPPORTUNITY_FILTERS = [
+  { label: "All", icon: Grid2X2 },
+  { label: "Casting", icon: Drama },
+  { label: "Actor", icon: Camera },
+  { label: "Model", icon: Camera },
+  { label: "Dancer", icon: Users },
+  { label: "Influencer", icon: Megaphone },
+  { label: "Musician", icon: Music2 },
 ];
 
 /* -------------------------------------------------------------------------- */
@@ -212,38 +209,13 @@ function fromRecommendation(r: CampaignRecommendation): FeedItem {
   };
 }
 
-function getInitials(name?: string): string {
-  if (!name) return "U";
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-}
-
-function greetingForHour(): string {
-  const h = new Date().getHours();
-  if (h < 12) return "Good Morning";
-  if (h < 17) return "Good Afternoon";
-  return "Good Evening";
-}
-
-function scoreLabel(score?: number): string {
-  if (score == null) return "Not scored";
-  if (score >= 80) return "Excellent";
-  if (score >= 60) return "Good";
-  return "Average";
-}
-
 /* -------------------------------------------------------------------------- */
 /*                                 SKELETONS                                  */
 /* -------------------------------------------------------------------------- */
 
 function CardSkeleton() {
   return (
-    <div className="card-soft w-64 shrink-0 overflow-hidden pb-0">
+    <div className="card-soft w-full overflow-hidden pb-0">
       <Skeleton className="h-32 w-full rounded-none" />
       <div className="space-y-2 p-3">
         <Skeleton className="h-4 w-3/4" />
@@ -332,7 +304,7 @@ function OpportunityCard({
           : "bg-success text-brand-foreground";
 
   return (
-    <article className="card-soft w-64 shrink-0 snap-start overflow-hidden pb-3">
+    <article className="card-soft w-full overflow-hidden pb-3">
       <Link href={`/talent/opportunities/${item.id}`} className="block">
         <div className="relative grid h-32 place-items-center bg-muted text-xs font-medium text-muted-foreground">
           {item.coverImageUrl ? (
@@ -343,7 +315,7 @@ function OpportunityCard({
               loading="lazy"
             />
           ) : (
-            "Image placeholder"
+            <Film className="size-9 text-muted-foreground" />
           )}
           <span
             className={cn(
@@ -356,6 +328,11 @@ function OpportunityCard({
         </div>
         <div className="px-3 pt-3">
           <h3 className="truncate text-sm font-bold">{item.name}</h3>
+          {item.recruiter?.company_name && (
+            <p className="mt-0.5 truncate text-xs font-medium text-muted-foreground">
+              {item.recruiter.company_name}
+            </p>
+          )}
           <p className="mt-0.5 truncate text-xs text-muted-foreground">
             {item.description || item.roleType}
           </p>
@@ -379,6 +356,9 @@ function OpportunityCard({
             )}
           >
             <Calendar className="size-3.5" /> {deadline.text}
+          </p>
+          <p className="mt-1 truncate text-xs font-semibold">
+            {item.budgetText || "Budget not disclosed"}
           </p>
         </div>
       </Link>
@@ -422,7 +402,7 @@ function UrgentCard({ item }: { item: FeedItem }) {
             loading="lazy"
           />
         ) : (
-          "Image"
+          <Film className="size-6 text-muted-foreground" />
         )}
       </div>
       <div className="min-w-0">
@@ -681,18 +661,40 @@ export function OpportunitiesPage() {
   const languages = searchParams?.get("languages") ?? undefined;
   const bookmarked = searchParams?.get("bookmarked") === "true";
 
-  const isForYou = tab === "For You" && !isRecruiterView;
+  const isForYou =
+    tab === "For You" &&
+    !isRecruiterView &&
+    !search &&
+    !gender &&
+    !locationCity &&
+    !skills &&
+    !languages &&
+    !bookmarked;
 
-  const { data: profile } = useTalentProfile();
-  const { data: appStats } = useTalentApplicationStats();
   const { data: bookmarks } = useBookmarks();
   const { data: recommendations, isLoading: recsLoading } = useCampaignRecommendations(10);
+  const recentCampaignQuery = useCampaigns(
+    { status: "active", sort: "newest", page: 1, limit: 6 },
+    isForYou,
+  );
   const bookmarkMutation = useBookmarkCampaign();
   const queryClient = useQueryClient();
 
   const [searchInput, setSearchInput] = useState(() => search);
+  const [syncedSearch, setSyncedSearch] = useState(search);
+  const [locationInput, setLocationInput] = useState(() => locationCity ?? "");
+  const [syncedLocation, setSyncedLocation] = useState(locationCity ?? "");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [premiumBannerVisible, setPremiumBannerVisible] = useState(true);
+
+  if (syncedSearch !== search) {
+    setSyncedSearch(search);
+    setSearchInput(search);
+  }
+  if (syncedLocation !== (locationCity ?? "")) {
+    setSyncedLocation(locationCity ?? "");
+    setLocationInput(locationCity ?? "");
+  }
 
   useEffect(() => {
     setFilterSheetOpen(filtersOpen && !isRecruiterView);
@@ -701,14 +703,18 @@ export function OpportunitiesPage() {
   useEffect(() => {
     if (!searchParams) return;
     const timeout = setTimeout(() => {
-      if (searchInput === search) return;
+      const nextSearch = searchInput.trim();
+      const nextLocation = locationInput.trim();
+      if (nextSearch === search && nextLocation === (locationCity ?? "")) return;
       const params = new URLSearchParams(searchParams.toString());
-      if (searchInput.trim()) params.set("search", searchInput.trim());
+      if (nextSearch) params.set("search", nextSearch);
       else params.delete("search");
+      if (nextLocation) params.set("location_city", nextLocation);
+      else params.delete("location_city");
       router.replace(`${pathname}?${params.toString()}`);
     }, 300);
     return () => clearTimeout(timeout);
-  }, [searchInput, search, pathname, router, searchParams]);
+  }, [searchInput, search, locationInput, locationCity, pathname, router, searchParams]);
 
   const updateParams = useCallback(
     (updates: Record<string, string | null>) => {
@@ -757,6 +763,10 @@ export function OpportunitiesPage() {
       isBookmarked: bookmarkIds.has(item.id) || item.isBookmarked,
     }));
   }, [isForYou, recommendations, campaigns, bookmarkIds]);
+  const recentItems = useMemo(
+    () => (recentCampaignQuery.data ?? []).map(fromCampaign),
+    [recentCampaignQuery.data],
+  );
 
   const displayedItems = useMemo(() => {
     if (!bookmarked) return items;
@@ -781,42 +791,6 @@ export function OpportunitiesPage() {
     [bookmarkMutation, queryClient],
   );
 
-  const profileName = profile?.full_legal_name || profile?.username || "Talent";
-  const initials = getInitials(profileName);
-  const trustScore = profile?.trust_score;
-  const profileViews = profile?.analytics?.profile_views_7d ?? 0;
-
-  const stats = [
-    {
-      icon: FileText,
-      label: "My Applications",
-      value: String(appStats?.applied ?? 0),
-      tone: "bg-brand-soft text-brand",
-      href: "/talent/applications",
-    },
-    {
-      icon: CalendarDays,
-      label: "Auditions",
-      value: String(appStats?.auditions ?? 0),
-      tone: "bg-accent-pink/10 text-accent-pink",
-      href: "/talent/applications",
-    },
-    {
-      icon: Bookmark,
-      label: "Saved",
-      value: String(bookmarks?.length ?? 0),
-      tone: "bg-warning/15 text-warning",
-      href: "/talent/opportunities?tab=All&bookmarked=true",
-    },
-    {
-      icon: Eye,
-      label: "Profile Views",
-      value: String(profileViews),
-      tone: "bg-success/12 text-success",
-      href: "/talent/profile",
-    },
-  ];
-
   const urgentItems = useMemo(() => {
     const source = isForYou
       ? (recommendations ?? []).map(fromRecommendation)
@@ -826,29 +800,6 @@ export function OpportunitiesPage() {
       return d.urgent && d.text !== "Closed";
     });
   }, [isForYou, recommendations, items]);
-
-  const profileCity = profile?.location?.city?.toLowerCase();
-
-  const quickStats = useMemo(() => {
-    const highlyMatched = (recommendations ?? []).filter(
-      (r) => (r.match_score ?? 0) >= 80,
-    ).length;
-    const closingSoon = displayedItems.filter((i) => {
-      const d = formatDeadline(i.deadline);
-      return d.urgent && d.text !== "Closed";
-    }).length;
-    const nearYou = displayedItems.filter((i) => {
-      const city = i.locationText.split(",")[0]?.trim().toLowerCase();
-      return !!profileCity && city === profileCity;
-    }).length;
-    const newlyPosted = displayedItems.filter((i) => isNewListing(i.createdAt)).length;
-    return [
-      { icon: Target, value: highlyMatched, label: "Highly matched", tone: "text-success" },
-      { icon: Timer, value: closingSoon, label: "Closing soon", tone: "text-accent-pink" },
-      { icon: Navigation, value: nearYou, label: "Near you", tone: "text-brand" },
-      { icon: Sparkles, value: newlyPosted, label: "Newly posted", tone: "text-info" },
-    ];
-  }, [displayedItems, profileCity, recommendations]);
 
   const activeChips = useMemo(() => {
     const chips: { label: string; remove: () => void }[] = [];
@@ -884,141 +835,171 @@ export function OpportunitiesPage() {
     return chips;
   }, [tab, search, gender, locationCity, skills, languages, sort, bookmarked, updateParams]);
 
-  const tabHref = (t: TabKey) => {
-    if (!searchParams) return `?tab=${t}`;
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("tab", t);
-    return `?${params.toString()}`;
-  };
-
-  const viewHref = (nextView: "opportunities" | "recruiters") => {
-    const params = new URLSearchParams(searchParams?.toString() ?? "");
-    if (nextView === "recruiters") params.set("view", "recruiters");
-    else params.delete("view");
-    const query = params.toString();
-    return query ? `${pathname}?${query}` : pathname;
-  };
-
   return (
-    <div className="mx-auto min-h-screen w-full max-w-md bg-background pb-24 font-sans">
-      <div className="flex items-center justify-between gap-3 px-4 pt-4">
-        <h1 className="text-xl font-extrabold tracking-tight">
-          {isRecruiterView ? "Find Recruiters" : "Opportunities"}
-        </h1>
-        <Button asChild variant="outline" size="sm" className="shrink-0 gap-1.5">
-          <Link href="/talent/applications">
-            <FileText className="size-4" />
-            My Applications
-          </Link>
-        </Button>
-      </div>
-
-      <div className="mt-4 px-4">
-        <div className="grid grid-cols-2 gap-1 rounded-2xl bg-surface-2 p-1">
-          <Link
-            href={viewHref("opportunities")}
-            aria-current={!isRecruiterView ? "page" : undefined}
-            className={cn(
-              "flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-semibold transition-colors",
-              !isRecruiterView
-                ? "bg-card text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            <Briefcase className="size-4" /> Opportunities
-          </Link>
-          <Link
-            href={viewHref("recruiters")}
-            aria-current={isRecruiterView ? "page" : undefined}
-            className={cn(
-              "flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-semibold transition-colors",
-              isRecruiterView
-                ? "bg-card text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            <Users className="size-4" /> Find Recruiters
-          </Link>
-        </div>
-      </div>
-
-      {isRecruiterView && <RecruiterSearchPanel />}
-
-      {isForYou && (
-        <section className="mt-5 px-4">
-          <div className="card-soft p-4">
-            <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-4">
-              <div className="min-w-0">
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  RootScore <Info className="size-3.5" />
-                </div>
-                <div className="mt-1 text-4xl font-extrabold tracking-tight">
-                  {trustScore ?? "—"}
-                </div>
-                <div className="text-sm font-semibold text-brand">{scoreLabel(trustScore)}</div>
-              </div>
-              <div className="min-w-0 border-l border-border pl-4">
-                <p className="text-sm leading-snug text-muted-foreground">
-                  You&apos;re highly visible to casting directors and production houses.
-                </p>
-                <Link
-                  href="/talent/profile"
-                  className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-brand/40 px-3 py-2 text-sm font-semibold text-brand"
-                >
-                  Improve Profile <ArrowRight className="size-4" />
+    <div className="mx-auto w-full max-w-7xl space-y-5 pb-24 font-sans">
+      <section
+        className="relative mx-4 isolate overflow-hidden rounded-3xl bg-[#0a0827] bg-cover bg-[65%_center] bg-no-repeat text-white shadow-sm sm:bg-right"
+        style={{
+          backgroundImage: `url(${isRecruiterView ? "/images/landing/rootin-recruiter-banner.webp" : "/images/landing/rootin-opportunity-banner.webp"})`,
+        }}
+      >
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#0a0827]/95 via-[#0a0827]/80 to-[#0a0827]/20 sm:via-[#0a0827]/65 sm:to-transparent"
+        />
+        <div className="relative z-10 flex min-h-36 items-stretch sm:min-h-56">
+          <div className="flex w-full max-w-2xl flex-col justify-center px-5 py-4 sm:w-[65%] sm:px-8 sm:py-8 lg:px-10">
+            <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-indigo-200 sm:text-xs sm:tracking-[0.2em]">
+              RootIn creative network / {isRecruiterView ? "companies" : "opportunities"}
+            </p>
+            <h1 className="mt-2 text-xl font-bold leading-tight sm:mt-3 sm:text-3xl md:text-4xl">
+              {isRecruiterView ? (
+                <>Discover <span className="text-fuchsia-300">recruiters</span> and companies</>
+              ) : (
+                <>Find the best <span className="text-fuchsia-300">opportunities</span> for your talent</>
+              )}
+            </h1>
+            <p className="mt-1.5 max-w-xl text-[11px] leading-relaxed text-white/80 sm:mt-2 sm:text-sm md:text-base">
+              {isRecruiterView
+                ? "Connect with production houses, agencies, and creative brands."
+                : "Explore auditions, casting calls, projects, and creative roles."}
+            </p>
+            {!isRecruiterView && (
+              <Button
+                asChild
+                variant="secondary"
+                size="sm"
+                className="mt-3 w-fit gap-1.5 rounded-full bg-white/95 text-[#542094] shadow-sm hover:bg-white"
+              >
+                <Link href="/talent/applications">
+                  <FileText className="size-4" />
+                  My Applications
                 </Link>
+              </Button>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <div className="mx-4">
+        <DiscoveryTabs searchTerm={searchInput} />
+      </div>
+
+      {!isRecruiterView && (
+        <Card className="mx-4 gap-0 rounded-3xl border-border/60 bg-card py-0 shadow-[0_8px_24px_rgba(27,16,56,0.07)]">
+          <CardContent className="space-y-3.5 p-3.5 sm:p-5">
+            <div className="flex items-center gap-2">
+              <div className="relative min-w-0 flex-1">
+                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  type="search"
+                  value={searchInput}
+                  onChange={(event) => setSearchInput(event.target.value)}
+                  placeholder="Search opportunities, e.g. web series, ad, model"
+                  aria-label="Search campaigns"
+                  className="h-11 rounded-xl border-border/70 bg-background pl-10 pr-3 text-sm shadow-[0_2px_8px_rgba(27,16,56,0.04)]"
+                />
               </div>
+              <Button
+                type="button"
+                size="icon"
+                aria-label="Open campaign filters"
+                onClick={() => setFiltersOpen(true)}
+                className="size-11 shrink-0 rounded-xl bg-gradient-to-r from-[#9d1fe8] to-[#7212c7] text-white shadow-[0_4px_12px_rgba(126,19,205,0.22)] hover:brightness-105"
+              >
+                <SlidersHorizontal className="size-5" />
+              </Button>
             </div>
 
-          </div>
-        </section>
+            <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Browse opportunity categories">
+              {OPPORTUNITY_FILTERS.map(({ label, icon: Icon }) => {
+                const selected = label === "All"
+                  ? tab === "For You" || tab === "All"
+                  : tab === label;
+                return (
+                  <button
+                    key={label}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => updateParams({ tab: label === "All" ? "All" : label })}
+                    className={`flex h-[68px] w-[68px] shrink-0 flex-col items-center justify-center gap-1.5 rounded-2xl border px-1.5 text-center text-[10px] font-semibold leading-tight transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8614df] focus-visible:ring-offset-2 ${
+                      selected
+                        ? "border-[#8614df] bg-gradient-to-b from-[#a529f3] to-[#7410c9] text-white shadow-[0_5px_12px_rgba(126,19,205,0.25)]"
+                        : "border-[#eee7f6] bg-gradient-to-b from-white to-[#faf7fd] text-[#494257] shadow-[0_2px_6px_rgba(27,16,56,0.05)] hover:border-[#d8c0f1] hover:text-[#7410c9]"
+                    }`}
+                  >
+                    <Icon aria-hidden="true" className="size-5" />
+                    <span>{label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="no-scrollbar flex gap-2 overflow-x-auto pb-0.5">
+              <div className="relative w-[126px] shrink-0">
+                <MapPin className="pointer-events-none absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={locationInput}
+                  onChange={(event) => setLocationInput(event.target.value)}
+                  placeholder="Location"
+                  aria-label="Location"
+                  className="h-9 rounded-full border-border/70 bg-background pl-8 pr-2 text-xs shadow-[0_2px_6px_rgba(27,16,56,0.04)]"
+                />
+              </div>
+              <Select
+                value={gender ?? "any"}
+                onValueChange={(value) => updateParams({ gender: value === "any" ? null : value })}
+              >
+                <SelectTrigger aria-label="Gender" className="h-9 w-[126px] shrink-0 rounded-full border-border/70 bg-background px-3 text-xs shadow-[0_2px_6px_rgba(27,16,56,0.04)]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="any">Any gender</SelectItem>
+                  <SelectItem value="female">Female</SelectItem>
+                  <SelectItem value="male">Male</SelectItem>
+                  <SelectItem value="non-binary">Non-binary</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select
+                value={sort ?? "relevance"}
+                onValueChange={(value) => updateParams({ sort: value === "relevance" ? null : value })}
+              >
+                <SelectTrigger aria-label="Sort results" className="h-9 w-[138px] shrink-0 rounded-full border-border/70 bg-background px-3 text-xs shadow-[0_2px_6px_rgba(27,16,56,0.04)]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="relevance">Best match</SelectItem>
+                  <SelectItem value="newest">Newest</SelectItem>
+                  <SelectItem value="oldest">Oldest</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
-      {isForYou && (
-        <section className="mt-4 px-4">
-          <div className="card-soft no-scrollbar flex gap-1 overflow-x-auto p-3">
-            {stats.map((s) => {
-              const content = (
-                <div className="flex w-[5.5rem] shrink-0 flex-col items-center gap-1.5">
-                  <div className={cn("grid size-10 place-items-center rounded-xl", s.tone)}>
-                    <s.icon className="size-5" />
-                  </div>
-                  <span className="text-center text-[11px] leading-tight text-muted-foreground">
-                    {s.label}
-                  </span>
-                  <span className="text-sm font-bold">{s.value}</span>
-                </div>
-              );
-              return s.href ? (
-                <Link
-                  key={s.label}
-                  href={s.href}
-                  className="shrink-0 transition-transform active:scale-95"
-                >
-                  {content}
-                </Link>
-              ) : (
-                <div key={s.label}>{content}</div>
-              );
-            })}
-          </div>
-        </section>
+      {isRecruiterView && (
+        <RecruiterSearchPanel
+          input={searchInput}
+          onSearchChange={setSearchInput}
+          search={search}
+        />
       )}
 
       {/* Top opportunities */}
       {isForYou && (
         <section className="mt-6">
           <div className="px-4">
-            <SectionHeader title="Top Opportunities For You" emoji="🔥" href="?tab=All" />
+            <SectionHeader title="Featured & recommended campaigns" emoji="✨" href="?tab=All" />
           </div>
-          <div className="no-scrollbar flex snap-x gap-3 overflow-x-auto px-4 pb-1">
+            <div className="grid gap-3 px-4 pb-1 sm:grid-cols-2 xl:grid-cols-3">
             {recsLoading ? (
               <>
                 <CardSkeleton />
                 <CardSkeleton />
                 <CardSkeleton />
               </>
-            ) : (
+            ) : items.length > 0 ? (
               items.map((item) => (
                 <OpportunityCard
                   key={item.id}
@@ -1027,90 +1008,48 @@ export function OpportunitiesPage() {
                   isBookmarking={bookmarkMutation.isPending}
                 />
               ))
+            ) : (
+              <p className="rounded-2xl border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground sm:col-span-2 xl:col-span-3">
+                Campaign recommendations will appear here as they become available.
+              </p>
             )}
           </div>
         </section>
       )}
 
       {isForYou && (
-        <section className="mt-6 px-4">
-          <h2 className="mb-3 text-base font-extrabold tracking-tight">Explore Opportunities</h2>
-          <div className="grid grid-cols-3 gap-3">
-            {categories.map((c) => (
-              <Link
-                key={c.label}
-                href={c.href}
-                className="card-soft flex flex-col items-center gap-2 px-2 py-3 transition-transform active:scale-95"
-              >
-                <span className={cn("grid size-10 place-items-center rounded-xl", c.tone)}>
-                  <c.icon className="size-5" />
-                </span>
-                <span className="text-center text-[11px] font-medium leading-tight">{c.label}</span>
-              </Link>
-            ))}
-          </div>
+        <section className="mt-8 px-4">
+          <SectionHeader title="Recently added campaigns" href="?tab=All" />
+          {recentCampaignQuery.isLoading ? (
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <CardSkeleton key={index} />
+              ))}
+            </div>
+          ) : recentCampaignQuery.isError ? (
+            <ErrorState />
+          ) : recentItems.length > 0 ? (
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {recentItems.map((item) => (
+                <OpportunityCard
+                  key={item.id}
+                  item={item}
+                  onBookmark={handleBookmark}
+                  isBookmarking={bookmarkMutation.isPending}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="rounded-2xl border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground">
+              New campaigns will appear here as soon as they are posted.
+            </p>
+          )}
         </section>
       )}
 
       {/* Filtered search/list layout */}
       {!isForYou && !isRecruiterView && (
         <section className="mt-2 px-4">
-          {/* Sticky tabs + search */}
-          <div className="sticky top-16 z-40 -mx-4 border-b border-border bg-background/95 px-4 pb-3 pt-3 backdrop-blur-xl">
-            {/* Tabs */}
-            <div className="no-scrollbar flex gap-2 overflow-x-auto">
-              {TABS.map((t) => (
-                <Link
-                  key={t}
-                  href={tabHref(t)}
-                  className={cn(
-                    "shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition-colors",
-                    t === tab
-                      ? "gradient-brand text-brand-foreground"
-                      : "card-soft text-foreground hover:bg-muted",
-                  )}
-                >
-                  {t}
-                </Link>
-              ))}
-            </div>
-
-            {/* Search + filter */}
-            <div className="mt-3 flex items-center gap-2">
-              <div className="flex flex-1 items-center gap-2 rounded-xl border border-border bg-background px-3 py-2.5">
-                <Search className="size-4 shrink-0 text-muted-foreground" />
-                <input
-                  type="text"
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  placeholder="Search roles, productions, companies..."
-                  className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-                />
-              </div>
-              <button
-                type="button"
-                onClick={() => setFiltersOpen(true)}
-                aria-label="Open filters"
-                className="grid size-10 shrink-0 place-items-center rounded-xl border border-border bg-card text-foreground transition-colors hover:bg-muted"
-              >
-                <SlidersHorizontal className="size-5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Quick stats */}
-          <div className="card-soft mt-4 grid grid-cols-4 gap-2 rounded-2xl p-3">
-            {quickStats.map((s) => (
-              <div key={s.label} className="flex flex-col items-center gap-1 text-center">
-                <s.icon className={cn("size-5", s.tone)} />
-                <span className="text-sm font-bold">{s.value}</span>
-                <span className="text-[10px] leading-tight text-muted-foreground">
-                  {s.label}
-                </span>
-              </div>
-            ))}
-          </div>
-
           {/* Result bar */}
           <div className="mt-5 flex items-center justify-between gap-3">
             <h3 className="truncate text-base font-extrabold tracking-tight">
@@ -1118,18 +1057,6 @@ export function OpportunitiesPage() {
                 ? `${displayedItems.length} saved`
                 : `${campaignCount?.count ?? items.length} opportunities`}
             </h3>
-            <div className="relative">
-              <select
-                value={sort}
-                onChange={(e) => updateParams({ sort: e.target.value })}
-                className="appearance-none rounded-lg border border-border bg-card px-3 py-2 pr-8 text-xs font-semibold outline-none"
-              >
-                <option value="relevance">Best Match</option>
-                <option value="newest">Newest</option>
-                <option value="oldest">Oldest</option>
-              </select>
-              <ChevronDown className="pointer-events-none absolute right-2 top-1/2 size-3 -translate-y-1/2 text-muted-foreground" />
-            </div>
           </div>
 
           {/* Active chips */}
@@ -1167,11 +1094,11 @@ export function OpportunitiesPage() {
           )}
 
           {/* List */}
-          <div className="mt-4 space-y-4">
+          <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {loading ? (
-              Array.from({ length: 3 }).map((_, i) => <FeedCardSkeleton key={i} />)
+              Array.from({ length: 6 }).map((_, i) => <FeedCardSkeleton key={i} />)
             ) : isError ? (
-              <ErrorState />
+              <div className="sm:col-span-2 xl:col-span-3"><ErrorState /></div>
             ) : displayedItems.length > 0 ? (
               displayedItems.map((item) => (
                 <FeedCard
@@ -1182,14 +1109,16 @@ export function OpportunitiesPage() {
                 />
               ))
             ) : (
-              <EmptyState
-                onClear={() => {
-                  setSearchInput("");
-                  const params = new URLSearchParams();
-                  params.set("tab", "All");
-                  router.push(`${pathname}?${params.toString()}`);
-                }}
-              />
+              <div className="sm:col-span-2 xl:col-span-3">
+                <EmptyState
+                  onClear={() => {
+                    setSearchInput("");
+                    const params = new URLSearchParams();
+                    params.set("tab", "All");
+                    router.push(`${pathname}?${params.toString()}`);
+                  }}
+                />
+              </div>
             )}
           </div>
         </section>
@@ -1247,6 +1176,20 @@ export function OpportunitiesPage() {
           </div>
         </section>
       )}
+
+      <section className="mx-4 mt-8 flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+        <div>
+          <h2 className="text-base font-bold">Looking for creative professionals?</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Find photographers, studios, editors, and more in Services.
+          </p>
+        </div>
+        <Button asChild className="shrink-0">
+          <Link href="/services">
+            Explore Services <ArrowRight className="ml-2 size-4" />
+          </Link>
+        </Button>
+      </section>
     </div>
   );
 }

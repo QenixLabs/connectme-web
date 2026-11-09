@@ -248,7 +248,13 @@ export function toReviewItems(testimonials: Testimonial[]): ReviewItem[] {
     id: t._id,
     name: t.author_name,
     role: [t.author_role, t.author_company].filter(Boolean).join(", "),
-    rating: t.rating ?? 5,
+    rating:
+      typeof t.rating === "number" &&
+      Number.isFinite(t.rating) &&
+      t.rating >= 1 &&
+      t.rating <= 5
+        ? t.rating
+        : 0,
     when: formatRelativeTime(t.created_at),
     quote: t.content || "",
   }));
@@ -258,7 +264,16 @@ export function computeRating(testimonials: Testimonial[]): {
   average: number;
   count: number;
 } {
-  if (testimonials.length === 0) return { average: 0, count: 0 };
-  const sum = testimonials.reduce((acc, t) => acc + (t.rating ?? 5), 0);
-  return { average: Number((sum / testimonials.length).toFixed(1)), count: testimonials.length };
+  const ratings = testimonials
+    .map((testimonial) => testimonial.rating)
+    .filter(
+      (rating): rating is number =>
+        typeof rating === "number" &&
+        Number.isFinite(rating) &&
+        rating >= 1 &&
+        rating <= 5,
+    );
+  if (ratings.length === 0) return { average: 0, count: 0 };
+  const sum = ratings.reduce((total, rating) => total + rating, 0);
+  return { average: Number((sum / ratings.length).toFixed(1)), count: ratings.length };
 }

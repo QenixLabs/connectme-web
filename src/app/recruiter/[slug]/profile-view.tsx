@@ -1088,8 +1088,8 @@ export function RecruiterProfileView({
           <img
             src={profile.banner_image_url || castingHero}
             alt={`${profile.company_name} cover`}
-            width={1200}
-            height={912}
+            width={1920}
+            height={600}
           />
           <div className={styles.heroOverlay} />
         </section>

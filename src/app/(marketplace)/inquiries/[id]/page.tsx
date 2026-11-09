@@ -143,7 +143,13 @@ export default function ServiceInquiryDetailPage() {
           </dl>
           <div className="flex flex-wrap gap-2 border-t pt-4">
             <Button asChild>
-              <Link href={`${inbox}/${inquiry.conversation_id}`}>
+              <Link
+                href={`${inbox}/${inquiry.conversation_id}${
+                  inquiry.service_id
+                    ? `?serviceId=${encodeURIComponent(inquiry.service_id)}`
+                    : ""
+                }`}
+              >
                 <MessageSquare className="mr-2 size-4" />
                 Open conversation
               </Link>

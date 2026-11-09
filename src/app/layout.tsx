@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Caveat, Rubik } from "next/font/google";
+import { Caveat, Plus_Jakarta_Sans, Rubik } from "next/font/google";
 import { ServiceWorkerRegistration } from "@/components/pwa/service-worker-registration";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { resolveSiteOrigin } from "@/lib/site";
@@ -21,6 +21,12 @@ const caveat = Caveat({
   variable: "--font-script",
   subsets: ["latin"],
   weight: ["400", "500", "600"],
+});
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  variable: "--font-plus-jakarta",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 /**
@@ -80,7 +86,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${rubik.variable} ${caveat.variable}`}
+      className={`${rubik.variable} ${caveat.variable} ${plusJakartaSans.variable}`}
       data-theme="light"
       suppressHydrationWarning
     >

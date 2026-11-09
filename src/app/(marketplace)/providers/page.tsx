@@ -2,17 +2,21 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import Image from "next/image";
+import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { AlertCircle, Search, SlidersHorizontal, Users, X } from "lucide-react";
+import { AlertCircle, ArrowRight, Search, SlidersHorizontal, Sparkles, Users, X } from "lucide-react";
 import { providersApi } from "@/lib/api/marketplace";
 import type { ProviderDirectoryQuery } from "@/lib/api/marketplace";
 import { getApiErrorMessage } from "@/lib/api/client";
 import { queryKeys } from "@/lib/api/query-keys";
+import { MARKETPLACE_CATEGORIES } from "@/lib/marketplace-categories";
 import {
   readProviderDirectoryFilters,
   updateMarketplaceSearchParams,
 } from "@/lib/marketplace-search";
 import { ProviderCard } from "@/components/marketplace/provider-card";
+import { DiscoveryTabs } from "@/components/marketplace/discovery-tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -98,17 +102,71 @@ function ProvidersBrowser() {
   ].filter(Boolean);
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6">
-        <h1 className="text-3xl font-bold tracking-tight">Browse providers</h1>
-        <p className="mt-1 max-w-2xl text-muted-foreground">
-          Discover independent providers and studios. Visit a profile to see their services,
-          portfolio, and contact details.
-        </p>
-      </div>
+    <div className="space-y-3 sm:space-y-4">
+      <DiscoveryTabs />
+      <section className="relative isolate overflow-hidden rounded-2xl border bg-background shadow-sm sm:rounded-3xl">
+        <div className="absolute inset-y-0 right-0 hidden w-[46%] lg:block">
+          <Image
+            src="/providers-marketplace-hero.png"
+            alt=""
+            fill
+            priority
+            sizes="(max-width: 1024px) 46vw, 530px"
+            className="object-cover object-[62%_42%]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-background via-background/40 to-transparent" />
+        </div>
+        <div className="relative max-w-2xl p-4 sm:p-7 lg:max-w-[58%] lg:py-8">
+          <Badge variant="secondary" className="gap-1.5 rounded-full bg-success/10 px-3 py-1 font-medium text-success">
+            <Sparkles className="size-3.5" />
+            Independent experts and studios
+          </Badge>
+          <h1 className="mt-3 max-w-lg text-2xl font-bold leading-tight tracking-tight sm:mt-4 sm:text-4xl">
+            Service Providers
+          </h1>
+          <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground sm:text-base">
+            Explore professional profiles, compare expertise, and visit a provider to see all their services.
+          </p>
+          <div className="mt-4 flex flex-wrap items-center gap-3 sm:mt-5 sm:gap-4">
+            <Button asChild className="min-h-11 rounded-full bg-success text-white hover:bg-success/90 sm:min-h-9">
+              <Link href="#provider-search">
+                Find a provider
+                <ArrowRight className="ml-2 size-4" />
+              </Link>
+            </Button>
+            <Link
+              href="/services"
+              className="py-2 text-sm font-medium text-foreground/80 transition-colors hover:text-primary"
+            >
+              Explore services
+            </Link>
+          </div>
+          <div className="no-scrollbar mt-4 flex gap-2 overflow-x-auto pb-1">
+            {MARKETPLACE_CATEGORIES.slice(0, 8).map((category) => (
+              <button
+                key={category}
+                type="button"
+                aria-pressed={filters.category === category}
+                onClick={() =>
+                  pushParams({
+                    category: filters.category === category ? undefined : category,
+                  })
+                }
+                className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                  filters.category === category
+                    ? "border-success/30 bg-success/10 text-success"
+                    : "border-border bg-background text-muted-foreground hover:border-success/30 hover:text-success"
+                }`}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
 
       <Card>
-        <CardContent className="space-y-4 p-4">
+        <CardContent id="provider-search" className="scroll-mt-20 space-y-3 p-3 sm:p-4">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -121,7 +179,7 @@ function ProvidersBrowser() {
                 }
               }}
               placeholder="Search providers, skills, or locations"
-              className="pl-9"
+              className="h-11 pl-9 md:h-9"
               aria-label="Search providers"
             />
             {searchInput && (
@@ -136,7 +194,7 @@ function ProvidersBrowser() {
             )}
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-x-2 gap-y-3 sm:gap-3 md:grid-cols-4">
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">Category</label>
               <Select
@@ -145,12 +203,12 @@ function ProvidersBrowser() {
                   pushParams({ category: value === "all" ? undefined : value })
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger aria-label="Category" className="h-11 md:h-9">
                   <SelectValue placeholder="All categories" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All categories</SelectItem>
-                  {(facetsQuery.data?.categories ?? []).map((category) => (
+                  {MARKETPLACE_CATEGORIES.map((category) => (
                     <SelectItem key={category} value={category}>
                       {category}
                     </SelectItem>
@@ -167,7 +225,7 @@ function ProvidersBrowser() {
                   pushParams({ location: value === "all" ? undefined : value })
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger aria-label="Location" className="h-11 md:h-9">
                   <SelectValue placeholder="Anywhere" />
                 </SelectTrigger>
                 <SelectContent>
@@ -189,7 +247,7 @@ function ProvidersBrowser() {
                   pushParams({ min_rating: value === "any" ? undefined : value })
                 }
               >
-                <SelectTrigger aria-label="Minimum rating">
+                <SelectTrigger aria-label="Minimum rating" className="h-11 md:h-9">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -209,7 +267,7 @@ function ProvidersBrowser() {
                   pushParams({ sort: value === "relevance" ? undefined : value })
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger aria-label="Sort by" className="h-11 md:h-9">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -290,7 +348,7 @@ function ProvidersBrowser() {
       </div>
 
       {directoryQuery.isLoading ? (
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3">
           {Array.from({ length: 6 }).map((_, index) => (
             <Skeleton key={index} className="h-64 rounded-xl" />
           ))}
@@ -332,7 +390,7 @@ function ProvidersBrowser() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:grid-cols-3">
           {providers.map((provider) => (
             <ProviderCard key={provider.id} provider={provider} />
           ))}
@@ -362,6 +420,19 @@ function ProvidersBrowser() {
           </Button>
         </div>
       )}
+      <section className="flex flex-col gap-4 rounded-2xl border border-primary/15 bg-primary/5 p-6 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="font-semibold">Looking for your next project?</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Browse campaigns and opportunities from creative teams.
+          </p>
+        </div>
+        <Button asChild variant="outline" className="shrink-0">
+          <Link href="/talent/opportunities">
+            Explore Opportunities <ArrowRight className="size-4" />
+          </Link>
+        </Button>
+      </section>
     </div>
   );
 }
