@@ -19,6 +19,7 @@ import {
   BarChart3,
   Star,
   ClipboardList,
+  LayoutGrid,
 } from "lucide-react";
 
 export interface NavItem {
@@ -59,9 +60,7 @@ export const recruiterBottomNavItems: NavItem[] = [
 export const providerNavItems: NavItem[] = [
   { label: "Dashboard", href: "/provider/dashboard", icon: LayoutDashboard },
   { label: "My Profile", href: "/provider/profile", icon: User },
-  { label: "Publish", href: "/publish", icon: Package },
-  { label: "Services", href: "/provider/services", icon: Briefcase },
-  { label: "Products", href: "/provider/products", icon: Package },
+  { label: "Listings", href: "/provider/listings", icon: Package },
   { label: "Inquiries", href: "/provider/inquiries", icon: ClipboardList },
   { label: "Messages", href: "/provider/messages", icon: MessageSquare },
   { label: "Verification", href: "/provider/verify-documents", icon: ShieldCheck },
@@ -70,9 +69,9 @@ export const providerNavItems: NavItem[] = [
 export const providerBottomNavItems: NavItem[] = [
   { label: "Dashboard", href: "/provider/dashboard", icon: Home },
   { label: "Inquiries", href: "/provider/inquiries", icon: ClipboardList },
-  { label: "Publish", href: "/publish", icon: Package },
+  { label: "Listings", href: "/provider/listings", icon: Layers },
   { label: "Messages", href: "/provider/messages", icon: MessageSquare },
-  { label: "Profile", href: "/provider/profile", icon: User },
+  { label: "More", href: "/provider/profile", icon: LayoutGrid },
 ];
 
 export const adminNavItems: NavItem[] = [

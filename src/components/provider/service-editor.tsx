@@ -400,7 +400,7 @@ export function ServiceEditor({ serviceId }: { serviceId?: string }) {
       <div className="mx-auto max-w-3xl rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-800">
         <p>{getApiErrorMessage(serviceQuery.error, "Could not load service.")}</p>
         <Button asChild variant="outline" className="mt-4">
-          <Link href="/provider/services">Back to My Services</Link>
+          <Link href="/provider/listings">Back to My Listings</Link>
         </Button>
       </div>
     );
@@ -641,7 +641,7 @@ function ServiceEditorForm({
 
   function goBack() {
     if (step === 0) {
-      router.push("/provider/services");
+      router.push("/provider/listings");
       return;
     }
     setStep((current) => Math.max(0, current - 1));
@@ -723,7 +723,7 @@ function ServiceEditorForm({
             : "Draft saved",
       );
       await queryClient.invalidateQueries({ queryKey: ["services"] });
-      router.push("/provider/services");
+      router.push("/provider/listings");
     } catch (error) {
       setFormError(
         getApiErrorMessage(
@@ -956,8 +956,8 @@ function ServiceEditorForm({
               Dashboard
             </Link>
             <span>/</span>
-            <Link href="/provider/services" className="hover:text-violet-700">
-              My Services
+            <Link href="/provider/listings" className="hover:text-violet-700">
+              My Listings
             </Link>
             <span>/</span>
             <span className="text-violet-700">
@@ -974,7 +974,7 @@ function ServiceEditorForm({
         </div>
         <div className="hidden shrink-0 items-center gap-2 md:flex">
           <Button asChild variant="outline" className={outlineButtonClass}>
-            <Link href="/provider/services">Cancel</Link>
+            <Link href="/provider/listings">Cancel</Link>
           </Button>
           <Button
             type="button"

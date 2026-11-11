@@ -14,7 +14,6 @@ import {
   MapPin,
   PencilLine,
   ShieldCheck,
-  ShoppingBag,
   Sparkles,
   Star,
   UserRound,
@@ -103,21 +102,15 @@ export default function ProviderProfilePage() {
       featured: true,
     },
     {
-      label: "Manage Services",
-      description: "Add, edit or update your services",
-      href: "/provider/services",
+      label: "Manage Listings",
+      description: "Add, edit or update your services and products",
+      href: "/provider/listings",
       icon: BriefcaseBusiness,
-    },
-    {
-      label: "Manage Products",
-      description: "Add, edit or update your products",
-      href: "/provider/products",
-      icon: ShoppingBag,
     },
     {
       label: "Packages & Pricing",
       description: "Create services and set their pricing",
-      href: "/provider/services",
+      href: "/provider/listings?type=service",
       icon: Layers3,
     },
     {

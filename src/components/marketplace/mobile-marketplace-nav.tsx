@@ -17,7 +17,7 @@ function profileHref(role?: string, capabilities?: string[]) {
 export function MobileMarketplaceNav() {
   const pathname = usePathname();
   const user = useStore(authStore, (state) => state.user);
-  if (/^\/services\/[^/]+$/.test(pathname)) return null;
+  if (/^\/(?:providers|services)\/[^/]+$/.test(pathname)) return null;
   const messagesHref = user
     ? user.account_capabilities?.includes("provider") || user.role === "provider"
       ? "/provider/messages"

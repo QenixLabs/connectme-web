@@ -1048,7 +1048,7 @@ function ProviderProfileEditForm() {
               </p>
               <Button type="button" variant="outline" asChild>
                 <Link
-                  href="/provider/services"
+                  href="/provider/listings?type=service"
                   target="_blank"
                   rel="noreferrer"
                 >
@@ -1100,7 +1100,7 @@ function ProviderProfileEditForm() {
               action={
                 <Button type="button" variant="outline" size="sm" asChild>
                   <Link
-                    href="/provider/services"
+                    href="/provider/listings?type=service"
                     target="_blank"
                     rel="noreferrer"
                   >

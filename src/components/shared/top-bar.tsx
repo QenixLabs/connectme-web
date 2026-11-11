@@ -70,6 +70,7 @@ export function TopBar({ navItems, role, showUserMenu = false }: TopBarProps) {
   // Talent Search owns its compact mobile header — hide the large app bar on
   // small screens so the page matches the reference (desktop keeps nav).
   const hideOnMobile = pathname === "/recruiter/find-talent";
+  const hideNav = role === "provider" && pathname === "/provider/dashboard";
 
   return (
     <header
@@ -78,17 +79,20 @@ export function TopBar({ navItems, role, showUserMenu = false }: TopBarProps) {
         hideOnMobile && "max-md:hidden",
       )}
     >
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href={`/${role}/dashboard`} className="flex items-center">
-          <Image
-            src={logoImage}
-            alt="RootIn"
-            height={32}
-            className="h-8 w-auto sm:h-10"
-            priority
-          />
-        </Link>
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-3 sm:px-6 lg:px-8">
+        <div className="flex items-center gap-1.5 sm:gap-3">
+          <Link href={`/${role}/dashboard`} className="flex items-center">
+            <Image
+              src={logoImage}
+              alt="RootIn"
+              height={32}
+              className="h-7 w-auto sm:h-9"
+              priority
+            />
+          </Link>
+        </div>
 
+        {!hideNav && (
           <nav className="hidden items-center gap-1 rounded-full border border-border bg-bg-surface p-1 md:flex">
             {navItems.map((item) => {
               const active = isMounted && pathname.startsWith(item.href);
@@ -108,6 +112,7 @@ export function TopBar({ navItems, role, showUserMenu = false }: TopBarProps) {
               );
             })}
           </nav>
+        )}
 
           <div className="flex items-center gap-1">
             {role === "provider" && (
@@ -204,13 +209,22 @@ function UserMenu({ role }: { role: TopBarProps["role"] }) {
           className="size-10 rounded-full hover:bg-surface"
           aria-label="User menu"
         >
-          <Avatar className="size-8 border border-border">
+          <Avatar className="size-8 sm:size-9 border border-border">
             <AvatarImage
               src={profile?.profile_photo}
               alt={`${user?.username || user?.email || "User"} profile photo`}
             />
-            <AvatarFallback className="bg-muted text-xs font-semibold">
-              {initials}
+            <AvatarFallback
+              className={cn(
+                "text-xs font-semibold",
+                role === "provider"
+                  ? "bg-[#0b132b] font-bold text-white"
+                  : "bg-muted"
+              )}
+            >
+              {role === "provider" && (!user?.username && !user?.email)
+                ? "SF"
+                : initials}
             </AvatarFallback>
           </Avatar>
         </Button>
@@ -292,9 +306,9 @@ function UserMenu({ role }: { role: TopBarProps["role"] }) {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/provider/services" className="cursor-pointer">
+                  <Link href="/provider/listings" className="cursor-pointer">
                     <Briefcase className="mr-2 size-4" />
-                    Services
+                    Listings
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>

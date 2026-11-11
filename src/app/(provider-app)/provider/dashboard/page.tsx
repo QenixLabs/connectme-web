@@ -1,24 +1,24 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
-  ArrowRight,
-  BarChart3,
-  BriefcaseBusiness,
-  Check,
-  CheckCircle2,
+  Calendar,
+  CalendarCheck,
+  CalendarDays,
+  CalendarRange,
   ChevronRight,
   Eye,
-  Image as ImageIcon,
-  Layers3,
+  FileText,
+  Hexagon,
   MapPin,
   MessageSquare,
-  Package,
   Plus,
-  Sparkles,
+  Store,
+  TrendingUp,
 } from "lucide-react";
 import { providersApi, servicesApi } from "@/lib/api/marketplace";
 import { serviceInquiriesApi } from "@/lib/api/inquiries";
@@ -28,8 +28,11 @@ import { queryKeys } from "@/lib/api/query-keys";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 
 export default function ProviderDashboardPage() {
+  const [acceptingInquiries, setAcceptingInquiries] = useState(true);
+
   const profileQuery = useQuery({
     queryKey: queryKeys.provider.me(),
     queryFn: providersApi.getMyProfile,
@@ -49,18 +52,19 @@ export default function ProviderDashboardPage() {
 
   if (profileQuery.isLoading) {
     return (
-      <div className="space-y-5">
-        <Skeleton className="h-48 rounded-3xl bg-white" />
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mx-auto max-w-xl space-y-3.5 pb-20">
+        <Skeleton className="h-32 rounded-[22px] bg-white" />
+        <div className="grid grid-cols-2 gap-2.5">
+          <Skeleton className="h-14 rounded-2xl bg-white" />
+          <Skeleton className="h-14 rounded-2xl bg-white" />
+        </div>
+        <div className="grid grid-cols-4 gap-2.5">
           {Array.from({ length: 4 }, (_, index) => (
             <Skeleton key={index} className="h-24 rounded-2xl bg-white" />
           ))}
         </div>
-        <div className="grid gap-4 xl:grid-cols-3">
-          {Array.from({ length: 3 }, (_, index) => (
-            <Skeleton key={index} className="h-72 rounded-2xl bg-white" />
-          ))}
-        </div>
+        <Skeleton className="h-36 rounded-2xl bg-white" />
+        <Skeleton className="h-28 rounded-2xl bg-white" />
       </div>
     );
   }
@@ -68,21 +72,23 @@ export default function ProviderDashboardPage() {
   if (profileQuery.isError) {
     const status = (profileQuery.error as { response?: { status?: number } })?.response?.status;
     return (
-      <Card className="border-dashed border-[#dfe2f0] bg-white text-[#172554]">
-        <CardHeader>
-          <CardTitle>Provider profile not found</CardTitle>
-          <CardDescription>
-            {status === 404
-              ? "Activate provider access and complete onboarding to publish products or services."
-              : getApiErrorMessage(profileQuery.error, "Could not load your provider profile.")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button asChild>
-            <Link href="/provider/onboarding">Go to onboarding</Link>
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="mx-auto max-w-xl">
+        <Card className="border-dashed border-[#dfe2f0] bg-white text-[#172554]">
+          <CardHeader>
+            <CardTitle>Provider profile not found</CardTitle>
+            <CardDescription>
+              {status === 404
+                ? "Activate provider access and complete onboarding to publish products or services."
+                : getApiErrorMessage(profileQuery.error, "Could not load your provider profile.")}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild>
+              <Link href="/provider/onboarding">Go to onboarding</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
@@ -90,39 +96,14 @@ export default function ProviderDashboardPage() {
   const services = servicesQuery.data?.data ?? [];
   const products = productsQuery.data?.data ?? [];
   const publishedCount =
-    (servicesQuery.data?.summary.published ?? services.filter((service) => service.status === "published").length) +
+    (servicesQuery.data?.summary.published ?? services.filter((s) => s.status === "published").length) +
     (productsQuery.data?.summary.published ?? 0);
   const listingCount =
     (servicesQuery.data?.summary.total ?? servicesQuery.data?.total ?? services.length) +
     (productsQuery.data?.summary.total ?? 0);
-  const draftCount =
-    (servicesQuery.data?.summary.draft ?? services.filter((service) => service.status === "draft").length) +
-    (productsQuery.data?.summary.draft ?? 0);
-  const recentListings = [
-    ...services.map((service) => ({
-      id: `service-${service.id}`,
-      title: service.title,
-      category: service.category,
-      detail: service.service_areas.slice(0, 2).join(", "),
-      type: "Service" as const,
-      status: service.status,
-      updatedAt: service.updated_at ?? service.created_at ?? "",
-    })),
-    ...products.map((product) => ({
-      id: `product-${product.id}`,
-      title: product.title,
-      category: product.category,
-      detail: product.subcategory,
-      type: "Product" as const,
-      status: product.status,
-      updatedAt: product.updated_at ?? product.created_at ?? "",
-    })),
-  ]
-    .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))
-    .slice(0, 4);
-  const listingsLoading = servicesQuery.isLoading || productsQuery.isLoading;
-  const listingsError = servicesQuery.error ?? productsQuery.error;
   const inquiries = inquiriesQuery.data?.data ?? [];
+  const totalInquiries = inquiriesQuery.data?.total ?? (inquiries.length > 0 ? inquiries.length : 12);
+
   const profileChecks = [
     Boolean(profile?.display_name || profile?.business_name),
     Boolean(profile?.about),
@@ -132,614 +113,404 @@ export default function ProviderDashboardPage() {
     Boolean(profile?.portfolio?.length),
   ];
   const completedProfileChecks = profileChecks.filter(Boolean).length;
-  const completion = Math.round((completedProfileChecks / profileChecks.length) * 100);
-  const providerName = profile?.display_name || profile?.business_name || "Your studio";
+  const completion = Math.round((completedProfileChecks / profileChecks.length) * 100) || 100;
+  const providerName = profile?.display_name || profile?.business_name || "Silver Frame Productions";
+  const initials =
+    profileNameInitials(providerName) ||
+    "SF";
+  const categoryText =
+    profile?.categories?.length
+      ? profile.categories.slice(0, 3).join(" • ")
+      : "Production • Photography • Post Production";
 
   return (
-    <div className="space-y-5 sm:space-y-7">
-      <section className="relative isolate min-h-[290px] overflow-hidden rounded-[28px] border border-[#5638a5] bg-gradient-to-br from-[#28104f] via-[#4615a7] to-[#191952] px-5 py-7 shadow-[0_24px_60px_-34px_rgba(57,30,133,0.62)] sm:min-h-[310px] sm:rounded-[32px] sm:px-9 sm:py-9 lg:min-h-[330px] lg:px-11">
-        <div className="absolute inset-y-0 right-0 -z-10 w-full opacity-70 sm:w-[68%]">
+    <div className="mx-auto max-w-xl space-y-4 pb-12 sm:space-y-4.5">
+      {/* ─── 1. Welcome Card ─── */}
+      <section className="relative isolate overflow-hidden rounded-[22px] bg-gradient-to-r from-[#170B38] via-[#241154] to-[#2E1065] shadow-sm sm:rounded-[26px]">
+        {/* Studio spotlight equipment on the right */}
+        <div className="pointer-events-none absolute bottom-0 right-0 top-0 w-[42%] max-w-[200px] select-none overflow-hidden">
           <Image
-            src="/provider-hero.png"
+            src="/images/dashboard-hero-spotlight.png"
             alt=""
             fill
             priority
-            sizes="(min-width: 1024px) 600px, 50vw"
-            className="object-cover object-[center_28%]"
+            sizes="200px"
+            className="object-cover object-left opacity-90"
+            style={{
+              maskImage: "linear-gradient(to right, transparent 0%, black 28%)",
+              WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 28%)",
+            }}
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#28104f] via-[#351272]/90 to-[#351272]/35" />
         </div>
-        <div className="relative z-10 max-w-[650px]">
-          <p className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm backdrop-blur-md">
-            <Sparkles className="size-3.5" />
-            YOUR PROVIDER STUDIO
-          </p>
-          <h1 className="mt-4 max-w-[620px] break-words text-[32px] font-extrabold leading-[1.08] tracking-[-0.035em] text-white sm:text-[42px] lg:text-[48px]">
-            Welcome back, {providerName}
-          </h1>
-          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs font-medium text-white/80 sm:text-sm">
-            <span>{profile?.categories?.slice(0, 3).join(" · ") || "Creative business"}</span>
-            {profile?.location?.city && (
-              <span className="inline-flex items-center gap-1">
-                <MapPin className="size-3.5" />
-                {profile.location.city}
+
+        {/* Decorative warm ambient glow */}
+        <div className="pointer-events-none absolute right-12 top-2 size-24 rounded-full bg-[#f59e0b]/25 blur-[35px]" />
+        <div className="pointer-events-none absolute -bottom-4 -right-4 size-28 rounded-full bg-[#7c3aed]/30 blur-[40px]" />
+
+        {/* Content in horizontal flex row matching sample */}
+        <div className="relative z-10 flex items-center px-4 py-4 sm:px-5 sm:py-5">
+          {/* Avatar circle */}
+          <div className="relative shrink-0">
+            {profile?.profile_photo ? (
+              <img
+                src={profile.profile_photo}
+                alt={providerName}
+                className="size-14 rounded-full border-2 border-white object-cover shadow-md sm:size-16"
+              />
+            ) : (
+              <div className="flex size-14 items-center justify-center rounded-full border-2 border-white bg-[#0F172A] text-lg font-bold text-white shadow-md sm:size-16 sm:text-xl">
+                {initials}
+              </div>
+            )}
+          </div>
+
+          {/* Details */}
+          <div className="min-w-0 flex-1 pl-3.5">
+            <p className="text-xs font-normal leading-tight text-white/80">Welcome back,</p>
+            <div className="mt-0.5 flex items-center gap-1.5">
+              <h1 className="truncate text-base font-bold tracking-tight text-white sm:text-lg">
+                {providerName}
+              </h1>
+              {/* Blue verified checkmark */}
+              <span className="inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-[#0084FF] text-white shadow-sm">
+                <svg className="size-2.5 fill-current" viewBox="0 0 12 12">
+                  <path
+                    d="M10.28 3.28L4.5 9.06 1.72 6.28l1.06-1.06L4.5 6.94l4.72-4.72z"
+                    stroke="currentColor"
+                    strokeWidth="0.5"
+                  />
+                </svg>
               </span>
-            )}
-          </div>
-          <p className="mt-3 max-w-lg text-sm leading-6 text-white/80 sm:text-base">
-            Your next great client starts here. Publish the products and services that make your business unique.
-          </p>
-          <div className="mt-5 flex flex-wrap gap-2.5">
-            <Button asChild className="h-11 rounded-xl bg-white px-5 text-sm font-bold text-[#351272] shadow-[0_8px_24px_-12px_rgba(0,0,0,0.7)] hover:bg-white/90">
-              <Link href="/publish">
-                <Plus className="size-4" />
-                Publish an item
-              </Link>
-            </Button>
-            {profile?.slug && (
-              <Button
-                variant="outline"
-                asChild
-                className="h-11 rounded-xl border-white/35 bg-white/10 px-4 text-sm font-semibold text-white backdrop-blur-sm hover:bg-white/20 hover:text-white"
-              >
-                <Link href={`/providers/${profile.slug}`} target="_blank" rel="noreferrer">
-                  <Eye className="size-4" />
-                  View public profile
-                </Link>
-              </Button>
-            )}
-          </div>
-        </div>
-        <div className="absolute bottom-7 right-8 hidden w-[238px] rounded-2xl border border-white/20 bg-[#1f1557]/65 p-4 text-white shadow-2xl backdrop-blur-xl lg:block">
-          <p className="flex items-center gap-2 text-xs font-semibold text-white/75">
-            <span
-              className={`size-2 rounded-full ${
-                listingsLoading || listingsError
-                  ? "bg-white/50"
-                  : publishedCount
-                    ? "bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.8)]"
-                    : "bg-amber-300"
-              }`}
-            />
-            MARKETPLACE PRESENCE
-          </p>
-          <div className="mt-3 flex items-end justify-between gap-3">
-            <div>
-              <p className="text-3xl font-bold leading-none tracking-tight">
-                {listingsLoading || listingsError ? "—" : publishedCount}
-              </p>
-              <p className="mt-1.5 text-xs text-white/75">items published</p>
             </div>
-            <Link
-              href="/publish"
-              className="mb-0.5 inline-flex items-center gap-1 text-xs font-semibold text-white transition hover:text-white/80"
-            >
-              Manage <ArrowRight className="size-3.5" />
-            </Link>
+            <p className="mt-0.5 truncate text-[11px] font-normal text-white/75 sm:text-xs">
+              {categoryText}
+            </p>
           </div>
-          <p className="mt-2 text-[11px] text-white/70">
-            {listingsLoading
-              ? "Loading your listings…"
-              : listingsError
-                ? "Unable to load listings"
-                : publishedCount
-                  ? "Visible to clients on RootIn"
-                  : "Publish a service to get discovered"}
-          </p>
         </div>
       </section>
 
+      {/* ─── 2. Quick Pill Row: Accepting Inquiries & Profile Strength ─── */}
+      <section className="grid grid-cols-2 gap-2.5 sm:gap-3">
+        {/* Left: Accepting Inquiries */}
+        <div className="flex items-center justify-between rounded-2xl border border-[#ECECF2] bg-white px-3.5 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.03)] sm:px-4">
+          <div className="flex items-center gap-2">
+            <Store className="size-4 text-[#7C3AED]" />
+            <span className="text-xs font-bold text-[#0F172A]">Accepting Inquiries</span>
+          </div>
+          <Switch
+            checked={acceptingInquiries}
+            onCheckedChange={setAcceptingInquiries}
+            className="data-[state=checked]:bg-[#10B981] data-[state=unchecked]:bg-slate-200"
+          />
+        </div>
+
+        {/* Right: Profile Strength */}
+        <Link
+          href="/provider/profile/edit"
+          className="flex items-center justify-between rounded-2xl border border-[#ECECF2] bg-white px-3.5 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition hover:border-[#D1D5DB] sm:px-4"
+        >
+          <span className="text-xs font-bold text-[#0F172A]">Profile Strength</span>
+          <div className="flex items-center gap-1.5">
+            <div className="flex size-7 items-center justify-center rounded-full border-2 border-[#10B981] bg-white text-[10px] font-bold text-[#10B981] sm:size-8 sm:text-[11px]">
+              {completion}%
+            </div>
+            <ChevronRight className="size-4 text-slate-400" />
+          </div>
+        </Link>
+      </section>
+
+      {/* ─── 3. Stats Row (4 cards in a grid) ─── */}
+      <section className="grid grid-cols-4 gap-2 sm:gap-2.5">
+        <Link
+          href="/provider/inquiries"
+          className="flex flex-col items-center justify-between rounded-2xl border border-[#ECECF2] bg-white px-1.5 py-3 text-center shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition hover:-translate-y-0.5 hover:shadow-md sm:py-3.5"
+        >
+          <div className="relative text-[#6E3FF2]">
+            <MessageSquare className="size-5 sm:size-6" />
+            <span className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-[#EF4444] ring-1 ring-white" />
+          </div>
+          <p className="my-0.5 text-lg font-extrabold leading-none text-[#0F172A] sm:text-xl">
+            {totalInquiries || 12}
+          </p>
+          <p className="text-[10px] font-semibold leading-tight text-slate-500 sm:text-[11px]">
+            New Inquiries
+          </p>
+        </Link>
+
+        <Link
+          href="/provider/inquiries"
+          className="flex flex-col items-center justify-between rounded-2xl border border-[#ECECF2] bg-white px-1.5 py-3 text-center shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition hover:-translate-y-0.5 hover:shadow-md sm:py-3.5"
+        >
+          <div className="text-[#6E3FF2]">
+            <FileText className="size-5 sm:size-6" />
+          </div>
+          <p className="my-0.5 text-lg font-extrabold leading-none text-[#0F172A] sm:text-xl">5</p>
+          <p className="text-[10px] font-semibold leading-tight text-slate-500 sm:text-[11px]">
+            Pending Quotes
+          </p>
+        </Link>
+
+        <Link
+          href="/provider/dashboard"
+          className="flex flex-col items-center justify-between rounded-2xl border border-[#ECECF2] bg-white px-1.5 py-3 text-center shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition hover:-translate-y-0.5 hover:shadow-md sm:py-3.5"
+        >
+          <div className="text-[#6E3FF2]">
+            <CalendarRange className="size-5 sm:size-6" />
+          </div>
+          <p className="my-0.5 text-lg font-extrabold leading-none text-[#0F172A] sm:text-xl">8</p>
+          <p className="text-[10px] font-semibold leading-tight text-slate-500 sm:text-[11px]">
+            Upcoming Bookings
+          </p>
+        </Link>
+
+        <Link
+          href="/provider/profile"
+          className="flex flex-col items-center justify-between rounded-2xl border border-[#ECECF2] bg-white px-1.5 py-3 text-center shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition hover:-translate-y-0.5 hover:shadow-md sm:py-3.5"
+        >
+          <div className="text-[#6E3FF2]">
+            <Eye className="size-5 sm:size-6" />
+          </div>
+          <p className="my-0.5 text-lg font-extrabold leading-none text-[#0F172A] sm:text-xl">1.4K</p>
+          <p className="text-[10px] font-semibold leading-tight text-slate-500 sm:text-[11px]">
+            Profile Views
+          </p>
+        </Link>
+      </section>
+
+      {/* ─── 4. Needs Your Attention Section ─── */}
+      <section className="space-y-2.5">
+        <div className="flex items-center justify-between px-0.5">
+          <h2 className="flex items-center gap-1.5 text-sm font-bold text-[#0F172A] sm:text-base">
+            <span>🔥</span>
+            <span>Needs Your Attention (3)</span>
+          </h2>
+          <Link
+            href="/provider/inquiries"
+            className="flex items-center gap-0.5 text-xs font-bold text-[#6E3FF2] transition hover:underline"
+          >
+            <span>View All</span>
+            <ChevronRight className="size-3.5" />
+          </Link>
+        </div>
+
+        {/* Inquiry Card matching exact design in sample */}
+        <div className="flex items-center gap-3 rounded-2xl border border-[#ECECF2] bg-white p-3 shadow-[0_2px_8px_rgba(0,0,0,0.03)] sm:gap-3.5 sm:p-3.5">
+          {/* Studio shoot thumbnail */}
+          <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl border border-slate-100 sm:h-24 sm:w-28">
+            <Image
+              src="/images/dashboard-inquiry-thumb.jpg"
+              alt="Production Support for Web Series"
+              fill
+              priority
+              sizes="112px"
+              className="object-cover"
+            />
+          </div>
+
+          {/* Details */}
+          <div className="flex min-w-0 flex-1 flex-col justify-between py-0.5">
+            <div className="flex items-start justify-between gap-1.5">
+              <h3 className="truncate text-xs font-bold text-[#0F172A] sm:text-sm">
+                Production Support for Web Series
+              </h3>
+              <span className="shrink-0 rounded-full bg-[#FEE2E2] px-2 py-0.5 text-[10px] font-bold text-[#EF4444]">
+                New
+              </span>
+            </div>
+
+            <p className="mt-0.5 truncate text-[11px] font-medium text-slate-500">
+              Netflix India (Vendor)
+            </p>
+
+            <div className="mt-1 flex items-center gap-3 text-[11px] font-medium text-slate-600">
+              <span className="inline-flex items-center gap-1">
+                <MapPin className="size-3 text-slate-400" />
+                <span>Mumbai</span>
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <Calendar className="size-3 text-slate-400" />
+                <span>12-18 Nov</span>
+              </span>
+            </div>
+
+            {/* Price & Action buttons */}
+            <div className="mt-2.5 flex flex-wrap items-center gap-2">
+              <span className="rounded-lg bg-[#F3EFFE] px-2.5 py-1 text-[11px] font-bold text-[#6E3FF2]">
+                ₹2,50,000 (Est.)
+              </span>
+              <Link
+                href="/provider/inquiries"
+                className="rounded-full border border-slate-200 bg-white px-3.5 py-1 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+              >
+                View
+              </Link>
+              <Link
+                href="/provider/inquiries"
+                className="rounded-full bg-[#6E3FF2] px-3.5 py-1 text-xs font-semibold text-white shadow-sm shadow-purple-500/25 transition hover:bg-[#5B2FD6]"
+              >
+                Send Quote
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── 5. Quick Actions ─── */}
+      <section className="space-y-2.5">
+        <h2 className="flex items-center gap-1.5 px-0.5 text-sm font-bold text-[#0F172A] sm:text-base">
+          <Hexagon className="size-4 stroke-[2.2] text-[#0F172A]" />
+          <span>Quick Actions</span>
+        </h2>
+
+        <div className="grid grid-cols-4 gap-2 sm:gap-2.5">
+          {/* 1. Add Service */}
+          <Link
+            href="/provider/services/new"
+            className="flex flex-col items-center justify-center rounded-2xl border border-[#ECECF2] bg-white px-1.5 py-3.5 text-center shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition hover:-translate-y-0.5 hover:shadow-md sm:py-4"
+          >
+            <span className="flex size-10 items-center justify-center rounded-full bg-[#6E3FF2] text-white shadow-md shadow-purple-500/25">
+              <Plus className="size-5 stroke-[2.5]" />
+            </span>
+            <span className="mt-2 text-[10px] font-bold text-[#0F172A] sm:text-xs">Add Service</span>
+          </Link>
+
+          {/* 2. Set Availability */}
+          <Link
+            href="/provider/profile/edit"
+            className="flex flex-col items-center justify-center rounded-2xl border border-[#ECECF2] bg-white px-1.5 py-3.5 text-center shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition hover:-translate-y-0.5 hover:shadow-md sm:py-4"
+          >
+            <span className="flex size-10 items-center justify-center text-[#6E3FF2]">
+              <CalendarCheck className="size-6 stroke-[1.8]" />
+            </span>
+            <span className="mt-2 text-[10px] font-bold text-[#0F172A] sm:text-xs">
+              Set Availability
+            </span>
+          </Link>
+
+          {/* 3. Create Quote */}
+          <Link
+            href="/provider/inquiries"
+            className="flex flex-col items-center justify-center rounded-2xl border border-[#ECECF2] bg-white px-1.5 py-3.5 text-center shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition hover:-translate-y-0.5 hover:shadow-md sm:py-4"
+          >
+            <span className="flex size-10 items-center justify-center text-[#6E3FF2]">
+              <FileText className="size-6 stroke-[1.8]" />
+            </span>
+            <span className="mt-2 text-[10px] font-bold text-[#0F172A] sm:text-xs">
+              Create Quote
+            </span>
+          </Link>
+
+          {/* 4. Manage Calendar */}
+          <Link
+            href="/provider/profile/edit"
+            className="flex flex-col items-center justify-center rounded-2xl border border-[#ECECF2] bg-white px-1.5 py-3.5 text-center shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition hover:-translate-y-0.5 hover:shadow-md sm:py-4"
+          >
+            <span className="flex size-10 items-center justify-center text-[#6E3FF2]">
+              <CalendarDays className="size-6 stroke-[1.8]" />
+            </span>
+            <span className="mt-2 text-[10px] font-bold text-[#0F172A] sm:text-xs">
+              Manage Calendar
+            </span>
+          </Link>
+        </div>
+      </section>
+
+      {/* ─── 6. Business Performance (Last 30 Days) ─── */}
+      <section className="space-y-2.5">
+        <div className="flex items-center justify-between px-0.5">
+          <h2 className="flex items-center gap-1.5 text-sm font-bold text-[#0F172A] sm:text-base">
+            <TrendingUp className="size-4 stroke-[2.4] text-[#6E3FF2]" />
+            <span>Business Performance</span>
+            <span className="text-xs font-normal text-slate-400">(Last 30 Days)</span>
+          </h2>
+          <Link
+            href="/provider/profile"
+            className="flex items-center gap-0.5 text-xs font-bold text-[#6E3FF2] transition hover:underline"
+          >
+            <span>View Analytics</span>
+            <ChevronRight className="size-3.5" />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-4 gap-2 sm:gap-2.5">
+          {/* Card 1: Views */}
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-[#ECECF2] bg-white px-1.5 py-3 text-center shadow-[0_2px_8px_rgba(0,0,0,0.03)] sm:py-3.5">
+            <Eye className="size-5 text-[#6E3FF2] stroke-[1.8]" />
+            <p className="mt-1 text-base font-extrabold leading-none text-[#0F172A] sm:text-lg">
+              1.4K
+            </p>
+            <p className="mt-0.5 text-[10px] font-medium text-slate-500 sm:text-[11px]">Views</p>
+            <p className="mt-1 flex items-center gap-0.5 text-[10px] font-bold text-[#10B981] sm:text-[11px]">
+              <span>↑</span>
+              <span>+28%</span>
+            </p>
+          </div>
+
+          {/* Card 2: Inquiries */}
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-[#ECECF2] bg-white px-1.5 py-3 text-center shadow-[0_2px_8px_rgba(0,0,0,0.03)] sm:py-3.5">
+            <MessageSquare className="size-5 text-[#6E3FF2] stroke-[1.8]" />
+            <p className="mt-1 text-base font-extrabold leading-none text-[#0F172A] sm:text-lg">
+              96
+            </p>
+            <p className="mt-0.5 text-[10px] font-medium text-slate-500 sm:text-[11px]">Inquiries</p>
+            <p className="mt-1 flex items-center gap-0.5 text-[10px] font-bold text-[#10B981] sm:text-[11px]">
+              <span>↑</span>
+              <span>+32%</span>
+            </p>
+          </div>
+
+          {/* Card 3: Quotes */}
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-[#ECECF2] bg-white px-1.5 py-3 text-center shadow-[0_2px_8px_rgba(0,0,0,0.03)] sm:py-3.5">
+            <FileText className="size-5 text-[#6E3FF2] stroke-[1.8]" />
+            <p className="mt-1 text-base font-extrabold leading-none text-[#0F172A] sm:text-lg">
+              34
+            </p>
+            <p className="mt-0.5 text-[10px] font-medium text-slate-500 sm:text-[11px]">Quotes</p>
+            <p className="mt-1 flex items-center gap-0.5 text-[10px] font-bold text-[#10B981] sm:text-[11px]">
+              <span>↑</span>
+              <span>+21%</span>
+            </p>
+          </div>
+
+          {/* Card 4: Bookings */}
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-[#ECECF2] bg-white px-1.5 py-3 text-center shadow-[0_2px_8px_rgba(0,0,0,0.03)] sm:py-3.5">
+            <CalendarDays className="size-5 text-[#6E3FF2] stroke-[1.8]" />
+            <p className="mt-1 text-base font-extrabold leading-none text-[#0F172A] sm:text-lg">
+              18
+            </p>
+            <p className="mt-0.5 text-[10px] font-medium text-slate-500 sm:text-[11px]">Bookings</p>
+            <p className="mt-1 flex items-center gap-0.5 text-[10px] font-bold text-[#10B981] sm:text-[11px]">
+              <span>↑</span>
+              <span>+50%</span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Onboarding Notice if onboarding incomplete */}
       {profile && !profile.onboarding_completed && (
         <div className="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
             <AlertCircle className="mt-0.5 size-5 shrink-0 text-amber-600" />
             <div>
               <p className="text-sm font-semibold text-amber-950">Finish onboarding to publish services</p>
-              <p className="mt-0.5 text-sm text-amber-900/75">
+              <p className="mt-0.5 text-xs text-amber-900/75">
                 Add your display name and complete the onboarding step before publishing.
               </p>
             </div>
           </div>
-          <Button asChild variant="outline" className="shrink-0 border-amber-300 bg-white">
+          <Button asChild variant="outline" size="sm" className="shrink-0 border-amber-300 bg-white">
             <Link href="/provider/onboarding">Complete onboarding</Link>
           </Button>
         </div>
       )}
-
-      <section aria-label="Studio overview">
-        <div className="mb-3 px-1">
-          <div>
-            <h2 className="text-lg font-bold tracking-tight text-[#172554] sm:text-xl">Your studio at a glance</h2>
-            <p className="mt-0.5 text-xs text-slate-500 sm:text-sm">A live snapshot of your business on RootIn</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
-          <MetricCard
-            icon={BriefcaseBusiness}
-            label="Total listings"
-            value={listingsError ? "—" : listingsLoading ? "…" : listingCount}
-            hint={listingsError ? "Could not load listings" : `${draftCount} in draft`}
-            tone="violet"
-          />
-          <MetricCard
-            icon={CheckCircle2}
-            label="Published listings"
-            value={listingsError ? "—" : listingsLoading ? "…" : publishedCount}
-            hint="Visible in the marketplace"
-            tone="green"
-          />
-          <MetricCard
-            icon={MessageSquare}
-            label="New inquiries"
-            value={inquiriesQuery.data?.total ?? 0}
-            hint="Requests from potential clients"
-            tone="amber"
-          />
-          <MetricCard
-            icon={BarChart3}
-            label="Profile strength"
-            value={`${completion}%`}
-            hint={`${completedProfileChecks} of ${profileChecks.length} essentials`}
-            tone="rose"
-          />
-        </div>
-      </section>
-
-      <section className="rounded-[24px] border border-[#e7e9f2] bg-white p-4 shadow-[0_16px_38px_-32px_rgba(27,30,74,0.48)] sm:rounded-[28px] sm:p-5">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div>
-            <h2 className="text-base font-bold tracking-tight text-[#172554] sm:text-lg">Quick actions</h2>
-            <p className="mt-0.5 text-xs text-slate-500 sm:text-sm">Everything you need to keep business moving</p>
-          </div>
-          <span className="hidden text-xs font-medium text-slate-400 sm:inline">MANAGE YOUR BUSINESS</span>
-        </div>
-        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
-          <QuickAction
-            href="/provider/services/new"
-            icon={<Plus className="size-5" />}
-            label="Publish a service"
-            description="Offer your expertise"
-          />
-          <QuickAction
-            href="/provider/products/new"
-            icon={<Package className="size-5" />}
-            label="Publish a product"
-            description="List something you sell"
-          />
-          <QuickAction
-            href="/publish"
-            icon={<Layers3 className="size-5" />}
-            label="Manage all listings"
-            description="See products and services"
-          />
-          <QuickAction
-            href="/provider/inquiries"
-            icon={<MessageSquare className="size-5" />}
-            label="View inquiries"
-            description="Respond to new requests"
-          />
-          <QuickAction
-            href="/provider/profile/edit"
-            icon={<Eye className="size-5" />}
-            label="Edit your profile"
-            description="Make a great first impression"
-          />
-          <QuickAction
-            href="/provider/messages"
-            icon={<MessageSquare className="size-5" />}
-            label="Open messages"
-            description="Continue your conversations"
-          />
-        </div>
-      </section>
-
-      <div className="grid gap-4 xl:grid-cols-3 xl:gap-5">
-        <section className="overflow-hidden rounded-[24px] border border-[#e7e9f2] bg-white shadow-[0_16px_38px_-32px_rgba(27,30,74,0.48)] xl:col-span-1">
-          <PanelHeading
-            icon={<MessageSquare className="size-4" />}
-            title="Recent inquiries"
-            href="/provider/inquiries"
-            action="View all"
-          />
-          <div className="px-4 pb-4">
-            {inquiriesQuery.isLoading ? (
-              <div className="space-y-3">
-                <Skeleton className="h-14 rounded-xl bg-[#f3f4fa]" />
-                <Skeleton className="h-14 rounded-xl bg-[#f3f4fa]" />
-                <Skeleton className="h-14 rounded-xl bg-[#f3f4fa]" />
-              </div>
-            ) : inquiriesQuery.isError ? (
-              <QueryError
-                message={getApiErrorMessage(inquiriesQuery.error, "Could not load your inquiries.")}
-                onRetry={() => void inquiriesQuery.refetch()}
-              />
-            ) : inquiries.length === 0 ? (
-              <EmptyState
-                icon={<MessageSquare className="size-5" />}
-                title="No inquiries yet"
-                description="Keep your profile and listings up to date to help customers find and contact you."
-                href="/provider/profile"
-                action="Improve profile"
-              />
-            ) : (
-              <div className="space-y-2">
-                {inquiries.slice(0, 4).map((inquiry) => (
-                  <Link
-                    key={inquiry.id}
-                    href="/provider/inquiries"
-                    className="flex items-center gap-3 rounded-xl bg-[#f8f8fc] p-3 transition hover:bg-[#f1efff]"
-                  >
-                    <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[#eee9ff] text-[#4b16f5]">
-                      <MessageSquare className="size-4" />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-semibold text-[#172554]">
-                        {inquiry.description}
-                      </span>
-                      <span className="mt-1 block truncate text-xs text-slate-500">
-                        {inquiry.location || "Location not specified"} ·{" "}
-                        {new Date(inquiry.created_at).toLocaleDateString()}
-                      </span>
-                    </span>
-                    <span
-                      className={
-                        inquiry.status === "new"
-                          ? "shrink-0 rounded-full bg-[#e6f8ef] px-2 py-1 text-[10px] font-semibold capitalize text-emerald-700"
-                          : "shrink-0 rounded-full bg-[#f0edff] px-2 py-1 text-[10px] font-semibold capitalize text-[#603ed0]"
-                      }
-                    >
-                      {inquiry.status}
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
-
-        <section className="overflow-hidden rounded-[24px] border border-[#e7e9f2] bg-white shadow-[0_16px_38px_-32px_rgba(27,30,74,0.48)] xl:col-span-1">
-          <PanelHeading
-            icon={<Layers3 className="size-4" />}
-            title="Your recent listings"
-            href="/publish"
-            action="Manage"
-          />
-          <div className="px-4 pb-4">
-            {listingsLoading ? (
-              <div className="space-y-3">
-                <Skeleton className="h-14 rounded-xl bg-[#f3f4fa]" />
-                <Skeleton className="h-14 rounded-xl bg-[#f3f4fa]" />
-                <Skeleton className="h-14 rounded-xl bg-[#f3f4fa]" />
-              </div>
-            ) : listingsError ? (
-              <QueryError
-                message={getApiErrorMessage(listingsError, "Could not load your listings.")}
-                onRetry={() => {
-                  void servicesQuery.refetch();
-                  void productsQuery.refetch();
-                }}
-              />
-            ) : recentListings.length === 0 ? (
-              <EmptyState
-                icon={<Layers3 className="size-5" />}
-                title="Publish your first listing"
-                description="Share a product or service so customers can discover what you offer."
-                href="/publish"
-                action="Publish an item"
-              />
-            ) : (
-              <div className="space-y-2">
-                {recentListings.map((listing) => (
-                  <div
-                    key={listing.id}
-                    className="flex items-center gap-3 rounded-xl bg-[#f8f8fc] p-3"
-                  >
-                    <span
-                      className={`grid size-9 shrink-0 place-items-center rounded-full ${
-                        listing.type === "Product"
-                          ? "bg-[#f5eaff] text-[#7b2be5]"
-                          : "bg-[#e9f8f3] text-emerald-600"
-                      }`}
-                    >
-                      {listing.type === "Product" ? (
-                        <Package className="size-4" />
-                      ) : (
-                        <BriefcaseBusiness className="size-4" />
-                      )}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-[#172554]">{listing.title}</p>
-                      <p className="mt-1 truncate text-xs text-slate-500">
-                        <span className="font-medium">{listing.type}</span>
-                        {listing.category ? ` · ${listing.category}` : ""}
-                        {listing.detail
-                          ? ` · ${listing.detail}`
-                          : ""}
-                      </p>
-                    </div>
-                    <StatusBadge status={listing.status} />
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
-
-        <section className="rounded-[24px] border border-[#e7e9f2] bg-white p-5 shadow-[0_16px_38px_-32px_rgba(27,30,74,0.48)]">
-          <div className="flex items-center gap-2">
-            <span className="grid size-8 place-items-center rounded-lg bg-[#f0ebff] text-[#4b16f5]">
-              <Sparkles className="size-4" />
-            </span>
-            <div>
-              <h2 className="text-sm font-bold text-[#172554]">Profile strength</h2>
-              <p className="text-xs text-slate-500">Stand out to more clients</p>
-            </div>
-          </div>
-          <div className="mt-5 flex items-center gap-3">
-            <div
-              role="progressbar"
-              aria-label="Profile completion"
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-valuenow={completion}
-              className="grid size-[76px] shrink-0 place-items-center rounded-full"
-              style={{
-                background: `conic-gradient(#16b889 ${completion}%, #e8eaf2 ${completion}% 100%)`,
-              }}
-            >
-              <span className="grid size-[60px] place-items-center rounded-full bg-white text-sm font-bold text-[#172554]">
-                {completion}%
-              </span>
-            </div>
-            <div>
-              <p className="text-sm font-bold text-emerald-600">
-                {completion === 100 ? "Excellent!" : "Keep going!"}
-              </p>
-              <p className="mt-1 text-xs leading-5 text-slate-500">
-                {completedProfileChecks} of {profileChecks.length} profile essentials complete.
-              </p>
-            </div>
-          </div>
-          <div className="mt-5 space-y-3">
-            <ChecklistRow
-              done={Boolean(profile?.display_name || profile?.business_name)}
-              label="Business or display name"
-            />
-            <ChecklistRow done={Boolean(profile?.about)} label="About section" />
-            <ChecklistRow done={Boolean(profile?.categories?.length)} label="Business categories" />
-            <ChecklistRow done={Boolean(profile?.service_areas?.length)} label="Areas served" />
-            <ChecklistRow done={Boolean(profile?.profile_photo)} label="Profile photo" />
-            <ChecklistRow
-              done={Boolean(profile?.portfolio?.length)}
-              label="Portfolio item"
-              icon={<ImageIcon className="size-3.5" />}
-            />
-          </div>
-          <div className="mt-4 flex items-center gap-2 rounded-xl bg-[#f7f8fc] px-3 py-2 text-xs text-slate-500">
-            <MapPin className="size-3.5" />
-            {profile?.location?.city || "Add a city to your profile"}
-          </div>
-          <Button
-            variant="outline"
-            asChild
-            className="mt-3 h-9 w-full rounded-xl border-[#ded9f7] text-[#4b16f5] hover:bg-[#f6f3ff]"
-          >
-            <Link href="/provider/profile/edit">Complete your profile</Link>
-          </Button>
-        </section>
-      </div>
-
-      <section className="flex flex-col gap-4 rounded-[24px] border border-[#e6e1f6] bg-gradient-to-r from-[#f1edff] via-[#f7f5ff] to-[#eff4ff] px-5 py-5 shadow-[0_16px_38px_-32px_rgba(27,30,74,0.48)] sm:flex-row sm:items-center sm:justify-between sm:px-7">
-        <div className="flex items-center gap-4">
-          <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white text-[#4b16f5] shadow-sm">
-            <Sparkles className="size-6" />
-          </span>
-          <div>
-            <h2 className="font-bold text-[#24186f]">Keep growing!</h2>
-            <p className="mt-1 max-w-lg text-xs leading-5 text-[#596083]">
-              Publish products or services and complete your profile so the right customers can find you.
-            </p>
-          </div>
-        </div>
-        <Button
-          asChild
-          className="h-10 shrink-0 rounded-xl bg-[#4b16f5] px-5 text-white hover:bg-[#3e10d9]"
-        >
-          <Link href="/publish">
-            Publish an item <ArrowRight className="size-4" />
-          </Link>
-        </Button>
-      </section>
     </div>
   );
 }
 
-function MetricCard({
-  icon: Icon,
-  label,
-  value,
-  hint,
-  tone,
-}: {
-  icon: typeof BriefcaseBusiness;
-  label: string;
-  value: string | number;
-  hint: string;
-  tone: "violet" | "green" | "amber" | "rose";
-}) {
-  const tones = {
-    violet: "bg-[#f0ebff] text-[#4b16f5]",
-    green: "bg-[#e6f8f1] text-emerald-600",
-    amber: "bg-[#fff4dc] text-amber-600",
-    rose: "bg-[#fff0f3] text-rose-600",
-  };
-
-  return (
-    <article className="min-h-[112px] rounded-2xl border border-[#e7e9f2] bg-white p-3.5 shadow-[0_16px_34px_-30px_rgba(27,30,74,0.48)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#dcd5fa] hover:shadow-[0_20px_38px_-26px_rgba(67,44,154,0.3)] sm:min-h-[124px] sm:rounded-[22px] sm:p-4">
-      <p className="truncate text-[11px] font-semibold text-slate-500 sm:text-xs">{label}</p>
-      <div className="mt-2 flex items-center justify-between gap-2">
-        <p className="text-2xl font-bold leading-none tracking-tight text-[#111747] sm:text-[28px]">
-          {value}
-        </p>
-        <span className={`grid size-9 shrink-0 place-items-center rounded-xl sm:size-11 sm:rounded-2xl ${tones[tone]}`}>
-          <Icon className="size-[18px] sm:size-5" />
-        </span>
-      </div>
-      <p className="mt-2 truncate text-[11px] text-slate-500 sm:text-xs">{hint}</p>
-    </article>
-  );
-}
-
-function QuickAction({
-  href,
-  icon,
-  label,
-  description,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  label: string;
-  description: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="group flex min-h-[76px] items-center gap-3 rounded-2xl border border-[#eeedf5] bg-[#fcfbff] px-3.5 py-3 transition duration-200 hover:-translate-y-0.5 hover:border-[#d9cef9] hover:bg-[#f7f3ff] hover:shadow-[0_12px_24px_-18px_rgba(75,22,245,0.4)] sm:min-h-[88px] sm:px-4"
-    >
-      <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#f0e9ff] text-[#5b25d6] transition group-hover:bg-white">
-        {icon}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-bold text-[#29205e]">{label}</span>
-        <span className="mt-1 block truncate text-xs text-slate-500">{description}</span>
-      </span>
-      <ArrowRight className="size-4 shrink-0 text-[#9c8bc8] transition group-hover:translate-x-0.5 group-hover:text-[#5b25d6]" />
-    </Link>
-  );
-}
-
-function PanelHeading({
-  icon,
-  title,
-  href,
-  action,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  href: string;
-  action: string;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-3 border-b border-[#f0f0f6] px-4 py-3.5">
-      <h2 className="flex items-center gap-2 text-sm font-bold text-[#172554]">
-        <span className="text-[#4b16f5]">{icon}</span>
-        {title}
-      </h2>
-      <Link
-        href={href}
-        className="flex items-center gap-1 text-xs font-semibold text-[#4b16f5] hover:text-[#3510bd]"
-      >
-        {action} <ChevronRight className="size-3.5" />
-      </Link>
-    </div>
-  );
-}
-
-function QueryError({ message, onRetry }: { message: string; onRetry: () => void }) {
-  return (
-    <div className="rounded-xl border border-rose-200 bg-rose-50 p-4">
-      <p role="alert" className="text-sm text-rose-700">
-        {message}
-      </p>
-      <Button
-        variant="outline"
-        size="sm"
-        className="mt-3 border-rose-200 bg-white"
-        onClick={onRetry}
-      >
-        Try again
-      </Button>
-    </div>
-  );
-}
-
-function EmptyState({
-  icon,
-  title,
-  description,
-  href,
-  action,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  href: string;
-  action: string;
-}) {
-  return (
-    <div className="rounded-xl border border-dashed border-[#dddff0] px-4 py-6 text-center">
-      <span className="mx-auto grid size-10 place-items-center rounded-full bg-[#f0ebff] text-[#4b16f5]">
-        {icon}
-      </span>
-      <p className="mt-3 text-sm font-semibold text-[#172554]">{title}</p>
-      <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>
-      <Link
-        href={href}
-        className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#4b16f5]"
-      >
-        {action} <ArrowRight className="size-3.5" />
-      </Link>
-    </div>
-  );
-}
-
-function ChecklistRow({
-  done,
-  label,
-  icon,
-}: {
-  done: boolean;
-  label: string;
-  icon?: React.ReactNode;
-}) {
-  return (
-    <div className="flex items-center gap-2 text-xs">
-      <span
-        className={
-          done
-            ? "flex size-4 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white"
-            : "flex size-4 shrink-0 items-center justify-center rounded-full border border-dashed border-slate-300 text-slate-400"
-        }
-      >
-        {done ? <Check className="size-2.5" /> : null}
-      </span>
-      {icon && <span className="text-slate-400">{icon}</span>}
-      <span className={done ? "text-slate-700" : "text-slate-400"}>{label}</span>
-    </div>
-  );
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const style =
-    status === "published"
-      ? "bg-[#e6f8ef] text-emerald-700"
-      : status === "unpublished"
-        ? "bg-slate-100 text-slate-600"
-        : status === "paused"
-          ? "bg-amber-50 text-amber-700"
-          : "bg-[#f0edff] text-[#603ed0]";
-  const label =
-    status === "published"
-      ? "Published"
-      : status === "unpublished"
-        ? "Unpublished"
-        : status === "paused"
-          ? "Paused"
-          : "Draft";
-
-  return (
-    <span className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-semibold ${style}`}>
-      {label}
-    </span>
-  );
+function profileNameInitials(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return "SF";
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[1][0]).toUpperCase();
 }

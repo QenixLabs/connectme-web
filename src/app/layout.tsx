@@ -90,9 +90,7 @@ export default function RootLayout({
       data-theme="light"
       suppressHydrationWarning
     >
-      <head />
-      <body className="min-h-screen antialiased">
-        <ServiceWorkerRegistration />
+      <head>
         {/**
          * Password-manager / form-filling browser extensions sometimes inject an
          * `fdprocessedid` attribute into buttons and inputs before React hydrates,
@@ -129,6 +127,9 @@ export default function RootLayout({
             `,
           }}
         />
+      </head>
+      <body className="min-h-screen antialiased">
+        <ServiceWorkerRegistration />
         <ThemeProvider>
           <AuthStoreProvider>
             <SocketProvider>

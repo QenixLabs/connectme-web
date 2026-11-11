@@ -38,6 +38,7 @@ import { SKILL_TONE_STYLES } from "@/data/skills";
 import type {
   ProviderRatingSummary,
   PublicProviderPackage,
+  PublicProviderProduct,
   PublicProviderProfile,
 } from "@/lib/api/marketplace";
 import type { ShareProfileTarget } from "@/lib/share";
@@ -49,7 +50,7 @@ import {
   StatTile,
 } from "@/components/marketplace/provider-profile-components";
 import { ProviderProfileHeader } from "@/components/marketplace/provider-profile-header";
-import { formatShortPrice } from "@/components/marketplace/format";
+import { formatAmount, formatShortPrice } from "@/components/marketplace/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -62,6 +63,9 @@ import {
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
 } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -543,10 +547,12 @@ function OverviewSection({
   profile,
   name,
   onRequestQuote,
+  onViewProducts,
 }: {
   profile: PublicProviderProfile;
   name: string;
   onRequestQuote: () => void;
+  onViewProducts: () => void;
 }) {
   const reasons = profile.choose_us_reasons?.filter(Boolean) ?? [];
   const members =
@@ -554,7 +560,14 @@ function OverviewSection({
       (member) => member.name?.trim() || member.avatar_url,
     ) ?? [];
   const memberCount = profile.team_members_count ?? members.length;
-  const stats = [
+  const productsCount = profile.products_count ?? profile.products?.length ?? 0;
+  const stats: {
+    label: string;
+    value: number;
+    icon: LucideIcon;
+    onClick?: () => void;
+    clickLabel?: string;
+  }[] = [
     ...(profile.services_count > 0
       ? [{ label: "Services", value: profile.services_count, icon: BriefcaseBusiness }]
       : []),
@@ -564,7 +577,17 @@ function OverviewSection({
     ...(profile.portfolio.length > 0
       ? [{ label: "Portfolio", value: profile.portfolio.length, icon: Images }]
       : []),
-    { label: "Products", value: profile.products_count ?? 0, icon: PackageIcon },
+    ...(productsCount > 0
+      ? [
+          {
+            label: "Products",
+            value: productsCount,
+            icon: PackageIcon,
+            onClick: onViewProducts,
+            clickLabel: "View products",
+          },
+        ]
+      : []),
     ...(profile.project_count != null
       ? [{ label: "Projects", value: profile.project_count, icon: BadgeCheck }]
       : []),
@@ -665,87 +688,90 @@ function OverviewSection({
 function ServiceRow({
   service,
   onRequestQuote,
+  onQuickView,
 }: {
   service: PublicProviderProfile["services"][number];
   onRequestQuote: () => void;
+  onQuickView: () => void;
 }) {
   return (
-    <div className="flex items-center gap-2">
-      <Link
-        href={`/services/${service.id}`}
-        className="group flex min-h-28 min-w-0 flex-1 items-stretch gap-3 rounded-2xl border border-provider-border/80 bg-provider-surface p-2.5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-provider-primary/35 hover:shadow-provider-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:gap-4 sm:p-3"
+    <article className="group min-w-0 overflow-hidden rounded-[24px] border border-provider-border/80 bg-provider-surface shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-provider-card">
+      <button
+        type="button"
+        onClick={onQuickView}
+        aria-label={`Quick view ${service.title}`}
+        className="relative block aspect-square w-full overflow-hidden bg-gradient-to-br from-provider-tint via-violet-100 to-provider-primary/30 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
       >
-        <span className="relative w-24 shrink-0 self-stretch overflow-hidden rounded-xl bg-gradient-to-br from-provider-tint via-violet-50 to-provider-canvas sm:w-32">
           {service.images?.[0] ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={service.images[0]}
               alt={`${service.title} preview`}
-              className="absolute inset-0 size-full object-cover transition-transform duration-300 group-hover:scale-105"
+              className="absolute inset-0 size-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
           ) : (
-            <span className="absolute inset-0 grid place-items-center text-provider-primary/60">
-              <BriefcaseBusiness className="size-7" aria-hidden="true" />
+            <span className="absolute inset-0 grid place-items-center text-provider-primary/70">
+              <BriefcaseBusiness className="size-10" aria-hidden="true" />
+            </span>
+          )}
+          <span className="absolute inset-0 bg-gradient-to-t from-slate-950/45 via-transparent to-transparent" />
+          {service.category && (
+            <span className="absolute left-3 top-3 max-w-[calc(100%-1.5rem)] truncate rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-provider-primary shadow-sm backdrop-blur-sm">
+              {service.category}
             </span>
           )}
           {service.images && service.images.length > 1 && (
-            <span className="absolute bottom-1.5 right-1.5 inline-flex items-center gap-1 rounded-full bg-black/65 px-1.5 py-1 text-[10px] font-semibold text-white">
+            <span className="absolute bottom-3 right-3 inline-flex items-center gap-1 rounded-full bg-black/65 px-2 py-1 text-[10px] font-semibold text-white">
               <Images className="size-3" aria-hidden="true" />
               {service.images.length}
             </span>
           )}
-        </span>
-        <span className="flex min-w-0 flex-1 flex-col justify-between py-0.5">
-          <span className="min-w-0">
-            {service.category && (
-              <span className="mb-1.5 block truncate text-[10px] font-semibold uppercase tracking-wide text-provider-primary sm:text-[11px]">
-                {service.category}
-              </span>
-            )}
-            <span className="line-clamp-2 block text-sm font-bold leading-snug text-provider-foreground sm:text-base">
-              {service.title}
-            </span>
-            <span className="mt-1 line-clamp-2 block text-xs leading-relaxed text-provider-muted sm:text-sm">
-              {service.short_description || service.description}
-            </span>
+      </button>
+      <div className="flex min-h-40 flex-col p-3 sm:p-4">
+        <Link
+          href={`/services/${service.id}`}
+          className="line-clamp-2 text-sm font-bold leading-snug text-provider-foreground transition-colors hover:text-provider-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-base"
+        >
+          {service.title}
+        </Link>
+        <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-provider-muted sm:text-sm">
+          {service.short_description || service.description}
+        </p>
+        <div className="mt-auto flex items-center justify-between gap-2 border-t border-provider-border/70 pt-3">
+          <span className="min-w-0 truncate text-xs font-bold text-provider-primary sm:text-sm">
+            {formatShortPrice(service.indicative_price)}
           </span>
-          <span className="mt-2 flex items-center justify-between gap-2 border-t border-provider-border/70 pt-2">
-            <span className="truncate text-xs font-bold text-provider-primary sm:text-sm">
-              {formatShortPrice(service.indicative_price)}
-            </span>
-            <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-provider-muted transition-colors group-hover:text-provider-primary">
-              View details
-              <ChevronRight className="size-3.5" aria-hidden="true" />
-            </span>
-          </span>
-        </span>
-      </Link>
-      <Button
-        type="button"
-        variant="outline"
-        className="size-11 shrink-0 self-center rounded-full border-provider-border bg-provider-surface p-0 text-provider-primary shadow-sm transition hover:border-provider-primary/30 hover:bg-provider-tint"
-        aria-label={`Request a quote for ${service.title}`}
-        onClick={onRequestQuote}
-      >
-        <Sparkles className="size-4" aria-hidden="true" />
-      </Button>
-    </div>
+          <Button
+            type="button"
+            variant="outline"
+            className="size-9 shrink-0 rounded-full border-provider-border p-0 text-provider-primary shadow-sm hover:border-provider-primary/30 hover:bg-provider-tint"
+            aria-label={`Request a quote for ${service.title}`}
+            onClick={onRequestQuote}
+          >
+            <Sparkles className="size-4" aria-hidden="true" />
+          </Button>
+        </div>
+      </div>
+    </article>
   );
 }
 
 function FeaturedServiceCard({
   service,
   onRequestQuote,
+  onQuickView,
 }: {
   service: PublicProviderProfile["services"][number];
   onRequestQuote: () => void;
+  onQuickView: () => void;
 }) {
   return (
-    <article className="overflow-hidden rounded-[24px] border border-provider-primary/15 bg-provider-surface shadow-provider-card transition-shadow hover:shadow-lg">
-      <Link
-        href={`/services/${service.id}`}
-        aria-label={`View ${service.title}`}
-        className="group relative block h-[260px] overflow-hidden bg-gradient-to-br from-violet-700 via-provider-primary to-fuchsia-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset sm:h-[320px]"
+    <article className="overflow-hidden rounded-[28px] border border-provider-border bg-provider-surface shadow-provider-card">
+      <button
+        type="button"
+        onClick={onQuickView}
+        aria-label={`Quick view ${service.title}`}
+        className="group relative block aspect-[1.35] w-full overflow-hidden bg-gradient-to-br from-provider-primary-strong via-provider-primary to-fuchsia-500 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset sm:aspect-[2.1]"
       >
         {service.images?.[0] && (
           // eslint-disable-next-line @next/next/no-img-element
@@ -755,14 +781,14 @@ function FeaturedServiceCard({
             className="absolute inset-0 size-full object-cover transition-transform duration-700 group-hover:scale-105"
           />
         )}
-        <span className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-slate-950/15" />
-        <span className="absolute inset-0 bg-gradient-to-r from-provider-primary/20 to-transparent" />
+        <span className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/10 to-slate-950/10" />
         <span className="absolute inset-0 flex flex-col justify-between p-4 sm:p-6">
           <span className="flex items-start justify-between gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-black/25 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-white shadow-sm backdrop-blur-md">
-              <Sparkles className="size-3.5" aria-hidden="true" />
-              Featured service
-            </span>
+            {service.category && (
+              <span className="max-w-[75%] truncate rounded-full border border-white/25 bg-black/25 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-white shadow-sm backdrop-blur-md">
+                {service.category}
+              </span>
+            )}
             {service.images && service.images.length > 1 && (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-black/35 px-2.5 py-1.5 text-xs font-semibold text-white backdrop-blur-md">
                 <Images className="size-3.5" aria-hidden="true" />
@@ -771,37 +797,42 @@ function FeaturedServiceCard({
             )}
           </span>
           <span className="block max-w-xl">
-            {service.category && (
-              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.15em] text-white/80">
-                {service.category}
-              </span>
-            )}
-            <span className="block text-2xl font-extrabold leading-tight tracking-tight text-white sm:text-3xl">
+            <span className="block text-xl font-extrabold leading-tight tracking-tight text-white sm:text-3xl">
               {service.title}
             </span>
-            <span className="mt-2 line-clamp-2 block max-w-lg text-sm leading-relaxed text-white/85 sm:text-base">
-              {service.short_description || service.description}
+          </span>
+        </span>
+      </button>
+      <div className="p-4 sm:p-5">
+        <p className="line-clamp-3 text-sm leading-relaxed text-provider-muted sm:text-base">
+          {service.short_description || service.description}
+        </p>
+        <div className="mt-4 flex flex-wrap items-end justify-between gap-3 border-t border-provider-border/70 pt-4">
+          <span className="min-w-0">
+            <span className="block text-[10px] font-semibold uppercase tracking-wider text-provider-muted">
+              Starting at
+            </span>
+            <span className="mt-0.5 block truncate text-xl font-extrabold text-provider-foreground sm:text-2xl">
+              {formatShortPrice(service.indicative_price)}
             </span>
           </span>
-        </span>
-      </Link>
-      <div className="flex items-center justify-between gap-3 p-3.5 sm:p-4">
-        <span className="min-w-0">
-          <span className="block text-[10px] font-semibold uppercase tracking-wider text-provider-muted">
-            Starting at
-          </span>
-          <span className="mt-0.5 block truncate text-lg font-extrabold text-provider-primary sm:text-xl">
-            {formatShortPrice(service.indicative_price)}
-          </span>
-        </span>
-        <Button
-          type="button"
-          onClick={onRequestQuote}
-          className="h-11 shrink-0 rounded-full bg-gradient-to-r from-provider-primary-strong to-provider-primary px-4 font-semibold text-white shadow-provider-action transition hover:-translate-y-0.5 hover:brightness-105 sm:px-5"
-        >
-          <Sparkles className="size-4" aria-hidden="true" />
-          Get a quote
-        </Button>
+          <div className="flex shrink-0 items-center gap-3">
+            <Link
+              href={`/services/${service.id}`}
+              className="text-xs font-semibold text-provider-muted underline-offset-4 hover:text-provider-primary hover:underline"
+            >
+              Full details
+            </Link>
+            <Button
+              type="button"
+              onClick={onRequestQuote}
+              className="h-11 rounded-full bg-gradient-to-r from-provider-primary-strong to-provider-primary px-4 font-semibold text-white shadow-provider-action transition hover:-translate-y-0.5 hover:brightness-105 sm:px-5"
+            >
+              <Sparkles className="size-4" aria-hidden="true" />
+              Get a quote
+            </Button>
+          </div>
+        </div>
       </div>
     </article>
   );
@@ -809,66 +840,94 @@ function FeaturedServiceCard({
 
 function ServicesSection({
   profile,
+  ratingSummary,
   onRequestQuote,
+  onQuickView,
 }: {
   profile: PublicProviderProfile;
+  ratingSummary?: ProviderRatingSummary | null;
   onRequestQuote: (serviceId?: string) => void;
+  onQuickView: (service: PublicProviderProfile["services"][number]) => void;
 }) {
   if (profile.services.length === 0) return null;
 
+  const stats = [
+    { label: "Services", value: String(profile.services.length) },
+    ...(profile.project_count && profile.project_count > 0
+      ? [{ label: "Projects", value: String(profile.project_count) }]
+      : []),
+    ...(ratingSummary?.average_rating != null
+      ? [{ label: "Rating", value: ratingSummary.average_rating.toFixed(1) }]
+      : []),
+    ...(profile.experience_years && profile.experience_years > 0
+      ? [{ label: "Years experience", value: String(profile.experience_years) }]
+      : []),
+  ];
+
   return (
-    <section className="relative isolate overflow-hidden rounded-[28px] border border-violet-100 bg-gradient-to-br from-white via-violet-50/70 to-fuchsia-50/60 px-3 py-8 shadow-provider-card">
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-16 -top-20 z-0 size-56 rounded-full bg-fuchsia-200/50 blur-3xl"
-      />
-      <span
-        aria-hidden="true"
-        className="pointer-events-none absolute -bottom-24 -left-20 z-0 size-56 rounded-full bg-violet-200/50 blur-3xl"
-      />
-      <div className="relative z-10">
-        <div className="flex items-center justify-between gap-3">
+    <section className="relative overflow-hidden rounded-[28px] border border-provider-border bg-gradient-to-b from-provider-surface to-provider-canvas px-3 py-6 shadow-provider-card sm:px-5 sm:py-8">
+      <div className="relative">
+        <div className="flex items-end justify-between gap-3">
           <div>
             <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-provider-primary sm:text-xs">
               <Sparkles className="size-3.5" aria-hidden="true" />
-              Made for your next big idea
+              Our services
             </span>
             <h2 className="mt-1 text-2xl font-extrabold tracking-tight text-provider-foreground sm:text-3xl">
-              Our Services
+              Find the right service
             </h2>
           </div>
-          <span className="shrink-0 rounded-full border border-provider-primary/15 bg-white/80 px-3 py-1.5 text-xs font-bold text-provider-primary shadow-sm">
+          <span className="shrink-0 rounded-full border border-provider-border bg-provider-surface px-3 py-1.5 text-xs font-bold text-provider-primary shadow-sm">
             {profile.services.length} {profile.services.length === 1 ? "service" : "services"}
           </span>
         </div>
         <p className="mt-2 max-w-xl text-sm leading-relaxed text-provider-muted sm:text-base">
-          From the first spark to the final cut, find the right team to bring your vision to life.
+          Explore the services available from {profile.display_name || profile.business_name || "this provider"}.
         </p>
         <div className="mt-5">
           <FeaturedServiceCard
             service={profile.services[0]}
             onRequestQuote={() => onRequestQuote(profile.services[0].id)}
+            onQuickView={() => onQuickView(profile.services[0])}
           />
         </div>
         {profile.services.length > 1 && (
           <div className="mt-6">
             <div className="mb-3 flex items-center justify-between gap-3">
               <h3 className="text-sm font-bold text-provider-foreground sm:text-base">
-                More ways we can help
+                More services
               </h3>
               <span className="text-xs font-medium text-provider-muted">
                 {profile.services.length - 1} more
               </span>
             </div>
-            <div className="grid grid-cols-1 gap-3">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
               {profile.services.slice(1).map((service) => (
                 <ServiceRow
                   key={service.id}
                   service={service}
                   onRequestQuote={() => onRequestQuote(service.id)}
+                  onQuickView={() => onQuickView(service)}
                 />
               ))}
             </div>
+          </div>
+        )}
+        {stats.length > 0 && (
+          <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {stats.map((stat) => (
+              <div
+                key={stat.label}
+                className="rounded-2xl border border-provider-border/80 bg-provider-surface px-3 py-3 text-center shadow-sm"
+              >
+                <span className="block text-lg font-extrabold text-provider-primary sm:text-xl">
+                  {stat.value}
+                </span>
+                <span className="mt-0.5 block text-[10px] font-medium text-provider-muted sm:text-xs">
+                  {stat.label}
+                </span>
+              </div>
+            ))}
           </div>
         )}
       </div>
@@ -883,6 +942,270 @@ function ServicesSection({
         </Button>
       </div>
     </section>
+  );
+}
+
+const SERVICE_DELIVERY_LABELS: Record<
+  NonNullable<PublicProviderProfile["services"][number]["delivery_time"]>,
+  string
+> = {
+  "1-3_days": "1–3 days",
+  "5-10_days": "5–10 days",
+  "2-4_weeks": "2–4 weeks",
+  "1_month_or_more": "1 month or more",
+  custom: "Custom timeline",
+};
+
+const SERVICE_EQUIPMENT_LABELS: Record<
+  NonNullable<PublicProviderProfile["services"][number]["equipment"]>,
+  string
+> = {
+  provider: "Provided by the provider",
+  client: "Provided by the client",
+  both: "Shared between both",
+};
+
+function ServiceQuickView({
+  service,
+  onRequestQuote,
+}: {
+  service: PublicProviderProfile["services"][number];
+  onRequestQuote: () => void;
+}) {
+  const details = [
+    ...(service.service_areas.filter(Boolean).length > 0
+      ? [
+          {
+            label: "Service areas",
+            value: service.service_areas.filter(Boolean).join(", "),
+            icon: MapPin,
+          },
+        ]
+      : []),
+    ...(service.delivery_time
+      ? [
+          {
+            label: "Delivery time",
+            value: SERVICE_DELIVERY_LABELS[service.delivery_time],
+            icon: Clock3,
+          },
+        ]
+      : []),
+    ...(service.team_size
+      ? [
+          {
+            label: "Team size",
+            value: `${service.team_size} people`,
+            icon: UsersRound,
+          },
+        ]
+      : []),
+    ...(service.equipment
+      ? [
+          {
+            label: "Equipment",
+            value: SERVICE_EQUIPMENT_LABELS[service.equipment],
+            icon: BriefcaseBusiness,
+          },
+        ]
+      : []),
+  ];
+
+  return (
+    <SheetContent
+      side="bottom"
+      className="provider-profile-theme max-h-[90dvh] gap-0 overflow-hidden rounded-t-[28px] border-provider-border bg-provider-surface p-0 text-provider-foreground"
+    >
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <div className="relative h-44 shrink-0 overflow-hidden bg-gradient-to-br from-provider-primary-strong via-provider-primary to-fuchsia-500 sm:h-56">
+          {service.images?.[0] && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={service.images[0]}
+              alt={`${service.title} preview`}
+              className="size-full object-cover"
+            />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/65 via-transparent to-transparent" />
+          {service.category && (
+            <span className="absolute bottom-4 left-4 rounded-full bg-white/90 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-provider-primary shadow-sm">
+              {service.category}
+            </span>
+          )}
+        </div>
+        <div className="px-5 pb-5 pt-4 sm:px-7">
+          <SheetHeader className="p-0">
+            <SheetTitle className="pr-10 text-xl font-extrabold text-provider-foreground sm:text-2xl">
+              {service.title}
+            </SheetTitle>
+            <SheetDescription className="text-sm leading-relaxed text-provider-muted">
+              {service.short_description || service.description}
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl bg-provider-canvas p-4">
+            <span>
+              <span className="block text-[10px] font-bold uppercase tracking-wider text-provider-muted">
+                Starting at
+              </span>
+              <span className="mt-0.5 block text-xl font-extrabold text-provider-primary">
+                {formatShortPrice(service.indicative_price)}
+              </span>
+            </span>
+            <span className="grid size-11 shrink-0 place-items-center rounded-full bg-provider-tint text-provider-primary">
+              <BriefcaseBusiness className="size-5" aria-hidden="true" />
+            </span>
+          </div>
+          {details.length > 0 && (
+            <section className="mt-5">
+              <h3 className="text-sm font-bold text-provider-foreground">
+                Service details
+              </h3>
+              <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+                {details.map(({ label, value, icon: Icon }) => (
+                  <li
+                    key={label}
+                    className="flex min-w-0 items-start gap-2.5 rounded-xl border border-provider-border/80 bg-provider-surface p-3"
+                  >
+                    <span className="grid size-8 shrink-0 place-items-center rounded-full bg-provider-tint text-provider-primary">
+                      <Icon className="size-4" aria-hidden="true" />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-[10px] font-semibold uppercase tracking-wide text-provider-muted">
+                        {label}
+                      </span>
+                      <span className="mt-0.5 block text-xs font-medium text-provider-foreground">
+                        {value}
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </div>
+      </div>
+      <div className="flex shrink-0 gap-3 border-t border-provider-border bg-provider-surface p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+        <Button variant="outline" className="h-11 flex-1 rounded-full" asChild>
+          <Link href={`/services/${service.id}`}>View full details</Link>
+        </Button>
+        <Button
+          type="button"
+          onClick={onRequestQuote}
+          className="h-11 flex-1 rounded-full shadow-provider-action"
+        >
+          Get a quote
+        </Button>
+      </div>
+    </SheetContent>
+  );
+}
+
+function ProductsSection({ profile }: { profile: PublicProviderProfile }) {
+  const products = profile.products ?? [];
+  if (products.length === 0) return null;
+  const total = profile.products_count ?? products.length;
+
+  return (
+    <section className="relative overflow-hidden rounded-[28px] border border-emerald-100 bg-gradient-to-br from-white via-emerald-50/70 to-teal-50/50 px-4 py-6 shadow-provider-card sm:px-6 sm:py-8">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-emerald-700 sm:text-xs">
+            <PackageIcon className="size-3.5" aria-hidden="true" />
+            Ready to buy
+          </span>
+          <h2 className="mt-1 text-2xl font-extrabold tracking-tight text-provider-foreground sm:text-3xl">
+            Our Products
+          </h2>
+          <p className="mt-2 max-w-xl text-sm leading-relaxed text-provider-muted sm:text-base">
+            Physical and digital products from {profile.display_name || profile.business_name || "this provider"}.
+          </p>
+        </div>
+        <span className="shrink-0 rounded-full border border-emerald-200 bg-white/80 px-3 py-1.5 text-xs font-bold text-emerald-700 shadow-sm">
+          {total} {total === 1 ? "product" : "products"}
+        </span>
+      </div>
+
+      <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {products.map((product) => (
+          <ProductCard key={product.id} product={product} />
+        ))}
+      </div>
+
+      {total > products.length && (
+        <p className="mt-4 text-center text-xs font-medium text-provider-muted">
+          Showing {products.length} of {total} products
+        </p>
+      )}
+    </section>
+  );
+}
+
+function ProductCard({ product }: { product: PublicProviderProduct }) {
+  const cover = product.images?.[0];
+  const price =
+    product.pricing?.mode === "variants"
+      ? product.price_from ?? undefined
+      : product.pricing?.price;
+  const originalPrice =
+    product.pricing?.mode === "single" ? product.pricing.original_price : undefined;
+
+  return (
+    <Link
+      href={`/products/${encodeURIComponent(product.id)}`}
+      aria-label={`View ${product.title}`}
+      className="group flex flex-col overflow-hidden rounded-2xl border border-emerald-100/80 bg-provider-surface shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-provider-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+    >
+      <span className="relative block aspect-[1.3] overflow-hidden bg-gradient-to-br from-emerald-50 via-provider-canvas to-teal-50">
+        {cover ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={cover}
+            alt={`${product.title} preview`}
+            className="absolute inset-0 size-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        ) : (
+          <span className="absolute inset-0 grid place-items-center text-emerald-300">
+            <PackageIcon className="size-9" aria-hidden="true" />
+          </span>
+        )}
+        <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-black/55 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white backdrop-blur-sm">
+          {product.product_type === "digital" ? "Digital" : "Physical"}
+        </span>
+      </span>
+      <span className="flex flex-1 flex-col gap-1 p-3.5">
+        {product.category && (
+          <span className="block truncate text-[10px] font-semibold uppercase tracking-wide text-emerald-700 sm:text-[11px]">
+            {product.category}
+          </span>
+        )}
+        <span className="line-clamp-1 block text-sm font-bold text-provider-foreground sm:text-base">
+          {product.title}
+        </span>
+        {product.short_description && (
+          <span className="line-clamp-2 block text-xs leading-relaxed text-provider-muted sm:text-sm">
+            {product.short_description}
+          </span>
+        )}
+        <span className="mt-auto flex items-center justify-between gap-2 border-t border-emerald-100/70 pt-2.5">
+          <span className="min-w-0">
+            <span className="block truncate text-sm font-extrabold text-emerald-800">
+              {price === undefined
+                ? "View price"
+                : formatAmount(price, product.pricing?.currency)}
+            </span>
+            {originalPrice !== undefined && originalPrice > (price ?? 0) && (
+              <span className="block truncate text-[11px] text-provider-muted line-through">
+                {formatAmount(originalPrice, product.pricing?.currency)}
+              </span>
+            )}
+          </span>
+          <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-provider-muted transition-colors group-hover:text-emerald-700">
+            View details
+            <ChevronRight className="size-3.5" aria-hidden="true" />
+          </span>
+        </span>
+      </span>
+    </Link>
   );
 }
 
@@ -1424,6 +1747,8 @@ export function ProviderProfileView({
   const [quoteSelection, setQuoteSelection] =
     useState<ProviderQuoteSelection | null>(null);
   const [quoteOpen, setQuoteOpen] = useState(false);
+  const [quickViewService, setQuickViewService] =
+    useState<PublicProviderProfile["services"][number] | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
   const name =
     profile.display_name || profile.business_name || "Service provider";
@@ -1479,10 +1804,15 @@ export function ProviderProfileView({
   const hasPackages = Boolean(
     profile.packages?.some((providerPackage) => providerPackage.name?.trim()),
   );
+  const productCount = profile.products_count ?? profile.products?.length ?? 0;
+  const hasProducts = productCount > 0 && (profile.products?.length ?? 0) > 0;
   const tabs: { value: string; label: string; icon: LucideIcon }[] = [
     { value: "overview", label: "Overview", icon: UserRound },
     ...(profile.services.length > 0
       ? [{ value: "services", label: "Services", icon: BriefcaseBusiness }]
+      : []),
+    ...(hasProducts
+      ? [{ value: "products", label: "Products", icon: PackageIcon }]
       : []),
     ...(profile.portfolio.length > 0
       ? [{ value: "portfolio", label: "Portfolio", icon: Images }]
@@ -1516,16 +1846,24 @@ export function ProviderProfileView({
           profile={profile}
           name={name}
           onRequestQuote={() => requestQuote()}
+          onViewProducts={() => setActiveTab("products")}
         />
       </TabsContent>
       {profile.services.length > 0 && (
         <TabsContent value="services" className="mt-0">
           <ServicesSection
             profile={profile}
+            ratingSummary={ratingSummary}
             onRequestQuote={(serviceId) =>
               requestQuote(serviceId ? { serviceId } : null)
             }
+            onQuickView={setQuickViewService}
           />
+        </TabsContent>
+      )}
+      {hasProducts && (
+        <TabsContent value="products" className="mt-0">
+          <ProductsSection profile={profile} />
         </TabsContent>
       )}
       {profile.portfolio.length > 0 && (
@@ -1609,7 +1947,7 @@ export function ProviderProfileView({
           className={
             isPreview
               ? "mt-6 grid grid-cols-1 gap-5"
-              : activeTab === "services"
+              : activeTab === "services" || activeTab === "products"
                 ? "mt-6 grid grid-cols-1 gap-6"
               : "mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]"
           }
@@ -1626,6 +1964,23 @@ export function ProviderProfileView({
           >
             {inquiryContent}
           </SheetContent>
+        </Sheet>
+      )}
+      {quickViewService && (
+        <Sheet
+          open
+          onOpenChange={(open) => {
+            if (!open) setQuickViewService(null);
+          }}
+        >
+          <ServiceQuickView
+            service={quickViewService}
+            onRequestQuote={() => {
+              const serviceId = quickViewService.id;
+              setQuickViewService(null);
+              requestQuote({ serviceId });
+            }}
+          />
         </Sheet>
       )}
     </div>

@@ -2,7 +2,7 @@
 import { RootInLogo } from "@/components/RootInLogo";
 import Link from "next/link";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
 import {
@@ -195,6 +195,7 @@ export function StepOrganization({
   values,
   onChange,
   onLogoChange,
+  logoFile,
   onSubmit,
   submitting = false,
   error,
@@ -204,6 +205,7 @@ export function StepOrganization({
   values: OrgValues;
   onChange: (values: OrgValues) => void;
   onLogoChange?: (file: File | null) => void;
+  logoFile?: File | null;
   onSubmit: () => void;
   submitting?: boolean;
   error?: string | null;
@@ -214,6 +216,17 @@ export function StepOrganization({
   const [logoError, setLogoError] = useState<string | null>(null);
   const [errors, setErrors] = useState<Partial<Record<keyof OrgValues, string>>>({});
 
+  useEffect(() => {
+    if (!logoFile) return;
+
+    const previewUrl = URL.createObjectURL(logoFile);
+    const frame = requestAnimationFrame(() => setLogoPreview(previewUrl));
+    return () => {
+      cancelAnimationFrame(frame);
+      URL.revokeObjectURL(previewUrl);
+    };
+  }, [logoFile]);
+
   const set = <K extends keyof OrgValues>(key: K, value: OrgValues[K]) => {
     onChange({ ...values, [key]: value });
     setErrors((current) => ({ ...current, [key]: undefined }));
@@ -221,6 +234,7 @@ export function StepOrganization({
 
   const handleLogoChange = (file: File | undefined) => {
     setLogoError(null);
+    setLogoPreview(null);
     if (!file) {
       onLogoChange?.(null);
       return;
@@ -237,7 +251,6 @@ export function StepOrganization({
       onLogoChange?.(null);
       return;
     }
-    setLogoPreview(URL.createObjectURL(file));
     onLogoChange?.(file);
   };
 

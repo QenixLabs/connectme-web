@@ -28,7 +28,9 @@ export function DiscoveryTabs({
   const searchParams = useSearchParams();
   const user = useStore(authStore, (state) => state.user);
   const isOpportunities = pathname.startsWith("/talent/opportunities");
-  const isRecruiters = isOpportunities && searchParams.get("view") === "recruiters";
+  const view = isOpportunities ? searchParams.get("view") : null;
+  const isRecruiters = view === "recruiters";
+  const isServices = view === "services";
   const isTalentDiscovery = pathname.startsWith("/talent/opportunities");
   const search = (searchTerm ?? searchParams.get("search") ?? "").trim();
 
@@ -81,7 +83,7 @@ export function DiscoveryTabs({
             icon: Clapperboard,
             mode: "opportunities",
             active:
-              (isOpportunities && !isRecruiters) ||
+              (isOpportunities && !isRecruiters && !isServices) ||
               (pathname === "/discover" && (!user || user.role === "talent")),
           },
           {
@@ -92,13 +94,14 @@ export function DiscoveryTabs({
             active: isRecruiters,
           },
           {
-            href: "/services",
+            href: isTalentDiscovery ? "/talent/opportunities?view=services" : "/services",
             label: "Services",
             icon: Wrench,
             mode: "services",
-            active:
-              pathname.startsWith("/services") ||
-              pathname.startsWith("/providers"),
+            active: isTalentDiscovery
+              ? isServices
+              : pathname.startsWith("/services") ||
+                pathname.startsWith("/providers"),
           },
         ];
 
@@ -146,7 +149,7 @@ export function DiscoveryTabs({
             className={className}
           >
             <Icon aria-hidden="true" className="size-4 shrink-0" />
-            {label}
+            {displayLabel}
           </Link>
         );
       })}

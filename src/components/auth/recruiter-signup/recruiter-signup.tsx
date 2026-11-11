@@ -16,6 +16,11 @@ import { Field, inputClass } from "./field";
 
 const TOTAL_STEPS = 3;
 
+type AccountIssue = {
+  field: keyof AccountValues;
+  message: string;
+};
+
 /** Maps the display labels to the company_size values the API expects. */
 const COMPANY_SIZE_MAP: Record<string, string> = {
   "Just me": "1-10",
@@ -60,6 +65,8 @@ export function RecruiterSignup({ isGoogleResume = false }: { isGoogleResume?: b
     phone: "",
     password: "",
   });
+  const [agreed, setAgreed] = useState(false);
+  const [accountIssue, setAccountIssue] = useState<AccountIssue | null>(null);
   const [roles, setRoles] = useState<string[]>([]);
   const [org, setOrg] = useState<OrgValues>({
     name: "",
@@ -118,6 +125,17 @@ export function RecruiterSignup({ isGoogleResume = false }: { isGoogleResume?: b
       const e = err as { response?: { data?: { message?: string } } };
       const message =
         e.response?.data?.message || "Could not create your account. Please try again.";
+      const messageLower = message.toLowerCase();
+      const field = (["email", "phone", "password", "name"] as const).find((key) =>
+        messageLower.includes(key),
+      );
+      if (field) {
+        const accountField = field === "name" ? "fullName" : field;
+        setAccountIssue({ field: accountField, message });
+        goTo(1);
+        toast.error(message);
+        return;
+      }
       setSignupError(message);
       toast.error(message);
     } finally {
@@ -169,7 +187,18 @@ export function RecruiterSignup({ isGoogleResume = false }: { isGoogleResume?: b
         />
         <div className="px-4 pt-3 sm:px-7 sm:pt-5">
           {step === 1 && (
-            <StepAccount values={account} onChange={setAccount} onContinue={() => goTo(2)} />
+            <StepAccount
+              values={account}
+              onChange={setAccount}
+              onContinue={() => {
+                setAccountIssue(null);
+                goTo(2);
+              }}
+              agreed={agreed}
+              onAgreementChange={setAgreed}
+              apiIssue={accountIssue}
+              onClearApiIssue={() => setAccountIssue(null)}
+            />
           )}
           {step === 2 && (
             <StepRoles
@@ -187,6 +216,7 @@ export function RecruiterSignup({ isGoogleResume = false }: { isGoogleResume?: b
               values={org}
               onChange={setOrg}
               onLogoChange={setLogoFile}
+              logoFile={logoFile}
               onSubmit={handleFinish}
               submitting={submitting}
               error={signupError}
@@ -614,6 +644,7 @@ function GoogleRecruiterOnboarding() {
               values={org}
               onChange={setOrg}
               onLogoChange={setLogoFile}
+              logoFile={logoFile}
               onSubmit={() => void finishOnboarding()}
               submitting={submitting}
               error={error}

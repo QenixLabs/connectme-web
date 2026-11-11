@@ -13,12 +13,15 @@ import {
   Wifi,
 } from "lucide-react";
 import { providersApi, servicesApi } from "@/lib/api/marketplace";
+import { productsApi } from "@/lib/api/products";
 import type {
   ProviderProfile,
+  PublicProviderProduct,
   PublicProviderProfile,
   PublicServiceSummary,
   ServiceListing,
 } from "@/lib/api/marketplace";
+import type { ProductListing } from "@/lib/api/products";
 import { getApiErrorMessage } from "@/lib/api/client";
 import { queryKeys } from "@/lib/api/query-keys";
 import { ProviderProfileView } from "@/components/marketplace/provider-profile-view";
@@ -41,9 +44,32 @@ function toPublicService(service: ServiceListing): PublicServiceSummary {
   };
 }
 
+function toPublicProduct(product: ProductListing): PublicProviderProduct {
+  return {
+    id: product.id,
+    title: product.title,
+    short_description: product.short_description,
+    category: product.category,
+    product_type: product.product_type,
+    images: product.media
+      .filter((item) => item.type === "image" && item.url)
+      .map((item) => item.url as string),
+    pricing: product.pricing,
+    price_from:
+      product.pricing.mode === "variants"
+        ? product.variants
+            .map((variant) => variant.price)
+            .filter((value): value is number => typeof value === "number" && value > 0)
+            .sort((a, b) => a - b)[0] ?? null
+        : null,
+    published_at: product.published_at ?? null,
+  };
+}
+
 function toPublicProfile(
   profile: ProviderProfile,
   services: PublicServiceSummary[],
+  products: PublicProviderProduct[],
 ): PublicProviderProfile {
   return {
     id: profile.id,
@@ -67,6 +93,8 @@ function toPublicProfile(
     })),
     services,
     services_count: services.length,
+    products,
+    products_count: products.length,
     member_since: profile.created_at ?? null,
   };
 }
@@ -107,6 +135,12 @@ export default function ProviderProfilePreviewPage() {
     retry: false,
   });
 
+  const productsQuery = useQuery({
+    queryKey: queryKeys.products.mine({ status: "published", limit: 50 }),
+    queryFn: () => productsApi.getMine({ status: "published", limit: 50 }),
+    retry: false,
+  });
+
   const slug = profileQuery.data?.profile.slug ?? "";
   const ratingQuery = useQuery({
     queryKey: queryKeys.provider.ratingSummary(slug),
@@ -115,7 +149,7 @@ export default function ProviderProfilePreviewPage() {
     retry: false,
   });
 
-  if (profileQuery.isLoading || servicesQuery.isLoading) {
+  if (profileQuery.isLoading || servicesQuery.isLoading || productsQuery.isLoading) {
     return (
       <div className="min-h-screen bg-muted/30">
         <div className="mx-auto max-w-5xl px-4 py-8">
@@ -150,7 +184,10 @@ export default function ProviderProfilePreviewPage() {
   const services = (servicesQuery.data?.data ?? [])
     .filter((service) => service.status === "published")
     .map(toPublicService);
-  const publicProfile = toPublicProfile(profile, services);
+  const products = (productsQuery.data?.data ?? [])
+    .filter((product) => product.status === "published")
+    .map(toPublicProduct);
+  const publicProfile = toPublicProfile(profile, services, products);
 
   return (
     <div className="min-h-screen bg-muted/30">

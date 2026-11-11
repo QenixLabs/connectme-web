@@ -54,6 +54,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { DiscoveryTabs } from "@/components/marketplace/discovery-tabs";
 import { OpportunityFiltersSheet } from "./OpportunityFiltersSheet";
 import { RecruiterSearchPanel } from "./RecruiterSearchPanel";
+import { TalentServicesView } from "./TalentServicesView";
 
 /* -------------------------------------------------------------------------- */
 /*                                    TYPES                                   */
@@ -652,6 +653,7 @@ export function OpportunitiesPage() {
 
   const view = searchParams?.get("view");
   const isRecruiterView = view === "recruiters";
+  const isServicesView = view === "services";
 
   const search = searchParams?.get("search") ?? "";
   const sort = (searchParams?.get("sort") ?? "relevance") as QueryCampaignsParams["sort"];
@@ -664,6 +666,7 @@ export function OpportunitiesPage() {
   const isForYou =
     tab === "For You" &&
     !isRecruiterView &&
+    !isServicesView &&
     !search &&
     !gender &&
     !locationCity &&
@@ -697,8 +700,8 @@ export function OpportunitiesPage() {
   }
 
   useEffect(() => {
-    setFilterSheetOpen(filtersOpen && !isRecruiterView);
-  }, [filtersOpen, isRecruiterView]);
+    setFilterSheetOpen(filtersOpen && !isRecruiterView && !isServicesView);
+  }, [filtersOpen, isRecruiterView, isServicesView]);
 
   useEffect(() => {
     if (!searchParams) return;
@@ -746,8 +749,14 @@ export function OpportunitiesPage() {
     return params;
   }, [tab, search, sort, gender, locationCity, skills, languages]);
 
-  const { data: campaigns, isLoading, isError } = useCampaigns(queryParams, !isForYou);
-  const { data: campaignCount } = useCampaignCount(queryParams, !isForYou);
+  const { data: campaigns, isLoading, isError } = useCampaigns(
+    queryParams,
+    !isForYou && !isServicesView,
+  );
+  const { data: campaignCount } = useCampaignCount(
+    queryParams,
+    !isForYou && !isServicesView,
+  );
 
   const bookmarkIds = useMemo(
     () => new Set((bookmarks ?? []).map((b) => b._id)),
@@ -850,11 +859,13 @@ export function OpportunitiesPage() {
         <div className="relative z-10 flex min-h-36 items-stretch sm:min-h-56">
           <div className="flex w-full max-w-2xl flex-col justify-center px-5 py-4 sm:w-[65%] sm:px-8 sm:py-8 lg:px-10">
             <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-indigo-200 sm:text-xs sm:tracking-[0.2em]">
-              RootIn creative network / {isRecruiterView ? "companies" : "opportunities"}
+              RootIn creative network / {isRecruiterView ? "companies" : isServicesView ? "marketplace" : "opportunities"}
             </p>
             <h1 className="mt-2 text-xl font-bold leading-tight sm:mt-3 sm:text-3xl md:text-4xl">
               {isRecruiterView ? (
                 <>Discover <span className="text-fuchsia-300">recruiters</span> and companies</>
+              ) : isServicesView ? (
+                <>Find <span className="text-fuchsia-300">creative services</span> for your project</>
               ) : (
                 <>Find the best <span className="text-fuchsia-300">opportunities</span> for your talent</>
               )}
@@ -862,9 +873,11 @@ export function OpportunitiesPage() {
             <p className="mt-1.5 max-w-xl text-[11px] leading-relaxed text-white/80 sm:mt-2 sm:text-sm md:text-base">
               {isRecruiterView
                 ? "Connect with production houses, agencies, and creative brands."
+                : isServicesView
+                  ? "Discover trusted creative professionals and services for your next project."
                 : "Explore auditions, casting calls, projects, and creative roles."}
             </p>
-            {!isRecruiterView && (
+            {!isRecruiterView && !isServicesView && (
               <Button
                 asChild
                 variant="secondary"
@@ -885,7 +898,11 @@ export function OpportunitiesPage() {
         <DiscoveryTabs searchTerm={searchInput} />
       </div>
 
-      {!isRecruiterView && (
+      {isServicesView ? (
+        <TalentServicesView initialSearch={search} />
+      ) : (
+        <>
+          {!isRecruiterView && (
         <Card className="mx-4 gap-0 rounded-3xl border-border/60 bg-card py-0 shadow-[0_8px_24px_rgba(27,16,56,0.07)]">
           <CardContent className="space-y-3.5 p-3.5 sm:p-5">
             <div className="flex items-center gap-2">
@@ -976,7 +993,7 @@ export function OpportunitiesPage() {
             </div>
           </CardContent>
         </Card>
-      )}
+          )}
 
       {isRecruiterView && (
         <RecruiterSearchPanel
@@ -1190,6 +1207,8 @@ export function OpportunitiesPage() {
           </Link>
         </Button>
       </section>
+        </>
+      )}
     </div>
   );
 }

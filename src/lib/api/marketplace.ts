@@ -105,6 +105,7 @@ export interface PublicServiceProviderSummary {
   about?: string;
   average_rating: number | null;
   review_count: number;
+  is_verified?: boolean;
 }
 
 export interface PublicServiceSummary {
@@ -123,6 +124,24 @@ export interface PublicServiceSummary {
   indicative_price?: IndicativePrice | null;
   published_at?: string | null;
   provider?: PublicServiceProviderSummary | null;
+}
+
+export interface PublicProviderProduct {
+  id: string;
+  title: string;
+  short_description?: string;
+  category?: string;
+  product_type?: "physical" | "digital";
+  images: string[];
+  pricing?: {
+    mode?: "single" | "variants";
+    price?: number;
+    original_price?: number;
+    currency?: string;
+    tax_percent?: number;
+  } | null;
+  price_from?: number | null;
+  published_at?: string | null;
 }
 
 export interface PublicProviderProfile {
@@ -180,6 +199,7 @@ export interface PublicProviderProfile {
   portfolio: ProviderPortfolioItem[];
   services: PublicServiceSummary[];
   services_count: number;
+  products?: PublicProviderProduct[];
   products_count?: number;
   member_since?: string | null;
 }

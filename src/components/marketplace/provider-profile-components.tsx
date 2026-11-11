@@ -17,10 +17,14 @@ export function StatTile({
   label,
   value,
   icon: Icon,
+  onClick,
+  clickLabel,
 }: {
   label: string;
   value: string | number;
   icon: LucideIcon;
+  onClick?: () => void;
+  clickLabel?: string;
 }) {
   const accent = {
     Services: {
@@ -54,10 +58,9 @@ export function StatTile({
     value: "text-provider-foreground",
   };
 
-  return (
-    <div
-      className={`flex min-w-0 items-center gap-2 rounded-xl border ${accent.border} bg-gradient-to-br from-white to-provider-canvas p-3 shadow-sm transition-transform hover:-translate-y-0.5 hover:shadow-provider-card`}
-    >
+  const className = `flex min-w-0 items-center gap-2 rounded-xl border ${accent.border} bg-gradient-to-br from-white to-provider-canvas p-3 text-left shadow-sm transition-transform hover:-translate-y-0.5 hover:shadow-provider-card`;
+  const content = (
+    <>
       <span className={`grid size-9 shrink-0 place-items-center rounded-full ${accent.icon}`}>
         <Icon className="size-4" aria-hidden="true" />
       </span>
@@ -69,8 +72,23 @@ export function StatTile({
           {label}
         </span>
       </span>
-    </div>
+    </>
   );
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        aria-label={clickLabel ?? `View ${label.toLowerCase()}`}
+        className={`${className} cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2`}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return <div className={className}>{content}</div>;
 }
 
 export function PackageCard({

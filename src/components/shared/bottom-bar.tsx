@@ -67,20 +67,26 @@ export function BottomBar({ navItems, mobileNavItems, iconOnly, variant = "defau
         isSettingsVariant ? "h-[78px]" : "h-16",
       )}>
         {visibleNavItems.map((item) => {
-          const active = isMounted && (
-            pathname.startsWith(item.href) ||
-            item.label === activeLabel ||
-            (isSettingsVariant && item.label === "Profile")
-          );
+          const isExactDashboard =
+            item.href === "/provider/dashboard" ||
+            item.href === "/talent/dashboard" ||
+            item.href === "/recruiter/dashboard";
+          const active =
+            isMounted &&
+            (activeLabel
+              ? item.label === activeLabel
+              : isExactDashboard
+                ? pathname === item.href
+                : pathname.startsWith(item.href));
           const Icon = item.icon;
           return (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
-                "group relative flex flex-col items-center justify-center gap-0.5 py-2 transition-colors",
+                "group relative flex flex-col items-center justify-center gap-0.5 py-1.5 transition-colors",
                 isSettingsVariant
-                  ? active ? "text-[#6f2ce9]" : "text-[#29265f] hover:text-[#6f2ce9]"
+                  ? active ? "text-[#6f2ce9]" : "text-[#475569] hover:text-[#6f2ce9]"
                   : active ? "text-primary" : "text-muted-foreground hover:text-foreground"
               )}
               aria-current={active ? "page" : undefined}
@@ -89,7 +95,7 @@ export function BottomBar({ navItems, mobileNavItems, iconOnly, variant = "defau
               <span
                 className={cn(
                   isSettingsVariant
-                    ? "flex h-12 min-w-[58px] items-center justify-center rounded-[18px] transition-all duration-200"
+                    ? "flex h-11 min-w-[54px] items-center justify-center rounded-[16px] transition-all duration-200"
                     : "flex h-9 w-9 items-center justify-center rounded-full transition-all duration-200",
                   active
                     ? isSettingsVariant
@@ -105,20 +111,25 @@ export function BottomBar({ navItems, mobileNavItems, iconOnly, variant = "defau
                       alt="Profile photo"
                     />
                     <AvatarFallback>
-                      <Icon className={isSettingsVariant ? "size-6" : "size-5"} />
+                      <Icon className={isSettingsVariant ? "size-5" : "size-5"} />
                     </AvatarFallback>
                   </Avatar>
                 ) : (
-                  <Icon className={isSettingsVariant ? "size-6" : "size-5"} />
+                  <span className="relative flex items-center justify-center">
+                    <Icon className={isSettingsVariant ? "size-5" : "size-5"} />
+                    {item.label === "Inquiries" && (
+                      <span className="absolute -right-1 -top-1 size-2 rounded-full bg-[#ef4444] ring-2 ring-white" />
+                    )}
+                  </span>
                 )}
               </span>
               {(!iconOnly || isSettingsVariant) && (
                 <span className={cn(
-                  "text-[10px] font-medium",
-                  isSettingsVariant && "text-[12px]"
+                  "text-[10px] font-medium leading-tight",
+                  isSettingsVariant && (active ? "text-[11px] font-bold text-[#6f2ce9]" : "text-[11px] text-[#475569]")
                 )}>{item.label}</span>
               )}
-              {active && (
+              {active && !isSettingsVariant && (
                 <span className="absolute bottom-1.5 h-1 w-1 rounded-full bg-primary" />
               )}
             </Link>

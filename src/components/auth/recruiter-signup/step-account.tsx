@@ -27,6 +27,13 @@ export type AccountValues = {
   password: string;
 };
 
+type AccountField = keyof AccountValues;
+
+type AccountIssue = {
+  field: AccountField;
+  message: string;
+};
+
 const perks = [
   { icon: Users, label: ["Verified", "Talent Network"] },
   { icon: Target, label: ["Smart", "Matching"] },
@@ -36,40 +43,71 @@ const perks = [
 
 function validatePassword(password: string): string | null {
   if (password.length < 8) return "Password must be at least 8 characters";
+  if (!/[a-z]/.test(password)) return "Password needs one lowercase letter";
   if (!/[A-Z]/.test(password)) return "Password needs one uppercase letter";
   if (!/\d/.test(password)) return "Password needs one number";
   if (!/[^A-Za-z0-9]/.test(password)) return "Password needs one special character";
   return null;
 }
 
+function validateField(field: AccountField, values: AccountValues): string | undefined {
+  switch (field) {
+    case "fullName":
+      if (!values.fullName.trim()) return "Full name is required";
+      if (values.fullName.trim().length > 80) return "Name must be 80 characters or fewer";
+      return undefined;
+    case "email":
+      return /^\S+@\S+\.\S+$/.test(values.email.trim())
+        ? undefined
+        : "Enter a valid work email";
+    case "phone": {
+      const digits = values.phone.replace(/\D/g, "");
+      return /^[6-9]\d{9}$/.test(digits)
+        ? undefined
+        : "Enter a valid 10-digit mobile number";
+    }
+    case "password":
+      return validatePassword(values.password) ?? undefined;
+  }
+}
+
 export function StepAccount({
   values,
   onChange,
   onContinue,
+  agreed,
+  onAgreementChange,
+  apiIssue,
+  onClearApiIssue,
 }: {
   values: AccountValues;
   onChange: (values: AccountValues) => void;
   onContinue: () => void;
+  agreed: boolean;
+  onAgreementChange: (agreed: boolean) => void;
+  apiIssue?: AccountIssue | null;
+  onClearApiIssue?: () => void;
 }) {
   const [showPassword, setShowPassword] = useState(false);
-  const [agreed, setAgreed] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof AccountValues, string>>>({});
   const [agreementError, setAgreementError] = useState<string | null>(null);
 
-  const set = (key: keyof AccountValues) => (value: string) => {
+  const set = (key: AccountField) => (value: string) => {
     onChange({ ...values, [key]: value });
     setErrors((current) => ({ ...current, [key]: undefined }));
+    if (apiIssue?.field === key) onClearApiIssue?.();
   };
+
+  const getFieldError = (key: AccountField) =>
+    errors[key] ?? (apiIssue?.field === key ? apiIssue.message : undefined);
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     const next: Partial<Record<keyof AccountValues, string>> = {};
-    const digits = values.phone.replace(/\D/g, "");
-    if (!values.fullName.trim()) next.fullName = "Full name is required";
-    if (!/^\S+@\S+\.\S+$/.test(values.email.trim())) next.email = "Enter a valid work email";
-    if (digits.length !== 10) next.phone = "Enter a valid 10-digit mobile number";
-    const passwordError = validatePassword(values.password);
-    if (passwordError) next.password = passwordError;
+    (Object.keys(values) as AccountField[]).forEach((field) => {
+      const error = validateField(field, values);
+      if (error) next[field] = error;
+    });
     const agreementMessage = agreed
       ? null
       : "Accept the Terms of Service and Privacy Policy to continue";
@@ -82,10 +120,8 @@ export function StepAccount({
     }
     onContinue();
   };
-
   return (
     <form className="space-y-3" onSubmit={handleSubmit} noValidate>
-
        <section
        className="
          relative
@@ -145,32 +181,36 @@ export function StepAccount({
        </div>
 
       <div className="space-y-2">
-         <Field icon={<User className="size-5" />} label="Full Name" required error={errors.fullName}>
+         <Field icon={<User className="size-5" />} label="Full Name" required error={getFieldError("fullName")}>
           <input
             required
+            autoComplete="name"
             className={inputClass}
             placeholder="e.g. Karan Mehta"
              value={values.fullName}
              onChange={(e) => set("fullName")(e.target.value)}
-             aria-invalid={Boolean(errors.fullName)}
+             onBlur={() => setErrors((current) => ({ ...current, fullName: validateField("fullName", values) }))}
+             aria-invalid={Boolean(getFieldError("fullName"))}
            />
          </Field>
-         <Field icon={<Mail className="size-5" />} label="Work Email" required error={errors.email}>
+         <Field icon={<Mail className="size-5" />} label="Work Email" required error={getFieldError("email")}>
           <input
             required
             type="email"
+            autoComplete="email"
             className={inputClass}
             placeholder="e.g. karan@company.com"
              value={values.email}
              onChange={(e) => set("email")(e.target.value)}
-             aria-invalid={Boolean(errors.email)}
+             onBlur={() => setErrors((current) => ({ ...current, email: validateField("email", values) }))}
+             aria-invalid={Boolean(getFieldError("email"))}
            />
          </Field>
          <Field
            icon={<Phone className="size-5" />}
            label="Mobile Number"
            required
-           error={errors.phone}
+           error={getFieldError("phone")}
           trailing={
             <span className="rounded-md border border-border px-2 py-0.5 text-xs font-semibold text-muted-foreground">
               IN
@@ -181,18 +221,20 @@ export function StepAccount({
             required
             inputMode="numeric"
             maxLength={10}
+            autoComplete="tel"
             className={inputClass}
             placeholder="98765 43210"
              value={values.phone}
              onChange={(e) => set("phone")(e.target.value.replace(/\D/g, "").slice(0, 10))}
-             aria-invalid={Boolean(errors.phone)}
+             onBlur={() => setErrors((current) => ({ ...current, phone: validateField("phone", values) }))}
+             aria-invalid={Boolean(getFieldError("phone"))}
            />
          </Field>
          <Field
            icon={<Lock className="size-5" />}
            label="Password"
            required
-           error={errors.password}
+           error={getFieldError("password")}
           trailing={
             <button
               type="button"
@@ -207,11 +249,13 @@ export function StepAccount({
           <input
             required
             type={showPassword ? "text" : "password"}
+            autoComplete="new-password"
             className={inputClass}
             placeholder="Create a strong password"
              value={values.password}
              onChange={(e) => set("password")(e.target.value)}
-             aria-invalid={Boolean(errors.password)}
+             onBlur={() => setErrors((current) => ({ ...current, password: validateField("password", values) }))}
+             aria-invalid={Boolean(getFieldError("password"))}
            />
          </Field>
        </div>
@@ -223,7 +267,7 @@ export function StepAccount({
           type="checkbox"
           checked={agreed}
           onChange={(e) => {
-            setAgreed(e.target.checked);
+            onAgreementChange(e.target.checked);
             if (e.target.checked) setAgreementError(null);
           }}
           className={`size-4 shrink-0 accent-[var(--primary)] ${agreementError ? "ring-2 ring-destructive ring-offset-1" : ""}`}

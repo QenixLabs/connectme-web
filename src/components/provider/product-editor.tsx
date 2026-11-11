@@ -383,7 +383,7 @@ export function ProductEditor({ productId }: { productId?: string }) {
       <div className="mx-auto max-w-3xl rounded-2xl border border-red-200 bg-red-50 p-6 text-sm text-red-800">
         <p>{getApiErrorMessage(productQuery.error, "Could not load product.")}</p>
         <Button asChild variant="outline" className="mt-4">
-          <Link href="/provider/products">Back to My Products</Link>
+          <Link href="/provider/listings">Back to My Listings</Link>
         </Button>
       </div>
     );
@@ -572,7 +572,7 @@ function ProductEditorForm({
       await queryClient.invalidateQueries({ queryKey: ["products", "public"] });
       setDirty(false);
       toast.success("Product published");
-      router.push("/provider/products");
+      router.push("/provider/listings");
     } catch (publishError) {
       showError(getApiErrorMessage(publishError, "Could not publish product."));
     } finally {
@@ -723,14 +723,14 @@ function ProductEditorForm({
       <header className="mb-5 flex items-center justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-violet-700">
-            {productId ? "Edit product" : "My products"}
+            {productId ? "Edit product" : "My listings"}
           </p>
           <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
             {productId ? "Update your listing" : "Add a new listing"}
           </h1>
         </div>
         <Button asChild type="button" variant="outline" className="rounded-xl">
-          <Link href="/provider/products">Exit</Link>
+          <Link href="/provider/listings">Exit</Link>
         </Button>
       </header>
 
