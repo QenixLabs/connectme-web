@@ -73,6 +73,7 @@ export function TalentProfileView({
   awards,
   viewerRole,
   campaigns,
+  reportUser,
 }: {
   profile: TalentProfile;
   portfolioItems: PortfolioApiResponse[];
@@ -81,6 +82,7 @@ export function TalentProfileView({
   awards: AwardType[];
   viewerRole: "talent" | "recruiter" | "admin" | null;
   campaigns?: Campaign[];
+  reportUser?: { userId: string; name: string };
 }) {
   const authUser = useAuthStore((s) => s.user);
   const router = useRouter();
@@ -141,7 +143,7 @@ export function TalentProfileView({
 
   return (
     <>
-      <div className="public-talent-profile mx-auto w-full max-w-md bg-background pb-24 text-foreground">
+      <div className="public-talent-profile mx-auto w-full max-w-5xl bg-background pb-24 text-foreground">
         {/* Cover + identity band */}
         <HeroSection
           profile={profile}
@@ -163,6 +165,7 @@ export function TalentProfileView({
           viewerRole={viewerRole}
           campaigns={campaigns}
           testimonials={testimonials}
+          reportUser={reportUser}
         />
 
         {/* Social connect */}
@@ -171,22 +174,24 @@ export function TalentProfileView({
         {/* Tab bar */}
         <nav
           ref={tabScrollRef}
-           className="no-scrollbar flex snap-x snap-mandatory items-end overflow-x-auto rounded-[20px] bg-white/90 px-1 py-1.5 shadow-[0_6px_24px_rgba(15,23,42,0.05)]"
+            aria-label="Profile sections"
+            className="no-scrollbar flex snap-x snap-mandatory items-end gap-1 overflow-x-auto rounded-[20px] border border-border/60 bg-white/95 px-1.5 py-2 shadow-[0_6px_24px_rgba(15,23,42,0.05)]"
         >
           {tabItems.map((t) => (
             <button
               key={t.id}
               data-tab={t.id}
+              aria-current={activeTab === t.id ? "page" : undefined}
               onClick={() => setActiveTab(t.id)}
               className={cn(
-                "w-1/4 min-w-[25%] snap-center flex flex-col items-center gap-1 border-b-2 px-0.5 pb-1.5 pt-1 transition-colors",
+                "min-w-[76px] flex-1 snap-center flex flex-col items-center gap-1 rounded-xl px-2 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 activeTab === t.id
-                   ? "border-[#2563EB] text-[#2563EB]"
-                  : "border-transparent text-muted-foreground",
+                   ? "bg-blue-50 text-[#2563EB]"
+                  : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
               )}
             >
               <t.icon className="size-4" />
-              <span className="text-[9px] font-semibold">{t.label}</span>
+              <span className="text-[10px] font-semibold">{t.label}</span>
             </button>
           ))}
         </nav>

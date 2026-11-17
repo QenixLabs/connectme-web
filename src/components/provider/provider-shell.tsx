@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { BottomBar } from "@/components/shared/bottom-bar";
 import { TopBar } from "@/components/shared/top-bar";
+import { CommunicationFeed } from "@/components/content/communication-feed";
 import {
   providerBottomNavItems,
   providerNavItems,
@@ -38,6 +39,7 @@ export function ProviderShell({ children }: { children: React.ReactNode }) {
           isDashboard ? "max-w-xl sm:max-w-2xl" : "max-w-7xl lg:px-8"
         )}
       >
+        {isDashboard && <CommunicationFeed />}
         {children}
       </main>
       {!isConversationPage && !isListingEditor && (

@@ -20,6 +20,7 @@ import {
   ClipboardList,
   ArrowUpRight,
   ShieldCheck,
+  Headphones,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/providers/auth-store-provider";
@@ -71,6 +72,9 @@ export function TopBar({ navItems, role, showUserMenu = false }: TopBarProps) {
   // small screens so the page matches the reference (desktop keeps nav).
   const hideOnMobile = pathname === "/recruiter/find-talent";
   const hideNav = role === "provider" && pathname === "/provider/dashboard";
+  const showSupportShortcut =
+    (role === "recruiter" || role === "provider") &&
+    pathname === `/${role}/dashboard`;
 
   return (
     <header
@@ -115,6 +119,19 @@ export function TopBar({ navItems, role, showUserMenu = false }: TopBarProps) {
         )}
 
           <div className="flex items-center gap-1">
+            {showSupportShortcut && (
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="h-9 gap-1.5 rounded-full px-3"
+              >
+                <Link href={`/${role}/support`} aria-label="Help and support">
+                  <Headphones className="size-4" />
+                  <span className="hidden sm:inline">Support</span>
+                </Link>
+              </Button>
+            )}
             {role === "provider" && (
               <Link
                 href="/services"
@@ -250,6 +267,12 @@ function UserMenu({ role }: { role: TopBarProps["role"] }) {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
+                  <Link href="/talent/support" className="cursor-pointer">
+                    <Headphones className="mr-2 size-4" />
+                    Help &amp; Support
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
                   <Link href="/talent/analytics" className="cursor-pointer">
                     <BarChart3 className="mr-2 size-4" />
                     Analytics
@@ -278,6 +301,12 @@ function UserMenu({ role }: { role: TopBarProps["role"] }) {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
+                  <Link href="/recruiter/support" className="cursor-pointer">
+                    <Headphones className="mr-2 size-4" />
+                    Help &amp; Support
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
                   <Link href="/recruiter/analytics" className="cursor-pointer">
                     <BarChart3 className="mr-2 size-4" />
                     Analytics
@@ -303,6 +332,12 @@ function UserMenu({ role }: { role: TopBarProps["role"] }) {
                   <Link href={profileHref} className="cursor-pointer">
                     <User className="mr-2 size-4" />
                     Profile
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/provider/support" className="cursor-pointer">
+                    <Headphones className="mr-2 size-4" />
+                    Help &amp; Support
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
@@ -349,7 +384,7 @@ function UserMenu({ role }: { role: TopBarProps["role"] }) {
                   className="cursor-pointer"
                 >
                   <Store className="mr-2 size-4" />
-                  {hasProviderAccess ? "Provider Studio" : "Become a service provider"}
+                  {hasProviderAccess ? "Provider WorkShop" : "Become a service provider"}
                 </Link>
               </DropdownMenuItem>
             )}

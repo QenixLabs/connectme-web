@@ -72,6 +72,17 @@ function getApiErrorMessage(error: unknown, fallback: string): string {
 
 const ACTION_OPTIONS = [
   "all",
+  "communication.created",
+  "communication.edited",
+  "communication.published",
+  "communication.send_queued",
+  "communication.sent",
+  "communication.delivery_failed",
+  "communication.archived",
+  "legal.draft_saved",
+  "legal.published",
+  "platform.settings.updated",
+  "team.role.permissions_updated",
   "message_read",
   "attachment_uploaded",
   "user_blocked",

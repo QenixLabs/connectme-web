@@ -7,6 +7,7 @@ import Image from "next/image";
 import {
   LayoutDashboard,
   Users,
+  Gavel,
   ShieldCheck,
   Flag,
   MessageSquareWarning,
@@ -16,7 +17,12 @@ import {
   Image as ImageIcon,
   Clock,
   KeyRound,
+  Headphones,
+  TicketPercent,
   LogOut,
+  Megaphone,
+  FileText,
+  Bell,
 } from "lucide-react";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { Button } from "@/components/ui/button";
@@ -45,6 +51,7 @@ import {
 } from "@/components/ui/sidebar";
 
 import rootinLogo from "@/assets/rootin-logo-orange.png";
+import { CommunicationFeed } from "@/components/content/communication-feed";
 
 const navigation = [
   {
@@ -55,6 +62,10 @@ const navigation = [
     title: "Management",
     items: [
       { label: "Users", href: "/admin/users", icon: Users },
+      { label: "Talent overview", href: "/admin/talents", icon: Users },
+      { label: "Provider overview", href: "/admin/providers", icon: Users },
+      { label: "Recruiter overview", href: "/admin/recruiters", icon: Users },
+      { label: "Bulk Moderation", href: "/admin/moderation", icon: Gavel },
       { label: "Verifications", href: "/admin/verifications", icon: ShieldCheck },
     ],
   },
@@ -63,6 +74,7 @@ const navigation = [
     items: [
       { label: "Reports", href: "/admin/reports", icon: Flag },
       { label: "Appeals", href: "/admin/appeals", icon: MessageSquareWarning },
+      { label: "Support", href: "/admin/support", icon: Headphones },
       { label: "Portfolio", href: "/admin/portfolio", icon: ImageIcon },
     ],
   },
@@ -70,8 +82,11 @@ const navigation = [
     title: "System",
     items: [
       { label: "Audit Logs", href: "/admin/audit-logs", icon: ScrollText },
+      { label: "Communication", href: "/admin/communication", icon: Megaphone },
+      { label: "Terms & Conditions", href: "/admin/terms-and-conditions", icon: FileText },
       { label: "Plans", href: "/admin/plans", icon: CreditCard },
       { label: "Subscriptions", href: "/admin/subscriptions", icon: BarChart3 },
+      { label: "Coupons", href: "/admin/coupons", icon: TicketPercent },
       { label: "Cron Jobs", href: "/admin/cron-jobs", icon: Clock },
       { label: "OTP Test", href: "/admin/otp-test", icon: KeyRound },
     ],
@@ -81,12 +96,21 @@ const navigation = [
 const pageTitles: Record<string, string> = {
   "/admin/dashboard": "Dashboard",
   "/admin/users": "Users",
+  "/admin/talents": "Talent overview",
+  "/admin/providers": "Provider overview",
+  "/admin/recruiters": "Recruiter overview",
+  "/admin/moderation": "Bulk Moderation",
   "/admin/verifications": "Verifications",
   "/admin/reports": "Reports",
   "/admin/appeals": "Appeals",
+  "/admin/support": "Support",
   "/admin/audit-logs": "Audit Logs",
+  "/admin/communication": "Communication",
+  "/admin/notifications": "Notifications",
+  "/admin/terms-and-conditions": "Terms & Conditions",
   "/admin/plans": "Plans",
   "/admin/subscriptions": "Subscriptions",
+  "/admin/coupons": "Coupons",
   "/admin/portfolio": "Portfolio",
   "/admin/cron-jobs": "Cron Jobs",
   "/admin/otp-test": "OTP Test",
@@ -201,7 +225,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <span className="text-sm font-medium text-foreground sm:hidden">{pageTitle}</span>
           </div>
 
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-2">
+            <Button variant="ghost" size="icon" asChild><Link href="/admin/notifications" aria-label="Notifications"><Bell className="size-4" /></Link></Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center gap-2 h-8 px-2 -mr-2">
@@ -226,7 +251,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </header>
 
-        <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6">{children}</main>
+        <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6">{pathname === "/admin/dashboard" && <CommunicationFeed />}{children}</main>
       </SidebarInset>
 
     </SidebarProvider>

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, BadgeCheck, CheckCheck, ExternalLink, MoreVertical } from "lucide-react";
+import { ArrowLeft, BadgeCheck, CheckCheck, ExternalLink, MoreVertical, Flag } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ interface ConversationHeaderProps {
   showBack?: boolean;
   onBack?: () => void;
   onMarkAllRead?: () => void;
+  onReport?: () => void;
   className?: string;
 }
 
@@ -28,6 +29,7 @@ export function ConversationHeader({
   showBack,
   onBack,
   onMarkAllRead,
+  onReport,
   className,
 }: ConversationHeaderProps) {
   const router = useRouter();
@@ -139,6 +141,10 @@ export function ConversationHeader({
           >
             <CheckCheck className="mr-2 size-4" />
             Mark all as read
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={onReport} className="cursor-pointer text-destructive">
+            <Flag className="mr-2 size-4" />
+            Report user
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

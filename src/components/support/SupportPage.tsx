@@ -3,10 +3,12 @@
 import {
   ChevronRight,
   CircleHelp,
+  CheckCircle2,
   Clock3,
   CreditCard,
   Headphones,
   Mail,
+  LoaderCircle,
   Megaphone,
   MessageSquareMore,
   Plus,
@@ -39,6 +41,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { supportApi, type SupportTicket } from "@/lib/api/support";
+import { toast } from "sonner";
 
 type Category = {
   name: string;
@@ -66,55 +70,41 @@ const faqs: Array<[string, string]> = [
   ["Why am I not receiving messages?", "Check notification permissions and your internet connection, then refresh your inbox."],
 ];
 
-type Ticket = {
-  id: string;
-  subject: string;
-  date: string;
-  status: string;
-  tone: string;
-  description: string;
-};
-
-const initialTickets: Ticket[] = [
-  { id: "#RTN-78543", subject: "Payment not reflecting", date: "20 Sep", status: "Open", tone: "status-open", description: "Payment completed but not reflecting in the wallet balance." },
-  { id: "#RTN-77211", subject: "Document verification issue", date: "18 Sep", status: "In Progress", tone: "status-progress", description: "Submitted documents are still pending review." },
-  { id: "#RTN-76109", subject: "Cannot send messages", date: "14 Sep", status: "Resolved", tone: "status-resolved", description: "Messages were failing to send. Fixed after reconnecting." },
-];
-
 export function SupportPage() {
   const router = useRouter();
   const pathname = usePathname();
   const [query, setQuery] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState("");
   const [notice, setNotice] = useState("");
-  const [ticketList, setTicketList] = useState<Ticket[]>(initialTickets);
+  const [ticketList, setTicketList] = useState<SupportTicket[]>([]);
+  const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
+  const [replyMessage, setReplyMessage] = useState("");
+  const [ticketLoading, setTicketLoading] = useState(true);
+  const [ticketError, setTicketError] = useState(false);
+  const [ticketSubmitting, setTicketSubmitting] = useState(false);
+  const [replySubmitting, setReplySubmitting] = useState(false);
+  const [ticketCategory, setTicketCategory] = useState("");
   const [ticketDialogOpen, setTicketDialogOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
-  const [viewingTicket, setViewingTicket] = useState<Ticket | null>(null);
   const [newSubject, setNewSubject] = useState("");
   const [newDescription, setNewDescription] = useState("");
 
-  const messagesHref = pathname.startsWith("/recruiter") ? "/recruiter/messages" : "/talent/messages";
+  const messagesHref = pathname.startsWith("/recruiter")
+    ? "/recruiter/messages"
+    : pathname.startsWith("/provider")
+      ? "/provider/messages"
+      : "/talent/messages";
 
+  const refreshTickets = async () => {
+    setTicketError(false);
+    try { setTicketList((await supportApi.mine()).tickets); }
+    catch { setTicketError(true); }
+    finally { setTicketLoading(false); }
+  };
   useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem("rootin-support-tickets");
-      if (!raw) return;
-      const parsed: unknown = JSON.parse(raw);
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrate persisted tickets on mount
-      if (Array.isArray(parsed)) setTicketList(parsed as Ticket[]);
-    } catch {
-      // Corrupt storage — fall back to the default tickets.
-    }
+    const timer = window.setTimeout(() => { void refreshTickets(); }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem("rootin-support-tickets", JSON.stringify(ticketList));
-    } catch {
-      // Storage unavailable — tickets still work for this session.
-    }
-  }, [ticketList]);
 
   const matches = (text: string, term: string) => text.toLowerCase().includes(term.toLowerCase());
 
@@ -159,21 +149,45 @@ export function SupportPage() {
 
   const submitTicket = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (ticketSubmitting) return;
     const subject = newSubject.trim();
-    if (!subject) {
-      setNotice("Give your ticket a subject before submitting.");
+    const message = newDescription.trim();
+    if (subject.length < 3 || !message) {
+      toast.error("Add a subject and describe the issue.");
       return;
     }
-    const id = `#RTN-${Math.floor(10000 + Math.random() * 89999)}`;
-    const date = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-    setTicketList((current) => [
-      { id, subject, date, status: "Open", tone: "status-open", description: newDescription.trim() || "No additional details provided." },
-      ...current,
-    ]);
-    setNewSubject("");
-    setNewDescription("");
-    setTicketDialogOpen(false);
-    setNotice(`Ticket ${id} created. Our team will reply soon.`);
+    setTicketSubmitting(true);
+    void supportApi.create({ subject, message, category: ticketCategory || undefined }).then(async (ticket) => {
+      setNewSubject(""); setNewDescription(""); setTicketCategory(""); setTicketDialogOpen(false);
+      setNotice(`Ticket created. Reference ${ticket._id.slice(-8).toUpperCase()}.`);
+      toast.success("Ticket submitted. You can follow the conversation below.");
+      await refreshTickets();
+    }).catch(() => toast.error("Ticket could not be submitted. Please try again.")).finally(() => setTicketSubmitting(false));
+  };
+
+  const openTicket = async (id: string) => {
+    try {
+      setSelectedTicket(await supportApi.getMine(id));
+    } catch {
+      toast.error("Could not load this conversation. Please try again.");
+    }
+  };
+
+  const sendReply = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!selectedTicket || !replyMessage.trim() || replySubmitting) return;
+    setReplySubmitting(true);
+    try {
+      const updatedTicket = await supportApi.replyMine(selectedTicket._id, replyMessage.trim());
+      setSelectedTicket(updatedTicket);
+      setReplyMessage("");
+      await refreshTickets();
+      toast.success("Reply sent.");
+    } catch {
+      toast.error("Reply could not be sent. Please try again.");
+    } finally {
+      setReplySubmitting(false);
+    }
   };
 
   return (
@@ -268,7 +282,7 @@ export function SupportPage() {
           {filteredCategories.length > 0 ? (
           <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-7 md:px-0 scrollbar-none">
             {filteredCategories.map(({ name, description, icon: Icon, tone }) => (
-              <button key={name} type="button" onClick={() => setNotice(`${name} articles selected`)} className={`${tone} category-card snap-start`}>
+              <button key={name} type="button" onClick={() => applySearch(name)} className={`${tone} category-card snap-start`}>
                 <span className="category-icon"><Icon /></span>
                 <span className="mt-3 block text-xs font-extrabold text-ink">{name}</span>
                 <span className="mt-1 block text-[10px] leading-4 text-muted-foreground">{description}</span>
@@ -331,7 +345,7 @@ export function SupportPage() {
           </aside>
         </div>
 
-        <section className="mt-4 rounded-lg border border-border bg-card p-4 md:p-5">
+        <section id="support-tickets" className="mt-4 scroll-mt-24 rounded-xl border border-border bg-card p-4 shadow-sm md:p-5">
           <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
             <div className="min-w-0">
               <h2 className="truncate text-lg font-extrabold text-ink">Your Support Tickets</h2>
@@ -339,19 +353,33 @@ export function SupportPage() {
             </div>
             <Button variant="outline" size="sm" onClick={() => setTicketDialogOpen(true)}><Plus /> <span className="hidden sm:inline">Create New Ticket</span><span className="sm:hidden">New</span></Button>
           </div>
-          <div className="mt-4 grid gap-2 md:grid-cols-3">
-            {ticketList.map((ticket) => (
-              <article key={ticket.id} className="rounded-md border border-border p-3">
+          <div className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+            {ticketLoading ? (
+              <div className="flex items-center gap-2 rounded-lg bg-muted/60 p-5 text-sm text-muted-foreground"><LoaderCircle className="size-4 animate-spin" /> Loading your requests…</div>
+            ) : ticketError ? (
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-destructive/20 bg-destructive/5 p-4 text-sm">
+                <span>We couldn’t load your support requests.</span>
+                <Button variant="outline" size="sm" onClick={() => void refreshTickets()}>Try again</Button>
+              </div>
+            ) : ticketList.length === 0 ? (
+              <div className="col-span-full rounded-lg border border-dashed border-border bg-muted/30 px-5 py-8 text-center">
+                <span className="mx-auto grid size-10 place-items-center rounded-full bg-primary/10 text-primary"><MessageSquareMore className="size-5" /></span>
+                <h3 className="mt-3 text-sm font-bold text-ink">No support requests yet</h3>
+                <p className="mt-1 text-xs text-muted-foreground">If you need a hand, send us a message and we’ll take it from there.</p>
+                <Button size="sm" className="mt-4" onClick={() => setTicketDialogOpen(true)}><Plus /> Create a request</Button>
+              </div>
+            ) : ticketList.map((ticket) => (
+              <article key={ticket._id} className="rounded-lg border border-border bg-background/60 p-4 transition hover:border-primary/30 hover:shadow-sm">
                 <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
                   <div className="min-w-0">
-                    <p className="text-[10px] font-bold text-primary">{ticket.id}</p>
+                    <p className="text-[10px] font-bold text-primary">#{ticket._id.slice(-8).toUpperCase()}</p>
                     <h3 className="mt-1 truncate text-xs font-bold text-ink">{ticket.subject}</h3>
                   </div>
-                  <span className={`${ticket.tone} status-pill`}>{ticket.status}</span>
+                  <span className={`${ticket.status === "resolved" || ticket.status === "closed" ? "status-resolved" : ticket.status === "in_progress" ? "status-progress" : "status-open"} status-pill`}>{ticket.status === "waiting_on_user" ? "Your reply needed" : ticket.status.replaceAll("_", " ")}</span>
                 </div>
                 <div className="mt-3 flex items-center justify-between text-[10px] text-muted-foreground">
-                  <span>Updated {ticket.date}</span>
-                  <Button variant="link" size="sm" className="h-auto p-0 text-[10px]" onClick={() => setViewingTicket(ticket)}>View <ChevronRight /></Button>
+                  <span>Updated {new Date(ticket.last_activity_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>
+                  <Button variant="link" size="sm" className="h-auto p-0 text-[10px]" onClick={() => void openTicket(ticket._id)}>View conversation <ChevronRight /></Button>
                 </div>
               </article>
             ))}
@@ -362,14 +390,29 @@ export function SupportPage() {
       <Dialog open={ticketDialogOpen} onOpenChange={setTicketDialogOpen}>
         <DialogContent className="support-theme sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-ink">Create support ticket</DialogTitle>
-            <DialogDescription>Tell us what went wrong and our team will get back to you.</DialogDescription>
+            <DialogTitle className="text-ink">Tell us how we can help</DialogTitle>
+            <DialogDescription>Share a few details. Our support team will reply here and you can track the conversation in your requests.</DialogDescription>
           </DialogHeader>
           <form onSubmit={submitTicket} className="grid gap-3">
+            <div className="grid gap-1.5">
+              <Label htmlFor="ticket-category">What do you need help with?</Label>
+              <select id="ticket-category" value={ticketCategory} onChange={(event) => setTicketCategory(event.target.value)} className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                <option value="">Choose a topic (optional)</option>
+                {[
+                  ["account", "Account"],
+                  ["verification", "Verification"],
+                  ["payments", "Payments"],
+                  ["technical", "Technical issue"],
+                  ["other", "Something else"],
+                ].map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              </select>
+            </div>
             <div className="grid gap-1.5">
               <Label htmlFor="ticket-subject">Subject</Label>
               <Input
                 id="ticket-subject"
+                minLength={3}
+                maxLength={120}
                 value={newSubject}
                 onChange={(event) => setNewSubject(event.target.value)}
                 placeholder="e.g. Payment not reflecting"
@@ -379,32 +422,36 @@ export function SupportPage() {
               <Label htmlFor="ticket-description">Description</Label>
               <Textarea
                 id="ticket-description"
+                maxLength={10000}
                 value={newDescription}
                 onChange={(event) => setNewDescription(event.target.value)}
                 placeholder="Describe the issue in a few lines"
-                rows={4}
+                rows={5}
               />
+              <p className="text-right text-[11px] text-muted-foreground">{newDescription.length}/10,000</p>
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setTicketDialogOpen(false)}>Cancel</Button>
-              <Button type="submit">Submit ticket</Button>
+              <Button type="submit" disabled={ticketSubmitting || newSubject.trim().length < 3 || !newDescription.trim()}>
+                {ticketSubmitting && <LoaderCircle className="animate-spin" />} {ticketSubmitting ? "Sending…" : "Send request"}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={viewingTicket !== null} onOpenChange={(open) => { if (!open) setViewingTicket(null); }}>
+      <Dialog open={selectedTicket !== null} onOpenChange={(open) => { if (!open) setSelectedTicket(null); }}>
         <DialogContent className="support-theme sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-ink">{viewingTicket?.subject}</DialogTitle>
-            <DialogDescription>{viewingTicket?.id} · Updated {viewingTicket?.date}</DialogDescription>
+            <DialogTitle className="text-ink">{selectedTicket?.subject}</DialogTitle>
+            <DialogDescription>Ticket #{selectedTicket?._id.slice(-8).toUpperCase()} · {selectedTicket?.status.replaceAll("_", " ")}</DialogDescription>
           </DialogHeader>
-          {viewingTicket && (
-            <div className="grid gap-3">
-              <span className={`${viewingTicket.tone} status-pill w-fit`}>{viewingTicket.status}</span>
-              <p className="text-xs leading-5 text-muted-foreground">{viewingTicket.description}</p>
-            </div>
-          )}
+          <div className="max-h-80 space-y-3 overflow-y-auto rounded-lg bg-muted/30 p-3">
+            {selectedTicket?.replies.length === 0 && <p className="py-5 text-center text-sm text-muted-foreground">Your message is with our team. We’ll reply here.</p>}
+            {selectedTicket?.replies.map((reply, index) => <div key={reply._id || index} className={`max-w-[90%] rounded-xl p-3 text-sm ${reply.author_role === "admin" ? "bg-primary/10" : "ml-auto bg-card shadow-sm"}`}><p className="mb-1 text-[10px] font-bold text-muted-foreground">{reply.author_role === "admin" ? "Rootin Support" : "You"} · {new Date(reply.created_at).toLocaleString()}</p><p className="whitespace-pre-wrap break-words">{reply.message}</p></div>)}
+          </div>
+          {selectedTicket && !["resolved", "closed"].includes(selectedTicket.status) && <form className="grid gap-2" onSubmit={sendReply}><Label htmlFor="ticket-reply" className="sr-only">Your reply</Label><Textarea id="ticket-reply" value={replyMessage} onChange={(event) => setReplyMessage(event.target.value)} placeholder="Write a reply…" maxLength={10000} required /><div className="flex justify-end"><Button type="submit" disabled={replySubmitting || !replyMessage.trim()}>{replySubmitting && <LoaderCircle className="animate-spin" />} {replySubmitting ? "Sending…" : "Send reply"}</Button></div></form>}
+          {selectedTicket && ["resolved", "closed"].includes(selectedTicket.status) && <p className="flex items-center gap-2 rounded-lg bg-success/10 p-3 text-sm text-foreground"><CheckCircle2 className="size-4 text-success" /> This request is closed. Create a new request if you need more help.</p>}
         </DialogContent>
       </Dialog>
 

@@ -20,6 +20,9 @@ import {
   Star,
   ClipboardList,
   LayoutGrid,
+  Headphones,
+  Megaphone,
+  FileText,
 } from "lucide-react";
 
 export interface NavItem {
@@ -47,6 +50,7 @@ export const recruiterNavItems: NavItem[] = [
   { label: "Shortlist", href: "/recruiter/shortlist", icon: UsersRound },
   { label: "Team", href: "/recruiter/team", icon: Users },
   { label: "Messages", href: "/recruiter/messages", icon: MessageSquare },
+  { label: "Support", href: "/recruiter/support", icon: Headphones },
 ];
 
 export const recruiterBottomNavItems: NavItem[] = [
@@ -64,6 +68,7 @@ export const providerNavItems: NavItem[] = [
   { label: "Inquiries", href: "/provider/inquiries", icon: ClipboardList },
   { label: "Messages", href: "/provider/messages", icon: MessageSquare },
   { label: "Verification", href: "/provider/verify-documents", icon: ShieldCheck },
+  { label: "Support", href: "/provider/support", icon: Headphones },
 ];
 
 export const providerBottomNavItems: NavItem[] = [
@@ -75,6 +80,8 @@ export const providerBottomNavItems: NavItem[] = [
 ];
 
 export const adminNavItems: NavItem[] = [
+  { label: "Communication", href: "/admin/communication", icon: Megaphone },
+  { label: "Terms & Conditions", href: "/admin/terms-and-conditions", icon: FileText },
   { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { label: "Users", href: "/admin/users", icon: Users },
   { label: "Verifications", href: "/admin/verifications", icon: ShieldCheck },

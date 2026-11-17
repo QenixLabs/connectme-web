@@ -15,6 +15,7 @@ import {
   Clock,
   ArrowRight,
   FileSearch,
+  Eye,
 } from "lucide-react";
 import {
   PieChart,
@@ -81,7 +82,11 @@ const METRIC_OPTIONS: { value: MetricKey; label: string }[] = [
   { value: "reports_created", label: "Reports Created" },
   { value: "reports_resolved", label: "Reports Resolved" },
   { value: "campaigns_created", label: "Campaigns" },
+  { value: "recruiter_campaigns_created", label: "Recruiter activity" },
+  { value: "applications_submitted", label: "Talent applications" },
   { value: "verifications_submitted", label: "Verifications" },
+  { value: "verifications_approved", label: "Verifications approved" },
+  { value: "verifications_rejected", label: "Verifications rejected" },
 ];
 
 function DashboardSkeleton() {
@@ -178,6 +183,7 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedMetric, setSelectedMetric] = useState<MetricKey>("signups");
+  const [selectedRole, setSelectedRole] = useState<"talent" | "recruiter" | "provider">("talent");
 
   useEffect(() => {
     let cancelled = false;
@@ -298,6 +304,28 @@ export default function AdminDashboardPage() {
     if (h < 17) return "Good afternoon";
     return "Good evening";
   }, []);
+  const roleMetrics = {
+    talent: [
+      ["Total talent", stats?.total_artists, "Registered talent"],
+      ["Active talent", stats?.active_talents_30d, "Active in last 30 days"],
+      ["Applications", stats?.total_applications, "Campaign applications"],
+      ["Accepted", stats?.accepted_applications, "Successful applications"],
+    ],
+    recruiter: [
+      ["Total recruiters", stats?.total_brands, "Registered recruiter accounts"],
+      ["Active recruiters", stats?.active_recruiters_30d, "Active in last 30 days"],
+      ["Campaigns", stats?.total_campaigns, "Across the platform"],
+      ["Applications pending", stats?.pending_applications, "Awaiting recruiter review"],
+      ["Profile views", stats?.profile_views_7d, "Talent profiles viewed · 7 days"],
+    ],
+    provider: [
+      ["Total providers", stats?.total_providers, "Registered service providers"],
+      ["Active providers", stats?.active_providers_30d, "Active in last 30 days"],
+      ["Pending verification", stats?.pending_verifications, "Awaiting admin review"],
+      ["Open reports", stats?.pending_reports, "Platform-wide moderation queue"],
+      ["Profile views", stats?.profile_views_30d, "Talent profile views · 30 days"],
+    ],
+  } as const;
 
   if (loading) return <DashboardSkeleton />;
 
@@ -336,7 +364,47 @@ export default function AdminDashboardPage() {
         </div>
       </motion.div>
 
-      {/* Stat cards */}
+      {/* Role-specific account overview */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <CardTitle className="text-sm font-semibold">Account intelligence</CardTitle>
+            <CardDescription className="text-xs mt-0.5">Applications, recruiter campaign activity, provider activity, and talent profile views.</CardDescription>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {(["talent", "recruiter", "provider"] as const).map((role) => (
+                <button key={role} onClick={() => setSelectedRole(role)} className={cn("rounded-md border px-3 py-1.5 text-xs font-medium capitalize transition-colors", selectedRole === role ? "border-primary bg-primary text-primary-foreground" : "border-border text-muted-foreground hover:bg-accent hover:text-foreground")}>
+                  {role === "talent" ? "Talent" : role === "recruiter" ? "Recruiters" : "Providers"}
+                </button>
+              ))}
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <motion.div variants={container} initial="hidden" animate="show" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+            {roleMetrics[selectedRole].map(([label, value, sublabel], index) => (
+              <motion.div variants={item} key={label}>
+                <StatCard label={label} value={(value ?? 0).toLocaleString()} sublabel={sublabel} icon={[Users, ShieldCheck, FolderKanban, CheckCircle, Eye][index]} accentClass={["border-l-primary bg-primary/10 text-primary", "border-l-green bg-green/10 text-green", "border-l-gold bg-gold/10 text-gold", "border-l-rose bg-rose/10 text-rose", "border-l-sky-500 bg-sky-500/10 text-sky-600"][index]} />
+              </motion.div>
+            ))}
+          </motion.div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-semibold">Verification status</CardTitle>
+          <CardDescription className="text-xs mt-0.5">Current submission outcomes across all account types.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <StatCard label="Verified" value={stats.verified_verifications.toLocaleString()} sublabel="Approved or auto-approved" icon={ShieldCheck} accentClass="border-l-green bg-green/10 text-green" />
+          <StatCard label="Pending" value={stats.pending_verifications.toLocaleString()} sublabel="Awaiting review" icon={Clock} accentClass="border-l-gold bg-gold/10 text-gold" />
+          <StatCard label="Not verified" value={stats.rejected_verifications.toLocaleString()} sublabel="Rejected submissions" icon={UserX} accentClass="border-l-rose bg-rose/10 text-rose" />
+        </CardContent>
+      </Card>
+
+      {/* Platform-wide operations */}
       <motion.div
         variants={container}
         initial="hidden"
@@ -345,18 +413,18 @@ export default function AdminDashboardPage() {
       >
         <motion.div variants={item}>
           <StatCard
-            label="Total Artists"
-            value={stats.total_artists.toLocaleString()}
-            sublabel="Registered talent"
+            label="All users"
+            value={(stats.total_artists + stats.total_brands + stats.total_providers + stats.total_admins).toLocaleString()}
+            sublabel="Talent, recruiters, providers, admins"
             icon={Users}
             accentClass="border-l-primary bg-primary/10 text-primary"
           />
         </motion.div>
         <motion.div variants={item}>
           <StatCard
-            label="Verified Brands"
-            value={stats.total_brands.toLocaleString()}
-            sublabel="Registered recruiters"
+            label="Total Providers"
+            value={stats.total_providers.toLocaleString()}
+            sublabel="Registered service providers"
             icon={ShieldCheck}
             accentClass="border-l-gold bg-gold/10 text-gold"
           />

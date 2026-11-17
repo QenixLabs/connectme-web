@@ -6,6 +6,7 @@ import { Clapperboard, Play } from "lucide-react";
 import Link from "next/link";
 import { GlassCard } from "../primitives";
 import type { PortfolioItem } from "@/lib/types/portfolio";
+import { getYouTubeEmbedUrl } from "@/hooks/use-portfolio";
 
 export function ShowreelPlayerCard({
   items,
@@ -20,6 +21,10 @@ export function ShowreelPlayerCard({
   if (!hero) return null;
 
   const img = hero.thumbnailUrl || hero.url;
+  const youtubeUrl = hero.type === "youtube" ? getYouTubeEmbedUrl(hero.url) : null;
+  const youtubeSrc = youtubeUrl
+    ? `${youtubeUrl}${youtubeUrl.includes("?") ? "&" : "?"}rel=0&playsinline=1`
+    : null;
 
   return (
     <GlassCard className="bg-gradient-to-br from-slate-50 to-blue-50/70 p-3.5 sm:p-4">
@@ -35,34 +40,43 @@ export function ShowreelPlayerCard({
            View All
          </Link>
       </div>
-      <button
-        onClick={() => onOpenReel?.(hero.id)}
-        className="group relative block aspect-video w-full overflow-hidden rounded-[18px] bg-slate-900 shadow-[0_10px_24px_rgba(15,23,42,0.14)]"
-      >
-        <img
-          src={img}
-          alt={hero.title}
-          loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-        />
-        <span className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/5 to-transparent" />
-        <span className="absolute inset-0 grid place-items-center">
-          <span className="grid size-12 place-items-center rounded-full border-2 border-card bg-foreground/30 backdrop-blur-sm transition-colors group-hover:bg-foreground/45">
-            <Play className="size-5 fill-card text-card" />
-          </span>
-        </span>
-        <span className="absolute left-3 top-3 rounded-full bg-white/15 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-white backdrop-blur-md">
-          Video
-        </span>
-        <span className="absolute bottom-2 left-3 max-w-[60%] truncate rounded-md bg-foreground/60 px-2 py-0.5 text-[11px] font-semibold text-card">
+      <div className="relative aspect-video w-full overflow-hidden rounded-[18px] bg-slate-900 shadow-[0_10px_24px_rgba(15,23,42,0.14)]">
+        {youtubeSrc ? (
+          <iframe
+            src={youtubeSrc}
+            title={hero.title}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+            className="h-full w-full"
+          />
+        ) : hero.type === "video" ? (
+          <video
+            src={hero.url}
+            poster={hero.thumbnailUrl}
+            controls
+            playsInline
+            preload="metadata"
+            aria-label={`Play ${hero.title}`}
+            className="h-full w-full object-contain"
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => onOpenReel?.(hero.id)}
+            className="group relative block h-full w-full"
+          >
+            <img src={img} alt={hero.title} loading="lazy" className="h-full w-full object-cover" />
+            <span className="absolute inset-0 grid place-items-center">
+              <span className="grid size-12 place-items-center rounded-full border-2 border-card bg-foreground/30 text-card">
+                <Play className="size-5 fill-current" />
+              </span>
+            </span>
+          </button>
+        )}
+        <span className="pointer-events-none absolute bottom-2 left-3 max-w-[60%] truncate rounded-md bg-foreground/60 px-2 py-0.5 text-[11px] font-semibold text-card">
           {hero.title}
         </span>
-        {hero.duration && (
-          <span className="absolute bottom-2 right-3 rounded-md bg-foreground/60 px-2 py-0.5 text-[11px] font-semibold text-card">
-            {hero.duration}
-          </span>
-        )}
-      </button>
+      </div>
     </GlassCard>
   );
 }

@@ -44,6 +44,7 @@ import {
   getAchievementTitle,
 } from "./achievement-types";
 import { useCreateAchievement, useUpdateAchievement } from "@/hooks/use-experience";
+import { CropImageModal } from "@/components/ui/crop-image-modal";
 
 const defaultDraftStorageKey = "rootin-achievement-draft";
 
@@ -187,6 +188,7 @@ export function AchievementForm({
   const updateMutation = useUpdateAchievement();
   const [uploadingProof, setUploadingProof] = useState(false);
   const [localProofPreview, setLocalProofPreview] = useState<string | null>(null);
+  const [cropSource, setCropSource] = useState<string | null>(null);
   const draftStorageKey =
     mode === "default" ? defaultDraftStorageKey : `${defaultDraftStorageKey}-${mode}`;
   const form = useForm<AchievementFormValues>({
@@ -252,6 +254,10 @@ export function AchievementForm({
       return;
     }
 
+    setCropSource(URL.createObjectURL(file));
+  }
+
+  async function handleCroppedUpload(file: File) {
     setLocalProofPreview(URL.createObjectURL(file));
     setUploadingProof(true);
     try {
@@ -304,6 +310,19 @@ export function AchievementForm({
   }
 
   return (
+    <>
+    <CropImageModal
+      open={Boolean(cropSource)}
+      onOpenChange={(open) => {
+        if (!open && cropSource) URL.revokeObjectURL(cropSource);
+        if (!open) setCropSource(null);
+      }}
+      imageSrc={cropSource ?? ""}
+      aspect={1}
+      title="Crop cover image"
+      description="Adjust image to a square 1:1 cover."
+      onCropped={handleCroppedUpload}
+    />
     <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetContent
         side="bottom"
@@ -496,5 +515,6 @@ export function AchievementForm({
         </Form>
       </SheetContent>
     </Sheet>
+    </>
   );
 }

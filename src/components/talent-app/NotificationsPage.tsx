@@ -37,6 +37,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CommunicationNotificationDialog } from "@/components/content/communication-notification-dialog";
 
 type Tab = "active" | "history";
 
@@ -83,6 +84,14 @@ function NotificationItem({
   return (
     <Card
       onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onClick();
+        }
+      }}
       className={cn(
         "relative cursor-pointer transition-colors hover:border-primary/40",
         isUnread && "border-l-4 border-l-primary",
@@ -130,6 +139,7 @@ function NotificationItem({
 }
 
 export function NotificationsPage() {
+  const [communication, setCommunication] = useState<Notification | null>(null);
   const [tab, setTab] = useState<Tab>("active");
   const [query, setQuery] = useState("");
 
@@ -199,6 +209,11 @@ export function NotificationsPage() {
   }
 
   function handleItemClick(notification: Notification) {
+    if (notification.type === "system" && notification.data.communication_id) {
+      if (notification.status === "unread") markRead.mutate(notification._id);
+      setCommunication(notification);
+      return;
+    }
     if (tab === "active" && notification.status === "unread") {
       markRead.mutate(notification._id);
       return;
@@ -214,6 +229,7 @@ export function NotificationsPage() {
 
   return (
     <div className="mx-auto w-full max-w-4xl space-y-5 px-4 pb-28 pt-5 lg:px-6">
+      <CommunicationNotificationDialog notification={communication} close={() => setCommunication(null)} />
       {/* Hero */}
       <Card className="overflow-hidden">
         <CardHeader>

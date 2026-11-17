@@ -6,6 +6,7 @@ import { Ellipsis, Globe, Link2 } from "lucide-react";
 import {
   siInstagram,
   siYoutube,
+  siImdb,
   siFacebook,
   siTiktok,
   siPinterest,
@@ -52,6 +53,7 @@ type IconEntry =
 const socialIcons: Record<string, IconEntry> = {
   instagram: { icon: siInstagram, label: "Instagram profile" },
   youtube: { icon: siYoutube, label: "YouTube channel" },
+  imdb: { icon: siImdb, label: "IMDb profile" },
   facebook: { icon: siFacebook, label: "Facebook profile" },
   linkedin: { component: FaLinkedinIn, color: "#0A66C2", label: "LinkedIn profile" },
   tiktok: { icon: siTiktok, label: "TikTok profile" },
@@ -103,6 +105,7 @@ function SocialIcon({ platform, className }: { platform: string; className: stri
 }
 
 function formatPlatformName(key: string): string {
+  if (key === "imdb") return "IMDb";
   if (key === "twitter") return "X";
   return key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, " ");
 }

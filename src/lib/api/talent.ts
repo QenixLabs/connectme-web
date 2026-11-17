@@ -391,6 +391,7 @@ export interface Award {
   description?: string;
   media_url?: string;
   proof_url?: string;
+  credit_url?: string;
   order?: number;
   created_at: string;
 }

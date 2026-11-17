@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
-import { X, Share2, Play, FileText, ExternalLink } from "lucide-react";
+import { X, Play, FileText, ExternalLink } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -321,16 +321,6 @@ function ReelSlide({
             initialLiked={item.isLiked}
             variant="reel"
           />
-          <button
-            className="flex flex-col items-center gap-1 text-white transition-transform active:scale-90"
-            aria-label="Share"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <span className="grid size-11 place-items-center rounded-full bg-black/40 backdrop-blur-sm">
-              <Share2 className="size-5" />
-            </span>
-            <span className="text-[11px] font-medium">Share</span>
-          </button>
         </div>
 
         {/* Bottom info */}

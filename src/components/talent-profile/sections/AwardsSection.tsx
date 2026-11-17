@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { useState } from "react";
-import { Award, ChevronRight, Play } from "lucide-react";
+import { Award, ExternalLink, Play } from "lucide-react";
 import { CollapsibleSection } from "../primitives";
 import type { AwardItem } from "../data";
 import {
@@ -44,39 +44,30 @@ export function AwardsSection({
           <p className="mt-0.5 text-xs text-muted-foreground/60">Awards and recognitions will appear here.</p>
         </div>
       ) : (
-        <ul className="space-y-2">
+        <ul className="divide-y divide-border/60">
           {data.map((a) => (
             <li
               key={a.id}
-              className="border-b border-border/60 pb-2 last:border-0 last:pb-0"
+              className="py-3 first:pt-0 last:pb-0"
             >
-              <button
-                type="button"
-                onClick={() => setSelected(a)}
-                className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <span className="relative grid size-9 shrink-0 place-items-center overflow-hidden rounded-lg bg-amber-50 text-warning">
-                  <Award className="size-4" />
-                  {a.mediaUrl && (
-                    <img
-                      src={getYouTubeThumbnail(a.mediaUrl) ?? a.mediaUrl}
-                      alt=""
-                      className="absolute inset-0 size-full object-cover"
-                      onError={(event) => {
-                        event.currentTarget.style.display = "none";
-                      }}
-                    />
-                  )}
-                  {a.mediaUrl && getYouTubeEmbedUrl(a.mediaUrl) && (
-                    <Play className="absolute size-4 fill-white text-white drop-shadow" />
-                  )}
-                </span>
-                <span className="min-w-0">
-                  <span className="block truncate text-[11px] font-bold text-foreground">{a.name}</span>
-                  <span className="block truncate text-[10px] text-muted-foreground">{a.issuer}</span>
-                </span>
-                <ChevronRight className="size-3.5 shrink-0 text-muted-foreground" />
-              </button>
+              <div className="flex min-w-0 items-start gap-3">
+                {a.mediaUrl ? (
+                  <button type="button" aria-label={`View ${a.name} media`} onClick={() => setSelected(a)} className="relative size-[60px] shrink-0 overflow-hidden rounded-xl bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                    <img src={getYouTubeThumbnail(a.mediaUrl) ?? a.mediaUrl} alt={`${a.name} cover`} className="size-full object-cover" onError={(event) => { event.currentTarget.style.display = "none"; }} />
+                    {getYouTubeEmbedUrl(a.mediaUrl) && <span className="absolute inset-0 grid place-items-center bg-black/15"><Play className="size-4 fill-white text-white drop-shadow" /></span>}
+                  </button>
+                ) : (
+                  <button type="button" aria-label={`View ${a.name} details`} onClick={() => setSelected(a)} className="grid size-[60px] shrink-0 place-items-center rounded-xl bg-amber-50 text-[#D97706] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                    <Award className="size-5" />
+                  </button>
+                )}
+                <div className="min-w-0 flex-1">
+                  <button type="button" onClick={() => setSelected(a)} className="block min-h-6 max-w-full break-words text-left text-[15px] font-semibold leading-snug text-foreground hover:text-brand focus-visible:outline-none focus-visible:underline">{a.name}</button>
+                  {(a.issuer || a.year) && <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{[a.issuer, a.year].filter(Boolean).join(" · ")}</p>}
+                  {a.description && <p className="mt-1 line-clamp-2 break-words text-xs leading-relaxed text-muted-foreground">{a.description}</p>}
+                  {a.linkUrl && <a href={a.linkUrl} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex min-h-11 items-center gap-1 text-[13px] font-semibold text-brand transition-colors hover:text-brand/80 active:text-brand/70 focus-visible:outline-none focus-visible:underline">View award <ExternalLink className="size-3.5" /></a>}
+                </div>
+              </div>
             </li>
           ))}
         </ul>
@@ -106,6 +97,16 @@ export function AwardsSection({
               <p className="text-sm font-semibold text-foreground">{selected.issuer}</p>
               {selected.description && (
                 <p className="whitespace-pre-wrap pt-2 text-sm leading-relaxed text-muted-foreground">{selected.description}</p>
+              )}
+              {selected.linkUrl && (
+                <a
+                  href={selected.linkUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 inline-flex min-h-11 items-center gap-2 text-[13px] font-semibold text-brand hover:text-brand/80 focus-visible:outline-none focus-visible:underline"
+                >
+                  View award <ExternalLink className="size-4" />
+                </a>
               )}
             </div>
           )}

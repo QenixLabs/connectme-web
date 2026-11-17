@@ -56,6 +56,7 @@ export const queryKeys = {
   },
   provider: {
     me: () => ['provider', 'me'] as const,
+    dashboard: () => ['provider', 'dashboard'] as const,
     publicProfile: (slug: string) => ['provider', 'public', slug] as const,
     reviews: (slug: string, page = 1) =>
       ['provider', 'reviews', slug, page] as const,

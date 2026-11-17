@@ -11,10 +11,13 @@ import { ProviderProfileView } from "@/components/marketplace/provider-profile-v
 import { ProviderReviewsSection } from "@/components/marketplace/provider-reviews-section";
 import { ServiceInquiryForm } from "@/components/marketplace/service-inquiry-form";
 import { Button } from "@/components/ui/button";
+import { ReportProfileButton } from "@/components/shared/report-profile-button";
+import { useAuthStore } from "@/providers/auth-store-provider";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function PublicProviderProfilePage() {
+  const user = useAuthStore((state) => state.user);
   const params = useParams();
   const slug = typeof params.slug === "string" ? params.slug : "";
 
@@ -92,18 +95,38 @@ export default function PublicProviderProfilePage() {
   return (
     <ProviderProfileView
       profile={profile}
+      reportAction={
+        user && profile.user_id && user._id !== profile.user_id ? (
+          <ReportProfileButton userId={profile.user_id} name={name} />
+        ) : undefined
+      }
       ratingSummary={ratingQuery.data}
-      inquirySlot={(selection) => (
-        <ServiceInquiryForm
-          key={`${selection?.serviceId ?? ""}-${selection?.packageTitle ?? ""}`}
-          providerSlug={profile.slug}
-          providerName={name}
-          services={profile.services}
-          serviceId={selection?.serviceId}
-          packageTitle={selection?.packageTitle}
-          inSheet
-        />
-      )}
+      inquirySlot={(selection) =>
+        profile.accepting_inquiries === false ? (
+          <div className="flex flex-col items-center gap-2 px-1 py-6 text-center">
+            <span className="flex size-11 items-center justify-center rounded-full bg-muted">
+              <AlertCircle className="size-5 text-muted-foreground" />
+            </span>
+            <p className="text-sm font-semibold">
+              {name} is not accepting new inquiries
+            </p>
+            <p className="text-xs text-muted-foreground">
+              They have paused new requests right now. Check back later or browse
+              other providers.
+            </p>
+          </div>
+        ) : (
+          <ServiceInquiryForm
+            key={`${selection?.serviceId ?? ""}-${selection?.packageTitle ?? ""}`}
+            providerSlug={profile.slug}
+            providerName={name}
+            services={profile.services}
+            serviceId={selection?.serviceId}
+            packageTitle={selection?.packageTitle}
+            inSheet
+          />
+        )
+      }
       reviewsSlot={
         <ProviderReviewsSection providerSlug={profile.slug} providerName={name} />
       }

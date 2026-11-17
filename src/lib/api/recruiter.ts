@@ -172,6 +172,7 @@ export interface PublicRecruiterDirectoryItem {
   average_rating?: number | null;
   total_reviews_count: number;
   project_count: number;
+  match_score?: number;
   projects: Array<{ _id: string; name?: string; cover_image_url?: string }>;
   created_at?: string;
 }

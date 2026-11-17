@@ -5,6 +5,7 @@ import { TopBar } from "@/components/shared/top-bar";
 import { BottomBar } from "@/components/shared/bottom-bar";
 import { useTalentNavItems } from "@/hooks/use-talent-nav-items";
 import { OnboardingGuard } from "@/components/auth/onboarding-guard";
+import { CommunicationFeed } from "@/components/content/communication-feed";
 
 export default function TalentAppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -24,7 +25,7 @@ export default function TalentAppLayout({ children }: { children: React.ReactNod
   const content = (
     <div className="flex min-h-screen flex-col">
       {!isSettingsPage && !isProfileVisibilityPage && <TopBar navItems={navItems} role="talent" showUserMenu />}
-      <main className="flex-1 pb-10">{children}</main>
+      <main className="flex-1 pb-10">{pathname === "/talent/dashboard" && <CommunicationFeed />}{children}</main>
       {!isProfileVisibilityPage && !isConversationPage && (
         <BottomBar
           navItems={navItems}

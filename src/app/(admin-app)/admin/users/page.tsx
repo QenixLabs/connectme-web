@@ -79,6 +79,7 @@ const ROLE_TABS = [
   { value: "all", label: "All Users" },
   { value: "talent", label: "Talent" },
   { value: "recruiter", label: "Recruiters" },
+  { value: "provider", label: "Providers" },
   { value: "admin", label: "Admins" },
 ] as const;
 

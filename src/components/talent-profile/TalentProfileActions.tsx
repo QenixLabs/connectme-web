@@ -22,6 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ShareProfileDialog } from "@/components/shared/share-profile-dialog";
+import { ReportProfileButton } from "@/components/shared/report-profile-button";
 import {
   useStartConversation,
   useSaveTalent,
@@ -45,6 +46,7 @@ interface TalentProfileActionsProps {
   viewerRole: "talent" | "recruiter" | "admin" | null;
   campaigns?: Campaign[];
   testimonials?: Testimonial[];
+  reportUser?: { userId: string; name: string };
 }
 
 function CampaignShortlistItem({
@@ -120,6 +122,7 @@ export function TalentProfileActions({
   viewerRole,
   campaigns = [],
   testimonials = [],
+  reportUser,
 }: TalentProfileActionsProps) {
   const username = profile.username ?? "";
   const isRecruiter = viewerRole === "recruiter" || viewerRole === "admin";
@@ -294,6 +297,13 @@ export function TalentProfileActions({
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
+              {reportUser && (
+                <ReportProfileButton
+                  userId={reportUser.userId}
+                  name={reportUser.name}
+                  asMenuItem
+                />
+              )}
               <DropdownMenuItem
                 onSelect={(event) => {
                   event.preventDefault();

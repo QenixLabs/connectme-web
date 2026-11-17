@@ -211,9 +211,14 @@ export default function PricingPage() {
       try {
         setUpgradingKey(plan.key);
         const interval = cycle === "yearly" ? "yearly" : "monthly";
+        const hasPaidSubscription = Boolean(subscriptionQuery.data?.subscription);
+        const couponCode = hasPaidSubscription
+          ? null
+          : window.prompt("Have a coupon code? Enter it, or leave blank to continue without one.");
         const result = await subscriptionsApi.upgrade({
           planKey: plan.key,
           interval,
+          ...(couponCode?.trim() ? { couponCode: couponCode.trim().toUpperCase() } : {}),
         });
         const url = result.short_url || result.checkout_url;
         if (url) {
@@ -235,7 +240,7 @@ export default function PricingPage() {
         setUpgradingKey(null);
       }
     },
-    [cycle, user, isRecruiterView, queryClient],
+    [cycle, user, isRecruiterView, queryClient, subscriptionQuery.data?.subscription],
   );
 
   if (isLoading || (user && subscriptionQuery.isLoading)) return <PricingSkeleton />;

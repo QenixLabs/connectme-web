@@ -27,6 +27,10 @@ function isPdf(url: string) {
   return /\.pdf(?:[?#].*)?$/i.test(url);
 }
 
+function isImage(url: string) {
+  return /\.(?:avif|gif|jpe?g|png|webp)(?:[?#].*)?$/i.test(url);
+}
+
 export function AchievementMedia({
   achievement,
   className = "",
@@ -36,7 +40,9 @@ export function AchievementMedia({
 }) {
   const ConfigIcon = ACHIEVEMENT_TYPE_CONFIG[achievement.type].icon;
   const media = getAchievementMedia(achievement);
-  const youtubeThumbnail = media ? getYouTubeThumbnail(media) : null;
+  const image = [achievement.media_url, achievement.proof_url, achievement.credit_url]
+    .find((url) => url && isImage(url));
+  const youtubeThumbnail = !image && media ? getYouTubeThumbnail(media) : null;
 
   return (
     <div className={`relative isolate overflow-hidden bg-[#f1effb] ${className}`}>
@@ -47,9 +53,9 @@ export function AchievementMedia({
           <ConfigIcon className="size-7" strokeWidth={1.8} />
         )}
       </span>
-      {media && !isPdf(media) && (
+      {(image || (media && !isPdf(media))) && (
         <img
-          src={youtubeThumbnail ?? media}
+          src={image ?? youtubeThumbnail ?? media!}
           alt=""
           loading="lazy"
           className="relative z-10 h-full w-full object-cover"

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { SiImdb } from "react-icons/si";
 import {
   Instagram,
   Youtube,
@@ -45,6 +46,7 @@ interface EditorProps {
 const PLATFORMS = [
   { key: "instagram", label: "Instagram", icon: Instagram },
   { key: "youtube", label: "YouTube", icon: Youtube },
+  { key: "imdb", label: "IMDb", icon: SiImdb },
   { key: "tiktok", label: "TikTok", icon: Music2 },
   { key: "linkedin", label: "LinkedIn", icon: Linkedin },
   { key: "facebook", label: "Facebook", icon: Facebook },
@@ -153,7 +155,7 @@ export function SocialLinksEditor({ profile, onBack, onUpdate }: EditorProps) {
   };
 
   const getPlaceholder = (platform: string) => {
-    const p = PLATFORMS.find((plat) => plat.key === platform);
+    if (platform === "imdb") return "imdb.com/name/nm1234567/";
     if (platform === "website") return "yoursite.com";
     if (platform === "discord") return "discord.gg/invite";
     if (platform === "tiktok") return "tiktok.com/@username";

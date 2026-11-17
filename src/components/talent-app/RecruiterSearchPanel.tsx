@@ -198,6 +198,9 @@ export function RecruiterSearchPanel({
   const query = useRecruiterDirectory(params);
   const recruiters = query.data?.pages.flatMap((page) => page.data) ?? [];
   const total = query.data?.pages[0]?.total ?? 0;
+  const hasPersonalizedMatches = recruiters.some(
+    (recruiter) => (recruiter.match_score ?? 0) > 0,
+  );
 
   const runSearch = (value: string) => {
     onSearchChange(value);
@@ -293,7 +296,9 @@ export function RecruiterSearchPanel({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="relevance">Best match</SelectItem>
+                <SelectItem value="relevance">
+                  {hasPersonalizedMatches ? "Recommended for you" : "Best match"}
+                </SelectItem>
                 <SelectItem value="rating">Highest rated</SelectItem>
               </SelectContent>
             </Select>
@@ -313,7 +318,7 @@ export function RecruiterSearchPanel({
           </h2>
         </div>
         <span className="shrink-0 rounded-full bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground">
-          Best match
+          {hasPersonalizedMatches ? "Recommended for you" : "Best match"}
         </span>
       </div>
 

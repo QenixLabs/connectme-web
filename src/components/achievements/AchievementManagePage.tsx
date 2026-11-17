@@ -99,7 +99,7 @@ export function AchievementManagePage({ scope = "all" }: { scope?: AchievementMa
   const scopedAchievements = useMemo(
     () =>
       scope === "all"
-        ? achievements
+        ? achievements.filter((achievement) => achievement.type !== "credit")
         : achievements.filter((achievement) => achievement.type === "credit"),
     [achievements, scope],
   );
@@ -125,7 +125,7 @@ export function AchievementManagePage({ scope = "all" }: { scope?: AchievementMa
   }, [activeFilter, deferredSearch, scopedAchievements]);
 
   const verifiedCount = scopedAchievements.filter(isVerifiedAchievement).length;
-  const showCredits = achievements.some((achievement) => achievement.type === "credit");
+  const showCredits = scope === "credits" && achievements.some((achievement) => achievement.type === "credit");
 
   function startAdd() {
     setEditingAchievement(undefined);

@@ -32,6 +32,8 @@ function toProfileAwards(achievements: Achievement[]): Award[] {
       year: achievement.year,
       description: achievement.description,
       media_url: achievement.media_url,
+      proof_url: achievement.proof_url,
+      credit_url: achievement.credit_url,
       order: achievement.order,
       created_at: achievement.created_at,
     }));
@@ -154,6 +156,11 @@ export function PublicTalentProfileClient({
       awards={awards}
       viewerRole={viewerRole}
       campaigns={campaigns}
+      reportUser={
+        viewerRole && profile.user_id !== user?._id ? (
+          { userId: profile.user_id, name: profile.full_legal_name || profile.username }
+        ) : undefined
+      }
     />
   );
 }

@@ -46,6 +46,7 @@ export interface AwardItem {
   year?: number;
   description?: string;
   mediaUrl?: string;
+  linkUrl?: string;
 }
 
 export function formatLocation(
@@ -234,12 +235,11 @@ export function toAwardItems(awards: Award[]): AwardItem[] {
   return awards.map((a) => ({
     id: a._id,
     name: a.title,
-    issuer: [a.awarding_body, a.year ? String(a.year) : ""]
-      .filter(Boolean)
-      .join(" • "),
+    issuer: a.awarding_body || "",
     year: a.year,
     description: a.description,
     mediaUrl: a.media_url || a.proof_url,
+    linkUrl: a.credit_url || a.proof_url,
   }));
 }
 

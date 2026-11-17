@@ -41,7 +41,7 @@ export function ProfileLinksTab({ profile, onFieldUpdate }: ProfileLinksTabProps
                 </div>
                 <div className="min-w-0 flex-1">
                   <InlineField
-                    label={platform.charAt(0).toUpperCase() + platform.slice(1)}
+                    label={platform === "imdb" ? "IMDb" : platform.charAt(0).toUpperCase() + platform.slice(1)}
                     value={link?.url ?? ""}
                     onSave={(v) => {
                       const next = { ...socialLinks };
@@ -58,7 +58,7 @@ export function ProfileLinksTab({ profile, onFieldUpdate }: ProfileLinksTabProps
                       onFieldUpdate("social_links", next);
                     }}
                     inputType="url"
-                    placeholder={`https://${platform}.com/...`}
+                    placeholder={platform === "imdb" ? "https://www.imdb.com/name/nm1234567/" : `https://${platform}.com/...`}
                   />
                 </div>
                 {link?.url && (

@@ -4,7 +4,19 @@ export interface DashboardStats {
   total_artists: number;
   total_brands: number;
   total_admins: number;
+  total_providers: number;
+  active_talents_30d: number;
+  active_recruiters_30d: number;
+  active_providers_30d: number;
+  total_campaigns: number;
+  total_applications: number;
+  accepted_applications: number;
+  pending_applications: number;
+  profile_views_7d: number;
+  profile_views_30d: number;
   pending_verifications: number;
+  verified_verifications: number;
+  rejected_verifications: number;
   active_campaigns: number;
   pending_reports: number;
   resolved_today: number;
@@ -24,7 +36,70 @@ export interface DashboardActivity {
   reports_created: TimeSeriesPoint[];
   reports_resolved: TimeSeriesPoint[];
   campaigns_created: TimeSeriesPoint[];
+  recruiter_campaigns_created: TimeSeriesPoint[];
+  applications_submitted: TimeSeriesPoint[];
   verifications_submitted: TimeSeriesPoint[];
+  verifications_approved: TimeSeriesPoint[];
+  verifications_rejected: TimeSeriesPoint[];
+}
+
+export interface VerificationCounts {
+  total: number;
+  verified: number;
+  unverified: number;
+  manual_review: number;
+  pending: number;
+  rejected: number;
+  not_started: number;
+  email_verified: number;
+  phone_verified: number;
+}
+
+export interface VerificationOverviewUser {
+  _id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  username?: string;
+  role: string;
+  status: string;
+  verification_tier: number;
+  is_verified: boolean;
+  is_email_verified: boolean;
+  is_phone_verified: boolean;
+  document_status: string;
+  document_count: number;
+  created_at?: string;
+  verification: {
+    _id: string;
+    type: string;
+    status: string;
+    review_notes?: string;
+    reviewed_by?: string;
+    created_at?: string;
+    updated_at?: string;
+    docs: { type: string; download_url: string; expires: number }[];
+  } | null;
+}
+
+export interface VerificationOverviewQuery {
+  page?: number;
+  limit?: number;
+  search?: string;
+  role?: string;
+  verification?: string;
+  document_status?: string;
+  tier?: number;
+}
+
+export interface VerificationOverview {
+  summary: VerificationCounts;
+  by_role: (VerificationCounts & { role: string })[];
+  users: VerificationOverviewUser[];
+  total: number;
+  page: number;
+  limit: number;
+  total_pages: number;
 }
 
 export interface PendingVerificationItem {
@@ -49,6 +124,7 @@ export interface ReportItem {
     email: string;
     full_legal_name?: string;
     username?: string;
+    slug?: string;
     company_name?: string;
     role?: string;
   };
@@ -133,8 +209,7 @@ export interface AdminUserSubscription {
   cancel_at_period_end: boolean;
 }
 
-export interface AdminUserSubscriptionDetail {
-  subscription: {
+export interface AdminSubscriptionRecord {
     _id: string;
     user_id: string;
     plan_key: string;
@@ -146,15 +221,62 @@ export interface AdminUserSubscriptionDetail {
     cancellation_reason?: string | null;
     created_at?: string;
     updated_at?: string;
-  } | null;
-  plan: {
-    _id: string;
-    key: string;
-    display_name: string;
-    description: string;
-    price: number;
-    interval: string;
-  } | null;
+    expires_at?: string | null;
+    grace_period_ends_at?: string | null;
+    scheduled_cancellation_at?: string | null;
+    scheduled_plan_key?: string | null;
+    scheduled_change_at?: string | null;
+    plan_display_name: string;
+    access_status: string;
+    billing_cycle: string;
+    billing_cycle_inferred: boolean;
+}
+
+export type SubscriptionOverrideAction = "grant" | "upgrade" | "downgrade" | "extend" | "revoke";
+
+export interface SubscriptionOverrideInput {
+  action: SubscriptionOverrideAction;
+  plan_key?: string;
+  reason: string;
+  ends_at: string;
+  expected_revision: string;
+  billing_acknowledged: boolean;
+}
+
+export interface AdminSubscriptionOverride {
+  _id: string;
+  action: SubscriptionOverrideAction;
+  plan_key: string;
+  reason: string;
+  starts_at: string;
+  ends_at: string;
+  superseded_at: string | null;
+  created_at: string;
+  admin_id: { _id: string; email: string } | string | null;
+  before: { effective?: { plan_display_name?: string; plan_key?: string | null } };
+  billing_consequences: string;
+}
+
+export interface AdminUserSubscriptionDetail {
+  subscription: AdminSubscriptionRecord | null;
+  paid_subscription: AdminSubscriptionRecord | null;
+  plan: { key: string; display_name: string } | null;
+  effective: {
+    plan_key: string | null;
+    plan_display_name: string;
+    status: string;
+    source: "free" | "paid" | "admin_granted" | "admin_revoked" | "unbilled";
+    expires_at: string | null;
+  };
+  active_override: AdminSubscriptionOverride | null;
+  history: AdminSubscriptionOverride[];
+  usage: Array<{ key: string; label: string; used: number; limit: number }>;
+  available_plans: Array<{ key: string; display_name: string; monthly_price: number }>;
+  can_override: boolean;
+  revision: string;
+  as_of: string;
+  expiry_policy: string;
+  billing_consequences: string;
 }
 
 export interface AdminUserInvoice {
@@ -216,6 +338,18 @@ export interface AdminUser {
   verification_status?: string;
   message_quota?: { used: number; limit: number };
   campaign_quota?: { used: number; limit: number };
+  business_name?: string;
+  provider_type?: string;
+  categories?: string[];
+  accepting_inquiries?: boolean;
+  onboarding_completed?: boolean;
+}
+
+export interface AdminUserOverview {
+  total: number;
+  active: number;
+  recently_active: number;
+  verified: number;
 }
 
 export interface PaginatedUsers {
@@ -230,12 +364,31 @@ export interface UserDetail {
   user: AdminUser;
   profile: {
     username?: string;
+    slug?: string;
     professions?: string[];
     headline?: string;
+    about?: string;
     location?: { city?: string; country?: string };
     privacy_mode?: string;
     company_name?: string;
     company_website?: string;
+    contact_name?: string;
+    company_size?: string;
+    industry?: string;
+    industries?: string[];
+    founded_year?: number;
+    years_in_business?: string;
+    languages?: string[];
+    casting_categories?: string[];
+    display_name?: string;
+    business_name?: string;
+    provider_type?: string;
+    tagline?: string;
+    categories?: string[];
+    service_areas?: string[];
+    skills?: string[];
+    accepting_inquiries?: boolean;
+    onboarding_completed?: boolean;
     specialties?: string[];
     position?: string;
     verification_status?: string;
@@ -423,6 +576,18 @@ export interface CronJobExecution {
   error?: string;
 }
 
+export interface AdminCoupon {
+  _id: string;
+  code: string;
+  percent_off: number;
+  user_id: { _id: string; email: string } | null;
+  max_redemptions: number | null;
+  redemption_count: number;
+  expires_at: string | null;
+  active: boolean;
+  created_at: string;
+}
+
 export type TestOtpChannel = 'email' | 'sms';
 
 export interface SendTestOtpPayload {
@@ -449,6 +614,11 @@ export const adminApi = {
     const response = await apiClient.get('/admin/dashboard-stats/activity', {
       params: { days },
     });
+    return response.data;
+  },
+
+  getVerificationOverview: async (params: VerificationOverviewQuery): Promise<VerificationOverview> => {
+    const response = await apiClient.get('/admin/verifications', { params });
     return response.data;
   },
 
@@ -507,6 +677,11 @@ export const adminApi = {
 
   getReportById: async (id: string): Promise<ReportDetail> => {
     const response = await apiClient.get(`/admin/reports/${id}`);
+    return response.data;
+  },
+
+  getUserOverview: async (role: "talent" | "provider" | "recruiter"): Promise<AdminUserOverview> => {
+    const response = await apiClient.get('/admin/users/overview', { params: { role } });
     return response.data;
   },
 
@@ -640,8 +815,33 @@ export const adminApi = {
     return response.data;
   },
 
+  getCoupons: async (): Promise<AdminCoupon[]> => {
+    const response = await apiClient.get('/admin/subscriptions/coupons');
+    return response.data;
+  },
+
+  createCoupon: async (payload: {
+    code: string;
+    percent_off: number;
+    user_email?: string;
+    max_redemptions?: number;
+    expires_at?: string;
+  }): Promise<AdminCoupon> => {
+    const response = await apiClient.post('/admin/subscriptions/coupons', payload);
+    return response.data;
+  },
+
+  deactivateCoupon: async (id: string): Promise<void> => {
+    await apiClient.delete(`/admin/subscriptions/coupons/${id}`);
+  },
+
   getUserSubscription: async (id: string): Promise<AdminUserSubscriptionDetail> => {
-    const response = await apiClient.get(`/admin/subscriptions/${id}`);
+    const response = await apiClient.get(`/admin/users/${id}/subscription`);
+    return response.data;
+  },
+
+  updateUserSubscription: async (id: string, payload: SubscriptionOverrideInput): Promise<AdminUserSubscriptionDetail> => {
+    const response = await apiClient.patch(`/admin/users/${id}/subscription`, payload);
     return response.data;
   },
 

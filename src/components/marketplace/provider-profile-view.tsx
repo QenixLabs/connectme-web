@@ -77,6 +77,7 @@ interface ProviderProfileViewProps {
     selection: ProviderQuoteSelection | null,
   ) => React.ReactNode;
   reviewsSlot?: React.ReactNode;
+  reportAction?: React.ReactNode;
 }
 
 interface ProviderQuoteSelection {
@@ -1742,6 +1743,7 @@ export function ProviderProfileView({
   variant = "public",
   inquirySlot,
   reviewsSlot,
+  reportAction,
 }: ProviderProfileViewProps) {
   const isPreview = variant === "preview";
   const [quoteSelection, setQuoteSelection] =
@@ -1922,6 +1924,9 @@ export function ProviderProfileView({
           shareTarget={providerShareTarget}
         />
       </section>
+      {!isPreview && reportAction && (
+        <div className="flex justify-end">{reportAction}</div>
+      )}
 
       <Tabs
         value={activeTab}

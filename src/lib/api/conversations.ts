@@ -7,6 +7,16 @@ import type {
 } from "./types";
 
 export const conversationsApi = {
+  reportUser: async (payload: {
+    reported_id: string;
+    reason: string;
+    details?: string;
+    conversation_id?: string;
+  }) => {
+    const response = await apiClient.post("/reports", payload);
+    return response.data;
+  },
+
   getUnreadCount: async () => {
     const response = await apiClient.get("/conversations/unread-count");
     return response.data as { count: number };

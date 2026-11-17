@@ -28,6 +28,7 @@ import {
   SlidersHorizontal,
   Sparkles,
   Star,
+  Store,
   TrendingUp,
   User,
   Users,
@@ -1374,6 +1375,15 @@ export default function RecruiterFindTalentPage() {
           ))}
         </nav>
       </header>
+
+      <Link
+        href="/providers"
+        className="mx-4 mt-3 flex min-h-11 items-center gap-2.5 rounded-xl border border-[#E9E2FB] bg-[#FBF9FF] px-3 text-sm font-semibold text-[#07133D] transition-colors hover:bg-[#F3EEFF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6D28FF]"
+      >
+        <Store aria-hidden="true" className="h-4 w-4 shrink-0 text-[#6D28FF]" />
+        <span className="min-w-0 flex-1">Browse service providers</span>
+        <ArrowRight aria-hidden="true" className="h-4 w-4 shrink-0 text-[#6D28FF]" />
+      </Link>
 
       {tab === "Search" ? (
         <>

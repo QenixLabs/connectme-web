@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useStore } from "zustand/react";
 import { toast } from "sonner";
+import { Flag } from "lucide-react";
 import { authStore } from "@/stores/auth-store";
 import { conversationsApi } from "@/lib/api";
 import { getConversationParticipant, getMessageSenderId } from "@/lib/messages";
@@ -15,6 +16,11 @@ import {
   ServiceConversationPreview,
 } from "@/components/messages";
 import type { Conversation, Message } from "@/lib/api/types";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function TalentConversationPage() {
   const params = useParams();
@@ -27,6 +33,10 @@ export default function TalentConversationPage() {
   const [loading, setLoading] = useState(true);
   const [sendText, setSendText] = useState("");
   const [sending, setSending] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportReason, setReportReason] = useState("");
+  const [reportDetails, setReportDetails] = useState("");
+  const [reporting, setReporting] = useState(false);
 
   const { sendMessage: sendSocketMessage, markMessageRead } = useConversationSocket(
     conversationId,
@@ -176,6 +186,27 @@ export default function TalentConversationPage() {
       .catch(() => toast.error("Could not mark as read"));
   }
 
+  async function handleReport() {
+    if (!conversation || !participant?._id || !reportReason.trim() || reporting) return;
+    setReporting(true);
+    try {
+      await conversationsApi.reportUser({
+        reported_id: participant._id,
+        conversation_id: conversation._id,
+        reason: reportReason.trim(),
+        details: reportDetails.trim() || undefined,
+      });
+      toast.success("Report submitted for review");
+      setReportOpen(false);
+      setReportReason("");
+      setReportDetails("");
+    } catch {
+      toast.error("Could not submit report. Please try again.");
+    } finally {
+      setReporting(false);
+    }
+  }
+
   const participant = getConversationParticipant(conversation, currentUserId);
   const name = participant?.full_legal_name || participant?.company_name || "Unknown";
 
@@ -188,6 +219,7 @@ export default function TalentConversationPage() {
           showBack
           onBack={() => router.push("/talent/messages")}
           onMarkAllRead={handleMarkAllRead}
+          onReport={() => setReportOpen(true)}
         />
         <ServiceConversationPreview
           conversationId={conversationId}
@@ -206,6 +238,37 @@ export default function TalentConversationPage() {
           sending={sending}
           placeholder={`Message ${name.split(" ")[0] || "them"}...`}
         />
+        <Dialog open={reportOpen} onOpenChange={setReportOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Report conversation</DialogTitle>
+              <DialogDescription>
+                Admins will review your report and the 20 most recent messages in this conversation.
+              </DialogDescription>
+            </DialogHeader>
+            <Textarea
+              value={reportReason}
+              onChange={(event) => setReportReason(event.target.value)}
+              placeholder="Reason for report"
+              maxLength={500}
+              aria-label="Report reason"
+            />
+            <Textarea
+              value={reportDetails}
+              onChange={(event) => setReportDetails(event.target.value)}
+              placeholder="Additional details (optional)"
+              maxLength={2000}
+              aria-label="Additional details"
+            />
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setReportOpen(false)}>Cancel</Button>
+              <Button onClick={handleReport} disabled={!reportReason.trim() || reporting}>
+                <Flag className="mr-2 size-4" />
+                {reporting ? "Submitting…" : "Submit report"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

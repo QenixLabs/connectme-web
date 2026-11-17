@@ -113,10 +113,13 @@ export function PortfolioReelItem({
           ref={videoRef}
           src={item.url}
           poster={item.thumbnailUrl}
+          controls={isActive}
           muted
           loop
           playsInline
-          className="h-full w-full object-cover"
+          preload={isActive ? "auto" : "none"}
+          aria-label={`Play ${item.title}`}
+          className="h-full w-full object-contain"
         />
       ) : item.url ? (
         <img

@@ -36,6 +36,14 @@ export interface PlanConfig {
 export interface SubscriptionResponse {
   subscription: Subscription | null;
   plan: PlanConfig | null;
+  effective_access?: {
+    plan_key: string | null;
+    plan_display_name: string;
+    status: string;
+    source: "free" | "paid" | "admin_granted" | "admin_revoked" | "unbilled";
+    expires_at: string | null;
+  };
+  effective_plan?: PlanConfig | null;
 }
 
 export interface UsageResponse {
@@ -74,6 +82,7 @@ export interface InvoicesResponse {
 export interface UpgradePayload {
   planKey: string;
   interval: "monthly" | "yearly";
+  couponCode?: string;
 }
 
 export interface UpgradeResponse {

@@ -3,14 +3,12 @@
 import { useParams } from "next/navigation";
 import {
   Check,
-  Copy,
   Heart,
-  MoreHorizontal,
   Send,
   Share2,
   UserPlus,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import {
   usePublicRecruiterProfile,
   usePublicRecruiterCampaigns,
@@ -25,6 +23,7 @@ import { useAuthStore } from "@/providers/auth-store-provider";
 import type { SubmitRecruiterReviewPayload } from "@/lib/api/recruiter";
 import type { ShareProfileTarget } from "@/lib/share";
 import { ShareProfileButton } from "@/components/shared/share-profile-button";
+import { ReportProfileButton } from "@/components/shared/report-profile-button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RecruiterProfileView } from "./profile-view";
 import styles from "./page.module.css";
@@ -105,32 +104,9 @@ export default function PublicRecruiterProfilePage() {
   const { status: connectionStatus, isPending: connectPending, send: sendConnection } = useConnectionRequest(profile?.user_id || "");
 
   const [notice, setNotice] = useState("");
-  const [moreOpen, setMoreOpen] = useState(false);
-  const moreWrapRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!moreOpen) return;
-    const close = (e: MouseEvent) => {
-      if (moreWrapRef.current && !moreWrapRef.current.contains(e.target as Node)) {
-        setMoreOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", close);
-    return () => document.removeEventListener("mousedown", close);
-  }, [moreOpen]);
-
   const notify = (message: string) => {
     setNotice(message);
     window.setTimeout(() => setNotice(""), 2200);
-  };
-
-  const copyProfileLink = async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.href);
-      notify("Link copied");
-    } catch {
-      notify("Couldn't copy link");
-    }
   };
 
   const isLoading = profileLoading || campaignsLoading;
@@ -252,31 +228,13 @@ export default function PublicRecruiterProfilePage() {
           <Share2 size={14} />
           Share
         </ShareProfileButton>
-        <div className={styles.moreWrap} ref={moreWrapRef}>
-          <button
-            className={styles.moreAction}
-            aria-label="More profile actions"
-            aria-expanded={moreOpen}
-            aria-haspopup="menu"
-            onClick={() => setMoreOpen((v) => !v)}
-          >
-            <MoreHorizontal size={18} />
-          </button>
-          {moreOpen && (
-            <div className={styles.moreMenu} role="menu">
-              <button
-                role="menuitem"
-                onClick={() => {
-                  setMoreOpen(false);
-                  void copyProfileLink();
-                }}
-              >
-                <Copy size={13} />
-                Copy profile link
-              </button>
-            </div>
-          )}
-        </div>
+        {user?._id !== profile.user_id && (
+          <ReportProfileButton
+            userId={profile.user_id}
+            name={profile.company_name || "recruiter"}
+            className={styles.ghostAction}
+          />
+        )}
       </div>
     </>
   );

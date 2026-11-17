@@ -12,7 +12,6 @@ import {
   Theater,
   Trophy,
   Tv,
-  UserRound,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import {
@@ -95,8 +94,8 @@ function CreditMedia({
           className="object-cover"
         />
         {isYouTube && (
-          <span className="absolute inset-0 grid place-items-center bg-black/10 text-white">
-            <Play aria-hidden="true" className="size-6 fill-current drop-shadow" />
+          <span className="absolute bottom-1 right-1 grid size-5 place-items-center rounded-full bg-black/65 text-white">
+            <Play aria-hidden="true" className="size-2.5 fill-current" />
           </span>
         )}
       </span>
@@ -121,39 +120,21 @@ function CreditCard({
   onClick: () => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex w-full min-w-0 items-start gap-3 rounded-xl px-1 py-2 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-    >
-      <CreditMedia item={item} className="size-[60px] sm:size-16" />
+    <div className="min-w-0 py-3 first:pt-0">
+      <button
+        type="button"
+        onClick={onClick}
+        className="flex w-full min-w-0 items-start gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <CreditMedia item={item} className="size-[60px] shrink-0 rounded-xl sm:size-16" />
 
-      <span className="min-w-0 flex-1">
-        {item.year && (
-          <span className="block text-[10px] font-medium tabular-nums text-muted-foreground">
-            {item.year}
-          </span>
-        )}
-        <span className="mt-0.5 block break-words text-sm font-semibold leading-snug text-foreground">
+        <span className="min-w-0 flex-1">
+        <span className="block break-words text-[15px] font-semibold leading-snug text-foreground">
           {item.projectName || "Untitled project"}
         </span>
-        <span className="mt-1.5 flex flex-wrap items-center gap-1.5">
-          {item.platform && (
-            <span className="inline-flex max-w-full items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium leading-tight text-foreground/75">
-              {getCategoryIcon(item.platform, "size-3")}
-              <span className="break-words">{item.platform}</span>
-            </span>
-          )}
-          {item.role && (
-            <span className="max-w-full break-words rounded-full bg-brand-soft px-2 py-0.5 text-[10px] font-medium leading-tight text-brand">
-              {item.role}
-            </span>
-          )}
-        </span>
-        {item.director && (
-          <span className="mt-1.5 flex min-w-0 items-start gap-1 text-xs text-muted-foreground">
-            <UserRound aria-hidden="true" className="mt-0.5 size-3 shrink-0" />
-            <span className="break-words">{item.director}</span>
+        {(item.role || item.director || item.year || item.platform) && (
+          <span className="mt-0.5 block break-words text-xs leading-relaxed text-muted-foreground">
+            {[item.role, item.director, item.year, item.platform].filter(Boolean).join(" · ")}
           </span>
         )}
         {item.description && (
@@ -161,8 +142,19 @@ function CreditCard({
             {item.description}
           </span>
         )}
-      </span>
-    </button>
+        </span>
+      </button>
+      {item.creditUrl && (
+          <a
+          href={item.creditUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-1 inline-flex min-h-11 items-center gap-1.5 text-[13px] font-semibold text-brand transition-colors hover:text-brand/80 active:text-brand/70 focus-visible:outline-none focus-visible:underline"
+        >
+          View credit <ExternalLink aria-hidden="true" className="size-3.5" />
+        </a>
+      )}
+    </div>
   );
 }
 

@@ -1,4 +1,5 @@
 import { apiClient } from "./client";
+import type { ServiceInquiryStatus } from "./inquiries";
 
 export type ServiceStatus = "draft" | "published" | "unpublished";
 export type ServiceType = "one_time" | "package" | "custom";
@@ -67,6 +68,7 @@ export interface ProviderProfile {
   skills: string[];
   portfolio: ProviderPortfolioItem[];
   onboarding_completed?: boolean;
+  accepting_inquiries?: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -146,6 +148,7 @@ export interface PublicProviderProduct {
 
 export interface PublicProviderProfile {
   id: string;
+  user_id?: string;
   slug: string;
   display_name?: string;
   business_name?: string;
@@ -199,6 +202,7 @@ export interface PublicProviderProfile {
   portfolio: ProviderPortfolioItem[];
   services: PublicServiceSummary[];
   services_count: number;
+  accepting_inquiries?: boolean;
   products?: PublicProviderProduct[];
   products_count?: number;
   member_since?: string | null;
@@ -336,6 +340,7 @@ export interface UpdateProviderProfilePayload {
   portfolio?: ProviderPortfolioItem[];
   about?: string;
   profile_photo?: string;
+  accepting_inquiries?: boolean;
 }
 
 export interface ServiceListingPayload {
@@ -362,6 +367,50 @@ export interface MyServiceSummary {
 
 export interface MyServicesResponse extends Paginated<ServiceListing> {
   summary: MyServiceSummary;
+}
+
+export interface ProviderDashboardStats {
+  accepting_inquiries: boolean;
+  new_inquiries: number;
+  responded_inquiries: number;
+  closed_inquiries: number;
+  total_inquiries: number;
+  new_inquiries_30d: number;
+  responded_inquiries_30d: number;
+  closed_inquiries_30d: number;
+  total_inquiries_30d: number;
+  previous_inquiries_30d: number;
+  previous_responded_inquiries_30d: number;
+  previous_closed_inquiries_30d: number;
+  published_services: number;
+  draft_services: number;
+  published_products: number;
+  draft_products: number;
+  published_listings: number;
+  profile_views_30d: number;
+  previous_profile_views_30d: number;
+}
+
+export interface ProviderDashboardInquiry {
+  id: string;
+  requester_id: string;
+  requester_name: string;
+  service_id: string | null;
+  service_title: string;
+  service_image_url?: string;
+  description: string;
+  requested_date: string | null;
+  location: string | null;
+  budget: { amount: number; currency: string } | null;
+  status: ServiceInquiryStatus;
+  conversation_id: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface ProviderDashboardResponse {
+  stats: ProviderDashboardStats;
+  recent_inquiries: ProviderDashboardInquiry[];
 }
 
 export const providersApi = {
@@ -451,6 +500,11 @@ export const providersApi = {
   getMyProfile: async () => {
     const response = await apiClient.get("/provider/profile");
     return response.data as { profile: ProviderProfile };
+  },
+
+  getDashboard: async () => {
+    const response = await apiClient.get("/provider/dashboard");
+    return response.data as ProviderDashboardResponse;
   },
 
   updateMyProfile: async (payload: UpdateProviderProfilePayload) => {

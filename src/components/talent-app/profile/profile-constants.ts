@@ -88,6 +88,7 @@ export const SPECIALTY_SUGGESTIONS = [
 export const SOCIAL_PLATFORMS = [
   "instagram",
   "youtube",
+  "imdb",
   "linkedin",
   "twitter",
   "tiktok",

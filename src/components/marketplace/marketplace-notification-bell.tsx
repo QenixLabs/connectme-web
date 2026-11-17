@@ -12,6 +12,7 @@ import {
 } from "@/hooks/use-notifications";
 import { getApiErrorMessage } from "@/lib/api/client";
 import type { Notification } from "@/lib/api/notifications";
+import { safeActionLink } from "@/components/content/formatted-content";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -22,6 +23,10 @@ import {
 } from "@/components/ui/popover";
 
 function notificationHref(notification: Notification): string {
+  if (notification.type === "system" && notification.data?.communication_id) {
+    return safeActionLink(typeof notification.data.href === "string" ? notification.data.href : undefined)
+      || "/provider/notifications";
+  }
   if (
     notification.resource_type === "service_inquiry" &&
     /^[a-f\d]{24}$/i.test(notification.resource_id ?? "")

@@ -4,6 +4,7 @@ import { FileText, ExternalLink, Globe } from "lucide-react";
 import {
   SiInstagram,
   SiYoutube,
+  SiImdb,
   SiFacebook,
   SiTiktok,
   SiX,
@@ -23,6 +24,7 @@ import type { TalentProfile } from "@/lib/api/talent";
 const socialIcons: Record<string, React.ComponentType<{ className?: string }>> = {
   instagram: SiInstagram,
   youtube: SiYoutube,
+  imdb: SiImdb,
   facebook: SiFacebook,
   linkedin: FaLinkedin,
   tiktok: SiTiktok,
@@ -39,6 +41,7 @@ const socialIcons: Record<string, React.ComponentType<{ className?: string }>> =
 };
 
 function formatSocialName(key: string): string {
+  if (key === "imdb") return "IMDb";
   return key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, " ");
 }
 

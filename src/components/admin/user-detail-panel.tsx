@@ -11,6 +11,10 @@ import {
   ChevronRight,
   Copy,
   ExternalLink,
+  Mail,
+  Phone,
+  Clock3,
+  MessageSquare,
   ShieldAlert,
   ShieldBan,
   ShieldCheck,
@@ -34,13 +38,13 @@ import { Label } from "@/components/ui/label";
 import {
   adminApi,
   type AdminNote,
-  type AdminUserSubscriptionDetail,
   type PaginatedAdminUserInvoices,
   type PaginatedModerationActions,
   type UserActivity,
   type UserDetail,
 } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { SubscriptionOverview } from "./subscription-overview";
 
 function getApiErrorMessage(error: unknown, fallback: string): string {
   const err = error as { response?: { data?: { message?: string } }; message?: string };
@@ -58,6 +62,14 @@ function getInitials(name: string) {
     .slice(0, 2);
 
   return initials || "?";
+}
+
+function formatDateTime(value?: string | null) {
+  if (!value) return "—";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? "—"
+    : date.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -144,10 +156,6 @@ export function UserDetailPanel({
     useState<PaginatedModerationActions | null>(null);
   const [moderationLoading, setModerationLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
-  const [subscription, setSubscription] =
-    useState<AdminUserSubscriptionDetail | null>(null);
-  const [subscriptionLoading, setSubscriptionLoading] = useState(false);
-  const [subscriptionError, setSubscriptionError] = useState<string | null>(null);
   const [invoices, setInvoices] = useState<PaginatedAdminUserInvoices | null>(null);
   const [invoicePage, setInvoicePage] = useState(1);
   const [invoicesLoading, setInvoicesLoading] = useState(false);
@@ -164,20 +172,6 @@ export function UserDetailPanel({
       setModerationLoading(false);
     }
   };
-
-  const fetchSubscriptionDetails = useCallback(async () => {
-    if (!userId) return;
-    setSubscriptionLoading(true);
-    setSubscriptionError(null);
-    try {
-      const subscriptionDetails = await adminApi.getUserSubscription(userId);
-      setSubscription(subscriptionDetails);
-    } catch (err) {
-      setSubscriptionError(getApiErrorMessage(err, "Failed to load subscription"));
-    } finally {
-      setSubscriptionLoading(false);
-    }
-  }, [userId]);
 
   const fetchInvoices = useCallback(async () => {
     if (!userId) return;
@@ -204,10 +198,8 @@ export function UserDetailPanel({
       setVerificationTier(1);
       setModerationPage(1);
       setModerationData(null);
-      setSubscription(null);
       setInvoices(null);
       setInvoicePage(1);
-      setSubscriptionError(null);
       return;
     }
 
@@ -247,12 +239,6 @@ export function UserDetailPanel({
     if (!userId || moderationPage === 1) return;
     fetchModerationActions(moderationPage);
   }, [moderationPage, userId]);
-
-  useEffect(() => {
-    if (activeTab === "subscription" && userId) {
-      fetchSubscriptionDetails();
-    }
-  }, [activeTab, userId, fetchSubscriptionDetails]);
 
   useEffect(() => {
     if (activeTab === "subscription" && userId) {
@@ -366,7 +352,7 @@ export function UserDetailPanel({
 
   return (
     <Sheet open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
+      <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
         <SheetHeader>
           <SheetTitle className="text-base">User Details</SheetTitle>
         </SheetHeader>
@@ -384,7 +370,7 @@ export function UserDetailPanel({
           </Alert>
         )}
 
-        {!loading && detail && (
+        {!loading && detail && detail.user._id === userId && (
           <div className="mt-4 space-y-4">
             <div className="flex items-start gap-3">
               <Avatar size="lg" className="size-12">
@@ -418,6 +404,45 @@ export function UserDetailPanel({
               </div>
             </div>
 
+            <div className="grid gap-2 rounded-lg border border-border bg-muted/20 p-3 text-xs sm:grid-cols-2">
+              <a
+                href={`mailto:${detail.user.email}`}
+                className="flex min-w-0 items-center gap-2 text-foreground hover:text-primary"
+              >
+                <Mail className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                <span className="truncate">{detail.user.email || "No email"}</span>
+              </a>
+              {detail.user.phone ? (
+                <a
+                  href={`tel:${detail.user.phone}`}
+                  className="flex min-w-0 items-center gap-2 text-foreground hover:text-primary"
+                >
+                  <Phone className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                  <span className="truncate">{detail.user.phone}</span>
+                </a>
+              ) : (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Phone className="h-3.5 w-3.5" /> No phone number
+                </div>
+              )}
+              <div className="flex min-w-0 items-center gap-2 text-muted-foreground sm:col-span-2">
+                <span className="shrink-0">User ID</span>
+                <code className="truncate font-mono text-[10px] text-foreground">
+                  {detail.user._id}
+                </code>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="ml-auto h-6 w-6 shrink-0"
+                  aria-label="Copy user ID"
+                  onClick={() => navigator.clipboard.writeText(detail.user._id)}
+                >
+                  <Copy className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
+
             <div className="flex flex-wrap gap-2">
               {detail.user.status !== "active" && (
                 <Button
@@ -432,6 +457,8 @@ export function UserDetailPanel({
                 </Button>
               )}
             </div>
+
+            <SubscriptionOverview key={detail.user._id} userId={detail.user._id} onChange={onStatusChange} />
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="w-full">
@@ -448,14 +475,26 @@ export function UserDetailPanel({
                   Notes
                 </TabsTrigger>
                 <TabsTrigger value="subscription" className="flex-1 text-xs">
-                  Subscription
+                  Invoices
                 </TabsTrigger>
               </TabsList>
 
               <TabsContent value="profile" className="mt-3 space-y-3">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {[
+                    { label: "Trust score", value: `${detail.user.trust_score}/100` },
+                    { label: "Reports", value: detail.report_count },
+                    { label: "Verification", value: `Tier ${detail.user.verification_tier}` },
+                  ].map((metric) => (
+                    <div key={metric.label} className="min-w-0 rounded-lg border border-border p-2.5">
+                      <div className="truncate text-[10px] text-muted-foreground">{metric.label}</div>
+                      <div className="mt-1 truncate text-sm font-semibold tabular-nums">{metric.value}</div>
+                    </div>
+                  ))}
+                </div>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className="text-muted-foreground">Phone</div>
-                  <div>{detail.user.phone}</div>
+                  <div>{detail.user.phone || "—"}</div>
                   <div className="text-muted-foreground">Auth Provider</div>
                   <div className="capitalize">{detail.user.auth_provider || "credentials"}</div>
                   <div className="text-muted-foreground">Verification Tier</div>
@@ -467,11 +506,11 @@ export function UserDetailPanel({
                   <div className="text-muted-foreground">Phone Verified</div>
                   <div>{detail.user.is_phone_verified ? "Yes" : "No"}</div>
                   <div className="text-muted-foreground">Joined</div>
-                  <div>{new Date(detail.user.created_at).toLocaleDateString()}</div>
+                  <div>{formatDateTime(detail.user.created_at)}</div>
                   <div className="text-muted-foreground">Last Active</div>
                   <div>
                     {detail.user.last_active_at
-                      ? new Date(detail.user.last_active_at).toLocaleDateString()
+                      ? formatDateTime(detail.user.last_active_at)
                       : "—"}
                   </div>
                 </div>
@@ -527,7 +566,48 @@ export function UserDetailPanel({
                       ) : (
                         <>
                           <div className="text-muted-foreground">Company</div>
-                          <div>{detail.profile.company_name || "—"}</div>
+                          <div>{detail.profile.company_name || detail.profile.business_name || detail.profile.display_name || "—"}</div>
+                          {detail.user.role === "recruiter" ? (
+                            <>
+                              <div className="text-muted-foreground">Contact</div>
+                              <div>{detail.profile.contact_name || "—"}</div>
+                              <div className="text-muted-foreground">Headline</div>
+                              <div>{detail.profile.headline || "—"}</div>
+                              <div className="text-muted-foreground">About</div>
+                              <div className="whitespace-pre-wrap">{detail.profile.about || "—"}</div>
+                              <div className="text-muted-foreground">Industry</div>
+                              <div>{detail.profile.industries?.join(", ") || detail.profile.industry || "—"}</div>
+                              <div className="text-muted-foreground">Company Size</div>
+                              <div>{detail.profile.company_size || "—"}</div>
+                              <div className="text-muted-foreground">Founded / Experience</div>
+                              <div>{detail.profile.founded_year || detail.profile.years_in_business || "—"}</div>
+                              <div className="text-muted-foreground">Location</div>
+                              <div>{detail.profile.location ? `${detail.profile.location.city || ""}, ${detail.profile.location.country || ""}` : "—"}</div>
+                              <div className="text-muted-foreground">Languages</div>
+                              <div>{detail.profile.languages?.join(", ") || "—"}</div>
+                              <div className="text-muted-foreground">Casting Categories</div>
+                              <div>{detail.profile.casting_categories?.join(", ") || "—"}</div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="text-muted-foreground">Provider Type</div>
+                              <div>{detail.profile.provider_type || "—"}</div>
+                              <div className="text-muted-foreground">Tagline</div>
+                              <div>{detail.profile.tagline || "—"}</div>
+                              <div className="text-muted-foreground">About</div>
+                              <div className="whitespace-pre-wrap">{detail.profile.about || "—"}</div>
+                              <div className="text-muted-foreground">Categories</div>
+                              <div>{detail.profile.categories?.join(", ") || "—"}</div>
+                              <div className="text-muted-foreground">Service Areas</div>
+                              <div>{detail.profile.service_areas?.join(", ") || "—"}</div>
+                              <div className="text-muted-foreground">Skills</div>
+                              <div>{detail.profile.skills?.join(", ") || "—"}</div>
+                              <div className="text-muted-foreground">Accepting Inquiries</div>
+                              <div>{detail.profile.accepting_inquiries == null ? "—" : detail.profile.accepting_inquiries ? "Yes" : "No"}</div>
+                              <div className="text-muted-foreground">Onboarding Complete</div>
+                              <div>{detail.profile.onboarding_completed == null ? "—" : detail.profile.onboarding_completed ? "Yes" : "No"}</div>
+                            </>
+                          )}
                           <div className="text-muted-foreground">Website</div>
                           <div>{detail.profile.company_website || "—"}</div>
                           <div className="text-muted-foreground">Specialties</div>
@@ -547,6 +627,28 @@ export function UserDetailPanel({
                         variant="outline"
                         className="mt-3 h-8 text-xs"
                         onClick={() => router.push(`/talent/${detail.profile!.username}`)}
+                      >
+                        <ExternalLink className="mr-1 h-3.5 w-3.5" />
+                        View Public Profile
+                      </Button>
+                    )}
+                    {detail.user.role === "recruiter" && detail.profile.slug && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="mt-3 h-8 text-xs"
+                        onClick={() => router.push(`/recruiter/${detail.profile!.slug}`)}
+                      >
+                        <ExternalLink className="mr-1 h-3.5 w-3.5" />
+                        View Public Profile
+                      </Button>
+                    )}
+                    {detail.user.role === "provider" && detail.profile.slug && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="mt-3 h-8 text-xs"
+                        onClick={() => router.push(`/providers/${detail.profile!.slug}`)}
                       >
                         <ExternalLink className="mr-1 h-3.5 w-3.5" />
                         View Public Profile
@@ -748,9 +850,40 @@ export function UserDetailPanel({
               </TabsContent>
 
               <TabsContent value="activity" className="mt-3 space-y-3">
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="text-muted-foreground">Messages Sent</div>
-                  <div>{activity?.message_count ?? 0}</div>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  <div className="rounded-lg border border-border p-3">
+                    <div className="text-xs text-muted-foreground">Reports</div>
+                    <div className="mt-1 text-lg font-semibold tabular-nums">
+                      {detail.report_count}
+                    </div>
+                  </div>
+                  <div className="rounded-lg border border-border p-3">
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <MessageSquare className="h-3.5 w-3.5" /> Messages sent
+                    </div>
+                    <div className="mt-1 text-lg font-semibold tabular-nums">
+                      {activity?.message_count ?? 0}
+                    </div>
+                  </div>
+                  <div className="rounded-lg border border-border p-3">
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Clock3 className="h-3.5 w-3.5" /> Last active
+                    </div>
+                    <div className="mt-1 text-xs font-medium">
+                      {formatDateTime(detail.user.last_active_at)}
+                    </div>
+                  </div>
+                  {detail.user.role === "talent" && (
+                    <div className="rounded-lg border border-border p-3">
+                      <div className="text-xs text-muted-foreground">Profile views (30d)</div>
+                      <div className="mt-1 text-lg font-semibold tabular-nums">
+                        {detail.user.analytics?.profile_views_30d ?? "—"}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div className="rounded-md bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                  Session duration isn’t currently tracked, so total time spent in the app is unavailable.
                 </div>
 
                 {activity?.recent_campaigns && activity.recent_campaigns.length > 0 && (
@@ -809,75 +942,6 @@ export function UserDetailPanel({
               </TabsContent>
 
               <TabsContent value="subscription" className="mt-3 space-y-3">
-                {subscriptionLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                  </div>
-                ) : subscriptionError ? (
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{subscriptionError}</AlertDescription>
-                  </Alert>
-                ) : subscription?.subscription ? (
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className="text-muted-foreground">Plan</div>
-                      <div>
-                        {subscription.plan?.display_name || subscription.subscription.plan_key}
-                      </div>
-
-                      <div className="text-muted-foreground">Status</div>
-                      <div className="capitalize">{subscription.subscription.status}</div>
-
-                      <div className="text-muted-foreground">Current Period Start</div>
-                      <div>
-                        {subscription.subscription.current_period_start
-                          ? new Date(
-                              subscription.subscription.current_period_start
-                            ).toLocaleDateString()
-                          : "—"}
-                      </div>
-
-                      <div className="text-muted-foreground">Current Period End</div>
-                      <div>
-                        {subscription.subscription.current_period_end
-                          ? new Date(
-                              subscription.subscription.current_period_end
-                            ).toLocaleDateString()
-                          : "—"}
-                      </div>
-
-                      <div className="text-muted-foreground">Cancel at Period End</div>
-                      <div>{subscription.subscription.cancel_at_period_end ? "Yes" : "No"}</div>
-
-                      {subscription.subscription.cancellation_reason && (
-                        <>
-                          <div className="text-muted-foreground">Cancellation Reason</div>
-                          <div>{subscription.subscription.cancellation_reason}</div>
-                        </>
-                      )}
-
-                      <div className="text-muted-foreground">Razorpay Subscription ID</div>
-                      <div className="flex items-center gap-1">
-                        <span className="truncate">
-                          {subscription.subscription.razorpay_subscription_id || "—"}
-                        </span>
-                        {subscription.subscription.razorpay_subscription_id && (
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-5 w-5"
-                            onClick={() => {
-                              const id = subscription.subscription?.razorpay_subscription_id;
-                              if (id) navigator.clipboard.writeText(id);
-                            }}
-                          >
-                            <Copy className="h-3 w-3" />
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-
                     <div className="mt-3 border-t border-border pt-3">
                       <div className="mb-2 text-xs font-medium">Invoices</div>
                       {invoicesLoading ? (
@@ -941,10 +1005,6 @@ export function UserDetailPanel({
                         <div className="text-xs text-muted-foreground">No invoices found.</div>
                       )}
                     </div>
-                  </div>
-                ) : (
-                  <div className="text-xs text-muted-foreground">No subscription found.</div>
-                )}
               </TabsContent>
             </Tabs>
           </div>

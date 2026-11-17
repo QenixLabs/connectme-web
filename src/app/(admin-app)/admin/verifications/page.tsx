@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -13,6 +13,8 @@ import {
   User,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { VerificationOverview } from "@/components/admin/verification-overview";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -35,9 +37,12 @@ function getApiErrorMessage(error: unknown, fallback: string): string {
 
 export default function AdminVerificationsPage() {
   const router = useRouter();
-  const [pending, setPending] = useState<PendingVerificationItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const { data: pending = [], isFetching: loading, error: pendingError, refetch: fetchPending } = useQuery({
+    queryKey: ["admin-pending-verifications"],
+    queryFn: adminApi.getPendingVerifications,
+  });
+  const error = pendingError ? getApiErrorMessage(pendingError, "Failed to load pending verifications") : null;
   const [actionError, setActionError] = useState<string | null>(null);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
@@ -48,26 +53,17 @@ export default function AdminVerificationsPage() {
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerItem, setViewerItem] = useState<PendingVerificationItem | null>(null);
 
-  const fetchPending = useCallback(() => {
-    setLoading(true);
-    setError(null);
-    adminApi
-      .getPendingVerifications()
-      .then((data) => setPending(data))
-      .catch((err) => setError(getApiErrorMessage(err, "Failed to load pending verifications")))
-      .finally(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    fetchPending();
-  }, [fetchPending]);
-
   const handleApprove = async (item: PendingVerificationItem) => {
     setActionError(null);
     setProcessingId(item._id);
     try {
       await adminApi.approveVerification(item._id);
-      setPending((prev) => prev.filter((p) => p._id !== item._id));
+      queryClient.setQueryData<PendingVerificationItem[]>(["admin-pending-verifications"], (prev) => prev?.filter((p) => p._id !== item._id));
+      void queryClient.invalidateQueries({ queryKey: ["admin-verification-overview"] });
+      if (viewerItem?._id === item._id) {
+        setViewerOpen(false);
+        setViewerItem(null);
+      }
       toast.success("Verification approved");
     } catch (err) {
       setActionError(getApiErrorMessage(err, "Failed to approve"));
@@ -99,7 +95,8 @@ export default function AdminVerificationsPage() {
     setProcessingId(rejectTarget._id);
     try {
       await adminApi.rejectVerification(rejectTarget._id, rejectReason.trim());
-      setPending((prev) => prev.filter((p) => p._id !== rejectTarget._id));
+      queryClient.setQueryData<PendingVerificationItem[]>(["admin-pending-verifications"], (prev) => prev?.filter((p) => p._id !== rejectTarget._id));
+      void queryClient.invalidateQueries({ queryKey: ["admin-verification-overview"] });
       setRejectDialogOpen(false);
       setRejectTarget(null);
       setRejectReason("");
@@ -242,9 +239,13 @@ export default function AdminVerificationsPage() {
         </Button>
       </div>
 
+      <VerificationOverview />
+
       <Card className="border-border">
         <CardHeader>
           <CardTitle className="text-lg">Verification Review Queue</CardTitle>
+          <p className="text-sm text-muted-foreground">Submitted documents awaiting a decision. Drafts have not been submitted for review.</p>
+          <Button variant="outline" size="sm" className="w-fit" onClick={() => void fetchPending()} disabled={loading}>Refresh queue</Button>
         </CardHeader>
         <CardContent className="space-y-6">
           {actionError && (
@@ -265,9 +266,9 @@ export default function AdminVerificationsPage() {
             <p className="text-sm text-muted-foreground text-center py-12">No pending verifications.</p>
           ) : (
             <>
-              {renderTable(artists, "Artists")}
-              {renderTable(brands, "Brands")}
-              {renderTable(serviceProviders, "Service Providers")}
+              {renderTable(artists, `Talent (${artists.length})`)}
+              {renderTable(brands, `Recruiters (${brands.length})`)}
+              {renderTable(serviceProviders, `Providers (${serviceProviders.length})`)}
             </>
           )}
         </CardContent>
@@ -335,6 +336,11 @@ export default function AdminVerificationsPage() {
           </DialogHeader>
 
           <div className="space-y-4 py-2">
+            {actionError && (
+              <Alert variant="destructive">
+                <AlertDescription>{actionError}</AlertDescription>
+              </Alert>
+            )}
             {viewerItem && (
               <div className="flex items-center gap-3">
                 {viewerItem.profile_photo ? (
@@ -408,10 +414,8 @@ export default function AdminVerificationsPage() {
                 <Button
                   className="gap-1 bg-success-soft text-success border-success/20 hover:bg-success/20"
                   variant="outline"
-                  onClick={() => {
-                    handleApprove(viewerItem);
-                    setViewerOpen(false);
-                    setViewerItem(null);
+                    onClick={() => {
+                      void handleApprove(viewerItem);
                   }}
                   disabled={processingId === viewerItem._id}
                 >

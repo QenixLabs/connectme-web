@@ -616,7 +616,7 @@ function SocialIcon({ platform }: { platform: string }) {
   return <Link2 className="size-3" />;
 }
 
-function socialLabel(platform: string) { return platform.replaceAll("_", " ").replace(/(^|\s)\S/g, (letter) => letter.toUpperCase()); }
+function socialLabel(platform: string) { return platform === "imdb" ? "IMDb" : platform.replaceAll("_", " ").replace(/(^|\s)\S/g, (letter) => letter.toUpperCase()); }
 function wordCount(value: string) { return value.trim().split(/\s+/).filter(Boolean).length; }
 function basicCount(profile: Profile) { return [profile.fullLegalName, profile.username, profile.location, profile.dateOfBirth].filter(Boolean).length; }
 function languagePreview(languages: string[]) { return languages.length > 2 ? `${languages.slice(0, 2).join(" · ")} +${languages.length - 2}` : languages.join(" · "); }

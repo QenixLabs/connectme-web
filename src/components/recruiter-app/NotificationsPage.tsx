@@ -1,4 +1,5 @@
 "use client";
+import { CommunicationNotificationDialog } from "@/components/content/communication-notification-dialog";
 
 import { useMemo, useState } from "react";
 import {
@@ -10,7 +11,6 @@ import {
   MessageSquare,
   Megaphone,
   UserPlus,
-  type LucideIcon,
 } from "lucide-react";
 import { format, isToday, isYesterday } from "date-fns";
 import { toast } from "sonner";
@@ -81,14 +81,15 @@ function getTone(notification: Notification): Tone {
   return "neutral";
 }
 
-function getIcon(notification: Notification): LucideIcon {
+function NotificationIcon({ notification }: { notification: Notification }) {
   const category = getCategory(notification);
-  if (category === "Messages") return MessageSquare;
-  if (category === "Applications") return UserPlus;
-  if (category === "Action Required") return CalendarDays;
-  if (notification.type.startsWith("campaign")) return Megaphone;
-  if (notification.type.startsWith("application")) return FileText;
-  return Bell;
+  const props = { className: "size-6", strokeWidth: 2.25 };
+  if (category === "Messages") return <MessageSquare {...props} />;
+  if (category === "Applications") return <UserPlus {...props} />;
+  if (category === "Action Required") return <CalendarDays {...props} />;
+  if (notification.type.startsWith("campaign")) return <Megaphone {...props} />;
+  if (notification.type.startsWith("application")) return <FileText {...props} />;
+  return <Bell {...props} />;
 }
 
 function getActionLabel(notification: Notification): string {
@@ -142,9 +143,7 @@ function NotificationRow({
   notification: Notification;
   onClick: () => void;
 }) {
-  const category = getCategory(notification);
   const tone = getTone(notification);
-  const Icon = getIcon(notification);
   const isUnread = notification.status === "unread";
 
   return (
@@ -161,7 +160,7 @@ function NotificationRow({
       tabIndex={0}
     >
       <div className={cn("grid size-12 shrink-0 place-items-center rounded-xl", toneClass[tone])}>
-        <Icon className="size-6" strokeWidth={2.25} />
+        <NotificationIcon notification={notification} />
       </div>
       <div className="min-w-0 flex-1">
         <p className={cn("text-xs font-semibold", tone === "alert" ? "text-destructive" : toneClass[tone].split(" ")[1])}>
@@ -204,6 +203,7 @@ function NotificationRow({
 }
 
 export function NotificationsPage() {
+  const [communication, setCommunication] = useState<Notification | null>(null);
   const [filter, setFilter] = useState<Category>("All");
   const [tab, setTab] = useState<Tab>("active");
   const {
@@ -242,6 +242,11 @@ export function NotificationsPage() {
   const unreadCount = unreadData?.count ?? 0;
 
   function handleItemClick(notification: Notification) {
+    if (notification.type === "system" && notification.data.communication_id) {
+      if (notification.status === "unread") markRead.mutate(notification._id);
+      setCommunication(notification);
+      return;
+    }
     if (tab === "active" && notification.status === "unread") {
       markRead.mutate(notification._id);
     } else if (tab === "active") {
@@ -266,6 +271,7 @@ export function NotificationsPage() {
 
   return (
     <div className="relative isolate mx-auto min-h-[calc(100vh-4rem)] w-full max-w-5xl overflow-hidden px-4 pb-28 pt-6 sm:px-6 lg:px-8">
+      <CommunicationNotificationDialog notification={communication} close={() => setCommunication(null)} />
       <div className="ambient-glow right-[-8rem] top-[-5rem] size-72 bg-primary/30" />
 
       <header className="relative mb-7 overflow-hidden rounded-2xl bg-[url('/images/notifications-hero.png')] bg-cover bg-center bg-no-repeat">
