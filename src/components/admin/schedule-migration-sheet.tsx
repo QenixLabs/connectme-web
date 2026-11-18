@@ -159,6 +159,8 @@ export function ScheduleMigrationSheet({ plan, plans, onSuccess }: ScheduleMigra
                       return p.target_role === "talent" || p.target_role === "both";
                     if (plan.target_role === "recruiter")
                       return p.target_role === "recruiter" || p.target_role === "both";
+                    if (plan.target_role === "provider")
+                      return p.target_role === "provider" || p.target_role === "both";
                     return true;
                   })
                   .map((p) => (

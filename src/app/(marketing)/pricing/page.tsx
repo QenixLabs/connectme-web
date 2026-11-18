@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
@@ -14,6 +14,7 @@ import {
   HelpCircle,
   Loader2,
   LockKeyhole,
+  Tag,
   Send,
   ShieldCheck,
   Sparkles,
@@ -21,6 +22,15 @@ import {
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Accordion,
@@ -80,16 +90,20 @@ function getPlanIcon(plan: Plan, index: number, total: number) {
 
 function getPlanEyebrow(
   plan: Plan,
-  targetRole: "recruiter" | "talent",
+  targetRole: "recruiter" | "talent" | "provider",
 ): string {
   if (plan.monthly_price === 0) return "Get started";
   if (plan.is_popular === true)
     return targetRole === "recruiter"
       ? "For professional recruiters"
-      : "For serious creators";
+      : targetRole === "provider"
+        ? "For growing service businesses"
+        : "For serious creators";
   return targetRole === "recruiter"
     ? "For teams and studios"
-    : "For pros and teams";
+    : targetRole === "provider"
+      ? "For established providers"
+      : "For pros and teams";
 }
 
 function getCtaLabel(plan: Plan): string {
@@ -152,15 +166,40 @@ export default function PricingPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [upgradingKey, setUpgradingKey] = useState<string | null>(null);
+  const [checkoutPlan, setCheckoutPlan] = useState<Plan | null>(null);
+  const [couponCode, setCouponCode] = useState("");
+  const [requestedRole] = useState<"talent" | "recruiter" | "provider">(() => {
+    if (typeof window === "undefined") return "talent";
+    const role = new URLSearchParams(window.location.search).get("role");
+    return role === "talent" || role === "recruiter" || role === "provider"
+      ? role
+      : "talent";
+  });
 
   const user = useAuthStore((s) => s.user);
   const hasHydrated = useAuthStore((s) => s.hasHydrated);
-  const targetRole = user?.role === "recruiter" ? "recruiter" : "talent";
+  const hasProviderCapability =
+    user?.role === "provider" ||
+    user?.account_capabilities?.includes("provider") === true;
+  const targetRole = user
+    ? hasProviderCapability &&
+      (user.role === "provider" || requestedRole === "provider")
+      ? "provider"
+      : user.role === "recruiter"
+        ? "recruiter"
+        : "talent"
+    : requestedRole;
   const isRecruiterView = targetRole === "recruiter";
+  const isProviderView = targetRole === "provider";
   const queryClient = useQueryClient();
   const subscriptionQuery = useQuery({
-    queryKey: queryKeys.subscriptions.me(),
-    queryFn: subscriptionsApi.getMySubscription,
+    queryKey: queryKeys.subscriptions.me(
+      isProviderView ? "provider" : undefined,
+    ),
+    queryFn: () =>
+      subscriptionsApi.getMySubscription(
+        isProviderView ? "provider" : undefined,
+      ),
     enabled: hasHydrated && !!user,
   });
 
@@ -200,61 +239,95 @@ export default function PricingPage() {
     };
   }, [hasHydrated, targetRole]);
 
-  const handleUpgrade = useCallback(
-    async (plan: Plan) => {
-      if (!user) {
-        window.location.href = isRecruiterView
-          ? "/auth/signup?role=recruiter"
-          : "/auth/signup";
+  const startUpgrade = async (plan: Plan, coupon?: string) => {
+    if (!user) {
+      const roleQuery = isRecruiterView
+        ? "?role=recruiter"
+        : isProviderView
+          ? "?role=provider"
+          : "";
+      window.location.assign(`/auth/signup${roleQuery}`);
+      return;
+    }
+    try {
+      setUpgradingKey(plan.key);
+      const interval = cycle === "yearly" ? "yearly" : "monthly";
+      const result = await subscriptionsApi.upgrade({
+        planKey: plan.key,
+        interval,
+        ...(isProviderView ? { targetRole: "provider" as const } : {}),
+        ...(coupon?.trim() ? { couponCode: coupon.trim().toUpperCase() } : {}),
+      });
+      const url = result.short_url || result.checkout_url;
+      if (url) {
+        window.location.assign(url);
         return;
       }
-      try {
-        setUpgradingKey(plan.key);
-        const interval = cycle === "yearly" ? "yearly" : "monthly";
-        const hasPaidSubscription = Boolean(subscriptionQuery.data?.subscription);
-        const couponCode = hasPaidSubscription
-          ? null
-          : window.prompt("Have a coupon code? Enter it, or leave blank to continue without one.");
-        const result = await subscriptionsApi.upgrade({
-          planKey: plan.key,
-          interval,
-          ...(couponCode?.trim() ? { couponCode: couponCode.trim().toUpperCase() } : {}),
-        });
-        const url = result.short_url || result.checkout_url;
-        if (url) {
-          window.location.href = url;
-          return;
-        }
-        // Paid-to-paid change applied without a new checkout.
-        await queryClient.invalidateQueries({
-          queryKey: queryKeys.subscriptions.me(),
-        });
-        toast.success("Plan updated successfully.");
-        setUpgradingKey(null);
-      } catch (err) {
-        const backendMessage = (err as { backendMessage?: string })
-          ?.backendMessage;
-        toast.error(
-          backendMessage || "Failed to initiate upgrade. Please try again.",
-        );
-        setUpgradingKey(null);
-      }
-    },
-    [cycle, user, isRecruiterView, queryClient, subscriptionQuery.data?.subscription],
-  );
+      // Paid-to-paid change applied without a new checkout.
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.subscriptions.me(
+          isProviderView ? "provider" : undefined,
+        ),
+      });
+      toast.success("Plan updated successfully.");
+      setUpgradingKey(null);
+    } catch (err) {
+      const backendMessage = (err as { backendMessage?: string })
+        ?.backendMessage;
+      toast.error(
+        backendMessage || "Failed to initiate upgrade. Please try again.",
+      );
+      setUpgradingKey(null);
+    }
+  };
+
+  const handleUpgrade = (plan: Plan) => {
+    if (!user) {
+      const roleQuery = isRecruiterView
+        ? "?role=recruiter"
+        : isProviderView
+          ? "?role=provider"
+          : "";
+      window.location.assign(`/auth/signup${roleQuery}`);
+      return;
+    }
+
+    if (subscriptionQuery.data?.subscription) {
+      void startUpgrade(plan);
+      return;
+    }
+
+    setCouponCode("");
+    setCheckoutPlan(plan);
+  };
+
+  const continueToCheckout = () => {
+    if (!checkoutPlan) return;
+    const plan = checkoutPlan;
+    setCheckoutPlan(null);
+    void startUpgrade(plan, couponCode);
+  };
 
   if (isLoading || (user && subscriptionQuery.isLoading)) return <PricingSkeleton />;
   if (error) return <PricingError message={error} />;
 
-  const defaultPlanKey = isRecruiterView ? "recruiter_free" : "talent_free";
+  const defaultPlanKey = isRecruiterView
+    ? "recruiter_free"
+    : isProviderView
+      ? "provider_free"
+      : "talent_free";
   const currentPlanKey = user
     ? subscriptionQuery.data?.subscription?.plan_key ??
-      (subscriptionQuery.isError ? user.active_plan : undefined) ??
+      (subscriptionQuery.isError && !isProviderView
+        ? user.active_plan
+        : undefined) ??
       defaultPlanKey
     : null;
   const signupHref = isRecruiterView
     ? "/auth/signup?role=recruiter"
-    : "/auth/signup";
+    : isProviderView
+      ? "/auth/signup?role=provider"
+      : "/auth/signup";
 
   return (
     <main className="min-h-screen overflow-hidden bg-background text-foreground">
@@ -278,6 +351,11 @@ export default function PricingPage() {
                   Choose how you{" "}
                   <span className="text-primary">want to recruit</span>
                 </>
+              ) : isProviderView ? (
+                <>
+                  Choose how you{" "}
+                  <span className="text-primary">want to grow</span>
+                </>
               ) : (
                 <>
                   Choose how you{" "}
@@ -288,7 +366,9 @@ export default function PricingPage() {
             <p className="mt-4 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg">
               {isRecruiterView
                 ? "Flexible plans for individuals, teams and organizations. Find, connect and hire the right talent — faster."
-                : "Flexible plans for creators at every stage. Showcase your work, get discovered, and unlock better opportunities."}
+                : isProviderView
+                  ? "Flexible plans for service providers at every stage. Showcase your business, reach more clients, and grow your services."
+                  : "Flexible plans for creators at every stage. Showcase your work, get discovered, and unlock better opportunities."}
             </p>
           </div>
 
@@ -298,7 +378,9 @@ export default function PricingPage() {
               alt={
                 isRecruiterView
                   ? "A director's chair on an active film production set"
-                  : "Creative talent on a production set"
+                  : isProviderView
+                    ? "A service provider showcasing work to clients"
+                    : "Creative talent on a production set"
               }
               fill
               sizes="(max-width: 1024px) 100vw, 40vw"
@@ -308,7 +390,9 @@ export default function PricingPage() {
               <p className="max-w-48 font-script text-2xl leading-tight text-white">
                 {isRecruiterView
                   ? "Great talent creates great work."
-                  : "Great work finds great talent."}
+                  : isProviderView
+                    ? "Great service deserves to be seen."
+                    : "Great work finds great talent."}
               </p>
             </div>
           </figure>
@@ -337,8 +421,20 @@ export default function PricingPage() {
             ))}
           </div>
         </div>
+        <p className="mt-3 text-center text-xs font-medium text-muted-foreground">
+          Choose a plan first. You’ll review payment details securely at checkout.
+        </p>
 
-        <section className="mt-6" aria-label="Recruiting plans">
+        <section
+          className="mt-6"
+          aria-label={
+            isRecruiterView
+              ? "Recruiting plans"
+              : isProviderView
+                ? "Provider plans"
+                : "Talent plans"
+          }
+        >
           <div className="no-scrollbar -mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-6 pt-5 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0 sm:pt-5">
             {plans.map((plan, index) => {
               const Icon = getPlanIcon(plan, index, plans.length);
@@ -512,6 +608,50 @@ export default function PricingPage() {
           </p>
         </footer>
       </div>
+      <Dialog open={Boolean(checkoutPlan)} onOpenChange={(open) => !open && setCheckoutPlan(null)}>
+        <DialogContent className="max-w-md rounded-3xl p-6 sm:p-7">
+          <DialogHeader>
+            <div className="mb-2 grid size-11 place-items-center rounded-2xl bg-primary/10 text-primary">
+              <Tag className="size-5" />
+            </div>
+            <DialogTitle className="font-display text-2xl">Ready to upgrade?</DialogTitle>
+            <DialogDescription>
+              {checkoutPlan?.display_name} · {cycle === "yearly" ? "billed yearly" : "billed monthly"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-3 rounded-2xl border border-border bg-secondary/50 p-4">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="font-semibold">{checkoutPlan?.display_name}</p>
+                <p className="text-sm text-muted-foreground">Secure checkout via Razorpay</p>
+              </div>
+              <p className="font-display text-xl font-extrabold">
+                ₹{checkoutPlan ? formatPrice(cycle === "monthly" ? checkoutPlan.monthly_price : checkoutPlan.yearly_price) : "0"}
+              </p>
+            </div>
+          </div>
+          <div className="mt-4 space-y-2">
+            <label htmlFor="coupon-code" className="text-sm font-semibold">Have a coupon?</label>
+            <div className="flex gap-2">
+              <Input
+                id="coupon-code"
+                value={couponCode}
+                onChange={(event) => setCouponCode(event.target.value.toUpperCase())}
+                placeholder="Enter code (optional)"
+                autoComplete="off"
+                className="h-11 rounded-xl uppercase"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">No code? No problem — you can continue without one.</p>
+          </div>
+          <DialogFooter className="mt-4 gap-2 sm:gap-2">
+            <Button variant="ghost" onClick={() => setCheckoutPlan(null)}>Not now</Button>
+            <Button className="rounded-xl font-bold" onClick={continueToCheckout}>
+              Continue to checkout <ChevronRight className="size-4" />
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }

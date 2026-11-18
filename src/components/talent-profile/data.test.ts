@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { Testimonial } from "@/lib/api/talent";
-import { computeRating } from "./data";
+import type { PortfolioApiResponse, Testimonial } from "@/lib/api/talent";
+import { computeRating, toPortfolioItems } from "./data";
 
 const testimonial = (rating?: number): Testimonial => ({
   _id: "review-id",
@@ -22,6 +22,20 @@ describe("computeRating", () => {
         testimonial(6),
       ]),
     ).toEqual({ average: 4.5, count: 2 });
+  });
+
+  describe("toPortfolioItems", () => {
+    it("does not use a video URL as its own poster while preserving image fallbacks", () => {
+      const items: PortfolioApiResponse[] = [
+        { id: "showreel", type: "video", category: "work", url: "https://cdn.example/showreel.mp4" },
+        { id: "photo", type: "image", category: "work", url: "https://cdn.example/photo.jpg" },
+      ];
+
+      expect(toPortfolioItems(items).map((item) => item.thumbnailUrl)).toEqual([
+        undefined,
+        "https://cdn.example/photo.jpg",
+      ]);
+    });
   });
 
   it("returns no rating when there are no rated testimonials", () => {

@@ -2,6 +2,7 @@
 import { CommunicationNotificationDialog } from "@/components/content/communication-notification-dialog";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Bell,
   CalendarDays,
@@ -10,6 +11,7 @@ import {
   Loader2,
   MessageSquare,
   Megaphone,
+  Search,
   UserPlus,
 } from "lucide-react";
 import { format, isToday, isYesterday } from "date-fns";
@@ -22,6 +24,7 @@ import {
   useMarkNotificationRead,
   useMoveNotificationToHistory,
   useNotificationsInfinite,
+  useRespondToNotification,
   useUnreadNotifications,
 } from "@/hooks/use-notifications";
 import { cn, relativeTime } from "@/lib/utils";
@@ -139,12 +142,26 @@ function NotificationSkeleton() {
 function NotificationRow({
   notification,
   onClick,
+  onRespond,
+  isResponding,
 }: {
   notification: Notification;
   onClick: () => void;
+  onRespond: (action: "accepted" | "declined") => void;
+  isResponding: boolean;
 }) {
   const tone = getTone(notification);
   const isUnread = notification.status === "unread";
+  const isPendingOffer =
+    notification.type === "subscription_plan_offer" &&
+    notification.action_status === "pending";
+  const expiresAt =
+    typeof notification.data.expires_at === "string"
+      ? new Date(notification.data.expires_at)
+      : null;
+  const offerExpired =
+    notification.action_status === "expired" ||
+    (isPendingOffer && expiresAt !== null && +expiresAt <= Date.now());
 
   return (
     <article
@@ -197,15 +214,29 @@ function NotificationRow({
           <span className="truncate">{getActionLabel(notification)}</span>
           <ChevronRight className="size-3.5 sm:hidden" />
         </Button>
+        {isPendingOffer && (
+          <div className="flex w-full gap-1" onClick={(event) => event.stopPropagation()}>
+            {offerExpired ? (
+              <span className="w-full text-right text-xs text-muted-foreground">Offer expired</span>
+            ) : (
+              <>
+                <Button size="sm" className="min-w-0 flex-1 px-2" disabled={isResponding} onClick={() => onRespond("accepted")}>Accept</Button>
+                <Button size="sm" variant="outline" className="min-w-0 flex-1 px-2" disabled={isResponding} onClick={() => onRespond("declined")}>Decline</Button>
+              </>
+            )}
+          </div>
+        )}
       </div>
     </article>
   );
 }
 
 export function NotificationsPage() {
+  const router = useRouter();
   const [communication, setCommunication] = useState<Notification | null>(null);
   const [filter, setFilter] = useState<Category>("All");
   const [tab, setTab] = useState<Tab>("active");
+  const [query, setQuery] = useState("");
   const {
     data,
     isLoading,
@@ -219,14 +250,22 @@ export function NotificationsPage() {
   const markRead = useMarkNotificationRead();
   const moveToHistory = useMoveNotificationToHistory();
   const clearHistory = useClearNotificationHistory();
+  const respond = useRespondToNotification();
 
   const items = useMemo(
     () => data?.pages.flatMap((page) => page.data) ?? [],
     [data],
   );
   const visible = useMemo(
-    () => items.filter((item) => filter === "All" || getCategory(item) === filter),
-    [filter, items],
+    () => {
+      const normalized = query.trim().toLowerCase();
+      return items.filter((item) => {
+        const matchesFilter = filter === "All" || getCategory(item) === filter;
+        const matchesQuery = !normalized || `${item.title} ${item.body} ${notificationTypeLabel(item.type)}`.toLowerCase().includes(normalized);
+        return matchesFilter && matchesQuery;
+      });
+    },
+    [filter, items, query],
   );
   const counts = useMemo(
     () =>
@@ -247,11 +286,30 @@ export function NotificationsPage() {
       setCommunication(notification);
       return;
     }
+    const href = notification.data.href;
+    if (typeof href === "string" && href.startsWith("/")) {
+      if (notification.status === "unread") markRead.mutate(notification._id);
+      router.push(href);
+      return;
+    }
     if (tab === "active" && notification.status === "unread") {
       markRead.mutate(notification._id);
     } else if (tab === "active") {
       moveToHistory.mutate(notification._id);
     }
+  }
+
+  function handleOfferResponse(notification: Notification, action: "accepted" | "declined") {
+    respond.mutate(
+      { id: notification._id, action, type: notification.type },
+      {
+        onSuccess: () => toast.success(
+          action === "accepted" ? "Plan offer accepted" : "Plan offer declined",
+          { description: action === "accepted" ? "Your plan access has been updated." : "Your current plan remains unchanged." },
+        ),
+        onError: () => toast.error("Could not respond to this plan offer. Refresh and try again."),
+      },
+    );
   }
 
   function handleMarkAll() {
@@ -328,6 +386,18 @@ export function NotificationsPage() {
         </div>
       </div>
 
+      <div className="relative mb-5 flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2.5 shadow-sm">
+        <Search className="size-4 shrink-0 text-muted-foreground" />
+        <input
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Search your notifications..."
+          aria-label="Search notifications"
+          className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+        />
+        {query && <button type="button" onClick={() => setQuery("")} className="text-xs font-semibold text-muted-foreground hover:text-foreground">Clear</button>}
+      </div>
+
       <div className="mb-4 flex min-h-8 items-center justify-between gap-3">
         <p className="text-xs font-medium text-muted-foreground">
           {tab === "active" && unreadCount > 0 ? `${unreadCount} unread notification${unreadCount === 1 ? "" : "s"}` : `${visible.length} notification${visible.length === 1 ? "" : "s"}`}
@@ -379,6 +449,8 @@ export function NotificationsPage() {
                     key={notification._id}
                     notification={notification}
                     onClick={() => handleItemClick(notification)}
+                    onRespond={(action) => handleOfferResponse(notification, action)}
+                    isResponding={respond.isPending}
                   />
                 ))}
               </div>

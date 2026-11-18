@@ -42,7 +42,7 @@ export interface SubscriptionResponse {
     status: string;
     source: "free" | "paid" | "admin_granted" | "admin_revoked" | "unbilled";
     expires_at: string | null;
-  };
+  } | null;
   effective_plan?: PlanConfig | null;
 }
 
@@ -83,6 +83,7 @@ export interface UpgradePayload {
   planKey: string;
   interval: "monthly" | "yearly";
   couponCode?: string;
+  targetRole?: "talent" | "recruiter" | "provider";
 }
 
 export interface UpgradeResponse {
@@ -100,6 +101,7 @@ export function getUpgradeCheckoutUrl(result: UpgradeResponse): string | null {
 
 export interface UpdatePaymentMethodPayload {
   return_url?: string;
+  targetRole?: "talent" | "recruiter" | "provider";
 }
 
 export interface PaymentMethodResponse {
@@ -114,8 +116,10 @@ export interface CheckoutStatusResponse {
 }
 
 export const subscriptionsApi = {
-  getMySubscription: async () => {
-    const response = await apiClient.get("/subscriptions/me");
+  getMySubscription: async (targetRole?: "talent" | "recruiter" | "provider") => {
+    const response = await apiClient.get("/subscriptions/me", {
+      params: targetRole ? { targetRole } : undefined,
+    });
     return response.data as SubscriptionResponse;
   },
 
@@ -124,9 +128,13 @@ export const subscriptionsApi = {
     return response.data as UsageResponse;
   },
 
-  getInvoices: async (page = 1, limit = 20) => {
+  getInvoices: async (
+    page = 1,
+    limit = 20,
+    targetRole?: "talent" | "recruiter" | "provider",
+  ) => {
     const response = await apiClient.get("/subscriptions/invoices", {
-      params: { page, limit },
+      params: { page, limit, ...(targetRole ? { targetRole } : {}) },
     });
     return response.data as InvoicesResponse;
   },
@@ -136,8 +144,10 @@ export const subscriptionsApi = {
     return response.data as UpgradeResponse;
   },
 
-  getCheckoutStatus: async () => {
-    const response = await apiClient.get("/subscriptions/checkout/status");
+  getCheckoutStatus: async (targetRole?: "talent" | "recruiter" | "provider") => {
+    const response = await apiClient.get("/subscriptions/checkout/status", {
+      params: targetRole ? { targetRole } : undefined,
+    });
     return response.data as CheckoutStatusResponse;
   },
 

@@ -7,7 +7,6 @@ import { useState, useSyncExternalStore } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   LogOut,
-  Bell,
   User,
   CreditCard,
   Settings,
@@ -28,9 +27,7 @@ import { talentApi } from "@/lib/api/talent";
 import { recruiterApi } from "@/lib/api/recruiter";
 import { providersApi } from "@/lib/api/marketplace";
 import { MarketplaceNotificationBell } from "@/components/marketplace/marketplace-notification-bell";
-import { useUnreadNotifications } from "@/hooks/use-unread-counts";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -140,35 +137,11 @@ export function TopBar({ navItems, role, showUserMenu = false }: TopBarProps) {
                 Browse marketplace <ArrowUpRight className="size-3.5" />
               </Link>
             )}
-            {showUserMenu && (role === "provider" ? <MarketplaceNotificationBell /> : <NotificationBell role={role} />)}
+            {showUserMenu && <MarketplaceNotificationBell role={role} />}
             {showUserMenu && <UserMenu role={role} />}
           </div>
         </div>
     </header>
-  );
-}
-
-function NotificationBell({ role }: { role: TopBarProps["role"] }) {
-  const { data } = useUnreadNotifications();
-  const count = data?.count ?? 0;
-
-  return (
-    <Button
-      asChild
-      variant="ghost"
-      size="icon"
-      className="relative size-10 rounded-full text-muted-foreground hover:bg-surface hover:text-foreground"
-      aria-label="Notifications"
-    >
-      <Link href={`/${role}/notifications`}>
-        <Bell className="size-5" />
-        {count > 0 && (
-          <Badge className="pointer-events-none absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-badge-red p-0 text-[10px] font-semibold text-white">
-            {count > 9 ? "9+" : count}
-          </Badge>
-        )}
-      </Link>
-    </Button>
   );
 }
 
@@ -267,6 +240,12 @@ function UserMenu({ role }: { role: TopBarProps["role"] }) {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
+                  <Link href="/talent/verify-documents" className="cursor-pointer">
+                    <ShieldCheck className="mr-2 size-4" />
+                    Verification
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
                   <Link href="/talent/support" className="cursor-pointer">
                     <Headphones className="mr-2 size-4" />
                     Help &amp; Support
@@ -298,6 +277,12 @@ function UserMenu({ role }: { role: TopBarProps["role"] }) {
                   <Link href={profileHref} className="cursor-pointer">
                     <User className="mr-2 size-4" />
                     Profile
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/recruiter/verify-documents" className="cursor-pointer">
+                    <ShieldCheck className="mr-2 size-4" />
+                    Verification
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>

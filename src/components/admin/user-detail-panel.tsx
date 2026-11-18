@@ -45,6 +45,7 @@ import {
 } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { SubscriptionOverview } from "./subscription-overview";
+import { toast } from "sonner";
 
 function getApiErrorMessage(error: unknown, fallback: string): string {
   const err = error as { response?: { data?: { message?: string } }; message?: string };
@@ -302,18 +303,23 @@ export function UserDetailPanel({
       switch (actionType) {
         case "warning":
           await adminApi.warnUser(userId, reason);
+          toast.success("Warning issued", { description: "The user was notified in-app and by email." });
           break;
         case "suspension":
           await adminApi.suspendUser(userId, reason, actionDuration);
+          toast.success("Account suspended", { description: `The user was notified about the ${actionDuration}-day suspension.` });
           break;
         case "ban":
           await adminApi.banUser(userId, reason);
+          toast.success("Account banned", { description: "The user was notified in-app and by email." });
           break;
         case "edit_verification":
           await adminApi.updateVerificationTier(userId, reason, verificationTier);
+          toast.success("Verification tier updated");
           break;
         case "mark_safe":
           await adminApi.markUserSafe(userId, reason || undefined);
+          toast.success("User marked safe");
           break;
       }
       setActiveAction(null);

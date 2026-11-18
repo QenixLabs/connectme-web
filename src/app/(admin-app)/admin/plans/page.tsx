@@ -22,6 +22,9 @@ import {
   ChevronDown,
   ChevronUp,
   Star,
+  Search,
+  ArrowUpDown,
+  RotateCcw,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -53,6 +56,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { plansApi, type PlanConfig, type UpdatePlanInput } from "@/lib/api/plans";
 import { queryKeys } from "@/lib/api/query-keys";
 import { CreatePlanVersionSheet } from "@/components/admin/create-plan-version-sheet";
@@ -84,7 +88,7 @@ const planSchema = z.object({
   features: z.array(z.string().min(1, "Feature cannot be empty")).max(20),
   is_active: z.boolean(),
   is_popular: z.boolean(),
-  target_role: z.enum(["talent", "recruiter", "both"]),
+  target_role: z.enum(["talent", "recruiter", "provider", "both"]),
   message_quota_limit: z.number().min(0, "Limit must be at least 0").nullable(),
   campaign_quota_limit: z.number().min(0, "Limit must be at least 0").nullable(),
   max_images: z.number().min(0, "Limit must be at least 0").nullable(),
@@ -93,6 +97,9 @@ const planSchema = z.object({
 });
 
 type PlanFormValues = z.infer<typeof planSchema>;
+type PlanRoleFilter = "all" | "talent" | "recruiter" | "provider" | "both";
+type PlanStatusFilter = "all" | "active" | "inactive" | "sunsetting";
+type PlanSort = "sort_order" | "name" | "price_asc" | "price_desc";
 
 function formatPriceInRupees(paise: number): string {
   return `₹${(paise / 100).toLocaleString("en-IN")}`;
@@ -302,6 +309,9 @@ function PlanEditSheet({
                       </SelectItem>
                       <SelectItem value="recruiter" className="text-sm">
                         Recruiter Only
+                      </SelectItem>
+                      <SelectItem value="provider" className="text-sm">
+                        Provider Only
                       </SelectItem>
                       <SelectItem value="both" className="text-sm">
                         Both
@@ -608,6 +618,10 @@ export default function AdminPlansPage() {
   const [expandedFamilies, setExpandedFamilies] = useState<Set<string>>(
     new Set()
   );
+  const [roleFilter, setRoleFilter] = useState<PlanRoleFilter>("all");
+  const [statusFilter, setStatusFilter] = useState<PlanStatusFilter>("all");
+  const [sortBy, setSortBy] = useState<PlanSort>("sort_order");
+  const [search, setSearch] = useState("");
 
   const toggleFamily = useCallback((familyKey: string) => {
     setExpandedFamilies((prev) => {
@@ -623,6 +637,104 @@ export default function AdminPlansPage() {
 
   const activeCount = plans?.filter((p) => p.is_active).length ?? 0;
   const totalPlans = plans?.length ?? 0;
+  const visibleFamilies = useMemo(() => {
+    const normalizedSearch = search.trim().toLocaleLowerCase();
+    const entries = Array.from(familyGroups.entries()).filter(
+      ([familyKey, versions]) => {
+        const latest = versions[0];
+        if (roleFilter !== "all" && latest.target_role !== roleFilter) {
+          return false;
+        }
+        if (statusFilter === "active" && !latest.is_active) return false;
+        if (statusFilter === "inactive" && latest.is_active) return false;
+        if (
+          statusFilter === "sunsetting" &&
+          !latest.sunset_at &&
+          latest.accepts_new_subscriptions !== false
+        ) {
+          return false;
+        }
+        if (!normalizedSearch) return true;
+
+        return [
+          familyKey,
+          ...versions.flatMap((plan) => [
+            plan.key,
+            plan.family_key,
+            plan.display_name,
+            plan.description,
+            ...plan.features,
+          ]),
+        ].some(
+          (value) =>
+            typeof value === "string" &&
+            value.toLocaleLowerCase().includes(normalizedSearch)
+        );
+      }
+    );
+
+    return entries.sort(([, versionsA], [, versionsB]) => {
+      const a = versionsA[0];
+      const b = versionsB[0];
+      if (sortBy === "name") {
+        return a.display_name.localeCompare(b.display_name);
+      }
+      if (sortBy === "price_asc") {
+        return (
+          a.monthly_price - b.monthly_price ||
+          a.display_name.localeCompare(b.display_name)
+        );
+      }
+      if (sortBy === "price_desc") {
+        return (
+          b.monthly_price - a.monthly_price ||
+          a.display_name.localeCompare(b.display_name)
+        );
+      }
+      return (
+        (a.sort_order ?? 0) - (b.sort_order ?? 0) ||
+        a.display_name.localeCompare(b.display_name)
+      );
+    });
+  }, [familyGroups, roleFilter, search, sortBy, statusFilter]);
+  const roleCounts = useMemo(() => {
+    const counts: Record<PlanRoleFilter, number> = {
+      all: familyGroups.size,
+      talent: 0,
+      recruiter: 0,
+      provider: 0,
+      both: 0,
+    };
+    for (const versions of familyGroups.values()) {
+      counts[versions[0].target_role ?? "both"] += 1;
+    }
+    return counts;
+  }, [familyGroups]);
+  const expandableFamilies = visibleFamilies.filter(
+    ([, versions]) => versions.length > 1
+  );
+  const allVisibleExpanded =
+    expandableFamilies.length > 0 &&
+    expandableFamilies.every(([familyKey]) => expandedFamilies.has(familyKey));
+
+  const resetFilters = () => {
+    setRoleFilter("all");
+    setStatusFilter("all");
+    setSortBy("sort_order");
+    setSearch("");
+  };
+
+  const toggleVisibleFamilies = () => {
+    setExpandedFamilies((current) => {
+      const next = new Set(current);
+      for (const [familyKey, versions] of visibleFamilies) {
+        if (versions.length < 2) continue;
+        if (allVisibleExpanded) next.delete(familyKey);
+        else next.add(familyKey);
+      }
+      return next;
+    });
+  };
 
   return (
     <div className="space-y-5">
@@ -661,28 +773,158 @@ export default function AdminPlansPage() {
         </div>
       ) : (
         <>
-          {/* Stats */}
-          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-            <Badge variant="outline" className="text-xs px-2 py-0.5">
-              {totalPlans} plan{totalPlans !== 1 ? "s" : ""} total
-            </Badge>
-            <Badge
-              variant="outline"
-              className="text-xs px-2 py-0.5 text-emerald-700 border-emerald-200 bg-emerald-50"
-            >
-              {activeCount} active
-            </Badge>
-            <Badge
-              variant="outline"
-              className="text-xs px-2 py-0.5 text-muted-foreground"
-            >
-              {familyGroups.size} familie{familyGroups.size !== 1 ? "s" : "y"}
-            </Badge>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {[
+              { label: "Plan families", value: familyGroups.size },
+              { label: "Active versions", value: activeCount },
+              {
+                label: "Sunsetting",
+                value:
+                  plans?.filter(
+                    (plan) =>
+                      plan.sunset_at ||
+                      plan.accepts_new_subscriptions === false
+                  ).length ?? 0,
+              },
+              { label: "Total versions", value: totalPlans },
+            ].map((stat) => (
+              <div
+                key={stat.label}
+                className="rounded-xl border bg-card px-4 py-3"
+              >
+                <p className="text-xs text-muted-foreground">{stat.label}</p>
+                <p className="mt-1 text-xl font-semibold">{stat.value}</p>
+              </div>
+            ))}
           </div>
 
-          {/* Plan Cards Grid */}
+          <section
+            aria-label="Filter subscription plans"
+            className="space-y-3 rounded-xl border bg-card p-4"
+          >
+            <Tabs
+              value={roleFilter}
+              onValueChange={(value) =>
+                setRoleFilter(value as PlanRoleFilter)
+              }
+            >
+              <TabsList className="h-auto w-full flex-wrap justify-start">
+                {([
+                  ["all", "All plans"],
+                  ["talent", "Talent"],
+                  ["recruiter", "Recruiter"],
+                  ["provider", "Provider"],
+                  ["both", "Shared"],
+                ] as const).map(([value, label]) => (
+                  <TabsTrigger key={value} value={value} className="gap-1.5">
+                    {label}
+                    <span className="text-[10px] text-muted-foreground">
+                      {roleCounts[value]}
+                    </span>
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+            <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+              <div className="relative min-w-0 flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Search plan name, key, description, or feature"
+                  aria-label="Search subscription plans"
+                  className="pl-9"
+                />
+              </div>
+              <Select
+                value={statusFilter}
+                onValueChange={(value) =>
+                  setStatusFilter(value as PlanStatusFilter)
+                }
+              >
+                <SelectTrigger
+                  aria-label="Filter by plan status"
+                  className="w-full lg:w-40"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All statuses</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                  <SelectItem value="sunsetting">Sunsetting</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select
+                value={sortBy}
+                onValueChange={(value) => setSortBy(value as PlanSort)}
+              >
+                <SelectTrigger
+                  aria-label="Sort plans"
+                  className="w-full lg:w-48"
+                >
+                  <ArrowUpDown className="size-4" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sort_order">Configured order</SelectItem>
+                  <SelectItem value="name">Name: A to Z</SelectItem>
+                  <SelectItem value="price_asc">Price: low to high</SelectItem>
+                  <SelectItem value="price_desc">Price: high to low</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+              <span>
+                Showing {visibleFamilies.length} of {familyGroups.size} plan families
+              </span>
+              <div className="flex items-center gap-3">
+                {(search ||
+                  roleFilter !== "all" ||
+                  statusFilter !== "all" ||
+                  sortBy !== "sort_order") && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 gap-1 px-2"
+                    onClick={resetFilters}
+                  >
+                    <RotateCcw className="size-3.5" />
+                    Reset filters
+                  </Button>
+                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2"
+                  onClick={toggleVisibleFamilies}
+                  disabled={expandableFamilies.length === 0}
+                >
+                  {allVisibleExpanded ? "Collapse versions" : "Expand versions"}
+                </Button>
+              </div>
+            </div>
+          </section>
+
+          {visibleFamilies.length === 0 ? (
+            <div className="rounded-xl border border-dashed bg-card p-10 text-center">
+              <Search className="mx-auto size-7 text-muted-foreground/50" />
+              <p className="mt-3 text-sm font-medium">No plans match these filters</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Try another role, status, or search term.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-4"
+                onClick={resetFilters}
+              >
+                Clear filters
+              </Button>
+            </div>
+          ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-            {Array.from(familyGroups.entries()).map(
+            {visibleFamilies.map(
               ([familyKey, versions]) => {
                 const latest = versions[0];
                 const older = versions.slice(1);
@@ -736,6 +978,9 @@ export default function AdminPlansPage() {
                         >
                           v{latest.version ?? 1}
                         </Badge>
+                        <Badge variant="outline" className="text-[10px]">
+                          Order {latest.sort_order ?? 0}
+                        </Badge>
                         <Badge
                           variant="outline"
                           className={`text-[10px] capitalize ${
@@ -743,6 +988,8 @@ export default function AdminPlansPage() {
                               ? "bg-blue-50 text-blue-700 border-blue-200"
                               : latest.target_role === "recruiter"
                               ? "bg-sky-50 text-sky-700 border-sky-200"
+                              : latest.target_role === "provider"
+                              ? "bg-violet-50 text-violet-700 border-violet-200"
                               : "bg-muted text-muted-foreground border-border"
                           }`}
                         >
@@ -981,6 +1228,7 @@ export default function AdminPlansPage() {
               }
             )}
           </div>
+          )}
         </>
       )}
     </div>

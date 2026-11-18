@@ -1295,6 +1295,9 @@ function AdminUsersContent() {
                     <TableHead className="text-[11px] font-semibold text-muted-foreground whitespace-nowrap">
                       Status
                     </TableHead>
+                    <TableHead className="text-[11px] font-semibold text-muted-foreground whitespace-nowrap">
+                      Verification
+                    </TableHead>
                     <TableHead className="text-[11px] font-semibold text-muted-foreground whitespace-nowrap hidden sm:table-cell">
                       Plan
                     </TableHead>
@@ -1434,6 +1437,26 @@ function AdminUsersContent() {
                               {user.status}
                             </Badge>
                           </div>
+                        </TableCell>
+
+                        {/* Verification status */}
+                        <TableCell>
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              "gap-1 text-[10px] px-1.5 py-0",
+                              user.is_email_verified && user.is_phone_verified && user.verification_tier >= 2
+                                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                : "text-muted-foreground",
+                            )}
+                          >
+                            <ShieldCheck className="size-3" />
+                            {user.verification_status
+                              ? user.verification_status.replaceAll("_", " ")
+                              : user.is_email_verified && user.is_phone_verified && user.verification_tier >= 2
+                                ? "Verified"
+                                : `Tier ${user.verification_tier}`}
+                          </Badge>
                         </TableCell>
 
                         {/* Plan */}

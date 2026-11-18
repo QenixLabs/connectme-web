@@ -39,7 +39,7 @@ export interface PlanConfig {
   max_images?: number | null;
   max_videos?: number | null;
   sort_order?: number;
-  target_role: "talent" | "recruiter" | "both";
+  target_role: "talent" | "recruiter" | "provider" | "both";
   is_popular?: boolean;
 }
 
@@ -56,7 +56,7 @@ export interface UpdatePlanInput {
   max_images?: number;
   max_videos?: number;
   sort_order?: number;
-  target_role?: "talent" | "recruiter" | "both";
+  target_role?: "talent" | "recruiter" | "provider" | "both";
   is_popular?: boolean;
 }
 
@@ -75,7 +75,7 @@ export interface CreatePlanInput {
   max_images?: number;
   max_videos?: number;
   sort_order?: number;
-  target_role?: "talent" | "recruiter" | "both";
+  target_role?: "talent" | "recruiter" | "provider" | "both";
   is_popular?: boolean;
 }
 

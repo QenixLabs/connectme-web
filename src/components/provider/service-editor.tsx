@@ -107,7 +107,7 @@ const STEPS = [
     shortLabel: "Pricing",
     heading: "Set your service pricing",
     subtitle:
-      "Help customers understand your pricing before contacting you.",
+      "Share an indicative price if you have one. You can also discuss pricing directly with customers.",
   },
 ] as const;
 
@@ -544,18 +544,6 @@ function ServiceEditorForm({
     if (!form.delivery_time) {
       errors.delivery_time = "Choose how long delivery usually takes.";
     }
-    if (form.service_type !== "custom") {
-      const amount = Number(form.amount);
-      if (
-        !form.amount.trim() ||
-        !Number.isFinite(amount) ||
-        amount < 0 ||
-        amount > 100000000
-      ) {
-        errors.amount = "Enter a valid, non-negative indicative price.";
-      }
-    }
-
     return errors;
   }
 
@@ -1957,7 +1945,7 @@ function StepPricing({
         <SectionCard
           icon={Wallet}
           title="Pricing configuration"
-          description="Set an indicative price to help customers decide. Final scope can be agreed directly."
+          description="An indicative price is optional. Customers can contact you to discuss scope and pricing."
         >
           {form.service_type === "custom" ? (
             <div className="rounded-2xl border border-violet-200 bg-violet-50/70 p-5">
@@ -1980,8 +1968,8 @@ function StepPricing({
                 <Field
                   label="Indicative price"
                   htmlFor="service-amount"
-                  required
-                  hint="Use a starting price. You can confirm the final quote later."
+                  optional
+                  hint="Leave blank to discuss pricing directly with the customer."
                   error={fieldErrors.amount}
                 >
                   <div className="relative">
@@ -2106,8 +2094,8 @@ function StepPricing({
                 label={form.service_areas.length > 0 ? `${form.service_areas.length} service area${form.service_areas.length === 1 ? "" : "s"}` : "Add service areas"}
               />
               <ReadinessItem
-                ready={form.service_type === "custom" || Boolean(form.amount)}
-                label={form.service_type === "custom" ? "Custom pricing" : form.amount ? "Pricing set" : "Add pricing"}
+                ready
+                label={form.service_type === "custom" ? "Custom pricing" : form.amount ? "Price added" : "Price optional"}
               />
             </div>
 

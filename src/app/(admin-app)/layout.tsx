@@ -19,10 +19,10 @@ import {
   KeyRound,
   Headphones,
   TicketPercent,
+  Gift,
   LogOut,
   Megaphone,
   FileText,
-  Bell,
 } from "lucide-react";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { Button } from "@/components/ui/button";
@@ -52,6 +52,7 @@ import {
 
 import rootinLogo from "@/assets/rootin-logo-orange.png";
 import { CommunicationFeed } from "@/components/content/communication-feed";
+import { MarketplaceNotificationBell } from "@/components/marketplace/marketplace-notification-bell";
 
 const navigation = [
   {
@@ -62,6 +63,7 @@ const navigation = [
     title: "Management",
     items: [
       { label: "Users", href: "/admin/users", icon: Users },
+      { label: "Free upgrades", href: "/admin/free-upgrades", icon: Gift },
       { label: "Talent overview", href: "/admin/talents", icon: Users },
       { label: "Provider overview", href: "/admin/providers", icon: Users },
       { label: "Recruiter overview", href: "/admin/recruiters", icon: Users },
@@ -96,6 +98,7 @@ const navigation = [
 const pageTitles: Record<string, string> = {
   "/admin/dashboard": "Dashboard",
   "/admin/users": "Users",
+  "/admin/free-upgrades": "Free upgrades",
   "/admin/talents": "Talent overview",
   "/admin/providers": "Provider overview",
   "/admin/recruiters": "Recruiter overview",
@@ -226,7 +229,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
 
           <div className="ml-auto flex items-center gap-2">
-            <Button variant="ghost" size="icon" asChild><Link href="/admin/notifications" aria-label="Notifications"><Bell className="size-4" /></Link></Button>
+            <MarketplaceNotificationBell role="admin" />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center gap-2 h-8 px-2 -mr-2">

@@ -51,7 +51,7 @@ const schema = z.object({
   permissions: z.array(z.string().min(1, "Permission cannot be empty")).max(50),
   is_active: z.boolean(),
   is_popular: z.boolean(),
-  target_role: z.enum(["talent", "recruiter", "both"]),
+  target_role: z.enum(["talent", "recruiter", "provider", "both"]),
   message_quota_limit: z.number().min(0, "Limit must be at least 0").nullable(),
   campaign_quota_limit: z.number().min(0, "Limit must be at least 0").nullable(),
   max_images: z.number().min(0, "Limit must be at least 0").nullable(),
@@ -288,6 +288,7 @@ export function CreatePlanSheet({ onSuccess }: CreatePlanSheetProps) {
                     <SelectContent>
                       <SelectItem value="talent" className="text-sm">Talent Only</SelectItem>
                       <SelectItem value="recruiter" className="text-sm">Recruiter Only</SelectItem>
+                      <SelectItem value="provider" className="text-sm">Provider Only</SelectItem>
                       <SelectItem value="both" className="text-sm">Both</SelectItem>
                     </SelectContent>
                   </Select>

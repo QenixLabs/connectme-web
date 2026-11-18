@@ -279,6 +279,34 @@ export interface AdminUserSubscriptionDetail {
   billing_consequences: string;
 }
 
+export interface AdminUpgradeCandidate {
+  _id: string;
+  email: string;
+  role: "talent" | "recruiter";
+  display_name: string;
+  trust_score: number;
+  last_active_at: string;
+  activity_score: number;
+  selection_weight: number;
+}
+
+export interface AdminUpgradeCandidatePage {
+  candidates: AdminUpgradeCandidate[];
+  total: number;
+  page: number;
+  limit: number;
+  total_pages: number;
+  scoring: string;
+}
+
+export interface SubscriptionOfferInput {
+  plan_key: string;
+  duration_days: number;
+  reason: string;
+  expected_revision: string;
+  billing_acknowledged: boolean;
+}
+
 export interface AdminUserInvoice {
   _id: string;
   razorpay_invoice_id: string;
@@ -583,6 +611,13 @@ export interface AdminCoupon {
   user_id: { _id: string; email: string } | null;
   max_redemptions: number | null;
   redemption_count: number;
+  redemptions?: Array<{
+    user_id: { _id: string; email: string; username?: string } | string;
+    status?: "pending" | "used" | "released";
+    claimed_at?: string;
+    used_at?: string;
+    razorpay_subscription_id?: string;
+  }>;
   expires_at: string | null;
   active: boolean;
   created_at: string;
@@ -826,7 +861,7 @@ export const adminApi = {
     user_email?: string;
     max_redemptions?: number;
     expires_at?: string;
-  }): Promise<AdminCoupon> => {
+  }): Promise<{ _id: string; code: string }> => {
     const response = await apiClient.post('/admin/subscriptions/coupons', payload);
     return response.data;
   },
@@ -837,6 +872,32 @@ export const adminApi = {
 
   getUserSubscription: async (id: string): Promise<AdminUserSubscriptionDetail> => {
     const response = await apiClient.get(`/admin/users/${id}/subscription`);
+    return response.data;
+  },
+
+  getFreeUpgradeCandidates: async (params: {
+    role: "talent" | "recruiter";
+    page?: number;
+    limit?: number;
+    search?: string;
+  }): Promise<AdminUpgradeCandidatePage> => {
+    const response = await apiClient.get("/admin/free-upgrades/candidates", { params });
+    return response.data;
+  },
+
+  drawFreeUpgradeCandidate: async (
+    role: "talent" | "recruiter",
+    count: number,
+  ): Promise<{ candidates: AdminUpgradeCandidate[]; eligible_count: number; scoring: string }> => {
+    const response = await apiClient.post("/admin/free-upgrades/draw", { role, count });
+    return response.data;
+  },
+
+  createSubscriptionOffer: async (
+    id: string,
+    payload: SubscriptionOfferInput,
+  ): Promise<{ notification: { _id: string }; expires_at: string }> => {
+    const response = await apiClient.post(`/admin/users/${id}/subscription-offers`, payload);
     return response.data;
   },
 

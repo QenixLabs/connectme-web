@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 import { AlertTriangle, Ban, Clock3, Flag, Gavel, Search, ShieldCheck, Users } from "lucide-react";
 import { adminApi, type AdminUser, type DashboardStats, type PaginatedUsers } from "@/lib/api";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -42,7 +43,13 @@ export default function BulkModerationPage() {
     }
   }, [page, search, status, sort]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    let cancelled = false;
+    void Promise.resolve().then(() => {
+      if (!cancelled) return load();
+    });
+    return () => { cancelled = true; };
+  }, [load]);
 
   const toggle = (id: string) => setSelected((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
   const runAction = async () => {
@@ -51,16 +58,30 @@ export default function BulkModerationPage() {
     if (!window.confirm(`${verb} ${selected.length} selected account(s)? This action will be recorded.`)) return;
     setBusy(true); setError(""); setNotice("");
     let completed = 0;
+    let failed = 0;
     for (const id of selected) {
       try {
         if (action === "ban") await adminApi.banUser(id, reason.trim());
         else if (action === "suspend") await adminApi.suspendUser(id, reason.trim(), duration);
         else await adminApi.unrestrictUser(id, reason.trim());
         completed++;
-      } catch { /* Continue processing remaining users; report partial completion below. */ }
+      } catch {
+        failed++;
+      }
     }
     setBusy(false); setSelected([]);
-    setNotice(`${completed} of ${selected.length} accounts ${action === "restore" ? "restored" : `${action}ned`}.`);
+    const actionLabel = action === "restore" ? "restored" : action === "ban" ? "banned" : "suspended";
+    setNotice(`${completed} of ${selected.length} accounts ${actionLabel}.${failed ? ` ${failed} failed; review the account status and retry if needed.` : ""}`);
+    if (completed) {
+      toast.success("Moderation action complete", {
+        description: `${completed} of ${selected.length} selected account${selected.length === 1 ? "" : "s"} were processed.`,
+      });
+    }
+    if (failed) {
+      toast.error("Some moderation actions failed", {
+        description: `${failed} selected account${failed === 1 ? "" : "s"} could not be processed.`,
+      });
+    }
     await load();
   };
 
@@ -83,7 +104,7 @@ export default function BulkModerationPage() {
     <Card><CardContent className="space-y-4 p-4">
       <div className="grid gap-3 md:grid-cols-[1fr_180px_180px]">
         <div className="relative"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input className="pl-9" placeholder="Search name, username, or email" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} /></div>
-        <Select value={status} onValueChange={(v) => { setStatus(v); setPage(1); }}><SelectTrigger><SelectValue placeholder="Account status" /></SelectTrigger><SelectContent><SelectItem value="all">All statuses</SelectItem><SelectItem value="active">Active</SelectItem><SelectItem value="suspended">Suspended</SelectItem><SelectItem value="banned">Banned</SelectItem></SelectContent></Select>
+        <Select value={status} onValueChange={(v) => { setStatus(v); setPage(1); }}><SelectTrigger><SelectValue placeholder="Account status" /></SelectTrigger><SelectContent><SelectItem value="all">All actions</SelectItem><SelectItem value="active">Active</SelectItem><SelectItem value="warning">Has warnings</SelectItem><SelectItem value="suspended">Suspended</SelectItem><SelectItem value="banned">Banned</SelectItem></SelectContent></Select>
         <Select value={sort} onValueChange={setSort}><SelectTrigger><SelectValue placeholder="Sort users" /></SelectTrigger><SelectContent><SelectItem value="report_count">Most reports</SelectItem><SelectItem value="created_at">Newest joined</SelectItem><SelectItem value="last_active_at">Recently active</SelectItem><SelectItem value="trust_score">Lowest trust score</SelectItem></SelectContent></Select>
       </div>
       <div className="overflow-x-auto rounded-md border"><Table><TableHeader><TableRow><TableHead><input aria-label="Select all visible users" type="checkbox" checked={users.length > 0 && users.every((u) => selected.includes(u._id))} onChange={(e) => setSelected(e.target.checked ? [...new Set([...selected, ...users.map((u) => u._id)])] : selected.filter((id) => !users.some((u) => u._id === id)))} /></TableHead><TableHead>User</TableHead><TableHead>Role</TableHead><TableHead>Status</TableHead><TableHead>Reports</TableHead><TableHead>Trust</TableHead><TableHead>Joined</TableHead></TableRow></TableHeader>

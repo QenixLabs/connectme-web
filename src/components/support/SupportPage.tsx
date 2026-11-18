@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   Clock3,
   CreditCard,
+  FileImage,
   Headphones,
   Mail,
   LoaderCircle,
@@ -21,7 +22,7 @@ import {
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import {
   Accordion,
@@ -88,6 +89,8 @@ export function SupportPage() {
   const [contactOpen, setContactOpen] = useState(false);
   const [newSubject, setNewSubject] = useState("");
   const [newDescription, setNewDescription] = useState("");
+  const [ticketAttachments, setTicketAttachments] = useState<File[]>([]);
+  const ticketAttachmentInput = useRef<HTMLInputElement>(null);
 
   const messagesHref = pathname.startsWith("/recruiter")
     ? "/recruiter/messages"
@@ -157,8 +160,15 @@ export function SupportPage() {
       return;
     }
     setTicketSubmitting(true);
-    void supportApi.create({ subject, message, category: ticketCategory || undefined }).then(async (ticket) => {
-      setNewSubject(""); setNewDescription(""); setTicketCategory(""); setTicketDialogOpen(false);
+    void supportApi.create({
+      subject,
+      message,
+      category: ticketCategory || undefined,
+      attachments: ticketAttachments,
+    }).then(async (ticket) => {
+      setNewSubject(""); setNewDescription(""); setTicketCategory(""); setTicketAttachments([]);
+      if (ticketAttachmentInput.current) ticketAttachmentInput.current.value = "";
+      setTicketDialogOpen(false);
       setNotice(`Ticket created. Reference ${ticket._id.slice(-8).toUpperCase()}.`);
       toast.success("Ticket submitted. You can follow the conversation below.");
       await refreshTickets();
@@ -430,6 +440,39 @@ export function SupportPage() {
               />
               <p className="text-right text-[11px] text-muted-foreground">{newDescription.length}/10,000</p>
             </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="ticket-attachments">Screenshots <span className="text-muted-foreground">(optional, up to 5 images · 10 MB each)</span></Label>
+              <Input
+                id="ticket-attachments"
+                ref={ticketAttachmentInput}
+                type="file"
+                accept="image/jpeg,image/png,image/gif,image/webp"
+                multiple
+                onChange={(event) => {
+                  const files = Array.from(event.target.files ?? []);
+                  const invalid = files.length > 5
+                    ? "Attach no more than 5 images."
+                    : files.find((file) => !["image/jpeg", "image/png", "image/gif", "image/webp"].includes(file.type) || file.size > 10 * 1024 * 1024);
+                  if (invalid) {
+                    toast.error(typeof invalid === "string" ? invalid : "Use JPEG, PNG, GIF, or WEBP images up to 10 MB each.");
+                    event.target.value = "";
+                    return;
+                  }
+                  setTicketAttachments(files);
+                }}
+              />
+              {ticketAttachments.length > 0 && (
+                <ul className="space-y-1 text-xs text-muted-foreground">
+                  {ticketAttachments.map((file, index) => (
+                    <li key={`${file.name}-${index}`} className="flex items-center gap-2">
+                      <FileImage className="size-3.5" />
+                      <span className="min-w-0 flex-1 truncate">{file.name}</span>
+                      <button type="button" className="underline" onClick={() => setTicketAttachments((current) => current.filter((_, itemIndex) => itemIndex !== index))}>Remove</button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setTicketDialogOpen(false)}>Cancel</Button>
               <Button type="submit" disabled={ticketSubmitting || newSubject.trim().length < 3 || !newDescription.trim()}>
@@ -448,7 +491,7 @@ export function SupportPage() {
           </DialogHeader>
           <div className="max-h-80 space-y-3 overflow-y-auto rounded-lg bg-muted/30 p-3">
             {selectedTicket?.replies.length === 0 && <p className="py-5 text-center text-sm text-muted-foreground">Your message is with our team. We’ll reply here.</p>}
-            {selectedTicket?.replies.map((reply, index) => <div key={reply._id || index} className={`max-w-[90%] rounded-xl p-3 text-sm ${reply.author_role === "admin" ? "bg-primary/10" : "ml-auto bg-card shadow-sm"}`}><p className="mb-1 text-[10px] font-bold text-muted-foreground">{reply.author_role === "admin" ? "Rootin Support" : "You"} · {new Date(reply.created_at).toLocaleString()}</p><p className="whitespace-pre-wrap break-words">{reply.message}</p></div>)}
+            {selectedTicket?.replies.map((reply, index) => <div key={reply._id || index} className={`max-w-[90%] rounded-xl p-3 text-sm ${reply.author_role === "admin" ? "bg-primary/10" : "ml-auto bg-card shadow-sm"}`}><p className="mb-1 text-[10px] font-bold text-muted-foreground">{reply.author_role === "admin" ? "Rootin Support" : "You"} · {new Date(reply.created_at).toLocaleString()}</p><p className="whitespace-pre-wrap break-words">{reply.message}</p>{reply.attachments?.map((attachment) => <a key={attachment.url} href={attachment.url} target="_blank" rel="noreferrer" className="mt-2 block text-xs text-primary underline">{attachment.name}</a>)}</div>)}
           </div>
           {selectedTicket && !["resolved", "closed"].includes(selectedTicket.status) && <form className="grid gap-2" onSubmit={sendReply}><Label htmlFor="ticket-reply" className="sr-only">Your reply</Label><Textarea id="ticket-reply" value={replyMessage} onChange={(event) => setReplyMessage(event.target.value)} placeholder="Write a reply…" maxLength={10000} required /><div className="flex justify-end"><Button type="submit" disabled={replySubmitting || !replyMessage.trim()}>{replySubmitting && <LoaderCircle className="animate-spin" />} {replySubmitting ? "Sending…" : "Send reply"}</Button></div></form>}
           {selectedTicket && ["resolved", "closed"].includes(selectedTicket.status) && <p className="flex items-center gap-2 rounded-lg bg-success/10 p-3 text-sm text-foreground"><CheckCircle2 className="size-4 text-success" /> This request is closed. Create a new request if you need more help.</p>}

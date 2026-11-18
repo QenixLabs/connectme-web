@@ -93,8 +93,12 @@ export const queryKeys = {
     detail: (id: string) => ['service-inquiries', 'detail', id] as const,
   },
   subscriptions: {
-    me: () => ['subscriptions', 'me'] as const,
-    invoices: (page: number, limit: number) => ['subscriptions', 'invoices', page, limit] as const,
+    me: (targetRole?: string) =>
+      targetRole ? (['subscriptions', 'me', targetRole] as const) : (['subscriptions', 'me'] as const),
+    invoices: (page: number, limit: number, targetRole?: string) =>
+      targetRole
+        ? (['subscriptions', 'invoices', page, limit, targetRole] as const)
+        : (['subscriptions', 'invoices', page, limit] as const),
     usage: () => ['subscriptions', 'usage'] as const,
     checkoutStatus: () => ['subscriptions', 'checkout', 'status'] as const,
     adminAnalytics: () => ['subscriptions', 'admin', 'analytics'] as const,

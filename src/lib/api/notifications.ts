@@ -16,6 +16,7 @@ export type NotificationType =
   | "subscription_activated"
   | "plan_migration_scheduled"
   | "plan_migration_request"
+  | "subscription_plan_offer"
   | "campaign_recommendation"
   | "task_assigned"
   | "task_submitted"
@@ -33,7 +34,8 @@ export type NotificationActionStatus =
   | "allowed"
   | "denied"
   | "accepted"
-  | "declined";
+  | "declined"
+  | "expired";
 
 export type NotificationDismissStrategy = "manual" | "auto";
 
@@ -160,7 +162,13 @@ export const notificationsApi = {
 
   respondToAction: async (id: string, action: "accepted" | "declined") => {
     const response = await apiClient.post(`/notifications/${id}/respond`, { action });
-    return response.data as { message: string; data: Notification };
+    const payload = response.data as { message: string; data: Notification };
+    return { notification: payload.data };
+  },
+
+  respondToSubscriptionOffer: async (id: string, action: "accepted" | "declined") => {
+    const response = await apiClient.post(`/subscriptions/offers/${id}/respond`, { action });
+    return response.data as { notification: Notification };
   },
 
   getSettings: async () => {
@@ -191,6 +199,7 @@ export function notificationTypeLabel(type: NotificationType): string {
     subscription_activated: "Subscription",
     plan_migration_scheduled: "Plan Migration",
     plan_migration_request: "Plan Migration",
+    subscription_plan_offer: "Plan offer",
     campaign_recommendation: "Recommendation",
     task_assigned: "Task Assigned",
     task_submitted: "Task Submitted",

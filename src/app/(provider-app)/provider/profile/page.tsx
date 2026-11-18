@@ -6,6 +6,7 @@ import {
   BriefcaseBusiness,
   CheckCircle2,
   ChevronRight,
+  CreditCard,
   ExternalLink,
   Eye,
   Image,
@@ -135,6 +136,12 @@ export default function ProviderProfilePage() {
       description: "Account verification and documents",
       href: "/provider/verify-documents",
       icon: ShieldCheck,
+    },
+    {
+      label: "Plans & Billing",
+      description: "Manage your provider plan and payments",
+      href: "/provider/billing",
+      icon: CreditCard,
     },
     {
       label: "Availability & Service Area",

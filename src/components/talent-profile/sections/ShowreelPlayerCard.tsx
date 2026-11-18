@@ -4,6 +4,7 @@
 
 import { Clapperboard, Play } from "lucide-react";
 import Link from "next/link";
+import { useState } from "react";
 import { GlassCard } from "../primitives";
 import type { PortfolioItem } from "@/lib/types/portfolio";
 import { getYouTubeEmbedUrl } from "@/hooks/use-portfolio";
@@ -17,11 +18,15 @@ export function ShowreelPlayerCard({
   username: string;
   onOpenReel?: (itemId: string) => void;
 }) {
+  const [videoFailed, setVideoFailed] = useState(false);
   const hero = items.find((i) => i.profileHighlightType === "showreel");
   if (!hero) return null;
 
   const img = hero.thumbnailUrl || hero.url;
-  const youtubeUrl = hero.type === "youtube" ? getYouTubeEmbedUrl(hero.url) : null;
+  const youtubeUrl =
+    hero.type === "youtube"
+      ? hero.embedUrl || getYouTubeEmbedUrl(hero.url)
+      : null;
   const youtubeSrc = youtubeUrl
     ? `${youtubeUrl}${youtubeUrl.includes("?") ? "&" : "?"}rel=0&playsinline=1`
     : null;
@@ -50,15 +55,28 @@ export function ShowreelPlayerCard({
             className="h-full w-full"
           />
         ) : hero.type === "video" ? (
-          <video
-            src={hero.url}
-            poster={hero.thumbnailUrl}
-            controls
-            playsInline
-            preload="metadata"
-            aria-label={`Play ${hero.title}`}
-            className="h-full w-full object-contain"
-          />
+          videoFailed ? (
+            <div className="grid h-full place-items-center px-6 text-center text-sm text-card">
+              <p>
+                This video could not be played in your browser.{" "}
+                <a href={hero.url} target="_blank" rel="noreferrer" className="underline">
+                  Open the video file
+                </a>
+              </p>
+            </div>
+          ) : (
+            <video
+              controls
+              playsInline
+              preload="metadata"
+              poster={hero.thumbnailUrl}
+              aria-label={`Play ${hero.title}`}
+              className="h-full w-full object-contain"
+              onLoadStart={() => setVideoFailed(false)}
+              onError={() => setVideoFailed(true)}
+              src={hero.url}
+            />
+          )
         ) : (
           <button
             type="button"

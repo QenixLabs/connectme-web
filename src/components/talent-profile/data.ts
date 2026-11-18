@@ -188,7 +188,8 @@ export function toPortfolioItems(
       title: item.title || item.caption || "Untitled work",
       description: item.description || "",
       url: item.url,
-      thumbnailUrl: item.thumbnail_url || item.url,
+      thumbnailUrl:
+        item.thumbnail_url || (type === "image" ? item.url : undefined),
       mimeType: item.mime_type,
       fileName: item.file_name,
       fileSize: item.file_size,

@@ -48,7 +48,8 @@ function apiItemToPortfolioItem(
     title,
     description: item.description || "",
     url: item.url,
-    thumbnailUrl: item.thumbnail_url || item.url,
+    thumbnailUrl:
+      item.thumbnail_url || (safeType === "image" ? item.url : undefined),
     mimeType: item.mime_type,
     fileName: item.file_name,
     fileSize: item.file_size,

@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, Loader2, RefreshCw } from "lucide-react";
 import {
   adminApi, type AdminSubscriptionRecord, type SubscriptionOverrideAction,
-  type SubscriptionOverrideInput,
+  type SubscriptionOfferInput, type SubscriptionOverrideInput,
 } from "@/lib/api/admin";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
 
 function date(value?: string | null) {
   return value ? new Date(value).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }) : "—";
@@ -63,6 +64,8 @@ export function SubscriptionOverview({ userId, onChange }: { userId: string; onC
   const [reason, setReason] = useState("");
   const [endsAt, setEndsAt] = useState("");
   const [review, setReview] = useState<SubscriptionOverrideInput | null>(null);
+  const [offerReview, setOfferReview] = useState<SubscriptionOfferInput | null>(null);
+  const [durationDays, setDurationDays] = useState("30");
   const [acknowledged, setAcknowledged] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const mutation = useMutation({
@@ -78,6 +81,22 @@ export function SubscriptionOverview({ userId, onChange }: { userId: string; onC
     },
     onError: () => { void refetch(); setAcknowledged(false); },
   });
+  const offerMutation = useMutation({
+    mutationFn: (payload: SubscriptionOfferInput) => adminApi.createSubscriptionOffer(userId, payload),
+    onSuccess: (result) => {
+      setOfferReview(null);
+      setEditing(false);
+      setReason("");
+      setAcknowledged(false);
+      onChange();
+      toast.success("Plan offer sent", {
+        description: `The user has 7 days to respond. If accepted, access begins for ${offerReview?.duration_days ?? durationDays} days.`,
+      });
+      void refetch();
+      return result;
+    },
+    onError: () => { void refetch(); setAcknowledged(false); },
+  });
 
   // Refresh at expiry as well as polling: no stale admin-granted badge at the boundary.
   useEffect(() => {
@@ -90,6 +109,31 @@ export function SubscriptionOverview({ userId, onChange }: { userId: string; onC
 
   const prepareReview = () => {
     if (!data) return;
+    if (action !== "revoke" && action !== "extend") {
+      const duration = Number(durationDays);
+      if (!Number.isInteger(duration) || duration < 1 || duration > 3650) {
+        setFormError("Offer duration must be from 1 to 3650 days.");
+        return;
+      }
+      if (reason.trim().length < 3 || reason.trim().length > 2000) {
+        setFormError("Enter a reason of 3–2000 characters.");
+        return;
+      }
+      if (!plan) { setFormError("Select a plan."); return; }
+      setFormError(null);
+      mutation.reset();
+      offerMutation.reset();
+      setAcknowledged(false);
+      setReview(null);
+      setOfferReview({
+        plan_key: plan,
+        duration_days: duration,
+        reason: reason.trim(),
+        expected_revision: data.revision,
+        billing_acknowledged: false,
+      });
+      return;
+    }
     const end = new Date(endsAt);
     if (reason.trim().length < 3 || reason.trim().length > 2000) { setFormError("Enter a reason of 3–2000 characters."); return; }
     if (!Number.isFinite(+end) || +end <= Date.now()) { setFormError("Choose a future expiry date."); return; }
@@ -164,11 +208,37 @@ export function SubscriptionOverview({ userId, onChange }: { userId: string; onC
                 </Select>
               </div>}
             </div>
-            <p className="text-muted-foreground">{action === "revoke" ? "Revoke paid/admin access temporarily; free access remains. Billing continues." : action === "extend" ? "Keep the current non-free plan beyond its current access end." : "Upgrade and downgrade tiers use the plan’s monthly list price. No payment is collected."} Starts immediately when applied; replaces the previous override.</p>
-            <div className="space-y-1"><Label htmlFor="override-end">Effective until (your local time) *</Label><Input id="override-end" type="datetime-local" value={endsAt} onChange={(event) => setEndsAt(event.target.value)} /></div>
+            <p className="text-muted-foreground">
+              {action === "revoke"
+                ? "Revoke paid/admin access temporarily; free access remains. Billing continues. This takes effect immediately."
+                : action === "extend"
+                  ? "Keep the current non-free plan beyond its current access end. This takes effect immediately."
+                  : "Plan changes are sent as an offer. The user must accept within 7 days; access starts only on acceptance and lasts for the selected duration."}
+            </p>
+            {action !== "revoke" && action !== "extend" ? (
+              <div className="space-y-1"><Label htmlFor="offer-duration">Access duration after acceptance (days) *</Label><Input id="offer-duration" type="number" min={1} max={3650} step={1} value={durationDays} onChange={(event) => setDurationDays(event.target.value)} /></div>
+            ) : (
+              <div className="space-y-1"><Label htmlFor="override-end">Effective until (your local time) *</Label><Input id="override-end" type="datetime-local" value={endsAt} onChange={(event) => setEndsAt(event.target.value)} /></div>
+            )}
             <div className="space-y-1"><Label htmlFor="override-reason">Reason *</Label><Textarea id="override-reason" maxLength={2000} value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Why is this access change needed?" /></div>
             {formError && <p role="alert" className="text-destructive">{formError}</p>}
-            <Button size="sm" onClick={prepareReview} disabled={!!error || isFetching}>Review override</Button>
+            <Button size="sm" onClick={prepareReview} disabled={!!error || isFetching}>Review {action === "revoke" || action === "extend" ? "override" : "offer"}</Button>
+          </> : offerReview ? <>
+            <h4 className="font-semibold">Review plan offer</h4>
+            <p>Offer {data.available_plans.find((item) => item.key === offerReview.plan_key)?.display_name ?? offerReview.plan_key} to {data.effective.plan_display_name} access for {offerReview.duration_days} days.</p>
+            <p>The offer expires in 7 days. If accepted, access begins at acceptance and ends {date(new Date(Date.now() + offerReview.duration_days * 86400000).toISOString())}.</p>
+            <p className="whitespace-pre-wrap break-words">{offerReview.reason}</p>
+            <Alert><AlertDescription>{data.billing_consequences}</AlertDescription></Alert>
+            <p>{data.expiry_policy}</p>
+            {offerReview.expected_revision !== data.revision && <p role="alert" className="text-destructive">Subscription changed. Go back and review the latest state.</p>}
+            <label className="flex items-start gap-2"><input type="checkbox" checked={acknowledged} onChange={(event) => setAcknowledged(event.target.checked)} disabled={offerMutation.isPending} /><span>I understand the billing consequences and expiry behavior.</span></label>
+            {offerMutation.error && <p role="alert" className="text-destructive">{errorMessage(offerMutation.error)}</p>}
+            <div className="flex gap-2">
+              <Button size="sm" disabled={!acknowledged || offerMutation.isPending || !!error || offerReview.expected_revision !== data.revision} onClick={() => offerMutation.mutate({ ...offerReview, billing_acknowledged: true })}>
+                {offerMutation.isPending && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}Send offer
+              </Button>
+              <Button size="sm" variant="ghost" disabled={offerMutation.isPending} onClick={() => setOfferReview(null)}>Back</Button>
+            </div>
           </> : <>
             <h4 className="font-semibold">Review access change</h4>
             <p><span className="capitalize">{review.action}</span>: {data.effective.plan_display_name} → {review.action === "revoke" ? "Free access" : review.action === "extend" ? data.effective.plan_display_name : data.available_plans.find((item) => item.key === review.plan_key)?.display_name}</p>

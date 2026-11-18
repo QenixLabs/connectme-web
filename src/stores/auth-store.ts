@@ -141,16 +141,38 @@ export const authStore = createStore<AuthState>()(
     }),
     {
       name: "auth-storage",
+      version: 1,
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         user: state.user,
-        accessToken: state.accessToken,
         isAuthenticated: state.isAuthenticated,
       }),
+      migrate: (persistedState) => {
+        const migrated = persistedState as Partial<AuthState>;
+        delete migrated.accessToken;
+        return migrated;
+      },
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated?.(true);
-        if (state?.accessToken) {
-          tokenStorage.setToken(state.accessToken);
+        // Access tokens are short-lived. Keep them in memory only and let the
+        // httpOnly cookie + refresh endpoint restore a session after reload.
+        tokenStorage.setToken(null);
+        if (state) state.accessToken = null;
+        if (typeof window !== "undefined") {
+          try {
+            const raw = window.localStorage.getItem("auth-storage");
+            if (raw) {
+              const persisted = JSON.parse(raw) as {
+                state?: Record<string, unknown>;
+              };
+              if (persisted.state && "accessToken" in persisted.state) {
+                delete persisted.state.accessToken;
+                window.localStorage.setItem("auth-storage", JSON.stringify(persisted));
+              }
+            }
+          } catch {
+            // Ignore malformed legacy auth state; the normal auth flow will recover.
+          }
         }
       },
     },

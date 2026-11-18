@@ -32,11 +32,18 @@ export function useNotifications(
   });
 }
 
-export function useNotificationsInfinite(history = false, limit = 20) {
+export function useNotificationsInfinite(
+  history = false,
+  limit = 20,
+  unreadOnly = false,
+  refetchInterval = 15_000,
+) {
   return useInfiniteQuery({
-    queryKey: [...notificationKeys.lists(), "infinite", { history, limit }],
+    queryKey: [...notificationKeys.lists(), "infinite", { history, limit, unreadOnly }],
     queryFn: ({ pageParam = 1 }) =>
-      notificationsApi.getNotifications({ history, page: pageParam, limit }),
+      notificationsApi.getNotifications({ history, unreadOnly, page: pageParam, limit }),
+    refetchInterval,
+    refetchIntervalInBackground: true,
     initialPageParam: 1,
     getNextPageParam: (lastPage) =>
       lastPage.page < lastPage.total_pages ? lastPage.page + 1 : undefined,
@@ -48,7 +55,8 @@ export function useUnreadNotifications(enabled = true) {
     queryKey: notificationKeys.unread(),
     queryFn: () => notificationsApi.getUnreadCount(),
     staleTime: 30_000,
-    refetchInterval: 60_000,
+    refetchInterval: 15_000,
+    refetchIntervalInBackground: true,
     enabled,
   });
 }
@@ -109,8 +117,18 @@ export function useDismissAutoNotifications() {
 export function useRespondToNotification() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, action }: { id: string; action: "accepted" | "declined" }) =>
-      notificationsApi.respondToAction(id, action),
+    mutationFn: ({
+      id,
+      action,
+      type,
+    }: {
+      id: string;
+      action: "accepted" | "declined";
+      type?: string;
+    }) =>
+      type === "subscription_plan_offer"
+        ? notificationsApi.respondToSubscriptionOffer(id, action)
+        : notificationsApi.respondToAction(id, action),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: notificationKeys.lists() });
       queryClient.invalidateQueries({ queryKey: notificationKeys.unread() });

@@ -205,9 +205,9 @@ function productPayload(form: ProductForm): ProductPayload {
 function priceText(product: ProductForm): string {
   if (product.pricing_mode === "variants") {
     const price = product.variants[0]?.price;
-    return price === undefined ? "Add variant pricing" : `${product.currency} ${price}`;
+    return price === undefined ? "Contact for Pricing" : `${product.currency} ${price}`;
   }
-  return product.price ? `${product.currency} ${product.price}` : "Set a price";
+  return product.price ? `${product.currency} ${product.price}` : "Contact for Pricing";
 }
 
 function FormField({
@@ -340,7 +340,7 @@ function VariantRow({
         </Button>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
-        <FormField label="Variant price" required>
+        <FormField label="Variant price (optional)">
           <Input
             aria-label={`Variant ${index + 1} price`}
             type="number"
@@ -481,7 +481,8 @@ function ProductEditorForm({
     if (targetStep === 3) {
       if (form.pricing_mode === "single") {
         const price = Number(form.price);
-        if (!form.price || !Number.isFinite(price) || price <= 0) return "Enter a selling price greater than zero.";
+        if (form.price && (!Number.isFinite(price) || price <= 0)) return "Enter a selling price greater than zero, or leave it blank.";
+        if (form.original_price && !form.price) return "Add a selling price before entering an original price.";
         if (form.original_price && Number(form.original_price) < price) return "Original price must be greater than or equal to selling price.";
       } else {
         if (!form.variants.length) return "Add at least one product variant.";
@@ -494,11 +495,10 @@ function ProductEditorForm({
                   !attribute.name.trim() ||
                   !attribute.value.trim(),
               ) ||
-              !variant.price ||
-              variant.price <= 0,
+              (variant.price !== undefined && (!Number.isFinite(variant.price) || variant.price <= 0)),
           )
         ) {
-          return "Every variant needs a first attribute and a price greater than zero.";
+          return "Every variant needs complete options; any listed price must be greater than zero.";
         }
       }
     }
@@ -936,7 +936,7 @@ function ProductEditorForm({
           <div className="space-y-5">
             <div>
               <h2 className="text-lg font-bold text-slate-950">Pricing and variants</h2>
-              <p className="mt-1 text-sm text-slate-600">Set a price or add options with different prices.</p>
+              <p className="mt-1 text-sm text-slate-600">Prices are optional. Add them now or discuss pricing with buyers.</p>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               {(["single", "variants"] as const).map((mode) => (
@@ -954,7 +954,7 @@ function ProductEditorForm({
             {form.pricing_mode === "single" ? (
               <>
                 <div className="grid gap-4 sm:grid-cols-3">
-                  <FormField label="Selling price" required><Input type="number" min="0" step="0.01" value={form.price} onChange={(event) => update("price", event.target.value)} placeholder="0.00" /></FormField>
+                  <FormField label="Selling price (optional)"><Input type="number" min="0" step="0.01" value={form.price} onChange={(event) => update("price", event.target.value)} placeholder="Discuss with buyer" /></FormField>
                   <FormField label="Original price / MRP"><Input type="number" min="0" step="0.01" value={form.original_price} onChange={(event) => update("original_price", event.target.value)} placeholder="Optional" /></FormField>
                   <FormField label="Currency"><Input maxLength={3} value={form.currency} onChange={(event) => update("currency", event.target.value.toUpperCase())} /></FormField>
                 </div>
