@@ -47,6 +47,10 @@ import {
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { toast } from "sonner";
 import rootinLogo from "@/assets/rootin-logo-orange.png";
+import {
+  loadRazorpayCheckout,
+  openRazorpaySubscriptionCheckout,
+} from "@/lib/razorpay-checkout";
 
 const faqs = [
   {
@@ -258,6 +262,60 @@ export default function PricingPage() {
         ...(isProviderView ? { targetRole: "provider" as const } : {}),
         ...(coupon?.trim() ? { couponCode: coupon.trim().toUpperCase() } : {}),
       });
+      if (result.pending_confirmation) {
+        toast.info("Your payment is being confirmed by Razorpay. Your plan will update shortly.");
+        await queryClient.invalidateQueries({
+          queryKey: queryKeys.subscriptions.me(
+            isProviderView ? "provider" : undefined,
+          ),
+        });
+        setUpgradingKey(null);
+        return;
+      }
+      if (result.checkout) {
+        await loadRazorpayCheckout();
+        openRazorpaySubscriptionCheckout(result.checkout, {
+          onPayment: async (response) => {
+            try {
+              if (!response.razorpay_subscription_id) {
+                throw new Error("Razorpay did not return a subscription ID.");
+              }
+              const verification = await subscriptionsApi.verifyCheckoutPayment({
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_subscription_id: response.razorpay_subscription_id,
+                razorpay_signature: response.razorpay_signature,
+              });
+              toast[verification.payment_confirmed ? "success" : "info"](
+                verification.payment_confirmed
+                  ? "Payment confirmed. Your subscription is active."
+                  : "Payment verified. Your subscription will activate after Razorpay confirms it.",
+              );
+              await queryClient.invalidateQueries({
+                queryKey: queryKeys.subscriptions.me(
+                  isProviderView ? "provider" : undefined,
+                ),
+              });
+            } catch (error) {
+              toast.error(
+                error instanceof Error
+                  ? error.message
+                  : "Payment verification failed. Please contact support before retrying.",
+              );
+            } finally {
+              setUpgradingKey(null);
+            }
+          },
+          onDismiss: () => {
+            setUpgradingKey(null);
+            toast.info("Checkout closed. Your plan remains unchanged until payment is confirmed.");
+          },
+          onFailure: (message) => {
+            setUpgradingKey(null);
+            toast.error(message);
+          },
+        });
+        return;
+      }
       const url = result.short_url || result.checkout_url;
       if (url) {
         window.location.assign(url);
@@ -275,7 +333,10 @@ export default function PricingPage() {
       const backendMessage = (err as { backendMessage?: string })
         ?.backendMessage;
       toast.error(
-        backendMessage || "Failed to initiate upgrade. Please try again.",
+        backendMessage ||
+          (err instanceof Error
+            ? err.message
+            : "Failed to initiate upgrade. Please try again."),
       );
       setUpgradingKey(null);
     }
@@ -384,6 +445,7 @@ export default function PricingPage() {
               }
               fill
               sizes="(max-width: 1024px) 100vw, 40vw"
+              loading="eager"
               className="object-cover"
             />
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-6 pb-6 pt-20">
@@ -523,7 +585,7 @@ export default function PricingPage() {
                         size="lg"
                         className="h-12 w-full rounded-xl font-bold"
                         onClick={() => handleUpgrade(plan)}
-                        disabled={isUpgrading}
+                        disabled={Boolean(upgradingKey)}
                       >
                         {isUpgrading ? (
                           <Loader2 className="size-4 animate-spin" />

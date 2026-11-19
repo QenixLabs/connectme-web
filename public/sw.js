@@ -130,10 +130,11 @@ async function cacheFirst(request, event) {
   try {
     const response = await fetch(request);
     if (response.ok && response.type === "basic") {
+      const responseToCache = response.clone();
       event.waitUntil(
         (async () => {
           const cache = await caches.open(RUNTIME_CACHE);
-          await cache.put(request, response.clone());
+          await cache.put(request, responseToCache);
           await trimRuntimeCache(cache);
         })()
       );

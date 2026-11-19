@@ -711,7 +711,9 @@ export function TalentOnboarding({ isGoogleResume = false }: { isGoogleResume?: 
           : undefined,
       });
     } catch {
-      // The account is already verified; profile details can be completed from the dashboard.
+      toast.error(
+        "Your email is verified, but your profile details could not be saved. You can update them from your dashboard.",
+      );
     }
   };
 

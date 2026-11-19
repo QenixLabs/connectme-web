@@ -41,6 +41,10 @@ import {
   type Invoice,
 } from "@/lib/api";
 import { toast } from "sonner";
+import {
+  loadRazorpayCheckout,
+  openRazorpaySubscriptionCheckout,
+} from "@/lib/razorpay-checkout";
 
 interface BillingData {
   subscription: Subscription | null;
@@ -233,6 +237,66 @@ export function BillingPage() {
         planKey,
         interval: "monthly",
       });
+      if (result.pending_confirmation) {
+        toast.info("Your payment is being confirmed by Razorpay. Your plan will update shortly.");
+        const latest = await subscriptionsApi.getMySubscription();
+        if (isMountedRef.current) {
+          setData((prev) => ({
+            ...prev,
+            subscription: latest.subscription,
+            plan: latest.plan,
+          }));
+        }
+        setIsUpgrading(false);
+        return;
+      }
+      if (result.checkout) {
+        await loadRazorpayCheckout();
+        openRazorpaySubscriptionCheckout(result.checkout, {
+          onPayment: async (response) => {
+            try {
+              if (!response.razorpay_subscription_id) {
+                throw new Error("Razorpay did not return a subscription ID.");
+              }
+              const verification = await subscriptionsApi.verifyCheckoutPayment({
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_subscription_id: response.razorpay_subscription_id,
+                razorpay_signature: response.razorpay_signature,
+              });
+              toast[verification.payment_confirmed ? "success" : "info"](
+                verification.payment_confirmed
+                  ? "Payment confirmed. Your subscription is active."
+                  : "Payment verified. Your subscription will activate after Razorpay confirms it.",
+              );
+              const latest = await subscriptionsApi.getMySubscription();
+              if (isMountedRef.current) {
+                setData((prev) => ({
+                  ...prev,
+                  subscription: latest.subscription,
+                  plan: latest.plan,
+                }));
+              }
+            } catch (error) {
+              toast.error(
+                error instanceof Error
+                  ? error.message
+                  : "Payment verification failed. Please contact support before retrying.",
+              );
+            } finally {
+              setIsUpgrading(false);
+            }
+          },
+          onDismiss: () => {
+            setIsUpgrading(false);
+            toast.info("Checkout closed. Your plan remains unchanged until payment is confirmed.");
+          },
+          onFailure: (message) => {
+            setIsUpgrading(false);
+            toast.error(message);
+          },
+        });
+        return;
+      }
       const url = result.short_url || result.checkout_url;
       if (url) {
         window.location.href = url;
@@ -243,7 +307,12 @@ export function BillingPage() {
       setIsUpgrading(false);
     } catch (err) {
       const backendMessage = (err as { backendMessage?: string })?.backendMessage;
-      toast.error(backendMessage || "Failed to initiate upgrade. Please try again.");
+      toast.error(
+        backendMessage ||
+          (err instanceof Error
+            ? err.message
+            : "Failed to initiate upgrade. Please try again."),
+      );
       setIsUpgrading(false);
     }
   };

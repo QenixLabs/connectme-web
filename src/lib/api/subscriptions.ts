@@ -90,6 +90,12 @@ export interface UpgradeResponse {
   razorpay_subscription_id: string;
   short_url: string | null;
   resume: boolean;
+  pending_confirmation?: boolean;
+  checkout?: {
+    key_id: string;
+    subscription_id: string;
+    plan_name: string;
+  };
   /** Legacy alias — backend returns `short_url`. */
   checkout_url?: string;
 }
@@ -142,6 +148,21 @@ export const subscriptionsApi = {
   upgrade: async (payload: UpgradePayload) => {
     const response = await apiClient.post("/subscriptions/upgrade", payload);
     return response.data as UpgradeResponse;
+  },
+
+  verifyCheckoutPayment: async (
+    payload: Pick<
+      RazorpayPaymentResponse,
+      "razorpay_payment_id" | "razorpay_subscription_id" | "razorpay_signature"
+    >,
+  ) => {
+    const response = await apiClient.post("/subscriptions/verify", payload);
+    return response.data as {
+      verified: boolean;
+      payment_confirmed: boolean;
+      payment_status: string;
+      subscription_status: string;
+    };
   },
 
   getCheckoutStatus: async (targetRole?: "talent" | "recruiter" | "provider") => {
