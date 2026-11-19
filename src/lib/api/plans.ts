@@ -96,6 +96,13 @@ export interface SunsetPlanInput {
   sunset_at: string;
 }
 
+export interface RefreshPlanVersionsResult {
+  created: Array<{ family_key: string; key: string }>;
+  failures: Array<{ family_key: string; message: string }>;
+  skipped: number;
+  total: number;
+}
+
 export const plansApi = {
   getPlans: async () => {
     const response = await apiClient.get("/plans");
@@ -124,6 +131,11 @@ export const plansApi = {
 
   createPlanVersion: async (familyKey: string, payload: CreatePlanInput): Promise<PlanConfig> => {
     const response = await apiClient.post(`/admin/plans/${familyKey}/versions`, payload);
+    return response.data;
+  },
+
+  refreshAllPlanVersions: async (): Promise<RefreshPlanVersionsResult> => {
+    const response = await apiClient.post("/admin/plans/refresh-all");
     return response.data;
   },
 

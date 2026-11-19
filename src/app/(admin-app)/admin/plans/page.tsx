@@ -25,6 +25,7 @@ import {
   Search,
   ArrowUpDown,
   RotateCcw,
+  RefreshCw,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -64,9 +65,17 @@ import { SunsetPlanDialog } from "@/components/admin/sunset-plan-dialog";
 import { ScheduleMigrationSheet } from "@/components/admin/schedule-migration-sheet";
 import { EditFamilyBenefitsSheet } from "@/components/admin/edit-family-benefits-sheet";
 import { CreatePlanSheet } from "@/components/admin/create-plan-sheet";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 function getApiErrorMessage(err: unknown, fallback: string): string {
-  if (err instanceof Error) return err.message;
   if (typeof err === "object" && err !== null) {
     const e = err as Record<string, unknown>;
     if (e.response) {
@@ -77,6 +86,7 @@ function getApiErrorMessage(err: unknown, fallback: string): string {
       }
     }
   }
+  if (err instanceof Error) return err.message;
   return fallback;
 }
 
@@ -561,6 +571,7 @@ function PlanEditSheet({
 
 export default function AdminPlansPage() {
   const queryClient = useQueryClient();
+  const [refreshDialogOpen, setRefreshDialogOpen] = useState(false);
 
   const {
     data: plans,
@@ -587,6 +598,37 @@ export default function AdminPlansPage() {
     },
     onError: (err: unknown) => {
       toast.error(getApiErrorMessage(err, "Failed to update plan"));
+    },
+  });
+
+  const refreshPlansMutation = useMutation({
+    mutationFn: plansApi.refreshAllPlanVersions,
+    onSuccess: (result) => {
+      if (result.failures.length === 0) {
+        toast.success(
+          `Created new Razorpay versions for ${result.created.length} plan families`
+        );
+      } else {
+        const failedFamilies = result.failures
+          .slice(0, 2)
+          .map((failure) => `${failure.family_key}: ${failure.message}`)
+          .join("; ");
+        const additionalFailures =
+          result.failures.length > 2
+            ? `; and ${result.failures.length - 2} more`
+            : "";
+        toast.error(
+          `Refreshed ${result.created.length} of ${result.total} plan families. Failed: ${failedFamilies}${additionalFailures}`
+        );
+      }
+      setRefreshDialogOpen(false);
+    },
+    onError: (err: unknown) => {
+      toast.error(getApiErrorMessage(err, "Failed to refresh Razorpay plans"));
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.plans.admin() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.plans.public() });
     },
   });
 
@@ -751,8 +793,51 @@ export default function AdminPlansPage() {
             </p>
           </div>
         </div>
-        <CreatePlanSheet onSuccess={handlePlanChange} />
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => setRefreshDialogOpen(true)}
+            disabled={isLoading || refreshPlansMutation.isPending || !plans?.length}
+          >
+            <RefreshCw className="w-4 h-4" />
+            Refresh All Razorpay Plans
+          </Button>
+          <CreatePlanSheet onSuccess={handlePlanChange} />
+        </div>
       </div>
+
+      <AlertDialog open={refreshDialogOpen} onOpenChange={setRefreshDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Refresh all paid plan families?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This creates a new version for each active paid plan family using
+              the backend&apos;s currently configured Razorpay credentials. New
+              signups will use the new versions. Existing plan versions and
+              subscriptions are preserved and are not migrated.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={refreshPlansMutation.isPending}>
+              Cancel
+            </AlertDialogCancel>
+            <Button
+              onClick={() => refreshPlansMutation.mutate()}
+              disabled={refreshPlansMutation.isPending}
+            >
+              {refreshPlansMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  Refreshing...
+                </>
+              ) : (
+                "Create New Versions"
+              )}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {isLoading ? (
         <div className="flex items-center justify-center py-16">
