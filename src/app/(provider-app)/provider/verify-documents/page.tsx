@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { BadgeCheck, CheckCircle2, FileCheck2, Loader2, ShieldCheck, Upload, X } from "lucide-react";
+import { BadgeCheck, CheckCircle2, FileCheck2, Info, Loader2, ShieldCheck, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import {
@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { VerifyPhoneDialog } from "@/components/talent-app/settings/verify-phone-dialog";
+import { VerificationTypeDropdown } from "@/components/shared/verification-type-dropdown";
 
 export default function ProviderVerifyDocumentsPage() {
   const user = useAuthStore((state) => state.user);
@@ -28,6 +29,7 @@ export default function ProviderVerifyDocumentsPage() {
   const submitVerification = useSubmitVerification();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [phoneDialogOpen, setPhoneDialogOpen] = useState(false);
+  const [documentType, setDocumentType] = useState("Government ID");
 
   const emailVerified = Boolean(user?.is_email_verified);
   const phoneVerified = Boolean(user?.is_phone_verified);
@@ -97,16 +99,21 @@ export default function ProviderVerifyDocumentsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
-      <div>
-        <p className="text-sm font-semibold text-primary">Account trust</p>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight">Verification</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Complete all three verification tiers to contact other service providers.
-        </p>
+    <div className="relative mx-auto max-w-4xl space-y-6 overflow-hidden pb-8">
+      <div className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full bg-primary/10 blur-3xl" />
+      <div className="relative overflow-hidden rounded-3xl border border-primary/15 bg-gradient-to-br from-primary/10 via-card to-card p-6 shadow-sm sm:p-8">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="flex items-center gap-2 text-sm font-bold text-primary"><ShieldCheck className="size-4" /> Account trust</div>
+            <h1 className="mt-2 text-3xl font-black tracking-tight">Verification center</h1>
+            <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">Complete your identity checks to unlock trusted provider access and make your profile stand out.</p>
+          </div>
+          <div className="grid size-20 shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/20"><ShieldCheck className="size-10" strokeWidth={1.5} /></div>
+        </div>
+        <div className="mt-6 flex items-center gap-3 text-xs font-bold text-muted-foreground"><div className="h-2 flex-1 overflow-hidden rounded-full bg-primary/15"><div className={`h-full rounded-full bg-primary transition-all ${isApproved ? "w-full" : tierTwo ? "w-2/3" : "w-1/3"}`} /></div><span>{isApproved ? "Complete" : tierTwo ? "2 of 3" : "1 of 3"}</span></div>
       </div>
 
-      <Card>
+      <Card className="rounded-2xl border-border/70 shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <ShieldCheck className="size-5 text-primary" />
@@ -171,7 +178,7 @@ export default function ProviderVerifyDocumentsPage() {
         </Alert>
       )}
 
-      <Card>
+      <Card className="rounded-2xl border-border/70 shadow-sm">
         <CardHeader>
           <CardTitle>Identity document</CardTitle>
           <CardDescription>
@@ -180,6 +187,10 @@ export default function ProviderVerifyDocumentsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="rounded-xl bg-muted/45 p-4">
+            <div className="mb-2 flex items-center gap-2 text-sm font-semibold"><Info className="size-4 text-primary" /> Document type</div>
+            <VerificationTypeDropdown value={documentType} onChange={setDocumentType} options={["Government ID", "Passport", "Aadhaar Card", "Driving Licence"]} />
+          </div>
           {isLoading ? (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="size-4 animate-spin" /> Loading verification status…

@@ -279,6 +279,7 @@ export function UserDetailPanel({
     try {
       if (action === "unrestrict") {
         await adminApi.unrestrictUser(userId, reason);
+        toast.success(detail?.user.status === "banned" ? "User unbanned" : "User unsuspended");
       }
       onStatusChange();
       await refreshData();
@@ -447,21 +448,6 @@ export function UserDetailPanel({
                   <Copy className="h-3 w-3" />
                 </Button>
               </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              {detail.user.status !== "active" && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-8 text-xs"
-                  onClick={() => handleAction("unrestrict")}
-                  disabled={actionLoading === "unrestrict"}
-                >
-                  <CheckCircle className="mr-1 h-3.5 w-3.5" />
-                  Activate
-                </Button>
-              )}
             </div>
 
             <SubscriptionOverview key={detail.user._id} userId={detail.user._id} onChange={onStatusChange} />
@@ -668,6 +654,18 @@ export function UserDetailPanel({
                 <div className="space-y-3">
                   <div className="text-xs font-medium">Actions</div>
                   <div className="flex flex-wrap gap-2">
+                    {detail.user.status !== "active" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 text-xs"
+                        onClick={() => handleAction("unrestrict")}
+                        disabled={!!actionLoading}
+                      >
+                        <CheckCircle className="mr-1 h-3.5 w-3.5" />
+                        {detail.user.status === "banned" ? "Unban" : "Unsuspend"}
+                      </Button>
+                    )}
                     {Object.entries(ACTION_CONFIG).map(([key, config]) => (
                       <Button
                         key={key}

@@ -61,9 +61,14 @@ function TalentRow({ user }: { user: AdminUser }) {
         <p className="text-xs text-muted-foreground">{user.analytics?.shortlist_count ?? 0} shortlists · {user.report_count} reports</p>
       </td>
       <td className="px-4 py-3 text-right">
-        <Button variant="outline" size="sm" asChild>
-          <Link href={`/admin/users?userId=${encodeURIComponent(user._id)}`}>Details <ExternalLink className="ml-1 size-3.5" /></Link>
-        </Button>
+        <div className="flex justify-end gap-2">
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/admin/users?userId=${encodeURIComponent(user._id)}`}>Details <ExternalLink className="ml-1 size-3.5" /></Link>
+          </Button>
+          <Button variant="secondary" size="sm" asChild>
+            <Link href={`/admin/users?userId=${encodeURIComponent(user._id)}`}>Manage subscription</Link>
+          </Button>
+        </div>
       </td>
     </tr>
   );

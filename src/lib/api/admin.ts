@@ -348,6 +348,8 @@ export interface AdminUser {
   username?: string;
   profile_photo?: string;
   report_count: number;
+  warning_count?: number;
+  ban_count?: number;
   created_at: string;
   last_active_at?: string;
   subscription: AdminUserSubscription | null;
@@ -802,7 +804,7 @@ export const adminApi = {
     trust_score_max?: number;
     report_count_min?: number;
     report_count_max?: number;
-    sort_by?: string;
+    sort_by?: 'created_at' | 'last_active_at' | 'trust_score' | 'report_count' | 'warning_count' | 'ban_count' | string;
     sort_order?: string;
     city?: string;
     state?: string;

@@ -8,8 +8,6 @@ import {
   ShieldCheck,
   Lock,
   Info,
-  ChevronDown,
-  Contact,
   X,
   CheckCircle2,
   RefreshCw,
@@ -31,6 +29,7 @@ import {
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { useVerification, useCreateVerification, useUploadVerificationDoc, useRemoveVerificationDoc, useSubmitVerification } from "@/hooks/use-verification";
 import { Skeleton } from "@/components/ui/skeleton";
+import { VerificationTypeDropdown } from "@/components/shared/verification-type-dropdown";
 
 const steps = [
   {
@@ -304,20 +303,13 @@ export default function TalentVerifyDocumentsPage() {
                   >
                     Document Type
                   </label>
-                  <div className="relative mt-2 max-w-sm">
-                    <Contact className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <select
+                  <div className="mt-2 max-w-sm">
+                    <VerificationTypeDropdown
                       id="docType"
                       value={docType}
-                      onChange={(e) => setDocType(e.target.value)}
-                      className="w-full appearance-none rounded-lg border border-border bg-background/50 py-3 pl-10 pr-10 text-sm font-medium text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-ring/40"
-                    >
-                      <option>Aadhaar Card</option>
-                      <option>PAN Card</option>
-                      <option>Passport</option>
-                      <option>Driving Licence</option>
-                    </select>
-                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      onChange={setDocType}
+                      options={["Aadhaar Card", "PAN Card", "Passport", "Driving Licence"]}
+                    />
                   </div>
 
                   <input

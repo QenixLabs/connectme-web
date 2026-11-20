@@ -8,13 +8,11 @@ import {
   Building2,
   Check,
   CheckCircle2,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   CircleAlert,
   CircleCheck,
   Clock,
-  ContactRound,
   FileCheck2,
   Gem,
   Loader2,
@@ -39,6 +37,7 @@ import {
   useUploadVerificationDoc,
   useVerification,
 } from "@/hooks/use-verification";
+import { VerificationTypeDropdown } from "@/components/shared/verification-type-dropdown";
 
 const documentTypes = [
   "GST Certificate",
@@ -399,15 +398,13 @@ export default function RecruiterVerifyDocumentsPage() {
             <div className="mt-6 flex flex-wrap items-end gap-4">
               <div className="min-w-[240px] flex-1">
                 <label htmlFor="document-type" className="text-sm font-semibold text-muted-foreground">Document type</label>
-                <div className="relative mt-2">
-                  <ContactRound className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                  <select id="document-type" value={docType} onChange={(event) => setDocType(event.target.value)} className="w-full appearance-none rounded-xl border border-border bg-background py-3 pl-10 pr-10 text-sm font-medium outline-none focus:border-primary focus:ring-2 focus:ring-primary/20">
-                    <option>Company Registration</option>
-                    <option>GST Certificate</option>
-                    <option>PAN Card (Company)</option>
-                    <option>Incorporation Certificate</option>
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <div className="mt-2">
+                  <VerificationTypeDropdown
+                    id="document-type"
+                    value={docType}
+                    onChange={setDocType}
+                    options={["Company Registration", "GST Certificate", "PAN Card (Company)", "Incorporation Certificate"]}
+                  />
                 </div>
               </div>
               <p className="max-w-xs text-xs leading-4 text-muted-foreground">Your selected type is applied to newly uploaded company proof files.</p>

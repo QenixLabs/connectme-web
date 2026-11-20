@@ -1483,6 +1483,17 @@ function AdminUsersContent() {
                               &mdash;
                             </span>
                           )}
+                          <Button
+                            type="button"
+                            variant="link"
+                            className="h-auto justify-start p-0 text-[11px]"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setSelectedUserId(user._id);
+                            }}
+                          >
+                            Manage subscription
+                          </Button>
                         </TableCell>
 
                         {/* Talent: Location */}

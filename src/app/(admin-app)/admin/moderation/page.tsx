@@ -28,11 +28,12 @@ export default function BulkModerationPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const sortOrder = sort === "trust_score" ? "asc" : "desc";
 
   const load = useCallback(async () => {
     try {
       const [users, dashboard] = await Promise.all([
-        adminApi.getUsers({ page, limit: PAGE_SIZE, search: search || undefined, status: status === "all" ? undefined : status, sort_by: sort, sort_order: "desc" }),
+        adminApi.getUsers({ page, limit: PAGE_SIZE, search: search || undefined, status: status === "all" ? undefined : status, sort_by: sort, sort_order: sortOrder }),
         adminApi.getDashboardStats(),
       ]);
       setResult(users);
@@ -41,7 +42,7 @@ export default function BulkModerationPage() {
     } catch {
       setError("Could not load moderation data. Check your connection and try again.");
     }
-  }, [page, search, status, sort]);
+  }, [page, search, status, sort, sortOrder]);
 
   useEffect(() => {
     let cancelled = false;
@@ -105,10 +106,10 @@ export default function BulkModerationPage() {
       <div className="grid gap-3 md:grid-cols-[1fr_180px_180px]">
         <div className="relative"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input className="pl-9" placeholder="Search name, username, or email" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} /></div>
         <Select value={status} onValueChange={(v) => { setStatus(v); setPage(1); }}><SelectTrigger><SelectValue placeholder="Account status" /></SelectTrigger><SelectContent><SelectItem value="all">All actions</SelectItem><SelectItem value="active">Active</SelectItem><SelectItem value="warning">Has warnings</SelectItem><SelectItem value="suspended">Suspended</SelectItem><SelectItem value="banned">Banned</SelectItem></SelectContent></Select>
-        <Select value={sort} onValueChange={setSort}><SelectTrigger><SelectValue placeholder="Sort users" /></SelectTrigger><SelectContent><SelectItem value="report_count">Most reports</SelectItem><SelectItem value="created_at">Newest joined</SelectItem><SelectItem value="last_active_at">Recently active</SelectItem><SelectItem value="trust_score">Lowest trust score</SelectItem></SelectContent></Select>
+        <Select value={sort} onValueChange={(value) => { setSort(value); setPage(1); }}><SelectTrigger><SelectValue placeholder="Sort users" /></SelectTrigger><SelectContent><SelectItem value="warning_count">Most warnings</SelectItem><SelectItem value="ban_count">Most bans</SelectItem><SelectItem value="report_count">Most reports</SelectItem><SelectItem value="trust_score">Lowest trust score</SelectItem><SelectItem value="created_at">Newest joined</SelectItem><SelectItem value="last_active_at">Recently active</SelectItem></SelectContent></Select>
       </div>
-      <div className="overflow-x-auto rounded-md border"><Table><TableHeader><TableRow><TableHead><input aria-label="Select all visible users" type="checkbox" checked={users.length > 0 && users.every((u) => selected.includes(u._id))} onChange={(e) => setSelected(e.target.checked ? [...new Set([...selected, ...users.map((u) => u._id)])] : selected.filter((id) => !users.some((u) => u._id === id)))} /></TableHead><TableHead>User</TableHead><TableHead>Role</TableHead><TableHead>Status</TableHead><TableHead>Reports</TableHead><TableHead>Trust</TableHead><TableHead>Joined</TableHead></TableRow></TableHeader>
-      <TableBody>{users.map((user) => <TableRow key={user._id}><TableCell><input aria-label={`Select ${user.display_name}`} type="checkbox" checked={selected.includes(user._id)} onChange={() => toggle(user._id)} /></TableCell><TableCell><div className="font-medium">{user.display_name || user.username || user.email}</div><div className="text-xs text-muted-foreground">{user.email}</div></TableCell><TableCell className="capitalize">{user.role}</TableCell><TableCell><Badge variant="outline" className="capitalize">{user.status}</Badge></TableCell><TableCell className={user.report_count > 0 ? "font-semibold text-rose-600" : ""}>{user.report_count}</TableCell><TableCell>{user.trust_score}</TableCell><TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell></TableRow>)}{users.length === 0 && <TableRow><TableCell colSpan={7} className="py-10 text-center text-muted-foreground">No matching users.</TableCell></TableRow>}</TableBody></Table></div>
+      <div className="overflow-x-auto rounded-md border"><Table><TableHeader><TableRow><TableHead><input aria-label="Select all visible users" type="checkbox" checked={users.length > 0 && users.every((u) => selected.includes(u._id))} onChange={(e) => setSelected(e.target.checked ? [...new Set([...selected, ...users.map((u) => u._id)])] : selected.filter((id) => !users.some((u) => u._id === id)))} /></TableHead><TableHead>User</TableHead><TableHead>Role</TableHead><TableHead>Status</TableHead><TableHead>Warnings</TableHead><TableHead>Bans</TableHead><TableHead>Reports</TableHead><TableHead>Trust</TableHead><TableHead>Joined</TableHead></TableRow></TableHeader>
+      <TableBody>{users.map((user) => <TableRow key={user._id}><TableCell><input aria-label={`Select ${user.display_name}`} type="checkbox" checked={selected.includes(user._id)} onChange={() => toggle(user._id)} /></TableCell><TableCell><div className="font-medium">{user.display_name || user.username || user.email}</div><div className="text-xs text-muted-foreground">{user.email}</div></TableCell><TableCell className="capitalize">{user.role}</TableCell><TableCell><Badge variant="outline" className="capitalize">{user.status}</Badge></TableCell><TableCell className={(user.warning_count ?? 0) > 0 ? "font-semibold text-amber-600" : ""}>{user.warning_count ?? 0}</TableCell><TableCell className={(user.ban_count ?? 0) > 0 ? "font-semibold text-rose-600" : ""}>{user.ban_count ?? 0}</TableCell><TableCell className={user.report_count > 0 ? "font-semibold text-rose-600" : ""}>{user.report_count}</TableCell><TableCell>{user.trust_score}</TableCell><TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell></TableRow>)}{users.length === 0 && <TableRow><TableCell colSpan={9} className="py-10 text-center text-muted-foreground">No matching users.</TableCell></TableRow>}</TableBody></Table></div>
       <div className="flex items-center justify-between text-sm text-muted-foreground"><span>{selected.length} selected · {result?.total ?? 0} matching users</span><div className="flex items-center gap-2"><Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>Previous</Button><span>Page {page} of {Math.max(1, result?.total_pages ?? 1)}</span><Button variant="outline" size="sm" disabled={page >= (result?.total_pages ?? 1)} onClick={() => setPage(page + 1)}>Next</Button></div></div>
     </CardContent></Card>
     <Card><CardContent className="flex flex-col gap-3 p-4 lg:flex-row lg:items-end">
