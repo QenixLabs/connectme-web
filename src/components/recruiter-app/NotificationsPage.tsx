@@ -35,7 +35,7 @@ import {
 
 type Category = "All" | "Action Required" | "Applications" | "Messages";
 type Tone = "alert" | "violet" | "mint" | "sky" | "amber" | "neutral";
-type Tab = "active" | "history";
+type Tab = "active" | "unread" | "history";
 
 const filters: Category[] = ["All", "Action Required", "Applications", "Messages"];
 
@@ -244,7 +244,7 @@ export function NotificationsPage() {
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
-  } = useNotificationsInfinite(tab === "history");
+  } = useNotificationsInfinite(tab === "history", 20, tab === "unread");
   const { data: unreadData } = useUnreadNotifications();
   const markAll = useMarkAllNotificationsRead();
   const markRead = useMarkNotificationRead();
@@ -292,7 +292,7 @@ export function NotificationsPage() {
       router.push(href);
       return;
     }
-    if (tab === "active" && notification.status === "unread") {
+    if (tab !== "history" && notification.status === "unread") {
       markRead.mutate(notification._id);
     } else if (tab === "active") {
       moveToHistory.mutate(notification._id);
@@ -368,7 +368,7 @@ export function NotificationsPage() {
           })}
         </div>
         <div className="flex shrink-0 items-center gap-1 self-start rounded-lg border border-border bg-card p-1">
-          {(["active", "history"] as const).map((value) => (
+          {(["active", "unread", "history"] as const).map((value) => (
             <Button
               key={value}
               type="button"
@@ -380,7 +380,7 @@ export function NotificationsPage() {
                 setFilter("All");
               }}
             >
-              {value}
+              {value === "active" ? "All" : value}
             </Button>
           ))}
         </div>
@@ -402,7 +402,7 @@ export function NotificationsPage() {
         <p className="text-xs font-medium text-muted-foreground">
           {tab === "active" && unreadCount > 0 ? `${unreadCount} unread notification${unreadCount === 1 ? "" : "s"}` : `${visible.length} notification${visible.length === 1 ? "" : "s"}`}
         </p>
-        {tab === "active" ? (
+        {tab !== "history" ? (
           <Button variant="ghost" size="sm" className="h-8 text-xs" disabled={markAll.isPending || unreadCount === 0} onClick={handleMarkAll}>
             Mark all as read
           </Button>

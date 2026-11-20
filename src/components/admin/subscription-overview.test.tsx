@@ -79,6 +79,22 @@ describe("Admin subscription overview", () => {
     expect(screen.getByText("Support grant")).toBeTruthy();
   });
 
+  it("shows prior subscription records and their cancellation dates", async () => {
+    const data = overview();
+    data.subscription_history = [{
+      _id: "sub-old", user_id: "user-1", plan_key: "recruiter_pro", status: "cancelled",
+      plan_display_name: "Former Pro", access_status: "cancelled", billing_cycle: "yearly",
+      billing_cycle_inferred: false, cancel_at_period_end: false,
+      cancelled_at: "2026-03-01T00:00:00Z", created_at: "2025-03-01T00:00:00Z",
+    }];
+    vi.mocked(adminApi.getUserSubscription).mockResolvedValue(data);
+    renderOverview();
+
+    fireEvent.click(await screen.findByText("Subscription history (1)"));
+    expect(await screen.findByText("Former Pro")).toBeTruthy();
+    expect(screen.getByText("Cancelled at")).toBeTruthy();
+  });
+
   it("requires review and explicit billing acknowledgement before saving", async () => {
     const { onChange } = renderOverview();
     await reviewRevocation();

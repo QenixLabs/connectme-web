@@ -40,6 +40,7 @@ import {
   useRecentConversations,
 } from "@/hooks/use-talent-dashboard";
 import { DashboardSkeleton } from "./DashboardSkeleton";
+import { FreeUpgradeOfferBanner } from "./FreeUpgradeOfferBanner";
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -330,6 +331,9 @@ export function DashboardContent() {
 
   return (
     <div className="mx-auto min-h-screen w-full max-w-md pb-10">
+      <div className="mx-4 mt-4">
+        <FreeUpgradeOfferBanner />
+      </div>
       {/* Profile card */}
       <section className="mx-4 mt-4 rounded-[20px] border bg-card p-3 shadow-sm">
         <div className="flex items-center gap-3">

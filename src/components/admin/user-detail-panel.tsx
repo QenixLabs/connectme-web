@@ -968,11 +968,26 @@ export function UserDetailPanel({
                                 </Badge>
                               </div>
                               <div className="mt-1 text-muted-foreground">
-                                {invoice.amount / 100} {invoice.currency} ·{" "}
+                                {(invoice.amount_paid ?? invoice.amount) / 100} {invoice.currency} ·{" "}
                                 {invoice.period_start
                                   ? new Date(invoice.period_start).toLocaleDateString()
                                   : "—"}
+                                {invoice.period_end
+                                  ? ` – ${new Date(invoice.period_end).toLocaleDateString()}`
+                                  : ""}
                               </div>
+                              {(invoice.invoice_number || invoice.razorpay_payment_id || invoice.pdf_url) && (
+                                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground">
+                                  {invoice.invoice_number && <span>Invoice {invoice.invoice_number}</span>}
+                                  {invoice.razorpay_payment_id && <span>Payment {invoice.razorpay_payment_id}</span>}
+                                  {invoice.pdf_url && <a className="text-primary underline" href={invoice.pdf_url} target="_blank" rel="noreferrer">View invoice</a>}
+                                </div>
+                              )}
+                              {invoice.paid_at && (
+                                <div className="mt-1 text-muted-foreground">
+                                  Collected {new Date(invoice.paid_at).toLocaleString()}
+                                </div>
+                              )}
                             </div>
                           ))}
                           {invoices.total_pages > 1 && (

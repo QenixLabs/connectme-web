@@ -17,7 +17,6 @@ import {
   Store,
   Briefcase,
   ClipboardList,
-  ArrowUpRight,
   ShieldCheck,
   Headphones,
 } from "lucide-react";
@@ -129,14 +128,6 @@ export function TopBar({ navItems, role, showUserMenu = false }: TopBarProps) {
                 </Link>
               </Button>
             )}
-            {role === "provider" && (
-              <Link
-                href="/services"
-                className="hidden items-center gap-1 text-sm font-medium text-muted-foreground transition hover:text-foreground sm:flex"
-              >
-                Browse marketplace <ArrowUpRight className="size-3.5" />
-              </Link>
-            )}
             {showUserMenu && <MarketplaceNotificationBell role={role} />}
             {showUserMenu && <UserMenu role={role} />}
           </div>
@@ -231,6 +222,14 @@ function UserMenu({ role }: { role: TopBarProps["role"] }) {
         <DropdownMenuSeparator />
         {role !== "admin" && (
           <>
+            {(role === "talent" || role === "recruiter" || role === "provider") && (
+              <DropdownMenuItem asChild>
+                <Link href={`/${role}/billing`} className="cursor-pointer">
+                  <CreditCard className="mr-2 size-4" />
+                  Billing
+                </Link>
+              </DropdownMenuItem>
+            )}
             {role === "talent" && (
               <>
                 <DropdownMenuItem asChild>
@@ -344,14 +343,6 @@ function UserMenu({ role }: { role: TopBarProps["role"] }) {
                   </Link>
                 </DropdownMenuItem>
               </>
-            )}
-            {role !== "provider" && (
-              <DropdownMenuItem asChild>
-                <Link href={`/${role}/billing`} className="cursor-pointer">
-                  <CreditCard className="mr-2 size-4" />
-                  Billing
-                </Link>
-              </DropdownMenuItem>
             )}
             {role === "talent" && (
               <DropdownMenuItem asChild>

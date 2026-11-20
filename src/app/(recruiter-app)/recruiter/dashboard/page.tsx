@@ -64,6 +64,7 @@ import { useRecruiterCampaigns } from "@/hooks/use-campaigns";
 import { talentApi } from "@/lib/api/talent";
 import type { Campaign } from "@/lib/api/campaigns";
 import type { DashboardTalentRecommendation } from "@/lib/api/recommendations";
+import { FreeUpgradeOfferBanner } from "@/components/dashboard/FreeUpgradeOfferBanner";
 
 const TALENT_STRIP = "/assets/recruiter-dashboard/talent-strip.jpg";
 const CAMPAIGN_STRIP = "/assets/recruiter-dashboard/campaign-strip.jpg";
@@ -440,6 +441,9 @@ export default function RecruiterDashboardPage() {
     <div className="recruiter-dashboard-theme min-h-full bg-background">
       <main className="mx-auto min-h-screen w-full max-w-md overflow-x-hidden bg-background pb-8 shadow-app">
         <div className="px-4">
+          <div className="mt-3">
+            <FreeUpgradeOfferBanner />
+          </div>
           <section className="relative -mx-4 min-h-40 overflow-hidden">
             <div className="relative z-10 w-[56%] px-4 pt-3 pb-4">
               <p className="text-sm font-medium">{getGreeting()},</p>

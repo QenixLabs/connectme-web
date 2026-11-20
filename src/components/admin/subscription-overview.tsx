@@ -39,6 +39,7 @@ function BillingRecord({ record, title }: { record: AdminSubscriptionRecord; tit
         <dd>{date(record.expires_at ?? record.current_period_end)}</dd>
         <dt className="text-muted-foreground">Cancellation</dt>
         <dd>{record.status === "cancelled" ? "Cancelled" : record.cancel_at_period_end ? `Scheduled for ${date(record.scheduled_cancellation_at ?? record.current_period_end)}` : "Not scheduled"}</dd>
+        {record.cancelled_at && <><dt className="text-muted-foreground">Cancelled at</dt><dd>{date(record.cancelled_at)}</dd></>}
         {record.cancellation_reason && <><dt className="text-muted-foreground">Cancellation reason</dt><dd>{record.cancellation_reason.replaceAll("_", " ")}</dd></>}
         {record.grace_period_ends_at && <><dt className="text-muted-foreground">Grace period ends</dt><dd>{date(record.grace_period_ends_at)}</dd></>}
         {record.scheduled_plan_key && <><dt className="text-muted-foreground">Scheduled plan</dt><dd>{record.scheduled_plan_key} · {date(record.scheduled_change_at)}</dd></>}
@@ -173,6 +174,14 @@ export function SubscriptionOverview({ userId, onChange }: { userId: string; onC
         </div>}
         {data.paid_subscription && data.paid_subscription._id !== data.subscription?._id &&
           <BillingRecord record={data.paid_subscription} title="Latest paid subscription" />}
+        {(data.subscription_history?.length ?? 0) > 0 && <details className="border-t pt-3">
+          <summary className="cursor-pointer font-medium">Subscription history ({data.subscription_history?.length ?? 0})</summary>
+          <div className="mt-2 max-h-80 space-y-2 overflow-y-auto">
+            {data.subscription_history?.map((record) => (
+              <BillingRecord key={record._id} record={record} title={`Started ${date(record.created_at)}`} />
+            ))}
+          </div>
+        </details>}
         {data.active_override && <div className="space-y-1 rounded-md border border-primary/30 bg-primary/5 p-3">
           <h4 className="font-medium">Active admin override · <span className="capitalize">{data.active_override.action}</span></h4>
           <p>{data.active_override.plan_key} · {date(data.active_override.starts_at)} – {date(data.active_override.ends_at)}</p>

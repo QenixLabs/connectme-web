@@ -71,7 +71,7 @@ const faqs: Array<[string, string]> = [
   ["Why am I not receiving messages?", "Check notification permissions and your internet connection, then refresh your inbox."],
 ];
 
-export function SupportPage() {
+export function SupportPage({ ticketOnly = false }: { ticketOnly?: boolean }) {
   const router = useRouter();
   const pathname = usePathname();
   const [query, setQuery] = useState("");
@@ -175,12 +175,8 @@ export function SupportPage() {
     }).catch(() => toast.error("Ticket could not be submitted. Please try again.")).finally(() => setTicketSubmitting(false));
   };
 
-  const openTicket = async (id: string) => {
-    try {
-      setSelectedTicket(await supportApi.getMine(id));
-    } catch {
-      toast.error("Could not load this conversation. Please try again.");
-    }
+  const openTicket = (ticket: SupportTicket) => {
+    setSelectedTicket(ticket);
   };
 
   const sendReply = async (event: FormEvent<HTMLFormElement>) => {
@@ -246,7 +242,7 @@ export function SupportPage() {
               </div>
               <h2 className="max-w-md text-3xl font-extrabold leading-[1.02] text-ink md:text-5xl">What can we help you solve?</h2>
               <p className="mt-2 max-w-md text-xs leading-5 text-muted-foreground md:text-sm">
-                Find a quick answer or talk to our support team.
+                Find a quick answer or send our support team a ticket.
               </p>
               <form onSubmit={submitSearch} className="mt-4 grid grid-cols-[minmax(0,1fr)_auto] rounded-lg border border-primary/20 bg-card p-1.5 shadow-hero-search">
                 <label className="flex min-w-0 items-center gap-2 px-2">
@@ -337,7 +333,9 @@ export function SupportPage() {
                 <p className="text-[10px] text-muted-foreground">Our team is here for you.</p>
               </div>
             </div>
-            <Button className="mt-4 w-full" onClick={() => setContactOpen(true)}>Contact Support</Button>
+            <Button className="mt-4 w-full" onClick={() => ticketOnly ? setTicketDialogOpen(true) : setContactOpen(true)}>
+              {ticketOnly ? <><Plus /> Create a support ticket</> : "Contact Support"}
+            </Button>
             <div className="mt-3 divide-y divide-border rounded-md bg-card px-3">
               <div className="flex gap-3 py-3">
                 <Clock3 className="size-4 shrink-0 text-primary" />
@@ -347,10 +345,17 @@ export function SupportPage() {
                 <CircleHelp className="size-4 shrink-0 text-primary" />
                 <div><p className="text-[10px] text-muted-foreground">Support hours</p><p className="text-xs font-bold text-ink">Mon–Sat, 9:00 AM–7:00 PM</p></div>
               </div>
-              <div className="flex gap-3 py-3">
-                <Mail className="size-4 shrink-0 text-primary" />
-                <div><p className="text-[10px] text-muted-foreground">Get help via</p><p className="text-xs font-bold text-ink">Email, chat or ticket</p></div>
-              </div>
+              {ticketOnly ? (
+                <div className="flex gap-3 py-3">
+                  <MessageSquareMore className="size-4 shrink-0 text-primary" />
+                  <div><p className="text-[10px] text-muted-foreground">Support channel</p><p className="text-xs font-bold text-ink">Ticket and replies in one place</p></div>
+                </div>
+              ) : (
+                <div className="flex gap-3 py-3">
+                  <Mail className="size-4 shrink-0 text-primary" />
+                  <div><p className="text-[10px] text-muted-foreground">Get help via</p><p className="text-xs font-bold text-ink">Email, chat or ticket</p></div>
+                </div>
+              )}
             </div>
           </aside>
         </div>
@@ -389,7 +394,7 @@ export function SupportPage() {
                 </div>
                 <div className="mt-3 flex items-center justify-between text-[10px] text-muted-foreground">
                   <span>Updated {new Date(ticket.last_activity_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>
-                  <Button variant="link" size="sm" className="h-auto p-0 text-[10px]" onClick={() => void openTicket(ticket._id)}>View conversation <ChevronRight /></Button>
+                  <Button variant="link" size="sm" className="h-auto p-0 text-[10px]" onClick={() => openTicket(ticket)}>View conversation <ChevronRight /></Button>
                 </div>
               </article>
             ))}
@@ -398,56 +403,71 @@ export function SupportPage() {
       </main>
 
       <Dialog open={ticketDialogOpen} onOpenChange={setTicketDialogOpen}>
-        <DialogContent className="support-theme sm:max-w-md">
+        <DialogContent className="support-theme max-h-[90vh] overflow-y-auto sm:max-w-xl">
           <DialogHeader>
-            <DialogTitle className="text-ink">Tell us how we can help</DialogTitle>
-            <DialogDescription>Share a few details. Our support team will reply here and you can track the conversation in your requests.</DialogDescription>
+            <DialogTitle className="text-ink">Create a support ticket</DialogTitle>
+            <DialogDescription>Tell us what happened. We’ll reply here, and you can follow the conversation in Your Support Tickets.</DialogDescription>
           </DialogHeader>
-          <form onSubmit={submitTicket} className="grid gap-3">
-            <div className="grid gap-1.5">
-              <Label htmlFor="ticket-category">What do you need help with?</Label>
-              <select id="ticket-category" value={ticketCategory} onChange={(event) => setTicketCategory(event.target.value)} className="h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                <option value="">Choose a topic (optional)</option>
-                {[
-                  ["account", "Account"],
-                  ["verification", "Verification"],
-                  ["payments", "Payments"],
-                  ["technical", "Technical issue"],
-                  ["other", "Something else"],
-                ].map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-              </select>
+          <form onSubmit={submitTicket} className="grid gap-5">
+            <div className="grid gap-4 rounded-xl border border-border bg-muted/20 p-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)]">
+              <div className="grid content-start gap-1.5">
+                <Label htmlFor="ticket-category">Topic <span className="font-normal text-muted-foreground">(optional)</span></Label>
+                <select id="ticket-category" value={ticketCategory} onChange={(event) => setTicketCategory(event.target.value)} className="h-11 rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                  <option value="">Choose a topic</option>
+                  {[
+                    ["account", "Account"],
+                    ["verification", "Verification"],
+                    ["payments", "Payments"],
+                    ["technical", "Technical issue"],
+                    ["other", "Something else"],
+                  ].map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                </select>
+                <p className="text-xs text-muted-foreground">This helps us route your request.</p>
+              </div>
+              <div className="grid content-start gap-1.5">
+                <Label htmlFor="ticket-subject">Subject <span className="text-destructive">*</span></Label>
+                <Input
+                  id="ticket-subject"
+                  minLength={3}
+                  maxLength={160}
+                  value={newSubject}
+                  onChange={(event) => setNewSubject(event.target.value)}
+                  placeholder="Briefly summarize the issue"
+                  className="h-11 bg-background"
+                  required
+                />
+                <p className="text-xs text-muted-foreground">At least 3 characters.</p>
+              </div>
             </div>
             <div className="grid gap-1.5">
-              <Label htmlFor="ticket-subject">Subject</Label>
-              <Input
-                id="ticket-subject"
-                minLength={3}
-                maxLength={120}
-                value={newSubject}
-                onChange={(event) => setNewSubject(event.target.value)}
-                placeholder="e.g. Payment not reflecting"
-              />
-            </div>
-            <div className="grid gap-1.5">
-              <Label htmlFor="ticket-description">Description</Label>
+              <div className="flex items-center justify-between gap-2">
+                <Label htmlFor="ticket-description">What happened? <span className="text-destructive">*</span></Label>
+                <span className="text-xs text-muted-foreground">{newDescription.length}/10,000</span>
+              </div>
               <Textarea
                 id="ticket-description"
                 maxLength={10000}
                 value={newDescription}
                 onChange={(event) => setNewDescription(event.target.value)}
-                placeholder="Describe the issue in a few lines"
-                rows={5}
+                placeholder="Include any steps to reproduce the issue and what you expected to happen."
+                rows={6}
+                required
+                className="resize-y bg-background"
               />
-              <p className="text-right text-[11px] text-muted-foreground">{newDescription.length}/10,000</p>
+              <p className="text-xs text-muted-foreground">Please don’t include passwords or other sensitive information.</p>
             </div>
-            <div className="grid gap-1.5">
-              <Label htmlFor="ticket-attachments">Screenshots <span className="text-muted-foreground">(optional, up to 5 images · 10 MB each)</span></Label>
+            <div className="grid gap-2 rounded-xl border border-dashed border-border bg-muted/20 p-4">
+              <div>
+                <Label htmlFor="ticket-attachments">Add screenshots <span className="font-normal text-muted-foreground">(optional)</span></Label>
+                <p className="mt-1 text-xs text-muted-foreground">JPEG, PNG, GIF or WEBP · Up to 5 images, 10 MB each</p>
+              </div>
               <Input
                 id="ticket-attachments"
                 ref={ticketAttachmentInput}
                 type="file"
                 accept="image/jpeg,image/png,image/gif,image/webp"
                 multiple
+                className="cursor-pointer bg-background file:mr-3 file:rounded-md file:border-0 file:bg-primary/10 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-primary"
                 onChange={(event) => {
                   const files = Array.from(event.target.files ?? []);
                   const invalid = files.length > 5
@@ -498,7 +518,7 @@ export function SupportPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={contactOpen} onOpenChange={setContactOpen}>
+      {!ticketOnly && <Dialog open={contactOpen} onOpenChange={setContactOpen}>
         <DialogContent className="support-theme sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-ink">Contact support</DialogTitle>
@@ -512,7 +532,7 @@ export function SupportPage() {
             <Button variant="outline" onClick={() => { setContactOpen(false); setTicketDialogOpen(true); }}><Plus /> Create a ticket</Button>
           </div>
         </DialogContent>
-      </Dialog>
+      </Dialog>}
     </div>
   );
 }

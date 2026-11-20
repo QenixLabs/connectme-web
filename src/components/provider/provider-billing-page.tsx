@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { queryKeys, subscriptionsApi } from "@/lib/api";
+import { getBillingPlanDetails } from "@/lib/billing";
 
 function formatCurrency(amountInPaise: number): string {
   return `₹${Math.round(amountInPaise / 100)}`;
@@ -53,10 +54,13 @@ export function ProviderBillingPage() {
     );
   }
 
-  const subscription = subscriptionQuery.data?.subscription ?? null;
   const plan = subscriptionQuery.data?.plan ?? null;
-  const isFree = !subscription || subscription.plan_key === "provider_free";
-  const status = subscription?.status ?? "active";
+  const billingDetails = subscriptionQuery.data
+    ? getBillingPlanDetails(subscriptionQuery.data, "Free Provider")
+    : null;
+  const effectivePlan = billingDetails?.plan ?? plan;
+  const isFree = !(billingDetails?.isPaid ?? false);
+  const status = billingDetails?.status ?? "active";
   const isActive = ["active", "trialing", "past_due", "grace_period"].includes(
     status,
   );
@@ -86,22 +90,22 @@ export function ProviderBillingPage() {
           <div>
             <p className="text-sm font-semibold text-primary">Current plan</p>
             <h2 className="mt-1 font-display text-2xl font-bold">
-              {isFree ? "Free Provider" : plan?.display_name ?? subscription?.plan_key}
+              {billingDetails?.planName ?? "Free Provider"}
             </h2>
             <Badge className="mt-3" variant={isActive ? "default" : "secondary"}>
               {isActive ? "Active" : status.replace(/_/g, " ")}
             </Badge>
           </div>
-          {subscription?.current_period_end && (
+          {billingDetails?.periodEnd && (
             <p className="flex items-center gap-2 text-sm text-muted-foreground">
               <CalendarDays className="size-4" />
-              Renews {formatDate(subscription.current_period_end)}
+              Renews {formatDate(billingDetails.periodEnd)}
             </p>
           )}
         </div>
-        {plan?.features?.length ? (
+        {effectivePlan?.features?.length ? (
           <ul className="mt-5 grid gap-2 border-t pt-5 text-sm sm:grid-cols-2">
-            {plan.features.map((feature) => (
+            {effectivePlan.features.map((feature) => (
               <li key={feature}>{feature}</li>
             ))}
           </ul>

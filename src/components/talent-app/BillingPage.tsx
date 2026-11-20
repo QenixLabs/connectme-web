@@ -40,6 +40,7 @@ import {
   type UsageResponse,
   type Invoice,
 } from "@/lib/api";
+import { getBillingPlanDetails } from "@/lib/billing";
 import { toast } from "sonner";
 import {
   loadRazorpayCheckout,
@@ -49,6 +50,8 @@ import {
 interface BillingData {
   subscription: Subscription | null;
   plan: PlanConfig | null;
+  effectiveAccess: Awaited<ReturnType<typeof subscriptionsApi.getMySubscription>>["effective_access"];
+  effectivePlan: PlanConfig | null;
   usage: UsageResponse | null;
   invoices: Invoice[];
   plans: PlanConfig[];
@@ -162,6 +165,8 @@ export function BillingPage() {
   const [data, setData] = useState<BillingData>({
     subscription: null,
     plan: null,
+    effectiveAccess: null,
+    effectivePlan: null,
     usage: null,
     invoices: [],
     plans: [],
@@ -198,6 +203,14 @@ export function BillingPage() {
               : null,
           plan:
             subResult.status === "fulfilled" ? subResult.value.plan : null,
+          effectiveAccess:
+            subResult.status === "fulfilled"
+              ? subResult.value.effective_access
+              : null,
+          effectivePlan:
+            subResult.status === "fulfilled"
+              ? subResult.value.effective_plan ?? null
+              : null,
           usage:
             usageResult.status === "fulfilled" ? usageResult.value : null,
           invoices:
@@ -236,6 +249,7 @@ export function BillingPage() {
       const result = await subscriptionsApi.upgrade({
         planKey,
         interval: "monthly",
+        targetRole: "talent",
       });
       if (result.pending_confirmation) {
         toast.info("Your payment is being confirmed by Razorpay. Your plan will update shortly.");
@@ -245,6 +259,8 @@ export function BillingPage() {
             ...prev,
             subscription: latest.subscription,
             plan: latest.plan,
+            effectiveAccess: latest.effective_access,
+            effectivePlan: latest.effective_plan ?? null,
           }));
         }
         setIsUpgrading(false);
@@ -274,6 +290,8 @@ export function BillingPage() {
                   ...prev,
                   subscription: latest.subscription,
                   plan: latest.plan,
+                  effectiveAccess: latest.effective_access,
+                  effectivePlan: latest.effective_plan ?? null,
                 }));
               }
             } catch (error) {
@@ -348,14 +366,23 @@ export function BillingPage() {
     return <BillingError message={data.error} />;
   }
 
-  const isPaid = !!data.subscription?.plan_key;
-  const status = data.subscription?.status;
+  const billingDetails = getBillingPlanDetails(
+    {
+      subscription: data.subscription,
+      plan: data.plan,
+      effective_access: data.effectiveAccess,
+      effective_plan: data.effectivePlan,
+    },
+    "Free Plan",
+  );
+  const isPaid = billingDetails.isPaid;
+  const status = billingDetails.status;
   const isActive =
     status === "active" ||
     status === "trialing" ||
     status === "past_due" ||
     status === "grace_period";
-  const resetDate = data.subscription?.current_period_end;
+  const resetDate = billingDetails.periodEnd;
   const daysLeft = daysUntil(resetDate);
 
   const usagePercent =
@@ -406,7 +433,7 @@ export function BillingPage() {
           <div>
             <p className="font-semibold text-primary">Current Plan</p>
             <h2 className="mt-1.5 font-display text-3xl font-bold tracking-tight">
-              {isPaid ? (data.plan?.display_name ?? formatPlanName(data.subscription?.plan_key)) : "Free Plan"}
+              {billingDetails.planName}
             </h2>
             {resetDate && isActive && (
               <p className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground">

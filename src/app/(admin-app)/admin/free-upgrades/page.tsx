@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Search, Shuffle } from "lucide-react";
+import { BriefcaseBusiness, Loader2, Search, Shuffle, Store, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { adminApi, type AdminUpgradeCandidate } from "@/lib/api/admin";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -13,10 +13,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function FreeUpgradesPage() {
   const queryClient = useQueryClient();
-  const [role, setRole] = useState<"talent" | "recruiter">("talent");
+  const [role, setRole] = useState<AdminUpgradeCandidate["role"]>("talent");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<AdminUpgradeCandidate | null>(null);
@@ -181,15 +182,32 @@ export default function FreeUpgradesPage() {
         <CardHeader><CardTitle className="text-base">Eligibility and selection</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-            <div className="space-y-1">
-              <Label htmlFor="upgrade-role">Account type</Label>
-              <Select value={role} onValueChange={(value: "talent" | "recruiter") => { setRole(value); setPage(1); setSelected(null); setSelectedCandidates([]); setPlan(""); setAcknowledged(false); }}>
-                <SelectTrigger id="upgrade-role" className="w-40"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="talent">Talent</SelectItem>
-                  <SelectItem value="recruiter">Recruiter</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="min-w-0 space-y-1 sm:w-[26rem]">
+              <Label>Account type</Label>
+              <Tabs
+                value={role}
+                onValueChange={(value) => {
+                  if (value !== "talent" && value !== "recruiter" && value !== "provider") return;
+                  setRole(value);
+                  setPage(1);
+                  setSelected(null);
+                  setSelectedCandidates([]);
+                  setPlan("");
+                  setAcknowledged(false);
+                }}
+              >
+                <TabsList className="grid h-auto w-full grid-cols-3 gap-1 rounded-xl border border-border bg-muted/40 p-1">
+                  <TabsTrigger value="talent" className="h-10 rounded-lg text-xs sm:text-sm">
+                    <UserRound className="size-4" /> Talent
+                  </TabsTrigger>
+                  <TabsTrigger value="recruiter" className="h-10 rounded-lg text-xs sm:text-sm">
+                    <BriefcaseBusiness className="size-4" /> Recruiter
+                  </TabsTrigger>
+                  <TabsTrigger value="provider" className="h-10 rounded-lg text-xs sm:text-sm">
+                    <Store className="size-4" /> Provider
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
             </div>
             <div className="relative min-w-0 flex-1">
               <Search className="absolute left-3 top-2.5 size-4 text-muted-foreground" />

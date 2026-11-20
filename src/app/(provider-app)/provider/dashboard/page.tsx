@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
+import { FreeUpgradeOfferBanner } from "@/components/dashboard/FreeUpgradeOfferBanner";
 
 export default function ProviderDashboardPage() {
   const queryClient = useQueryClient();
@@ -182,6 +183,7 @@ export default function ProviderDashboardPage() {
 
   return (
     <div className="mx-auto max-w-xl space-y-4 pb-12 sm:space-y-4.5">
+      <FreeUpgradeOfferBanner />
       {/* ─── 1. Welcome Card ─── */}
       <section className="relative isolate overflow-hidden rounded-[22px] bg-gradient-to-r from-[#170B38] via-[#241154] to-[#2E1065] shadow-sm sm:rounded-[26px]">
         {/* Studio spotlight equipment on the right */}

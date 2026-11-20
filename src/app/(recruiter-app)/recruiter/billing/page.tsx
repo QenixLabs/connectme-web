@@ -13,12 +13,12 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   useRecruiterBillingSubscription,
   useRecruiterBillingUsage,
   useRecruiterBillingInvoices,
 } from "@/hooks/use-recruiter-billing";
+import { getBillingPlanDetails } from "@/lib/billing";
 import { toast } from "sonner";
 
 function formatPlanName(planKey?: string | null): string {
@@ -114,8 +114,10 @@ export default function RecruiterBillingPage() {
     isLoading: loadingInvoices,
   } = useRecruiterBillingInvoices(1, 20);
 
-  const subscription = subResponse?.subscription ?? null;
   const plan = subResponse?.plan ?? null;
+  const billingDetails = subResponse
+    ? getBillingPlanDetails(subResponse, "Free")
+    : null;
 
   if (loadingSub || loadingUsage || loadingInvoices) {
     return <BillingSkeleton />;
@@ -134,15 +136,15 @@ export default function RecruiterBillingPage() {
     );
   }
 
-  const currentPlanKey = subscription?.plan_key ?? "recruiter_free";
-  const isPaid = currentPlanKey !== "recruiter_free";
-  const status = subscription?.status ?? "active";
+  const currentPlanKey = billingDetails?.planKey ?? "recruiter_free";
+  const isPaid = billingDetails?.isPaid ?? false;
+  const status = billingDetails?.status ?? "active";
   const isActive =
     status === "active" ||
     status === "trialing" ||
     status === "past_due" ||
     status === "grace_period";
-  const resetDate = subscription?.current_period_end;
+  const resetDate = billingDetails?.periodEnd;
   const daysLeft = daysUntil(resetDate);
 
   const invoices = invoicesResponse?.data ?? [];
@@ -168,7 +170,7 @@ export default function RecruiterBillingPage() {
           variant="outline"
           className="border-accent-teal/50 text-accent-teal hover:bg-accent-teal-bg"
         >
-          <Link href="/pricing">
+          <Link href="/pricing?role=recruiter">
             <ArrowUpRight className="mr-1 size-4" />
             Change Plan
           </Link>
@@ -186,7 +188,11 @@ export default function RecruiterBillingPage() {
           </h2>
            <span className="rounded-full border border-accent-teal/50 px-4 py-1.5 text-sm font-semibold text-accent-teal">
             {isPaid
-              ? (plan?.display_name ?? formatPlanName(currentPlanKey))
+              ? (
+                  billingDetails?.planName ??
+                  plan?.display_name ??
+                  formatPlanName(currentPlanKey)
+                )
               : "Free"}
           </span>
         </div>
@@ -212,7 +218,7 @@ export default function RecruiterBillingPage() {
             variant="outline"
             className="flex-1 border-accent-teal/50 text-accent-teal hover:bg-accent-teal-bg"
           >
-            <Link href="/pricing">
+            <Link href="/pricing?role=recruiter">
               <RefreshCw className="mr-2 size-4" />
               Change plan
             </Link>

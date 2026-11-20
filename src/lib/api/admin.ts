@@ -219,6 +219,7 @@ export interface AdminSubscriptionRecord {
     current_period_end?: string | null;
     cancel_at_period_end: boolean;
     cancellation_reason?: string | null;
+    cancelled_at?: string | null;
     created_at?: string;
     updated_at?: string;
     expires_at?: string | null;
@@ -259,6 +260,7 @@ export interface AdminSubscriptionOverride {
 
 export interface AdminUserSubscriptionDetail {
   subscription: AdminSubscriptionRecord | null;
+  subscription_history?: AdminSubscriptionRecord[];
   paid_subscription: AdminSubscriptionRecord | null;
   plan: { key: string; display_name: string } | null;
   effective: {
@@ -282,7 +284,7 @@ export interface AdminUserSubscriptionDetail {
 export interface AdminUpgradeCandidate {
   _id: string;
   email: string;
-  role: "talent" | "recruiter";
+  role: "talent" | "recruiter" | "provider";
   display_name: string;
   trust_score: number;
   last_active_at: string;
@@ -310,11 +312,16 @@ export interface SubscriptionOfferInput {
 export interface AdminUserInvoice {
   _id: string;
   razorpay_invoice_id: string;
+  razorpay_payment_id?: string;
+  invoice_number?: string | null;
   amount: number;
+  amount_paid?: number | null;
   currency: string;
   status: string;
   period_start?: string | null;
   period_end?: string | null;
+  paid_at?: string | null;
+  pdf_url?: string | null;
   created_at?: string;
 }
 
@@ -492,6 +499,14 @@ export interface SubscriptionItem {
   razorpay_subscription_id?: string | null;
   current_period_start?: string | null;
   current_period_end?: string | null;
+  scheduled_cancellation_at?: string | null;
+  cancel_at_period_end?: boolean;
+  cancellation_reason?: string | null;
+  expires_at?: string | null;
+  grace_period_ends_at?: string | null;
+  billing_cycle?: string;
+  payment_status?: string;
+  plan_display_name?: string;
   created_at?: string;
   user?: {
     _id: string;
@@ -506,6 +521,27 @@ export interface PaginatedSubscriptions {
   total: number;
   page: number;
   limit: number;
+  total_pages: number;
+}
+
+export interface AdminSubscriptionAccessGrant {
+  _id: string;
+  user_id: string;
+  user: { _id: string; email: string; role: string };
+  action: string;
+  plan_key: string;
+  plan_display_name: string;
+  starts_at: string;
+  ends_at: string;
+  reason: string;
+}
+
+export interface PaginatedAdminSubscriptionAccessGrants {
+  data: AdminSubscriptionAccessGrant[];
+  total: number;
+  page: number;
+  limit: number;
+  total_pages: number;
 }
 
 export interface CreateMigrationInput {
@@ -521,6 +557,34 @@ export interface SubscriptionAnalytics {
   counts_by_plan: Array<{ plan_key: string; display_name: string; count: number }>;
   mrr_paise: number;
   mrr_inr: number;
+  arr_paise: number;
+  at_risk_mrr_paise: number;
+  actual_collected_revenue_paise: number;
+  churned_paid_users_30d: number;
+  trends: Array<{
+    date: string;
+    new_paid_subscriptions: number;
+    cancellations: number;
+    actual_collected_revenue_paise: number;
+  }>;
+  user_counts: {
+    total_users: number;
+    paid_customers: number;
+    paid_plan_access_users: number;
+    active_paid_access_users: number;
+    active_paid_billing_users: number;
+    free_access_users: number;
+    trial_users: number;
+    past_due_users: number;
+    cancelled_users: number;
+    expired_users: number;
+    scheduled_cancellation_users: number;
+    admin_granted_users: number;
+    admin_revoked_users: number;
+    unknown_billing_cycle_subscriptions: number;
+  };
+  paid_vs_free: Array<{ category: "paid_access" | "free_access"; count: number }>;
+  effective_plan_distribution: Array<{ plan_key: string; display_name: string; count: number }>;
   total_revenue_paise: number;
   total_revenue_inr: number;
   recent_subscriptions: Array<{ date: string; count: number }>;
@@ -876,7 +940,7 @@ export const adminApi = {
   },
 
   getFreeUpgradeCandidates: async (params: {
-    role: "talent" | "recruiter";
+    role: AdminUpgradeCandidate["role"];
     page?: number;
     limit?: number;
     search?: string;
@@ -886,7 +950,7 @@ export const adminApi = {
   },
 
   drawFreeUpgradeCandidate: async (
-    role: "talent" | "recruiter",
+    role: AdminUpgradeCandidate["role"],
     count: number,
   ): Promise<{ candidates: AdminUpgradeCandidate[]; eligible_count: number; scoring: string }> => {
     const response = await apiClient.post("/admin/free-upgrades/draw", { role, count });
@@ -911,8 +975,30 @@ export const adminApi = {
     return response.data;
   },
 
-  getSubscriptions: async (params?: { page?: number; limit?: number; status?: string; plan_key?: string; plan_family_key?: string }): Promise<PaginatedSubscriptions> => {
+  getSubscriptions: async (params?: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    plan_key?: string;
+    plan_family_key?: string;
+    role?: string;
+    search?: string;
+    plan_type?: "paid" | "free";
+    payment_status?: "paid" | "pending" | "failed" | "none";
+    billing_interval?: "monthly" | "yearly" | "unknown" | "none";
+    cancellation_state?: "scheduled" | "not_scheduled";
+  }): Promise<PaginatedSubscriptions> => {
     const response = await apiClient.get('/admin/subscriptions', { params });
+    return response.data;
+  },
+
+  getSubscriptionAccessGrants: async (params?: {
+    page?: number;
+    limit?: number;
+    role?: string;
+    search?: string;
+  }): Promise<PaginatedAdminSubscriptionAccessGrants> => {
+    const response = await apiClient.get('/admin/subscriptions/access-overrides', { params });
     return response.data;
   },
 
