@@ -8,6 +8,7 @@ import { QueryProvider } from "@/providers/query-provider";
 import { SocketProvider } from "@/providers/socket-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { NotificationToastListener } from "@/components/notifications/notification-toast-listener";
 import Script from "next/script";
 import "./globals.css";
 
@@ -136,6 +137,7 @@ export default function RootLayout({
               <QueryProvider>
                 <TooltipProvider>
                   {children}
+                  <NotificationToastListener />
                   <Toaster position="top-right" richColors />
                 </TooltipProvider>
               </QueryProvider>
