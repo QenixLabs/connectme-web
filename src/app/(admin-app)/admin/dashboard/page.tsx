@@ -55,6 +55,7 @@ function getApiErrorMessage(err: unknown, fallback: string): string {
 const CHART_COLORS = {
   artists: "#6366f1",
   brands: "#f59e0b",
+  providers: "#0ea5e9",
   admins: "#10b981",
   pending: "#f97316",
   resolved: "#10b981",
@@ -213,6 +214,7 @@ export default function AdminDashboardPage() {
     return [
       { name: "Artists", value: stats.total_artists, color: CHART_COLORS.artists },
       { name: "Brands", value: stats.total_brands, color: CHART_COLORS.brands },
+      { name: "Providers", value: stats.total_providers, color: CHART_COLORS.providers },
       { name: "Admins", value: stats.total_admins, color: CHART_COLORS.admins },
     ].filter((d) => d.value > 0);
   }, [stats]);

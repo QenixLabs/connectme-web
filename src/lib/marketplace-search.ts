@@ -3,6 +3,7 @@ import type {
   ServiceQuery,
 } from "@/lib/api/marketplace";
 import { MARKETPLACE_CATEGORIES } from "@/lib/marketplace-categories";
+import { SERVICE_CATEGORIES } from "@/lib/service-catalog";
 
 const PAGE_SIZE = 12;
 
@@ -39,9 +40,9 @@ function readRating(params: URLSearchParams): number | undefined {
     : undefined;
 }
 
-function readCategory(params: URLSearchParams): string | undefined {
+function readCategory(params: URLSearchParams, categories: readonly string[]): string | undefined {
   const category = params.get("category")?.trim();
-  return MARKETPLACE_CATEGORIES.find((value) => value === category);
+  return categories.find((value) => value === category);
 }
 
 function readPrice(params: URLSearchParams, name: string): number | undefined {
@@ -66,7 +67,7 @@ export function readProviderDirectoryFilters(
 ): ProviderDirectoryQuery {
   return {
     search: params.get("search")?.trim() || undefined,
-    category: readCategory(params),
+    category: readCategory(params, MARKETPLACE_CATEGORIES),
     location: params.get("location")?.trim() || undefined,
     min_rating: readRating(params),
     sort: readSort(params, providerSorts),
@@ -79,7 +80,7 @@ export function readServiceSearchFilters(params: URLSearchParams): ServiceQuery 
   const currency = params.get("currency")?.trim() ?? "";
   return {
     search: params.get("search")?.trim() || undefined,
-    category: readCategory(params),
+    category: readCategory(params, SERVICE_CATEGORIES),
     location: params.get("location")?.trim() || undefined,
     currency: /^[A-Za-z]{3}$/.test(currency) ? currency.toUpperCase() : undefined,
     min_price: readPrice(params, "min_price"),

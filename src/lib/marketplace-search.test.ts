@@ -39,9 +39,9 @@ describe("marketplace search URL state", () => {
   it("only accepts categories from the marketplace category list", () => {
     expect(
       readServiceSearchFilters(
-        new URLSearchParams("category=Photography+%26+Video"),
-      ).category,
-    ).toBe("Photography & Video");
+        new URLSearchParams("category=Photography+%26+Videography"),
+    ).category,
+    ).toBe("Photography & Videography");
     expect(
       readProviderDirectoryFilters(
         new URLSearchParams("category=Unlisted+Category"),

@@ -58,7 +58,7 @@ import type {
 } from "@/lib/api/marketplace";
 import { getApiErrorMessage } from "@/lib/api/client";
 import { queryKeys } from "@/lib/api/query-keys";
-import { MARKETPLACE_CATEGORIES } from "@/lib/marketplace-categories";
+import { SERVICE_CATALOG, SERVICE_CATEGORIES } from "@/lib/service-catalog";
 import { formatAmount } from "@/components/marketplace/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -292,7 +292,13 @@ const outlineButtonClass =
   "h-11 rounded-xl border-border bg-card text-foreground hover:border-violet-300 hover:bg-violet-50 hover:text-violet-800";
 
 function isSupportedCategory(value: string): boolean {
-  return MARKETPLACE_CATEGORIES.some((category) => category === value);
+  return SERVICE_CATEGORIES.some((category) => category === value);
+}
+
+function isSupportedSubcategory(category: string, value: string): boolean {
+  return (SERVICE_CATALOG[category as keyof typeof SERVICE_CATALOG] ?? []).some(
+    (subcategory) => subcategory === value,
+  );
 }
 
 function serviceToForm(service: ServiceListing): ServiceForm {
@@ -531,6 +537,8 @@ function ServiceEditorForm({
 
     if (!form.subcategory.trim()) {
       errors.subcategory = "Add a subcategory to help customers find you.";
+    } else if (!isSupportedSubcategory(form.category, form.subcategory)) {
+      errors.subcategory = "Choose a subcategory from the selected category.";
     }
     if (!form.short_description.trim()) {
       errors.short_description = "Add a short description for service cards.";
@@ -1364,7 +1372,10 @@ function StepBasics({
               <Select
                 value={form.category || "unselected"}
                 onValueChange={(category) =>
-                  updateForm({ category: category === "unselected" ? "" : category })
+                  updateForm({
+                    category: category === "unselected" ? "" : category,
+                    subcategory: "",
+                  })
                 }
               >
                 <SelectTrigger
@@ -1376,7 +1387,7 @@ function StepBasics({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="unselected">Choose a category</SelectItem>
-                  {MARKETPLACE_CATEGORIES.map((category) => (
+                  {SERVICE_CATEGORIES.map((category) => (
                     <SelectItem key={category} value={category}>
                       {category}
                     </SelectItem>
@@ -1393,15 +1404,26 @@ function StepBasics({
               error={fieldErrors.subcategory}
               counter={`${form.subcategory.length}/80`}
             >
-              <Input
-                id="service-subcategory"
-                value={form.subcategory}
-                maxLength={80}
-                aria-invalid={Boolean(fieldErrors.subcategory)}
-                onChange={(event) => updateForm({ subcategory: event.target.value })}
-                placeholder="e.g. Wedding films"
-                className={inputClass}
-              />
+              <Select
+                value={form.subcategory || "unselected"}
+                onValueChange={(subcategory) =>
+                  updateForm({ subcategory: subcategory === "unselected" ? "" : subcategory })
+                }
+              >
+                <SelectTrigger
+                  id="service-subcategory"
+                  aria-invalid={Boolean(fieldErrors.subcategory)}
+                  className={cn(inputClass, "w-full")}
+                >
+                  <SelectValue placeholder={form.category ? "Choose a subcategory" : "Choose a category first"} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unselected">Choose a subcategory</SelectItem>
+                  {(SERVICE_CATALOG[form.category as keyof typeof SERVICE_CATALOG] ?? []).map((subcategory) => (
+                    <SelectItem key={subcategory} value={subcategory}>{subcategory}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </Field>
           </div>
 

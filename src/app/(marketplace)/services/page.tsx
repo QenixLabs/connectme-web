@@ -31,7 +31,7 @@ import { servicesApi } from "@/lib/api/marketplace";
 import type { ServiceQuery } from "@/lib/api/marketplace";
 import { getApiErrorMessage } from "@/lib/api/client";
 import { queryKeys } from "@/lib/api/query-keys";
-import { MARKETPLACE_CATEGORIES } from "@/lib/marketplace-categories";
+import { SERVICE_CATEGORIES } from "@/lib/service-catalog";
 import { authStore } from "@/stores/auth-store";
 import {
   readServiceSearchFilters,
@@ -326,7 +326,7 @@ function ServicesBrowser() {
   } = listingsQuery;
   const services = data?.pages.flatMap((page) => page.data) ?? [];
   const total = data?.pages[0]?.total ?? 0;
-  const categories = MARKETPLACE_CATEGORIES;
+  const categories = SERVICE_CATEGORIES;
   const selectedCategoryIsHidden = SERVICE_SHORTCUTS.slice(4).find(
     ({ category }) => category === filters.category,
   );
