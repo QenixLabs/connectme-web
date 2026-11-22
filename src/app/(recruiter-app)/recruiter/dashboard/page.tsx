@@ -476,6 +476,7 @@ export default function RecruiterDashboardPage() {
           </section>
 
           <section
+            data-tour="recruiter-summary"
             className="relative z-20 -mt-2 grid grid-cols-4 rounded-xl border border-border bg-card px-2 py-3 shadow-panel"
             aria-label="Casting summary"
           >
@@ -509,7 +510,7 @@ export default function RecruiterDashboardPage() {
                 ))}
           </section>
 
-          <section className="relative mt-3 overflow-hidden rounded-xl border border-primary/10 bg-copilot p-3 shadow-panel">
+          <section data-tour="recruiter-copilot" className="relative mt-3 overflow-hidden rounded-xl border border-primary/10 bg-copilot p-3 shadow-panel">
             <div className="relative z-10 w-[68%]">
               <div className="flex items-center gap-2">
                 <Sparkles className="size-4 text-primary" />
@@ -561,6 +562,7 @@ export default function RecruiterDashboardPage() {
           </section>
 
           <section
+            data-tour="recruiter-actions"
             className="grid grid-cols-4 rounded-b-xl border border-t-0 border-border bg-card px-1 py-3 shadow-panel"
             aria-label="Quick actions"
           >
@@ -581,7 +583,7 @@ export default function RecruiterDashboardPage() {
             ))}
           </section>
 
-          <section className="mt-4">
+          <section data-tour="recruiter-tasks" className="mt-4">
             <SectionTitle href="/recruiter/campaigns" chevron>
               Priority Tasks
             </SectionTitle>
@@ -612,7 +614,7 @@ export default function RecruiterDashboardPage() {
             </div>
           </section>
 
-          <section className="mt-4">
+          <section data-tour="recruiter-matches" className="mt-4">
             <SectionTitle href="/recruiter/find-talent">Top AI Matches for You</SectionTitle>
             <div className="scrollbar-none flex gap-2 overflow-x-auto pb-1">
               {loadingRecommendations ? (
@@ -727,7 +729,7 @@ export default function RecruiterDashboardPage() {
             </div>
           </section>
 
-          <section className="mt-4">
+          <section data-tour="recruiter-campaigns" className="mt-4">
             <SectionTitle href="/recruiter/campaigns" chevron>
               Active Campaigns
             </SectionTitle>

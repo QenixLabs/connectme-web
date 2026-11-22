@@ -9,6 +9,9 @@ import {
   providerBottomNavItems,
   providerNavItems,
 } from "@/components/shared/nav-config";
+import { RoleTour } from "@/components/onboarding/RoleTour";
+import { providerTourSteps } from "@/components/onboarding/providerTourSteps";
+import { PROVIDER_TOUR_REPLAY_EVENT } from "@/components/onboarding/tour-events";
 
 export function ProviderShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -32,6 +35,7 @@ export function ProviderShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen flex-col bg-[#f7f7fb]">
+      <RoleTour role="provider" steps={providerTourSteps} replayEvent={PROVIDER_TOUR_REPLAY_EVENT} />
       <TopBar navItems={providerNavItems} role="provider" showUserMenu />
       <main
         className={cn(

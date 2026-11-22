@@ -81,6 +81,7 @@ export interface UpdateTalentProfilePayload {
 export interface TalentProfile {
   _id: string;
   user_id: string;
+  hasCompletedOnboardingTour?: boolean;
   username: string;
   full_legal_name?: string;
   professional_name?: string;
@@ -444,6 +445,11 @@ export const talentApi = {
   getMyProfile: async () => {
     const response = await apiClient.get("/talent/me");
     return response.data as TalentProfile;
+  },
+
+  completeOnboardingTour: async () => {
+    const response = await apiClient.patch("/talent/onboarding-tour");
+    return response.data as { hasCompletedOnboardingTour: boolean };
   },
 
   updateMyProfile: async (data: UpdateTalentProfilePayload) => {

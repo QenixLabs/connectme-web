@@ -16,6 +16,12 @@ import type { NavItem } from "./nav-config";
 const subscribe = () => () => {};
 const getClientSnapshot = () => true;
 const getServerSnapshot = () => false;
+const talentTourNavTargets: Record<string, string> = {
+  Opportunities: "opportunities-nav",
+  Services: "services-nav",
+  Network: "network-nav",
+  Profile: "profile-nav",
+};
 
 interface BottomBarProps {
   navItems: NavItem[];
@@ -30,6 +36,7 @@ export function BottomBar({ navItems, mobileNavItems, iconOnly, variant = "defau
   const user = useAuthStore((state) => state.user);
   const visibleNavItems = mobileNavItems ?? navItems;
   const profileItem = visibleNavItems.find((item) => item.label === "Profile");
+  const isTalent = profileItem?.href.startsWith("/talent") ?? false;
   const isRecruiter = profileItem?.href.startsWith("/recruiter") ?? false;
   const isProvider = profileItem?.href.startsWith("/provider") ?? false;
   const { data: profile } = useQuery<{ profile_photo?: string }>({
@@ -83,6 +90,7 @@ export function BottomBar({ navItems, mobileNavItems, iconOnly, variant = "defau
             <Link
               key={item.href}
               href={item.href}
+              data-tour={isTalent ? talentTourNavTargets[item.label] : undefined}
               className={cn(
                 "group relative flex flex-col items-center justify-center gap-0.5 py-1.5 transition-colors",
                 isSettingsVariant

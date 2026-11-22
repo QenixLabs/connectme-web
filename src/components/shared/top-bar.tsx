@@ -38,10 +38,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { NavItem } from "./nav-config";
 import logoImage from "@/assets/rootin-logo-orange.png";
+import { tourReplayEventForRole } from "@/components/onboarding/tour-events";
 
 const subscribe = () => () => {};
 const getClientSnapshot = () => true;
 const getServerSnapshot = () => false;
+const talentTourNavTargets: Record<string, string> = {
+  Opportunities: "opportunities-nav",
+  Services: "services-nav",
+  Network: "network-nav",
+  Profile: "profile-nav",
+};
 
 interface TopBarProps {
   navItems: NavItem[];
@@ -100,6 +107,7 @@ export function TopBar({ navItems, role, showUserMenu = false }: TopBarProps) {
                 <Link
                   key={item.href}
                   href={item.href}
+                  data-tour={role === "talent" ? talentTourNavTargets[item.label] : undefined}
                   className={cn(
                     "relative rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-200",
                     active
@@ -189,6 +197,7 @@ function UserMenu({ role }: { role: TopBarProps["role"] }) {
           size="icon"
           className="size-10 rounded-full hover:bg-surface"
           aria-label="User menu"
+          data-tour={role === "talent" ? "profile-menu" : `${role}-profile-menu`}
         >
           <Avatar className="size-8 sm:size-9 border border-border">
             <AvatarImage
@@ -210,7 +219,11 @@ function UserMenu({ role }: { role: TopBarProps["role"] }) {
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent
+        align="end"
+        className="w-56"
+        data-tour={role === "talent" ? "profile-menu-content" : `${role}-profile-menu-content`}
+      >
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium">
@@ -249,6 +262,13 @@ function UserMenu({ role }: { role: TopBarProps["role"] }) {
                     <Headphones className="mr-2 size-4" />
                     Help &amp; Support
                   </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onSelect={() => window.dispatchEvent(new Event(tourReplayEventForRole(role)))}
+                >
+                  <span className="mr-2 size-4" aria-hidden="true">✦</span>
+                  Take a tour
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href="/talent/analytics" className="cursor-pointer">
@@ -343,6 +363,15 @@ function UserMenu({ role }: { role: TopBarProps["role"] }) {
                   </Link>
                 </DropdownMenuItem>
               </>
+            )}
+            {(role === "recruiter" || role === "provider") && (
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onSelect={() => window.dispatchEvent(new Event(tourReplayEventForRole(role)))}
+              >
+                <span className="mr-2 size-4" aria-hidden="true">âœ¦</span>
+                Take a tour
+              </DropdownMenuItem>
             )}
             {role === "talent" && (
               <DropdownMenuItem asChild>

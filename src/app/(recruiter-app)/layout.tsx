@@ -10,6 +10,9 @@ import {
 import { OnboardingGuard } from "@/components/auth/onboarding-guard";
 import { useRecruiterProfile } from "@/hooks/use-recruiter-profile";
 import { CommunicationFeed } from "@/components/content/communication-feed";
+import { RoleTour } from "@/components/onboarding/RoleTour";
+import { recruiterTourSteps } from "@/components/onboarding/recruiterTourSteps";
+import { RECRUITER_TOUR_REPLAY_EVENT } from "@/components/onboarding/tour-events";
 
 export default function RecruiterAppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -24,6 +27,7 @@ export default function RecruiterAppLayout({ children }: { children: React.React
   return (
     <OnboardingGuard role="recruiter">
       <div className="flex min-h-screen flex-col">
+        <RoleTour role="recruiter" steps={recruiterTourSteps} replayEvent={RECRUITER_TOUR_REPLAY_EVENT} />
         <TopBar navItems={recruiterNavItems} role="recruiter" showUserMenu />
         <main className="flex-1 pb-16 md:pb-0">{pathname === "/recruiter/dashboard" && <CommunicationFeed />}{children}</main>
         {!isConversationPage && (

@@ -185,7 +185,7 @@ export default function ProviderDashboardPage() {
     <div className="mx-auto max-w-xl space-y-4 pb-12 sm:space-y-4.5">
       <FreeUpgradeOfferBanner />
       {/* ─── 1. Welcome Card ─── */}
-      <section className="relative isolate overflow-hidden rounded-[22px] bg-gradient-to-r from-[#170B38] via-[#241154] to-[#2E1065] shadow-sm sm:rounded-[26px]">
+      <section data-tour="provider-welcome" className="relative isolate overflow-hidden rounded-[22px] bg-gradient-to-r from-[#170B38] via-[#241154] to-[#2E1065] shadow-sm sm:rounded-[26px]">
         {/* Studio spotlight equipment on the right */}
         <div className="pointer-events-none absolute bottom-0 right-0 top-0 w-[42%] max-w-[200px] select-none overflow-hidden">
           <Image
@@ -239,7 +239,7 @@ export default function ProviderDashboardPage() {
       </section>
 
       {/* ─── 2. Quick Pill Row: Accepting Inquiries & Profile Strength ─── */}
-      <section className="grid grid-cols-2 gap-2.5 sm:gap-3">
+      <section data-tour="provider-controls" className="grid grid-cols-2 gap-2.5 sm:gap-3">
         {/* Left: Accepting Inquiries */}
         <div className="flex items-center justify-between rounded-2xl border border-[#ECECF2] bg-white px-3.5 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.03)] sm:px-4">
           <div className="flex items-center gap-2">
@@ -273,7 +273,7 @@ export default function ProviderDashboardPage() {
       </section>
 
       {/* ─── 3. Stats Row (4 cards in a grid) ─── */}
-      <section className="grid grid-cols-4 gap-2 sm:gap-2.5">
+      <section data-tour="provider-stats" className="grid grid-cols-4 gap-2 sm:gap-2.5">
         <Link
           href="/provider/inquiries"
           className="flex flex-col items-center justify-between rounded-2xl border border-[#ECECF2] bg-white px-1.5 py-3 text-center shadow-[0_2px_8px_rgba(0,0,0,0.03)] transition hover:-translate-y-0.5 hover:shadow-md sm:py-3.5"
@@ -339,7 +339,7 @@ export default function ProviderDashboardPage() {
       </section>
 
       {/* ─── 4. Needs Your Attention Section ─── */}
-      <section className="space-y-2.5">
+      <section data-tour="provider-inquiries" className="space-y-2.5">
         <div className="flex items-center justify-between px-0.5">
           <h2 className="flex items-center gap-1.5 text-sm font-bold text-[#0F172A] sm:text-base">
             <span>🔥</span>
@@ -449,7 +449,7 @@ export default function ProviderDashboardPage() {
       </section>
 
       {/* ─── 5. Quick Actions ─── */}
-      <section className="space-y-2.5">
+      <section data-tour="provider-actions" className="space-y-2.5">
         <h2 className="flex items-center gap-1.5 px-0.5 text-sm font-bold text-[#0F172A] sm:text-base">
           <Hexagon className="size-4 stroke-[2.2] text-[#0F172A]" />
           <span>Quick Actions</span>
@@ -509,7 +509,7 @@ export default function ProviderDashboardPage() {
       </section>
 
       {/* ─── 6. Business Performance (Last 30 Days) ─── */}
-      <section className="space-y-2.5">
+      <section data-tour="provider-performance" className="space-y-2.5">
         <div className="flex items-center justify-between px-0.5">
           <h2 className="flex items-center gap-1.5 text-sm font-bold text-[#0F172A] sm:text-base">
             <TrendingUp className="size-4 stroke-[2.4] text-[#6E3FF2]" />

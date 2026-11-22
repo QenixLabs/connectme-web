@@ -1,5 +1,115 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "driver.js/dist/driver.css";
+
+/* Product onboarding tour: a focused, premium layer over the app theme. */
+.driver-popover.connectme-tour-popover {
+  width: min(390px, calc(100vw - 32px));
+  max-width: min(390px, calc(100vw - 32px));
+  padding: 22px 22px 18px;
+  border: 1px solid color-mix(in srgb, var(--foreground) 13%, transparent);
+  border-radius: 20px;
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--card) 96%, var(--primary)), var(--card));
+  color: var(--foreground);
+  box-shadow:
+    0 30px 80px -28px rgba(0, 0, 0, 0.72),
+    0 12px 28px -14px color-mix(in srgb, var(--primary) 45%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 12%, transparent);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+}
+
+.connectme-tour-popover .driver-popover-close-btn {
+  top: 13px;
+  right: 13px;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  color: var(--muted-foreground);
+  transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.connectme-tour-popover .driver-popover-close-btn:hover {
+  background: color-mix(in srgb, var(--foreground) 9%, transparent);
+  color: var(--foreground);
+  transform: rotate(5deg);
+}
+
+.connectme-tour-popover .driver-popover-title {
+  max-width: calc(100% - 24px);
+  margin: 0 0 9px;
+  color: var(--foreground);
+  font-size: 1.05rem;
+  font-weight: 750;
+  letter-spacing: -0.025em;
+  line-height: 1.25;
+}
+
+.connectme-tour-popover .driver-popover-description {
+  margin: 0;
+  color: color-mix(in srgb, var(--foreground) 68%, transparent);
+  font-size: 0.83rem;
+  line-height: 1.65;
+}
+
+.connectme-tour-popover .driver-popover-footer {
+  align-items: center;
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.connectme-tour-popover .driver-popover-progress-text {
+  color: color-mix(in srgb, var(--foreground) 46%, transparent);
+  font-size: 0.7rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+
+.connectme-tour-popover .driver-popover-navigation-btns {
+  gap: 8px;
+}
+
+.connectme-tour-popover .driver-popover-footer-btn {
+  min-height: 34px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 0 13px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  transition: transform 160ms ease, background-color 160ms ease, border-color 160ms ease;
+}
+
+.connectme-tour-popover .driver-popover-footer-btn:hover { transform: translateY(-1px); }
+
+.connectme-tour-popover .driver-popover-next-btn,
+.connectme-tour-popover .driver-popover-done-btn {
+  border-color: var(--tour-accent, var(--cyan));
+  background: var(--tour-accent, var(--cyan));
+  color: var(--background);
+  box-shadow: 0 8px 18px -8px var(--tour-accent, var(--cyan));
+}
+
+.connectme-tour-popover .driver-popover-prev-btn {
+  border-color: color-mix(in srgb, var(--foreground) 12%, transparent);
+  background: color-mix(in srgb, var(--foreground) 5%, transparent);
+  color: color-mix(in srgb, var(--foreground) 72%, transparent);
+}
+
+.connectme-tour-popover--recruiter { --tour-accent: #a78bfa; }
+.connectme-tour-popover--provider { --tour-accent: #34d399; }
+
+.driver-popover-arrow-side-left { border-top-color: transparent; border-bottom-color: transparent; border-right-color: var(--card); }
+.driver-popover-arrow-side-right { border-top-color: transparent; border-bottom-color: transparent; border-left-color: var(--card); }
+.driver-popover-arrow-side-top { border-left-color: transparent; border-right-color: transparent; border-bottom-color: var(--card); }
+.driver-popover-arrow-side-bottom { border-left-color: transparent; border-right-color: transparent; border-top-color: var(--card); }
+.driver-overlay path { fill: color-mix(in srgb, var(--background) 82%, transparent); }
+
+@media (prefers-reduced-motion: reduce) {
+  .connectme-tour-popover .driver-popover-close-btn,
+  .connectme-tour-popover .driver-popover-footer-btn { transition: none; }
+}
 
 @custom-variant dark (&:is(.dark *, [data-theme="dark"] *));
 

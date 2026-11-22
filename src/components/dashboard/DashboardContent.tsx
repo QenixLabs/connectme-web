@@ -335,7 +335,7 @@ export function DashboardContent() {
         <FreeUpgradeOfferBanner />
       </div>
       {/* Profile card */}
-      <section className="mx-4 mt-4 rounded-[20px] border bg-card p-3 shadow-sm">
+      <section data-tour="profile-overview" className="mx-4 mt-4 rounded-[20px] border bg-card p-3 shadow-sm">
         <div className="flex items-center gap-3">
           {/* Left column: image + verified badge */}
           <div className="flex shrink-0 flex-col items-center gap-1.5">
@@ -453,7 +453,7 @@ export function DashboardContent() {
       </section>
 
       {/* Career Performance */}
-      <section className="mx-4 mt-4">
+      <section data-tour="analytics" className="mx-4 mt-4">
         <SectionHeader title="Career Performance" href="/talent/analytics" />
         <div className="mt-2 grid grid-cols-6 gap-1 rounded-2xl border bg-card p-3 shadow-sm">
           {stats.map((s) => (
@@ -470,7 +470,7 @@ export function DashboardContent() {
       </section>
 
       {/* Top Opportunities */}
-      <section className="mx-4 mt-5">
+      <section data-tour="opportunities" className="mx-4 mt-5">
         <SectionHeader title="Top Opportunities for You" href="/talent/opportunities" />
         <div className="mt-2 space-y-3">
           {(recommendations ?? []).slice(0, 3).map((o) => {
@@ -585,7 +585,7 @@ export function DashboardContent() {
       </section>
 
       {/* Application Tracker */}
-      <section className="mx-4 mt-5">
+      <section data-tour="application-tracker" className="mx-4 mt-5">
         <SectionHeader title="Application Tracker" href="/talent/applications" />
         <div className="mt-2 flex items-center justify-between rounded-2xl border bg-card p-4 shadow-sm">
           {[
@@ -655,7 +655,7 @@ export function DashboardContent() {
       </section>
 
       {/* Profile Strength */}
-      <section className="mx-4 mt-5">
+      <section data-tour="profile-completion" className="mx-4 mt-5">
         <div className="flex items-center gap-3 rounded-2xl border bg-card p-4 shadow-sm">
           <Ring percent={completeness} size={72} stroke={7} />
           <div className="min-w-0 flex-1">
@@ -685,7 +685,7 @@ export function DashboardContent() {
       </section>
 
       {/* Recent Messages */}
-      <section className="mx-4 mt-5">
+      <section data-tour="messages" className="mx-4 mt-5">
         <SectionHeader title="Recent Messages" href="/talent/messages" />
         <div className="mt-2 space-y-2">
           {(conversations ?? []).map((m) => {
