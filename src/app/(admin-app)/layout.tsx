@@ -25,6 +25,7 @@ import {
   FileText,
 } from "lucide-react";
 import { useAuthStore } from "@/providers/auth-store-provider";
+import { canAccessAdminPermission } from "@/lib/admin-access";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -133,18 +134,12 @@ function isActive(pathname: string, href: string): boolean {
   return pathname.startsWith(href);
 }
 
-function canAccess(user: { admin_level?: string; admin_permissions?: string[] }, permission?: string | string[]) {
-  if (!permission || user.admin_level === "super_admin") return true;
-  const permissions = user.admin_permissions ?? [];
-  return Array.isArray(permission) ? permission.some((item) => permissions.includes(item)) : permissions.includes(permission);
-}
-
 function permissionForPath(pathname: string): string | string[] | undefined {
   return navigation.flatMap((group) => group.items).find((item) => pathname === item.href || pathname.startsWith(`${item.href}/`))?.permission;
 }
 
 function firstAccessiblePath(user: { admin_level?: string; admin_permissions?: string[] }) {
-  return navigation.flatMap((group) => group.items).find((item) => canAccess(user, item.permission))?.href ?? "/auth/login";
+  return navigation.flatMap((group) => group.items).find((item) => canAccessAdminPermission(user, item.permission))?.href ?? "/auth/login";
 }
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -159,7 +154,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       return;
     }
     const requiredPermission = permissionForPath(pathname);
-    if (!canAccess(user, requiredPermission)) router.replace(firstAccessiblePath(user));
+    if (!canAccessAdminPermission(user, requiredPermission)) router.replace(firstAccessiblePath(user));
   }, [hasHydrated, user, pathname, router]);
 
   const handleLogout = useCallback(async () => {
@@ -203,7 +198,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {group.items.filter((item) => canAccess(user, item.permission)).map((item) => (
+                  {group.items.filter((item) => canAccessAdminPermission(user, item.permission)).map((item) => (
                     <SidebarMenuItem key={item.href}>
                       <SidebarMenuButton
                         asChild
