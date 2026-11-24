@@ -110,6 +110,24 @@ describe("NotificationToastListener", () => {
     expect(mocks.toast).toHaveBeenCalledTimes(1);
   });
 
+  it("shows future notification types using their payload without a frontend type update", () => {
+    const client = new QueryClient();
+    render(
+      <QueryClientProvider client={client}>
+        <NotificationToastListener />
+      </QueryClientProvider>,
+    );
+    const notification = createNotification({ href: "/recruiter/dashboard" });
+    const futureNotification = { ...notification, _id: "future-1", type: "new_feature_event" };
+
+    act(() => mocks.handler?.(futureNotification));
+
+    expect(mocks.toast).toHaveBeenLastCalledWith(
+      futureNotification.title,
+      expect.objectContaining({ description: futureNotification.body }),
+    );
+  });
+
   it.each(["talent", "recruiter", "provider"])(
     "falls back to the %s notification page",
     (role) => {

@@ -9,6 +9,8 @@ import { adminApi, type AdminUser } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { UserOverviewStats } from "@/components/admin/user-overview-stats";
+import { AdminUserExportControls, type UserExportFilters } from "@/components/admin/admin-user-export-controls";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const PAGE_SIZE = 25;
 
@@ -18,11 +20,12 @@ function formatDate(value?: string) {
   return Number.isNaN(date.getTime()) ? "—" : date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
 
-function TalentRow({ user }: { user: AdminUser }) {
+function TalentRow({ user, selected, onSelectedChange }: { user: AdminUser; selected: boolean; onSelectedChange: (checked: boolean) => void }) {
   const name = user.display_name || user.username || user.email;
   const location = [user.location?.city, user.location?.country].filter(Boolean).join(", ");
   return (
     <tr className="border-b last:border-0 hover:bg-muted/30">
+      <td className="px-4 py-3"><Checkbox checked={selected} onCheckedChange={(checked) => onSelectedChange(checked === true)} aria-label={`Select ${name}`} /></td>
       <td className="px-4 py-3">
         <div className="flex items-center gap-3">
           {user.profile_photo ? (
@@ -78,16 +81,25 @@ export default function AdminTalentsPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
+  const [filters, setFilters] = useState<UserExportFilters>({});
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const router = useRouter();
   const { data, isPending: loading, isError: error, refetch } = useQuery({
     queryKey: ["admin-role-overview", "talent", page, query],
     queryFn: () => adminApi.getUsers({
       role: "talent", page, limit: PAGE_SIZE, search: query || undefined,
+      status: filters.status,
+      verification_tier: filters.verification_tier ? Number(filters.verification_tier) : undefined,
+      is_email_verified: filters.is_email_verified ? filters.is_email_verified === "true" : undefined,
+      is_phone_verified: filters.is_phone_verified ? filters.is_phone_verified === "true" : undefined,
+      auth_provider: filters.auth_provider,
+      availability: filters.availability,
+      city: filters.city,
       sort_by: "last_active_at", sort_order: "desc",
     }),
   });
   useEffect(() => {
-    const timer = window.setTimeout(() => { setPage(1); setQuery(search.trim()); }, 250);
+    const timer = window.setTimeout(() => { setPage(1); setQuery(search.trim()); setFilters((current) => ({ ...current, search: search.trim() || undefined })); }, 250);
     return () => window.clearTimeout(timer);
   }, [search]);
 
@@ -106,6 +118,8 @@ export default function AdminTalentsPage() {
 
       <UserOverviewStats role="talent" />
 
+      <AdminUserExportControls role="talent" filters={filters} selectedIds={selectedIds} visibleIds={users.map((user) => user._id)} total={data?.total ?? 0} onFiltersChange={(next) => { setFilters(next); setPage(1); }} onSelectVisible={(checked) => setSelectedIds((current) => checked ? Array.from(new Set([...current, ...users.map((user) => user._id)])) : current.filter((id) => !users.some((user) => user._id === id)))} />
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="relative w-full max-w-sm">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -118,13 +132,13 @@ export default function AdminTalentsPage() {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1050px] text-left text-sm">
             <thead className="border-b bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
-              <tr>{["Talent", "Profession / location", "Availability", "Account health", "Activity", "Reach / reports", ""].map((heading, index) => <th key={`${heading}-${index}`} className="px-4 py-3 font-medium">{heading}</th>)}</tr>
+              <tr><th className="w-10 px-4 py-3" />{["Talent", "Profession / location", "Availability", "Account health", "Activity", "Reach / reports", ""].map((heading, index) => <th key={`${heading}-${index}`} className="px-4 py-3 font-medium">{heading}</th>)}</tr>
             </thead>
             <tbody>
-              {loading && <tr><td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">Loading talent profiles…</td></tr>}
-              {!loading && error && <tr><td colSpan={7} className="px-4 py-12 text-center text-destructive">Could not load talent users. Please try again. <button className="underline" onClick={() => void refetch()}>Retry</button></td></tr>}
-              {!loading && !error && users.map((user) => <TalentRow key={user._id} user={user} />)}
-              {!loading && !error && users.length === 0 && <tr><td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">No talent profiles found.</td></tr>}
+              {loading && <tr><td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">Loading talent profiles…</td></tr>}
+              {!loading && error && <tr><td colSpan={8} className="px-4 py-12 text-center text-destructive">Could not load talent users. Please try again. <button className="underline" onClick={() => void refetch()}>Retry</button></td></tr>}
+              {!loading && !error && users.map((user) => <TalentRow key={user._id} user={user} selected={selectedIds.includes(user._id)} onSelectedChange={(checked) => setSelectedIds((current) => checked ? [...current, user._id] : current.filter((id) => id !== user._id))} />)}
+              {!loading && !error && users.length === 0 && <tr><td colSpan={8} className="px-4 py-12 text-center text-muted-foreground">No talent profiles found.</td></tr>}
             </tbody>
           </table>
         </div>

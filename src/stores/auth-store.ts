@@ -11,6 +11,8 @@ export interface User {
   email: string;
   phone?: string;
   role: "talent" | "recruiter" | "provider" | "admin";
+  admin_level?: "super_admin" | "admin";
+  admin_permissions?: string[];
   account_capabilities?: UserCapability[];
   is_email_verified: boolean;
   is_phone_verified: boolean;
@@ -39,7 +41,7 @@ export interface AuthState {
   isLoading: boolean;
   error: string | null;
   hasHydrated: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (identifier: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   fetchUser: () => Promise<void>;
   setAccessToken: (token: string | null) => void;
@@ -90,10 +92,10 @@ export const authStore = createStore<AuthState>()(
       error: null,
       hasHydrated: false,
 
-      login: async (email: string, password: string) => {
+      login: async (identifier: string, password: string) => {
         set({ isLoading: true, error: null });
         try {
-          const { access_token } = await authApi.login(email, password);
+          const { access_token } = await authApi.login(identifier, password);
           tokenStorage.setToken(access_token);
           set({ accessToken: access_token });
           const { user } = await authApi.getCurrentUser();

@@ -24,9 +24,9 @@ function isNotification(value: unknown): value is Notification {
 }
 
 function workspaceRole(pathname: string): WorkspaceRole | null {
-  if (pathname.startsWith("/talent/")) return "talent";
-  if (pathname.startsWith("/recruiter/")) return "recruiter";
-  if (pathname.startsWith("/provider/")) return "provider";
+  if (pathname === "/talent" || pathname.startsWith("/talent/")) return "talent";
+  if (pathname === "/recruiter" || pathname.startsWith("/recruiter/")) return "recruiter";
+  if (pathname === "/provider" || pathname.startsWith("/provider/")) return "provider";
   return null;
 }
 

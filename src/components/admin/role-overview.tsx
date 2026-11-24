@@ -8,6 +8,8 @@ import { adminApi, type AdminUser } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { UserOverviewStats } from "./user-overview-stats";
+import { AdminUserExportControls, type UserExportFilters } from "./admin-user-export-controls";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type OverviewRole = "provider" | "recruiter";
 const PAGE_SIZE = 25;
@@ -30,12 +32,13 @@ function formatDate(value?: string) {
   return Number.isNaN(date.getTime()) ? "—" : date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
 
-function OverviewRow({ user, role }: { user: AdminUser; role: OverviewRole }) {
+function OverviewRow({ user, role, selected, onSelectedChange }: { user: AdminUser; role: OverviewRole; selected: boolean; onSelectedChange: (checked: boolean) => void }) {
   const name = user.display_name || user.email;
   const location = [user.location?.city, user.location?.country].filter(Boolean).join(", ");
   const tags = role === "provider" ? user.categories : user.specialties;
   return (
     <tr className="border-b last:border-0 hover:bg-muted/30">
+      <td className="px-4 py-3"><Checkbox checked={selected} onCheckedChange={(checked) => onSelectedChange(checked === true)} aria-label={`Select ${name}`} /></td>
       <td className="px-4 py-3">
         <div className="flex items-center gap-3">
           {user.profile_photo ? (
@@ -90,17 +93,24 @@ export function RoleOverview({ role }: { role: OverviewRole }) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
+  const [filters, setFilters] = useState<UserExportFilters>({});
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const copy = labels[role];
   const { data, isPending, isError, refetch } = useQuery({
     queryKey: ["admin-role-overview", role, page, query],
     queryFn: () => adminApi.getUsers({
-      role, page, limit: PAGE_SIZE, search: query || undefined,
+      role, page, limit: PAGE_SIZE, search: query || undefined, status: filters.status,
+      verification_tier: filters.verification_tier ? Number(filters.verification_tier) : undefined,
+      is_email_verified: filters.is_email_verified ? filters.is_email_verified === "true" : undefined,
+      is_phone_verified: filters.is_phone_verified ? filters.is_phone_verified === "true" : undefined,
+      auth_provider: filters.auth_provider,
+      city: filters.city,
       sort_by: "last_active_at", sort_order: "desc",
     }),
   });
 
   useEffect(() => {
-    const timer = window.setTimeout(() => { setPage(1); setQuery(search.trim()); }, 250);
+    const timer = window.setTimeout(() => { setPage(1); setQuery(search.trim()); setFilters((current) => ({ ...current, search: search.trim() || undefined })); }, 250);
     return () => window.clearTimeout(timer);
   }, [search]);
 
@@ -119,6 +129,8 @@ export function RoleOverview({ role }: { role: OverviewRole }) {
 
       <UserOverviewStats role={role} />
 
+      <AdminUserExportControls role={role} filters={filters} selectedIds={selectedIds} visibleIds={users.map((user) => user._id)} total={data?.total ?? 0} onFiltersChange={(next) => { setFilters(next); setPage(1); }} onSelectVisible={(checked) => setSelectedIds((current) => checked ? Array.from(new Set([...current, ...users.map((user) => user._id)])) : current.filter((id) => !users.some((user) => user._id === id)))} />
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="relative w-full max-w-sm">
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -131,13 +143,13 @@ export function RoleOverview({ role }: { role: OverviewRole }) {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[1050px] text-left text-sm" aria-label={`${copy.title} overview`}>
             <thead className="border-b bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
-              <tr>{[copy.title, role === "provider" ? "Type / categories / location" : "Company / specialties / location", role === "provider" ? "Inquiry availability" : "Verification", "Account health", "Activity", ""].map((heading, index) => <th key={`${heading}-${index}`} className="px-4 py-3 font-medium">{heading}</th>)}</tr>
+              <tr><th className="w-10 px-4 py-3" />{[copy.title, role === "provider" ? "Type / categories / location" : "Company / specialties / location", role === "provider" ? "Inquiry availability" : "Verification", "Account health", "Activity", ""].map((heading, index) => <th key={`${heading}-${index}`} className="px-4 py-3 font-medium">{heading}</th>)}</tr>
             </thead>
             <tbody>
-              {isPending && <tr><td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">Loading {role} profiles…</td></tr>}
-              {isError && <tr><td colSpan={6} className="px-4 py-12 text-center text-destructive">Could not load {role} users. <button className="underline" onClick={() => void refetch()}>Retry</button></td></tr>}
-              {!isPending && !isError && users.map((user) => <OverviewRow key={user._id} user={user} role={role} />)}
-              {!isPending && !isError && users.length === 0 && <tr><td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">No {role} profiles found.</td></tr>}
+              {isPending && <tr><td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">Loading {role} profiles…</td></tr>}
+              {isError && <tr><td colSpan={7} className="px-4 py-12 text-center text-destructive">Could not load {role} users. <button className="underline" onClick={() => void refetch()}>Retry</button></td></tr>}
+              {!isPending && !isError && users.map((user) => <OverviewRow key={user._id} user={user} role={role} selected={selectedIds.includes(user._id)} onSelectedChange={(checked) => setSelectedIds((current) => checked ? [...current, user._id] : current.filter((id) => id !== user._id))} />)}
+              {!isPending && !isError && users.length === 0 && <tr><td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">No {role} profiles found.</td></tr>}
             </tbody>
           </table>
         </div>

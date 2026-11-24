@@ -57,40 +57,41 @@ import { MarketplaceNotificationBell } from "@/components/marketplace/marketplac
 const navigation = [
   {
     title: "Main",
-    items: [{ label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard }],
+    items: [{ label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard, permission: "dashboard.view" }],
   },
   {
     title: "Management",
     items: [
-      { label: "Users", href: "/admin/users", icon: Users },
-      { label: "Free upgrades", href: "/admin/free-upgrades", icon: Gift },
-      { label: "Talent overview", href: "/admin/talents", icon: Users },
-      { label: "Provider overview", href: "/admin/providers", icon: Users },
-      { label: "Recruiter overview", href: "/admin/recruiters", icon: Users },
-      { label: "Bulk Moderation", href: "/admin/moderation", icon: Gavel },
-      { label: "Verifications", href: "/admin/verifications", icon: ShieldCheck },
+      { label: "Users", href: "/admin/users", icon: Users, permission: "users.view" },
+      { label: "Free upgrades", href: "/admin/free-upgrades", icon: Gift, permission: "subscriptions.manage" },
+      { label: "Talent overview", href: "/admin/talents", icon: Users, permission: "users.view" },
+      { label: "Provider overview", href: "/admin/providers", icon: Users, permission: "users.view" },
+      { label: "Recruiter overview", href: "/admin/recruiters", icon: Users, permission: "users.view" },
+      { label: "Bulk Moderation", href: "/admin/moderation", icon: Gavel, permission: ["moderation.warn", "moderation.suspend", "moderation.ban", "moderation.unrestrict", "moderation.mark_safe"] },
+      { label: "Verifications", href: "/admin/verifications", icon: ShieldCheck, permission: "verifications.view" },
     ],
   },
   {
     title: "Moderation",
     items: [
-      { label: "Reports", href: "/admin/reports", icon: Flag },
-      { label: "Appeals", href: "/admin/appeals", icon: MessageSquareWarning },
-      { label: "Support", href: "/admin/support", icon: Headphones },
-      { label: "Portfolio", href: "/admin/portfolio", icon: ImageIcon },
+      { label: "Reports", href: "/admin/reports", icon: Flag, permission: "reports.view" },
+      { label: "Appeals", href: "/admin/appeals", icon: MessageSquareWarning, permission: "reports.view" },
+      { label: "Support", href: "/admin/support", icon: Headphones, permission: "reports.view" },
+      { label: "Portfolio", href: "/admin/portfolio", icon: ImageIcon, permission: "portfolio.view" },
     ],
   },
   {
     title: "System",
     items: [
-      { label: "Audit Logs", href: "/admin/audit-logs", icon: ScrollText },
-      { label: "Communication", href: "/admin/communication", icon: Megaphone },
-      { label: "Terms & Conditions", href: "/admin/terms-and-conditions", icon: FileText },
-      { label: "Plans", href: "/admin/plans", icon: CreditCard },
-      { label: "Subscriptions", href: "/admin/subscriptions", icon: BarChart3 },
-      { label: "Coupons", href: "/admin/coupons", icon: TicketPercent },
-      { label: "Cron Jobs", href: "/admin/cron-jobs", icon: Clock },
-      { label: "OTP Test", href: "/admin/otp-test", icon: KeyRound },
+      { label: "Admin access", href: "/admin/admin-access", icon: KeyRound, permission: "admins.manage" },
+      { label: "Audit Logs", href: "/admin/audit-logs", icon: ScrollText, permission: "audit_logs.view" },
+      { label: "Communication", href: "/admin/communication", icon: Megaphone, permission: "admins.manage" },
+      { label: "Terms & Conditions", href: "/admin/terms-and-conditions", icon: FileText, permission: "admins.manage" },
+      { label: "Plans", href: "/admin/plans", icon: CreditCard, permission: "subscriptions.manage" },
+      { label: "Subscriptions", href: "/admin/subscriptions", icon: BarChart3, permission: "subscriptions.view" },
+      { label: "Coupons", href: "/admin/coupons", icon: TicketPercent, permission: "subscriptions.manage" },
+      { label: "Cron Jobs", href: "/admin/cron-jobs", icon: Clock, permission: "admins.manage" },
+      { label: "OTP Test", href: "/admin/otp-test", icon: KeyRound, permission: "admins.manage" },
     ],
   },
 ];
@@ -108,6 +109,7 @@ const pageTitles: Record<string, string> = {
   "/admin/appeals": "Appeals",
   "/admin/support": "Support",
   "/admin/audit-logs": "Audit Logs",
+  "/admin/admin-access": "Admin access",
   "/admin/communication": "Communication",
   "/admin/notifications": "Notifications",
   "/admin/terms-and-conditions": "Terms & Conditions",
@@ -131,6 +133,20 @@ function isActive(pathname: string, href: string): boolean {
   return pathname.startsWith(href);
 }
 
+function canAccess(user: { admin_level?: string; admin_permissions?: string[] }, permission?: string | string[]) {
+  if (!permission || user.admin_level === "super_admin") return true;
+  const permissions = user.admin_permissions ?? [];
+  return Array.isArray(permission) ? permission.some((item) => permissions.includes(item)) : permissions.includes(permission);
+}
+
+function permissionForPath(pathname: string): string | string[] | undefined {
+  return navigation.flatMap((group) => group.items).find((item) => pathname === item.href || pathname.startsWith(`${item.href}/`))?.permission;
+}
+
+function firstAccessiblePath(user: { admin_level?: string; admin_permissions?: string[] }) {
+  return navigation.flatMap((group) => group.items).find((item) => canAccess(user, item.permission))?.href ?? "/auth/login";
+}
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -140,8 +156,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     if (!hasHydrated) return;
     if (!user || user.role !== "admin") {
       router.push("/auth/login");
+      return;
     }
-  }, [hasHydrated, user, router]);
+    const requiredPermission = permissionForPath(pathname);
+    if (!canAccess(user, requiredPermission)) router.replace(firstAccessiblePath(user));
+  }, [hasHydrated, user, pathname, router]);
 
   const handleLogout = useCallback(async () => {
     await logout();
@@ -184,7 +203,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {group.items.map((item) => (
+                  {group.items.filter((item) => canAccess(user, item.permission)).map((item) => (
                     <SidebarMenuItem key={item.href}>
                       <SidebarMenuButton
                         asChild

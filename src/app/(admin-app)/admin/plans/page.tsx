@@ -778,6 +778,30 @@ export default function AdminPlansPage() {
     });
   };
 
+  const planSections = useMemo(() => {
+    const sectionDefinitions: Array<{
+      role: Exclude<PlanRoleFilter, "all">;
+      label: string;
+    }> =
+      roleFilter === "all"
+        ? [
+            { role: "talent", label: "Talent plans" },
+            { role: "provider", label: "Provider plans" },
+            { role: "recruiter", label: "Recruiter plans" },
+            { role: "both", label: "Shared plans" },
+          ]
+      : [{ role: roleFilter, label: "" }];
+
+    return sectionDefinitions
+      .map((section) => ({
+        ...section,
+        families: visibleFamilies.filter(
+          ([, versions]) => versions[0].target_role === section.role
+        ),
+      }))
+      .filter((section) => section.families.length > 0);
+  }, [roleFilter, visibleFamilies]);
+
   return (
     <div className="space-y-5">
       {/* Header */}
@@ -1008,8 +1032,21 @@ export default function AdminPlansPage() {
               </Button>
             </div>
           ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-            {visibleFamilies.map(
+          <div className="space-y-8">
+            {planSections.map(({ role, label, families }) => (
+              <section key={role} aria-labelledby={label ? `plans-${role}-heading` : undefined} className={label ? "space-y-3" : undefined}>
+                {label && (
+                  <div className="flex items-center gap-3">
+                    <h2 id={`plans-${role}-heading`} className="text-base font-semibold">
+                      {label}
+                    </h2>
+                    <span className="text-xs text-muted-foreground">
+                      {families.length} {families.length === 1 ? "family" : "families"}
+                    </span>
+                  </div>
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+            {families.map(
               ([familyKey, versions]) => {
                 const latest = versions[0];
                 const older = versions.slice(1);
@@ -1312,6 +1349,9 @@ export default function AdminPlansPage() {
                 );
               }
             )}
+                </div>
+              </section>
+            ))}
           </div>
           )}
         </>

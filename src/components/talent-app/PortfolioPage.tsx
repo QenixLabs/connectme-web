@@ -30,6 +30,7 @@ import { AddVideoDialog } from "./portfolio/dialogs/add-video-dialog";
 import { ExternalLinkDialog } from "./portfolio/dialogs/external-link-dialog";
 import { EditItemDialog } from "./portfolio/dialogs/edit-item-dialog";
 import { DeleteConfirmDialog } from "./portfolio/dialogs/delete-confirm";
+import { UpgradeLimitDialog } from "@/components/shared/upgrade-limit-dialog";
 import {
   Dialog,
   DialogContent,
@@ -119,6 +120,11 @@ export function PortfolioPage() {
   const [deletingItem, setDeletingItem] = useState<PortfolioApiResponse | null>(null);
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [showreelCandidate, setShowreelCandidate] = useState<ReturnType<typeof mapApiToItem> | null>(null);
+  const [limitDialog, setLimitDialog] = useState<{
+    label: string;
+    used: number;
+    limit: number;
+  } | null>(null);
 
   // Selection
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -162,11 +168,11 @@ export function PortfolioPage() {
       return;
     }
     if (type === "image" && imagesUsed >= planMaxImages) {
-      toast.error("Photo upload limit reached", { description: "Upgrade your plan or remove a photo to upload more." });
+      setLimitDialog({ label: "photos", used: imagesUsed, limit: planMaxImages });
       return;
     }
     if (type === "video" && videosUsed >= planMaxVideos) {
-      toast.error("Video upload limit reached", { description: "Upgrade your plan or remove a video to upload more." });
+      setLimitDialog({ label: "videos", used: videosUsed, limit: planMaxVideos });
       return;
     }
     if (type === "link") setExternalLinkOpen(true);
@@ -418,6 +424,14 @@ export function PortfolioPage() {
         onConfirm={handleDelete}
         title={deletingItem?.title ?? ""}
         isPending={deleteItem.isPending}
+      />
+
+      <UpgradeLimitDialog
+        open={limitDialog !== null}
+        onOpenChange={(open) => !open && setLimitDialog(null)}
+        mediaLabel={limitDialog?.label}
+        used={limitDialog?.used}
+        limit={limitDialog?.limit}
       />
 
       <Dialog

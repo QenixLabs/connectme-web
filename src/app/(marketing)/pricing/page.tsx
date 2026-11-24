@@ -1,7 +1,9 @@
 "use client";
 
 import Image from "next/image";
+import { Suspense } from "react";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
@@ -164,20 +166,18 @@ function PricingError({ message }: { message: string }) {
   );
 }
 
-export default function PricingPage() {
+function PricingContent() {
+  const searchParams = useSearchParams();
   const [cycle, setCycle] = useState<"monthly" | "yearly">("monthly");
   const [plans, setPlans] = useState<Plan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [upgradingKey, setUpgradingKey] = useState<string | null>(null);
   const [checkoutPlan, setCheckoutPlan] = useState<Plan | null>(null);
-  const [couponCode, setCouponCode] = useState("");
+  const [couponCode, setCouponCode] = useState(() => searchParams.get("coupon")?.trim().toUpperCase() ?? "");
   const [requestedRole] = useState<"talent" | "recruiter" | "provider">(() => {
-    if (typeof window === "undefined") return "talent";
-    const role = new URLSearchParams(window.location.search).get("role");
-    return role === "talent" || role === "recruiter" || role === "provider"
-      ? role
-      : "talent";
+    const role = searchParams.get("role");
+    return role === "talent" || role === "recruiter" || role === "provider" ? role : "talent";
   });
 
   const user = useAuthStore((s) => s.user);
@@ -353,7 +353,9 @@ export default function PricingPage() {
       return;
     }
 
-    if (subscriptionQuery.data?.subscription) {
+    // A coupon from an assigned offer must reach the checkout request, so keep
+    // the coupon dialog open even when the account has a subscription record.
+    if (subscriptionQuery.data?.subscription && !couponCode.trim()) {
       void startUpgrade(plan);
       return;
     }
@@ -715,5 +717,13 @@ export default function PricingPage() {
         </DialogContent>
       </Dialog>
     </main>
+  );
+}
+
+export default function PricingPage() {
+  return (
+    <Suspense fallback={<PricingSkeleton />}>
+      <PricingContent />
+    </Suspense>
   );
 }

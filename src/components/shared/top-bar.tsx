@@ -19,6 +19,7 @@ import {
   ClipboardList,
   ShieldCheck,
   Headphones,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/providers/auth-store-provider";
@@ -369,7 +370,7 @@ function UserMenu({ role }: { role: TopBarProps["role"] }) {
                 className="cursor-pointer"
                 onSelect={() => window.dispatchEvent(new Event(tourReplayEventForRole(role)))}
               >
-                <span className="mr-2 size-4" aria-hidden="true">âœ¦</span>
+                <Sparkles className="mr-2 size-4" aria-hidden="true" />
                 Take a tour
               </DropdownMenuItem>
             )}

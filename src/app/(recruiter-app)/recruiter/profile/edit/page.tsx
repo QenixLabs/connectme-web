@@ -37,6 +37,7 @@ import { siX } from "simple-icons/icons";
 import { toast } from "sonner";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { authApi } from "@/lib/api";
+import { isPlanLimitError } from "@/lib/api/client";
 import {
   useRecruiterProfile,
   useUpdateRecruiterProfile,
@@ -53,6 +54,7 @@ import type {
 import { recruiterProfileSchema } from "@/lib/validations/recruiter-profile.schema";
 import { RecruiterProfileView } from "@/app/recruiter/[slug]/profile-view";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { UpgradeLimitDialog } from "@/components/shared/upgrade-limit-dialog";
 import { Label } from "@/components/ui/label";
 import {
   Sheet,
@@ -755,6 +757,7 @@ export default function RecruiterProfileEditPage() {
   const [bannerCropSrc, setBannerCropSrc] = useState<string | null>(null);
   const [bannerCropOpen, setBannerCropOpen] = useState(false);
   const [verifyTarget, setVerifyTarget] = useState<null | "email" | "phone">(null);
+  const [uploadLimitDialogOpen, setUploadLimitDialogOpen] = useState(false);
 
   const handleContactVerified = useCallback(() => {
     setVerifyTarget(null);
@@ -932,7 +935,10 @@ export default function RecruiterProfileEditPage() {
           set("profile_photo", data.relativePath);
           toast.success("Logo uploaded — tap Save profile");
         },
-        onError: () => toast.error("Upload failed"),
+        onError: (error) => {
+          if (isPlanLimitError(error)) setUploadLimitDialogOpen(true);
+          else toast.error("Upload failed");
+        },
       });
     },
     [uploadPhoto, set],
@@ -945,7 +951,10 @@ export default function RecruiterProfileEditPage() {
           set("banner_image_url", data.relativePath);
           toast.success("Cover uploaded — tap Save profile");
         },
-        onError: () => toast.error("Banner upload failed"),
+        onError: (error) => {
+          if (isPlanLimitError(error)) setUploadLimitDialogOpen(true);
+          else toast.error("Banner upload failed");
+        },
       });
     },
     [uploadBanner, set],
@@ -1071,7 +1080,10 @@ export default function RecruiterProfileEditPage() {
           set("cta_image_url", data.relativePath);
           toast.success("CTA image uploaded — tap Save profile");
         },
-        onError: () => toast.error("CTA image upload failed"),
+        onError: (error) => {
+          if (isPlanLimitError(error)) setUploadLimitDialogOpen(true);
+          else toast.error("CTA image upload failed");
+        },
       });
     },
     [uploadAsset, set],
@@ -2542,6 +2554,11 @@ export default function RecruiterProfileEditPage() {
           onVerified={handleContactVerified}
         />
       )}
+
+      <UpgradeLimitDialog
+        open={uploadLimitDialogOpen}
+        onOpenChange={setUploadLimitDialogOpen}
+      />
     </div>
   );
 }

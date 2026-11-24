@@ -35,6 +35,8 @@ import {
   Wrench,
   Globe,
   GraduationCap,
+  Trash2,
+  Loader2,
 } from "lucide-react";
 
 import {
@@ -63,9 +65,19 @@ import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/admin/empty-state";
 import { Separator } from "@/components/ui/separator";
-import { adminApi, type PaginatedUsers, type DashboardStats } from "@/lib/api";
+import { adminApi, type AdminUser, type PaginatedUsers, type DashboardStats } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { UserDetailPanel } from "@/components/admin/user-detail-panel";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 function getApiErrorMessage(err: unknown, fallback: string): string {
   if (err instanceof Error && "response" in err) {
@@ -259,6 +271,8 @@ function AdminUsersContent() {
   const [companySize, setCompanySize] = useState("");
 
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null);
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"table" | "cards">("table");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false);
@@ -407,6 +421,22 @@ function AdminUsersContent() {
     setSelectedUserId(null);
     if (searchParams.has("userId")) {
       router.replace("/admin/users");
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!deleteTarget) return;
+    setDeletingUserId(deleteTarget._id);
+    try {
+      await adminApi.deleteUser(deleteTarget._id);
+      setDeleteTarget(null);
+      if (selectedUserId === deleteTarget._id) closeUserPanel();
+      fetchUsers();
+      fetchStats();
+    } catch (err) {
+      setError(getApiErrorMessage(err, "Failed to delete user"));
+    } finally {
+      setDeletingUserId(null);
     }
   };
 
@@ -1371,6 +1401,9 @@ function AdminUsersContent() {
                     <TableHead className="text-[11px] font-semibold text-muted-foreground whitespace-nowrap hidden xl:table-cell">
                       Last Active
                     </TableHead>
+                    <TableHead className="text-[11px] font-semibold text-muted-foreground whitespace-nowrap text-right">
+                      Actions
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1754,6 +1787,22 @@ function AdminUsersContent() {
                             ? formatRelativeTime(user.last_active_at)
                             : "\u2014"}
                         </TableCell>
+
+                        <TableCell className="text-right">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            aria-label={`Delete ${user.display_name}`}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setDeleteTarget(user);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
                       </motion.tr>
                     ))}
                   </AnimatePresence>
@@ -2062,6 +2111,34 @@ function AdminUsersContent() {
           fetchStats();
         }}
       />
+
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && !deletingUserId && setDeleteTarget(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this user?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will soft-delete {deleteTarget?.display_name || "this user"} and sign them out of the platform.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={!!deletingUserId}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(event) => {
+                event.preventDefault();
+                void handleDeleteUser();
+              }}
+              disabled={!!deletingUserId}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deletingUserId ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+              Delete user
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

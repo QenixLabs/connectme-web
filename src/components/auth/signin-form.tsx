@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/form";
 
 const signInSchema = z.object({
-  email: z.string().min(1, "Email is required").email("Enter a valid email address"),
+  identifier: z.string().min(1, "Email or phone number is required"),
   password: z.string().min(1, "Password is required"),
 });
 
@@ -46,7 +46,7 @@ export function SignInForm() {
 
   const form = useForm<SignInValues>({
     resolver: zodResolver(signInSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { identifier: "", password: "" },
   });
   const googleError = searchParams.get("google_error");
   const lastErrorRef = useRef<string | null>(null);
@@ -87,7 +87,7 @@ export function SignInForm() {
 
   const onSubmit = async (values: SignInValues) => {
     try {
-      await login(values.email, values.password);
+      await login(values.identifier, values.password);
     } catch {
       // error handled by store
     }
@@ -135,7 +135,7 @@ export function SignInForm() {
 
       <div className="my-4 flex items-center gap-3 text-[11px] font-medium text-[#7A849D]">
         <span className="h-px flex-1 bg-[#E2E7F0]" />
-        <span className="whitespace-nowrap">or continue with email</span>
+        <span className="whitespace-nowrap">or continue with email, phone, or username</span>
         <span className="h-px flex-1 bg-[#E2E7F0]" />
       </div>
 
@@ -166,11 +166,11 @@ export function SignInForm() {
 
           <FormField
             control={form.control}
-            name="email"
+            name="identifier"
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#66728F]">
-                  Email
+                  Email, phone number, or username
                 </FormLabel>
                 <FormControl>
                   <div className="group relative">
@@ -178,9 +178,9 @@ export function SignInForm() {
                       <Mail className="h-[18px] w-[18px]" strokeWidth={1.7} />
                     </div>
                     <Input
-                      type="email"
-                      placeholder="you@example.com"
-                      autoComplete="email"
+                      type="text"
+                      placeholder="you@example.com, +91 9876543210, or admin username"
+                      autoComplete="username"
                       className="h-14 rounded-[17px] border-[#E2E7F0] bg-white pl-11 text-[15px] text-[#080B2B] shadow-[0_3px_12px_rgba(40,48,90,0.025)] placeholder:text-[#8993AA] focus-visible:border-[#7C35FF] focus-visible:ring-2 focus-visible:ring-[#7C35FF]/10 dark:bg-white"
                       {...field}
                     />

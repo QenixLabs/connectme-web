@@ -1,6 +1,6 @@
 import { apiClient } from "./client";
 
-export type NotificationType =
+type KnownNotificationType =
   | "verification_status"
   | "system"
   | "campaign_invite"
@@ -26,6 +26,10 @@ export type NotificationType =
   | "marketplace_inquiry_closed"
   | "marketplace_review_moderated"
   | "marketplace_review_reported";
+
+// Keep autocomplete for known types while allowing the API to introduce a new
+// notification type without requiring a frontend release before it can render.
+export type NotificationType = KnownNotificationType | (string & {});
 
 export type NotificationStatus = "unread" | "read";
 
@@ -182,8 +186,8 @@ export const notificationsApi = {
   },
 };
 
-export function notificationTypeLabel(type: NotificationType): string {
-  const labels: Record<NotificationType, string> = {
+export function notificationTypeLabel(type: string): string {
+  const labels: Partial<Record<KnownNotificationType, string>> = {
     verification_status: "Verification",
     system: "System",
     campaign_invite: "Campaign Invite",
@@ -210,5 +214,5 @@ export function notificationTypeLabel(type: NotificationType): string {
     marketplace_review_moderated: "Review update",
     marketplace_review_reported: "Review report",
   };
-  return labels[type] ?? "Notification";
+  return labels[type as KnownNotificationType] ?? "Notification";
 }

@@ -484,6 +484,18 @@ export interface AuditLogItem {
   created_at: string;
 }
 
+export interface AdminAccount {
+  _id: string;
+  username?: string;
+  email: string;
+  role: 'admin';
+  admin_level?: 'super_admin' | 'admin';
+  admin_permissions?: string[];
+  status: string;
+  last_active_at?: string;
+  created_at: string;
+}
+
 export interface PaginatedAuditLogs {
   logs: AuditLogItem[];
   total: number;
@@ -706,6 +718,9 @@ export interface SendTestOtpResponse {
 }
 
 export const adminApi = {
+  getAdminAccounts: async (): Promise<AdminAccount[]> => (await apiClient.get('/admin/admin-accounts')).data,
+  createAdminAccount: async (payload: { username: string; password: string; permissions: string[] }): Promise<AdminAccount> => (await apiClient.post('/admin/admin-accounts', payload)).data,
+  updateAdminAccount: async (id: string, payload: { permissions?: string[]; password?: string; status?: 'active' | 'suspended' }): Promise<AdminAccount> => (await apiClient.patch(`/admin/admin-accounts/${id}`, payload)).data,
   getDashboardStats: async (): Promise<DashboardStats> => {
     const response = await apiClient.get('/admin/dashboard-stats');
     return response.data;
@@ -821,6 +836,11 @@ export const adminApi = {
     return response.data;
   },
 
+  exportUsers: async (params: Record<string, string | number | boolean | undefined>): Promise<Blob> => {
+    const response = await apiClient.get('/admin/users/export', { params, responseType: 'blob' });
+    return response.data;
+  },
+
   getUserById: async (id: string): Promise<UserDetail> => {
     const response = await apiClient.get(`/admin/users/${id}`);
     return response.data;
@@ -828,6 +848,11 @@ export const adminApi = {
 
   updateUserStatus: async (id: string, status: string, reason?: string, duration_days?: string): Promise<unknown> => {
     const response = await apiClient.patch(`/admin/users/${id}/status`, { status, reason, duration_days });
+    return response.data;
+  },
+
+  deleteUser: async (id: string): Promise<{ message: string; user_id: string }> => {
+    const response = await apiClient.delete(`/admin/users/${id}`);
     return response.data;
   },
 

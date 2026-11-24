@@ -30,7 +30,7 @@ import type {
   ProviderProfile,
   UpdateProviderProfilePayload,
 } from "@/lib/api/marketplace";
-import { getApiErrorMessage } from "@/lib/api/client";
+import { getApiErrorMessage, isPlanLimitError } from "@/lib/api/client";
 import { queryKeys } from "@/lib/api/query-keys";
 import { MARKETPLACE_CATEGORIES } from "@/lib/marketplace-categories";
 import { useAuthStore } from "@/providers/auth-store-provider";
@@ -50,6 +50,7 @@ import { ProviderSkillsPicker } from "@/components/provider/provider-skills-pick
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { UpgradeLimitDialog } from "@/components/shared/upgrade-limit-dialog";
 import {
   Select,
   SelectContent,
@@ -222,6 +223,9 @@ function ProviderProfileEditForm() {
   const bannerInputRef = useRef<HTMLInputElement>(null);
   const portfolioInputRef = useRef<HTMLInputElement>(null);
   const [portfolioTarget, setPortfolioTarget] = useState<number | null>(null);
+  const [limitDialogOpen, setLimitDialogOpen] = useState(false);
+
+  const PROVIDER_PORTFOLIO_LIMIT = 20;
 
   /* Render-phase sync: hydrate the form when the fetched profile version
      changes, instead of a setState effect. */
@@ -285,7 +289,8 @@ function ProviderProfileEditForm() {
       }));
       toast.success("Profile photo updated");
     } catch (err) {
-      toast.error(getApiErrorMessage(err, "Could not upload profile photo"));
+      if (isPlanLimitError(err)) setLimitDialogOpen(true);
+      else toast.error(getApiErrorMessage(err, "Could not upload profile photo"));
     } finally {
       setUploadingPhoto(false);
     }
@@ -303,7 +308,8 @@ function ProviderProfileEditForm() {
       }));
       toast.success("Profile banner updated");
     } catch (err) {
-      toast.error(getApiErrorMessage(err, "Could not upload profile banner"));
+      if (isPlanLimitError(err)) setLimitDialogOpen(true);
+      else toast.error(getApiErrorMessage(err, "Could not upload profile banner"));
     } finally {
       setUploadingBanner(false);
     }
@@ -328,7 +334,8 @@ function ProviderProfileEditForm() {
       }));
       toast.success("Portfolio image uploaded");
     } catch (err) {
-      toast.error(getApiErrorMessage(err, "Could not upload portfolio image"));
+      if (isPlanLimitError(err)) setLimitDialogOpen(true);
+      else toast.error(getApiErrorMessage(err, "Could not upload portfolio image"));
     } finally {
       setUploadingPortfolio(null);
       setPortfolioTarget(null);
@@ -920,16 +927,20 @@ function ProviderProfileEditForm() {
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() =>
+                disabled={false}
+                onClick={() => {
+                  if (form.portfolio.length >= PROVIDER_PORTFOLIO_LIMIT) {
+                    setLimitDialogOpen(true);
+                    return;
+                  }
                   setForm((current) => ({
                     ...current,
                     portfolio: [
                       ...current.portfolio,
                       { title: "", description: "" },
                     ],
-                  }))
-                }
-                disabled={form.portfolio.length >= 20}
+                  }));
+                }}
               >
                 <Plus className="mr-2 size-4" />
                 Add item
@@ -1453,6 +1464,13 @@ function ProviderProfileEditForm() {
           void handlePortfolioImageChange(event.target.files?.[0]);
           event.target.value = "";
         }}
+      />
+      <UpgradeLimitDialog
+        open={limitDialogOpen}
+        onOpenChange={setLimitDialogOpen}
+        mediaLabel="portfolio items"
+        used={form.portfolio.length}
+        limit={PROVIDER_PORTFOLIO_LIMIT}
       />
     </form>
   );

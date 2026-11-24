@@ -6,8 +6,8 @@ export const authApi = {
     return response.data;
   },
 
-  login: async (email: string, password: string) => {
-    const response = await apiClient.post("/auth/login", { email, password });
+  login: async (identifier: string, password: string) => {
+    const response = await apiClient.post("/auth/login", { identifier, password });
     return response.data;
   },
 

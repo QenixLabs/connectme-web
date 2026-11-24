@@ -72,6 +72,7 @@ export type {
   TestOtpChannel,
   SendTestOtpPayload,
   SendTestOtpResponse,
+  AdminAccount,
 } from "./admin";
 export { queryKeys } from "./query-keys";
 export { campaignsApi } from "./campaigns";

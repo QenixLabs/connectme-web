@@ -54,6 +54,11 @@ export function getApiErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
+export function isPlanLimitError(error: unknown): boolean {
+  const message = getApiErrorMessage(error, "");
+  return /\b(limit|quota|plan)\b/i.test(message);
+}
+
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
