@@ -10,10 +10,10 @@ import type { MetadataRoute } from "next";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/",
-    name: "RootIn – Talent Platform",
-    short_name: "RootIn",
+    name: "Morporfile â€“ Talent Platform",
+    short_name: "Morporfile",
     description:
-      "RootIn connects verified talent with recruiters: portfolios, campaigns, messaging and opportunities in one platform.",
+      "Morporfile connects verified talent with recruiters: portfolios, campaigns, messaging and opportunities in one platform.",
     start_url: "/",
     scope: "/",
     display: "standalone",

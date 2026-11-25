@@ -45,7 +45,7 @@ export default function PublicProductsPage() {
   return (
     <div className="space-y-6">
       <header className="rounded-3xl border border-violet-100 bg-gradient-to-br from-white to-violet-50 p-5 sm:p-8">
-        <p className="text-sm font-semibold text-violet-700">RootIn Marketplace</p>
+        <p className="text-sm font-semibold text-violet-700">Morporfile Marketplace</p>
         <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
           Products from creative providers
         </h1>
@@ -173,7 +173,7 @@ export default function PublicProductsPage() {
                       )}
                     </div>
                     <p className="truncate text-xs text-slate-500">
-                      {product.provider?.display_name || product.provider?.business_name || "RootIn provider"}
+                      {product.provider?.display_name || product.provider?.business_name || "Morporfile provider"}
                     </p>
                   </div>
                 </Link>

@@ -4,7 +4,7 @@
  * The card is rendered on the client with the Canvas 2D API so a profile
  * can be shared as a high-fidelity image on Instagram, WhatsApp, LinkedIn, etc.
  *
- * Uses the custom RootIn creative template background and overlays:
+ * Uses the custom Morporfile creative template background and overlays:
  * - Role badge
  * - Circular avatar with vivid gradient ring & verified check badge
  * - Talent name with verified badge and role headline
@@ -110,7 +110,7 @@ export interface ShareCardContent {
   roleLabel: string;
   initials: string;
   url: string;
-  /** Short, human friendly link label, e.g. `rootin.com/talent/asha-rao`. */
+  /** Short, human friendly link label, e.g. `morporfile.com/talent/asha-rao`. */
   shortUrl: string;
   /** The handle shown in the link panel, e.g. `@asha-rao`. */
   handle: string;
@@ -143,11 +143,11 @@ export function selectBestTalentStats(params: {
   const rootScore =
     typeof profile?.trust_score === "number" && profile.trust_score > 0
       ? String(Math.round(profile.trust_score))
-      : "—";
+      : "â€”";
   const responseRate =
     typeof profile?.response_rate === "number"
       ? `${Math.round(profile.response_rate)}%`
-      : "—";
+      : "â€”";
   const shortlistCount = profile?.analytics?.shortlist_count ?? 0;
   const trustScoreValue = profile?.trust_score;
   const responseRateValue = profile?.response_rate;
@@ -179,7 +179,7 @@ export function selectBestTalentStats(params: {
     },
     {
       icon: "star",
-      count: rating === null ? "—" : rating.toFixed(1),
+      count: rating === null ? "â€”" : rating.toFixed(1),
       label: "Rating",
       note: testimonials.length
         ? `${testimonials.length} Review${testimonials.length === 1 ? "" : "s"}`
@@ -187,7 +187,7 @@ export function selectBestTalentStats(params: {
     },
     {
       icon: "bookmark",
-      count: shortlistCount > 0 ? String(shortlistCount) : "—",
+      count: shortlistCount > 0 ? String(shortlistCount) : "â€”",
       label: "Shortlists",
       note: shortlistCount > 0 ? "Saved by recruiters" : "None yet",
     },
@@ -218,7 +218,7 @@ export function buildShareCardContent(
     options.target.tags && options.target.tags.length > 0
       ? options.target.tags
       : headline
-          .split(/[\/|·,]/)
+          .split(/[\/|Â·,]/)
           .map((s) => s.trim())
           .filter(Boolean);
 
@@ -236,14 +236,14 @@ export function buildShareCardContent(
       ? selectBestTalentStats({})
       : options.target.role === "provider"
         ? [
-            { icon: "briefcase", count: "—", label: "Services", note: "Listed" },
-            { icon: "star", count: "—", label: "Rating", note: "No reviews" },
-            { icon: "play", count: "—", label: "Projects", note: "Completed" },
+            { icon: "briefcase", count: "â€”", label: "Services", note: "Listed" },
+            { icon: "star", count: "â€”", label: "Rating", note: "No reviews" },
+            { icon: "play", count: "â€”", label: "Projects", note: "Completed" },
           ]
         : [
-            { icon: "briefcase", count: "—", label: "Projects", note: "On RootIn" },
-            { icon: "heart", count: "—", label: "Talent Hired", note: "On RootIn" },
-            { icon: "star", count: "—", label: "Rating", note: "No reviews" },
+            { icon: "briefcase", count: "â€”", label: "Projects", note: "On Morporfile" },
+            { icon: "heart", count: "â€”", label: "Talent Hired", note: "On Morporfile" },
+            { icon: "star", count: "â€”", label: "Rating", note: "No reviews" },
           ];
   const statItems =
     options.target.statItems?.length === 3 ||
@@ -267,7 +267,7 @@ export function buildShareCardContent(
 }
 
 /**
- * Short label for a canonical URL, e.g. `rootin.com/talent/asha-rao`.
+ * Short label for a canonical URL, e.g. `morporfile.com/talent/asha-rao`.
  */
 export function buildShortLinkLabel(url: string): string {
   const value = (url ?? "").trim();
@@ -346,10 +346,10 @@ export function truncateToWidth(
 ): string {
   if (ctx.measureText(text).width <= maxWidth) return text;
   let result = text;
-  while (result.length > 1 && ctx.measureText(`${result}…`).width > maxWidth) {
+  while (result.length > 1 && ctx.measureText(`${result}â€¦`).width > maxWidth) {
     result = result.slice(0, -1);
   }
-  return `${result}…`;
+  return `${result}â€¦`;
 }
 
 function initialsFor(name: string): string {
@@ -1120,7 +1120,7 @@ export async function renderShareCardToCanvas(
   ctx.fillStyle = "rgba(255, 255, 255, 0.88)";
   ctx.font = `400 18px ${font}`;
   ctx.fillText(
-    truncateToWidth(ctx, "Discover my work, skills and more on RootIn", textMaxW),
+    truncateToWidth(ctx, "Discover my work, skills and more on Morporfile", textMaxW),
     textX,
     panel.y + 84,
   );
@@ -1189,7 +1189,7 @@ export async function renderShareCard(
     };
   }
 
-  // The canvas was tainted by a cross-origin image — fall back.
+  // The canvas was tainted by a cross-origin image â€” fall back.
   const fallback = await renderShareCardToCanvas({
     ...options,
     origin,
@@ -1237,5 +1237,5 @@ export function downloadBlob(blob: Blob, filename: string): void {
  */
 export function shareCardFileName(target: ShareProfileTarget): string {
   const role = target.role;
-  return `rootin-${role}-profile.png`;
+  return `morporfile-${role}-profile.png`;
 }

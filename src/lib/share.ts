@@ -3,7 +3,7 @@
  *
  * Everything in this module is pure so it can be unit tested without a DOM.
  * The rule that drives the whole design: a shared profile always points at the
- * *canonical* public URL — never at `window.location.href`, which may carry
+ * *canonical* public URL â€” never at `window.location.href`, which may carry
  * query parameters, tab state or a portfolio deep link.
  */
 
@@ -11,7 +11,7 @@ import { normalizeOrigin } from "@/lib/site";
 
 export { normalizeOrigin };
 
-export const SHARE_BRAND = "RootIn";
+export const SHARE_BRAND = "Morporfile";
 
 export type ShareProfileRole = "talent" | "recruiter" | "provider";
 
@@ -51,7 +51,7 @@ export interface ShareProfileTarget {
    * Explicit public path, e.g. a portfolio item deep link.
    *
    * When it is present it replaces the role/slug path. It is only ever set
-   * when the user intentionally shares a specific surface — the default
+   * when the user intentionally shares a specific surface â€” the default
    * profile share always uses the canonical profile path.
    */
   path?: string;
@@ -64,7 +64,7 @@ export interface ShareProfileTarget {
 /** Destinations the share sheet can hand off to. */
 export type ShareDestination = "whatsapp" | "instagram" | "linkedin" | "more";
 
-/** How a share was carried out — mirrored in the analytics event vocabulary. */
+/** How a share was carried out â€” mirrored in the analytics event vocabulary. */
 export type ShareMethod = "native" | "clipboard" | "file" | "external_link" | "download" | "none";
 
 /** Mirrors `ProfileShareEventType` on the API side. */
@@ -100,7 +100,7 @@ export const SHARE_DESTINATIONS = {
 /**
  * Normalizes an explicit public path.
  *
- * Only root-relative paths are accepted — a value that carries a protocol or
+ * Only root-relative paths are accepted â€” a value that carries a protocol or
  * that is protocol relative (`//evil.example`) is rejected so a shared link
  * can never be pointed at another host.
  */
@@ -144,7 +144,7 @@ export function buildProfilePath(target: {
  * Canonical, absolute public URL for a profile.
  *
  * The slug is encoded so a malformed value can never break out of the path.
- * Returns an empty string when the origin is missing or unusable — a broken
+ * Returns an empty string when the origin is missing or unusable â€” a broken
  * link is worse than no link.
  */
 export function buildCanonicalProfileUrl(
@@ -167,12 +167,12 @@ export function buildShareText(target: ShareProfileTarget): string {
   const name = (target.name ?? "").trim() || defaultNameFor(target.role);
   const headline = (target.headline ?? "").trim();
   if (headline) {
-    return `Check out ${name} · ${headline} on ${SHARE_BRAND} ✨`;
+    return `Check out ${name} Â· ${headline} on ${SHARE_BRAND} âœ¨`;
   }
   if (target.role === "talent") {
-    return `Check out ${name}'s portfolio on ${SHARE_BRAND} ✨`;
+    return `Check out ${name}'s portfolio on ${SHARE_BRAND} âœ¨`;
   }
-  return `Check out ${defaultNameFor(target.role)} on ${SHARE_BRAND} ✨`;
+  return `Check out ${defaultNameFor(target.role)} on ${SHARE_BRAND} âœ¨`;
 }
 
 /**
@@ -196,8 +196,8 @@ export function buildShareMessage(
       : `${roleLabel(target.role).toLowerCase()} profile`;
   const lines: string[] = [
     name
-      ? `Hey! Check out ${name}'s ${profileType} on ${SHARE_BRAND} ✨`
-      : `Hey! Check out this ${profileType} on ${SHARE_BRAND} ✨`,
+      ? `Hey! Check out ${name}'s ${profileType} on ${SHARE_BRAND} âœ¨`
+      : `Hey! Check out this ${profileType} on ${SHARE_BRAND} âœ¨`,
   ];
 
   if (headline) lines.push("", headline);
@@ -216,7 +216,7 @@ export function buildShareMessage(
  * The text that accompanies a shared card.
  *
  * The card already shows the name and the profession, so the text stays short
- * and only adds the canonical link — the recipient needs it to open the
+ * and only adds the canonical link â€” the recipient needs it to open the
  * profile.
  */
 export function buildCardShareText(
@@ -233,7 +233,7 @@ export function buildCardShareText(
  * The Instagram caption.
  *
  * The caption is pasted into the Instagram composer, so it is written the way
- * a caption is written — no URL fragments, no duplicated hashtags and no
+ * a caption is written â€” no URL fragments, no duplicated hashtags and no
  * placeholder text for missing fields.
  */
 export function buildInstagramCaption(
@@ -245,7 +245,7 @@ export function buildInstagramCaption(
 
   const roleName = roleLabel(target.role).toLowerCase();
   const lines: string[] = [
-    name ? `Meet ${name} ✨` : `Meet this ${roleName} ✨`,
+    name ? `Meet ${name} âœ¨` : `Meet this ${roleName} âœ¨`,
   ];
   if (headline) lines.push("", headline);
 
@@ -262,7 +262,7 @@ export function buildInstagramCaption(
       : target.role === "provider"
         ? "#ServiceProvider"
         : "#RecruiterProfile";
-  lines.push("", `#RootIn ${profileHashtag} #ConnectAndCreate`);
+  lines.push("", `#Morporfile ${profileHashtag} #ConnectAndCreate`);
 
   return dedupeHashtags(lines.join("\n"));
 }
@@ -311,8 +311,8 @@ export type WhatsAppShareMode = "file" | "link";
 
 export interface WhatsAppSharePlan {
   /**
-   * `file` — the card is attached through the native share sheet.
-   * `link` — the browser cannot share files, so the card is downloaded and
+   * `file` â€” the card is attached through the native share sheet.
+   * `link` â€” the browser cannot share files, so the card is downloaded and
    * the link is shared instead.
    */
   mode: WhatsAppShareMode;
@@ -327,7 +327,7 @@ export interface WhatsAppSharePlan {
 /**
  * Decides how a WhatsApp share is carried out.
  *
- * A `wa.me` link can only carry text — it cannot attach a local file. The
+ * A `wa.me` link can only carry text â€” it cannot attach a local file. The
  * card therefore travels through the native share sheet whenever the browser
  * supports sharing files, and only falls back to a download when it does not.
  */
@@ -358,7 +358,7 @@ export type CardShareResult =
 /**
  * Shown after the card was handed to the native share sheet.
  *
- * It deliberately does not claim that the message text was delivered — some
+ * It deliberately does not claim that the message text was delivered â€” some
  * apps drop it as soon as a file is attached.
  */
 export const WHATSAPP_CARD_SHARED_MESSAGE =
@@ -370,11 +370,11 @@ export const WHATSAPP_CARD_SHARE_FAILED_MESSAGE =
 
 /** Shown by the download-and-share hand-off. */
 export const WHATSAPP_CARD_FALLBACK_MESSAGE =
-  "Card downloaded and link copied — attach the image in WhatsApp.";
+  "Card downloaded and link copied â€” attach the image in WhatsApp.";
 
 /** Shown by the download-and-share hand-off when the clipboard refused the link. */
 export const WHATSAPP_CARD_FALLBACK_COPY_FAILED_MESSAGE =
-  "Card downloaded — copy the profile link and attach the image in WhatsApp.";
+  "Card downloaded â€” copy the profile link and attach the image in WhatsApp.";
 
 /**
  * The message of the download-and-share hand-off.
@@ -391,7 +391,7 @@ export function buildWhatsAppFallbackMessage(copied: boolean): string {
  * What the share dialog does after a card share attempt.
  */
 export interface WhatsAppShareFeedback {
-  /** The message shown in the dialog — empty when there is nothing to say. */
+  /** The message shown in the dialog â€” empty when there is nothing to say. */
   message: string;
   /** Whether the message describes a failure. */
   isError: boolean;
@@ -406,7 +406,7 @@ export interface WhatsAppShareFeedback {
  *
  * A share sheet that resolved says nothing about the message text: some apps
  * drop it as soon as a file is attached, and the platform does not report
- * back. The link is therefore never claimed as delivered — it is offered for
+ * back. The link is therefore never claimed as delivered â€” it is offered for
  * copying instead.
  */
 export function buildWhatsAppShareFeedback(
@@ -428,7 +428,7 @@ export function buildWhatsAppShareFeedback(
         useFallback: false,
       };
     case "unsupported":
-      // The browser cannot attach the file — download it and share the link.
+      // The browser cannot attach the file â€” download it and share the link.
       return {
         message: "",
         isError: false,
@@ -437,7 +437,7 @@ export function buildWhatsAppShareFeedback(
       };
     case "cancelled":
     default:
-      // The user closed the share sheet — nothing happened, nothing is said.
+      // The user closed the share sheet â€” nothing happened, nothing is said.
       return {
         message: "",
         isError: false,
@@ -450,14 +450,14 @@ export function buildWhatsAppShareFeedback(
 /**
  * LinkedIn share URL.
  *
- * LinkedIn renders its own preview — we only guarantee the canonical link it
+ * LinkedIn renders its own preview â€” we only guarantee the canonical link it
  * receives, never the preview image it chooses to show.
  */
 export function buildLinkedInUrl(url: string): string {
   return `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
 }
 
-/** Instagram has no web share endpoint — the card must be shared manually. */
+/** Instagram has no web share endpoint â€” the card must be shared manually. */
 export const INSTAGRAM_URL = "https://www.instagram.com/";
 
 export const INSTAGRAM_INSTRUCTIONS = [
@@ -523,10 +523,10 @@ export function canShareFiles(files: File[]): boolean {
 }
 
 /**
- * A 1 × 1 transparent PNG.
+ * A 1 Ã— 1 transparent PNG.
  *
- * The probe file only has to look like a real PNG — browsers check the file
- * type, not the content — but a valid image keeps the check faithful on
+ * The probe file only has to look like a real PNG â€” browsers check the file
+ * type, not the content â€” but a valid image keeps the check faithful on
  * browsers that inspect the payload.
  */
 const PNG_PROBE_BYTES = Uint8Array.from([
@@ -552,7 +552,7 @@ export function canShareFilesSync(): boolean {
   if (typeof navigator.canShare !== "function") return false;
   if (typeof navigator.share !== "function") return false;
   try {
-    const probe = new File([PNG_PROBE_BYTES], "rootin-talent-profile.png", {
+    const probe = new File([PNG_PROBE_BYTES], "morporfile-talent-profile.png", {
       type: "image/png",
     });
     return navigator.canShare({ files: [probe] });
@@ -614,7 +614,7 @@ export async function copyTextToClipboard(text: string): Promise<boolean> {
  * Absolute URL for an image that may be stored as a relative path.
  *
  * Returns an empty string when the image is relative and no usable origin is
- * available — a preview image that points nowhere is worse than none.
+ * available â€” a preview image that points nowhere is worse than none.
  */
 export function toAbsoluteUrl(url: string | undefined, origin?: string): string {
   const value = (url ?? "").trim();

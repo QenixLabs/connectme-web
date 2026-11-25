@@ -179,7 +179,7 @@ export default function ServiceInquiryDetailPage() {
             </p>
           )}
           <p className="text-xs text-muted-foreground">
-            ConnectMe does not manage appointments, agreements, or payments.
+            Morporfile does not manage appointments, agreements, or payments.
             Continue any discussion directly with the provider.
           </p>
         </CardContent>

@@ -13,7 +13,7 @@ export default function MarketplaceLayout({
       <main className="mx-auto w-full max-w-6xl px-4 py-4 pb-24 sm:py-8 sm:pb-8">{children}</main>
       <footer className="hidden border-t border-border/60 bg-background md:block">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-6 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <p>RootIn Marketplace — find your next opportunity or creative service.</p>
+          <p>Morporfile Marketplace â€” find your next opportunity or creative service.</p>
           <div className="flex gap-4">
             <Link className="hover:text-foreground" href="/talent/opportunities">
               Opportunities

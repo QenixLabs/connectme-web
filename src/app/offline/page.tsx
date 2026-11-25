@@ -3,8 +3,8 @@ import Image from "next/image";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "You're offline – RootIn",
-  description: "RootIn needs an internet connection to load this page.",
+  title: "You're offline â€“ Morporfile",
+  description: "Morporfile needs an internet connection to load this page.",
   robots: {
     index: false,
     follow: false,
@@ -35,7 +35,7 @@ export default function OfflinePage() {
       <div style={{ maxWidth: "420px" }}>
         <Image
           src="/icons/icon-192.png"
-          alt="RootIn"
+          alt="Morporfile"
           width={72}
           height={72}
           unoptimized
@@ -66,7 +66,7 @@ export default function OfflinePage() {
             margin: "0 0 28px",
           }}
         >
-          RootIn needs an internet connection to load this page. Reconnect, then
+          Morporfile needs an internet connection to load this page. Reconnect, then
           try again.
         </p>
         <Link

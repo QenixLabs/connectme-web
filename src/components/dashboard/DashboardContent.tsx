@@ -61,8 +61,8 @@ function getInitials(name?: string | null) {
 
 function formatBudget(min?: number, max?: number, currency = "INR") {
   if (min == null && max == null) return "Not disclosed";
-  const symbol = currency === "INR" ? "₹" : "$";
-  if (min != null && max != null) return `${symbol}${min.toLocaleString("en-IN")}K – ${symbol}${max.toLocaleString("en-IN")}K`;
+  const symbol = currency === "INR" ? "â‚¹" : "$";
+  if (min != null && max != null) return `${symbol}${min.toLocaleString("en-IN")}K â€“ ${symbol}${max.toLocaleString("en-IN")}K`;
   if (min != null) return `${symbol}${min.toLocaleString("en-IN")}K+`;
   return `Up to ${symbol}${max?.toLocaleString("en-IN")}K`;
 }
@@ -216,7 +216,7 @@ export function DashboardContent() {
   const locationStr = [profile?.location?.city, profile?.location?.state]
     .filter(Boolean)
     .join(", ");
-  const professionsStr = profile?.professions?.join(" · ") || "Artist";
+  const professionsStr = profile?.professions?.join(" Â· ") || "Artist";
   const isVerified = profile?.is_verified ?? false;
   const isAvailable = profile?.availability === "available";
   const isPublic = profile?.privacy_mode === "public";
@@ -230,8 +230,8 @@ export function DashboardContent() {
     if (typeof navigator.share === "function") {
       try {
         await navigator.share({
-          title: `${name} on RootIn`,
-          text: "View my RootIn profile",
+          title: `${name} on Morporfile`,
+          text: "View my Morporfile profile",
           url: profileUrl,
         });
         return;
@@ -379,7 +379,7 @@ export function DashboardContent() {
           {/* Center: profile info */}
           <div className="min-w-0 flex-1">
             <p className="text-[10px] leading-tight text-muted-foreground">
-              {getGreeting()} 👋
+              {getGreeting()} ðŸ‘‹
             </p>
             <div className="mt-0.5 flex items-center gap-1">
               <Link href={profile?.username ? `/talent/${profile.username}` : "/talent/profile"}>
@@ -522,7 +522,7 @@ export function DashboardContent() {
                     <Building2 className="size-3 shrink-0" />
                     <span className="truncate">
                       {companyName
-                        ? `${companyName} · ${postedAt}`
+                        ? `${companyName} Â· ${postedAt}`
                         : `Posted ${postedAt}`}
                     </span>
                   </p>
@@ -621,7 +621,7 @@ export function DashboardContent() {
             },
           ].map((s, i) => (
             <div key={s.label} className="flex items-center gap-2">
-              {i > 0 && <span className="text-[10px] text-muted-foreground">→</span>}
+              {i > 0 && <span className="text-[10px] text-muted-foreground">â†’</span>}
               <div className="flex flex-col items-center gap-1">
                 <span className={`flex size-8 items-center justify-center rounded-full ${s.cls}`}>
                   <s.icon className="size-3.5" />

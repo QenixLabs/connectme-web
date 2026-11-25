@@ -23,7 +23,7 @@ export function DoneStep() {
         You&rsquo;re all set!
       </h1>
       <p className="mt-2 max-w-sm text-xs sm:text-sm leading-relaxed text-[#7885A3] dark:text-white/70">
-        Your RootIn provider profile is active. Showcase your services, receive inquiries, and grow your creative business.
+        Your Morporfile provider profile is active. Showcase your services, receive inquiries, and grow your creative business.
       </p>
 
       <div className="mt-8 flex w-full max-w-xs flex-col gap-3">

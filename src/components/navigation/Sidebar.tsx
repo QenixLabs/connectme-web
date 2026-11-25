@@ -41,7 +41,7 @@ export function Sidebar() {
       style={{ borderColor: "oklch(1 0 0 / 0.04)" }}
     >
       <div className="px-6 py-6">
-        <p className="font-display text-[28px] font-semibold tracking-tight">RootIn</p>
+        <p className="font-display text-[28px] font-semibold tracking-tight">Morporfile</p>
         <p className="mt-1.5 text-xs text-muted-foreground/40">
           Talent. Opportunities. Growth.
         </p>

@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { RootinLandingPage } from "@/components/landing/rootin-landing-page";
+import { MorporfileLandingPage } from "@/components/landing/morporfile-landing-page";
 
-const title = "Rootin — People. Talent. Opportunities.";
+const title = "Morporfile â€” People. Talent. Opportunities.";
 const description =
-  "Rootin connects entertainment talent, recruiters, and creative service providers across India.";
+  "Morporfile connects entertainment talent, recruiters, and creative service providers across India.";
 
 export const metadata: Metadata = {
   title,
@@ -20,5 +20,5 @@ export const metadata: Metadata = {
 };
 
 export default function MarketingHomePage() {
-  return <RootinLandingPage />;
+  return <MorporfileLandingPage />;
 }

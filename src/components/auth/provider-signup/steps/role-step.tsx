@@ -11,7 +11,7 @@ const ROLES = [
     id: "Service Provider" as const,
     icon: Briefcase,
     title: "Service Provider",
-    desc: "I offer my skills, services, gear or studio facilities on RootIn.",
+    desc: "I offer my skills, services, gear or studio facilities on Morporfile.",
     badge: "Recommended for you",
   },
   {
@@ -44,7 +44,7 @@ export function RoleStep({ data, update, onNext }: StepProps) {
           Choose Your Role
         </h1>
         <p className="mt-2 text-sm leading-relaxed text-[#7885A3] dark:text-white/70">
-          Tell us what brings you to RootIn. You can easily expand your profile capabilities later.
+          Tell us what brings you to Morporfile. You can easily expand your profile capabilities later.
         </p>
 
         <div className="mt-6 space-y-3.5">

@@ -48,7 +48,7 @@ import {
 } from "@/lib/api";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { toast } from "sonner";
-import rootinLogo from "@/assets/rootin-logo-orange.png";
+import morporfileLogo from "@/assets/morporfile-logo-orange.png";
 import {
   loadRazorpayCheckout,
   openRazorpaySubscriptionCheckout,
@@ -61,7 +61,7 @@ const faqs = [
   },
   {
     q: "What payment methods are accepted?",
-    a: "UPI, debit/credit cards, net banking, and wallets — all via Razorpay.",
+    a: "UPI, debit/credit cards, net banking, and wallets â€” all via Razorpay.",
   },
   {
     q: "What happens to my campaigns if I downgrade?",
@@ -399,8 +399,8 @@ function PricingContent() {
           <div className="relative z-10">
             <div className="mb-7 flex items-center gap-3">
               <Image
-                src={rootinLogo}
-                alt="Rootin"
+                src={morporfileLogo}
+                alt="Morporfile"
                 priority
                 className="h-auto w-[180px]"
               />
@@ -428,7 +428,7 @@ function PricingContent() {
             </h1>
             <p className="mt-4 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg">
               {isRecruiterView
-                ? "Flexible plans for individuals, teams and organizations. Find, connect and hire the right talent — faster."
+                ? "Flexible plans for individuals, teams and organizations. Find, connect and hire the right talent â€” faster."
                 : isProviderView
                   ? "Flexible plans for service providers at every stage. Showcase your business, reach more clients, and grow your services."
                   : "Flexible plans for creators at every stage. Showcase your work, get discovered, and unlock better opportunities."}
@@ -486,7 +486,7 @@ function PricingContent() {
           </div>
         </div>
         <p className="mt-3 text-center text-xs font-medium text-muted-foreground">
-          Choose a plan first. You’ll review payment details securely at checkout.
+          Choose a plan first. Youâ€™ll review payment details securely at checkout.
         </p>
 
         <section
@@ -508,8 +508,8 @@ function PricingContent() {
               const cadence = isFree
                 ? "forever"
                 : cycle === "monthly"
-                  ? "/ month · billed monthly"
-                  : "/ year · billed yearly";
+                  ? "/ month Â· billed monthly"
+                  : "/ year Â· billed yearly";
               const isCurrentPlan =
                 hasHydrated && currentPlanKey === plan.key;
               const isPopular = plan.is_popular === true;
@@ -539,7 +539,7 @@ function PricingContent() {
                     {getPlanEyebrow(plan, targetRole)}
                   </p>
                   <p className="mt-5 font-display text-4xl font-extrabold tracking-normal">
-                    ₹{formatPrice(price)}
+                    â‚¹{formatPrice(price)}
                   </p>
                   <p className="text-sm font-medium text-muted-foreground">
                     {cadence}
@@ -680,7 +680,7 @@ function PricingContent() {
             </div>
             <DialogTitle className="font-display text-2xl">Ready to upgrade?</DialogTitle>
             <DialogDescription>
-              {checkoutPlan?.display_name} · {cycle === "yearly" ? "billed yearly" : "billed monthly"}
+              {checkoutPlan?.display_name} Â· {cycle === "yearly" ? "billed yearly" : "billed monthly"}
             </DialogDescription>
           </DialogHeader>
           <div className="mt-3 rounded-2xl border border-border bg-secondary/50 p-4">
@@ -690,7 +690,7 @@ function PricingContent() {
                 <p className="text-sm text-muted-foreground">Secure checkout via Razorpay</p>
               </div>
               <p className="font-display text-xl font-extrabold">
-                ₹{checkoutPlan ? formatPrice(cycle === "monthly" ? checkoutPlan.monthly_price : checkoutPlan.yearly_price) : "0"}
+                â‚¹{checkoutPlan ? formatPrice(cycle === "monthly" ? checkoutPlan.monthly_price : checkoutPlan.yearly_price) : "0"}
               </p>
             </div>
           </div>
@@ -706,7 +706,7 @@ function PricingContent() {
                 className="h-11 rounded-xl uppercase"
               />
             </div>
-            <p className="text-xs text-muted-foreground">No code? No problem — you can continue without one.</p>
+            <p className="text-xs text-muted-foreground">No code? No problem â€” you can continue without one.</p>
           </div>
           <DialogFooter className="mt-4 gap-2 sm:gap-2">
             <Button variant="ghost" onClick={() => setCheckoutPlan(null)}>Not now</Button>

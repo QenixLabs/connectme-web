@@ -100,7 +100,7 @@ function Steps({ step }: { step: number }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Step 1 — Send OTP                                                 */
+/*  Step 1 â€” Send OTP                                                 */
 /* ------------------------------------------------------------------ */
 
 function StepSendOTP({
@@ -252,7 +252,7 @@ function StepSendOTP({
 }
 
 /* ------------------------------------------------------------------ */
-/*  Step 2 — Verify OTP + Set New Password                            */
+/*  Step 2 â€” Verify OTP + Set New Password                            */
 /* ------------------------------------------------------------------ */
 
 function StepResetPassword({
@@ -494,7 +494,7 @@ function StepResetPassword({
 }
 
 /* ------------------------------------------------------------------ */
-/*  Step 3 — Success                                                  */
+/*  Step 3 â€” Success                                                  */
 /* ------------------------------------------------------------------ */
 
 function StepSuccess() {
@@ -545,7 +545,7 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <AuthLayout subtitle="Reset your RootIn password in a few steps">
+    <AuthLayout subtitle="Reset your Morporfile password in a few steps">
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}

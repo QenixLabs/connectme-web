@@ -1,7 +1,7 @@
-# RootIn Web
+# Morporfile Web
 
-Next.js (App Router) + React 19 frontend for the RootIn talent platform, including the
-marketplace launched in Phases 2–6 and hardened in Phase 7.
+Next.js (App Router) + React 19 frontend for the Morporfile talent platform, including the
+marketplace launched in Phases 2â€“6 and hardened in Phase 7.
 
 ## Stack
 
@@ -14,7 +14,7 @@ marketplace launched in Phases 2–6 and hardened in Phase 7.
 - Vitest + Testing Library (Vitest 3, jsdom per-file pragma where needed)
 - ESLint 9 (`eslint.config.mjs`)
 
-The backend lives in the sibling `connectme-api` repository. All requests go to
+The backend lives in the sibling `morporfile-api` repository. All requests go to
 `NEXT_PUBLIC_API_URL` with credentials enabled (httpOnly cookie auth, Bearer fallback).
 
 ## Getting Started
@@ -65,28 +65,28 @@ offline page. Installation requires a production build served over HTTPS
 
 ```
 src/
-├── app/
-│   ├── (marketplace)/          # public marketplace + participant inquiries
-│   │   ├── providers/          # directory + public provider profile
-│   │   ├── services/           # public service discovery + detail
-│   │   └── inquiries/          # requester/provider inquiry lists + detail
-│   ├── (provider-app)/provider # onboarding, profile, services, inquiries, messages
-│   ├── (talent-app)/talent
-│   ├── (recruiter-app)/recruiter
-│   ├── (admin-app)/admin
-│   └── (auth), (marketing)
-├── components/marketplace/     # provider/service cards, inquiry form, reviews, bell
-├── components/provider/        # provider dashboard UI (services, inquiries)
-├── hooks/                      # React Query hooks (notifications, provider, inquiries)
-├── lib/api/                    # axios clients + TypeScript domain types
-│   ├── marketplace.ts          # providers, services, reviews, profile, activation
-│   ├── inquiries.ts            # service inquiries
-│   ├── notifications.ts        # notifications + settings
-│   └── query-keys.ts           # stable React Query key factory
-└── middleware.ts               # auth/role routing
+â”œâ”€â”€ app/
+â”‚   â”œâ”€â”€ (marketplace)/          # public marketplace + participant inquiries
+â”‚   â”‚   â”œâ”€â”€ providers/          # directory + public provider profile
+â”‚   â”‚   â”œâ”€â”€ services/           # public service discovery + detail
+â”‚   â”‚   â””â”€â”€ inquiries/          # requester/provider inquiry lists + detail
+â”‚   â”œâ”€â”€ (provider-app)/provider # onboarding, profile, services, inquiries, messages
+â”‚   â”œâ”€â”€ (talent-app)/talent
+â”‚   â”œâ”€â”€ (recruiter-app)/recruiter
+â”‚   â”œâ”€â”€ (admin-app)/admin
+â”‚   â””â”€â”€ (auth), (marketing)
+â”œâ”€â”€ components/marketplace/     # provider/service cards, inquiry form, reviews, bell
+â”œâ”€â”€ components/provider/        # provider dashboard UI (services, inquiries)
+â”œâ”€â”€ hooks/                      # React Query hooks (notifications, provider, inquiries)
+â”œâ”€â”€ lib/api/                    # axios clients + TypeScript domain types
+â”‚   â”œâ”€â”€ marketplace.ts          # providers, services, reviews, profile, activation
+â”‚   â”œâ”€â”€ inquiries.ts            # service inquiries
+â”‚   â”œâ”€â”€ notifications.ts        # notifications + settings
+â”‚   â””â”€â”€ query-keys.ts           # stable React Query key factory
+â””â”€â”€ middleware.ts               # auth/role routing
 ```
 
-Path alias: `@/*` → `src/*`.
+Path alias: `@/*` â†’ `src/*`.
 
 ## Marketplace Journeys
 
@@ -99,7 +99,7 @@ There is no payments, checkout, commission, escrow, or platform-managed booking 
 | View provider | `/providers/[slug]` | public profile, services, rating summary, reviews, contact |
 | Discover services | `/services` | keyword/location/category/price filters, `ServiceCard` |
 | View service | `/services/[id]` | service detail + inquiry form |
-| Send inquiry | `/services/[id]` | `ServiceInquiryForm` → `POST /service-inquiries` |
+| Send inquiry | `/services/[id]` | `ServiceInquiryForm` â†’ `POST /service-inquiries` |
 | Track inquiries | `/inquiries` | requester and provider lists, status filters |
 | Inquiry detail | `/inquiries/[id]` | participants only; status transitions |
 | Manage listings | `/provider/services` | create/edit/publish/unpublish provider listings |
@@ -141,13 +141,13 @@ Component tests that need the DOM start with the per-file pragma:
 
 Marketplace coverage:
 
-- `src/components/marketplace/marketplace-notification-bell.test.tsx` — count polling, lazy list
+- `src/components/marketplace/marketplace-notification-bell.test.tsx` â€” count polling, lazy list
   loading only while open, mark-read/history behavior.
-- `src/components/marketplace/service-inquiry-form.test.tsx` — validation, success redirect,
+- `src/components/marketplace/service-inquiry-form.test.tsx` â€” validation, success redirect,
   idempotency key reuse/rotation, unauthenticated redirect.
-- `src/components/marketplace/provider-card.test.tsx`, `service-card.test.tsx` — public card
+- `src/components/marketplace/provider-card.test.tsx`, `service-card.test.tsx` â€” public card
   rendering.
-- `src/lib/marketplace-search.test.ts`, `src/lib/api/__tests__/inquiries.test.ts` — query
+- `src/lib/marketplace-search.test.ts`, `src/lib/api/__tests__/inquiries.test.ts` â€” query
   serialization and API payloads.
 
 There is no browser E2E framework in this repository. Phase 7 deliberately avoided adding a heavy

@@ -11,7 +11,7 @@ import {
   Sparkles,
   Users,
 } from "lucide-react";
-import { RootInLogo } from "@/components/RootInLogo";
+import { MorporfileLogo } from "@/components/MorporfileLogo";
 
 const disciplines = ["Film", "OTT", "TV", "Fashion", "Music", "Digital"];
 
@@ -24,7 +24,7 @@ const recruiterBenefits = [
 const avatars = [
   { src: "/images/talent-avatar.jpg", alt: "Verified talent profile" },
   { src: "/images/portfolio/p5.jpg", alt: "Creative professional profile" },
-  { src: "/avatars/avatar-2.jpg", alt: "RootIn community member" },
+  { src: "/avatars/avatar-2.jpg", alt: "Morporfile community member" },
 ];
 
 export function AuthWelcome() {
@@ -35,8 +35,8 @@ export function AuthWelcome() {
 
       <div className="relative mx-auto flex min-h-dvh w-full max-w-[1380px] flex-col px-5 py-5 sm:px-8 sm:py-7 lg:px-12">
         <header className="flex items-center justify-between">
-          <Link href="/" aria-label="RootIn home" className="w-28 sm:w-32">
-            <RootInLogo />
+          <Link href="/" aria-label="Morporfile home" className="w-28 sm:w-32">
+            <MorporfileLogo />
           </Link>
 
           <div className="flex items-center gap-3 text-sm">
@@ -65,7 +65,7 @@ export function AuthWelcome() {
             </h1>
 
             <p className="mt-6 max-w-lg text-base leading-7 text-muted-foreground sm:text-lg">
-              RootIn brings recruiters, production teams and verified creative professionals
+              Morporfile brings recruiters, production teams and verified creative professionals
               together to turn a great brief into extraordinary work.
             </p>
 
@@ -74,7 +74,7 @@ export function AuthWelcome() {
                 href="/auth/recruiter/signup"
                 className="group inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#2563EB] to-[#4C8DF0] px-5 py-3.5 text-sm font-semibold text-white shadow-button transition-all hover:-translate-y-0.5 hover:shadow-button-hover"
               >
-                Start hiring on RootIn
+                Start hiring on Morporfile
                 <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
               <Link
@@ -124,7 +124,7 @@ export function AuthWelcome() {
             <div className="relative min-h-[490px] overflow-hidden rounded-[2rem] border border-white/10 bg-[#07111B] shadow-card-lift sm:min-h-[570px]">
               <Image
                 src="/hero-bg.png"
-                alt="A cinematic RootIn production set"
+                alt="A cinematic Morporfile production set"
                 fill
                 priority
                 sizes="(min-width: 1024px) 50vw, 100vw"
@@ -193,7 +193,7 @@ export function AuthWelcome() {
                   <Clapperboard className="size-4 text-orange" />
                   Open campaign
                 </div>
-                <p className="mt-2 text-xs font-semibold text-foreground">Lead role · Mumbai</p>
+                <p className="mt-2 text-xs font-semibold text-foreground">Lead role Â· Mumbai</p>
                 <div className="mt-2 flex items-center gap-1.5 text-[10px] text-emerald-400">
                   <Check className="size-3" /> Brief published today
                 </div>

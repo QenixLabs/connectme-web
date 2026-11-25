@@ -176,7 +176,7 @@ function ProfileSummary({ profile }: { profile: TalentProfile }) {
 
     if (typeof navigator.share === "function") {
       try {
-        await navigator.share({ title: `${name} on RootIn`, url });
+        await navigator.share({ title: `${name} on Morporfile`, url });
         setShared(true);
         toast.success("Profile shared");
         window.setTimeout(() => setShared(false), 2000);
@@ -220,7 +220,7 @@ function ProfileSummary({ profile }: { profile: TalentProfile }) {
               <p className="mt-2 flex items-center gap-1.5 text-sm text-[#62678A]"><MapPin className="size-3.5 text-[#6428F5]" />{location}</p>
             )}
             {(profile.about || profile.headline) && (
-              <p className="mt-2 line-clamp-2 text-sm italic leading-5 text-[#62678A]">“{profile.about || profile.headline}”</p>
+              <p className="mt-2 line-clamp-2 text-sm italic leading-5 text-[#62678A]">â€œ{profile.about || profile.headline}â€</p>
             )}
           </div>
         </div>
@@ -301,11 +301,11 @@ function ReputationHighlights({ reputation }: { reputation: TalentReputation }) 
   const score = Math.round(Math.min(100, Math.max(0, rootScore * 20)));
   const highlights: Highlight[] = [
     { label: "RootScore", value: rootScore.toFixed(1), progress: score, icon: ShieldCheck, tone: "text-[#6428F5]", iconBg: "bg-[#F1EAFF]" },
-    { label: "Average Rating", value: reputation.average_rating != null ? reputation.average_rating.toFixed(1) : "—", progress: reputation.average_rating != null ? reputation.average_rating * 20 : undefined, icon: Star, tone: "text-[#8B4DDE]", iconBg: "bg-[#F5ECFF]" },
+    { label: "Average Rating", value: reputation.average_rating != null ? reputation.average_rating.toFixed(1) : "â€”", progress: reputation.average_rating != null ? reputation.average_rating * 20 : undefined, icon: Star, tone: "text-[#8B4DDE]", iconBg: "bg-[#F5ECFF]" },
     { label: "Verified Projects", value: String(reputation.verified_projects), icon: Trophy, tone: "text-[#D98A00]", iconBg: "bg-[#FFF7DF]", helper: "public or recruiter verified" },
     { label: "Positive Reviews", value: String(reputation.testimonial_count), icon: MessageCircle, tone: "text-[#E14E9C]", iconBg: "bg-[#FFF0F8]", helper: "approved testimonials" },
-    { label: "Response Rate", value: reputation.response_rate != null ? `${Math.round(reputation.response_rate)}%` : "—", progress: reputation.response_rate ?? undefined, icon: BarChart3, tone: "text-[#3277E8]", iconBg: "bg-[#EAF2FF]", helper: reputation.response_rate == null ? "No invite data yet" : undefined },
-    { label: "On-Time Delivery", value: reputation.on_time_delivery_rate != null ? `${Math.round(reputation.on_time_delivery_rate)}%` : "—", progress: reputation.on_time_delivery_rate ?? undefined, icon: CheckCircle2, tone: "text-[#0D9F8A]", iconBg: "bg-[#E7FBF7]", helper: reputation.on_time_delivery_rate == null ? "No task data yet" : undefined },
+    { label: "Response Rate", value: reputation.response_rate != null ? `${Math.round(reputation.response_rate)}%` : "â€”", progress: reputation.response_rate ?? undefined, icon: BarChart3, tone: "text-[#3277E8]", iconBg: "bg-[#EAF2FF]", helper: reputation.response_rate == null ? "No invite data yet" : undefined },
+    { label: "On-Time Delivery", value: reputation.on_time_delivery_rate != null ? `${Math.round(reputation.on_time_delivery_rate)}%` : "â€”", progress: reputation.on_time_delivery_rate ?? undefined, icon: CheckCircle2, tone: "text-[#0D9F8A]", iconBg: "bg-[#E7FBF7]", helper: reputation.on_time_delivery_rate == null ? "No task data yet" : undefined },
   ];
 
   return (
@@ -376,16 +376,16 @@ function TestimonialCard({ testimonial }: { testimonial: Testimonial }) {
             {testimonial.author_name}
             {isVerified && <BadgeCheck className="size-3.5 shrink-0 fill-[#2379EF] text-white" aria-label="Verified testimonial" />}
           </p>
-          <p className="truncate text-xs text-[#62678A]">{[testimonial.author_role, testimonial.author_company].filter(Boolean).join(" · ") || "Role not provided"}</p>
+          <p className="truncate text-xs text-[#62678A]">{[testimonial.author_role, testimonial.author_company].filter(Boolean).join(" Â· ") || "Role not provided"}</p>
         </div>
       </div>
       <div className="mt-3"><StarRating rating={testimonial.rating} compact /></div>
       {testimonial.content ? (
-        <p className="mt-2 line-clamp-4 text-sm leading-5 text-[#414565]">“{testimonial.content}”</p>
+        <p className="mt-2 line-clamp-4 text-sm leading-5 text-[#414565]">â€œ{testimonial.content}â€</p>
       ) : (
         <p className="mt-2 text-sm italic text-[#8A8EAC]">No written comment provided.</p>
       )}
-      <p className="mt-auto pt-4 text-xs text-[#8A8EAC]">{formatDate(testimonial.created_at)} · {formatRelativeTime(testimonial.created_at)}</p>
+      <p className="mt-auto pt-4 text-xs text-[#8A8EAC]">{formatDate(testimonial.created_at)} Â· {formatRelativeTime(testimonial.created_at)}</p>
     </article>
   );
 }
@@ -437,11 +437,11 @@ function Projects({ credits }: { credits: Credit[] }) {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-bold text-[#12143A]">{credit.project_name || "Untitled project"}</p>
-                  <p className="truncate text-xs text-[#62678A]">{[credit.platform, credit.role_played].filter(Boolean).join(" · ") || "Creative project"}</p>
+                  <p className="truncate text-xs text-[#62678A]">{[credit.platform, credit.role_played].filter(Boolean).join(" Â· ") || "Creative project"}</p>
                 </div>
                 <div className="shrink-0 text-right">
                   <p className="flex items-center justify-end gap-1 text-xs font-semibold text-[#0D9F8A]"><CheckCircle2 className="size-3.5" />{status}</p>
-                  <p className="mt-1 text-xs text-[#62678A]">{credit.year || "—"}</p>
+                  <p className="mt-1 text-xs text-[#62678A]">{credit.year || "â€”"}</p>
                 </div>
               </div>
             );
@@ -493,7 +493,7 @@ function ReputationTrend({ history }: { history: TalentReputation["rating_histor
           <div className="flex items-center gap-3 rounded-2xl bg-[#F8F6FF] p-3">
             <span className="grid size-9 place-items-center rounded-xl bg-[#EDE5FF] text-[#6428F5]"><BarChart3 className="size-5" /></span>
             <p className="text-xs leading-4 text-[#62678A]">{growth > 0 ? `Your review score has grown by ${growth.toFixed(1)} points across the available reviews.` : "Your review score is holding steady across the available reviews."}</p>
-            {growth > 0 && <span className="ml-auto shrink-0 text-lg font-bold text-[#0D9F8A]">↑ {growth.toFixed(1)}</span>}
+            {growth > 0 && <span className="ml-auto shrink-0 text-lg font-bold text-[#0D9F8A]">â†‘ {growth.toFixed(1)}</span>}
           </div>
         </>
       ) : (

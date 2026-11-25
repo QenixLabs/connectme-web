@@ -139,7 +139,7 @@ export function ProviderSignupFlow() {
         // Fallback gracefully
       }
 
-      toast.success("Account verified! Welcome to RootIn Provider Studio.");
+      toast.success("Account verified! Welcome to Morporfile Provider Studio.");
       setStep(6);
     } catch (err: unknown) {
       const msg = getApiErrorMessage(

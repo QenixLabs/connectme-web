@@ -1,5 +1,5 @@
 "use client";
-import { RootInLogo } from "@/components/RootInLogo";
+import { MorporfileLogo } from "@/components/MorporfileLogo";
 import Link from "next/link";
 
 import { useEffect, useState, type ReactNode } from "react";
@@ -296,10 +296,10 @@ export function StepOrganization({
       >
        <Link
          href="/"
-         aria-label="Go to RootIn homepage"
+         aria-label="Go to Morporfile homepage"
          className="absolute left-[6%] top-3 z-10 sm:top-4"
        >
-         <RootInLogo className="w-28 pb-4" />
+         <MorporfileLogo className="w-28 pb-4" />
        </Link>
        <div className="absolute left-[6%] top-[56%] w-[52%] -translate-y-1/2 mt-1">
          <h1 className=" mt-2 text-[clamp(26px,5vw,35px)] font-bold leading-[1.05] text-[#080B2B]">
@@ -341,7 +341,7 @@ export function StepOrganization({
         <div>
           <p className="font-bold text-foreground">Add your organization logo</p>
           <p className="text-sm text-muted-foreground">
-            Recommended size 512 × 512 px (PNG, JPG or SVG)
+            Recommended size 512 Ã— 512 px (PNG, JPG or SVG)
           </p>
           {logoError ? <p className="mt-1 text-sm text-destructive">{logoError}</p> : null}
         </div>

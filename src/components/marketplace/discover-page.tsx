@@ -58,25 +58,25 @@ const DISCOVERY_HEROES: Record<
     title: "Find the best opportunities for your talent",
     accent: "opportunities",
     description: "Explore auditions, casting calls, projects, and creative roles.",
-    image: "/images/landing/rootin-opportunity-banner.webp",
+    image: "/images/landing/morporfile-opportunity-banner.webp",
   },
   recruiters: {
     title: "Discover recruiters and companies",
     accent: "recruiters",
     description: "Connect with production houses, agencies, and creative brands.",
-    image: "/images/landing/rootin-recruiter-banner.webp",
+    image: "/images/landing/morporfile-recruiter-banner.webp",
   },
   talent: {
     title: "Find the right talent for your next project",
     accent: "right talent",
     description: "Search creative profiles and connect with your next collaborator.",
-    image: "/images/landing/rootin-talent-banner.webp",
+    image: "/images/landing/morporfile-talent-banner.webp",
   },
   services: {
     title: "Book creative services for your next project",
     accent: "creative services",
     description: "Find trusted studios, professionals, and production teams.",
-    image: "/images/landing/rootin-service-banner.webp",
+    image: "/images/landing/morporfile-service-banner.webp",
   },
 };
 
@@ -115,9 +115,9 @@ function formatBudget(budget?: Campaign["budget_range"]) {
   if (!budget || (budget.min == null && budget.max == null))
     return "Budget not listed";
   const currency =
-    budget.currency === "INR" ? "₹" : `${budget.currency ?? ""} `;
+    budget.currency === "INR" ? "â‚¹" : `${budget.currency ?? ""} `;
   if (budget.min != null && budget.max != null) {
-    return `${currency}${budget.min.toLocaleString()} – ${currency}${budget.max.toLocaleString()}`;
+    return `${currency}${budget.min.toLocaleString()} â€“ ${currency}${budget.max.toLocaleString()}`;
   }
   if (budget.min != null)
     return `From ${currency}${budget.min.toLocaleString()}`;
@@ -157,7 +157,7 @@ function OpportunityCard({
               <h2 className="font-semibold leading-snug">{campaign.name}</h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 {campaign.recruiter?.company_name ?? "Recruiter"}
-                {campaign.role_type ? ` · ${campaign.role_type}` : ""}
+                {campaign.role_type ? ` Â· ${campaign.role_type}` : ""}
               </p>
             </div>
             {canSave && (
@@ -214,7 +214,7 @@ function OpportunityCard({
                 <Badge variant="secondary">
                   Age {campaign.requirements.age_range.min ?? "Any"}
                   {campaign.requirements.age_range.max
-                    ? `–${campaign.requirements.age_range.max}`
+                    ? `â€“${campaign.requirements.age_range.max}`
                     : "+"}
                 </Badge>
               )}
@@ -412,7 +412,7 @@ export function DiscoverPage() {
         <div className="relative z-10 flex min-h-36 items-stretch sm:min-h-56">
           <div className="flex w-full max-w-2xl flex-col justify-center px-5 py-4 sm:w-[65%] sm:px-8 sm:py-8 lg:px-10">
             <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-indigo-200 sm:text-xs sm:tracking-[0.2em]">
-              RootIn creative network <span aria-hidden="true">/</span> {mode}
+              Morporfile creative network <span aria-hidden="true">/</span> {mode}
             </p>
             <h1 className="mt-2 text-xl font-bold leading-tight sm:mt-3 sm:text-3xl md:text-4xl">
               {DISCOVERY_HEROES[mode].title.split(DISCOVERY_HEROES[mode].accent)[0]}

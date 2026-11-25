@@ -98,7 +98,7 @@ export function BasicInfoEditor({ profile, onBack, onUpdate }: EditorProps) {
             <p className="text-xs text-muted-foreground">
               Your profile link:{" "}
               <span className="font-semibold text-primary">
-                rootin.com/@{username || "username"}
+                morporfile.com/@{username || "username"}
               </span>
             </p>
             <div className="relative">
@@ -127,7 +127,7 @@ export function BasicInfoEditor({ profile, onBack, onUpdate }: EditorProps) {
               id="headline"
               value={headline}
               onChange={(e) => setHeadline(e.target.value)}
-              placeholder="Actor · Model based in Mumbai"
+              placeholder="Actor Â· Model based in Mumbai"
             />
           </div>
 
@@ -200,7 +200,7 @@ export function BasicInfoEditor({ profile, onBack, onUpdate }: EditorProps) {
             </Popover>
             {dobDate ? (
               <p className="text-xs text-muted-foreground">
-                Age {calcAge(dobDate)} — shown only to verified recruiters.
+                Age {calcAge(dobDate)} â€” shown only to verified recruiters.
               </p>
             ) : null}
           </div>

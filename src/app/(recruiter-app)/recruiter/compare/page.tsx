@@ -4,9 +4,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CompareTalentPage } from "@/components/recruiter-app/compare-talent/CompareTalentPage";
 
 export const metadata: Metadata = {
-  title: "RootIn — Compare Talent",
+  title: "Morporfile â€” Compare Talent",
   description:
-    "Compare shortlisted talent side by side — trust score, availability, skills and credits — then invite the best fit.",
+    "Compare shortlisted talent side by side â€” trust score, availability, skills and credits â€” then invite the best fit.",
 };
 
 export default function RecruiterCompareRoute() {

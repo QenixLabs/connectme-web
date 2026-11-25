@@ -129,9 +129,9 @@ function formatLocation(location?: { city?: string; state?: string }): string {
 
 function formatBudget(budget?: { min?: number; max?: number; currency?: string }): string {
   if (!budget) return "";
-  const sym = budget.currency === "INR" ? "₹" : "$";
+  const sym = budget.currency === "INR" ? "â‚¹" : "$";
   if (budget.min && budget.max) {
-    return `${sym}${budget.min.toLocaleString()} – ${sym}${budget.max.toLocaleString()}`;
+    return `${sym}${budget.min.toLocaleString()} â€“ ${sym}${budget.max.toLocaleString()}`;
   }
   if (budget.min) return `From ${sym}${budget.min.toLocaleString()}`;
   if (budget.max) return `Up to ${sym}${budget.max.toLocaleString()}`;
@@ -140,7 +140,7 @@ function formatBudget(budget?: { min?: number; max?: number; currency?: string }
 
 function formatAgeRange(age?: { min?: number; max?: number }): string {
   if (!age) return "";
-  if (age.min && age.max) return `${age.min}–${age.max} yrs`;
+  if (age.min && age.max) return `${age.min}â€“${age.max} yrs`;
   if (age.min) return `${age.min}+ yrs`;
   if (age.max) return `Up to ${age.max} yrs`;
   return "";
@@ -452,7 +452,7 @@ function FeedCard({
 
   const requirementBits = [item.gender, item.ageRangeText, item.languagesText]
     .filter(Boolean)
-    .join(" · ");
+    .join(" Â· ");
 
   return (
     <motion.article
@@ -849,7 +849,7 @@ export function OpportunitiesPage() {
       <section
         className="relative mx-4 isolate overflow-hidden rounded-3xl bg-[#0a0827] bg-cover bg-[65%_center] bg-no-repeat text-white shadow-sm sm:bg-right"
         style={{
-          backgroundImage: `url(${isRecruiterView ? "/images/landing/rootin-recruiter-banner.webp" : "/images/landing/rootin-opportunity-banner.webp"})`,
+          backgroundImage: `url(${isRecruiterView ? "/images/landing/morporfile-recruiter-banner.webp" : "/images/landing/morporfile-opportunity-banner.webp"})`,
         }}
       >
         <div
@@ -859,7 +859,7 @@ export function OpportunitiesPage() {
         <div className="relative z-10 flex min-h-36 items-stretch sm:min-h-56">
           <div className="flex w-full max-w-2xl flex-col justify-center px-5 py-4 sm:w-[65%] sm:px-8 sm:py-8 lg:px-10">
             <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-indigo-200 sm:text-xs sm:tracking-[0.2em]">
-              RootIn creative network / {isRecruiterView ? "companies" : isServicesView ? "marketplace" : "opportunities"}
+              Morporfile creative network / {isRecruiterView ? "companies" : isServicesView ? "marketplace" : "opportunities"}
             </p>
             <h1 className="mt-2 text-xl font-bold leading-tight sm:mt-3 sm:text-3xl md:text-4xl">
               {isRecruiterView ? (
@@ -1007,7 +1007,7 @@ export function OpportunitiesPage() {
       {isForYou && (
         <section className="mt-6">
           <div className="px-4">
-            <SectionHeader title="Featured & recommended campaigns" emoji="✨" href="?tab=All" />
+            <SectionHeader title="Featured & recommended campaigns" emoji="âœ¨" href="?tab=All" />
           </div>
             <div className="grid gap-3 px-4 pb-1 sm:grid-cols-2 xl:grid-cols-3">
             {recsLoading ? (

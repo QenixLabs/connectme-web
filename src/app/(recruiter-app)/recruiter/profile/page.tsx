@@ -81,20 +81,20 @@ function getVerificationDisplay(
   if (status === "enterprise" || status === "trusted_partner") {
     return {
       label: "Fully Verified",
-      sublabel: `Tier ${tier} · All verifications complete`,
+      sublabel: `Tier ${tier} Â· All verifications complete`,
       verified: true,
     };
   }
   if (status === "basic") {
     return {
       label: "Basic Verified",
-      sublabel: `Tier ${tier} · Basic verification`,
+      sublabel: `Tier ${tier} Â· Basic verification`,
       verified: true,
     };
   }
   return {
     label: "Verification Pending",
-    sublabel: `Tier ${tier} · Complete verification to unlock features`,
+    sublabel: `Tier ${tier} Â· Complete verification to unlock features`,
     verified: false,
   };
 }
@@ -200,7 +200,7 @@ export default function RecruiterProfilePage() {
     if (categoryTags.length >= 2) break;
     if (!categoryTags.includes(industry)) categoryTags.push(industry);
   }
-  const categoryLine = categoryTags.join(" • ");
+  const categoryLine = categoryTags.join(" â€¢ ");
 
   const locationText = [profile?.location?.city, profile?.location?.country]
     .map((v) => v?.trim())
@@ -252,7 +252,7 @@ export default function RecruiterProfilePage() {
   return (
     <div className="min-h-screen bg-[#F6F8FC]">
       <div className="mx-auto w-full max-w-[430px] px-4 pb-10 pt-5">
-        {/* 1 — Header */}
+        {/* 1 â€” Header */}
         <header className="flex items-center justify-between pb-4">
           <h1 className="text-[29px] font-bold tracking-tight text-[#0F1D2E]">
             Profile
@@ -266,7 +266,7 @@ export default function RecruiterProfilePage() {
           </Link>
         </header>
 
-        {/* 2 — Company identity hero (no card, no gradient) */}
+        {/* 2 â€” Company identity hero (no card, no gradient) */}
         <section aria-label="Company identity" className="flex items-start gap-3.5">
           {profilePhoto ? (
             <img
@@ -275,7 +275,7 @@ export default function RecruiterProfilePage() {
               className="h-[88px] w-[88px] shrink-0 rounded-[20px] border border-black/5 object-cover shadow-[0_1px_2px_rgba(15,23,42,0.08)]"
             />
           ) : (
-            <div className="flex h-[88px] w-[88px] shrink-0 items-center justify-center rounded-[20px] bg-[#E8EFFD] text-[26px] font-bold text-rootin shadow-[0_1px_2px_rgba(15,23,42,0.08)]">
+            <div className="flex h-[88px] w-[88px] shrink-0 items-center justify-center rounded-[20px] bg-[#E8EFFD] text-[26px] font-bold text-morporfile shadow-[0_1px_2px_rgba(15,23,42,0.08)]">
               {getInitials(companyName)}
             </div>
           )}
@@ -283,11 +283,11 @@ export default function RecruiterProfilePage() {
           <div className="min-w-0 flex-1 pt-0.5">
             <div className="flex items-center gap-1.5">
               <h2 className="truncate text-[19px] font-bold leading-snug text-[#0F1D2E]">
-                {loadingProfile ? "Loading…" : companyName}
+                {loadingProfile ? "Loadingâ€¦" : companyName}
               </h2>
               {verification.verified && (
                 <BadgeCheck
-                  className="h-[18px] w-[18px] shrink-0 text-rootin"
+                  className="h-[18px] w-[18px] shrink-0 text-morporfile"
                   strokeWidth={2.5}
                   aria-label={verification.label}
                 />
@@ -316,7 +316,7 @@ export default function RecruiterProfilePage() {
             )}
             <Link
               href="/recruiter/profile/edit"
-              className="mt-2.5 inline-flex h-9 items-center gap-1.5 rounded-full border border-[#E6EAF0] bg-white px-4 text-[13px] font-semibold text-rootin shadow-[0_1px_2px_rgba(15,23,42,0.05)] transition-colors hover:border-rootin/40"
+              className="mt-2.5 inline-flex h-9 items-center gap-1.5 rounded-full border border-[#E6EAF0] bg-white px-4 text-[13px] font-semibold text-morporfile shadow-[0_1px_2px_rgba(15,23,42,0.05)] transition-colors hover:border-morporfile/40"
             >
               <Pencil className="h-3.5 w-3.5" />
               Edit profile
@@ -324,7 +324,7 @@ export default function RecruiterProfilePage() {
           </div>
         </section>
 
-        {/* 3 — Credibility: trust score + verification merged */}
+        {/* 3 â€” Credibility: trust score + verification merged */}
         <section aria-label="Credibility" className="mt-5">
           <SectionLabel>Credibility</SectionLabel>
           <div className="rounded-[20px] border border-[#E6EAF0] bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
@@ -335,7 +335,7 @@ export default function RecruiterProfilePage() {
                   <p className="text-[15px] font-semibold text-[#0F1D2E]">
                     Trust Score
                   </p>
-                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#EAF1FE] px-2 py-0.5 text-[11px] font-semibold text-rootin">
+                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#EAF1FE] px-2 py-0.5 text-[11px] font-semibold text-morporfile">
                     <Check className="h-3 w-3" strokeWidth={3} />
                     Tier {verificationTier}
                   </span>
@@ -373,7 +373,7 @@ export default function RecruiterProfilePage() {
           </div>
         </section>
 
-        {/* 4 — Business plan / usage */}
+        {/* 4 â€” Business plan / usage */}
         <section aria-label="Business plan" className="mt-4">
           <div className="rounded-[20px] border border-[#E6EAF0] bg-white p-4 shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
             <div className="mb-3 flex items-baseline justify-between gap-2">
@@ -419,7 +419,7 @@ export default function RecruiterProfilePage() {
           </div>
         </section>
 
-        {/* 5 — Settings */}
+        {/* 5 â€” Settings */}
         <section aria-label="Settings" className="mt-4">
           <SectionLabel>Settings</SectionLabel>
           <div className="overflow-hidden rounded-[20px] border border-[#E6EAF0] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
@@ -448,20 +448,20 @@ export default function RecruiterProfilePage() {
           </div>
         </section>
 
-        {/* 6 — Account information */}
+        {/* 6 â€” Account information */}
         <section aria-label="Account information" className="mt-4">
           <SectionLabel>Account</SectionLabel>
           <div className="rounded-[20px] border border-[#E6EAF0] bg-white px-4 py-1 shadow-[0_1px_2px_rgba(15,23,42,0.05)]">
             <div className="flex items-center justify-between gap-3 border-b border-[#F1F5F9] py-2.5">
               <span className="shrink-0 text-[13px] text-[#64748B]">Email</span>
               <span className="truncate text-[13px] font-medium text-[#0F1D2E]">
-                {user?.email ?? "—"}
+                {user?.email ?? "â€”"}
               </span>
             </div>
             <div className="flex items-center justify-between gap-3 border-b border-[#F1F5F9] py-2.5">
               <span className="shrink-0 text-[13px] text-[#64748B]">Phone</span>
               <span className="truncate text-[13px] font-medium text-[#0F1D2E]">
-                {user?.phone ?? "—"}
+                {user?.phone ?? "â€”"}
               </span>
             </div>
             {website && (
@@ -488,7 +488,7 @@ export default function RecruiterProfilePage() {
                       month: "short",
                       year: "numeric",
                     })
-                  : "—"}
+                  : "â€”"}
               </span>
             </div>
           </div>

@@ -64,7 +64,7 @@ const visuals: Partial<Record<NotificationType, NotificationVisual>> = {
 
 function actorName(n: Notification) {
   const actor = n.actor_id;
-  return actor?.full_legal_name || actor?.company_name || actor?.email || "RootIn";
+  return actor?.full_legal_name || actor?.company_name || actor?.email || "Morporfile";
 }
 
 function visualFor(n: Notification): NotificationVisual {
@@ -108,7 +108,7 @@ function NotificationRow({ notification, onClick, onRespond, isResponding }: {
       <span className="min-w-0 flex-1">
         <span className="flex items-start gap-2"><span className="min-w-0 flex-1 text-[13px] font-semibold leading-5 text-slate-900">{notification.title}</span>{unread && <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary" aria-label="Unread" />}</span>
         <span className="mt-0.5 block line-clamp-2 text-[12px] leading-[18px] text-slate-500">{notification.body || actorName(notification)}</span>
-        <span className="mt-1 flex items-center gap-1.5 text-[11px] text-slate-400"><span>{relativeTime(notification.created_at)}</span><span aria-hidden>·</span><span>{notificationTypeLabel(notification.type)}</span></span>
+        <span className="mt-1 flex items-center gap-1.5 text-[11px] text-slate-400"><span>{relativeTime(notification.created_at)}</span><span aria-hidden>Â·</span><span>{notificationTypeLabel(notification.type)}</span></span>
         {pendingOffer && <span className="mt-2 flex flex-wrap items-center gap-2" onClick={(event) => event.stopPropagation()}>{expired ? <Badge variant="outline" className="h-7 text-[11px]">Offer expired</Badge> : <><Button size="sm" className="h-8 px-3 text-xs" disabled={isResponding} onClick={() => onRespond("accepted")}>Accept</Button><Button size="sm" variant="outline" className="h-8 px-3 text-xs" disabled={isResponding} onClick={() => onRespond("declined")}>Decline</Button>{expiresAt && <span className="text-[11px] text-slate-400">Expires {expiresAt.toLocaleDateString()}</span>}</>}</span>}
       </span>
       {detail && <ChevronRight className="mt-3 size-4 shrink-0 text-slate-300 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />}
@@ -180,8 +180,8 @@ export function NotificationsPage({ audience = "talent" }: { audience?: "talent"
     <div className="mt-4 border-b border-slate-200"><div className="grid grid-cols-3" role="tablist" aria-label="Notification views">{([["all", "All"], ["unread", "Unread"], ["history", "History"]] as const).map(([value, label]) => <button key={value} type="button" role="tab" aria-selected={tab === value} onClick={() => { setTab(value); setQuery(""); }} className={cn("relative min-h-11 px-2 text-sm font-semibold transition-colors", tab === value ? "text-primary" : "text-slate-500 hover:text-slate-800")}>{label}{value === "unread" && unreadCount > 0 && <span className="ml-1.5 text-[11px] text-primary">{unreadCount}</span>}{tab === value && <span className="absolute inset-x-3 -bottom-px h-0.5 rounded-full bg-primary" />}</button>)}</div></div>
     <section className="mt-2 overflow-hidden rounded-[14px] bg-white px-3 shadow-[0_2px_12px_rgba(30,64,120,0.04)]" aria-live="polite">
       {isLoading && Array.from({ length: 5 }).map((_, index) => <SkeletonRow key={index} />)}
-      {!isLoading && isError && <div className="px-4 py-12 text-center"><CircleAlert className="mx-auto size-8 text-amber-500" /><p className="mt-3 text-sm font-medium">Couldn’t load notifications</p><p className="mt-1 text-xs text-slate-500">Please try again in a moment.</p></div>}
-      {!isLoading && !isError && !grouped.length && <div className="px-4 py-14 text-center"><Inbox className="mx-auto size-8 text-slate-300" /><p className="mt-3 text-sm font-semibold">{query ? "No matching notifications" : tab === "history" ? "No notification history" : tab === "unread" ? "You’re all caught up" : "No notifications yet"}</p><p className="mt-1 text-xs text-slate-500">{query ? "Try a different search term." : "New updates will appear here."}</p></div>}
+      {!isLoading && isError && <div className="px-4 py-12 text-center"><CircleAlert className="mx-auto size-8 text-amber-500" /><p className="mt-3 text-sm font-medium">Couldnâ€™t load notifications</p><p className="mt-1 text-xs text-slate-500">Please try again in a moment.</p></div>}
+      {!isLoading && !isError && !grouped.length && <div className="px-4 py-14 text-center"><Inbox className="mx-auto size-8 text-slate-300" /><p className="mt-3 text-sm font-semibold">{query ? "No matching notifications" : tab === "history" ? "No notification history" : tab === "unread" ? "Youâ€™re all caught up" : "No notifications yet"}</p><p className="mt-1 text-xs text-slate-500">{query ? "Try a different search term." : "New updates will appear here."}</p></div>}
       {!isLoading && !isError && grouped.map((section) => <div key={section.label}><h2 className="px-1 pb-1 pt-4 text-[11px] font-bold uppercase tracking-[0.14em] text-slate-400">{section.label}</h2>{section.items.map((n) => <NotificationRow key={n._id} notification={n} onClick={() => openNotification(n)} onRespond={(action) => respondToOffer(n, action)} isResponding={respond.isPending} />)}</div>)}
     </section>
     {hasNextPage && <div className="flex justify-center py-5"><Button variant="outline" className="min-h-11 rounded-xl bg-white" onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>{isFetchingNextPage ? <><Loader2 className="size-4 animate-spin" /> Loading...</> : "Load more"}</Button></div>}

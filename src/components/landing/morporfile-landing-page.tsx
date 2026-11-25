@@ -22,7 +22,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import { RootInLogo } from "@/components/RootInLogo";
+import { MorporfileLogo } from "@/components/MorporfileLogo";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -30,8 +30,8 @@ import { toast } from "sonner";
 // external preview host that was slow enough for the Next.js image optimizer
 // (7s upstream timeout) to abort, which surfaced as TimeoutError in the server
 // logs and broken images on the landing page.
-const heroImage = "/images/landing/rootin-hero.webp";
-const bannerImage = "/images/landing/rootin-banner.webp";
+const heroImage = "/images/landing/morporfile-hero.webp";
+const bannerImage = "/images/landing/morporfile-banner.webp";
 
 type AudienceTone = "purple" | "blue" | "orange";
 
@@ -52,7 +52,7 @@ const audienceCards: AudienceCardData[] = [
   {
     id: "talent",
     tone: "purple",
-    image: "/images/landing/rootin-talent.webp",
+    image: "/images/landing/morporfile-talent.webp",
     imagePosition: "center 30%",
     icon: UsersRound,
     title: "Talent",
@@ -64,7 +64,7 @@ const audienceCards: AudienceCardData[] = [
   {
     id: "recruiters",
     tone: "blue",
-    image: "/images/landing/rootin-recruiter.webp",
+    image: "/images/landing/morporfile-recruiter.webp",
     imagePosition: "center 28%",
     icon: BriefcaseBusiness,
     title: "Recruiters",
@@ -76,7 +76,7 @@ const audienceCards: AudienceCardData[] = [
   {
     id: "services",
     tone: "orange",
-    image: "/images/landing/rootin-service.webp",
+    image: "/images/landing/morporfile-service.webp",
     imagePosition: "center 32%",
     icon: Settings,
     title: "Services Provider & Marketplace",
@@ -89,12 +89,12 @@ const audienceCards: AudienceCardData[] = [
 ];
 
 const socialAvatars = [
-  { src: "/avatars/avatar-1.jpg", alt: "RootIn community member" },
-  { src: "/avatars/avatar-2.jpg", alt: "RootIn community member" },
-  { src: "/avatars/avatar-3.jpg", alt: "RootIn community member" },
-  { src: "/avatars/avatar-user.jpg", alt: "RootIn community member" },
-  { src: "/images/avatars/avatar-priya.jpg", alt: "RootIn community member" },
-  { src: "/images/avatars/avatar-arjun.jpg", alt: "RootIn community member" },
+  { src: "/avatars/avatar-1.jpg", alt: "Morporfile community member" },
+  { src: "/avatars/avatar-2.jpg", alt: "Morporfile community member" },
+  { src: "/avatars/avatar-3.jpg", alt: "Morporfile community member" },
+  { src: "/avatars/avatar-user.jpg", alt: "Morporfile community member" },
+  { src: "/images/avatars/avatar-priya.jpg", alt: "Morporfile community member" },
+  { src: "/images/avatars/avatar-arjun.jpg", alt: "Morporfile community member" },
 ];
 
 const featureItems: { icon: LucideIcon; lines: string[]; href: string }[] = [
@@ -125,10 +125,10 @@ function LandingActionLink({
   tone?: "primary" | AudienceTone | "outline";
   className?: string;
 }) {
-  const toneClass = tone === "primary" ? "rootin-button-primary" : `rootin-button-${tone}`;
+  const toneClass = tone === "primary" ? "morporfile-button-primary" : `morporfile-button-${tone}`;
 
   return (
-    <Link href={href} className={`rootin-button ${toneClass} ${className}`}>
+    <Link href={href} className={`morporfile-button ${toneClass} ${className}`}>
       {children}
     </Link>
   );
@@ -137,15 +137,15 @@ function LandingActionLink({
 function LandingHeader() {
   return (
     <header className="landing-header">
-      <Link className="brand" href="#top" aria-label="Rootin home">
-        <RootInLogo className="brand-logo" />
+      <Link className="brand" href="#top" aria-label="Morporfile home">
+        <MorporfileLogo className="brand-logo" />
       </Link>
 
       <div className="nav-actions">
-        <Button asChild variant="rootinOutline">
+        <Button asChild variant="morporfileOutline">
           <Link href="/auth/login">Sign In</Link>
         </Button>
-        <Button asChild variant="rootin">
+        <Button asChild variant="morporfile">
           <Link href="/auth">Sign Up</Link>
         </Button>
       </div>
@@ -156,7 +156,7 @@ function LandingHeader() {
 function SocialProof() {
   return (
     <div className="social-proof">
-      <div className="avatar-stack" aria-label="RootIn members">
+      <div className="avatar-stack" aria-label="Morporfile members">
         {socialAvatars.map((avatar) => (
           <Image
             key={avatar.src}
@@ -170,7 +170,7 @@ function SocialProof() {
       </div>
       <div>
         <strong>50K+</strong>
-        <span>Talents already on RootIn</span>
+        <span>Talents already on Morporfile</span>
       </div>
     </div>
   );
@@ -184,7 +184,7 @@ function RoleSwitcher() {
   ] as const;
 
   return (
-    <nav className="role-switcher" aria-label="Choose your RootIn path">
+    <nav className="role-switcher" aria-label="Choose your Morporfile path">
       {roles.map(({ label, href, icon: Icon, tone }) => (
         <a href={href} key={label}>
           <span className={`role-switcher-icon ${tone}`}>
@@ -218,7 +218,7 @@ function HeroSection({ onWatchVideo }: { onWatchVideo: () => void }) {
           <LandingActionLink href="/auth" className="hero-primary-action">
             Get Started <ArrowRight size={20} />
           </LandingActionLink>
-          <button className="rootin-button rootin-button-outline hero-video-action" type="button" onClick={onWatchVideo}>
+          <button className="morporfile-button morporfile-button-outline hero-video-action" type="button" onClick={onWatchVideo}>
             <span className="play-round">
               <Play size={16} fill="currentColor" aria-hidden="true" />
             </span>
@@ -249,7 +249,7 @@ function HeroSection({ onWatchVideo }: { onWatchVideo: () => void }) {
             Opportunities.
           </div>
           <div className="hero-scribble" aria-hidden="true">
-            ↗ One Platform
+            â†— One Platform
             <br />
             Endless Possibilities
           </div>
@@ -262,7 +262,7 @@ function HeroSection({ onWatchVideo }: { onWatchVideo: () => void }) {
 
 function FeatureStrip() {
   return (
-    <section className="feature-section" id="opportunities" aria-label="What you can do on RootIn">
+    <section className="feature-section" id="opportunities" aria-label="What you can do on Morporfile">
       <nav className="feature-strip">
         {featureItems.map(({ icon: Icon, lines, href }) => (
           <a href={href} key={lines.join("-")}>
@@ -289,7 +289,7 @@ function AudienceCard({ card }: { card: AudienceCardData }) {
         <div className="audience-card-image">
           <Image
             src={card.image}
-            alt={`${card.title} on RootIn`}
+            alt={`${card.title} on Morporfile`}
             fill
             sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
             className="audience-card-art"
@@ -316,7 +316,7 @@ function AudienceCard({ card }: { card: AudienceCardData }) {
           <button
             type="button"
             onClick={() => toast.info("Service provider onboarding is coming soon")}
-            className={`rootin-button rootin-button-${actionTone} audience-card-cta w-full`}
+            className={`morporfile-button morporfile-button-${actionTone} audience-card-cta w-full`}
           >
             {card.action} <ArrowRight size={18} />
           </button>
@@ -330,7 +330,7 @@ function AudienceCard({ card }: { card: AudienceCardData }) {
       <div className="audience-card-image">
         <Image
           src={card.image}
-          alt={`${card.title} on RootIn`}
+          alt={`${card.title} on Morporfile`}
           fill
           sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
           className="audience-card-art"
@@ -364,7 +364,7 @@ function AudienceCard({ card }: { card: AudienceCardData }) {
 
 function AudienceCards() {
   return (
-    <section className="audience-section" aria-label="Join the RootIn community">
+    <section className="audience-section" aria-label="Join the Morporfile community">
       <div className="audience-grid">
         {audienceCards.map((card) => (
           <AudienceCard card={card} key={card.id} />
@@ -376,7 +376,7 @@ function AudienceCards() {
 
 function PlatformStats() {
   return (
-    <section className="stats-panel" aria-label="RootIn community numbers">
+    <section className="stats-panel" aria-label="Morporfile community numbers">
       {statItems.map(({ icon: Icon, value, lines, tone }) => (
         <div className={`stat-item ${tone}`} key={value}>
           <Icon aria-hidden="true" />
@@ -402,12 +402,12 @@ function TrustedBrands() {
           Disney+
           <b>hotstar</b>
         </span>
-        <span className="brand-prime">prime video <small>⌣</small></span>
+        <span className="brand-prime">prime video <small>âŒ£</small></span>
         <span className="brand-zee">ZEE</span>
         <span className="brand-sony">SONY</span>
         <span className="brand-viacom">viacom<small>18</small></span>
         <span className="brand-tseries">T<small>Series</small></span>
-        <span className="brand-dharma">◌ DHARMA<small>PRODUCTIONS</small></span>
+        <span className="brand-dharma">â—Œ DHARMA<small>PRODUCTIONS</small></span>
         <span className="brand-more">&amp; More</span>
       </div>
     </section>
@@ -418,7 +418,7 @@ function BottomCta() {
   return (
     <section className="bottom-cta hero-card" id="join">
       <div className="bottom-cta-copy hero-content">
-        <div className="bottom-cta-kicker">JOIN ROOTIN TODAY</div>
+        <div className="bottom-cta-kicker">JOIN MORPORFILE TODAY</div>
         <h2>
           Create. Collaborate.
           <br />
@@ -431,7 +431,7 @@ function BottomCta() {
           <LandingActionLink href="/auth">
             Sign Up Now <ArrowRight size={18} />
           </LandingActionLink>
-          <a className="rootin-button rootin-button-outline" href="#opportunities">
+          <a className="morporfile-button morporfile-button-outline" href="#opportunities">
             Learn More
           </a>
         </div>
@@ -439,7 +439,7 @@ function BottomCta() {
       <div className="bottom-cta-artwork hero-artwork">
         <Image
           src={bannerImage}
-          alt="RootIn creative talent community with an actress, cameras and lights"
+          alt="Morporfile creative talent community with an actress, cameras and lights"
           width={1942}
           height={809}
           sizes="(min-width: 640px) 50vw, 100vw"
@@ -453,28 +453,28 @@ function BottomCta() {
 function WatchVideoModal({ onClose }: { onClose: () => void }) {
   return (
     <div className="video-modal-backdrop" role="presentation" onClick={onClose}>
-      <div className="video-modal" role="dialog" aria-modal="true" aria-labelledby="rootin-video-title" onClick={(event) => event.stopPropagation()}>
+      <div className="video-modal" role="dialog" aria-modal="true" aria-labelledby="morporfile-video-title" onClick={(event) => event.stopPropagation()}>
         <button className="video-modal-close" type="button" aria-label="Close video" onClick={onClose}>
           <X size={22} />
         </button>
         <div className="video-player">
-          <video controls playsInline preload="metadata" poster={heroImage} aria-label="RootIn introduction video">
+          <video controls playsInline preload="metadata" poster={heroImage} aria-label="Morporfile introduction video">
             <track kind="captions" />
           </video>
-          <div className="video-player-empty">RootIn brand film coming soon.</div>
+          <div className="video-player-empty">Morporfile brand film coming soon.</div>
         </div>
-        <h2 id="rootin-video-title">Meet the RootIn community</h2>
+        <h2 id="morporfile-video-title">Meet the Morporfile community</h2>
         <p>See how talent, recruiters and service providers create better work together.</p>
       </div>
     </div>
   );
 }
 
-export function RootinLandingPage() {
+export function MorporfileLandingPage() {
   const [videoOpen, setVideoOpen] = useState(false);
 
   return (
-    <main className="rootin-page">
+    <main className="morporfile-page">
       <div className="landing-container">
         <LandingHeader />
         <HeroSection onWatchVideo={() => setVideoOpen(true)} />

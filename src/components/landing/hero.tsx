@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
-import logo from "@/assets/rootin-logo-orange.png";
+import logo from "@/assets/morporfile-logo-orange.png";
 import { NetworkVisual } from "./network-visual";
 
 export function Hero() {
@@ -27,9 +27,9 @@ export function Hero() {
           </h1>
 
           <p className="mt-5 max-w-xl text-base leading-relaxed text-text-secondary">
-            <img src={logo.src} alt="RootIn" className="inline-block h-[22px] w-auto align-text-bottom" /> is where professionals showcase their work and discover opportunities, and where
+            <img src={logo.src} alt="Morporfile" className="inline-block h-[22px] w-auto align-text-bottom" /> is where professionals showcase their work and discover opportunities, and where
             recruiters and brands discover, evaluate, shortlist and collaborate with the people they
-            need — from profile to finished project.
+            need â€” from profile to finished project.
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -49,7 +49,7 @@ export function Hero() {
 
           <p className="mt-6 flex items-center gap-2 text-xs text-text-muted">
             <span className="size-1.5 rounded-full bg-success" />
-            One profile. Verified tasks. Real collaboration — not just applications into a void.
+            One profile. Verified tasks. Real collaboration â€” not just applications into a void.
           </p>
         </div>
 

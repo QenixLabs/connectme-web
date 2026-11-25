@@ -75,7 +75,7 @@ export default function PublicProductDetailPage() {
   });
   const product = productQuery.data?.product;
   const provider = product?.provider;
-  const providerName = provider?.display_name || provider?.business_name || "RootIn provider";
+  const providerName = provider?.display_name || provider?.business_name || "Morporfile provider";
   const providerHref = provider?.slug ? `/providers/${encodeURIComponent(provider.slug)}` : undefined;
 
   if (productQuery.isLoading) {
@@ -201,8 +201,8 @@ export default function PublicProductDetailPage() {
               <div className="flex flex-wrap gap-2">
                 {product.variants.map((variant, index) => (
                   <span key={index} className="rounded-full border border-slate-200 px-3 py-1.5 text-xs text-slate-700">
-                    {variant.attributes.map(({ name, value }) => `${name}: ${value}`).join(" · ")}
-                    {variant.price !== undefined ? ` · ${product.pricing.currency} ${variant.price}` : ""}
+                    {variant.attributes.map(({ name, value }) => `${name}: ${value}`).join(" Â· ")}
+                    {variant.price !== undefined ? ` Â· ${product.pricing.currency} ${variant.price}` : ""}
                   </span>
                 ))}
               </div>
@@ -225,13 +225,13 @@ export default function PublicProductDetailPage() {
             ) : (
               <p className="mt-2 text-slate-600">
                 {product.delivery.digital_delivery === "instant" ? "Instant access" : "Digital delivery arranged by the provider"}
-                {product.delivery.delivery_information ? ` · ${product.delivery.delivery_information}` : ""}
+                {product.delivery.delivery_information ? ` Â· ${product.delivery.delivery_information}` : ""}
               </p>
             )}
             {product.delivery.return_exchange && <p className="mt-2 text-slate-600">Returns and exchanges are available.</p>}
           </div>
           <p className="text-xs leading-5 text-slate-500">
-            RootIn does not currently support product checkout or payments. Contact the provider to ask about this listing and confirm availability.
+            Morporfile does not currently support product checkout or payments. Contact the provider to ask about this listing and confirm availability.
           </p>
           {providerHref && (
             <Button asChild className="h-11 w-full rounded-xl bg-violet-700 hover:bg-violet-800">

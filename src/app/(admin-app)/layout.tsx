@@ -51,7 +51,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 
-import rootinLogo from "@/assets/rootin-logo-orange.png";
+import morporfileLogo from "@/assets/morporfile-logo-orange.png";
 import { CommunicationFeed } from "@/components/content/communication-feed";
 import { MarketplaceNotificationBell } from "@/components/marketplace/marketplace-notification-bell";
 
@@ -181,14 +181,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="flex h-12 items-center gap-2.5 px-2">
             <div className="relative h-8 w-8 shrink-0">
               <Image
-                src={rootinLogo}
-                alt="RootIn"
+                src={morporfileLogo}
+                alt="Morporfile"
                 fill
                 className="object-contain"
               />
             </div>
             <span className="text-sm font-semibold tracking-tight group-data-[collapsible=icon]:hidden">
-              RootIn Admin
+              Morporfile Admin
             </span>
           </div>
         </SidebarHeader>

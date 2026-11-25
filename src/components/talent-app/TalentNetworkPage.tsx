@@ -35,7 +35,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-import logoImage from "@/assets/rootin-logo-orange.png";
+import logoImage from "@/assets/morporfile-logo-orange.png";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -108,7 +108,7 @@ const categories = [
   { label: "Writers", image: "/images/portfolio/p7.jpg" },
   { label: "Editors", image: "/images/portfolio/p8.jpg" },
   { label: "Makeup Artists", image: "/images/portfolio/p9.jpg" },
-  { label: "Stylists", image: "/images/casting/rootin-creative-talent-showcase.png" },
+  { label: "Stylists", image: "/images/casting/morporfile-creative-talent-showcase.png" },
   { label: "Voice Artists", image: "/images/portfolio/p10.jpg" },
 ];
 
@@ -273,7 +273,7 @@ function InviteDialog({
               id="invite-message"
               value={message}
               onChange={(event) => setMessage(event.target.value.slice(0, 500))}
-              placeholder={`Hi ${target.name}! I'd love to collaborate on…`}
+              placeholder={`Hi ${target.name}! I'd love to collaborate onâ€¦`}
               rows={4}
               className="resize-none rounded-xl border-[#dbe7f7] bg-[#f8fbff] text-sm shadow-none focus-visible:ring-[#3b82f6]"
             />
@@ -296,7 +296,7 @@ function InviteDialog({
             disabled={createRequest.isPending}
             className="h-10 rounded-xl bg-[#1a5bdb] px-6 text-white hover:bg-[#1246b7]"
           >
-            {createRequest.isPending ? "Sending…" : "Send Invite"}
+            {createRequest.isPending ? "Sendingâ€¦" : "Send Invite"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -380,7 +380,7 @@ function CollaboratorCard({
 
         <div className="flex min-h-5 gap-2 overflow-hidden whitespace-nowrap text-[10px] font-medium text-[#52677f]">
           {tags.map((tag, index) => (
-            <span key={tag} className="shrink-0">{index > 0 ? "· " : ""}{tag}</span>
+            <span key={tag} className="shrink-0">{index > 0 ? "Â· " : ""}{tag}</span>
           ))}
         </div>
 
@@ -462,13 +462,13 @@ function RecruiterCard({ recruiter }: { recruiter: PublicRecruiterDirectoryItem 
           {recruiter.average_rating != null ? <span className="flex shrink-0 items-center gap-1 text-sm font-bold text-[#506b88]"><Star className="size-4 fill-[#f6a914] text-[#f6a914]" /> {recruiter.average_rating.toFixed(1)} <span className="text-[10px] font-medium text-[#8795aa]">({recruiter.total_reviews_count})</span></span> : null}
         </div>
 
-        <p className="line-clamp-2 min-h-8 text-[11px] leading-[1.45] text-[#64748b]">{industries.join(", ") || recruiter.position || "Industry professional"}{recruiter.headline ? ` · ${recruiter.headline}` : ""}</p>
+        <p className="line-clamp-2 min-h-8 text-[11px] leading-[1.45] text-[#64748b]">{industries.join(", ") || recruiter.position || "Industry professional"}{recruiter.headline ? ` Â· ${recruiter.headline}` : ""}</p>
 
         {visibleProjects.length > 0 ? <div className="flex gap-2 overflow-hidden">{visibleProjects.map((project) => <div key={project._id} className="relative aspect-[1.35] min-w-0 flex-1 overflow-hidden rounded-lg bg-[#edf4ff]"><Image src={project.cover_image_url || ""} alt={project.name || "Project"} fill sizes="120px" className="object-cover" /></div>)}</div> : null}
 
         <div className="flex items-center justify-between gap-2">
           {recruiter.project_count > 0 ? <span className="text-center text-[#1a5bdb]"><strong className="block text-sm">{recruiter.project_count}+</strong><span className="text-[10px]">Projects</span></span> : <span />}
-          <div className="flex min-w-0 flex-1 flex-wrap justify-end gap-x-2 text-[10px] font-medium text-[#52677f]">{tags.map((tag, index) => <span key={tag} className="max-w-[46%] truncate">{index > 0 ? "· " : ""}{tag}</span>)}</div>
+          <div className="flex min-w-0 flex-1 flex-wrap justify-end gap-x-2 text-[10px] font-medium text-[#52677f]">{tags.map((tag, index) => <span key={tag} className="max-w-[46%] truncate">{index > 0 ? "Â· " : ""}{tag}</span>)}</div>
         </div>
 
         <div className="grid grid-cols-2 gap-2 pt-1">
@@ -484,7 +484,7 @@ function ProjectCard({ project }: { project: Campaign }) {
   const location = project.location?.city || project.location?.state || "Remote";
   const needs = project.requirements?.skills?.join(", ") || project.specialties?.join(", ") || project.role_type || "Creative collaborators";
   const budget = project.budget_range?.min || project.budget_range?.max
-    ? `${project.budget_range.currency === "INR" ? "₹" : "$"}${(project.budget_range.min ?? project.budget_range.max)?.toLocaleString()}${project.budget_range.max ? ` - ${project.budget_range.currency === "INR" ? "₹" : "$"}${project.budget_range.max.toLocaleString()}` : ""}`
+    ? `${project.budget_range.currency === "INR" ? "â‚¹" : "$"}${(project.budget_range.min ?? project.budget_range.max)?.toLocaleString()}${project.budget_range.max ? ` - ${project.budget_range.currency === "INR" ? "â‚¹" : "$"}${project.budget_range.max.toLocaleString()}` : ""}`
     : "Details on project page";
   return (
     <Card className="w-[min(100%,420px)] min-w-[min(100%,420px)] gap-0 rounded-[17px] border-[#dbe7f7] bg-white p-2.5 shadow-[0_5px_16px_rgba(37,99,235,0.08)] sm:min-w-0">
@@ -498,7 +498,7 @@ function ProjectCard({ project }: { project: Campaign }) {
             <Badge className="shrink-0 rounded-full border-0 bg-[#eaf2ff] px-2 py-1 text-[9px] font-semibold text-[#1d4ed8]">{project.role_type || "Project"}</Badge>
           </div>
           <p className="mt-1 flex items-center gap-1 truncate text-[10px] text-[#64748b]">
-            {project.recruiter?.company_name || "Project creator"} <span className="text-[#9ab2d0]">•</span> <MapPin className="size-3 text-[#2563eb]" /> {location}
+            {project.recruiter?.company_name || "Project creator"} <span className="text-[#9ab2d0]">â€¢</span> <MapPin className="size-3 text-[#2563eb]" /> {location}
           </p>
           <p className="mt-2 text-[10px] leading-snug text-[#64748b]">Needs: {needs}</p>
           <div className="mt-2 space-y-1.5 text-[10px] text-[#64748b]">
@@ -666,7 +666,7 @@ function CollabPostComposerDialog({ onClose }: { onClose: () => void }) {
                       onChange={field.onChange}
                       suggestions={professionsQuery.data ?? []}
                       maxTags={10}
-                      placeholder="e.g. Dancer, Photographer…"
+                      placeholder="e.g. Dancer, Photographerâ€¦"
                     />
                   </FormControl>
                   <FormMessage />
@@ -708,7 +708,7 @@ function CollabPostComposerDialog({ onClose }: { onClose: () => void }) {
                 disabled={createPost.isPending}
                 className="h-10 rounded-xl bg-[#1a5bdb] px-6 text-white hover:bg-[#1246b7]"
               >
-                {createPost.isPending ? "Publishing…" : "Publish Post"}
+                {createPost.isPending ? "Publishingâ€¦" : "Publish Post"}
               </Button>
             </DialogFooter>
           </form>
@@ -736,7 +736,7 @@ function InterestDialog({ post, onClose }: { post: CollabPost; onClose: () => vo
           <DialogTitle className="text-[#172b4d]">Express interest</DialogTitle>
           <DialogDescription className="text-[#64748b]">
             {post.owner.full_legal_name || post.owner.username || "The talent"} will receive your
-            request for “{post.title}”. On accept you can message 1:1.
+            request for â€œ{post.title}â€. On accept you can message 1:1.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-2 py-2">
@@ -747,7 +747,7 @@ function InterestDialog({ post, onClose }: { post: CollabPost; onClose: () => vo
             id="interest-message"
             value={message}
             onChange={(event) => setMessage(event.target.value.slice(0, 500))}
-            placeholder="Hi! I'd love to be part of this because…"
+            placeholder="Hi! I'd love to be part of this becauseâ€¦"
             rows={4}
             className="resize-none rounded-xl border-[#dbe7f7] bg-[#f8fbff] text-sm shadow-none focus-visible:ring-[#3b82f6]"
           />
@@ -769,7 +769,7 @@ function InterestDialog({ post, onClose }: { post: CollabPost; onClose: () => vo
             disabled={expressInterest.isPending}
             className="h-10 rounded-xl bg-[#1a5bdb] px-6 text-white hover:bg-[#1246b7]"
           >
-            {expressInterest.isPending ? "Sending…" : "Send Interest"}
+            {expressInterest.isPending ? "Sendingâ€¦" : "Send Interest"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -870,7 +870,7 @@ function MyCollabPostRow({ post }: { post: CollabPost }) {
           <DialogHeader className="text-left">
           <DialogTitle className="text-[#172b4d]">Delete this post?</DialogTitle>
           <DialogDescription className="text-[#64748b]">
-              “{post.title}” will be removed. Existing conversations with interested talents are kept.
+              â€œ{post.title}â€ will be removed. Existing conversations with interested talents are kept.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex-row justify-end gap-2">
@@ -881,7 +881,7 @@ function MyCollabPostRow({ post }: { post: CollabPost }) {
               disabled={deletePost.isPending}
               className="h-10 rounded-xl bg-[#e3354f] px-5 text-white hover:bg-[#c22740]"
             >
-              {deletePost.isPending ? "Deleting…" : "Delete"}
+              {deletePost.isPending ? "Deletingâ€¦" : "Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -934,7 +934,7 @@ export function TalentNetworkPage() {
     : requestTab === "sent"
       ? sentRequests
       : activeRequests;
-  // Single lookup shared by every collaborator card: userId → connection state.
+  // Single lookup shared by every collaborator card: userId â†’ connection state.
   // (Previously each card fetched the whole requests list under its own query key.)
   const connectionByUserId = useMemo(() => {
     const map = new Map<string, ConnectionStatus>();
@@ -1030,8 +1030,8 @@ export function TalentNetworkPage() {
     <div className="network-page-theme min-h-screen bg-[#f7f9fc] pb-20 text-foreground md:pb-8">
       <header className="bg-white backdrop-blur-xl">
         <div className="mx-auto flex h-[62px] max-w-[1440px] items-center justify-between gap-4 px-4 sm:h-[78px] sm:px-6 lg:px-10">
-          <Link href="/talent/network" className="flex min-w-0 items-center gap-2.5" aria-label="Rootin talent network">
-            <Image src={logoImage} alt="RootIn" height={36} className="h-8 w-auto sm:h-10" priority />
+          <Link href="/talent/network" className="flex min-w-0 items-center gap-2.5" aria-label="Morporfile talent network">
+            <Image src={logoImage} alt="Morporfile" height={36} className="h-8 w-auto sm:h-10" priority />
           </Link>
 
           <nav className="hidden flex-1 items-center justify-center gap-1 md:flex" aria-label="Talent navigation">
@@ -1084,7 +1084,7 @@ export function TalentNetworkPage() {
                       value={searchQuery}
                       onChange={(event) => setSearchQuery(event.target.value)}
                       onKeyDown={(event) => { if (event.key === "Enter") handleSearch(); }}
-                      placeholder="Actors, dancers, photographers…"
+                      placeholder="Actors, dancers, photographersâ€¦"
                       className="h-6 border-0 bg-transparent p-0 text-[11px] text-[#52677f] shadow-none placeholder:text-[#71809a] focus-visible:ring-0 sm:text-sm"
                     />
                   </div>
@@ -1263,7 +1263,7 @@ export function TalentNetworkPage() {
               <div className="mt-3 rounded-[17px] border border-[#dbe7f7] bg-white px-5 py-8 text-center shadow-[0_5px_16px_rgba(37,99,235,0.06)]"><p className="font-semibold text-[#294b70]">We couldn&apos;t load collab posts right now.</p><Button type="button" variant="outline" onClick={() => feedQuery.refetch()} className="mt-3 rounded-xl border-[#3b82f6] text-[#1d4ed8]">Try again</Button></div>
             ) : collabPosts.length === 0 ? (
               <div className="mt-3 rounded-[17px] border border-dashed border-[#b9d0ee] bg-white/70 px-5 py-8 text-center">
-                <p className="font-semibold text-[#294b70]">No open collabs yet — be the first to post one.</p>
+                <p className="font-semibold text-[#294b70]">No open collabs yet â€” be the first to post one.</p>
                 <p className="mt-1 text-sm text-[#71809a]">Describe what you want to create and who you need.</p>
                 <Button type="button" onClick={() => setComposerOpen(true)} className="mt-4 h-10 rounded-xl bg-[#1a5bdb] px-6 text-white hover:bg-[#1246b7]">Post a collab</Button>
               </div>

@@ -173,7 +173,7 @@ function ShowcaseSectionHeader({
           onClick={onViewAll}
           className="ml-auto inline-flex items-center gap-1 text-sm font-bold text-[#641cff] hover:text-[#4311bd]"
         >
-          View All <span aria-hidden>›</span>
+          View All <span aria-hidden>â€º</span>
         </button>
       )}
     </div>
@@ -484,7 +484,7 @@ function PortfolioContent() {
   const showAllSections = activeTab === "Showreel";
 
   // Portfolio items are shared through the same dialog as the profile, but
-  // with an explicit deep link — the default share always points at the
+  // with an explicit deep link â€” the default share always points at the
   // canonical profile URL.
   const shareTarget = useMemo<ShareProfileTarget>(
     () => ({
@@ -577,7 +577,7 @@ function PortfolioContent() {
                 <span className="absolute size-6 rotate-45 rounded-lg bg-gradient-to-br from-[#06b6d4] to-[#ec4899] mix-blend-multiply" />
               </span>
               <span>
-                <span className="block text-lg font-extrabold leading-none tracking-tight text-[#10204c]">Rootin</span>
+                <span className="block text-lg font-extrabold leading-none tracking-tight text-[#10204c]">Morporfile</span>
                 <span className="text-[9px] font-semibold text-[#23366c]">People. Talent. Opportunities.</span>
               </span>
             </div>

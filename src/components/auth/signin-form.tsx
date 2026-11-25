@@ -121,7 +121,7 @@ export function SignInForm() {
           >
             Welcome back
             <br />
-            to <span className="text-[#7C35FF]">RootIn</span>
+            to <span className="text-[#7C35FF]">Morporfile</span>
           </h1>
           <p className="mt-3 max-w-[10rem] text-[13px] font-medium leading-[1.35] text-[#66728F]">
             Your next opportunity
@@ -214,7 +214,7 @@ export function SignInForm() {
                     </div>
                     <Input
                       type={showPassword ? "text" : "password"}
-                      placeholder="••••••••••"
+                      placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                       autoComplete="current-password"
                       className="h-14 rounded-[17px] border-[#E2E7F0] bg-white pl-11 pr-12 text-[15px] text-[#080B2B] shadow-[0_3px_12px_rgba(40,48,90,0.025)] placeholder:text-[#8993AA] focus-visible:border-[#7C35FF] focus-visible:ring-2 focus-visible:ring-[#7C35FF]/10 dark:bg-white"
                       {...field}
@@ -261,7 +261,7 @@ export function SignInForm() {
       </Form>
 
       <p className="mt-4 text-center text-[13px] font-medium text-[#66728F]">
-        New to RootIn?{" "}
+        New to Morporfile?{" "}
         <Link
           href="/auth?mode=signup"
           className="font-bold text-[#7C35FF] transition-colors hover:text-[#1769E8]"

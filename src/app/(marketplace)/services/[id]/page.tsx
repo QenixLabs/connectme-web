@@ -52,8 +52,8 @@ const FALLBACK_IMAGES = [
 
 const BUDGETS = [
   { value: "up_to_25000", label: "Up to Rs 25k", amount: 25_000 },
-  { value: "25000_50000", label: "Rs 25k–50k", amount: 25_000 },
-  { value: "50000_100000", label: "Rs 50k–1L", amount: 50_000 },
+  { value: "25000_50000", label: "Rs 25kâ€“50k", amount: 25_000 },
+  { value: "50000_100000", label: "Rs 50kâ€“1L", amount: 50_000 },
   { value: "above_100000", label: "Above Rs 1L", amount: 100_000 },
 ] as const;
 
@@ -196,7 +196,7 @@ function Header() {
       <div className="mx-auto flex h-[68px] max-w-6xl items-center justify-between px-4">
         <Link
           href="/"
-          aria-label="RootIn home"
+          aria-label="Morporfile home"
           className="text-[27px] font-extrabold tracking-[-0.07em] text-[#1e1550]"
         >
           Root<span className="text-[#f26b1d]">In</span>
@@ -669,7 +669,7 @@ function ProviderCard({
             </h2>
             <p className="mt-0.5 text-sm text-[#5b5878]">
               {provider?.provider_type || "Video editor"}
-              {location ? ` · ${location}` : ""}
+              {location ? ` Â· ${location}` : ""}
             </p>
             <p className="mt-1.5 flex items-center gap-1.5 text-sm font-bold text-[#302b51]">
               <Star className="size-4 fill-[#efa912] text-[#9b6900]" />
@@ -971,7 +971,7 @@ function QuoteForm({
           {mutation.isPending ? (
             <>
               <LoaderCircle className="mr-2 size-4 animate-spin" />
-              Sending inquiry…
+              Sending inquiryâ€¦
             </>
           ) : (
             <>

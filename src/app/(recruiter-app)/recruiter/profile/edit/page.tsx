@@ -176,7 +176,7 @@ function socialPlatform(key: SocialPlatformKey): SocialPlatform {
   return SOCIAL_CATALOG.find((p) => p.key === key) as SocialPlatform;
 }
 
-/** Platforms with a saved URL, in catalog order — initial link slots. */
+/** Platforms with a saved URL, in catalog order â€” initial link slots. */
 function slotsFromProfile(profile: RecruiterProfile): SocialPlatformKey[] {
   return SOCIAL_CATALOG.filter((p) => {
     const value = profile[p.field];
@@ -308,7 +308,7 @@ function getVerificationDisplay(
   return { label: "Verification Pending", sublabel: `Tier ${tier}`, verified: false };
 }
 
-/** Draft → public-profile shape so the preview renders the actual public view. */
+/** Draft â†’ public-profile shape so the preview renders the actual public view. */
 function draftToPublicPreview(
   draft: Draft,
   profile: RecruiterProfile,
@@ -653,7 +653,7 @@ function VerifyContactDialog({
             <AeButton onClick={handleSend} disabled={isSending} className="w-full">
               {isSending ? (
                 <>
-                  <Loader2 className="size-4 animate-spin" /> Sending…
+                  <Loader2 className="size-4 animate-spin" /> Sendingâ€¦
                 </>
               ) : (
                 "Send OTP"
@@ -697,7 +697,7 @@ function VerifyContactDialog({
                 disabled={isSending}
                 className="flex-1"
               >
-                {isSending ? "Resending…" : "Resend"}
+                {isSending ? "Resendingâ€¦" : "Resend"}
               </AeButton>
               <AeButton
                 type="button"
@@ -707,7 +707,7 @@ function VerifyContactDialog({
               >
                 {isVerifying ? (
                   <>
-                    <Loader2 className="size-4 animate-spin" /> Verifying…
+                    <Loader2 className="size-4 animate-spin" /> Verifyingâ€¦
                   </>
                 ) : (
                   "Verify"
@@ -765,7 +765,7 @@ export default function RecruiterProfileEditPage() {
   }, [fetchUser]);
 
   // Sync draft when the server profile version changes (render-phase
-  // adjustment — avoids setState-in-effect cascading renders).
+  // adjustment â€” avoids setState-in-effect cascading renders).
   const [syncedAt, setSyncedAt] = useState<string | null>(null);
   if (profile && syncedAt !== profile.updated_at) {
     setSyncedAt(profile.updated_at);
@@ -809,7 +809,7 @@ export default function RecruiterProfileEditPage() {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [isDirty]);
 
-  // Link slots (platform picker, max 5) — URLs live in draft fields.
+  // Link slots (platform picker, max 5) â€” URLs live in draft fields.
   const [linkSlots, setLinkSlots] = useState<SocialPlatformKey[]>([]);
   const [linksSyncedAt, setLinksSyncedAt] = useState<string | null>(null);
   if (profile && linksSyncedAt !== profile.updated_at) {
@@ -933,7 +933,7 @@ export default function RecruiterProfileEditPage() {
       uploadPhoto.mutate(file, {
         onSuccess: (data) => {
           set("profile_photo", data.relativePath);
-          toast.success("Logo uploaded — tap Save profile");
+          toast.success("Logo uploaded â€” tap Save profile");
         },
         onError: (error) => {
           if (isPlanLimitError(error)) setUploadLimitDialogOpen(true);
@@ -949,7 +949,7 @@ export default function RecruiterProfileEditPage() {
       uploadBanner.mutate(file, {
         onSuccess: (data) => {
           set("banner_image_url", data.relativePath);
-          toast.success("Cover uploaded — tap Save profile");
+          toast.success("Cover uploaded â€” tap Save profile");
         },
         onError: (error) => {
           if (isPlanLimitError(error)) setUploadLimitDialogOpen(true);
@@ -1078,7 +1078,7 @@ export default function RecruiterProfileEditPage() {
       uploadAsset.mutate(file, {
         onSuccess: (data) => {
           set("cta_image_url", data.relativePath);
-          toast.success("CTA image uploaded — tap Save profile");
+          toast.success("CTA image uploaded â€” tap Save profile");
         },
         onError: (error) => {
           if (isPlanLimitError(error)) setUploadLimitDialogOpen(true);
@@ -1259,9 +1259,9 @@ export default function RecruiterProfileEditPage() {
   const logoSummary = hasLogo && hasCover
     ? "Logo + cover added"
     : hasLogo
-      ? "Logo added · cover missing"
+      ? "Logo added Â· cover missing"
       : hasCover
-        ? "Cover added · logo missing"
+        ? "Cover added Â· logo missing"
         : "Add logo and cover";
   const logoStatus: AccordionStatus = hasLogo && hasCover ? "complete" : "incomplete";
 
@@ -1275,7 +1275,7 @@ export default function RecruiterProfileEditPage() {
   ];
   const basicFilled = basicFields.filter(Boolean).length;
   const basicSummary = draft.company_name.trim()
-    ? `${draft.company_name.trim().slice(0, 24)} · ${basicFilled}/6 filled`
+    ? `${draft.company_name.trim().slice(0, 24)} Â· ${basicFilled}/6 filled`
     : `${basicFilled}/6 filled`;
   const basicStatus: AccordionStatus = basicFilled === 6 ? "complete" : "incomplete";
 
@@ -1283,8 +1283,8 @@ export default function RecruiterProfileEditPage() {
   const aboutSummary =
     aboutLength > 0
       ? mottoText
-        ? `${aboutLength} chars · motto set`
-        : `${aboutLength} chars · no motto`
+        ? `${aboutLength} chars Â· motto set`
+        : `${aboutLength} chars Â· no motto`
       : "Add your story";
   const aboutStatus: AccordionStatus =
     aboutLength > 0 && mottoText ? "complete" : "incomplete";
@@ -1321,9 +1321,9 @@ export default function RecruiterProfileEditPage() {
   const langCount = draft.languages?.length ?? 0;
   const extraTags = (draft.banner_tags?.length ?? 0) + (draft.casting_categories?.length ?? 0);
   const companySummary = draft.company_size
-    ? `${draft.company_size.split(" ")[0]} · ${langCount} ${langCount === 1 ? "language" : "languages"}`
+    ? `${draft.company_size.split(" ")[0]} Â· ${langCount} ${langCount === 1 ? "language" : "languages"}`
     : langCount > 0 || extraTags > 0
-      ? `${langCount} ${langCount === 1 ? "language" : "languages"} · ${extraTags} tags`
+      ? `${langCount} ${langCount === 1 ? "language" : "languages"} Â· ${extraTags} tags`
       : "Add company details";
   const companyStatus: AccordionStatus =
     draft.company_size && langCount > 0 ? "complete" : "incomplete";
@@ -1339,9 +1339,9 @@ export default function RecruiterProfileEditPage() {
   const ctaHasImage = !!draft.cta_image_url?.trim();
   const ctaSummary = ctaHeadline
     ? ctaHasImage
-      ? `${ctaHeadline.slice(0, 26)} · image set`
+      ? `${ctaHeadline.slice(0, 26)} Â· image set`
       : ctaHeadline.slice(0, 30)
-    : "Optional · encourage reviews";
+    : "Optional Â· encourage reviews";
   const ctaStatus: AccordionStatus =
     ctaHeadline || ctaHasImage ? "complete" : "optional";
 
@@ -1353,7 +1353,7 @@ export default function RecruiterProfileEditPage() {
   const verificationStatus: AccordionStatus =
     verifiedCount === 3 ? "complete" : "incomplete";
 
-  // CTA banner is optional — it never blocks overall completeness.
+  // CTA banner is optional â€” it never blocks overall completeness.
   const requiredDone = [
     logoStatus,
     basicStatus,
@@ -1388,7 +1388,7 @@ export default function RecruiterProfileEditPage() {
                 Edit Agency Profile
               </h1>
               <p className="truncate text-xs text-muted-foreground md:text-sm">
-                Manage your agency information and how you appear on Rootin.
+                Manage your agency information and how you appear on Morporfile.
               </p>
             </div>
             <div className="hidden md:block">
@@ -1414,7 +1414,7 @@ export default function RecruiterProfileEditPage() {
                     Profile completeness
                   </p>
                   <p className="text-xs font-bold tabular-nums text-primary">
-                    {completenessPct}% · {requiredDone}/{requiredTotal}
+                    {completenessPct}% Â· {requiredDone}/{requiredTotal}
                   </p>
                 </div>
                 <div
@@ -1454,7 +1454,7 @@ export default function RecruiterProfileEditPage() {
                 </Alert>
               )}
 
-              {/* Single-open accordion — all sections collapsed by default */}
+              {/* Single-open accordion â€” all sections collapsed by default */}
               <div className="overflow-hidden border-y border-border/70 bg-card sm:rounded-xl sm:border">
                 <div className="divide-y divide-border/60">
               {/* Logo & Cover */}
@@ -1508,10 +1508,10 @@ export default function RecruiterProfileEditPage() {
                       disabled={uploadPhoto.isPending}
                       className="mt-2 w-full cursor-pointer text-center text-xs font-semibold text-primary disabled:cursor-wait disabled:opacity-60"
                     >
-                      {uploadPhoto.isPending ? "Uploading…" : "Change logo"}
+                      {uploadPhoto.isPending ? "Uploadingâ€¦" : "Change logo"}
                     </button>
                     <p className="mt-1 text-center text-[11px] text-muted-foreground">
-                      Square 1:1 · crops if needed
+                      Square 1:1 Â· crops if needed
                     </p>
                   </div>
                   <div className="min-w-0">
@@ -1536,7 +1536,7 @@ export default function RecruiterProfileEditPage() {
                           onClick={() => bannerInputRef.current?.click()}
                         >
                           {uploadBanner.isPending ? <Loader2 className="size-4 animate-spin" /> : <Camera className="size-4" />}
-                          <span className="hidden sm:inline">{uploadBanner.isPending ? "Uploading…" : "Change cover"}</span>
+                          <span className="hidden sm:inline">{uploadBanner.isPending ? "Uploadingâ€¦" : "Change cover"}</span>
                       </AeButton>
                     </div>
                     <input
@@ -1547,7 +1547,7 @@ export default function RecruiterProfileEditPage() {
                       onChange={handleBannerUpload}
                     />
                     <p className="mt-2 text-[11px] text-muted-foreground">
-                      1920 × 600 px (3.2:1) · crops if needed
+                      1920 Ã— 600 px (3.2:1) Â· crops if needed
                     </p>
                   </div>
                 </div>
@@ -1602,7 +1602,7 @@ export default function RecruiterProfileEditPage() {
                     valid={isFieldValid("slug", draft.slug) && slugCheck.status !== "checking"}
                     hint={
                       slugCheck.status === "checking"
-                        ? "Checking availability…"
+                        ? "Checking availabilityâ€¦"
                         : slugCheck.status === "available"
                           ? "This profile URL is available"
                           : slugCheck.status === "error"
@@ -1891,12 +1891,12 @@ export default function RecruiterProfileEditPage() {
                 onToggle={() => toggleSection("links")}
               >
                 <p className="mb-3 text-xs text-muted-foreground">
-                  {`Pick a platform from the dropdown and paste the URL — up to ${MAX_SOCIAL_LINKS} links`}
+                  {`Pick a platform from the dropdown and paste the URL â€” up to ${MAX_SOCIAL_LINKS} links`}
                 </p>
                 <div className="space-y-3">
                   {linkSlots.length === 0 && (
                     <p className="text-xs text-muted-foreground">
-                      No links added yet — add your website and social profiles.
+                      No links added yet â€” add your website and social profiles.
                     </p>
                   )}
                   {linkSlots.map((slotKey, index) => {
@@ -2204,7 +2204,7 @@ export default function RecruiterProfileEditPage() {
                     ) : (
                       <span className="flex flex-col items-center gap-1 text-xs">
                         {uploadAsset.isPending ? <Loader2 className="size-6 animate-spin" /> : <ImageIcon className="size-6" />}
-                        {uploadAsset.isPending ? "Uploading…" : "Upload CTA image"}
+                        {uploadAsset.isPending ? "Uploadingâ€¦" : "Upload CTA image"}
                       </span>
                     )}
                     <span className="absolute right-2 bottom-2 flex size-7 items-center justify-center rounded-full border-2 border-card bg-muted">
@@ -2270,7 +2270,7 @@ export default function RecruiterProfileEditPage() {
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-bold">{verification.label}</p>
                     <p className="text-[11px] text-muted-foreground">
-                      {verification.sublabel} · Trust Score{" "}
+                      {verification.sublabel} Â· Trust Score{" "}
                       <span className="font-semibold text-primary">{trustScore}%</span>
                     </p>
                   </div>
@@ -2346,12 +2346,12 @@ export default function RecruiterProfileEditPage() {
                 </AeButton>
                 <AeButton type="submit" className="min-w-44" disabled={saving || !isDirty} aria-busy={saving}>
                   {saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
-                  {saving ? "Saving…" : isDirty ? "Save profile" : "Saved"}
+                  {saving ? "Savingâ€¦" : isDirty ? "Save profile" : "Saved"}
                 </AeButton>
               </div>
             </form>
 
-            {/* Live preview — actual public profile rendering */}
+            {/* Live preview â€” actual public profile rendering */}
             <aside className="sticky top-24 hidden xl:block">
               <div className="overflow-hidden rounded-lg border border-border bg-card">
                 <div className="flex items-center justify-between border-b border-border p-4">
@@ -2368,7 +2368,7 @@ export default function RecruiterProfileEditPage() {
         </div>
       </main>
 
-      {/* Mobile save bar — sits above app BottomBar */}
+      {/* Mobile save bar â€” sits above app BottomBar */}
       <div className="fixed inset-x-0 bottom-16 z-30 border-t border-border bg-card/95 p-3 backdrop-blur md:hidden">
         <div className="grid grid-cols-[1fr_1.4fr] gap-3">
           <AeButton variant="outline" onClick={() => setPreviewOpen(true)}>
@@ -2376,7 +2376,7 @@ export default function RecruiterProfileEditPage() {
           </AeButton>
           <AeButton onClick={handleSave} disabled={saving || !isDirty} aria-busy={saving}>
             {saving && <Loader2 className="size-4 animate-spin" />}
-            {saving ? "Saving…" : isDirty ? "Save changes" : "Saved"}
+            {saving ? "Savingâ€¦" : isDirty ? "Save changes" : "Saved"}
           </AeButton>
         </div>
       </div>
@@ -2539,7 +2539,7 @@ export default function RecruiterProfileEditPage() {
           onCropped={handleBannerCropped}
           aspect={BANNER_ASPECT}
           title="Crop cover image"
-          description="Cover uses a 1920 × 600 format. Drag and zoom to choose what will be visible."
+          description="Cover uses a 1920 Ã— 600 format. Drag and zoom to choose what will be visible."
         />
       )}
 

@@ -35,7 +35,7 @@ export const OG_IMAGE_MAX_BYTES = 250_000;
  */
 const VERSION_NAMESPACE = "talent-og-image:v1";
 
-/** Route that renders the raw profile picture at exactly 1200 × 630. */
+/** Route that renders the raw profile picture at exactly 1200 Ã— 630. */
 export function buildTalentOgImagePath(slug: string): string {
   const value = (slug ?? "").trim();
   if (!value) return "";
@@ -43,7 +43,7 @@ export function buildTalentOgImagePath(slug: string): string {
 }
 
 export interface TalentOgImageUrlInput {
-  /** Public application origin, e.g. `https://rootin.app`. */
+  /** Public application origin, e.g. `https://morporfile.app`. */
   origin?: string | null;
   /** Talent username. */
   slug: string;
@@ -96,8 +96,8 @@ const VOLATILE_QUERY_PARAMS = new Set([
  *
  * Storage URLs are signed and carry expiring query parameters. Hashing the
  * whole URL would therefore change every few minutes and defeat every cache
- * (CDN and WhatsApp alike). Only the path plus the stable parameters — such as
- * `path` on `/files/access?path=…` — are used as the identity.
+ * (CDN and WhatsApp alike). Only the path plus the stable parameters â€” such as
+ * `path` on `/files/access?path=â€¦` â€” are used as the identity.
  */
 export function talentPhotoIdentity(profilePhoto?: string | null): string {
   const value = (profilePhoto ?? "").trim();

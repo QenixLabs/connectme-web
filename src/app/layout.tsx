@@ -42,10 +42,10 @@ const siteOrigin = resolveSiteOrigin({
 
 export const metadata: Metadata = {
   metadataBase: siteOrigin ? new URL(siteOrigin) : undefined,
-  applicationName: "RootIn",
-  title: "RootIn – Talent Platform",
+  applicationName: "Morporfile",
+  title: "Morporfile â€“ Talent Platform",
   description:
-    "RootIn connects verified talent with recruiters: portfolios, campaigns, messaging and opportunities in one platform.",
+    "Morporfile connects verified talent with recruiters: portfolios, campaigns, messaging and opportunities in one platform.",
   icons: {
     icon: [
       { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
@@ -57,7 +57,7 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    title: "RootIn",
+    title: "Morporfile",
     statusBarStyle: "black-translucent",
   },
   other: {
@@ -65,9 +65,9 @@ export const metadata: Metadata = {
     "mobile-web-app-capable": "yes",
   },
   openGraph: {
-    title: "RootIn – Talent Platform",
+    title: "Morporfile â€“ Talent Platform",
     description:
-      "RootIn connects verified talent with recruiters: portfolios, campaigns, messaging and opportunities in one platform.",
+      "Morporfile connects verified talent with recruiters: portfolios, campaigns, messaging and opportunities in one platform.",
     type: "website",
   },
   twitter: {

@@ -555,7 +555,7 @@ function ServicesBrowser() {
               </h2>
               <p className="mt-0.5 text-sm text-muted-foreground">
                 {listingsQuery.isLoading
-                  ? "Finding services…"
+                  ? "Finding servicesâ€¦"
                   : listingsQuery.hasNextPage
                     ? `${services.length} of ${total} services loaded`
                     : `${total} service${total === 1 ? "" : "s"} found`}
@@ -797,14 +797,14 @@ function ServicesBrowser() {
               {isFetchingNextPage && (
                 <>
                   <span className="mr-2 size-4 animate-spin rounded-full border-2 border-current border-r-transparent" />
-                  Loading more services…
+                  Loading more servicesâ€¦
                 </>
               )}
             </div>
           )}
           {!hasNextPage && services.length > 0 && (
             <p className="mt-8 text-center text-sm text-muted-foreground">
-              You’ve reached the end of the services.
+              Youâ€™ve reached the end of the services.
             </p>
           )}
         </div>
@@ -834,7 +834,7 @@ function ServicesBrowser() {
         <div>
           <h2 className="font-semibold">Looking for your next project?</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Explore campaigns and connect with recruiters on RootIn.
+            Explore campaigns and connect with recruiters on Morporfile.
           </p>
         </div>
         <Button asChild variant="outline" className="shrink-0 border-success/30 text-success hover:bg-success/10">

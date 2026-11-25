@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { TalentNetworkPage } from "@/components/talent-app/TalentNetworkPage";
 
 export const metadata: Metadata = {
-  title: "RootIn | Talent Network",
+  title: "Morporfile | Talent Network",
   description: "Find creative collaborators, join projects and build meaningful work with verified talent.",
 };
 

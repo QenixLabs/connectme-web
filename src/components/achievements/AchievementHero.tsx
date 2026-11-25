@@ -59,7 +59,7 @@ export function AchievementHero({
               <ArrowLeft className="size-5" />
             </Button>
             <span className="truncate bg-gradient-to-r from-[#5330df] to-[#2563eb] bg-clip-text text-[15px] font-extrabold tracking-[-0.03em] text-transparent">
-              RootIn
+              Morporfile
             </span>
           </div>
 
@@ -101,7 +101,7 @@ export function AchievementHero({
 
         <div className="relative mt-8 max-w-[69%] px-5 pb-6 sm:mt-10 sm:max-w-[58%] sm:px-6">
           <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#6846d9]">
-            RootIn milestones
+            Morporfile milestones
           </p>
           <h1 className="mt-2 text-[28px] font-bold leading-[1.02] tracking-[-0.055em] text-[#14225b] sm:text-[36px]">
             {title}

@@ -4,9 +4,9 @@ import { DiscoverPage } from "@/components/marketplace/discover-page";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const metadata: Metadata = {
-  title: "Discover opportunities and creative providers | RootIn",
+  title: "Discover opportunities and creative providers | Morporfile",
   description:
-    "Browse live creative opportunities and service providers on RootIn.",
+    "Browse live creative opportunities and service providers on Morporfile.",
 };
 
 function DiscoverSkeleton() {

@@ -9,7 +9,7 @@ import { AuthLayout } from "@/components/layout/auth-layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { SignInForm } from "@/components/auth/signin-form";
 import { SignupWizard } from "@/components/auth/signup-wizard";
-import { RootInLogo } from "@/components/RootInLogo";
+import { MorporfileLogo } from "@/components/MorporfileLogo";
 
 type Mode = "signin" | "signup";
 
@@ -28,8 +28,8 @@ function UnifiedAuthContent() {
         <div className="pointer-events-none absolute -right-40 bottom-0 size-[24rem] rounded-full bg-[#EAF4FF]/80 blur-3xl" />
         <div className="relative mx-auto flex min-h-dvh w-full max-w-[430px] flex-col px-[18px] py-5 sm:px-6 sm:py-7">
           <header className="flex items-center">
-            <Link href="/" aria-label="RootIn home" className="w-[104px]">
-              <RootInLogo />
+            <Link href="/" aria-label="Morporfile home" className="w-[104px]">
+              <MorporfileLogo />
             </Link>
           </header>
           <div className="flex flex-1 flex-col justify-start py-4 sm:py-6">
@@ -102,7 +102,7 @@ function UnifiedAuthContent() {
         </p>
 
         <p className="mt-4 text-center text-xs font-light text-muted-foreground">
-          By using RootIn you agree to our{" "}
+          By using Morporfile you agree to our{" "}
           <a
             href="/terms"
             className="text-foreground/70 underline underline-offset-2 transition-colors hover:text-foreground"

@@ -1,4 +1,4 @@
-import logo from "@/assets/rootin-logo-orange.png";
+import logo from "@/assets/morporfile-logo-orange.png";
 
 const candidates = [
   { initials: "AR", name: "Ana Reyes", role: "Motion designer", match: "94%", status: "Top ranked", tone: "success" },
@@ -18,7 +18,7 @@ export function ShortlistPreview() {
     <section className="border-b border-border bg-surface py-16 md:py-24">
       <div className="container-page">
         <p className="text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-cyan">
-          — Inside <img src={logo.src} alt="RootIn" className="inline-block h-[16px] w-auto align-text-bottom" /> —
+          â€” Inside <img src={logo.src} alt="Morporfile" className="inline-block h-[16px] w-auto align-text-bottom" /> â€”
         </p>
         <h2 className="mx-auto mt-4 max-w-2xl text-center font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
           Shortlist the right people with the evidence in front of you
@@ -31,7 +31,7 @@ export function ShortlistPreview() {
           <div className="flex items-start justify-between gap-4 border-b border-border pb-4">
             <div>
               <h3 className="text-sm font-semibold text-foreground">Spring brand campaign</h3>
-              <p className="mt-1 text-xs text-text-muted">26 applicants · 4 roles · closes in 6 days</p>
+              <p className="mt-1 text-xs text-text-muted">26 applicants Â· 4 roles Â· closes in 6 days</p>
             </div>
             <span className="rounded-full bg-gold-soft px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-gold">
               Reviewing

@@ -29,10 +29,10 @@ import { Switch } from "@/components/ui/switch";
 import { useMyProfile, useUpdateMyProfile } from "@/hooks/use-talent-profile";
 import type { PrivacyMode, SectionVisibility, UpdateTalentProfilePayload } from "@/lib/api/talent";
 import { useAuthStore } from "@/providers/auth-store-provider";
-import logoImage from "@/assets/rootin-logo-orange.png";
+import logoImage from "@/assets/morporfile-logo-orange.png";
 
 type IconTone = "violet" | "pink" | "blue" | "orange" | "teal" | "rose" | "purple";
-type ContactVisibility = "rootin" | "public";
+type ContactVisibility = "morporfile" | "public";
 type PortfolioVisibility = "recruiters" | "hidden";
 
 const DEFAULT_SECTION_VISIBILITY: Required<SectionVisibility> = {
@@ -178,7 +178,7 @@ export function ProfileVisibilityPage() {
   const sections = draft?.sections ?? { ...DEFAULT_SECTION_VISIBILITY, ...profile.section_visibility };
   const mode = draft?.mode ?? profile.privacy_mode ?? "public";
   const socialLinks = profile.social_links ?? {};
-  const contact = draft?.contact ?? (Object.values(socialLinks).some((value) => value.visibility === "public") ? "public" : "rootin");
+  const contact = draft?.contact ?? (Object.values(socialLinks).some((value) => value.visibility === "public") ? "public" : "morporfile");
   const portfolio = draft?.portfolio ?? (sections.portfolio ? "recruiters" : "hidden");
   const activePreset = getPreset(mode, sections);
   const displayName = profile.full_legal_name || user?.username || "Talent";
@@ -212,7 +212,7 @@ export function ProfileVisibilityPage() {
     const nextSocialLinks = Object.fromEntries(
       Object.entries(socialLinks).map(([key, value]) => [
         key,
-        { ...value, visibility: contact === "rootin" ? "recruiters_only" : "public" },
+        { ...value, visibility: contact === "morporfile" ? "recruiters_only" : "public" },
       ]),
     );
     const payload: UpdateTalentProfilePayload = {
@@ -233,8 +233,8 @@ export function ProfileVisibilityPage() {
     <div className="min-h-svh bg-[#fafaff] text-[#12143a]">
       <div className="mx-auto w-full max-w-[1240px] px-4 pb-32 pt-4 sm:px-6 sm:pt-5 lg:px-8 lg:pb-8">
         <header className="flex items-center justify-between">
-          <Link href="/talent/dashboard" className="rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6428f5]" aria-label="Rootin home">
-            <Image src={logoImage} alt="Rootin" priority className="h-10 w-auto object-contain sm:h-12" />
+          <Link href="/talent/dashboard" className="rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6428f5]" aria-label="Morporfile home">
+            <Image src={logoImage} alt="Morporfile" priority className="h-10 w-auto object-contain sm:h-12" />
           </Link>
           <div className="flex items-center gap-2 sm:gap-3">
             <Button asChild variant="ghost" size="icon" className="relative size-10 rounded-full text-[#12143a] hover:bg-white sm:size-11" aria-label="Notifications">
@@ -271,10 +271,10 @@ export function ProfileVisibilityPage() {
                 <span className="hidden rounded-full bg-[#f1eaff] px-3 py-1 text-xs font-semibold text-[#6428f5] sm:inline-flex">Private controls</span>
               </div>
 
-              <SettingCard icon={Globe2} tone="violet" title="Public Profile" description="Allow your profile to be visible to everyone on the web. A public profile helps you get discovered outside Rootin." helper={<div className="mt-2 flex flex-wrap items-center gap-2"><Badge className="border-0 bg-[#e4fff4] px-2.5 py-1 text-[11px] font-bold text-[#079653]">Recommended</Badge><span className="text-xs text-[#777394]">Increases your chances of getting noticed.</span></div>}>
+              <SettingCard icon={Globe2} tone="violet" title="Public Profile" description="Allow your profile to be visible to everyone on the web. A public profile helps you get discovered outside Morporfile." helper={<div className="mt-2 flex flex-wrap items-center gap-2"><Badge className="border-0 bg-[#e4fff4] px-2.5 py-1 text-[11px] font-bold text-[#079653]">Recommended</Badge><span className="text-xs text-[#777394]">Increases your chances of getting noticed.</span></div>}>
                 <Toggle checked={mode === "public"} onCheckedChange={(checked) => updateDraft({ mode: checked ? "public" : "recruiters_only" })} label="Make profile public" />
               </SettingCard>
-              <SettingCard icon={UsersRound} tone="pink" title="Recruiter Discoverability" description="Show your profile to verified recruiters, agencies and production houses on Rootin.">
+              <SettingCard icon={UsersRound} tone="pink" title="Recruiter Discoverability" description="Show your profile to verified recruiters, agencies and production houses on Morporfile.">
                 <Toggle checked={mode !== "private"} onCheckedChange={(checked) => updateDraft({ mode: checked ? "recruiters_only" : "private" })} label="Allow recruiter discovery" />
               </SettingCard>
               <SettingCard icon={Search} tone="blue" title="Search Visibility" description="Allow your profile to appear in search results based on your skills, location and categories.">
@@ -286,7 +286,7 @@ export function ProfileVisibilityPage() {
               <SettingCard icon={MessageCircle} tone="teal" title="Contact Visibility" description="Control how recruiters can contact you. Keep personal contact details private while staying reachable.">
                 <Select value={contact} onValueChange={(value) => updateDraft({ contact: value as ContactVisibility })}>
                   <SelectTrigger className="h-10 w-[150px] rounded-xl border-[#e0dcf2] bg-white px-3 text-[12px] font-semibold text-[#12143a] shadow-none sm:w-[185px] sm:text-sm"><SelectValue /></SelectTrigger>
-                  <SelectContent className="border-[#e7e5f4] bg-white text-[#12143a]"><SelectItem value="rootin">RootIn Messages Only</SelectItem><SelectItem value="public">RootIn + public links</SelectItem></SelectContent>
+                  <SelectContent className="border-[#e7e5f4] bg-white text-[#12143a]"><SelectItem value="morporfile">Morporfile Messages Only</SelectItem><SelectItem value="public">Morporfile + public links</SelectItem></SelectContent>
                 </Select>
               </SettingCard>
               <SettingCard icon={ImageIcon} tone="rose" title="Portfolio Visibility" description="Choose who can view your photos, videos and showreel on your profile.">
@@ -295,7 +295,7 @@ export function ProfileVisibilityPage() {
                   <SelectContent className="border-[#e7e5f4] bg-white text-[#12143a]"><SelectItem value="recruiters">Visible to Recruiters</SelectItem><SelectItem value="hidden">Hidden from profile</SelectItem></SelectContent>
                 </Select>
               </SettingCard>
-              <SettingCard icon={Activity} tone="purple" title="Activity Status" description="Show when you were last active on Rootin, helping recruiters know when to reach out.">
+              <SettingCard icon={Activity} tone="purple" title="Activity Status" description="Show when you were last active on Morporfile, helping recruiters know when to reach out.">
                 <Toggle checked={sections.availability} onCheckedChange={(checked) => updateSection("availability", checked)} label="Show activity status" />
               </SettingCard>
 

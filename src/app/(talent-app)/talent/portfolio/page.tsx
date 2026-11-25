@@ -3,12 +3,12 @@ import type { Metadata } from "next";
 import { PortfolioPage } from "@/components/talent-app/PortfolioPage";
 
 export const metadata: Metadata = {
-  title: "RootIn — Media Library",
+  title: "Morporfile â€” Media Library",
   description:
-    "Manage and showcase your photos, videos and documents on RootIn.",
+    "Manage and showcase your photos, videos and documents on Morporfile.",
   openGraph: {
-    title: "RootIn — Media Library",
-    description: "Manage and showcase your photos, videos and documents on RootIn.",
+    title: "Morporfile â€” Media Library",
+    description: "Manage and showcase your photos, videos and documents on Morporfile.",
   },
 };
 

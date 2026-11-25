@@ -16,7 +16,7 @@ import {
   BarChart3,
   ChevronRight,
 } from "lucide-react";
-import { RootInLogo } from "@/components/RootInLogo";
+import { MorporfileLogo } from "@/components/MorporfileLogo";
 import { SocialAuthButtons } from "@/components/auth/social-auth-buttons";
 import { Field, inputClass } from "./field";
 
@@ -138,10 +138,10 @@ export function StepAccount({
       >
        <Link
          href="/"
-         aria-label="Go to RootIn homepage"
+         aria-label="Go to Morporfile homepage"
          className="absolute left-[6%] top-3 z-10 sm:top-4"
        >
-         <RootInLogo className="w-28 pb-4" />
+         <MorporfileLogo className="w-28 pb-4" />
        </Link>
        <div className="absolute left-[6%] top-[56%] w-[52%] -translate-y-1/2 mt-1">
          <h1 className="text-[clamp(20px,5vw,36px)] font-bold leading-[1.05] text-[#080B2B]">

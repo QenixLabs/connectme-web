@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, Building2, UserRound } from "lucide-react";
-import logo from "@/assets/rootin-logo-orange.png";
+import logo from "@/assets/morporfile-logo-orange.png";
 
 const talent = [
   "Build a professional profile that presents your work properly",
@@ -75,13 +75,13 @@ export function AudienceSplit() {
     <section className="border-b border-border bg-background py-16 md:py-24">
       <div className="container-page">
         <p className="text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-gold">
-          — Two sides, one platform —
+          â€” Two sides, one platform â€”
         </p>
         <h2 className="mx-auto mt-4 max-w-2xl text-center font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-          Built for the people with the skills — and the people who need them
+          Built for the people with the skills â€” and the people who need them
         </h2>
         <p className="mx-auto mt-4 max-w-2xl text-center text-sm text-text-secondary">
-          <img src={logo.src} alt="RootIn" className="inline-block h-[22px] w-auto align-text-bottom" /> connects both sides of the same conversation, so nothing gets lost between
+          <img src={logo.src} alt="Morporfile" className="inline-block h-[22px] w-auto align-text-bottom" /> connects both sides of the same conversation, so nothing gets lost between
           discovery and delivery.
         </p>
 
@@ -90,7 +90,7 @@ export function AudienceSplit() {
             id="for-talent"
             tone="cyan"
             eyebrow="For talent"
-            title="Show what you can do — and be found for it"
+            title="Show what you can do â€” and be found for it"
             bullets={talent}
             cta="Create your profile"
           />

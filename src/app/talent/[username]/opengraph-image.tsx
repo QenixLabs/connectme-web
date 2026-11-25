@@ -10,7 +10,7 @@ import {
  * The Open Graph preview of a public talent profile.
  *
  * It is rendered by the app itself so the image is always publicly
- * reachable, always 1200 × 630 and never points at an internal API host.
+ * reachable, always 1200 Ã— 630 and never points at an internal API host.
  * The profile photo is embedded when it can be fetched; otherwise the brand
  * monogram is used.
  *
@@ -20,7 +20,7 @@ import {
  * complete image.
  */
 
-export const alt = "Talent profile on RootIn";
+export const alt = "Talent profile on Morporfile";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -69,7 +69,7 @@ export default async function OpengraphImage({
     "Talent";
   const headline =
     profile?.headline?.trim() ||
-    profile?.professions?.join(" · ") ||
+    profile?.professions?.join(" Â· ") ||
     "Talent profile";
   const isVerified = Boolean(profile?.is_verified);
 
@@ -82,13 +82,13 @@ export default async function OpengraphImage({
 
   const statCards = [
     {
-      value: stats.rootScore != null ? String(stats.rootScore) : "—",
+      value: stats.rootScore != null ? String(stats.rootScore) : "â€”",
       label: "RootScore",
       note: stats.rootScore != null ? trustBand(stats.rootScore) : "Not scored",
       color: "#2563EB",
     },
     {
-      value: stats.rating != null ? stats.rating.toFixed(1) : "—",
+      value: stats.rating != null ? stats.rating.toFixed(1) : "â€”",
       label: "Rating",
       note:
         stats.reviewCount > 0
@@ -97,7 +97,7 @@ export default async function OpengraphImage({
       color: "#D97706",
     },
     {
-      value: mediaCount > 0 ? String(mediaCount) : "—",
+      value: mediaCount > 0 ? String(mediaCount) : "â€”",
       label: "Portfolio",
       note:
         mediaCount > 0
@@ -106,12 +106,12 @@ export default async function OpengraphImage({
               stats.videoCount > 0 ? plural(stats.videoCount, "video") : null,
             ]
               .filter((part): part is string => part !== null)
-              .join(" · ")
+              .join(" Â· ")
           : "No media yet",
       color: "#7C3AED",
     },
     {
-      value: stats.projectCount > 0 ? String(stats.projectCount) : "—",
+      value: stats.projectCount > 0 ? String(stats.projectCount) : "â€”",
       label: "Projects",
       note:
         stats.projectCount > 0
@@ -121,7 +121,7 @@ export default async function OpengraphImage({
     },
   ];
 
-  const hasStats = statCards.some((card) => card.value !== "—");
+  const hasStats = statCards.some((card) => card.value !== "â€”");
 
   return new ImageResponse(
     (
@@ -157,7 +157,7 @@ export default async function OpengraphImage({
               display: "flex",
             }}
           >
-            RootIn
+            Morporfile
           </div>
           <div
             style={{
@@ -264,7 +264,7 @@ export default async function OpengraphImage({
                   fontWeight: 600,
                 }}
               >
-                Verified on RootIn
+                Verified on Morporfile
               </div>
             ) : null}
           </div>
@@ -336,7 +336,7 @@ export default async function OpengraphImage({
           }}
         >
           <div style={{ display: "flex", color: BRAND_PURPLE, fontWeight: 700 }}>
-            RootIn
+            Morporfile
           </div>
           <div style={{ marginLeft: 14, display: "flex" }}>
             Discover verified talent and roles

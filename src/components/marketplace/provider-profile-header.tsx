@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { RootInLogo } from "@/components/RootInLogo";
+import { MorporfileLogo } from "@/components/MorporfileLogo";
 
 export function ProviderProfileHeader() {
   return (
@@ -13,9 +13,9 @@ export function ProviderProfileHeader() {
         <Link
           href="/"
           className="min-w-0 flex-1 pl-4"
-          aria-label="RootIn home"
+          aria-label="Morporfile home"
         >
-          <RootInLogo className="w-[5.5rem]" />
+          <MorporfileLogo className="w-[5.5rem]" />
         </Link>
       </nav>
     </header>

@@ -332,7 +332,7 @@ export function Overview({
         </div>
         <div>
           <Star />
-          <strong>{profile.average_rating > 0 ? `${Math.round(profile.average_rating * 10)}%` : "—"}</strong>
+          <strong>{profile.average_rating > 0 ? `${Math.round(profile.average_rating * 10)}%` : "â€”"}</strong>
           <small>
             Client
             <br />
@@ -376,7 +376,7 @@ export function Projects({
                 </div>
                 <p>
                   {project.role_type || "Casting Call"}
-                  {project.created_at && ` · ${new Date(project.created_at).getFullYear()}`}
+                  {project.created_at && ` Â· ${new Date(project.created_at).getFullYear()}`}
                 </p>
                 <small>{project.location?.city || "Multiple Cities"}</small>
               </article>
@@ -442,7 +442,7 @@ export function Jobs({
               ? `${c.budget_range.currency} ${c.budget_range.min ?? ""}-${c.budget_range.max ?? ""}`
               : "Competitive",
           ],
-          meta: [c.role_type || "Casting Call", relativeTime(c.created_at)].filter(Boolean).join("   ·   "),
+          meta: [c.role_type || "Casting Call", relativeTime(c.created_at)].filter(Boolean).join("   Â·   "),
           date: c.deadline
             ? `Apply by ${new Date(c.deadline).toLocaleDateString("en-IN", {
                 day: "numeric",
@@ -653,7 +653,7 @@ export function Reviews({
       ? [{ icon: <BadgeCheck size={18} />, title: "Verified Recruiter", copy: "Identity verified" }]
       : []),
     ...(isTrustedPartner
-      ? [{ icon: <Award size={18} />, title: "Preferred Partner", copy: "RootIn partner status confirmed" }]
+      ? [{ icon: <Award size={18} />, title: "Preferred Partner", copy: "Morporfile partner status confirmed" }]
       : []),
   ];
 
@@ -687,7 +687,7 @@ export function Reviews({
           <div>
             <p className={styles.cardKicker}>Overall rating</p>
             <div className={styles.overallRatingLine}>
-              <strong className={styles.overallRating}>{roundedRating ?? "—"}</strong>
+              <strong className={styles.overallRating}>{roundedRating ?? "â€”"}</strong>
               <span>/ 5</span>
             </div>
             <div className={styles.ratingStars} aria-label={roundedRating ? `${roundedRating} out of 5 stars` : "No rating yet"}>
@@ -705,7 +705,7 @@ export function Reviews({
             aria-label={positiveRating ? `${positiveRating}% positive rating` : "No positive rating yet"}
           >
             <div>
-              <strong>{positiveRating ? `${positiveRating}%` : "—"}</strong>
+              <strong>{positiveRating ? `${positiveRating}%` : "â€”"}</strong>
               <small>Positive rating</small>
             </div>
           </div>
@@ -750,7 +750,7 @@ export function Reviews({
         <div className={styles.reputationStats}>
           <ReputationStat icon={<Clapperboard size={17} />} value={String(profile.completed_campaigns_count)} label="Completed Projects" />
           <ReputationStat icon={<Users size={17} />} value={String(profile.total_talents_count)} label="Talents Worked With" />
-          <ReputationStat icon={<Star size={17} />} value={roundedRating ?? "—"} label="Average Rating" />
+          <ReputationStat icon={<Star size={17} />} value={roundedRating ?? "â€”"} label="Average Rating" />
           <ReputationStat icon={<BadgeCheck size={17} />} value={String(verifiedReviews)} label="Verified Reviews" />
         </div>
       </section>
@@ -860,7 +860,7 @@ export function Reviews({
                     <strong>{review.author_name} {review.is_verified && <BadgeCheck size={14} />}</strong>
                     <small>{review.author_role || "Talent"}</small>
                   </div>
-                  <div className={styles.reviewRating}><RatingStars rating={review.rating} /><strong>{review.rating.toFixed(1)} <span>★</span></strong></div>
+                  <div className={styles.reviewRating}><RatingStars rating={review.rating} /><strong>{review.rating.toFixed(1)} <span>â˜…</span></strong></div>
                 </div>
                 <div className={styles.reviewProject}>
                   <BriefcaseBusiness size={13} />
@@ -938,7 +938,7 @@ export function Reviews({
                   }}
                 />
                 <strong>{project.name}</strong>
-                <small>{project.role_type || "Project"} · {project.applications_count} talents</small>
+                <small>{project.role_type || "Project"} Â· {project.applications_count} talents</small>
               </a>
             ))}
           </div>
@@ -1058,7 +1058,7 @@ export function RecruiterProfileView({
     { icon: <Star size={19} fill="currentColor" />, value: `${profile.trust_score}%`, label: "Trust score" },
     { icon: <Users size={19} />, value: String(profile.active_campaigns_count), label: "Active jobs" },
     { icon: <Clapperboard size={19} />, value: `Tier ${profile.verification_tier}`, label: "Verified" },
-    { icon: <Trophy size={19} />, value: profile.company_size || "—", label: "Company size" },
+    { icon: <Trophy size={19} />, value: profile.company_size || "â€”", label: "Company size" },
   ];
 
   const socials: { key: string; label: string; url: string; icon: ReactNode }[] = [
@@ -1112,11 +1112,11 @@ export function RecruiterProfileView({
             </div>
             <div className="min-w-0">
               <h1>
-                {profile.company_name} <span>●</span>
+                {profile.company_name} <span>â—</span>
               </h1>
               <p>
                 {profile.position || "Recruiter"}
-                {location && <>&nbsp; · &nbsp;{location}</>}
+                {location && <>&nbsp; Â· &nbsp;{location}</>}
               </p>
             </div>
           </div>

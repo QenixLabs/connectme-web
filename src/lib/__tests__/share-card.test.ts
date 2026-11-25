@@ -24,7 +24,7 @@ const talent = {
   isVerified: true,
 };
 
-const CANONICAL_URL = "https://rootin.app/talent/asha-rao";
+const CANONICAL_URL = "https://morporfile.app/talent/asha-rao";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -42,7 +42,7 @@ describe("buildShareCardContent", () => {
     expect(content.url).toBe(CANONICAL_URL);
     expect(content.initials).toBe("AR");
     expect(content.isVerified).toBe(true);
-    expect(content.brand).toBe("RootIn");
+    expect(content.brand).toBe("Morporfile");
   });
 
   it("falls back to the role when there is no headline", () => {
@@ -67,11 +67,11 @@ describe("buildShareCardContent", () => {
           { icon: "play", count: "200+", label: "Projects" },
         ],
       },
-      origin: "https://rootin.app",
+      origin: "https://morporfile.app",
     });
 
     expect(content.roleLabel).toBe("Service Provider");
-    expect(content.url).toBe("https://rootin.app/providers/silver-frame");
+    expect(content.url).toBe("https://morporfile.app/providers/silver-frame");
     expect(content.tags).toEqual(["Video", "Photography"]);
     expect(content.statItems.map(({ count }) => count)).toEqual(["12", "4.8", "200+"]);
   });
@@ -79,7 +79,7 @@ describe("buildShareCardContent", () => {
   it("derives the URL from the target when none is given", () => {
     const content = buildShareCardContent({
       target: talent,
-      origin: "https://rootin.app",
+      origin: "https://morporfile.app",
     });
     expect(content.url).toBe(CANONICAL_URL);
   });
@@ -97,7 +97,7 @@ describe("buildShareCardContent", () => {
       url: CANONICAL_URL,
     });
 
-    expect(content.shortUrl).toBe("rootin.app/talent/asha-rao");
+    expect(content.shortUrl).toBe("morporfile.app/talent/asha-rao");
     expect(content.shortUrl).not.toContain("https://");
     expect(content.handle).toBe("@asha-rao");
   });
@@ -105,11 +105,11 @@ describe("buildShareCardContent", () => {
 
 describe("buildShortLinkLabel", () => {
   it("drops the protocol and keeps the host and the path", () => {
-    expect(buildShortLinkLabel(CANONICAL_URL)).toBe("rootin.app/talent/asha-rao");
+    expect(buildShortLinkLabel(CANONICAL_URL)).toBe("morporfile.app/talent/asha-rao");
   });
 
   it("keeps the host when there is no path", () => {
-    expect(buildShortLinkLabel("https://rootin.app")).toBe("rootin.app");
+    expect(buildShortLinkLabel("https://morporfile.app")).toBe("morporfile.app");
   });
 
   it("returns an empty string for an empty URL", () => {
@@ -138,7 +138,7 @@ describe("buildQrMatrix", () => {
 
   it("encodes the exact canonical URL", () => {
     const canonical = buildQrMatrix(CANONICAL_URL);
-    const other = buildQrMatrix("https://rootin.app/talent/someone-else");
+    const other = buildQrMatrix("https://morporfile.app/talent/someone-else");
 
     expect(canonical).not.toBeNull();
     expect(canonical!.modules).not.toEqual(other!.modules);
@@ -317,19 +317,19 @@ describe("share card layout", () => {
 
 describe("shareCardFileName", () => {
   it("uses the shared card name for a talent profile", () => {
-    expect(shareCardFileName(talent)).toBe("rootin-talent-profile.png");
+    expect(shareCardFileName(talent)).toBe("morporfile-talent-profile.png");
   });
 
   it("uses the recruiter variant for a recruiter profile", () => {
     expect(
       shareCardFileName({ role: "recruiter", slug: "north-talent", name: "" }),
-    ).toBe("rootin-recruiter-profile.png");
+    ).toBe("morporfile-recruiter-profile.png");
   });
 
   it("uses the provider variant for a provider profile", () => {
     expect(
       shareCardFileName({ role: "provider", slug: "silver-frame", name: "" }),
-    ).toBe("rootin-provider-profile.png");
+    ).toBe("morporfile-provider-profile.png");
   });
 
   it("never leaks the slug or an unsafe character into the file name", () => {
@@ -338,7 +338,7 @@ describe("shareCardFileName", () => {
       slug: "Asha Rao / Photos",
       name: "",
     });
-    expect(name).toBe("rootin-talent-profile.png");
+    expect(name).toBe("morporfile-talent-profile.png");
     expect(name).not.toMatch(/[\\/:*?"<>|]/);
   });
 });
@@ -354,7 +354,7 @@ describe("downloadBlob", () => {
     const png = new Blob([new Uint8Array([137, 80, 78, 71])], {
       type: "image/png",
     });
-    // Without a DOM there is nothing to click — the call must not throw.
+    // Without a DOM there is nothing to click â€” the call must not throw.
     expect(() => downloadBlob(png, "card.png")).not.toThrow();
   });
 });
@@ -418,7 +418,7 @@ describe("truncateToWidth", () => {
 
   it("truncates text that is too long", () => {
     const result = truncateToWidth(context, "abcdefghij", 50);
-    expect(result.endsWith("…")).toBe(true);
+    expect(result.endsWith("â€¦")).toBe(true);
     expect(result.length).toBeLessThan("abcdefghij".length);
   });
 });
@@ -461,7 +461,7 @@ describe("selectBestTalentStats", () => {
       "Rating",
       "Shortlists",
     ]);
-    expect(stats.map((stat) => stat.count)).toEqual(["—", "—", "—", "—"]);
+    expect(stats.map((stat) => stat.count)).toEqual(["â€”", "â€”", "â€”", "â€”"]);
     expect(stats.map((stat) => stat.note)).toEqual([
       "Not scored",
       "Not shared",
@@ -481,7 +481,7 @@ describe("selectBestTalentStats", () => {
       testimonials: [],
     });
 
-    expect(stats.map((stat) => stat.count)).toEqual(["40", "0%", "—", "—"]);
+    expect(stats.map((stat) => stat.count)).toEqual(["40", "0%", "â€”", "â€”"]);
     expect(stats.map((stat) => stat.note)).toEqual([
       "Average",
       "Responsive",

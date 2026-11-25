@@ -160,7 +160,7 @@ export function AchievementManagePage({ scope = "all" }: { scope?: AchievementMa
           previewHref={publicPath}
           onShare={() => {
             if (typeof navigator !== "undefined" && navigator.share) {
-              navigator.share({ title: "RootIn achievements", url: getPublicUrl() }).catch(() => undefined);
+              navigator.share({ title: "Morporfile achievements", url: getPublicUrl() }).catch(() => undefined);
             } else {
               toast.info("Use Preview Profile to share your public achievements");
             }

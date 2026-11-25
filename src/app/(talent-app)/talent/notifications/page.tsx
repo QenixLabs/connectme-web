@@ -3,13 +3,13 @@ import type { Metadata } from "next";
 import { NotificationsPage } from "@/components/talent-app/NotificationsPage";
 
 export const metadata: Metadata = {
-  title: "RootIn — Notifications",
+  title: "Morporfile â€” Notifications",
   description:
-    "Stay updated with your latest RootIn activity — casting updates, messages, and opportunities in one feed.",
+    "Stay updated with your latest Morporfile activity â€” casting updates, messages, and opportunities in one feed.",
   openGraph: {
-    title: "RootIn — Notifications",
+    title: "Morporfile â€” Notifications",
     description:
-      "Stay updated with your latest RootIn activity in one feed.",
+      "Stay updated with your latest Morporfile activity in one feed.",
   },
 };
 

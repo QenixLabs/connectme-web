@@ -12,7 +12,7 @@ import {
   UsersRound,
 } from "lucide-react";
 import { useState } from "react";
-import logoImage from "@/assets/rootin-logo-orange.png";
+import logoImage from "@/assets/morporfile-logo-orange.png";
 import { authApi } from "@/lib/api";
 import { authStore } from "@/stores/auth-store";
 
@@ -20,12 +20,12 @@ import { authStore } from "@/stores/auth-store";
  * Migrated from design-pixel-perfect/src/routes/index.tsx.
  *
  * Drop the three art images into `public/assets/onboarding/`:
- *   - rootin-talent-collage.png     (welcome screen collage)
- *   - rootin-recruiter-banner.png   (recruiter role card art)
- *   - rootin-talent-banner.png      (talent role card art)
+ *   - morporfile-talent-collage.png     (welcome screen collage)
+ *   - morporfile-recruiter-banner.png   (recruiter role card art)
+ *   - morporfile-talent-banner.png      (talent role card art)
  */
-const recruiterImage = "/assets/onboarding/rootin-recruiter-banner.png";
-const talentImage = "/assets/onboarding/rootin-talent-banner.png";
+const recruiterImage = "/assets/onboarding/morporfile-recruiter-banner.png";
+const talentImage = "/assets/onboarding/morporfile-talent-banner.png";
 
 const imageSizes = "(max-width: 520px) 100vw, 430px";
 
@@ -33,12 +33,12 @@ export type OnboardingRole = "recruiter" | "talent" | "provider";
 
 type Role = OnboardingRole;
 
-function RootinLogo() {
+function MorporfileLogo() {
   return (
-    <Link href="/" aria-label="RootIn home">
+    <Link href="/" aria-label="Morporfile home">
       <Image
         src={logoImage}
-        alt="RootIn"
+        alt="Morporfile"
         height={32}
         className="h-10 w-auto"
         priority
@@ -90,7 +90,7 @@ function RoleCard({
       <span className="relative z-10 block max-w-[48%] text-left">
         <span className="role-eyebrow">For {roleLabel}</span>
         <span className="mt-2 block text-[1.16rem] font-extrabold leading-tight text-foreground">
-          I’m a {title}
+          Iâ€™m a {title}
         </span>
         <span className="mt-2 block text-[0.7rem] font-medium leading-[1.45] text-muted-foreground">
           {description}
@@ -160,7 +160,7 @@ export function RoleScreen({
   return (
     <main className="screen role-screen">
       <header className="role-header flex items-center">
-        <RootinLogo />
+        <MorporfileLogo />
         <span className="h-10 w-10" />
       </header>
 
@@ -169,9 +169,9 @@ export function RoleScreen({
       <section className="px-6 pt-6">
         <h1 className="text-[1.65rem] font-extrabold leading-[1.08] text-foreground">
           {googleSignup ? (
-            <>Choose your role<br />on <span className="text-primary">Rootin.</span></>
+            <>Choose your role<br />on <span className="text-primary">Morporfile.</span></>
           ) : (
-            <>How do you want to<br />be a part of <span className="text-primary">Rootin?</span></>
+            <>How do you want to<br />be a part of <span className="text-primary">Morporfile?</span></>
           )}
         </h1>
         <p className="mt-2 text-[0.78rem] font-medium text-muted-foreground">

@@ -64,7 +64,7 @@ import {
   useRemoveFromShortlist,
 } from "@/hooks/use-shortlists";
 import { talentApi, type TalentProfile } from "@/lib/api/talent";
-import logoImage from "@/assets/rootin-logo-orange.png";
+import logoImage from "@/assets/morporfile-logo-orange.png";
 import type { SavedSearch } from "@/lib/api/saved-searches";
 import {
   fromSavedSearchCriteria,
@@ -254,7 +254,7 @@ function TalentPreviewDialog({
   const name = talent.full_legal_name || talent.username;
   const roles =
     talent.professions && talent.professions.length > 0
-      ? talent.professions.slice(0, 3).join(" • ")
+      ? talent.professions.slice(0, 3).join(" â€¢ ")
       : "Talent";
   const city = formatLocation(talent.location);
   const match =
@@ -301,7 +301,7 @@ function TalentPreviewDialog({
       label: "Age",
       value:
         age != null
-          ? `${age} yrs${talent.gender ? ` · ${talent.gender}` : ""}`
+          ? `${age} yrs${talent.gender ? ` Â· ${talent.gender}` : ""}`
           : (talent.gender ?? "Not listed"),
     },
     {
@@ -315,7 +315,7 @@ function TalentPreviewDialog({
       value:
         talent.response_rate != null
           ? `${talent.response_rate}%${
-              talent.response_time ? ` · ${talent.response_time}` : ""
+              talent.response_time ? ` Â· ${talent.response_time}` : ""
             }`
           : (talent.response_time ?? "Not shared"),
     },
@@ -329,7 +329,7 @@ function TalentPreviewDialog({
       >
         <DialogTitle className="sr-only">{name} quick preview</DialogTitle>
         <DialogDescription className="sr-only">
-          Key details about {name} — experience, languages, skills and
+          Key details about {name} â€” experience, languages, skills and
           availability.
         </DialogDescription>
         <div className="flex gap-3 p-4 pb-0">
@@ -433,7 +433,7 @@ function TalentPreviewDialog({
                 {languages
                   .slice(0, 5)
                   .map((l) => `${l.name}${l.fluency ? ` (${l.fluency})` : ""}`)
-                  .join(" · ")}
+                  .join(" Â· ")}
               </p>
             </div>
           ) : null}
@@ -450,7 +450,7 @@ function TalentPreviewDialog({
                     className="rounded-md bg-muted px-2 py-1 text-[11px] text-muted-foreground"
                   >
                     {s.name}
-                    {s.proficiency ? ` · ${s.proficiency}` : ""}
+                    {s.proficiency ? ` Â· ${s.proficiency}` : ""}
                   </span>
                 ))}
               </div>
@@ -499,7 +499,7 @@ function TalentPreviewDialog({
                 Accents
               </p>
               <p className="text-sm text-foreground">
-                {accents.slice(0, 6).join(" · ")}
+                {accents.slice(0, 6).join(" Â· ")}
               </p>
             </div>
           ) : null}
@@ -510,7 +510,7 @@ function TalentPreviewDialog({
             <div className="mt-4 grid grid-cols-3 gap-2 rounded-xl bg-muted/70 p-3 text-center">
               <div className="min-w-0">
                 <p className="truncate text-base font-bold text-foreground">
-                  {trustScore ?? "–"}
+                  {trustScore ?? "â€“"}
                 </p>
                 <p className="mt-0.5 text-[10px] font-medium text-muted-foreground">
                   RootScore
@@ -526,7 +526,7 @@ function TalentPreviewDialog({
               </div>
               <div className="min-w-0">
                 <p className="truncate text-base font-bold text-foreground">
-                  {memberSinceYear ?? "–"}
+                  {memberSinceYear ?? "â€“"}
                 </p>
                 <p className="mt-0.5 text-[10px] font-medium text-muted-foreground">
                   Member since
@@ -538,7 +538,7 @@ function TalentPreviewDialog({
           {travelBits.length > 0 ? (
             <p className="mt-4 flex items-center gap-1.5 text-sm text-foreground">
               <Plane className="h-4 w-4 shrink-0 text-primary" />
-              <span className="truncate">{travelBits.join(" · ")}</span>
+              <span className="truncate">{travelBits.join(" Â· ")}</span>
             </p>
           ) : null}
         </div>
@@ -580,7 +580,7 @@ function TalentResultCard({
   const name = talent.full_legal_name || talent.username;
   const roles =
     talent.professions && talent.professions.length > 0
-      ? talent.professions.slice(0, 3).join(" • ")
+      ? talent.professions.slice(0, 3).join(" â€¢ ")
       : "Talent";
   const city = formatLocation(talent.location);
   const match =
@@ -628,7 +628,7 @@ function TalentResultCard({
       className="cursor-pointer rounded-2xl bg-card p-2.5 shadow-[var(--shadow-card)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
       <div className="flex gap-2.5">
-        {/* LEFT COLUMN — image only */}
+        {/* LEFT COLUMN â€” image only */}
         <div className="relative min-h-[184px] w-[33%] shrink-0 self-stretch overflow-hidden rounded-xl bg-muted">
           {talent.profile_photo ? (
             <img
@@ -689,7 +689,7 @@ function TalentResultCard({
           </span>
         </div>
 
-        {/* RIGHT COLUMN — all content + CTAs */}
+        {/* RIGHT COLUMN â€” all content + CTAs */}
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="flex items-start justify-between gap-1.5">
             <div className="min-w-0 flex-1">
@@ -724,7 +724,7 @@ function TalentResultCard({
             <span className="text-border">|</span>
             <span className="truncate text-muted-foreground">RootScore</span>
             <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border-2 border-primary text-xs font-bold text-primary">
-              {rootScore ?? "–"}
+              {rootScore ?? "â€“"}
             </span>
           </div>
 
@@ -891,7 +891,7 @@ function ShortlistPicker({
                     <span className="block truncate text-xs text-muted-foreground">
                       {[c.role_type, c.location?.city]
                         .filter(Boolean)
-                        .join(" • ")}
+                        .join(" â€¢ ")}
                     </span>
                   </span>
                   {selected ? (
@@ -950,7 +950,7 @@ function MoreFiltersDialog({
     setDraft((prev) => ({ ...prev, ...patch }));
   const ageBand =
     draft.ageMin != null && draft.ageMax != null
-      ? `${draft.ageMin}–${draft.ageMax}`
+      ? `${draft.ageMin}â€“${draft.ageMax}`
       : "";
   const experienceBand =
     EXPERIENCE_BANDS.find(
@@ -1250,7 +1250,7 @@ export default function RecruiterFindTalentPage() {
       setFilters((prev) => ({ ...prev, search: text }));
       setTab("Search");
       setAiError(
-        "AI parsing failed — showing keyword matches instead. Try again or use filters.",
+        "AI parsing failed â€” showing keyword matches instead. Try again or use filters.",
       );
     } finally {
       setAiLoading(false);
@@ -1280,7 +1280,7 @@ export default function RecruiterFindTalentPage() {
       },
       {
         onSuccess: () => {
-          toast.success("Search saved — find it under Saved Searches.");
+          toast.success("Search saved â€” find it under Saved Searches.");
           setTab("Saved Searches");
         },
         onError: () => toast.error("Could not save this search."),
@@ -1318,7 +1318,7 @@ export default function RecruiterFindTalentPage() {
 
   const ageBand =
     filters.ageMin != null && filters.ageMax != null
-      ? `${filters.ageMin}–${filters.ageMax}`
+      ? `${filters.ageMin}â€“${filters.ageMax}`
       : "";
   const experienceBand =
     EXPERIENCE_BANDS.find(
@@ -1347,7 +1347,7 @@ export default function RecruiterFindTalentPage() {
           </div>
           <Image
             src={logoImage}
-            alt="Rootin"
+            alt="Morporfile"
             height={28}
             className="h-7 w-auto shrink-0"
             priority
@@ -1409,7 +1409,7 @@ export default function RecruiterFindTalentPage() {
                   Who are you looking for?
                 </h2>
                 <p className="mt-1 text-xs text-[#667085]">
-                  Try “Female actor, 25–30, Hindi, Mumbai”
+                  Try â€œFemale actor, 25â€“30, Hindi, Mumbaiâ€
                 </p>
               </div>
               <div
@@ -1839,7 +1839,7 @@ export default function RecruiterFindTalentPage() {
             <div className="rounded-2xl border border-border/60 bg-card p-6 text-center shadow-[var(--shadow-card)]">
               <p className="font-bold">No saved searches yet</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Run a search, then tap “Save this search” to get alerts on new
+                Run a search, then tap â€œSave this searchâ€ to get alerts on new
                 talent.
               </p>
               <Button
@@ -1871,7 +1871,7 @@ export default function RecruiterFindTalentPage() {
                     <span className="block truncate text-xs text-muted-foreground">
                       {[s.subtitle, s.last_run_at ? timeAgo(s.last_run_at) : ""]
                         .filter(Boolean)
-                        .join(" • ")}
+                        .join(" â€¢ ")}
                     </span>
                   </span>
                   {s.new_results && s.new_results > 0 ? (
@@ -1956,7 +1956,7 @@ export default function RecruiterFindTalentPage() {
                         {talent.is_verified ? <VerifiedBadge /> : null}
                       </div>
                       <p className="truncate text-sm text-muted-foreground">
-                        {(talent.professions ?? []).slice(0, 2).join(" • ") ||
+                        {(talent.professions ?? []).slice(0, 2).join(" â€¢ ") ||
                           "Talent"}
                       </p>
                       <p className="mt-1 flex items-center gap-1 truncate text-xs text-muted-foreground">

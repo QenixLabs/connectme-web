@@ -1,12 +1,12 @@
 import Image from "next/image";
-import logo from "@/assets/rootin-logo-orange.png";
+import logo from "@/assets/morporfile-logo-orange.png";
 
-export function RootInLogo({ className = "" }: { className?: string }) {
+export function MorporfileLogo({ className = "" }: { className?: string }) {
   return (
     <div className={className}>
       <Image
         src={logo}
-        alt="RootIn — Connect • Collaborate • Get In"
+        alt="Morporfile"
         className="h-auto w-full max-w-[16rem]"
         priority
       />

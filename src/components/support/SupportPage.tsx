@@ -63,7 +63,7 @@ const categories: Category[] = [
 ];
 
 const faqs: Array<[string, string]> = [
-  ["How do I verify my account on Rootin?", "Open Account, choose Verification, and follow the secure document-check steps."],
+  ["How do I verify my account on Morporfile?", "Open Account, choose Verification, and follow the secure document-check steps."],
   ["How can I post a casting campaign?", "Go to Projects, tap Create Campaign, add your brief, and publish when it is ready."],
   ["How do I search for talent?", "Use Talent Search to filter profiles by role, location, skills, and availability."],
   ["What are the payment options?", "Available payment methods appear securely at checkout and in your billing settings."],
@@ -220,7 +220,7 @@ export function SupportPage({ ticketOnly = false }: { ticketOnly?: boolean }) {
             <div className="support-agent-wrap absolute inset-x-0 top-0 h-48 overflow-hidden md:inset-y-0 md:left-auto md:right-0 md:h-auto md:w-[46%]">
               <Image
                 src="/images/support-agent.png"
-                alt="Rootin support specialist wearing a headset"
+                alt="Morporfile support specialist wearing a headset"
                 width={1024}
                 height={1024}
                 priority
@@ -271,7 +271,7 @@ export function SupportPage({ ticketOnly = false }: { ticketOnly?: boolean }) {
                   <span className="size-5 rounded-full border-2 border-support bg-accent" />
                   <span className="grid size-5 place-items-center rounded-full border-2 border-support bg-primary text-[7px] font-bold text-primary-foreground">8+</span>
                 </span>
-                Real people · Average reply under 2 hours
+                Real people Â· Average reply under 2 hours
               </div>
             </div>
           </div>
@@ -343,7 +343,7 @@ export function SupportPage({ ticketOnly = false }: { ticketOnly?: boolean }) {
               </div>
               <div className="flex gap-3 py-3">
                 <CircleHelp className="size-4 shrink-0 text-primary" />
-                <div><p className="text-[10px] text-muted-foreground">Support hours</p><p className="text-xs font-bold text-ink">Mon–Sat, 9:00 AM–7:00 PM</p></div>
+                <div><p className="text-[10px] text-muted-foreground">Support hours</p><p className="text-xs font-bold text-ink">Monâ€“Sat, 9:00 AMâ€“7:00 PM</p></div>
               </div>
               {ticketOnly ? (
                 <div className="flex gap-3 py-3">
@@ -370,17 +370,17 @@ export function SupportPage({ ticketOnly = false }: { ticketOnly?: boolean }) {
           </div>
           <div className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
             {ticketLoading ? (
-              <div className="flex items-center gap-2 rounded-lg bg-muted/60 p-5 text-sm text-muted-foreground"><LoaderCircle className="size-4 animate-spin" /> Loading your requests…</div>
+              <div className="flex items-center gap-2 rounded-lg bg-muted/60 p-5 text-sm text-muted-foreground"><LoaderCircle className="size-4 animate-spin" /> Loading your requestsâ€¦</div>
             ) : ticketError ? (
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-destructive/20 bg-destructive/5 p-4 text-sm">
-                <span>We couldn’t load your support requests.</span>
+                <span>We couldnâ€™t load your support requests.</span>
                 <Button variant="outline" size="sm" onClick={() => void refreshTickets()}>Try again</Button>
               </div>
             ) : ticketList.length === 0 ? (
               <div className="col-span-full rounded-lg border border-dashed border-border bg-muted/30 px-5 py-8 text-center">
                 <span className="mx-auto grid size-10 place-items-center rounded-full bg-primary/10 text-primary"><MessageSquareMore className="size-5" /></span>
                 <h3 className="mt-3 text-sm font-bold text-ink">No support requests yet</h3>
-                <p className="mt-1 text-xs text-muted-foreground">If you need a hand, send us a message and we’ll take it from there.</p>
+                <p className="mt-1 text-xs text-muted-foreground">If you need a hand, send us a message and weâ€™ll take it from there.</p>
                 <Button size="sm" className="mt-4" onClick={() => setTicketDialogOpen(true)}><Plus /> Create a request</Button>
               </div>
             ) : ticketList.map((ticket) => (
@@ -406,7 +406,7 @@ export function SupportPage({ ticketOnly = false }: { ticketOnly?: boolean }) {
         <DialogContent className="support-theme max-h-[90vh] overflow-y-auto sm:max-w-xl">
           <DialogHeader>
             <DialogTitle className="text-ink">Create a support ticket</DialogTitle>
-            <DialogDescription>Tell us what happened. We’ll reply here, and you can follow the conversation in Your Support Tickets.</DialogDescription>
+            <DialogDescription>Tell us what happened. Weâ€™ll reply here, and you can follow the conversation in Your Support Tickets.</DialogDescription>
           </DialogHeader>
           <form onSubmit={submitTicket} className="grid gap-5">
             <div className="grid gap-4 rounded-xl border border-border bg-muted/20 p-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)]">
@@ -454,12 +454,12 @@ export function SupportPage({ ticketOnly = false }: { ticketOnly?: boolean }) {
                 required
                 className="resize-y bg-background"
               />
-              <p className="text-xs text-muted-foreground">Please don’t include passwords or other sensitive information.</p>
+              <p className="text-xs text-muted-foreground">Please donâ€™t include passwords or other sensitive information.</p>
             </div>
             <div className="grid gap-2 rounded-xl border border-dashed border-border bg-muted/20 p-4">
               <div>
                 <Label htmlFor="ticket-attachments">Add screenshots <span className="font-normal text-muted-foreground">(optional)</span></Label>
-                <p className="mt-1 text-xs text-muted-foreground">JPEG, PNG, GIF or WEBP · Up to 5 images, 10 MB each</p>
+                <p className="mt-1 text-xs text-muted-foreground">JPEG, PNG, GIF or WEBP Â· Up to 5 images, 10 MB each</p>
               </div>
               <Input
                 id="ticket-attachments"
@@ -496,7 +496,7 @@ export function SupportPage({ ticketOnly = false }: { ticketOnly?: boolean }) {
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setTicketDialogOpen(false)}>Cancel</Button>
               <Button type="submit" disabled={ticketSubmitting || newSubject.trim().length < 3 || !newDescription.trim()}>
-                {ticketSubmitting && <LoaderCircle className="animate-spin" />} {ticketSubmitting ? "Sending…" : "Send request"}
+                {ticketSubmitting && <LoaderCircle className="animate-spin" />} {ticketSubmitting ? "Sendingâ€¦" : "Send request"}
               </Button>
             </DialogFooter>
           </form>
@@ -507,13 +507,13 @@ export function SupportPage({ ticketOnly = false }: { ticketOnly?: boolean }) {
         <DialogContent className="support-theme sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-ink">{selectedTicket?.subject}</DialogTitle>
-            <DialogDescription>Ticket #{selectedTicket?._id.slice(-8).toUpperCase()} · {selectedTicket?.status.replaceAll("_", " ")}</DialogDescription>
+            <DialogDescription>Ticket #{selectedTicket?._id.slice(-8).toUpperCase()} Â· {selectedTicket?.status.replaceAll("_", " ")}</DialogDescription>
           </DialogHeader>
           <div className="max-h-80 space-y-3 overflow-y-auto rounded-lg bg-muted/30 p-3">
-            {selectedTicket?.replies.length === 0 && <p className="py-5 text-center text-sm text-muted-foreground">Your message is with our team. We’ll reply here.</p>}
-            {selectedTicket?.replies.map((reply, index) => <div key={reply._id || index} className={`max-w-[90%] rounded-xl p-3 text-sm ${reply.author_role === "admin" ? "bg-primary/10" : "ml-auto bg-card shadow-sm"}`}><p className="mb-1 text-[10px] font-bold text-muted-foreground">{reply.author_role === "admin" ? "Rootin Support" : "You"} · {new Date(reply.created_at).toLocaleString()}</p><p className="whitespace-pre-wrap break-words">{reply.message}</p>{reply.attachments?.map((attachment) => <a key={attachment.url} href={attachment.url} target="_blank" rel="noreferrer" className="mt-2 block text-xs text-primary underline">{attachment.name}</a>)}</div>)}
+            {selectedTicket?.replies.length === 0 && <p className="py-5 text-center text-sm text-muted-foreground">Your message is with our team. Weâ€™ll reply here.</p>}
+            {selectedTicket?.replies.map((reply, index) => <div key={reply._id || index} className={`max-w-[90%] rounded-xl p-3 text-sm ${reply.author_role === "admin" ? "bg-primary/10" : "ml-auto bg-card shadow-sm"}`}><p className="mb-1 text-[10px] font-bold text-muted-foreground">{reply.author_role === "admin" ? "Morporfile Support" : "You"} Â· {new Date(reply.created_at).toLocaleString()}</p><p className="whitespace-pre-wrap break-words">{reply.message}</p>{reply.attachments?.map((attachment) => <a key={attachment.url} href={attachment.url} target="_blank" rel="noreferrer" className="mt-2 block text-xs text-primary underline">{attachment.name}</a>)}</div>)}
           </div>
-          {selectedTicket && !["resolved", "closed"].includes(selectedTicket.status) && <form className="grid gap-2" onSubmit={sendReply}><Label htmlFor="ticket-reply" className="sr-only">Your reply</Label><Textarea id="ticket-reply" value={replyMessage} onChange={(event) => setReplyMessage(event.target.value)} placeholder="Write a reply…" maxLength={10000} required /><div className="flex justify-end"><Button type="submit" disabled={replySubmitting || !replyMessage.trim()}>{replySubmitting && <LoaderCircle className="animate-spin" />} {replySubmitting ? "Sending…" : "Send reply"}</Button></div></form>}
+          {selectedTicket && !["resolved", "closed"].includes(selectedTicket.status) && <form className="grid gap-2" onSubmit={sendReply}><Label htmlFor="ticket-reply" className="sr-only">Your reply</Label><Textarea id="ticket-reply" value={replyMessage} onChange={(event) => setReplyMessage(event.target.value)} placeholder="Write a replyâ€¦" maxLength={10000} required /><div className="flex justify-end"><Button type="submit" disabled={replySubmitting || !replyMessage.trim()}>{replySubmitting && <LoaderCircle className="animate-spin" />} {replySubmitting ? "Sendingâ€¦" : "Send reply"}</Button></div></form>}
           {selectedTicket && ["resolved", "closed"].includes(selectedTicket.status) && <p className="flex items-center gap-2 rounded-lg bg-success/10 p-3 text-sm text-foreground"><CheckCircle2 className="size-4 text-success" /> This request is closed. Create a new request if you need more help.</p>}
         </DialogContent>
       </Dialog>
@@ -522,12 +522,12 @@ export function SupportPage({ ticketOnly = false }: { ticketOnly?: boolean }) {
         <DialogContent className="support-theme sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-ink">Contact support</DialogTitle>
-            <DialogDescription>Mon–Sat, 9:00 AM–7:00 PM · Average reply under 2 hours.</DialogDescription>
+            <DialogDescription>Monâ€“Sat, 9:00 AMâ€“7:00 PM Â· Average reply under 2 hours.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-2">
             <Button onClick={() => router.push(messagesHref)}><MessageSquareMore /> Open chat</Button>
             <Button variant="outline" asChild>
-              <a href="mailto:support@rootin.app"><Mail /> Email us</a>
+              <a href="mailto:support@morporfile.app"><Mail /> Email us</a>
             </Button>
             <Button variant="outline" onClick={() => { setContactOpen(false); setTicketDialogOpen(true); }}><Plus /> Create a ticket</Button>
           </div>

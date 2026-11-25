@@ -106,7 +106,7 @@ export interface PublicRecruiterProfile {
   verification_tier: number;
   active_plan?: string | null;
   member_since?: string | null;
-  years_on_rootin?: number | null;
+  years_on_morporfile?: number | null;
   active_campaigns_count: number;
   completed_campaigns_count: number;
   total_talents_count: number;

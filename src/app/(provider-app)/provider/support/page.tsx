@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { SupportPage } from "@/components/support/SupportPage";
 
 export const metadata: Metadata = {
-  title: "Help & Support | Rootin",
+  title: "Help & Support | Morporfile",
   description: "Contact support and track your support tickets.",
 };
 

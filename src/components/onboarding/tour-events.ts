@@ -1,6 +1,6 @@
-export const TALENT_TOUR_REPLAY_EVENT = "connectme:replay-talent-tour";
-export const RECRUITER_TOUR_REPLAY_EVENT = "connectme:replay-recruiter-tour";
-export const PROVIDER_TOUR_REPLAY_EVENT = "connectme:replay-provider-tour";
+export const TALENT_TOUR_REPLAY_EVENT = "morporfile:replay-talent-tour";
+export const RECRUITER_TOUR_REPLAY_EVENT = "morporfile:replay-recruiter-tour";
+export const PROVIDER_TOUR_REPLAY_EVENT = "morporfile:replay-provider-tour";
 
 export function tourReplayEventForRole(role: "talent" | "recruiter" | "provider") {
   if (role === "recruiter") return RECRUITER_TOUR_REPLAY_EVENT;

@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import { CreditsPage } from "@/components/talent-app/CreditsPage";
 
 export const metadata: Metadata = {
-  title: "Credits — RootIn",
-  description: "Manage the films, shows, campaigns and productions on your RootIn profile.",
+  title: "Credits â€” Morporfile",
+  description: "Manage the films, shows, campaigns and productions on your Morporfile profile.",
   openGraph: {
-    title: "Credits — RootIn",
-    description: "Manage the films, shows, campaigns and productions on your RootIn profile.",
+    title: "Credits â€” Morporfile",
+    description: "Manage the films, shows, campaigns and productions on your Morporfile profile.",
     type: "website",
   },
   twitter: {

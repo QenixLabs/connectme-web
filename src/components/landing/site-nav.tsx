@@ -1,5 +1,5 @@
 import Link from "next/link";
-import logo from "@/assets/rootin-logo-orange.png";
+import logo from "@/assets/morporfile-logo-orange.png";
 
 const links = [
   { label: "For talent", href: "#for-talent" },
@@ -12,7 +12,7 @@ export function SiteNav() {
     <header className="sticky top-0 z-50 border-b border-border bg-surface/85 backdrop-blur">
       <div className="container-page flex h-[88px] items-center justify-between gap-4">
         <a href="#top" className="flex items-center gap-2">
-          <img src={logo.src} alt="RootIn logo" className="h-[78px] w-auto" width={116} height={78} />
+          <img src={logo.src} alt="Morporfile logo" className="h-[78px] w-auto" width={116} height={78} />
         </a>
 
         <nav className="hidden items-center gap-7 md:flex" aria-label="Primary">

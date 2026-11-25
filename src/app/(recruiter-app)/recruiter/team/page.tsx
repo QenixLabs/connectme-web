@@ -203,7 +203,7 @@ function InviteDialog({
           <DialogTitle>Invite a teammate</DialogTitle>
           <DialogDescription>
             Give a teammate the access they need. They can accept after signing
-            in to RootIn.
+            in to Morporfile.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">
@@ -653,7 +653,7 @@ function InvitationRow({
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold">{invitation.email}</p>
         <p className="text-xs text-muted-foreground">
-          {invitation.role?.name || "Team role"} ·{" "}
+          {invitation.role?.name || "Team role"} Â·{" "}
           {invitation.status.toLowerCase()}
         </p>
       </div>

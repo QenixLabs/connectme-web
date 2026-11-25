@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, BadgeCheck, Building2, Check, Loader2, MapPin, Sparkles, Store } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import logoImage from "@/assets/rootin-logo-orange.png";
+import logoImage from "@/assets/morporfile-logo-orange.png";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { providersApi } from "@/lib/api/marketplace";
 import type { ProviderProfile } from "@/lib/api/marketplace";
@@ -60,8 +60,8 @@ function OnboardingLayout({
       <div className="pointer-events-none absolute -bottom-48 -right-40 size-[34rem] rounded-full bg-blue-500/10 blur-3xl" />
 
       <header className="relative z-10 mx-auto flex h-[76px] max-w-7xl items-center justify-between px-5 sm:px-8">
-        <Link href="/" aria-label="RootIn home" className="inline-flex items-center">
-          <Image src={logoImage} alt="RootIn" height={34} className="h-9 w-auto" priority />
+        <Link href="/" aria-label="Morporfile home" className="inline-flex items-center">
+          <Image src={logoImage} alt="Morporfile" height={34} className="h-9 w-auto" priority />
         </Link>
         <Link
           href="/services"
@@ -192,7 +192,7 @@ export default function ProviderOnboardingPage() {
       const result = await providersApi.completeOnboarding();
       await fetchUser();
       await queryClient.invalidateQueries({ queryKey: queryKeys.provider.me() });
-      setMessage("Provider onboarding completed. Taking you to your dashboard…");
+      setMessage("Provider onboarding completed. Taking you to your dashboardâ€¦");
       if (result.profile?.slug) {
         queryClient.setQueryData(queryKeys.provider.me(), { profile: result.profile });
       }
@@ -214,7 +214,7 @@ export default function ProviderOnboardingPage() {
       >
         <div className="flex items-center gap-3 rounded-2xl border border-border bg-background/50 p-5 text-sm text-muted-foreground">
           <Loader2 className="size-5 animate-spin text-primary" />
-          Loading provider onboarding…
+          Loading provider onboardingâ€¦
         </div>
       </OnboardingLayout>
     );
@@ -234,7 +234,7 @@ export default function ProviderOnboardingPage() {
           <div>
             <p className="text-sm font-bold">One account, more ways to grow</p>
             <p className="mt-1 text-xs leading-5 text-muted-foreground">
-              Keep your existing account and add a provider profile whenever you’re ready.
+              Keep your existing account and add a provider profile whenever youâ€™re ready.
             </p>
           </div>
         </div>
@@ -257,7 +257,7 @@ export default function ProviderOnboardingPage() {
           {saving ? (
             <>
               <Loader2 className="size-4 animate-spin" />
-              Activating…
+              Activatingâ€¦
             </>
           ) : (
             <>
@@ -272,12 +272,12 @@ export default function ProviderOnboardingPage() {
 
   return (
     <OnboardingLayout
-      eyebrow={profile?.onboarding_completed ? "Profile is live" : "Step 1 · Profile basics"}
-      title={profile?.onboarding_completed ? "Your provider profile" : "Let’s make it official."}
+      eyebrow={profile?.onboarding_completed ? "Profile is live" : "Step 1 Â· Profile basics"}
+      title={profile?.onboarding_completed ? "Your provider profile" : "Letâ€™s make it official."}
       description={
         profile?.onboarding_completed
           ? "Your provider profile is complete. Manage your services and enquiries from the provider dashboard."
-          : "Start with the essentials. You can add portfolio items and more details whenever you’re ready."
+          : "Start with the essentials. You can add portfolio items and more details whenever youâ€™re ready."
       }
     >
       {profile?.onboarding_completed && (
@@ -347,7 +347,7 @@ export default function ProviderOnboardingPage() {
                 value={form.city}
                 onChange={(event) => setForm({ ...form, city: event.target.value })}
                 className="w-full rounded-xl border border-border bg-background/70 py-3 pl-10 pr-4 text-sm outline-none transition placeholder:text-muted-foreground/60 focus:border-primary focus:ring-4 focus:ring-primary/10"
-                placeholder="Where you’re based"
+                placeholder="Where youâ€™re based"
                 maxLength={80}
                 autoComplete="address-level2"
               />
@@ -378,7 +378,7 @@ export default function ProviderOnboardingPage() {
               value={form.about}
               onChange={(event) => setForm({ ...form, about: event.target.value })}
               className="min-h-28 w-full resize-y rounded-xl border border-border bg-background/70 px-4 py-3 text-sm leading-6 outline-none transition placeholder:text-muted-foreground/60 focus:border-primary focus:ring-4 focus:ring-primary/10"
-              placeholder="Tell clients what you do best and what makes your work special…"
+              placeholder="Tell clients what you do best and what makes your work specialâ€¦"
               maxLength={2000}
               rows={4}
             />
@@ -396,7 +396,7 @@ export default function ProviderOnboardingPage() {
         )}
         <div className="flex flex-col gap-3 border-t border-border/70 pt-5 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-muted-foreground">
-            <span className="text-primary">*</span> Required · You can update your profile anytime
+            <span className="text-primary">*</span> Required Â· You can update your profile anytime
           </p>
           <div className="flex flex-wrap items-center gap-3">
             {profile?.onboarding_completed && (
@@ -412,7 +412,7 @@ export default function ProviderOnboardingPage() {
               {saving ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
-                  Saving…
+                  Savingâ€¦
                 </>
               ) : (
                 <>

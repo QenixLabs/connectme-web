@@ -50,8 +50,8 @@ const toneClass: Record<Tone, string> = {
 
 function actorName(notification: Notification): string {
   const actor = notification.actor_id;
-  if (!actor) return "RootIn";
-  return actor.full_legal_name || actor.company_name || actor.email || "RootIn";
+  if (!actor) return "Morporfile";
+  return actor.full_legal_name || actor.company_name || actor.email || "Morporfile";
 }
 
 function getCategory(notification: Notification): Category {

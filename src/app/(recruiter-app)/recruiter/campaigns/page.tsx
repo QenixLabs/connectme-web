@@ -90,9 +90,9 @@ function isPrivate(campaign: Campaign): boolean {
 function formatBudget(campaign: Campaign): string | null {
   const { min, max, currency } = campaign.budget_range ?? {};
   if (!min && !max) return null;
-  const symbol = currency === "INR" ? "₹" : currency ? `${currency} ` : "₹";
+  const symbol = currency === "INR" ? "â‚¹" : currency ? `${currency} ` : "â‚¹";
   const fmt = (n: number) => (n >= 100000 ? `${Math.round(n / 100000)}L` : n >= 1000 ? `${Math.round(n / 1000)}k` : `${n}`);
-  if (min && max) return `${symbol}${fmt(min)} – ${fmt(max)}`;
+  if (min && max) return `${symbol}${fmt(min)} â€“ ${fmt(max)}`;
   if (min) return `${symbol}${fmt(min)}+`;
   return `Up to ${symbol}${fmt(max as number)}`;
 }
@@ -161,7 +161,7 @@ function Artwork({ kind, imageUrl, title }: { kind: ArtworkKind; imageUrl?: stri
   if (kind === "series") {
     return (
       <div className="artwork artwork-series" aria-label="Production artwork" role="img">
-        <span className="series-kicker">A ROOTIN ORIGINAL</span>
+        <span className="series-kicker">A MORPORFILE ORIGINAL</span>
         <strong>{title.slice(0, 10).toUpperCase() || "CASTING"}</strong>
         <small>NOW CASTING</small>
       </div>
@@ -299,7 +299,7 @@ function CampaignMenu({ campaign }: { campaign: Campaign }) {
           disabled={deleting}
           className="flex items-center gap-2 text-destructive focus:text-destructive"
         >
-          <Trash2 className="size-3.5" /> {deleting ? "Deleting…" : "Delete"}
+          <Trash2 className="size-3.5" /> {deleting ? "Deletingâ€¦" : "Delete"}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -317,7 +317,7 @@ function CampaignCard({ campaign }: { campaign: Campaign }) {
   const shortlisted = applicationData?.shortlisted ?? 0;
   const pending = applicationData?.pending ?? 0;
   const location = locationLabel(campaign);
-  const roleLine = [campaign.role_type, campaign.industry].filter(Boolean).join(" · ");
+  const roleLine = [campaign.role_type, campaign.industry].filter(Boolean).join(" Â· ");
   const detail = campaignDetail(campaign);
   const days = daysUntilDeadline(campaign.deadline);
   const urgent = days !== null && days >= 0 && days <= 3;
@@ -413,19 +413,19 @@ function CampaignCard({ campaign }: { campaign: Campaign }) {
         <div className="mt-3 grid grid-cols-3 gap-2 sm:mt-4 sm:gap-3">
           <Metric
             icon={<Users className="h-5 w-5" />}
-            value={applicationsLoading ? "…" : applications}
+            value={applicationsLoading ? "â€¦" : applications}
             label="Applicants"
             tone="bg-primary-soft text-primary"
           />
           <Metric
             icon={<Star className="h-5 w-5 fill-current" />}
-            value={applicationsLoading ? "…" : shortlisted}
+            value={applicationsLoading ? "â€¦" : shortlisted}
             label="Shortlisted"
             tone="bg-warning-soft text-warning"
           />
           <Metric
             icon={<FileText className="h-5 w-5 fill-current" />}
-            value={applicationsLoading ? "…" : pending}
+            value={applicationsLoading ? "â€¦" : pending}
             label="Pending"
             tone="bg-alert-soft text-alert"
           />
@@ -685,7 +685,7 @@ export default function RecruiterCampaignsPage() {
                     selected ? "bg-primary-foreground/15 text-primary-foreground" : "bg-secondary text-muted-foreground"
                   }`}
                 >
-                  {countLoading[item.value] ? "…" : (count ?? 0)}
+                  {countLoading[item.value] ? "â€¦" : (count ?? 0)}
                 </span>
               </button>
             );
@@ -899,10 +899,10 @@ export default function RecruiterCampaignsPage() {
 
         <p className="mt-3 text-xs text-muted-foreground sm:text-sm" aria-live="polite">
           {isLoading
-            ? "Loading campaigns…"
+            ? "Loading campaignsâ€¦"
             : `${visibleCampaigns.length} ${tab} campaign${visibleCampaigns.length === 1 ? "" : "s"}${
                 activeFilterCount > 0 || search.trim()
-                  ? ` · ${activeFilterCount} filter${activeFilterCount === 1 ? "" : "s"} applied`
+                  ? ` Â· ${activeFilterCount} filter${activeFilterCount === 1 ? "" : "s"} applied`
                   : ""
               }`}
         </p>

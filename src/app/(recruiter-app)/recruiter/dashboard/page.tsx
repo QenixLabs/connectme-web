@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Recruiter dashboard — visual port of screenshot-exact `src/routes/index.tsx`
+ * Recruiter dashboard â€” visual port of screenshot-exact `src/routes/index.tsx`
  * wired to real backend data.
  *
  * Layout follows the source screen section-by-section (brand header, greeting
@@ -145,7 +145,7 @@ function StripImage({ source, crop, alt }: { source: string; crop: string; alt: 
 }
 
 /* -------------------------------------------------------------------------- */
-/* Shortlist picker — same flow as find-talent: pick an active campaign       */
+/* Shortlist picker â€” same flow as find-talent: pick an active campaign       */
 /* -------------------------------------------------------------------------- */
 
 function ShortlistPicker({
@@ -245,7 +245,7 @@ function ShortlistPicker({
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-bold">{campaign.name}</span>
                     <span className="block truncate text-xs text-muted-foreground">
-                      {[campaign.role_type, campaign.location?.city].filter(Boolean).join(" • ")}
+                      {[campaign.role_type, campaign.location?.city].filter(Boolean).join(" â€¢ ")}
                     </span>
                   </span>
                   {selected && <Check className="size-5 shrink-0 text-primary" />}
@@ -381,7 +381,7 @@ export default function RecruiterDashboardPage() {
           ? `Review ${pendingReviews} new application${pendingReviews === 1 ? "" : "s"}`
           : "Review applications",
       project: firstCampaign
-        ? `${firstCampaign.name}${firstCampaign.role_type ? ` – ${firstCampaign.role_type}` : ""}`
+        ? `${firstCampaign.name}${firstCampaign.role_type ? ` â€“ ${firstCampaign.role_type}` : ""}`
         : "Active campaigns",
       due: pendingReviews > 0 ? "Today" : "This week",
       urgent: pendingReviews > 0,
@@ -536,7 +536,7 @@ export default function RecruiterDashboardPage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={ROBOT_SRC}
-              alt="Rootin AI casting assistant"
+              alt="Morporfile AI casting assistant"
               className="absolute -right-3 top-9 h-28 w-28 object-contain"
               loading="eager"
             />
@@ -553,7 +553,7 @@ export default function RecruiterDashboardPage() {
                 value={copilotQuery}
                 onChange={(event) => setCopilotQuery(event.target.value)}
                 className="min-w-0 flex-1 bg-transparent px-2 text-[10px] outline-none placeholder:text-muted-foreground"
-                placeholder="Try “Female actor, 25–30, Hindi, Mumbai”"
+                placeholder="Try â€œFemale actor, 25â€“30, Hindi, Mumbaiâ€"
               />
               <Button size="icon" className="h-10 w-11 rounded-lg" aria-label="Search talent">
                 <ArrowRight className="size-5" />
@@ -646,7 +646,7 @@ export default function RecruiterDashboardPage() {
               ) : (
                 talents.map((talent, index) => {
                   const name = talent.full_legal_name || talent.username;
-                  const profession = talent.professions?.slice(0, 2).join(" · ") || "Talent";
+                  const profession = talent.professions?.slice(0, 2).join(" Â· ") || "Talent";
                   const location =
                     talent.location?.city || talent.location?.state || "India";
                   const tags = (talent.professions ?? []).slice(0, 3);

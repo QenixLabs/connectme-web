@@ -142,22 +142,22 @@ export default function PublicRecruiterProfilePage() {
         count:
           profile.active_campaigns_count + profile.completed_campaigns_count > 0
             ? String(profile.active_campaigns_count + profile.completed_campaigns_count)
-            : "—",
+            : "â€”",
         label: "Projects",
-        note: "On RootIn",
+        note: "On Morporfile",
       },
       {
         icon: "heart",
         count:
           profile.total_talents_count > 0
             ? String(profile.total_talents_count)
-            : "—",
+            : "â€”",
         label: "Talent Hired",
-        note: "On RootIn",
+        note: "On Morporfile",
       },
       {
         icon: "star",
-        count: profile.average_rating > 0 ? profile.average_rating.toFixed(1) : "—",
+        count: profile.average_rating > 0 ? profile.average_rating.toFixed(1) : "â€”",
         label: "Rating",
         note:
           profile.total_reviews_count > 0

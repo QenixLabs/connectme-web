@@ -7,7 +7,7 @@
  * already-seen visitors straight to `/recruiter/dashboard`.
  */
 
-const STORAGE_PREFIX = "rootin:recruiter-welcome-seen:";
+const STORAGE_PREFIX = "morporfile:recruiter-welcome-seen:";
 
 interface WelcomeIdentity {
   _id?: string;
@@ -33,7 +33,7 @@ export function markRecruiterWelcomeSeen(user?: WelcomeIdentity | null): void {
   try {
     window.localStorage.setItem(recruiterWelcomeKey(user), "1");
   } catch {
-    // Storage unavailable (private mode etc.) — welcome may show again,
+    // Storage unavailable (private mode etc.) â€” welcome may show again,
     // but the app keeps working.
   }
 }

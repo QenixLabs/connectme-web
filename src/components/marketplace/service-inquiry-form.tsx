@@ -41,10 +41,10 @@ interface ServiceInquiryFormProps {
 const GENERAL_INQUIRY = "__general_inquiry__";
 
 const BUDGET_RANGES = [
-  { value: "up_to_25000", label: "Up to ₹25k", amount: 25_000 },
-  { value: "25000_50000", label: "₹25k–₹50k", amount: 25_000 },
-  { value: "50000_100000", label: "₹50k–₹1L", amount: 50_000 },
-  { value: "above_100000", label: "Above ₹1L", amount: 100_000 },
+  { value: "up_to_25000", label: "Up to â‚¹25k", amount: 25_000 },
+  { value: "25000_50000", label: "â‚¹25kâ€“â‚¹50k", amount: 25_000 },
+  { value: "50000_100000", label: "â‚¹50kâ€“â‚¹1L", amount: 50_000 },
+  { value: "above_100000", label: "Above â‚¹1L", amount: 100_000 },
 ] as const;
 
 export function ServiceInquiryForm({
@@ -389,7 +389,7 @@ export function ServiceInquiryForm({
                 Send Request
               </Button>
               <p className="mt-2 text-center text-xs text-provider-muted">
-                Your budget is informational only. ConnectMe does not collect
+                Your budget is informational only. Morporfile does not collect
                 payments.
               </p>
             </div>

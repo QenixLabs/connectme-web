@@ -3,13 +3,13 @@ import type { Metadata } from "next";
 import { OpportunityDetailPage } from "@/components/talent-app/OpportunityDetailPage";
 
 export const metadata: Metadata = {
-  title: "RootIn — Opportunity Details",
+  title: "Morporfile â€” Opportunity Details",
   description:
-    "View campaign details, requirements, and apply to opportunities on RootIn.",
+    "View campaign details, requirements, and apply to opportunities on Morporfile.",
   openGraph: {
-    title: "RootIn — Opportunity Details",
+    title: "Morporfile â€” Opportunity Details",
     description:
-      "View campaign details, requirements, and apply to opportunities on RootIn.",
+      "View campaign details, requirements, and apply to opportunities on Morporfile.",
   },
 };
 

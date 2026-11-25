@@ -32,7 +32,7 @@ export function CommunicationNotificationDialog({
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{notification?.title}</DialogTitle>
-          <DialogDescription>Update from RootIn</DialogDescription>
+          <DialogDescription>Update from Morporfile</DialogDescription>
         </DialogHeader>
         <p className="whitespace-pre-wrap break-words text-sm leading-6">
           {notification?.body}

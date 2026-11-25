@@ -30,7 +30,7 @@ import {
 } from "@/lib/find-talent/search-model";
 
 const SAMPLE_QUERY =
-  "I'm looking for a female actor, 25–30 years old, fluent in Telugu, based in Mumbai, for a web series. She should be available now.";
+  "I'm looking for a female actor, 25â€“30 years old, fluent in Telugu, based in Mumbai, for a web series. She should be available now.";
 
 const DEFAULT_CRITERIA: SearchCriteria = {
   ...emptyCriteria,
@@ -46,13 +46,13 @@ const DEFAULT_CRITERIA: SearchCriteria = {
 
 const examples = [
   { icon: Clapperboard, text: "Male model for fashion shoot in Delhi" },
-  { icon: Music, text: "Playback singer, Hindi, 20–30" },
+  { icon: Music, text: "Playback singer, Hindi, 20â€“30" },
   { icon: Users, text: "Dancers for a music video, Mumbai" },
 ];
 
 const defaultChips = [
   { icon: User, label: "Female Actor", tint: "bg-pink-100 text-pink-600" },
-  { icon: Calendar, label: "25 – 30 years", tint: "bg-indigo-100 text-indigo-600" },
+  { icon: Calendar, label: "25 â€“ 30 years", tint: "bg-indigo-100 text-indigo-600" },
   { icon: Languages, label: "Telugu", tint: "bg-emerald-100 text-emerald-600" },
   { icon: MapPin, label: "Mumbai", tint: "bg-sky-100 text-sky-600" },
   { icon: Clapperboard, label: "Web Series", tint: "bg-amber-100 text-amber-600" },
@@ -87,7 +87,7 @@ function criteriaChips(criteria: SearchCriteria) {
   if (criteria.ageMin != null || criteria.ageMax != null) {
     chips.push({
       icon: Calendar,
-      label: `${criteria.ageMin ?? ""} – ${criteria.ageMax ?? ""} years`,
+      label: `${criteria.ageMin ?? ""} â€“ ${criteria.ageMax ?? ""} years`,
       tint: "bg-indigo-100 text-indigo-600",
     });
   }
@@ -114,12 +114,12 @@ function criteriaLines(criteria: SearchCriteria) {
   return [
     criteria.gender && `Gender: ${criteria.gender}`,
     (criteria.ageMin != null || criteria.ageMax != null) &&
-      `Playing Age: ${criteria.ageMin ?? ""}–${criteria.ageMax ?? ""}`,
+      `Playing Age: ${criteria.ageMin ?? ""}â€“${criteria.ageMax ?? ""}`,
     criteria.languages.length > 0 && `Language: ${criteria.languages.join(", ")}`,
     criteria.location && `Location: ${criteria.location}`,
     criteria.profession && `Profession: ${criteria.profession}`,
     criteria.experienceMin != null || criteria.experienceMax != null
-      ? `Experience: ${criteria.experienceMin ?? ""}–${criteria.experienceMax ?? ""} years`
+      ? `Experience: ${criteria.experienceMin ?? ""}â€“${criteria.experienceMax ?? ""} years`
       : null,
     criteria.availability && `Availability: ${criteria.availability.replaceAll("_", " ")}`,
     criteria.skills.length > 0 && `Skills: ${criteria.skills.join(", ")}`,
@@ -137,7 +137,7 @@ export default function AiTalentSearchPage() {
   const parsedChips = hasParsedQuery ? criteriaChips(criteria) : defaultChips;
   const matchingCriteria = hasParsedQuery ? criteriaLines(criteria) : [
     "Gender: Female",
-    "Playing Age: 25–30",
+    "Playing Age: 25â€“30",
     "Language: Telugu",
     "Location: Mumbai",
     "Project Type: Web Series",
@@ -186,7 +186,7 @@ export default function AiTalentSearchPage() {
           </button>
           <div>
             <span className="block text-xl font-extrabold leading-none tracking-tight">AI Talent Search</span>
-            <span className="block text-[10px] font-medium text-muted-foreground">Powered by RootIn AI</span>
+            <span className="block text-[10px] font-medium text-muted-foreground">Powered by Morporfile AI</span>
           </div>
           <span className="ml-auto grid size-10 place-items-center rounded-full bg-foreground text-xs font-bold text-warning">
             AI
@@ -246,7 +246,7 @@ export default function AiTalentSearchPage() {
               aria-label="Describe the talent you need"
               rows={4}
               className="w-full resize-none bg-transparent text-sm leading-relaxed text-foreground outline-none placeholder:text-muted-foreground"
-              placeholder="e.g. Female actor, 25–30, Telugu, Mumbai"
+              placeholder="e.g. Female actor, 25â€“30, Telugu, Mumbai"
             />
             <div className="mt-2 flex justify-end">
               <button

@@ -28,7 +28,7 @@ function visibleSteps(steps: DriveStep[], menuSelector: string, menuContentSelec
 
 export function RoleTour({ role, steps, replayEvent }: RoleTourProps) {
   const startedRef = useRef(false);
-  const storageKey = `connectme:${role}-tour-completed`;
+  const storageKey = `morporfile:${role}-tour-completed`;
   const menuSelector = `[data-tour="${role}-profile-menu"]`;
   const menuContentSelector = `[data-tour="${role}-profile-menu-content"]`;
 
@@ -45,7 +45,7 @@ export function RoleTour({ role, steps, replayEvent }: RoleTourProps) {
       stagePadding: 12,
       stageRadius: 16,
       popoverOffset: 16,
-      popoverClass: `connectme-tour-popover connectme-tour-popover--${role}`,
+      popoverClass: `morporfile-tour-popover morporfile-tour-popover--${role}`,
       overlayOpacity: 0.78,
       allowClose: true,
       allowScroll: true,

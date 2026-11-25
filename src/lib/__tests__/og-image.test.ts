@@ -41,21 +41,21 @@ describe("buildTalentOgImageUrl", () => {
   it("returns an absolute, cache-busted URL", () => {
     expect(
       buildTalentOgImageUrl({
-        origin: "https://rootin.app/",
+        origin: "https://morporfile.app/",
         slug: "asha-rao",
         version: "abc123",
       }),
-    ).toBe("https://rootin.app/api/og/talent/asha-rao?v=abc123");
+    ).toBe("https://morporfile.app/api/og/talent/asha-rao?v=abc123");
   });
 
   it("omits the version when it is missing", () => {
     expect(
       buildTalentOgImageUrl({
-        origin: "https://rootin.app",
+        origin: "https://morporfile.app",
         slug: "asha-rao",
         version: "",
       }),
-    ).toBe("https://rootin.app/api/og/talent/asha-rao");
+    ).toBe("https://morporfile.app/api/og/talent/asha-rao");
   });
 
   it("returns an empty string without a usable origin", () => {
@@ -69,21 +69,21 @@ describe("talentPhotoIdentity", () => {
   it("ignores expiring signature parameters but keeps the file path", () => {
     expect(
       talentPhotoIdentity(
-        "https://api.rootin.app/files/access?path=avatars%2Fasha.jpg&expires=1&signature=aaa",
+        "https://api.morporfile.app/files/access?path=avatars%2Fasha.jpg&expires=1&signature=aaa",
       ),
     ).toBe(
-      "https://api.rootin.app/files/access?path=avatars%2Fasha.jpg",
+      "https://api.morporfile.app/files/access?path=avatars%2Fasha.jpg",
     );
   });
 });
 
 describe("buildTalentOgImageVersion", () => {
   const photo =
-    "https://api.rootin.app/files/access?path=avatars%2Fasha.jpg&expires=1770000000&signature=aaa";
+    "https://api.morporfile.app/files/access?path=avatars%2Fasha.jpg&expires=1770000000&signature=aaa";
 
   it("stays stable while only the signature rotates", () => {
     const rotated =
-      "https://api.rootin.app/files/access?path=avatars%2Fasha.jpg&expires=1779999999&signature=bbb";
+      "https://api.morporfile.app/files/access?path=avatars%2Fasha.jpg&expires=1779999999&signature=bbb";
 
     expect(
       buildTalentOgImageVersion({ profilePhoto: photo, updatedAt: "2026-01-01" }),
@@ -138,9 +138,9 @@ describe("buildProfileMetadata with the rendered OG image", () => {
     const metadata = buildProfileMetadata({
       name: "Asha Rao",
       headline: "Actor",
-      url: "https://rootin.app/talent/asha-rao",
+      url: "https://morporfile.app/talent/asha-rao",
       imageUrl:
-        "https://rootin.app/api/og/talent/asha-rao?v=abc123",
+        "https://morporfile.app/api/og/talent/asha-rao?v=abc123",
       imageWidth: OG_IMAGE_WIDTH,
       imageHeight: OG_IMAGE_HEIGHT,
       imageType: OG_IMAGE_CONTENT_TYPE,
@@ -148,11 +148,11 @@ describe("buildProfileMetadata with the rendered OG image", () => {
 
     expect(metadata.openGraph.images).toEqual([
       {
-        url: "https://rootin.app/api/og/talent/asha-rao?v=abc123",
+        url: "https://morporfile.app/api/og/talent/asha-rao?v=abc123",
         width: 1200,
         height: 630,
         type: "image/jpeg",
-        alt: "Asha Rao — Actor | RootIn",
+        alt: "Asha Rao â€” Actor | Morporfile",
       },
     ]);
   });

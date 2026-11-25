@@ -38,7 +38,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { NavItem } from "./nav-config";
-import logoImage from "@/assets/rootin-logo-orange.png";
+import logoImage from "@/assets/morporfile-logo-orange.png";
 import { tourReplayEventForRole } from "@/components/onboarding/tour-events";
 
 const subscribe = () => () => {};
@@ -72,7 +72,7 @@ export function TopBar({ navItems, role, showUserMenu = false }: TopBarProps) {
   if (pathname.match(/^\/recruiter\/campaigns\/[^/]+\/applications(\/|$)/))
     return null;
 
-  // Talent Search owns its compact mobile header — hide the large app bar on
+  // Talent Search owns its compact mobile header â€” hide the large app bar on
   // small screens so the page matches the reference (desktop keeps nav).
   const hideOnMobile = pathname === "/recruiter/find-talent";
   const hideNav = role === "provider" && pathname === "/provider/dashboard";
@@ -92,7 +92,7 @@ export function TopBar({ navItems, role, showUserMenu = false }: TopBarProps) {
           <Link href={`/${role}/dashboard`} className="flex items-center">
             <Image
               src={logoImage}
-              alt="RootIn"
+              alt="Morporfile"
               height={32}
               className="h-7 w-auto sm:h-9"
               priority
@@ -268,7 +268,7 @@ function UserMenu({ role }: { role: TopBarProps["role"] }) {
                   className="cursor-pointer"
                   onSelect={() => window.dispatchEvent(new Event(tourReplayEventForRole(role)))}
                 >
-                  <span className="mr-2 size-4" aria-hidden="true">✦</span>
+                  <span className="mr-2 size-4" aria-hidden="true">âœ¦</span>
                   Take a tour
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>

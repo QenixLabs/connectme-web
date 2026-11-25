@@ -29,7 +29,7 @@ export function RazorpayCheckoutButton({
       return;
     }
     if (amount < 100) {
-      toast.error("The minimum payment is ₹1.");
+      toast.error("The minimum payment is â‚¹1.");
       return;
     }
     if (!window.Razorpay) {
@@ -49,7 +49,7 @@ export function RazorpayCheckoutButton({
         key: keyId,
         amount: order.amount,
         currency: order.currency,
-        name: "RootIn",
+        name: "Morporfile",
         description,
         order_id: order.order_id,
         handler: async (response) => {
@@ -86,7 +86,7 @@ export function RazorpayCheckoutButton({
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="afterInteractive" />
       <Button type="button" onClick={() => void startCheckout()} disabled={isLoading}>
         {isLoading ? <Loader2 className="size-4 animate-spin" /> : null}
-        {isLoading ? "Processing…" : "Pay with Razorpay"}
+        {isLoading ? "Processingâ€¦" : "Pay with Razorpay"}
       </Button>
     </>
   );

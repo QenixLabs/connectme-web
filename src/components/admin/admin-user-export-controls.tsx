@@ -60,7 +60,7 @@ function download(buffer: Blob, role: Role) {
   const url = URL.createObjectURL(buffer);
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = `rootin-${role}-users.xlsx`;
+  anchor.download = `morporfile-${role}-users.xlsx`;
   anchor.click();
   URL.revokeObjectURL(url);
 }
@@ -92,7 +92,7 @@ export function AdminUserExportControls({ role, filters, selectedIds, visibleIds
         <Checkbox checked={visibleIds.length > 0 && visibleIds.every((id) => selectedIds.includes(id))} onCheckedChange={(checked) => onSelectVisible(checked === true)} aria-label="Select all visible users" />
         Select visible
       </div>
-      <span className="text-sm text-muted-foreground">{selectedIds.length} selected · {total.toLocaleString()} matching</span>
+      <span className="text-sm text-muted-foreground">{selectedIds.length} selected Â· {total.toLocaleString()} matching</span>
       <div className="ml-auto flex flex-wrap gap-2">
         <Button size="sm" variant="outline" disabled={loading !== null} onClick={() => void runExport("selected")}><FileSpreadsheet className="mr-1.5 size-4" />{loading === "selected" ? <Loader2 className="size-4 animate-spin" /> : "Export selected"}</Button>
         <Button size="sm" disabled={loading !== null} onClick={() => void runExport("filtered")}><Download className="mr-1.5 size-4" />{loading === "filtered" ? <Loader2 className="size-4 animate-spin" /> : "Export all matching"}</Button>
