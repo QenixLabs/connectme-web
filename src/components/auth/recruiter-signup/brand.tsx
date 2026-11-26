@@ -33,32 +33,7 @@ export function StepHeader({
   onBack: () => void;
 }) {
   return (
-    <header className="flex items-center gap-3 px-4 pt-4 sm:px-7 sm:pt-6">
-      <button
-        type="button"
-        onClick={onBack}
-        disabled={step <= 1}
-        aria-label="Go to previous step"
-        className="grid size-10 shrink-0 place-items-center rounded-full border border-border text-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40"
-      >
-        <ChevronLeft className="size-5" />
-      </button>
-      <div className="min-w-0 flex-1">
-        <p className="mb-2 text-xs font-medium text-muted-foreground">
-          Step {step} of {total}
-        </p>
-        <div className="flex gap-1.5" aria-label={`Step ${step} of ${total}`}>
-          {Array.from({ length: total }, (_, index) => (
-            <span
-              key={index}
-              className={`h-1.5 flex-1 rounded-full ${
-                index < step ? "bg-primary" : "bg-border"
-              }`}
-            />
-          ))}
-        </div>
-      </div>
-    </header>
+   <> </>
   );
 }
 

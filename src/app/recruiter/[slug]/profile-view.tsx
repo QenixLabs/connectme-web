@@ -288,7 +288,7 @@ export function Overview({
             aria-label="View casting portfolio"
           >
             <img
-              src={profile.profile_photo || castingHero}
+              src={castingHero}
               alt={`${profile.company_name} portfolio`}
               width={720}
               height={900}

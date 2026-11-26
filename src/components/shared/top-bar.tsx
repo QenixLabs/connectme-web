@@ -124,19 +124,7 @@ export function TopBar({ navItems, role, showUserMenu = false }: TopBarProps) {
         )}
 
           <div className="flex items-center gap-1">
-            {showSupportShortcut && (
-              <Button
-                asChild
-                variant="outline"
-                size="sm"
-                className="h-9 gap-1.5 rounded-full px-3"
-              >
-                <Link href={`/${role}/support`} aria-label="Help and support">
-                  <Headphones className="size-4" />
-                  <span className="hidden sm:inline">Support</span>
-                </Link>
-              </Button>
-            )}
+           
             {showUserMenu && <MarketplaceNotificationBell role={role} />}
             {showUserMenu && <UserMenu role={role} />}
           </div>

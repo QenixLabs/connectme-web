@@ -24,6 +24,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { CropImageModal } from "@/components/ui/crop-image-modal";
 import { Field, inputClass } from "./field";
 import { cn } from "@/lib/utils";
 
@@ -214,7 +215,14 @@ export function StepOrganization({
 }) {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoError, setLogoError] = useState<string | null>(null);
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+  const [cropModalOpen, setCropModalOpen] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof OrgValues, string>>>({});
+
+  useEffect(() => {
+    if (!cropImageSrc) return;
+    return () => URL.revokeObjectURL(cropImageSrc);
+  }, [cropImageSrc]);
 
   useEffect(() => {
     if (!logoFile) return;
@@ -227,31 +235,46 @@ export function StepOrganization({
     };
   }, [logoFile]);
 
-  const set = <K extends keyof OrgValues>(key: K, value: OrgValues[K]) => {
-    onChange({ ...values, [key]: value });
-    setErrors((current) => ({ ...current, [key]: undefined }));
-  };
-
-  const handleLogoChange = (file: File | undefined) => {
+  const handleLogoSelection = (file: File | undefined) => {
+    if (!file) return;
     setLogoError(null);
-    setLogoPreview(null);
-    if (!file) {
-      onLogoChange?.(null);
-      return;
-    }
     if (!["image/jpeg", "image/png", "image/svg+xml"].includes(file.type)) {
       setLogoError("Use a PNG, JPG or SVG image.");
       toast.error("Use a PNG, JPG or SVG image for your logo.");
-      onLogoChange?.(null);
       return;
     }
     if (file.size > 2 * 1024 * 1024) {
       setLogoError("Logo must be under 2 MB.");
       toast.error("Logo must be under 2 MB.");
-      onLogoChange?.(null);
+      return;
+    }
+    setCropImageSrc(URL.createObjectURL(file));
+    setCropModalOpen(true);
+  };
+
+  const set = <K extends keyof OrgValues>(key: K, value: OrgValues[K]) => {
+    onChange({ ...values, [key]: value });
+    setErrors((current) => ({ ...current, [key]: undefined }));
+  };
+
+  const handleCroppedLogo = (file: File) => {
+    setLogoError(null);
+    if (!["image/jpeg", "image/png", "image/svg+xml"].includes(file.type)) {
+      setLogoError("Use a PNG, JPG or SVG image.");
+      toast.error("Use a PNG, JPG or SVG image for your logo.");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setLogoError("Logo must be under 2 MB.");
+      toast.error("Logo must be under 2 MB.");
       return;
     }
     onLogoChange?.(file);
+  };
+
+  const handleCropModalChange = (open: boolean) => {
+    setCropModalOpen(open);
+    if (!open) setCropImageSrc(null);
   };
 
   return (
@@ -335,17 +358,32 @@ export function StepOrganization({
             type="file"
             accept="image/png,image/jpeg,image/svg+xml"
             className="sr-only"
-            onChange={(e) => handleLogoChange(e.target.files?.[0])}
+            onChange={(e) => {
+              handleLogoSelection(e.target.files?.[0]);
+              e.target.value = "";
+            }}
           />
         </label>
         <div>
           <p className="font-bold text-foreground">Add your organization logo</p>
           <p className="text-sm text-muted-foreground">
-            Recommended size 512 Ã— 512 px (PNG, JPG or SVG)
+            Crop to a 1:1 square. Recommended size 512 x 512 px (PNG, JPG or SVG)
           </p>
           {logoError ? <p className="mt-1 text-sm text-destructive">{logoError}</p> : null}
         </div>
       </div>
+
+      {cropImageSrc ? (
+        <CropImageModal
+          open={cropModalOpen}
+          onOpenChange={handleCropModalChange}
+          imageSrc={cropImageSrc}
+          onCropped={handleCroppedLogo}
+          aspect={1}
+          title="Crop your organization logo"
+          description="Adjust the image to fit inside the square crop area."
+        />
+      ) : null}
 
       <div className="space-y-3">
           <Field

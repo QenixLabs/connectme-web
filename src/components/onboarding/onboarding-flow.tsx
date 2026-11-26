@@ -90,7 +90,7 @@ function RoleCard({
       <span className="relative z-10 block max-w-[48%] text-left">
         <span className="role-eyebrow">For {roleLabel}</span>
         <span className="mt-2 block text-[1.16rem] font-extrabold leading-tight text-foreground">
-          Iâ€™m a {title}
+          I’m a {title}
         </span>
         <span className="mt-2 block text-[0.7rem] font-medium leading-[1.45] text-muted-foreground">
           {description}
