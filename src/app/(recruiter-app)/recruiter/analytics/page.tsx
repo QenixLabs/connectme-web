@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description:
     "Track recruitment funnels, hiring trends, campaigns, and talent mix from live campaign data.",
   openGraph: {
-    title: "Recruitment Analytics | Morporfile",
+    title: "Recruitment Analytics | Morporfiil",
     description:
       "A complete view of hiring performance and recruitment insights.",
     type: "website",

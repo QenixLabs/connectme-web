@@ -186,7 +186,7 @@ export default function AiTalentSearchPage() {
           </button>
           <div>
             <span className="block text-xl font-extrabold leading-none tracking-tight">AI Talent Search</span>
-            <span className="block text-[10px] font-medium text-muted-foreground">Powered by Morporfile AI</span>
+            <span className="block text-[10px] font-medium text-muted-foreground">Powered by Morporfiil AI</span>
           </div>
           <span className="ml-auto grid size-10 place-items-center rounded-full bg-foreground text-xs font-bold text-warning">
             AI

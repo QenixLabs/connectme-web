@@ -60,7 +60,7 @@ function download(buffer: Blob, role: Role) {
   const url = URL.createObjectURL(buffer);
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = `morporfile-${role}-users.xlsx`;
+  anchor.download = `morporfiil-${role}-users.xlsx`;
   anchor.click();
   URL.revokeObjectURL(url);
 }

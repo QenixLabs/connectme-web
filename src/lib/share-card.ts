@@ -4,7 +4,7 @@
  * The card is rendered on the client with the Canvas 2D API so a profile
  * can be shared as a high-fidelity image on Instagram, WhatsApp, LinkedIn, etc.
  *
- * Uses the custom Morporfile creative template background and overlays:
+ * Uses the custom Morporfiil creative template background and overlays:
  * - Role badge
  * - Circular avatar with vivid gradient ring & verified check badge
  * - Talent name with verified badge and role headline
@@ -110,7 +110,7 @@ export interface ShareCardContent {
   roleLabel: string;
   initials: string;
   url: string;
-  /** Short, human friendly link label, e.g. `morporfile.com/talent/asha-rao`. */
+  /** Short, human friendly link label, e.g. `morporfiil.com/talent/asha-rao`. */
   shortUrl: string;
   /** The handle shown in the link panel, e.g. `@asha-rao`. */
   handle: string;
@@ -241,8 +241,8 @@ export function buildShareCardContent(
             { icon: "play", count: "â€”", label: "Projects", note: "Completed" },
           ]
         : [
-            { icon: "briefcase", count: "â€”", label: "Projects", note: "On Morporfile" },
-            { icon: "heart", count: "â€”", label: "Talent Hired", note: "On Morporfile" },
+            { icon: "briefcase", count: "â€”", label: "Projects", note: "On Morporfiil" },
+            { icon: "heart", count: "â€”", label: "Talent Hired", note: "On Morporfiil" },
             { icon: "star", count: "â€”", label: "Rating", note: "No reviews" },
           ];
   const statItems =
@@ -267,7 +267,7 @@ export function buildShareCardContent(
 }
 
 /**
- * Short label for a canonical URL, e.g. `morporfile.com/talent/asha-rao`.
+ * Short label for a canonical URL, e.g. `morporfiil.com/talent/asha-rao`.
  */
 export function buildShortLinkLabel(url: string): string {
   const value = (url ?? "").trim();
@@ -1120,7 +1120,7 @@ export async function renderShareCardToCanvas(
   ctx.fillStyle = "rgba(255, 255, 255, 0.88)";
   ctx.font = `400 18px ${font}`;
   ctx.fillText(
-    truncateToWidth(ctx, "Discover my work, skills and more on Morporfile", textMaxW),
+    truncateToWidth(ctx, "Discover my work, skills and more on Morporfiil", textMaxW),
     textX,
     panel.y + 84,
   );
@@ -1237,5 +1237,5 @@ export function downloadBlob(blob: Blob, filename: string): void {
  */
 export function shareCardFileName(target: ShareProfileTarget): string {
   const role = target.role;
-  return `morporfile-${role}-profile.png`;
+  return `morporfiil-${role}-profile.png`;
 }

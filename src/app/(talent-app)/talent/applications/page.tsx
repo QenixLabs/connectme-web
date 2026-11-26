@@ -3,13 +3,13 @@ import type { Metadata } from "next";
 import { ApplicationsPage } from "@/components/talent-app/ApplicationsPage";
 
 export const metadata: Metadata = {
-  title: "My Applications | Morporfile",
+  title: "My Applications | Morporfiil",
   description:
-    "Track every casting call and gig you've applied for on Morporfile â€” pending, accepted, rejected and expired applications in one place.",
+    "Track every casting call and gig you've applied for on Morporfiil â€” pending, accepted, rejected and expired applications in one place.",
   openGraph: {
-    title: "My Applications | Morporfile",
+    title: "My Applications | Morporfiil",
     description:
-      "Track every casting call and gig you've applied for on Morporfile in one place.",
+      "Track every casting call and gig you've applied for on Morporfiil in one place.",
   },
 };
 

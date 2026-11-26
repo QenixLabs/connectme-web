@@ -176,7 +176,7 @@ function ProfileSummary({ profile }: { profile: TalentProfile }) {
 
     if (typeof navigator.share === "function") {
       try {
-        await navigator.share({ title: `${name} on Morporfile`, url });
+        await navigator.share({ title: `${name} on Morporfiil`, url });
         setShared(true);
         toast.success("Profile shared");
         window.setTimeout(() => setShared(false), 2000);

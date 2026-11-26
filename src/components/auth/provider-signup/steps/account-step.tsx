@@ -354,7 +354,7 @@ export function AccountStep({ data, update, onNext, loading = false }: StepProps
 
         <div className="relative mt-4 hidden lg:block">
           <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-white/30">
-            How Morporfile works
+            How Morporfiil works
           </p>
           <div className="mt-2 flex items-center gap-1.5">
             {JOURNEY.map(({ title, icon: Icon }, index) => (
@@ -404,7 +404,7 @@ export function AccountStep({ data, update, onNext, loading = false }: StepProps
           </h2>
           <p className="mt-1.5 text-[12.5px] leading-[1.6] text-[#7885A3] sm:text-[13px]">
             Let&rsquo;s get started! Enter your basic details to create your
-            Morporfile account.
+            Morporfiil account.
           </p>
         </div>
 

@@ -110,7 +110,7 @@ export function VerificationStep({ signupEmail, onBack, onVerified }: Verificati
             You&apos;re all set!
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Welcome to Morporfile. Redirecting to your dashboard...
+            Welcome to Morporfiil. Redirecting to your dashboard...
           </p>
         </motion.div>
       ) : (

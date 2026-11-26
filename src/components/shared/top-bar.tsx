@@ -38,7 +38,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { NavItem } from "./nav-config";
-import logoImage from "@/assets/morporfile-logo-orange.png";
+import logoImage from "@/assets/morporfiil-logo-orange.png";
 import { tourReplayEventForRole } from "@/components/onboarding/tour-events";
 
 const subscribe = () => () => {};
@@ -92,7 +92,7 @@ export function TopBar({ navItems, role, showUserMenu = false }: TopBarProps) {
           <Link href={`/${role}/dashboard`} className="flex items-center">
             <Image
               src={logoImage}
-              alt="Morporfile"
+              alt="Morporfiil"
               height={32}
               className="h-7 w-auto sm:h-9"
               priority

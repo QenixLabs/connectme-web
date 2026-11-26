@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Plans & Pricing Â· Morporfile",
+  title: "Plans & Pricing | Morporfiil",
   description:
     "Hire the best creative talent and pay only for what you need. Free, Pro and Business plans with no hidden fees.",
   openGraph: {
-    title: "Plans & Pricing Â· Morporfile",
+    title: "Plans & Pricing | Morporfiil",
     description:
       "Free, Pro and Business plans for hiring creative talent. No hidden fees, cancel anytime.",
     type: "website",

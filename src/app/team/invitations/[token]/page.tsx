@@ -51,7 +51,7 @@ export default function TeamInvitationPage() {
               You&apos;re on the team
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              Your Morporfile access is ready.
+              Your Morporfiil access is ready.
             </p>
             <Button
               className="mt-6 w-full"
@@ -69,7 +69,7 @@ export default function TeamInvitationPage() {
               This invitation will no longer grant access to the team.
             </p>
             <Button variant="outline" className="mt-6 w-full" asChild>
-              <Link href="/recruiter/dashboard">Continue to Morporfile</Link>
+              <Link href="/recruiter/dashboard">Continue to Morporfiil</Link>
             </Button>
           </>
         ) : (
@@ -79,7 +79,7 @@ export default function TeamInvitationPage() {
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">
               Review the invitation and join your recruiter team with your
-              Morporfile account.
+              Morporfiil account.
             </p>
             {user ? (
               <div className="mt-6 space-y-2">
@@ -111,7 +111,7 @@ export default function TeamInvitationPage() {
                   Use the email address that received this invitation.
                 </p>
                 <Button className="mt-4 w-full" asChild>
-                  <Link href="/auth/login">Sign in to Morporfile</Link>
+                  <Link href="/auth/login">Sign in to Morporfiil</Link>
                 </Button>
               </div>
             )}

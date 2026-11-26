@@ -577,7 +577,7 @@ function PortfolioContent() {
                 <span className="absolute size-6 rotate-45 rounded-lg bg-gradient-to-br from-[#06b6d4] to-[#ec4899] mix-blend-multiply" />
               </span>
               <span>
-                <span className="block text-lg font-extrabold leading-none tracking-tight text-[#10204c]">Morporfile</span>
+                <span className="block text-lg font-extrabold leading-none tracking-tight text-[#10204c]">Morporfiil</span>
                 <span className="text-[9px] font-semibold text-[#23366c]">People. Talent. Opportunities.</span>
               </span>
             </div>

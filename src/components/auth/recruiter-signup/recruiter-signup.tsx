@@ -356,7 +356,7 @@ function GoogleRecruiterAccountStep({
         <div className="relative flex h-full items-center px-6 sm:px-10">
           <div className="max-w-[20rem]">
             <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-              Welcome to Morporfile
+              Welcome to Morporfiil
             </p>
             <h1 className="mt-2 text-[clamp(25px,5vw,36px)] font-bold leading-[1.05] text-[#080B2B]">
               Finish your <span className="text-[#5B32FF]">recruiter account</span>

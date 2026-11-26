@@ -49,7 +49,7 @@ export function RazorpayCheckoutButton({
         key: keyId,
         amount: order.amount,
         currency: order.currency,
-        name: "Morporfile",
+        name: "Morporfiil",
         description,
         order_id: order.order_id,
         handler: async (response) => {

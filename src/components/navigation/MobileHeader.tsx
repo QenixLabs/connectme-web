@@ -40,7 +40,7 @@ export function MobileHeader() {
       <button aria-label="Open menu" className="grid size-9 place-items-center text-foreground">
         <Menu className="size-5" />
       </button>
-      <span className="truncate font-display text-xl font-bold tracking-tight text-foreground">Morporfile</span>
+      <span className="truncate font-display text-xl font-bold tracking-tight text-foreground">Morporfiil</span>
       <div className="flex shrink-0 items-center gap-2">
         <MiniBadge icon={MessageSquare} count={6} tone="primary" label="Messages" />
         <MiniBadge icon={Bell} count={12} tone="warning" label="Notifications" />

@@ -12,7 +12,7 @@ import {
   UsersRound,
 } from "lucide-react";
 import { useState } from "react";
-import logoImage from "@/assets/morporfile-logo-orange.png";
+import logoImage from "@/assets/morporfiil-logo-orange.png";
 import { authApi } from "@/lib/api";
 import { authStore } from "@/stores/auth-store";
 
@@ -20,12 +20,12 @@ import { authStore } from "@/stores/auth-store";
  * Migrated from design-pixel-perfect/src/routes/index.tsx.
  *
  * Drop the three art images into `public/assets/onboarding/`:
- *   - morporfile-talent-collage.png     (welcome screen collage)
- *   - morporfile-recruiter-banner.png   (recruiter role card art)
- *   - morporfile-talent-banner.png      (talent role card art)
+ *   - morporfiil-talent-collage.png     (welcome screen collage)
+ *   - morporfiil-recruiter-banner.png   (recruiter role card art)
+ *   - morporfiil-talent-banner.png      (talent role card art)
  */
-const recruiterImage = "/assets/onboarding/morporfile-recruiter-banner.png";
-const talentImage = "/assets/onboarding/morporfile-talent-banner.png";
+const recruiterImage = "/assets/onboarding/morporfiil-recruiter-banner.png";
+const talentImage = "/assets/onboarding/morporfiil-talent-banner.png";
 
 const imageSizes = "(max-width: 520px) 100vw, 430px";
 
@@ -33,12 +33,12 @@ export type OnboardingRole = "recruiter" | "talent" | "provider";
 
 type Role = OnboardingRole;
 
-function MorporfileLogo() {
+function MorporfiilLogo() {
   return (
-    <Link href="/" aria-label="Morporfile home">
+    <Link href="/" aria-label="Morporfiil home">
       <Image
         src={logoImage}
-        alt="Morporfile"
+        alt="Morporfiil"
         height={32}
         className="h-10 w-auto"
         priority
@@ -160,7 +160,7 @@ export function RoleScreen({
   return (
     <main className="screen role-screen">
       <header className="role-header flex items-center">
-        <MorporfileLogo />
+        <MorporfiilLogo />
         <span className="h-10 w-10" />
       </header>
 
@@ -169,9 +169,9 @@ export function RoleScreen({
       <section className="px-6 pt-6">
         <h1 className="text-[1.65rem] font-extrabold leading-[1.08] text-foreground">
           {googleSignup ? (
-            <>Choose your role<br />on <span className="text-primary">Morporfile.</span></>
+            <>Choose your role<br />on <span className="text-primary">Morporfiil.</span></>
           ) : (
-            <>How do you want to<br />be a part of <span className="text-primary">Morporfile?</span></>
+            <>How do you want to<br />be a part of <span className="text-primary">Morporfiil?</span></>
           )}
         </h1>
         <p className="mt-2 text-[0.78rem] font-medium text-muted-foreground">

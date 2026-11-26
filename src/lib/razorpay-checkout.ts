@@ -43,7 +43,7 @@ export function openRazorpaySubscriptionCheckout(
   const instance = new window.Razorpay({
     key: checkout.key_id,
     subscription_id: checkout.subscription_id,
-    name: "Morporfile",
+    name: "Morporfiil",
     description: `${checkout.plan_name} subscription`,
     handler: callbacks.onPayment,
     modal: { ondismiss: callbacks.onDismiss },

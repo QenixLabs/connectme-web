@@ -19,7 +19,7 @@ export function ServiceWorkerRegistration() {
     const register = () => {
       if (cancelled) return;
       navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch((error) => {
-        console.error("Morporfile service worker registration failed:", error);
+        console.error("Morporfiil service worker registration failed:", error);
       });
     };
 

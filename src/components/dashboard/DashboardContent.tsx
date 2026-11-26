@@ -230,8 +230,8 @@ export function DashboardContent() {
     if (typeof navigator.share === "function") {
       try {
         await navigator.share({
-          title: `${name} on Morporfile`,
-          text: "View my Morporfile profile",
+          title: `${name} on Morporfiil`,
+          text: "View my Morporfiil profile",
           url: profileUrl,
         });
         return;

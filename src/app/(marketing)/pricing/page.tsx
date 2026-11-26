@@ -48,7 +48,7 @@ import {
 } from "@/lib/api";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { toast } from "sonner";
-import morporfileLogo from "@/assets/morporfile-logo-orange.png";
+import morporfiilLogo from "@/assets/morporfiil-logo-orange.png";
 import {
   loadRazorpayCheckout,
   openRazorpaySubscriptionCheckout,
@@ -399,8 +399,8 @@ function PricingContent() {
           <div className="relative z-10">
             <div className="mb-7 flex items-center gap-3">
               <Image
-                src={morporfileLogo}
-                alt="Morporfile"
+                src={morporfiilLogo}
+                alt="Morporfiil"
                 priority
                 className="h-auto w-[180px]"
               />

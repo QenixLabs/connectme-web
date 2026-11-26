@@ -20,7 +20,7 @@ import {
  * complete image.
  */
 
-export const alt = "Talent profile on Morporfile";
+export const alt = "Talent profile on Morporfiil";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -157,7 +157,7 @@ export default async function OpengraphImage({
               display: "flex",
             }}
           >
-            Morporfile
+            Morporfiil
           </div>
           <div
             style={{
@@ -264,7 +264,7 @@ export default async function OpengraphImage({
                   fontWeight: 600,
                 }}
               >
-                Verified on Morporfile
+                Verified on Morporfiil
               </div>
             ) : null}
           </div>
@@ -336,7 +336,7 @@ export default async function OpengraphImage({
           }}
         >
           <div style={{ display: "flex", color: BRAND_PURPLE, fontWeight: 700 }}>
-            Morporfile
+            Morporfiil
           </div>
           <div style={{ marginLeft: 14, display: "flex" }}>
             Discover verified talent and roles

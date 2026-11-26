@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { useUnreadNotifications } from "@/hooks/use-unread-counts";
-import logoImage from "@/assets/morporfile-logo-orange.png";
+import logoImage from "@/assets/morporfiil-logo-orange.png";
 
 export function ProfileHeader() {
   const router = useRouter();
@@ -40,11 +40,11 @@ export function ProfileHeader() {
         <Link
           href="/"
           className="absolute left-1/2 -translate-x-1/2"
-          aria-label="Morporfile home"
+          aria-label="Morporfiil home"
         >
           <Image
             src={logoImage}
-            alt="Morporfile"
+            alt="Morporfiil"
             width={112}
             height={28}
             className="h-7 w-auto"

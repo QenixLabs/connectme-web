@@ -9,7 +9,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       attribute="data-theme"
       defaultTheme="light"
       enableSystem={false}
-      storageKey="morporfile-theme"
+      storageKey="morporfiil-theme"
       disableTransitionOnChange
     >
       {children}

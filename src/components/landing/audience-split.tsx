@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, Building2, UserRound } from "lucide-react";
-import logo from "@/assets/morporfile-logo-orange.png";
+import logo from "@/assets/morporfiil-logo-orange.png";
 
 const talent = [
   "Build a professional profile that presents your work properly",
@@ -81,7 +81,7 @@ export function AudienceSplit() {
           Built for the people with the skills â€” and the people who need them
         </h2>
         <p className="mx-auto mt-4 max-w-2xl text-center text-sm text-text-secondary">
-          <img src={logo.src} alt="Morporfile" className="inline-block h-[22px] w-auto align-text-bottom" /> connects both sides of the same conversation, so nothing gets lost between
+          <img src={logo.src} alt="Morporfiil" className="inline-block h-[22px] w-auto align-text-bottom" /> connects both sides of the same conversation, so nothing gets lost between
           discovery and delivery.
         </p>
 

@@ -4,9 +4,9 @@ import { DiscoverPage } from "@/components/marketplace/discover-page";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const metadata: Metadata = {
-  title: "Discover opportunities and creative providers | Morporfile",
+  title: "Discover opportunities and creative providers | Morporfiil",
   description:
-    "Browse live creative opportunities and service providers on Morporfile.",
+    "Browse live creative opportunities and service providers on Morporfiil.",
 };
 
 function DiscoverSkeleton() {

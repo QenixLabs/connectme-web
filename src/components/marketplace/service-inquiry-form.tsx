@@ -389,7 +389,7 @@ export function ServiceInquiryForm({
                 Send Request
               </Button>
               <p className="mt-2 text-center text-xs text-provider-muted">
-                Your budget is informational only. Morporfile does not collect
+                Your budget is informational only. Morporfiil does not collect
                 payments.
               </p>
             </div>

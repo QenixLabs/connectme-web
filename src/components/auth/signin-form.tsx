@@ -121,7 +121,7 @@ export function SignInForm() {
           >
             Welcome back
             <br />
-            to <span className="text-[#7C35FF]">Morporfile</span>
+            to <span className="text-[#7C35FF]">Morporfiil</span>
           </h1>
           <p className="mt-3 max-w-[10rem] text-[13px] font-medium leading-[1.35] text-[#66728F]">
             Your next opportunity
@@ -261,7 +261,7 @@ export function SignInForm() {
       </Form>
 
       <p className="mt-4 text-center text-[13px] font-medium text-[#66728F]">
-        New to Morporfile?{" "}
+        New to Morporfiil?{" "}
         <Link
           href="/auth?mode=signup"
           className="font-bold text-[#7C35FF] transition-colors hover:text-[#1769E8]"

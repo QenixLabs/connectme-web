@@ -834,7 +834,7 @@ function ServicesBrowser() {
         <div>
           <h2 className="font-semibold">Looking for your next project?</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Explore campaigns and connect with recruiters on Morporfile.
+            Explore campaigns and connect with recruiters on Morporfiil.
           </p>
         </div>
         <Button asChild variant="outline" className="shrink-0 border-success/30 text-success hover:bg-success/10">

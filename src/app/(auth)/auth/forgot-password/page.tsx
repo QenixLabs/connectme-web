@@ -545,7 +545,7 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <AuthLayout subtitle="Reset your Morporfile password in a few steps">
+    <AuthLayout subtitle="Reset your Morporfiil password in a few steps">
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}

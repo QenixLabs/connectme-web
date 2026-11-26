@@ -73,7 +73,7 @@ export function MobileBottomNav({ role = null }: { role?: Role }) {
               className={cn(
                 "mx-auto flex w-fit min-w-14 flex-col items-center gap-0.5 rounded-lg px-2 py-1 text-[11px] font-medium transition-colors",
                 item.isActive
-                  ? "text-morporfile"
+                  ? "text-morporfiil"
                   : "text-muted-foreground/70 hover:text-foreground",
               )}
             >

@@ -32,11 +32,11 @@ import {
  *
  * Original artwork was never exported â€” using existing local images directly
  * (no missing-src 404s). To swap in final art later, drop files as
- *   - `public/assets/recruiter-welcome/morporfile-hero.png`
- *   - `public/assets/recruiter-welcome/morporfile-robot.png`
+ *   - `public/assets/recruiter-welcome/morporfiil-hero.png`
+ *   - `public/assets/recruiter-welcome/morporfiil-robot.png`
  * and point HERO_SRC / ROBOT_SRC back at them.
  */
-const HERO_SRC = "/images/casting/morporfile-creative-talent-showcase.png";
+const HERO_SRC = "/images/casting/morporfiil-creative-talent-showcase.png";
 const HERO_FALLBACK = "/images/casting/casting-hero.png";
 const ROBOT_SRC = "/images/casting/cute-neon-robot-pointing-up.png";
 const ROBOT_FALLBACK = "/images/support-agent.png";
@@ -124,7 +124,7 @@ const progressSteps = [
 ];
 
 const prompts = [
-  "What kind of talent can I find on Morporfile?",
+  "What kind of talent can I find on Morporfiil?",
   "How do I create a casting campaign?",
   "Show me top talent in Mumbai",
   "Help me complete my profile",
@@ -215,7 +215,7 @@ export function RecruiterWelcome({ skipGate = false }: { skipGate?: boolean } = 
           {/* Welcome */}
           <section className="relative pt-4">
             <div className="pr-[104px] max-[370px]:pr-0">
-              <p className="text-[14px] font-semibold leading-tight">Welcome to Morporfile,</p>
+              <p className="text-[14px] font-semibold leading-tight">Welcome to Morporfiil,</p>
               <h1 className="mt-0.5 text-[29px] font-extrabold leading-none tracking-tight">{firstName}! ðŸ‘‹</h1>
               <p className="mt-2 max-w-[350px] text-[12px] leading-[1.28] text-muted-foreground">
                 You&apos;re a few steps away from discovering amazing talent and creating great
@@ -237,7 +237,7 @@ export function RecruiterWelcome({ skipGate = false }: { skipGate?: boolean } = 
             <ImgWithFallback
               src={HERO_SRC}
               fallback={HERO_FALLBACK}
-              alt="Actors, models, singers, dancers and creators around a Morporfile director's chair"
+              alt="Actors, models, singers, dancers and creators around a Morporfiil director's chair"
               className="-mx-4 -mt-2 block w-[calc(100%+2rem)] max-w-none object-contain object-bottom"
               style={{ height: 185 }}
               loading="eager"
@@ -288,7 +288,7 @@ export function RecruiterWelcome({ skipGate = false }: { skipGate?: boolean } = 
           <div className="flex items-start justify-between gap-3">
             <h3 className="font-extrabold">Your Setup Progress</h3>
             <p className="max-w-[45%] text-right text-[11px] text-muted-foreground">
-              Complete 3 steps to unlock the full power of Morporfile.
+              Complete 3 steps to unlock the full power of Morporfiil.
             </p>
           </div>
           <div className="mt-3 flex items-center gap-3">
@@ -317,7 +317,7 @@ export function RecruiterWelcome({ skipGate = false }: { skipGate?: boolean } = 
             <ImgWithFallback
               src={ROBOT_SRC}
               fallback={ROBOT_FALLBACK}
-              alt="Morporfile AI casting assistant robot"
+              alt="Morporfiil AI casting assistant robot"
               className="w-24 shrink-0 rounded-2xl object-cover"
               loading="lazy"
             />

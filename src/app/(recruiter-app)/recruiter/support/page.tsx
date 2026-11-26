@@ -3,11 +3,11 @@ import type { Metadata } from "next";
 import { SupportPage } from "@/components/support/SupportPage";
 
 export const metadata: Metadata = {
-  title: "Help & Support | Morporfile",
+  title: "Help & Support | Morporfiil",
   description:
     "Search answers, browse help topics, contact support, and track your support tickets.",
   openGraph: {
-    title: "Morporfile Help & Support",
+    title: "Morporfiil Help & Support",
     description:
       "Find answers, contact the support team, and track your support requests.",
     type: "website",

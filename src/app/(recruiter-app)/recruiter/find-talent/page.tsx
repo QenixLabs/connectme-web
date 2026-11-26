@@ -64,7 +64,7 @@ import {
   useRemoveFromShortlist,
 } from "@/hooks/use-shortlists";
 import { talentApi, type TalentProfile } from "@/lib/api/talent";
-import logoImage from "@/assets/morporfile-logo-orange.png";
+import logoImage from "@/assets/morporfiil-logo-orange.png";
 import type { SavedSearch } from "@/lib/api/saved-searches";
 import {
   fromSavedSearchCriteria,
@@ -1347,7 +1347,7 @@ export default function RecruiterFindTalentPage() {
           </div>
           <Image
             src={logoImage}
-            alt="Morporfile"
+            alt="Morporfiil"
             height={28}
             className="h-7 w-auto shrink-0"
             priority

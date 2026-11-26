@@ -1,4 +1,4 @@
-import logo from "@/assets/morporfile-logo-orange.png";
+import logo from "@/assets/morporfiil-logo-orange.png";
 
 const candidates = [
   { initials: "AR", name: "Ana Reyes", role: "Motion designer", match: "94%", status: "Top ranked", tone: "success" },
@@ -18,7 +18,7 @@ export function ShortlistPreview() {
     <section className="border-b border-border bg-surface py-16 md:py-24">
       <div className="container-page">
         <p className="text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-cyan">
-          â€” Inside <img src={logo.src} alt="Morporfile" className="inline-block h-[16px] w-auto align-text-bottom" /> â€”
+          â€” Inside <img src={logo.src} alt="Morporfiil" className="inline-block h-[16px] w-auto align-text-bottom" /> â€”
         </p>
         <h2 className="mx-auto mt-4 max-w-2xl text-center font-display text-3xl font-bold tracking-tight text-foreground md:text-4xl">
           Shortlist the right people with the evidence in front of you

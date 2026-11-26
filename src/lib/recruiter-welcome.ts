@@ -7,7 +7,7 @@
  * already-seen visitors straight to `/recruiter/dashboard`.
  */
 
-const STORAGE_PREFIX = "morporfile:recruiter-welcome-seen:";
+const STORAGE_PREFIX = "morporfiil:recruiter-welcome-seen:";
 
 interface WelcomeIdentity {
   _id?: string;

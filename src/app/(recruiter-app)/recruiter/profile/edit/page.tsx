@@ -1388,7 +1388,7 @@ export default function RecruiterProfileEditPage() {
                 Edit Agency Profile
               </h1>
               <p className="truncate text-xs text-muted-foreground md:text-sm">
-                Manage your agency information and how you appear on Morporfile.
+                Manage your agency information and how you appear on Morporfiil.
               </p>
             </div>
             <div className="hidden md:block">

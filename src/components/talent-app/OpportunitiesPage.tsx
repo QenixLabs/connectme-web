@@ -849,7 +849,7 @@ export function OpportunitiesPage() {
       <section
         className="relative mx-4 isolate overflow-hidden rounded-3xl bg-[#0a0827] bg-cover bg-[65%_center] bg-no-repeat text-white shadow-sm sm:bg-right"
         style={{
-          backgroundImage: `url(${isRecruiterView ? "/images/landing/morporfile-recruiter-banner.webp" : "/images/landing/morporfile-opportunity-banner.webp"})`,
+          backgroundImage: `url(${isRecruiterView ? "/images/landing/morporfiil-recruiter-banner.webp" : "/images/landing/morporfiil-opportunity-banner.webp"})`,
         }}
       >
         <div
@@ -859,7 +859,7 @@ export function OpportunitiesPage() {
         <div className="relative z-10 flex min-h-36 items-stretch sm:min-h-56">
           <div className="flex w-full max-w-2xl flex-col justify-center px-5 py-4 sm:w-[65%] sm:px-8 sm:py-8 lg:px-10">
             <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-indigo-200 sm:text-xs sm:tracking-[0.2em]">
-              Morporfile creative network / {isRecruiterView ? "companies" : isServicesView ? "marketplace" : "opportunities"}
+              Morporfiil creative network / {isRecruiterView ? "companies" : isServicesView ? "marketplace" : "opportunities"}
             </p>
             <h1 className="mt-2 text-xl font-bold leading-tight sm:mt-3 sm:text-3xl md:text-4xl">
               {isRecruiterView ? (

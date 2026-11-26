@@ -112,14 +112,14 @@ describe("normalizePublicPath", () => {
 describe("buildCanonicalProfileUrl", () => {
   it("builds an absolute URL from the origin and the canonical path", () => {
     expect(
-      buildCanonicalProfileUrl(talent, "https://morporfile.app"),
-    ).toBe("https://morporfile.app/talent/asha-rao");
+      buildCanonicalProfileUrl(talent, "https://morporfiil.app"),
+    ).toBe("https://morporfiil.app/talent/asha-rao");
   });
 
   it("strips trailing slashes from the origin", () => {
     expect(
-      buildCanonicalProfileUrl(talent, "https://morporfile.app///"),
-    ).toBe("https://morporfile.app/talent/asha-rao");
+      buildCanonicalProfileUrl(talent, "https://morporfiil.app///"),
+    ).toBe("https://morporfiil.app/talent/asha-rao");
   });
 
   it("returns an empty URL when no origin is available", () => {
@@ -133,7 +133,7 @@ describe("buildCanonicalProfileUrl", () => {
   });
 
   it("never carries query parameters", () => {
-    const url = buildCanonicalProfileUrl(talent, "https://morporfile.app");
+    const url = buildCanonicalProfileUrl(talent, "https://morporfiil.app");
     expect(url).not.toContain("?");
     expect(url).not.toContain("#");
   });
@@ -146,63 +146,63 @@ describe("buildCanonicalProfileUrl", () => {
           slug: "asha-rao",
           path: "/talent/asha-rao/portfolio?item=abc123",
         },
-        "https://morporfile.app",
+        "https://morporfiil.app",
       ),
-    ).toBe("https://morporfile.app/talent/asha-rao/portfolio?item=abc123");
+    ).toBe("https://morporfiil.app/talent/asha-rao/portfolio?item=abc123");
   });
 });
 
 describe("normalizeOrigin", () => {
   it("keeps the origin without a trailing slash", () => {
-    expect(normalizeOrigin("https://morporfile.app/")).toBe("https://morporfile.app");
+    expect(normalizeOrigin("https://morporfiil.app/")).toBe("https://morporfiil.app");
   });
 
   it("returns an empty string for an empty or invalid value", () => {
     expect(normalizeOrigin("  ")).toBe("");
     expect(normalizeOrigin(null)).toBe("");
-    expect(normalizeOrigin("ftp://morporfile.app")).toBe("");
+    expect(normalizeOrigin("ftp://morporfiil.app")).toBe("");
   });
 });
 
 describe("share messages", () => {
   it("mentions the name, the role and the brand", () => {
     expect(buildShareText(talent)).toBe(
-      "Check out Asha Rao Â· Actor & Voice Artist on Morporfile âœ¨",
+      "Check out Asha Rao Â· Actor & Voice Artist on Morporfiil âœ¨",
     );
   });
 
   it("omits the headline when there is none", () => {
     expect(buildShareText({ role: "talent", slug: "x", name: "Sam" })).toBe(
-      "Check out Sam's portfolio on Morporfile âœ¨",
+      "Check out Sam's portfolio on Morporfiil âœ¨",
     );
   });
 
   it("uses a generic name when the profile has no display name", () => {
     expect(buildShareText({ role: "recruiter", slug: "x", name: "" })).toBe(
-      "Check out a recruiter on Morporfile âœ¨",
+      "Check out a recruiter on Morporfiil âœ¨",
     );
   });
 
   it("uses provider-specific fallback copy and route", () => {
     const target = { role: "provider" as const, slug: "silver-frame", name: "" };
     expect(buildShareText(target)).toBe(
-      "Check out a service provider on Morporfile âœ¨",
+      "Check out a service provider on Morporfiil âœ¨",
     );
-    expect(buildShareMessage(target, "https://morporfile.app/providers/silver-frame"))
-      .toContain("View profile:\nhttps://morporfile.app/providers/silver-frame");
+    expect(buildShareMessage(target, "https://morporfiil.app/providers/silver-frame"))
+      .toContain("View profile:\nhttps://morporfiil.app/providers/silver-frame");
   });
 
   it("builds a professional WhatsApp message with the name, the profession and the link", () => {
     expect(
-      buildShareMessage(talent, "https://morporfile.app/talent/asha-rao"),
+      buildShareMessage(talent, "https://morporfiil.app/talent/asha-rao"),
     ).toBe(
       [
-        "Hey! Check out Asha Rao's creative portfolio on Morporfile âœ¨",
+        "Hey! Check out Asha Rao's creative portfolio on Morporfiil âœ¨",
         "",
         "Actor & Voice Artist",
         "",
         "View full portfolio, verified work & credits:",
-        "https://morporfile.app/talent/asha-rao",
+        "https://morporfiil.app/talent/asha-rao",
       ].join("\n"),
     );
   });
@@ -210,18 +210,18 @@ describe("share messages", () => {
   it("never renders undefined for a missing name or profession", () => {
     const message = buildShareMessage(
       { role: "talent", slug: "x", name: "" },
-      "https://morporfile.app/talent/x",
+      "https://morporfiil.app/talent/x",
     );
 
     expect(message).not.toContain("undefined");
     expect(message).not.toContain("null");
-    expect(message).toContain("Hey! Check out this creative portfolio on Morporfile âœ¨");
+    expect(message).toContain("Hey! Check out this creative portfolio on Morporfiil âœ¨");
     expect(message).not.toContain("\n\n\n");
   });
 
   it("omits the link block when there is no URL", () => {
     const message = buildShareMessage(talent, "");
-    expect(message).toContain("Hey! Check out Asha Rao's creative portfolio on Morporfile âœ¨");
+    expect(message).toContain("Hey! Check out Asha Rao's creative portfolio on Morporfiil âœ¨");
     expect(message).not.toContain("View full portfolio, verified work & credits:");
   });
 });
@@ -230,13 +230,13 @@ describe("instagram caption", () => {
   it("contains the name, the profession, the canonical URL and the hashtags", () => {
     const caption = buildInstagramCaption(
       talent,
-      "https://morporfile.app/talent/asha-rao",
+      "https://morporfiil.app/talent/asha-rao",
     );
 
     expect(caption).toContain("Meet Asha Rao âœ¨");
     expect(caption).toContain("Actor & Voice Artist");
-    expect(caption).toContain("Discover more: https://morporfile.app/talent/asha-rao");
-    expect(caption).toContain("#Morporfile");
+    expect(caption).toContain("Discover more: https://morporfiil.app/talent/asha-rao");
+    expect(caption).toContain("#Morporfiil");
     expect(caption).toContain("#TalentPortfolio");
   });
 
@@ -255,7 +255,7 @@ describe("instagram caption", () => {
   it("uses a provider-specific hashtag instead of a talent portfolio hashtag", () => {
     const caption = buildInstagramCaption(
       { role: "provider", slug: "silver-frame", name: "Silver Frame" },
-      "https://morporfile.app/providers/silver-frame",
+      "https://morporfiil.app/providers/silver-frame",
     );
 
     expect(caption).toContain("#ServiceProvider");
@@ -264,11 +264,11 @@ describe("instagram caption", () => {
 
   it("does not repeat a hashtag that already appears in the caption", () => {
     const caption = buildInstagramCaption(
-      { role: "talent", slug: "x", name: "Sam", headline: "#Morporfile fan" },
-      "https://morporfile.app/talent/x",
+      { role: "talent", slug: "x", name: "Sam", headline: "#Morporfiil fan" },
+      "https://morporfiil.app/talent/x",
     );
 
-    expect(caption.match(/#Morporfile/g)?.length).toBe(1);
+    expect(caption.match(/#Morporfiil/g)?.length).toBe(1);
   });
 });
 
@@ -284,26 +284,26 @@ describe("dedupeHashtags", () => {
 
 describe("destination links", () => {
   it("builds a WhatsApp link with a prefilled message and the canonical URL", () => {
-    const url = buildWhatsAppUrl(talent, "https://morporfile.app/talent/asha-rao");
+    const url = buildWhatsAppUrl(talent, "https://morporfiil.app/talent/asha-rao");
     expect(url.startsWith("https://wa.me/?text=")).toBe(true);
 
     const message = decodeURIComponent(url.split("text=")[1]);
     expect(message).toContain("Asha Rao");
     expect(message).toContain("Actor & Voice Artist");
-    expect(message).toContain("https://morporfile.app/talent/asha-rao");
+    expect(message).toContain("https://morporfiil.app/talent/asha-rao");
   });
 
   it("encodes the WhatsApp message so the link stays a single parameter", () => {
-    const url = buildWhatsAppUrl(talent, "https://morporfile.app/talent/asha-rao");
+    const url = buildWhatsAppUrl(talent, "https://morporfiil.app/talent/asha-rao");
     expect(url).not.toContain(" ");
     expect(url).not.toContain("\n");
     expect(url).toContain("%0A");
   });
 
   it("builds a LinkedIn share link carrying only the canonical URL", () => {
-    const url = buildLinkedInUrl("https://morporfile.app/talent/asha-rao");
+    const url = buildLinkedInUrl("https://morporfiil.app/talent/asha-rao");
     expect(url).toBe(
-      "https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fmorporfile.app%2Ftalent%2Fasha-rao",
+      "https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fmorporfiil.app%2Ftalent%2Fasha-rao",
     );
   });
 });
@@ -382,32 +382,32 @@ describe("whatsapp share feedback", () => {
 
 describe("card share text", () => {
   it("keeps the message short and ends with the canonical URL", () => {
-    const text = buildCardShareText(talent, "https://morporfile.app/talent/asha-rao");
+    const text = buildCardShareText(talent, "https://morporfiil.app/talent/asha-rao");
     const lines = text.split("\n");
 
     expect(lines).toHaveLength(2);
-    expect(lines[0]).toBe("Check out Asha Rao Â· Actor & Voice Artist on Morporfile âœ¨");
-    expect(lines[1]).toBe("https://morporfile.app/talent/asha-rao");
+    expect(lines[0]).toBe("Check out Asha Rao Â· Actor & Voice Artist on Morporfiil âœ¨");
+    expect(lines[1]).toBe("https://morporfiil.app/talent/asha-rao");
   });
 
   it("omits the link when there is no canonical URL", () => {
     expect(buildCardShareText(talent, "")).toBe(
-      "Check out Asha Rao Â· Actor & Voice Artist on Morporfile âœ¨",
+      "Check out Asha Rao Â· Actor & Voice Artist on Morporfiil âœ¨",
     );
   });
 
   it("never leaks a placeholder when the profile has no name", () => {
     const text = buildCardShareText(
       { role: "talent", slug: "asha-rao", name: "" },
-      "https://morporfile.app/talent/asha-rao",
+      "https://morporfiil.app/talent/asha-rao",
     );
     expect(text).not.toContain("undefined");
-    expect(text).toContain("https://morporfile.app/talent/asha-rao");
+    expect(text).toContain("https://morporfiil.app/talent/asha-rao");
   });
 });
 
 describe("whatsapp share plan", () => {
-  const url = "https://morporfile.app/talent/asha-rao";
+  const url = "https://morporfiil.app/talent/asha-rao";
 
   it("attaches the card through the native sheet when files can be shared", () => {
     const plan = planWhatsAppShare({
@@ -417,7 +417,7 @@ describe("whatsapp share plan", () => {
     });
 
     expect(plan.mode).toBe("file");
-    expect(plan.title).toBe("Asha Rao on Morporfile");
+    expect(plan.title).toBe("Asha Rao on Morporfiil");
     expect(plan.text).toContain(url);
     expect(plan.text.split("\n")).toHaveLength(2);
   });
@@ -440,7 +440,7 @@ describe("whatsapp share plan", () => {
   it("keeps the fallback link free of a local address", () => {
     const plan = planWhatsAppShare({
       target: talent,
-      url: "https://morporfile.app/talent/asha-rao",
+      url: "https://morporfiil.app/talent/asha-rao",
       canShareFiles: false,
     });
 
@@ -455,7 +455,7 @@ describe("whatsapp share plan", () => {
       canShareFiles: true,
     });
 
-    expect(plan.title).toBe("a talent on Morporfile");
+    expect(plan.title).toBe("a talent on Morporfiil");
   });
 });
 
@@ -473,8 +473,8 @@ describe("share capability detection", () => {
   it("uses navigator.canShare when it is available", () => {
     const canShare = vi.fn().mockReturnValue(true);
     vi.stubGlobal("navigator", { share: vi.fn(), canShare });
-    expect(canShareNative({ url: "https://morporfile.app" })).toBe(true);
-    expect(canShare).toHaveBeenCalledWith({ url: "https://morporfile.app" });
+    expect(canShareNative({ url: "https://morporfiil.app" })).toBe(true);
+    expect(canShare).toHaveBeenCalledWith({ url: "https://morporfiil.app" });
   });
 
   it("returns false when navigator.canShare throws", () => {
@@ -484,7 +484,7 @@ describe("share capability detection", () => {
         throw new Error("nope");
       },
     });
-    expect(canShareNative({ url: "https://morporfile.app" })).toBe(false);
+    expect(canShareNative({ url: "https://morporfiil.app" })).toBe(false);
   });
 
   it("never claims file sharing support without navigator.canShare", () => {
@@ -509,7 +509,7 @@ describe("share capability detection", () => {
     const payload = canShare.mock.calls[0][0] as { files: File[] };
     expect(payload.files).toHaveLength(1);
     expect(payload.files[0].type).toBe("image/png");
-    expect(payload.files[0].name).toBe("morporfile-talent-profile.png");
+    expect(payload.files[0].name).toBe("morporfiil-talent-profile.png");
     expect(payload.files[0].size).toBeGreaterThan(0);
 
     // A real PNG signature â€” the probe must look like the card it stands in for.
@@ -563,8 +563,8 @@ describe("copyTextToClipboard", () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     vi.stubGlobal("navigator", { clipboard: { writeText } });
 
-    await expect(copyTextToClipboard("https://morporfile.app")).resolves.toBe(true);
-    expect(writeText).toHaveBeenCalledWith("https://morporfile.app");
+    await expect(copyTextToClipboard("https://morporfiil.app")).resolves.toBe(true);
+    expect(writeText).toHaveBeenCalledWith("https://morporfiil.app");
   });
 
   it("reports a failure when the clipboard rejects the write", async () => {
@@ -573,7 +573,7 @@ describe("copyTextToClipboard", () => {
     });
     vi.stubGlobal("document", undefined);
 
-    await expect(copyTextToClipboard("https://morporfile.app")).resolves.toBe(false);
+    await expect(copyTextToClipboard("https://morporfiil.app")).resolves.toBe(false);
   });
 });
 
@@ -585,19 +585,19 @@ describe("helpers", () => {
   });
 
   it("makes relative image URLs absolute", () => {
-    expect(toAbsoluteUrl("/uploads/photo.png", "https://morporfile.app")).toBe(
-      "https://morporfile.app/uploads/photo.png",
+    expect(toAbsoluteUrl("/uploads/photo.png", "https://morporfiil.app")).toBe(
+      "https://morporfiil.app/uploads/photo.png",
     );
   });
 
   it("keeps absolute image URLs untouched", () => {
     expect(
-      toAbsoluteUrl("https://cdn.morporfile.app/photo.png", "https://morporfile.app"),
-    ).toBe("https://cdn.morporfile.app/photo.png");
+      toAbsoluteUrl("https://cdn.morporfiil.app/photo.png", "https://morporfiil.app"),
+    ).toBe("https://cdn.morporfiil.app/photo.png");
   });
 
   it("returns an empty string for a missing image", () => {
-    expect(toAbsoluteUrl(undefined, "https://morporfile.app")).toBe("");
+    expect(toAbsoluteUrl(undefined, "https://morporfiil.app")).toBe("");
   });
 
   it("returns an empty string for a relative image without an origin", () => {

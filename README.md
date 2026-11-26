@@ -1,6 +1,6 @@
-# Morporfile Web
+# Morporfiil Web
 
-Next.js (App Router) + React 19 frontend for the Morporfile talent platform, including the
+Next.js (App Router) + React 19 frontend for the Morporfiil talent platform, including the
 marketplace launched in Phases 2â€“6 and hardened in Phase 7.
 
 ## Stack
@@ -14,7 +14,7 @@ marketplace launched in Phases 2â€“6 and hardened in Phase 7.
 - Vitest + Testing Library (Vitest 3, jsdom per-file pragma where needed)
 - ESLint 9 (`eslint.config.mjs`)
 
-The backend lives in the sibling `morporfile-api` repository. All requests go to
+The backend lives in the sibling `morporfiil-api` repository. All requests go to
 `NEXT_PUBLIC_API_URL` with credentials enabled (httpOnly cookie auth, Bearer fallback).
 
 ## Getting Started

@@ -11,13 +11,13 @@ import {
 
 describe("normalizeOrigin", () => {
   it("keeps the scheme and the host only", () => {
-    expect(normalizeOrigin("https://morporfile.app")).toBe("https://morporfile.app");
-    expect(normalizeOrigin("https://morporfile.app/")).toBe("https://morporfile.app");
-    expect(normalizeOrigin("https://morporfile.app/some/path")).toBe(
-      "https://morporfile.app",
+    expect(normalizeOrigin("https://morporfiil.app")).toBe("https://morporfiil.app");
+    expect(normalizeOrigin("https://morporfiil.app/")).toBe("https://morporfiil.app");
+    expect(normalizeOrigin("https://morporfiil.app/some/path")).toBe(
+      "https://morporfiil.app",
     );
-    expect(normalizeOrigin("https://morporfile.app:8443")).toBe(
-      "https://morporfile.app:8443",
+    expect(normalizeOrigin("https://morporfiil.app:8443")).toBe(
+      "https://morporfiil.app:8443",
     );
   });
 
@@ -25,8 +25,8 @@ describe("normalizeOrigin", () => {
     expect(normalizeOrigin("")).toBe("");
     expect(normalizeOrigin("   ")).toBe("");
     expect(normalizeOrigin(null)).toBe("");
-    expect(normalizeOrigin("morporfile.app")).toBe("");
-    expect(normalizeOrigin("ftp://morporfile.app")).toBe("");
+    expect(normalizeOrigin("morporfiil.app")).toBe("");
+    expect(normalizeOrigin("ftp://morporfiil.app")).toBe("");
     expect(normalizeOrigin("javascript:alert(1)")).toBe("");
   });
 });
@@ -39,7 +39,7 @@ describe("host safety", () => {
     expect(isLoopbackHostname("0.0.0.0")).toBe(true);
     expect(isLoopbackHostname("::1")).toBe(true);
     expect(isLoopbackHostname("app.localhost")).toBe(true);
-    expect(isLoopbackHostname("morporfile.app")).toBe(false);
+    expect(isLoopbackHostname("morporfiil.app")).toBe(false);
   });
 
   it("detects private hosts", () => {
@@ -48,16 +48,16 @@ describe("host safety", () => {
     expect(isPrivateHostname("172.16.4.4")).toBe(true);
     expect(isPrivateHostname("printer.local")).toBe(true);
     expect(isPrivateHostname("service.internal")).toBe(true);
-    expect(isPrivateHostname("morporfile.app")).toBe(false);
+    expect(isPrivateHostname("morporfiil.app")).toBe(false);
   });
 
   it("classifies origins as public or local", () => {
-    expect(isPubliclyReachableOrigin("https://morporfile.app")).toBe(true);
+    expect(isPubliclyReachableOrigin("https://morporfiil.app")).toBe(true);
     expect(isPubliclyReachableOrigin("http://localhost:3000")).toBe(false);
     expect(isPubliclyReachableOrigin("")).toBe(false);
 
     expect(isLocalOrigin("http://localhost:3000")).toBe(true);
-    expect(isLocalOrigin("https://morporfile.app")).toBe(false);
+    expect(isLocalOrigin("https://morporfiil.app")).toBe(false);
   });
 });
 
@@ -65,27 +65,27 @@ describe("resolveSiteOrigin", () => {
   it("prefers the configured public site URL in every environment", () => {
     expect(
       resolveSiteOrigin({
-        configured: "https://morporfile.app",
+        configured: "https://morporfiil.app",
         windowOrigin: "http://localhost:3000",
         nodeEnv: "development",
       }),
-    ).toBe("https://morporfile.app");
+    ).toBe("https://morporfiil.app");
 
     expect(
       resolveSiteOrigin({
-        configured: "https://staging.morporfile.app",
-        windowOrigin: "https://staging.morporfile.app",
+        configured: "https://staging.morporfiil.app",
+        windowOrigin: "https://staging.morporfiil.app",
         nodeEnv: "production",
       }),
-    ).toBe("https://staging.morporfile.app");
+    ).toBe("https://staging.morporfiil.app");
 
     expect(
       resolveSiteOrigin({
-        configured: "https://morporfile.app/",
-        windowOrigin: "https://morporfile.app",
+        configured: "https://morporfiil.app/",
+        windowOrigin: "https://morporfiil.app",
         nodeEnv: "production",
       }),
-    ).toBe("https://morporfile.app");
+    ).toBe("https://morporfiil.app");
   });
 
   it("keeps the configured origin separate per environment", () => {
@@ -95,23 +95,23 @@ describe("resolveSiteOrigin", () => {
       nodeEnv: "development",
     });
     const production = resolveSiteOrigin({
-      configured: "https://morporfile.app",
-      windowOrigin: "https://morporfile.app",
+      configured: "https://morporfiil.app",
+      windowOrigin: "https://morporfiil.app",
       nodeEnv: "production",
     });
 
     expect(development).toBe("http://localhost:3000");
-    expect(production).toBe("https://morporfile.app");
+    expect(production).toBe("https://morporfiil.app");
     expect(development).not.toBe(production);
   });
 
   it("falls back to the origin the app is served from", () => {
     expect(
       resolveSiteOrigin({
-        windowOrigin: "https://morporfile.app",
+        windowOrigin: "https://morporfiil.app",
         nodeEnv: "production",
       }),
-    ).toBe("https://morporfile.app");
+    ).toBe("https://morporfiil.app");
   });
 
   it("allows a local origin while developing", () => {
@@ -150,9 +150,9 @@ describe("resolveSiteOrigin", () => {
     expect(
       resolveSiteOrigin({
         configured: "not-a-url",
-        windowOrigin: "https://morporfile.app",
+        windowOrigin: "https://morporfiil.app",
         nodeEnv: "production",
       }),
-    ).toBe("https://morporfile.app");
+    ).toBe("https://morporfiil.app");
   });
 });

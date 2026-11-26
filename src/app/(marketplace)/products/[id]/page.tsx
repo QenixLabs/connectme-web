@@ -75,7 +75,7 @@ export default function PublicProductDetailPage() {
   });
   const product = productQuery.data?.product;
   const provider = product?.provider;
-  const providerName = provider?.display_name || provider?.business_name || "Morporfile provider";
+  const providerName = provider?.display_name || provider?.business_name || "Morporfiil provider";
   const providerHref = provider?.slug ? `/providers/${encodeURIComponent(provider.slug)}` : undefined;
 
   if (productQuery.isLoading) {
@@ -231,7 +231,7 @@ export default function PublicProductDetailPage() {
             {product.delivery.return_exchange && <p className="mt-2 text-slate-600">Returns and exchanges are available.</p>}
           </div>
           <p className="text-xs leading-5 text-slate-500">
-            Morporfile does not currently support product checkout or payments. Contact the provider to ask about this listing and confirm availability.
+            Morporfiil does not currently support product checkout or payments. Contact the provider to ask about this listing and confirm availability.
           </p>
           {providerHref && (
             <Button asChild className="h-11 w-full rounded-xl bg-violet-700 hover:bg-violet-800">

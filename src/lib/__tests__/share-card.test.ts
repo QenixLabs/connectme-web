@@ -24,7 +24,7 @@ const talent = {
   isVerified: true,
 };
 
-const CANONICAL_URL = "https://morporfile.app/talent/asha-rao";
+const CANONICAL_URL = "https://morporfiil.app/talent/asha-rao";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -42,7 +42,7 @@ describe("buildShareCardContent", () => {
     expect(content.url).toBe(CANONICAL_URL);
     expect(content.initials).toBe("AR");
     expect(content.isVerified).toBe(true);
-    expect(content.brand).toBe("Morporfile");
+    expect(content.brand).toBe("Morporfiil");
   });
 
   it("falls back to the role when there is no headline", () => {
@@ -67,11 +67,11 @@ describe("buildShareCardContent", () => {
           { icon: "play", count: "200+", label: "Projects" },
         ],
       },
-      origin: "https://morporfile.app",
+      origin: "https://morporfiil.app",
     });
 
     expect(content.roleLabel).toBe("Service Provider");
-    expect(content.url).toBe("https://morporfile.app/providers/silver-frame");
+    expect(content.url).toBe("https://morporfiil.app/providers/silver-frame");
     expect(content.tags).toEqual(["Video", "Photography"]);
     expect(content.statItems.map(({ count }) => count)).toEqual(["12", "4.8", "200+"]);
   });
@@ -79,7 +79,7 @@ describe("buildShareCardContent", () => {
   it("derives the URL from the target when none is given", () => {
     const content = buildShareCardContent({
       target: talent,
-      origin: "https://morporfile.app",
+      origin: "https://morporfiil.app",
     });
     expect(content.url).toBe(CANONICAL_URL);
   });
@@ -97,7 +97,7 @@ describe("buildShareCardContent", () => {
       url: CANONICAL_URL,
     });
 
-    expect(content.shortUrl).toBe("morporfile.app/talent/asha-rao");
+    expect(content.shortUrl).toBe("morporfiil.app/talent/asha-rao");
     expect(content.shortUrl).not.toContain("https://");
     expect(content.handle).toBe("@asha-rao");
   });
@@ -105,11 +105,11 @@ describe("buildShareCardContent", () => {
 
 describe("buildShortLinkLabel", () => {
   it("drops the protocol and keeps the host and the path", () => {
-    expect(buildShortLinkLabel(CANONICAL_URL)).toBe("morporfile.app/talent/asha-rao");
+    expect(buildShortLinkLabel(CANONICAL_URL)).toBe("morporfiil.app/talent/asha-rao");
   });
 
   it("keeps the host when there is no path", () => {
-    expect(buildShortLinkLabel("https://morporfile.app")).toBe("morporfile.app");
+    expect(buildShortLinkLabel("https://morporfiil.app")).toBe("morporfiil.app");
   });
 
   it("returns an empty string for an empty URL", () => {
@@ -138,7 +138,7 @@ describe("buildQrMatrix", () => {
 
   it("encodes the exact canonical URL", () => {
     const canonical = buildQrMatrix(CANONICAL_URL);
-    const other = buildQrMatrix("https://morporfile.app/talent/someone-else");
+    const other = buildQrMatrix("https://morporfiil.app/talent/someone-else");
 
     expect(canonical).not.toBeNull();
     expect(canonical!.modules).not.toEqual(other!.modules);
@@ -317,19 +317,19 @@ describe("share card layout", () => {
 
 describe("shareCardFileName", () => {
   it("uses the shared card name for a talent profile", () => {
-    expect(shareCardFileName(talent)).toBe("morporfile-talent-profile.png");
+    expect(shareCardFileName(talent)).toBe("morporfiil-talent-profile.png");
   });
 
   it("uses the recruiter variant for a recruiter profile", () => {
     expect(
       shareCardFileName({ role: "recruiter", slug: "north-talent", name: "" }),
-    ).toBe("morporfile-recruiter-profile.png");
+    ).toBe("morporfiil-recruiter-profile.png");
   });
 
   it("uses the provider variant for a provider profile", () => {
     expect(
       shareCardFileName({ role: "provider", slug: "silver-frame", name: "" }),
-    ).toBe("morporfile-provider-profile.png");
+    ).toBe("morporfiil-provider-profile.png");
   });
 
   it("never leaks the slug or an unsafe character into the file name", () => {
@@ -338,7 +338,7 @@ describe("shareCardFileName", () => {
       slug: "Asha Rao / Photos",
       name: "",
     });
-    expect(name).toBe("morporfile-talent-profile.png");
+    expect(name).toBe("morporfiil-talent-profile.png");
     expect(name).not.toMatch(/[\\/:*?"<>|]/);
   });
 });

@@ -161,7 +161,7 @@ function Artwork({ kind, imageUrl, title }: { kind: ArtworkKind; imageUrl?: stri
   if (kind === "series") {
     return (
       <div className="artwork artwork-series" aria-label="Production artwork" role="img">
-        <span className="series-kicker">A MORPORFILE ORIGINAL</span>
+        <span className="series-kicker">A MORPORFIIL ORIGINAL</span>
         <strong>{title.slice(0, 10).toUpperCase() || "CASTING"}</strong>
         <small>NOW CASTING</small>
       </div>

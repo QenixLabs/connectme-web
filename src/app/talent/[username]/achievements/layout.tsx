@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Awards & Training | Morporfile",
+  title: "Awards & Training | Morporfiil",
   description:
-    "Explore Morporfile talent awards, nominations, training, workshops, certifications and institutions.",
+    "Explore Morporfiil talent awards, nominations, training, workshops, certifications and institutions.",
   openGraph: {
-    title: "Awards & Training | Morporfile",
+    title: "Awards & Training | Morporfiil",
     description:
-      "Explore Morporfile talent awards, nominations, training, workshops, certifications and institutions.",
+      "Explore Morporfiil talent awards, nominations, training, workshops, certifications and institutions.",
     type: "profile",
   },
 };

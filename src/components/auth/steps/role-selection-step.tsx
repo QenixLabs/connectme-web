@@ -12,7 +12,7 @@ export function RoleSelectionStep() {
     <div className="space-y-4">
       <div className="text-center">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
-          How do you want to join Morporfile?
+          How do you want to join Morporfiil?
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Choose your path to get started

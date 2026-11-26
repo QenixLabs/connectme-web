@@ -59,7 +59,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import logoImage from "@/assets/morporfile-logo-orange.png";
+import logoImage from "@/assets/morporfiil-logo-orange.png";
 
 type Step = 1 | 2 | 3;
 
@@ -110,7 +110,7 @@ function BrandMark() {
   return (
     <Image
       src={logoImage}
-      alt="Morporfile"
+      alt="Morporfiil"
       className="h-auto w-[8.5rem] max-[700px]:w-[7rem] max-[420px]:w-[6rem]"
       priority
     />
@@ -717,7 +717,7 @@ export function TalentOnboarding({ isGoogleResume = false }: { isGoogleResume?: 
     }
   };
 
-  const backdrop = step === 3 ? "/assets/talent-onboarding/mumbai-opportunities.jpg" : "/assets/onboarding/morporfile-talent-collage.png";
+  const backdrop = step === 3 ? "/assets/talent-onboarding/mumbai-opportunities.jpg" : "/assets/onboarding/morporfiil-talent-collage.png";
   const backdropAlt = step === 3 ? "Mumbai skyline and the Gateway of India at sunset" : "Actors, a dancer and a singer pursuing creative careers";
   const backdropClasses = step === 3 ? "absolute inset-0 h-full w-full object-cover object-right opacity-[0.78]" : "absolute inset-0 h-full w-full object-cover object-center opacity-[0.12]";
   const washClasses = step === 3 ? "absolute inset-0 bg-[linear-gradient(90deg,oklch(0.985_0.009_288_/_99%),oklch(0.985_0.009_288_/_94%)_52%,oklch(0.985_0.009_288_/_34%)_78%,transparent)]" : "absolute inset-0 bg-[linear-gradient(90deg,oklch(0.985_0.009_288_/_98%),oklch(0.985_0.009_288_/_91%)_55%,oklch(0.985_0.009_288_/_72%))]";
@@ -893,7 +893,7 @@ function GoogleAccountStep({
       >
         <div className="min-w-0">
           <div className="mb-7">
-            <p className="m-0 text-[0.72rem] font-bold tracking-[0.16em] text-[oklch(0.51_0.08_279)]">WELCOME TO MORPORFILE</p>
+            <p className="m-0 text-[0.72rem] font-bold tracking-[0.16em] text-[oklch(0.51_0.08_279)]">WELCOME TO MORPORFIIL</p>
             <h1 className="mt-[0.8rem] text-[clamp(2.7rem,6vw,3.8rem)] font-extrabold leading-[0.98] tracking-[-0.055em] text-[oklch(0.27_0.13_279)]">
               Great, you&apos;re<br /><em className="not-italic text-[oklch(0.53_0.31_293)]">signed in!</em> <Sparkles className="inline size-8 align-[0.08em] text-[oklch(0.53_0.31_293)]" aria-hidden="true" />
             </h1>
@@ -1064,7 +1064,7 @@ function GoogleTalentOnboarding() {
     }
   };
 
-  const backdrop = step === 3 ? "/assets/talent-onboarding/mumbai-opportunities.jpg" : "/assets/onboarding/morporfile-talent-collage.png";
+  const backdrop = step === 3 ? "/assets/talent-onboarding/mumbai-opportunities.jpg" : "/assets/onboarding/morporfiil-talent-collage.png";
   const backdropAlt = step === 3 ? "Mumbai skyline and the Gateway of India at sunset" : "Actors, a dancer and a singer pursuing creative careers";
   const backdropClasses = step === 3 ? "absolute inset-0 h-full w-full object-cover object-right opacity-[0.78]" : "absolute inset-0 h-full w-full object-cover object-center opacity-[0.12]";
   const washClasses = step === 3 ? "absolute inset-0 bg-[linear-gradient(90deg,oklch(0.985_0.009_288_/_99%),oklch(0.985_0.009_288_/_94%)_52%,oklch(0.985_0.009_288_/_34%)_78%,transparent)]" : "absolute inset-0 bg-[linear-gradient(90deg,oklch(0.985_0.009_288_/_98%),oklch(0.985_0.009_288_/_91%)_55%,oklch(0.985_0.009_288_/_72%))]";

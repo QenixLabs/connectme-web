@@ -15,7 +15,7 @@ import {
   ChevronRight,
   Sparkles,
 } from "lucide-react";
-import { MorporfileLogo } from "@/components/MorporfileLogo";
+import { MorporfiilLogo } from "@/components/MorporfiilLogo";
 import { ScriptNote } from "./brand";
 
 const roles = [
@@ -105,8 +105,8 @@ export function StepRoles({
         }}
       >
       <div className="flex items-start justify-between gap-4">
-        <Link href="/" aria-label="Go to Morporfile homepage">
-          <MorporfileLogo className="w-28 pt-1 pb-4" />
+        <Link href="/" aria-label="Go to Morporfiil homepage">
+          <MorporfiilLogo className="w-28 pt-1 pb-4" />
         </Link>
         <ScriptNote lines={["Different", "People", "Bigger", "Stories"]} />
       </div>

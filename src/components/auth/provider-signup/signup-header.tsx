@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ArrowLeft, HelpCircle } from "lucide-react";
-import { MorporfileLogo } from "@/components/MorporfileLogo";
+import { MorporfiilLogo } from "@/components/MorporfiilLogo";
 
 interface SignupHeaderProps {
   onBack?: (() => void) | undefined;
@@ -38,7 +38,7 @@ export function SignupHeader({
 
       <Link
         href="/"
-        aria-label="Morporfile home"
+        aria-label="Morporfiil home"
         className={`group flex min-h-11 items-center justify-center transition-opacity hover:opacity-90 ${
           isDark
             ? "rounded-xl bg-white px-2 py-1 shadow-[0_8px_24px_-12px_rgba(0,0,0,0.6)]"
@@ -46,13 +46,13 @@ export function SignupHeader({
         }`}
       >
         <div className="w-[92px] sm:w-[104px]">
-          <MorporfileLogo />
+          <MorporfiilLogo />
         </div>
       </Link>
 
       <div className="flex min-w-0 justify-end">
         <a
-          href="mailto:support@morporfile.com"
+          href="mailto:support@morporfiil.com"
           target="_blank"
           rel="noopener noreferrer"
           className={`inline-flex h-11 items-center gap-1.5 rounded-full border px-3.5 text-xs font-semibold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#8738FF] focus-visible:ring-offset-2 active:scale-95 motion-reduce:transition-none ${

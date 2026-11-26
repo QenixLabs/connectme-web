@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, BadgeCheck, Building2, Check, Loader2, MapPin, Sparkles, Store } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import logoImage from "@/assets/morporfile-logo-orange.png";
+import logoImage from "@/assets/morporfiil-logo-orange.png";
 import { useAuthStore } from "@/providers/auth-store-provider";
 import { providersApi } from "@/lib/api/marketplace";
 import type { ProviderProfile } from "@/lib/api/marketplace";
@@ -60,8 +60,8 @@ function OnboardingLayout({
       <div className="pointer-events-none absolute -bottom-48 -right-40 size-[34rem] rounded-full bg-blue-500/10 blur-3xl" />
 
       <header className="relative z-10 mx-auto flex h-[76px] max-w-7xl items-center justify-between px-5 sm:px-8">
-        <Link href="/" aria-label="Morporfile home" className="inline-flex items-center">
-          <Image src={logoImage} alt="Morporfile" height={34} className="h-9 w-auto" priority />
+        <Link href="/" aria-label="Morporfiil home" className="inline-flex items-center">
+          <Image src={logoImage} alt="Morporfiil" height={34} className="h-9 w-auto" priority />
         </Link>
         <Link
           href="/services"

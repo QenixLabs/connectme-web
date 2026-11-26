@@ -4,7 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CompareTalentPage } from "@/components/recruiter-app/compare-talent/CompareTalentPage";
 
 export const metadata: Metadata = {
-  title: "Morporfile â€” Compare Talent",
+  title: "Morporfiil - Compare Talent",
   description:
     "Compare shortlisted talent side by side â€” trust score, availability, skills and credits â€” then invite the best fit.",
 };

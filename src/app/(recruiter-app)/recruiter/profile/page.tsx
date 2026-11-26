@@ -275,7 +275,7 @@ export default function RecruiterProfilePage() {
               className="h-[88px] w-[88px] shrink-0 rounded-[20px] border border-black/5 object-cover shadow-[0_1px_2px_rgba(15,23,42,0.08)]"
             />
           ) : (
-            <div className="flex h-[88px] w-[88px] shrink-0 items-center justify-center rounded-[20px] bg-[#E8EFFD] text-[26px] font-bold text-morporfile shadow-[0_1px_2px_rgba(15,23,42,0.08)]">
+            <div className="flex h-[88px] w-[88px] shrink-0 items-center justify-center rounded-[20px] bg-[#E8EFFD] text-[26px] font-bold text-morporfiil shadow-[0_1px_2px_rgba(15,23,42,0.08)]">
               {getInitials(companyName)}
             </div>
           )}
@@ -287,7 +287,7 @@ export default function RecruiterProfilePage() {
               </h2>
               {verification.verified && (
                 <BadgeCheck
-                  className="h-[18px] w-[18px] shrink-0 text-morporfile"
+                  className="h-[18px] w-[18px] shrink-0 text-morporfiil"
                   strokeWidth={2.5}
                   aria-label={verification.label}
                 />
@@ -316,7 +316,7 @@ export default function RecruiterProfilePage() {
             )}
             <Link
               href="/recruiter/profile/edit"
-              className="mt-2.5 inline-flex h-9 items-center gap-1.5 rounded-full border border-[#E6EAF0] bg-white px-4 text-[13px] font-semibold text-morporfile shadow-[0_1px_2px_rgba(15,23,42,0.05)] transition-colors hover:border-morporfile/40"
+              className="mt-2.5 inline-flex h-9 items-center gap-1.5 rounded-full border border-[#E6EAF0] bg-white px-4 text-[13px] font-semibold text-morporfiil shadow-[0_1px_2px_rgba(15,23,42,0.05)] transition-colors hover:border-morporfiil/40"
             >
               <Pencil className="h-3.5 w-3.5" />
               Edit profile
@@ -335,7 +335,7 @@ export default function RecruiterProfilePage() {
                   <p className="text-[15px] font-semibold text-[#0F1D2E]">
                     Trust Score
                   </p>
-                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#EAF1FE] px-2 py-0.5 text-[11px] font-semibold text-morporfile">
+                  <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#EAF1FE] px-2 py-0.5 text-[11px] font-semibold text-morporfiil">
                     <Check className="h-3 w-3" strokeWidth={3} />
                     Tier {verificationTier}
                   </span>

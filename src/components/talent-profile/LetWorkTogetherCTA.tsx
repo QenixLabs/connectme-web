@@ -17,7 +17,7 @@ export function LetWorkTogetherCTA({
   const firstName = displayName.split(" ")[0] || displayName;
 
   return (
-    <GlassCard hover={false} className="border-morporfile/15 bg-morporfile/[0.03] text-center">
+    <GlassCard hover={false} className="border-morporfiil/15 bg-morporfiil/[0.03] text-center">
       <h2 className="text-sm font-bold uppercase tracking-[0.16em] text-foreground">
         Let&rsquo;s Work Together
       </h2>
@@ -28,7 +28,7 @@ export function LetWorkTogetherCTA({
       <button
         onClick={start}
         disabled={isPending}
-        className="mt-4 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-morporfile px-6 text-sm font-semibold text-white shadow-[0_4px_14px_-6px_var(--morporfile-blue)] transition-all hover:bg-morporfile/90 active:scale-[0.98] disabled:opacity-70"
+        className="mt-4 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-morporfiil px-6 text-sm font-semibold text-white shadow-[0_4px_14px_-6px_var(--morporfiil-blue)] transition-all hover:bg-morporfiil/90 active:scale-[0.98] disabled:opacity-70"
       >
         {isPending ? (
           <Loader2 className="size-4 animate-spin" />

@@ -63,7 +63,7 @@ const categories: Category[] = [
 ];
 
 const faqs: Array<[string, string]> = [
-  ["How do I verify my account on Morporfile?", "Open Account, choose Verification, and follow the secure document-check steps."],
+  ["How do I verify my account on Morporfiil?", "Open Account, choose Verification, and follow the secure document-check steps."],
   ["How can I post a casting campaign?", "Go to Projects, tap Create Campaign, add your brief, and publish when it is ready."],
   ["How do I search for talent?", "Use Talent Search to filter profiles by role, location, skills, and availability."],
   ["What are the payment options?", "Available payment methods appear securely at checkout and in your billing settings."],
@@ -220,7 +220,7 @@ export function SupportPage({ ticketOnly = false }: { ticketOnly?: boolean }) {
             <div className="support-agent-wrap absolute inset-x-0 top-0 h-48 overflow-hidden md:inset-y-0 md:left-auto md:right-0 md:h-auto md:w-[46%]">
               <Image
                 src="/images/support-agent.png"
-                alt="Morporfile support specialist wearing a headset"
+                alt="Morporfiil support specialist wearing a headset"
                 width={1024}
                 height={1024}
                 priority
@@ -511,7 +511,7 @@ export function SupportPage({ ticketOnly = false }: { ticketOnly?: boolean }) {
           </DialogHeader>
           <div className="max-h-80 space-y-3 overflow-y-auto rounded-lg bg-muted/30 p-3">
             {selectedTicket?.replies.length === 0 && <p className="py-5 text-center text-sm text-muted-foreground">Your message is with our team. Weâ€™ll reply here.</p>}
-            {selectedTicket?.replies.map((reply, index) => <div key={reply._id || index} className={`max-w-[90%] rounded-xl p-3 text-sm ${reply.author_role === "admin" ? "bg-primary/10" : "ml-auto bg-card shadow-sm"}`}><p className="mb-1 text-[10px] font-bold text-muted-foreground">{reply.author_role === "admin" ? "Morporfile Support" : "You"} Â· {new Date(reply.created_at).toLocaleString()}</p><p className="whitespace-pre-wrap break-words">{reply.message}</p>{reply.attachments?.map((attachment) => <a key={attachment.url} href={attachment.url} target="_blank" rel="noreferrer" className="mt-2 block text-xs text-primary underline">{attachment.name}</a>)}</div>)}
+            {selectedTicket?.replies.map((reply, index) => <div key={reply._id || index} className={`max-w-[90%] rounded-xl p-3 text-sm ${reply.author_role === "admin" ? "bg-primary/10" : "ml-auto bg-card shadow-sm"}`}><p className="mb-1 text-[10px] font-bold text-muted-foreground">{reply.author_role === "admin" ? "Morporfiil Support" : "You"} Â· {new Date(reply.created_at).toLocaleString()}</p><p className="whitespace-pre-wrap break-words">{reply.message}</p>{reply.attachments?.map((attachment) => <a key={attachment.url} href={attachment.url} target="_blank" rel="noreferrer" className="mt-2 block text-xs text-primary underline">{attachment.name}</a>)}</div>)}
           </div>
           {selectedTicket && !["resolved", "closed"].includes(selectedTicket.status) && <form className="grid gap-2" onSubmit={sendReply}><Label htmlFor="ticket-reply" className="sr-only">Your reply</Label><Textarea id="ticket-reply" value={replyMessage} onChange={(event) => setReplyMessage(event.target.value)} placeholder="Write a replyâ€¦" maxLength={10000} required /><div className="flex justify-end"><Button type="submit" disabled={replySubmitting || !replyMessage.trim()}>{replySubmitting && <LoaderCircle className="animate-spin" />} {replySubmitting ? "Sendingâ€¦" : "Send reply"}</Button></div></form>}
           {selectedTicket && ["resolved", "closed"].includes(selectedTicket.status) && <p className="flex items-center gap-2 rounded-lg bg-success/10 p-3 text-sm text-foreground"><CheckCircle2 className="size-4 text-success" /> This request is closed. Create a new request if you need more help.</p>}
@@ -527,7 +527,7 @@ export function SupportPage({ ticketOnly = false }: { ticketOnly?: boolean }) {
           <div className="grid gap-2">
             <Button onClick={() => router.push(messagesHref)}><MessageSquareMore /> Open chat</Button>
             <Button variant="outline" asChild>
-              <a href="mailto:support@morporfile.app"><Mail /> Email us</a>
+              <a href="mailto:support@morporfiil.app"><Mail /> Email us</a>
             </Button>
             <Button variant="outline" onClick={() => { setContactOpen(false); setTicketDialogOpen(true); }}><Plus /> Create a ticket</Button>
           </div>

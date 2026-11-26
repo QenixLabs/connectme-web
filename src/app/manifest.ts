@@ -10,10 +10,10 @@ import type { MetadataRoute } from "next";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/",
-    name: "Morporfile â€“ Talent Platform",
-    short_name: "Morporfile",
+    name: "Morporfiil â€“ Talent Platform",
+    short_name: "Morporfiil",
     description:
-      "Morporfile connects verified talent with recruiters: portfolios, campaigns, messaging and opportunities in one platform.",
+      "Morporfiil connects verified talent with recruiters: portfolios, campaigns, messaging and opportunities in one platform.",
     start_url: "/",
     scope: "/",
     display: "standalone",

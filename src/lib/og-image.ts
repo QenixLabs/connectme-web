@@ -43,7 +43,7 @@ export function buildTalentOgImagePath(slug: string): string {
 }
 
 export interface TalentOgImageUrlInput {
-  /** Public application origin, e.g. `https://morporfile.app`. */
+  /** Public application origin, e.g. `https://morporfiil.app`. */
   origin?: string | null;
   /** Talent username. */
   slug: string;

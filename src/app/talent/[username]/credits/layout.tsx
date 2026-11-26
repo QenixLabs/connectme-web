@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Credits | Morporfile",
-  description: "Explore Morporfile talent project credits and production experience.",
+  title: "Credits | Morporfiil",
+  description: "Explore Morporfiil talent project credits and production experience.",
   openGraph: {
-    title: "Credits | Morporfile",
-    description: "Explore Morporfile talent project credits and production experience.",
+    title: "Credits | Morporfiil",
+    description: "Explore Morporfiil talent project credits and production experience.",
     type: "profile",
   },
 };

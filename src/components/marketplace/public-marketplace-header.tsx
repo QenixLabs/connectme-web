@@ -17,7 +17,7 @@ import { authStore } from "@/stores/auth-store";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { MarketplaceNotificationBell } from "@/components/marketplace/marketplace-notification-bell";
-import { MorporfileLogo } from "@/components/MorporfileLogo";
+import { MorporfiilLogo } from "@/components/MorporfiilLogo";
 
 function dashboardFor(role?: string, capabilities?: string[]) {
   if (capabilities?.includes("provider")) return "/provider/dashboard";
@@ -54,9 +54,9 @@ export function PublicMarketplaceHeader() {
         <Link
           href="/"
           className="flex shrink-0 items-center"
-          aria-label="Morporfile Marketplace home"
+          aria-label="Morporfiil Marketplace home"
         >
-          <MorporfileLogo className="w-28" />
+          <MorporfiilLogo className="w-28" />
         </Link>
 
         <nav className="ml-4 hidden items-center gap-1 md:flex">

@@ -98,7 +98,7 @@ export function BasicInfoEditor({ profile, onBack, onUpdate }: EditorProps) {
             <p className="text-xs text-muted-foreground">
               Your profile link:{" "}
               <span className="font-semibold text-primary">
-                morporfile.com/@{username || "username"}
+                morporfiil.com/@{username || "username"}
               </span>
             </p>
             <div className="relative">

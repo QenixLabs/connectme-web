@@ -1,5 +1,5 @@
 "use client";
-import { MorporfileLogo } from "@/components/MorporfileLogo";
+import { MorporfiilLogo } from "@/components/MorporfiilLogo";
 import Link from "next/link";
 
 import { useEffect, useState, type ReactNode } from "react";
@@ -296,10 +296,10 @@ export function StepOrganization({
       >
        <Link
          href="/"
-         aria-label="Go to Morporfile homepage"
+         aria-label="Go to Morporfiil homepage"
          className="absolute left-[6%] top-3 z-10 sm:top-4"
        >
-         <MorporfileLogo className="w-28 pb-4" />
+         <MorporfiilLogo className="w-28 pb-4" />
        </Link>
        <div className="absolute left-[6%] top-[56%] w-[52%] -translate-y-1/2 mt-1">
          <h1 className=" mt-2 text-[clamp(26px,5vw,35px)] font-bold leading-[1.05] text-[#080B2B]">

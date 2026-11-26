@@ -1,8 +1,8 @@
 Place the three onboarding art images in this directory:
 
-- morporfile-talent-collage.png     (welcome screen collage)
-- morporfile-recruiter-banner.png   (recruiter role card art)
-- morporfile-talent-banner.png      (talent role card art)
+- morporfiil-talent-collage.png     (welcome screen collage)
+- morporfiil-recruiter-banner.png   (recruiter role card art)
+- morporfiil-talent-banner.png      (talent role card art)
 
 They are referenced by src/components/onboarding/onboarding-flow.tsx.
 Download them from the design-pixel-perfect Lovable asset URLs, or export from the design tool.

@@ -9,7 +9,7 @@ export function AuthBottomBar() {
       <div className="flex h-16 items-center justify-center px-4">
         <Link
           href="/auth/login"
-          className="flex items-center gap-2 rounded-full bg-morporfile px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-morporfile/90"
+          className="flex items-center gap-2 rounded-full bg-morporfiil px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-morporfiil/90"
         >
           <LogIn className="size-4" />
           Sign in to connect

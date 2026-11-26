@@ -52,7 +52,7 @@ export function VerifyStep({
       await onVerified?.();
       setStatus("verified");
       toast.success("Recruiter account ready", {
-        description: "Welcome to Morporfile!",
+        description: "Welcome to Morporfiil!",
       });
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
@@ -100,7 +100,7 @@ export function VerifyStep({
           </motion.div>
           <h2 className="text-xl font-bold tracking-tight text-foreground">You&apos;re all set!</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Welcome to Morporfile. Taking you to your getting-started guide...
+            Welcome to Morporfiil. Taking you to your getting-started guide...
           </p>
         </motion.div>
       ) : (

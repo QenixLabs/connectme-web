@@ -653,7 +653,7 @@ export function Reviews({
       ? [{ icon: <BadgeCheck size={18} />, title: "Verified Recruiter", copy: "Identity verified" }]
       : []),
     ...(isTrustedPartner
-      ? [{ icon: <Award size={18} />, title: "Preferred Partner", copy: "Morporfile partner status confirmed" }]
+      ? [{ icon: <Award size={18} />, title: "Preferred Partner", copy: "Morporfiil partner status confirmed" }]
       : []),
   ];
 

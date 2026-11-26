@@ -3,13 +3,13 @@ import type { Metadata } from "next";
 import { SettingsPage } from "@/components/talent-app/SettingsPage";
 
 export const metadata: Metadata = {
-  title: "Account Settings | Morporfile",
+  title: "Account Settings | Morporfiil",
   description:
-    "Manage your Morporfile account preferences, password, and security settings.",
+    "Manage your Morporfiil account preferences, password, and security settings.",
   openGraph: {
-    title: "Account Settings | Morporfile",
+    title: "Account Settings | Morporfiil",
     description:
-      "Manage your Morporfile account preferences and security.",
+      "Manage your Morporfiil account preferences and security.",
   },
 };
 

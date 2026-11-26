@@ -38,7 +38,7 @@ import { useUnreadNotifications } from "@/hooks/use-unread-counts";
 import { useMyProfile } from "@/hooks/use-talent-profile";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/providers/auth-store-provider";
-import logoImage from "@/assets/morporfile-logo-orange.png";
+import logoImage from "@/assets/morporfiil-logo-orange.png";
 
 import { ChangePasswordDialog } from "./settings/change-password-dialog";
 import { VerifyPhoneDialog } from "./settings/verify-phone-dialog";
@@ -227,7 +227,7 @@ export function SettingsPage() {
             <Link href="/talent/dashboard" className="inline-flex items-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
               <Image
                 src={logoImage}
-                alt="Morporfile"
+                alt="Morporfiil"
                 priority
                 className="h-10 w-auto object-contain sm:h-12"
               />
@@ -509,7 +509,7 @@ export function SettingsPage() {
             </SettingIcon>
             <span className="min-w-0 flex-1">
               <span className="block text-[17px] font-bold leading-5 text-[#e3262e] sm:text-[19px]">Logout</span>
-              <span className="mt-1 block text-[13px] leading-5 text-muted-foreground sm:text-[15px]">Sign out from your Morporfile account</span>
+              <span className="mt-1 block text-[13px] leading-5 text-muted-foreground sm:text-[15px]">Sign out from your Morporfiil account</span>
             </span>
             <ChevronRight className="size-6 shrink-0 text-[#e3262e]" strokeWidth={2.25} />
           </Button>

@@ -144,7 +144,7 @@ export default function PublicRecruiterProfilePage() {
             ? String(profile.active_campaigns_count + profile.completed_campaigns_count)
             : "â€”",
         label: "Projects",
-        note: "On Morporfile",
+        note: "On Morporfiil",
       },
       {
         icon: "heart",
@@ -153,7 +153,7 @@ export default function PublicRecruiterProfilePage() {
             ? String(profile.total_talents_count)
             : "â€”",
         label: "Talent Hired",
-        note: "On Morporfile",
+        note: "On Morporfiil",
       },
       {
         icon: "star",

@@ -64,7 +64,7 @@ const visuals: Partial<Record<NotificationType, NotificationVisual>> = {
 
 function actorName(n: Notification) {
   const actor = n.actor_id;
-  return actor?.full_legal_name || actor?.company_name || actor?.email || "Morporfile";
+  return actor?.full_legal_name || actor?.company_name || actor?.email || "Morporfiil";
 }
 
 function visualFor(n: Notification): NotificationVisual {

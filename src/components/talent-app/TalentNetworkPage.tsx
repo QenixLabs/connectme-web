@@ -35,7 +35,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-import logoImage from "@/assets/morporfile-logo-orange.png";
+import logoImage from "@/assets/morporfiil-logo-orange.png";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -108,7 +108,7 @@ const categories = [
   { label: "Writers", image: "/images/portfolio/p7.jpg" },
   { label: "Editors", image: "/images/portfolio/p8.jpg" },
   { label: "Makeup Artists", image: "/images/portfolio/p9.jpg" },
-  { label: "Stylists", image: "/images/casting/morporfile-creative-talent-showcase.png" },
+  { label: "Stylists", image: "/images/casting/morporfiil-creative-talent-showcase.png" },
   { label: "Voice Artists", image: "/images/portfolio/p10.jpg" },
 ];
 
@@ -1030,8 +1030,8 @@ export function TalentNetworkPage() {
     <div className="network-page-theme min-h-screen bg-[#f7f9fc] pb-20 text-foreground md:pb-8">
       <header className="bg-white backdrop-blur-xl">
         <div className="mx-auto flex h-[62px] max-w-[1440px] items-center justify-between gap-4 px-4 sm:h-[78px] sm:px-6 lg:px-10">
-          <Link href="/talent/network" className="flex min-w-0 items-center gap-2.5" aria-label="Morporfile talent network">
-            <Image src={logoImage} alt="Morporfile" height={36} className="h-8 w-auto sm:h-10" priority />
+          <Link href="/talent/network" className="flex min-w-0 items-center gap-2.5" aria-label="Morporfiil talent network">
+            <Image src={logoImage} alt="Morporfiil" height={36} className="h-8 w-auto sm:h-10" priority />
           </Link>
 
           <nav className="hidden flex-1 items-center justify-center gap-1 md:flex" aria-label="Talent navigation">

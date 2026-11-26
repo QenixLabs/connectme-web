@@ -3,11 +3,11 @@ import type { Metadata } from "next";
 import TalentInvitesPage from "@/components/recruiter-app/TalentInvitesPage";
 
 export const metadata: Metadata = {
-  title: "Morporfile â€” Talent Invitations",
+  title: "Morporfiil - Talent Invitations",
   description:
     "Manage your talent invitations and track casting responses. See who accepted, declined, or is still pending.",
   openGraph: {
-    title: "Morporfile â€” Talent Invitations",
+    title: "Morporfiil - Talent Invitations",
     description:
       "Manage your talent invitations and track casting responses. See who accepted, declined, or is still pending.",
   },

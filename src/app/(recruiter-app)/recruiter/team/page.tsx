@@ -203,7 +203,7 @@ function InviteDialog({
           <DialogTitle>Invite a teammate</DialogTitle>
           <DialogDescription>
             Give a teammate the access they need. They can accept after signing
-            in to Morporfile.
+            in to Morporfiil.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={submit} className="space-y-4">

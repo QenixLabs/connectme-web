@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
-import morporfileLogo from "@/assets/morporfile-logo-orange.png";
+import morporfiilLogo from "@/assets/morporfiil-logo-orange.png";
 
 interface AuthLayoutProps {
   children: React.ReactNode;
@@ -39,8 +39,8 @@ export function AuthLayout({ children, subtitle, showGlow, wide = false }: AuthL
               transition={{ type: "spring", stiffness: 300 }}
             >
               <Image
-                src={morporfileLogo}
-                alt="Morporfile logo"
+                src={morporfiilLogo}
+                alt="Morporfiil logo"
                 height={177}
                 width={264}
                 priority

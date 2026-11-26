@@ -9,27 +9,27 @@ import {
 const complete = {
   name: "Asha Rao",
   headline: "Actor & Voice Artist",
-  url: "https://morporfile.app/talent/asha-rao",
-  imageUrl: "https://morporfile.app/talent/asha-rao/opengraph-image",
+  url: "https://morporfiil.app/talent/asha-rao",
+  imageUrl: "https://morporfiil.app/talent/asha-rao/opengraph-image",
 };
 
 describe("buildProfileTitle", () => {
   it("leads with the name and the profession", () => {
     expect(buildProfileTitle(complete)).toBe(
-      "Asha Rao â€” Actor & Voice Artist | Morporfile",
+      "Asha Rao â€” Actor & Voice Artist | Morporfiil",
     );
   });
 
   it("omits the profession when there is none", () => {
     expect(
       buildProfileTitle({ ...complete, headline: undefined }),
-    ).toBe("Asha Rao on Morporfile");
+    ).toBe("Asha Rao on Morporfiil");
   });
 
   it("falls back to the brand when the profile has no name", () => {
     expect(
       buildProfileTitle({ ...complete, name: "", headline: undefined }),
-    ).toBe("Morporfile â€” Talent Profile");
+    ).toBe("Morporfiil â€” Talent Profile");
   });
 
   it("never renders undefined", () => {
@@ -47,7 +47,7 @@ describe("buildProfileDescription", () => {
     const description = buildProfileDescription(complete);
     expect(description).toContain("Asha Rao");
     expect(description).toContain("Actor & Voice Artist");
-    expect(description).toContain("Morporfile");
+    expect(description).toContain("Morporfiil");
     expect(description.length).toBeLessThanOrEqual(200);
   });
 
@@ -67,21 +67,21 @@ describe("buildProfileMetadata", () => {
   it("builds Open Graph profile metadata for a complete profile", () => {
     const metadata = buildProfileMetadata(complete);
 
-    expect(metadata.title).toBe("Asha Rao â€” Actor & Voice Artist | Morporfile");
+    expect(metadata.title).toBe("Asha Rao â€” Actor & Voice Artist | Morporfiil");
     expect(metadata.openGraph?.type).toBe("profile");
-    expect(metadata.openGraph?.url).toBe("https://morporfile.app/talent/asha-rao");
-    expect(metadata.openGraph?.siteName).toBe("Morporfile");
+    expect(metadata.openGraph?.url).toBe("https://morporfiil.app/talent/asha-rao");
+    expect(metadata.openGraph?.siteName).toBe("Morporfiil");
     expect(metadata.openGraph?.images).toEqual([
       {
-        url: "https://morporfile.app/talent/asha-rao/opengraph-image",
+        url: "https://morporfiil.app/talent/asha-rao/opengraph-image",
         width: 1200,
         height: 630,
         type: "image/png",
-        alt: "Asha Rao â€” Actor & Voice Artist | Morporfile",
+        alt: "Asha Rao â€” Actor & Voice Artist | Morporfiil",
       },
     ]);
     expect(metadata.alternates?.canonical).toBe(
-      "https://morporfile.app/talent/asha-rao",
+      "https://morporfiil.app/talent/asha-rao",
     );
   });
 
@@ -90,10 +90,10 @@ describe("buildProfileMetadata", () => {
 
     expect(metadata.twitter?.card).toBe("summary_large_image");
     expect(metadata.twitter?.title).toBe(
-      "Asha Rao â€” Actor & Voice Artist | Morporfile",
+      "Asha Rao â€” Actor & Voice Artist | Morporfiil",
     );
     expect(metadata.twitter?.images).toEqual([
-      "https://morporfile.app/talent/asha-rao/opengraph-image",
+      "https://morporfiil.app/talent/asha-rao/opengraph-image",
     ]);
   });
 
@@ -101,15 +101,15 @@ describe("buildProfileMetadata", () => {
     const metadata = buildProfileMetadata({
       name: "",
       headline: undefined,
-      url: "https://morporfile.app/talent/asha-rao",
+      url: "https://morporfiil.app/talent/asha-rao",
       imageUrl: "",
     });
 
-    expect(metadata.title).toBe("Morporfile â€” Talent Profile");
+    expect(metadata.title).toBe("Morporfiil â€” Talent Profile");
     expect(metadata.description).toBeTruthy();
     expect(metadata.openGraph?.images).toEqual([]);
     expect(metadata.twitter?.images).toEqual([]);
-    expect(metadata.openGraph?.url).toBe("https://morporfile.app/talent/asha-rao");
+    expect(metadata.openGraph?.url).toBe("https://morporfiil.app/talent/asha-rao");
   });
 
   it("never leaks a private field into the metadata", () => {

@@ -20,7 +20,7 @@ type Props = {
 
 /**
  * Find-talent filter tile â€” ported from talent-finder-flow's FilterSelect,
- * re-skinned with the Morporfile design tokens.
+ * re-skinned with the Morporfiil design tokens.
  */
 export function FilterSelect({ label, value, options, icon: Icon, onSelect, className }: Props) {
   const active = Boolean(value);

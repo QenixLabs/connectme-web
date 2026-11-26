@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { TalentOnboarding } from "@/components/auth/talent-onboarding/talent-onboarding";
 
 export const metadata: Metadata = {
-  title: "Create Your Talent Account | Morporfile",
-  description: "Join Morporfile's global community of creators and discover new opportunities.",
+  title: "Create Your Talent Account | Morporfiil",
+  description: "Join Morporfiil's global community of creators and discover new opportunities.",
 };
 
 export default async function TalentSignupPage({

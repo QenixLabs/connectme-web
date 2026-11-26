@@ -11,7 +11,7 @@ import { normalizeOrigin } from "@/lib/site";
 
 export { normalizeOrigin };
 
-export const SHARE_BRAND = "Morporfile";
+export const SHARE_BRAND = "Morporfiil";
 
 export type ShareProfileRole = "talent" | "recruiter" | "provider";
 
@@ -262,7 +262,7 @@ export function buildInstagramCaption(
       : target.role === "provider"
         ? "#ServiceProvider"
         : "#RecruiterProfile";
-  lines.push("", `#Morporfile ${profileHashtag} #ConnectAndCreate`);
+  lines.push("", `#Morporfiil ${profileHashtag} #ConnectAndCreate`);
 
   return dedupeHashtags(lines.join("\n"));
 }
@@ -552,7 +552,7 @@ export function canShareFilesSync(): boolean {
   if (typeof navigator.canShare !== "function") return false;
   if (typeof navigator.share !== "function") return false;
   try {
-    const probe = new File([PNG_PROBE_BYTES], "morporfile-talent-profile.png", {
+    const probe = new File([PNG_PROBE_BYTES], "morporfiil-talent-profile.png", {
       type: "image/png",
     });
     return navigator.canShare({ files: [probe] });

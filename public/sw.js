@@ -1,5 +1,5 @@
 /*
- * Morporfile service worker.
+ * Morporfiil service worker.
  *
  * Caching is deliberately conservative:
  * - navigation requests stay network-first and are never stored, because pages
@@ -9,7 +9,7 @@
  * - a static offline page is precached and used when a navigation fails.
  */
 
-const CACHE_VERSION = "morporfile-v1";
+const CACHE_VERSION = "morporfiil-v1";
 const CORE_CACHE = `${CACHE_VERSION}-core`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const OFFLINE_URL = "/offline";
@@ -61,7 +61,7 @@ self.addEventListener("activate", (event) => {
         keys
           .filter(
             (key) =>
-              key.startsWith("morporfile-") && key !== CORE_CACHE && key !== RUNTIME_CACHE
+              key.startsWith("morporfiil-") && key !== CORE_CACHE && key !== RUNTIME_CACHE
           )
           .map((key) => caches.delete(key))
       );

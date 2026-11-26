@@ -196,7 +196,7 @@ function Header() {
       <div className="mx-auto flex h-[68px] max-w-6xl items-center justify-between px-4">
         <Link
           href="/"
-          aria-label="Morporfile home"
+          aria-label="Morporfiil home"
           className="text-[27px] font-extrabold tracking-[-0.07em] text-[#1e1550]"
         >
           Root<span className="text-[#f26b1d]">In</span>

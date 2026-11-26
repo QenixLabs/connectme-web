@@ -536,7 +536,7 @@ export default function RecruiterDashboardPage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={ROBOT_SRC}
-              alt="Morporfile AI casting assistant"
+              alt="Morporfiil AI casting assistant"
               className="absolute -right-3 top-9 h-28 w-28 object-contain"
               loading="eager"
             />
