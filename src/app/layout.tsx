@@ -43,7 +43,7 @@ const siteOrigin = resolveSiteOrigin({
 export const metadata: Metadata = {
   metadataBase: siteOrigin ? new URL(siteOrigin) : undefined,
   applicationName: "Morporfile",
-  title: "Morporfile â€“ Talent Platform",
+  title: "Morporfile - Talent Platform",
   description:
     "Morporfile connects verified talent with recruiters: portfolios, campaigns, messaging and opportunities in one platform.",
   icons: {
@@ -65,7 +65,7 @@ export const metadata: Metadata = {
     "mobile-web-app-capable": "yes",
   },
   openGraph: {
-    title: "Morporfile â€“ Talent Platform",
+    title: "Morporfile - Talent Platform",
     description:
       "Morporfile connects verified talent with recruiters: portfolios, campaigns, messaging and opportunities in one platform.",
     type: "website",
