@@ -1897,7 +1897,7 @@ export function ProviderProfileView({
     <div
       className={
         isPreview
-          ? "space-y-5"
+          ? "provider-profile-theme space-y-5"
           : "provider-profile-theme -mx-4 -mt-4 space-y-4 sm:mx-0 sm:mt-0 sm:space-y-6"
       }
     >
