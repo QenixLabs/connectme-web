@@ -465,16 +465,25 @@
   line-height: 1.2;
 }
 
-.sectionTitle button {
+.sectionTitleAction {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   flex-shrink: 0;
-  border: 0;
+  padding: 6px 8px 6px 10px;
+  border: 1px solid color-mix(in oklab, var(--brand) 18%, var(--border));
+  border-radius: 999px;
   color: var(--brand);
-  background: transparent;
-  font-size: 10px;
+  background: color-mix(in oklab, var(--brand-soft) 55%, transparent);
+  font-size: 9px;
   font-weight: 700;
+  transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.sectionTitleAction:hover {
+  border-color: color-mix(in oklab, var(--brand) 35%, var(--border));
+  background: var(--brand-soft);
+  transform: translateX(1px);
 }
 
 .chipRow {
@@ -552,6 +561,23 @@
 .showreelCopy strong,
 .showreelCopy small {
   display: block;
+}
+
+.campaignAction {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 9px;
+  border: 1px solid color-mix(in oklab, var(--foreground) 38%, transparent);
+  border-radius: 999px;
+  color: var(--foreground);
+  background: color-mix(in oklab, var(--foreground) 16%, transparent);
+  backdrop-filter: blur(5px);
+  font-size: 8px;
+  font-weight: 800;
 }
 
 .showreelCopy strong {
@@ -658,6 +684,12 @@
   scrollbar-width: none;
 }
 
+.projectCard {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
 .projectCard div {
   position: relative;
   height: 132px;
@@ -701,6 +733,24 @@
 
 .projectCard small {
   margin-top: 2px;
+}
+
+.projectCardAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 7px;
+  color: var(--brand);
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.projectCard:hover img {
+  transform: scale(1.04);
+}
+
+.projectCard img {
+  transition: transform 180ms ease;
 }
 
 .jobCard {

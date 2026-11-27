@@ -23,7 +23,6 @@ import {
   Mic2,
   MoreHorizontal,
   Music2,
-  Play,
   Quote,
   Send,
   ShieldCheck,
@@ -192,11 +191,13 @@ function SectionTitle({
   onClick,
   icon,
   action,
+  actionLabel = "View all",
 }: {
   children: React.ReactNode;
   onClick?: (() => void) | undefined;
   icon?: React.ReactNode;
   action?: React.ReactNode;
+  actionLabel?: string;
 }) {
   return (
     <div className={styles.sectionTitle}>
@@ -205,8 +206,8 @@ function SectionTitle({
         <h2>{children}</h2>
       </div>
       {onClick && (
-        <button onClick={onClick}>
-          View all <ChevronRight size={13} />
+        <button className={styles.sectionTitleAction} onClick={onClick}>
+          {actionLabel} <ChevronRight size={13} />
         </button>
       )}
       {action}
@@ -257,14 +258,18 @@ export function Overview({
         </section>
       )}
       <section className={`${styles.overviewCard} ${styles.featuredWorkCard}`}>
-        <SectionTitle icon={<Clapperboard size={16} />} onClick={() => go("Projects")}>
+        <SectionTitle
+          icon={<Clapperboard size={16} />}
+          onClick={() => go("Projects")}
+          actionLabel="View all campaigns"
+        >
           Featured Work
         </SectionTitle>
         {campaigns.length > 0 ? (
           <button
             onClick={() => go("Projects")}
             className={styles.showreel}
-            aria-label="View featured casting call"
+            aria-label={`View ${campaigns[0].name} campaign`}
           >
             <img
               src={campaigns[0].cover_image_url || fallbackImages[0]}
@@ -273,8 +278,8 @@ export function Overview({
               height={900}
             />
             <span className={styles.showreelShade} />
-            <span className={styles.playButton}>
-              <Play size={23} fill="currentColor" />
+            <span className={styles.campaignAction}>
+              View campaign <ArrowUpRight size={16} />
             </span>
             <span className={styles.showreelCopy}>
               <strong>{campaigns[0].name}</strong>
@@ -285,7 +290,7 @@ export function Overview({
           <button
             onClick={() => go("Projects")}
             className={styles.showreel}
-            aria-label="View casting portfolio"
+            aria-label="View campaigns"
           >
             <img
               src={castingHero}
@@ -294,8 +299,8 @@ export function Overview({
               height={900}
             />
             <span className={styles.showreelShade} />
-            <span className={styles.playButton}>
-              <Play size={23} fill="currentColor" />
+            <span className={styles.campaignAction}>
+              Explore campaigns <ArrowUpRight size={16} />
             </span>
             <span className={styles.showreelCopy}>
               <strong>{profile.company_name}</strong>
@@ -365,7 +370,12 @@ export function Projects({
         {campaigns.length > 0 ? (
           <div className={styles.projectScroll}>
             {campaigns.map((project, i) => (
-              <article className={styles.projectCard} key={project._id}>
+              <a
+                className={styles.projectCard}
+                href={`/recruiter/campaigns/${project._id}`}
+                key={project._id}
+                aria-label={`View ${project.name} campaign`}
+              >
                 <div>
                   <img
                     src={project.cover_image_url || fallbackImages[i % fallbackImages.length]}
@@ -379,7 +389,8 @@ export function Projects({
                   {project.created_at && ` Â· ${new Date(project.created_at).getFullYear()}`}
                 </p>
                 <small>{project.location?.city || "Multiple Cities"}</small>
-              </article>
+                <span className={styles.projectCardAction}>View campaign <ArrowUpRight size={12} /></span>
+              </a>
             ))}
           </div>
         ) : (
@@ -458,7 +469,10 @@ export function Jobs({
   if (displayJobs.length === 0) {
     return (
       <section>
-        <SectionTitle onClick={condensed ? () => go("Jobs") : undefined}>
+        <SectionTitle
+          onClick={condensed ? () => go("Jobs") : undefined}
+          actionLabel="View all jobs"
+        >
           Current Openings
         </SectionTitle>
         <p className="text-sm text-muted-foreground py-4">No active openings at the moment.</p>
@@ -468,7 +482,10 @@ export function Jobs({
 
   return (
     <section>
-      <SectionTitle onClick={condensed ? () => go("Jobs") : undefined}>
+      <SectionTitle
+        onClick={condensed ? () => go("Jobs") : undefined}
+        actionLabel="View all jobs"
+      >
         Current Openings
       </SectionTitle>
       <div className={styles.spaceY3}>
