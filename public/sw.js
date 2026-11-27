@@ -9,16 +9,16 @@
  * - a static offline page is precached and used when a navigation fails.
  */
 
-const CACHE_VERSION = "morporfiil-v1";
+const CACHE_VERSION = "morporfiil-v3";
 const CORE_CACHE = `${CACHE_VERSION}-core`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const OFFLINE_URL = "/offline";
 const RUNTIME_CACHE_LIMIT = 80;
 
 const CORE_ASSETS = [
-  "/icons/icon-192.png",
-  "/icons/icon-512.png",
-  "/apple-touch-icon.png",
+  "/icons/icon-192.png?v=2",
+  "/icons/icon-512.png?v=2",
+  "/apple-touch-icon.png?v=2",
 ];
 
 self.addEventListener("install", (event) => {

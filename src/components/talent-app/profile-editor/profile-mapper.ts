@@ -122,7 +122,8 @@ export function mapViewToPayload(patch: Partial<Profile>): UpdateTalentProfilePa
   if (patch.username !== undefined) payload.username = patch.username;
   if (patch.headline !== undefined) payload.headline = patch.headline;
   if (patch.gender !== undefined) payload.gender = patch.gender;
-  if (patch.dateOfBirth !== undefined) payload.date_of_birth = patch.dateOfBirth;
+  if (patch.dateOfBirth !== undefined)
+    payload.date_of_birth = patch.dateOfBirth || null;
   if (patch.location !== undefined) payload.location = parseLocation(patch.location);
   if (patch.professions !== undefined) payload.professions = patch.professions;
   if (patch.specialties !== undefined) payload.specialties = patch.specialties;

@@ -43,7 +43,7 @@ export interface UpdateTalentProfilePayload {
   professional_name?: string;
   willing_to_travel?: string;
   preferred_cities?: string[];
-  date_of_birth?: string;
+  date_of_birth?: string | null;
   gender?: string;
   profile_photo?: string;
   location?: { country?: string; state?: string; city?: string };
@@ -87,7 +87,7 @@ export interface TalentProfile {
   professional_name?: string;
   willing_to_travel?: string;
   preferred_cities?: string[];
-  date_of_birth?: string;
+  date_of_birth?: string | null;
   gender?: string;
   profile_photo?: string;
   location?: { country?: string; state?: string; city?: string };

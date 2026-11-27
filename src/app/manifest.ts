@@ -10,7 +10,7 @@ import type { MetadataRoute } from "next";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/",
-    name: "Morporfiil â€“ Talent Platform",
+    name: "Morporfiil",
     short_name: "Morporfiil",
     description:
       "Morporfiil connects verified talent with recruiters: portfolios, campaigns, messaging and opportunities in one platform.",
@@ -24,25 +24,25 @@ export default function manifest(): MetadataRoute.Manifest {
     categories: ["business", "productivity"],
     icons: [
       {
-        src: "/icons/icon-192.png",
+        src: "/icons/icon-192.png?v=2",
         sizes: "192x192",
         type: "image/png",
         purpose: "any",
       },
       {
-        src: "/icons/icon-512.png",
+        src: "/icons/icon-512.png?v=2",
         sizes: "512x512",
         type: "image/png",
         purpose: "any",
       },
       {
-        src: "/icons/icon-maskable-192.png",
+        src: "/icons/icon-maskable-192.png?v=2",
         sizes: "192x192",
         type: "image/png",
         purpose: "maskable",
       },
       {
-        src: "/icons/icon-maskable-512.png",
+        src: "/icons/icon-maskable-512.png?v=2",
         sizes: "512x512",
         type: "image/png",
         purpose: "maskable",
