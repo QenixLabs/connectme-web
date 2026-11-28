@@ -56,7 +56,7 @@ export function PublicMarketplaceHeader() {
           className="flex shrink-0 items-center"
           aria-label="Morporfiil Marketplace home"
         >
-          <MorporfiilLogo className="w-28" />
+          <MorporfiilLogo className="w-36 sm:w-40" />
         </Link>
 
         <nav className="ml-4 hidden items-center gap-1 md:flex">
